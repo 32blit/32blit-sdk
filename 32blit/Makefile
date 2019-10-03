@@ -1,16 +1,16 @@
-BUILDDIR = build
+BUILDDIR = build.32blit-stm32
 TARGET = $(BUILDDIR)/lib32blit.a
 SOURCES = $(wildcard *.cpp, */*.cpp)
 OBJECTS = $(addprefix $(BUILDDIR)/, $(notdir $(SOURCES:.cpp=.o)) )
 
 PREFIX := arm-none-eabi-
 
-INCLUDES = -I32blit -Itypes -Igraphics -Iengine -I../lua
+INCLUDES = -I32blit -Itypes -Igraphics -Iengine #-I../lua
 
 CXX = $(PREFIX)g++
 AR = $(PREFIX)ar
 MCU = -mcpu=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -fpermissive
-LIBS = -lm -lnosys -llua
+LIBS = -lm -lnosys #-llua
 LIBDIR = -L../lua
 
 CXXFLAGS = $(MCU) $(INCLUDES) -std=c++11 -fdata-sections -ffunction-sections -Wall -Os
@@ -27,6 +27,9 @@ $(BUILDDIR)/%.o : */%.cpp
 
 dirs:
 	mkdir -p $(BUILDDIR)
+
+32blit-sdl:
+	make MCU= PREFIX= BUILDDIR=build.32blit-sdl
 
 clean:
 	rm $(OBJECTS) $(TARGET)

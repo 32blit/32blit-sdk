@@ -50,7 +50,7 @@ export BOILERPLATE_HPP
 
 PROJECTS := $(wildcard $(PROJECT_DIR)/*)
 PROJECT := $(PROJECT_DIR)/$(NAME)
-LIB32BLIT := $(32BLIT)/build.testbed
+LIB32BLIT := $(32BLIT)/build.32blit-sdl
 INC32BLIT := $(32BLIT)
 
 # Use the project folder name as the output binary name
@@ -101,10 +101,13 @@ list:
 $(PROJECTS): force
 	$(MAKE) single_project PROJECT=$@ ENABLE_FFMPEG=$(ENABLE_FFMPEG)
 
+lib32blit-sdl:
+	make -C ../32blit 32blit-sdl
+
 clean:
 	rm -r build
 
-single_project: Makefile $(LIB32BLIT)/lib32blit.a $(PROJECT_BUILD_DIR) $(TESTBED_BUILD_DIR) $(PROJECT_BUILD_DIR)/$(OUTPUT_NAME)
+single_project: lib32blit-sdl Makefile $(LIB32BLIT)/lib32blit.a $(PROJECT_BUILD_DIR) $(TESTBED_BUILD_DIR) $(PROJECT_BUILD_DIR)/$(OUTPUT_NAME)
 
 debug:
 	echo $(ALL_OBJ_FILES)

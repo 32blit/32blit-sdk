@@ -1,10 +1,10 @@
 
 # Single user cpp file containing game code to build into firmware
-USER_CODE = Src/32blitgame.cpp
+PROJECT = Src/32blitgame.cpp
 # Set the output filename to match the user code filename
-TARGET = $(basename $(notdir $(USER_CODE)))
+TARGET = $(basename $(notdir $(PROJECT)))
 DEBUG = 0
-#OPT = -Os
+OPT = -Os
 BUILD_DIR = build
 
 # C sources
@@ -113,7 +113,7 @@ C_INCLUDES =  \
 -IMiddlewares/ST/STM32_USB_Device_Library/Class/HID/Inc \
 -IMiddlewares/FatFs/src \
 -I../32blit \
--I$(dir $(USER_CODE))
+-I$(dir $(PROJECT))
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections
@@ -133,22 +133,25 @@ LDSCRIPT = STM32H750VBTx_FLASH.ld
 
 # libraries
 LIBS =  -l32blit -lc -lm -lnosys #-llua
-LIBDIR = -L../32blit/build #-L../lua
+LIBDIR = -L../32blit/build.32blit-stm32 #-L../lua
 LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) -static $(LIBDIR) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
 
 # default action: build all
-all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
+all: lib32blit-stm32 $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
 
 # list of objects
 OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o)))
 vpath %.c $(sort $(dir $(C_SOURCES)))
 
-OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(USER_CODE:.cpp=.o)))
-vpath %.cpp $(sort $(dir $(USER_CODE)))
+OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(PROJECT:.cpp=.o)))
+vpath %.cpp $(sort $(dir $(PROJECT)))
 
 # list of ASM program objects
 OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(ASM_SOURCES:.s=.o)))
 vpath %.s $(sort $(dir $(ASM_SOURCES)))
+
+lib32blit-stm32:
+	make -C ../32blit
 
 $(BUILD_DIR)/%.o: %.cpp Makefile | $(BUILD_DIR)
 	$(CC) -c $(CFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.cpp=.lst)) $< -o $@
