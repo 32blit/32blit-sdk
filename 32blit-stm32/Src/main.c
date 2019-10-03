@@ -446,10 +446,6 @@ void process_input() {
   // Tie backlight on/off to button X
   // HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1, HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_0));
 
-  // Tie shipping mode enable to button X
-  //if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_0) == 0) {
-  //  bq24295_enable_shipping_mode(&hi2c4);
-  //}
 
   /*vibe++;
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, vibe > vibe_trigger ? 1 : 0);
@@ -498,6 +494,11 @@ void process_input() {
     (HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_7)    ? blit::HOME       : 0) |  // INVERTED LOGIC!
     (!HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_5)   ? blit::MENU       : 0) |
     (!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_5)   ? blit::JOYSTICK   : 0);
+
+  // Tie shipping mode enable to HOME + MENU
+  if((blit::buttons & blit::HOME) && (blit::buttons & blit::MENU)) {
+    bq24295_enable_shipping_mode(&hi2c4);
+  }
 
   // read accelerometer
 
