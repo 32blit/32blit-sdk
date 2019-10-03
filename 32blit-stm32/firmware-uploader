@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+"""
+10 Send total size of binary (Unsigned 32bit integer, LE)
+20 Send 2k block of data
+30 Wait for response CRC
+40 Check CRC against data send
+50 If OK send next packet
+60 Of !OK fail with error
+70 GOTO 20
+"""
+import serial
+import binascii
+from serial.tools import list_ports
+import struct
+import sys
+
+X_VID = 0x0483 # 1155 
+X_PID = 0x5740 # 22336
+
+TIMEOUT = 2 # Timeout in seconds
+MAX_PACKET_SIZE = 4 * 1024
+
+binary_file_path = None
+device = None
+
+
+class Port(object):
+    def __init__(self):
+        self.last_write = None
+    
+    def read(self, length):
+        if len(self.last_write) == 4: # Hack to reply with size when size is received
+            return self.last_write
+        else:
+            return struct.pack("<L", binascii.crc32(self.last_write))
+
+    def write(self, data):
+        self.last_write = data
+
+
+class Packet(object):
+    def __init__(self, data):
+        self.data = data
+        self.size = len(data)
+        self.checksum = self._calculate_checksum()
+
+    def _calculate_checksum(self):
+        return binascii.crc32(self.data)
+
+    def __repr__(self):
+        orig = object.__repr__(self)
+        return "{} Length: {} Checksum: {}".format(orig, self.size, self.checksum)
+
+
+if len(sys.argv) > 1:
+    binary_file_path = sys.argv[1]
+
+if binary_file_path is None:
+    print("No firmware file specified!")
+    print("Usage: {} <firmware_file>".format(sys.argv[0]))
+    sys.exit(1)
+
+"""
+Attempt to find the device port.
+"""
+# ports = list_ports.comports()
+
+# for port in ports:
+#     print(port.device)
+#     vid = port.vid
+#     pid = port.pid    
+
+#     print(repr(port.pid))
+#     print(repr(port.vid))
+#     print(repr(X_PID))
+#     print(repr(X_VID))
+#     if (vid, pid) == (X_VID, X_PID):
+#         device = port.device
+
+device = "COM4"
+if device is None:
+    print("Unable to find device with VID/PID {:04x}/{:04x}".format(X_VID, X_PID))
+    sys.exit(1)
+
+#port = Port()
+port = serial.Serial(device, timeout=TIMEOUT, write_timeout=TIMEOUT, baudrate=9600)
+
+binary_file = open(binary_file_path, 'rb', 0)
+
+packets = []
+total_size = 0
+
+"""
+Load the binary file into MAX_PACKET_SIZE chunks,
+the "Packet" class will handle precalculating the
+CRC32 of each chunk.
+"""
+while True:
+    packet = binary_file.read(MAX_PACKET_SIZE)
+    if len(packet) == 0: # EOF
+        break
+    total_size += len(packet)
+    packets.append(Packet(packet))
+
+print("Binary file size: {} bytes".format(total_size))
+print("Total Packets: {}".format(len(packets)))
+
+
+"""
+Send the total size as an unsigned int32.
+Check the response is equal to the sent size.
+"""
+try:
+    port.write(struct.pack("<L", total_size))
+except serial.serialutil.SerialTimeoutException:
+    print("FAILED TO START TRANSFER: Timeout writing size.")
+    sys.exit(1)
+
+response = port.read(4)
+if len(response) == 0:
+    print("FAILED TO START TRANSFER: Timeout waiting for response.")
+    sys.exit(1)
+
+response_size = struct.unpack("<L", response)[0]
+
+if response_size != total_size:
+    print("FAILED TO START TRANSFER: {:04d}b != {:04d}b".format(response_size, total_size))
+    sys.exit(1)
+
+"""
+Iterate through each packet and send it.
+Check the response is equal to the packet CRC32
+"""
+packet_count = 0
+
+for packet in packets:
+    port.write(packet.data)
+
+    response = port.read(4)
+    if len(response) == 0:
+        print("{:04d}: TIMEOUT".format(packet_count))
+        sys.exit(1)
+        
+    crc = struct.unpack("<L", response)[0]
+    if crc != packet.checksum:
+        print("{:04d}: CRC ERROR {:08x} != {:08x}".format(packet_count, crc, packet.checksum))
+        sys.exit(1)
+
+    print("{:04d}: CRC OK {:08x} {:04d}b".format(packet_count, crc, packet.size))
+    packet_count += 1
+
+print("DONE!")

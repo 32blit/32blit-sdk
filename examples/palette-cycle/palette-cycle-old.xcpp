@@ -1,0 +1,216 @@
+#include "palette-cycle.hpp"
+
+using namespace engine;
+using namespace graphics;
+
+// define storage for the spritesheet
+uint8_t __ss_cycle[16 * 16] __attribute__((section(".ss")));
+surface ss_cycle((uint8_t *)__ss_cycle, size(16, 16), pixel_format::P);
+spritesheet s_cycle(ss_cycle, 16, 16);
+
+bool is_cycling = true;
+bool blend_cycle = true;
+uint32_t debounce = 0;
+int tick_count = 0;
+int fire_offset = 0;
+uint32_t last_cycle = 0;
+
+#define FIRE_TYPES 4
+#define FIRE_COLOURS 9
+
+//const rgba* grey = (rgba *)&torch2[47];
+
+const std::string fire_names[FIRE_TYPES] = {
+    "Grey",
+    "Green",
+    "Blue",
+    "Red"
+};
+
+rgba fire[FIRE_TYPES * 9] = {
+    // Grey Motion Indicator
+    rgba(0x24, 0x24, 0x24),
+    rgba(0x33, 0x34, 0x34),
+    rgba(0x45, 0x45, 0x46),
+    rgba(0x58, 0x58, 0x58),
+    rgba(0x6b, 0x6b, 0x6b),
+    rgba(0x93, 0x94, 0x93),
+    rgba(0xa7, 0xa7, 0xa7),
+    rgba(0xcb, 0xcc, 0xcc),
+    rgba(0xf6, 0xf6, 0xf5),
+
+    // Green Fire
+    rgba(0, 0, 0),
+    rgba(20, 20, 20),
+    rgba(12, 62, 12),
+    rgba(8, 192, 8),
+    rgba(73, 192, 8),
+    rgba(99, 192, 8),
+    rgba(125, 192, 8),
+    rgba(159, 192, 8),
+    rgba(180, 216, 10),
+    //rgba(222, 195, 14)
+
+    // Blue Fire
+    rgba(0, 0, 0),
+    rgba(20, 20, 20),
+    rgba(12, 12, 62),
+    rgba(8, 8, 192),
+    rgba(73, 8, 192),
+    rgba(99, 8, 192),
+    rgba(125, 8, 192),
+    rgba(159, 8, 192),
+    rgba(180, 10, 216),
+    //rgba(222, 195, 14)
+
+    // Red Fire
+    rgba(0, 0, 0),
+    rgba(20, 20, 20),
+    rgba(62, 12, 12),
+    rgba(192, 8, 8),
+    rgba(192, 73, 8),
+    rgba(192, 99, 8),
+    rgba(192, 125, 8),
+    rgba(192, 159, 8),
+    rgba(216, 180, 10),
+    //rgba(222, 195, 14)
+};
+
+rgba fadeColour(rgba a, rgba b, float f) {
+    rgba t(0, 0, 0, 255);
+    t.r = std::min(255, std::max(0, int(a.r + (float(b.r - a.r) * f))));
+    t.g = std::min(255, std::max(0, int(a.g + (float(b.g - a.g) * f))));
+    t.b = std::min(255, std::max(0, int(a.b + (float(b.b - a.b) * f))));
+    return t;
+}
+
+void init() {
+    set_screen_mode(screen_mode::hires);
+    s_cycle.s.load_from_packed(torch);
+}
+
+void render(uint32_t time) {
+    fb.pen(s_cycle.s.palette[6]);
+    fb.clear();
+
+    fb.alpha = 255;
+    fb.mask = nullptr;
+    fb.pen(rgba(255, 255, 255));
+    fb.rectangle(rect(0, 0, 320, 14));
+    fb.pen(rgba(0, 0, 0));
+    fb.text("Palette cycle demo", &minimal_font[0][0], point(5, 4));
+
+    uint32_t ms_start = now();
+
+    fb.stretch_blit(&ss_cycle, rect(0, 0, 16, 16), rect((fb.bounds.w - 128) / 2, (fb.bounds.h - 128) / 2, 128, 128));
+
+    if (is_cycling) {
+        int offset = fire_offset * FIRE_COLOURS;
+        float t = ms_start / 50.0f;
+        float phase = (t - floor(t));
+        for (int p = 7; p < 16; p++) {
+            int index = p - 7 + t;
+            index %= FIRE_COLOURS;
+            int blend_to = index + 1;
+            if (blend_to > (FIRE_COLOURS - 1)) { blend_to = 0; }
+            if (blend_cycle) {
+                // Blended Cycle
+                s_cycle.s.palette[p] = fadeColour(fire[offset + index], fire[offset + blend_to], std::max(0.0f, std::min(1.0f, phase)));
+            }
+            else
+            {
+                // Regular Cycle
+                s_cycle.s.palette[p] = fire[offset + index];
+            }
+        }
+    }
+
+    for (int x = 0; x < 16; x++) {
+        rgba r = s_cycle.s.palette[x];
+        fb.pen(r);
+        fb.rectangle(rect(20 * x, 220, 20, 20));
+        //std::stringstream no;
+        //no << x;
+        //fb.pen(rgba(128, 128, 128));
+        //fb.text(no.str(), &minimal_font[0][0], rect(10 * x, 100, 10, 10));
+    }
+
+    for (int i = 0; i < FIRE_TYPES; i++) {
+        fb.pen(fire_offset == i ? rgba(200, 200, 200) : rgba(100, 100, 100) );
+        fb.text(fire_names[i], &minimal_font[0][0], rect(4, i * 10 + 18, 100, 10));
+    }
+/*
+    fb.pen(blend_cycle ? rgba(200, 200, 200) : rgba(100, 100, 100));
+    fb.text("PRESS B", &minimal_font[0][0], rect(4, 62, 100, 10));
+    fb.text("TO BLEND", &minimal_font[0][0], rect(4, 70, 100, 10));
+
+    fb.pen(is_cycling ? rgba(200, 200, 200) : rgba(100, 100, 100));
+    fb.text("PRESS A", &minimal_font[0][0], rect(4, 82, 100, 10));
+    fb.text(is_cycling ? "TO PAUSE" : "TO PLAY", &minimal_font[0][0], rect(4, 90, 100, 10));
+*/
+    uint32_t ms_end = now();
+
+    fb.watermark();
+
+    // draw FPS meter
+    /*fb.alpha = 200;
+    fb.pen(rgba(255, 255, 255, 100));
+    fb.rectangle(rect(1, 240 - 10, 12, 9));
+    fb.pen(rgba(255, 255, 255, 200));
+    std::string fms = std::to_string(ms_end - ms_start);
+    fb.text(fms, &minimal_font[0][0], rect(3, 120 - 9, 10, 16));
+
+    int block_size = 4;
+    for (int i = 0; i < (ms_end - ms_start); i++) {
+        fb.pen(rgba(i * 5, 255 - (i * 5), 0));
+        fb.rectangle(rect(i * (block_size + 1) + 1 + 13, fb.bounds.h - block_size - 1, block_size, block_size));
+    }*/
+}
+
+void update(uint32_t time) {
+    if (input::buttons & input::A) {
+        if (!(debounce & input::A)) {
+            is_cycling = !is_cycling;
+            debounce |= input::A;
+        }
+    }
+    else {
+        debounce &= ~input::A;
+    }
+
+    if (input::buttons & input::B) {
+        if (!(debounce & input::B)) {
+            blend_cycle = !blend_cycle;
+            debounce |= input::B;
+        }
+    }
+    else {
+        debounce &= ~input::B;
+    }
+
+    if (input::buttons & input::DPAD_DOWN) {
+        if (!(debounce & input::DPAD_DOWN)) {
+            fire_offset += 1;
+            if (fire_offset > FIRE_TYPES - 1) {
+                fire_offset = 0;
+            }
+            debounce |= input::DPAD_DOWN;
+        }
+    }
+    else {
+        debounce &= ~input::DPAD_DOWN;
+    }
+    
+    if (input::buttons & input::DPAD_UP) {
+        if (!(debounce & input::DPAD_UP)) {
+            fire_offset -= 1;
+            if (fire_offset < 0) {
+                fire_offset = FIRE_TYPES - 1;
+            }
+            debounce |= input::DPAD_UP;
+        }
+    }
+    else {
+        debounce &= ~input::DPAD_UP;
+    }
+}
