@@ -420,6 +420,10 @@ int main(int argc, char *argv[]) {
 				break;
 		}
 	}
+	if (running) {
+		fprintf(stderr, "Main loop exited with error: %s\n", SDL_GetError());
+		running = false; // ensure timer thread quits
+	}
 
 	int returnValue;
 	SDL_WaitThread(t_system_timer, &returnValue);
