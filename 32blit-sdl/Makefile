@@ -96,6 +96,8 @@ list:
 	@echo "\nAvailable projects:"
 	@ls $(PROJECT_DIR)
 
+all: $(PROJECTS)
+
 .PHONY: force
 
 $(PROJECTS): force

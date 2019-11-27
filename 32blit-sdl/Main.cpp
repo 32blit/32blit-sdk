@@ -42,19 +42,19 @@ std::map<int, int> keys = {
 	{SDLK_2,       button::MENU}
 };
 
-SDL_Thread *t_system_loop;
-SDL_mutex *mutex_window_resize;
+SDL_Thread *t_system_timer;
 
 static bool running = true;
 static bool recording = false;
 bool left_ctrl = false;
 
-int current_pixel_size = 4;
+float current_pixel_size = 4;
 int current_width = SYSTEM_WIDTH * current_pixel_size;
 int current_height = SYSTEM_HEIGHT * current_pixel_size;
+bool keep_aspect = true;
+bool keep_pixels = true;
+SDL_Rect renderer_dest = {0, 0, current_width, current_height};
 
-static unsigned int need_resize = 0;
-static unsigned int last_resize;
 
 static unsigned int last_record_startstop = 0;
 
@@ -126,49 +126,48 @@ std::string getTimeStamp() {
 	return s;
 }
 
-static int system_loop(void *ptr) {
-	while (running) {
-		SDL_LockMutex(mutex_window_resize);
-		// otherwise it's time for updating the game
-		uint32_t ticks_now = SDL_GetTicks();
-		ticks_passed = ticks_now - ticks_last_update;
-		
-		//std::cout << "Tick! " << ticks_now << std::endl;
+void system_tick() {
+	// it's time for updating the game
+	uint32_t ticks_now = SDL_GetTicks();
+	ticks_passed = ticks_now - ticks_last_update;
 
-		SDL_Delay(20);
+	//std::cout << "Tick! " << ticks_now << std::endl;
 
-		// TICK HERE
-		blit::tick(::now());
+	// TICK HERE
+	blit::tick(::now());
 
-		ticks_last_update = ticks_now;
+	ticks_last_update = ticks_now;
 
-		SDL_Rect dest = {};
-		dest.x = 0; dest.y = 0; dest.w = current_width; dest.h = current_height;
-		SDL_SetRenderTarget(renderer, NULL);
-		SDL_RenderClear(renderer);
+	SDL_SetRenderTarget(renderer, NULL);
+	SDL_RenderClear(renderer);
 
 
-		if (mode == blit::screen_mode::lores) {
-			SDL_UpdateTexture(__fb_texture_RGB24, NULL, (uint8_t *)__fb.data, 160 * 3);
-			SDL_RenderCopy(renderer, __fb_texture_RGB24, NULL, &dest);
-		}
-		else
-		{
-			SDL_UpdateTexture(__ltdc_texture_RGB565, NULL, (uint8_t *)__ltdc.data, 320 * sizeof(uint16_t));
-			SDL_RenderCopy(renderer, __ltdc_texture_RGB565, NULL, &dest);
-		}
-
-		SDL_RenderPresent(renderer);
-
-#ifndef NO_FFMPEG_CAPTURE
-		if (recording) {
-			capture();
-		}
-#endif
-
-		SDL_UnlockMutex(mutex_window_resize);
+	if (mode == blit::screen_mode::lores) {
+		SDL_UpdateTexture(__fb_texture_RGB24, NULL, (uint8_t *)__fb.data, 160 * 3);
+		SDL_RenderCopy(renderer, __fb_texture_RGB24, NULL, &renderer_dest);
+	}
+	else
+	{
+		SDL_UpdateTexture(__ltdc_texture_RGB565, NULL, (uint8_t *)__ltdc.data, 320 * sizeof(uint16_t));
+		SDL_RenderCopy(renderer, __ltdc_texture_RGB565, NULL, &renderer_dest);
 	}
 
+	SDL_RenderPresent(renderer);
+
+#ifndef NO_FFMPEG_CAPTURE
+	if (recording) {
+		capture();
+	}
+#endif
+}
+
+static int system_timer(void *ptr) {
+	while (running) {
+		SDL_Event event;
+		event.type = SDL_USEREVENT;
+		SDL_PushEvent(&event);
+		SDL_Delay(20);
+	}
 	return 0;
 }
 
@@ -199,6 +198,54 @@ void virtual_analog(int x, int y) {
 	//printf("Joystick X/Y %f %f\n", jx, jy);
 
 	blit::joystick = vec2(jx, jy);
+}
+
+void resize_renderer(int sizeX, int sizeY) {
+
+	current_pixel_size = std::min((float)sizeX / SYSTEM_WIDTH, (float)sizeY / SYSTEM_HEIGHT);
+
+	if (keep_pixels) current_pixel_size = (int)current_pixel_size;
+
+	current_width = sizeX;
+	current_height = sizeY;
+
+	if (keep_pixels || keep_aspect) {
+		int w = 160 * current_pixel_size;
+		int h = 120 * current_pixel_size;
+		int xoffs = (current_width - w) / 2;
+		int yoffs = (current_height - h) / 2;
+		renderer_dest.x = xoffs; renderer_dest.y = yoffs;
+		renderer_dest.w = w; renderer_dest.h = h;
+	} else {
+		renderer_dest.x = 0; renderer_dest.y = 0;
+		renderer_dest.w = current_width; renderer_dest.h = current_height;
+	}
+
+	std::cout << "Resized to: " << sizeX << "x" << sizeY << std::endl;
+
+	SDL_SetRenderTarget(renderer, NULL);
+
+	if (__fb_texture_RGB24) {
+		SDL_DestroyTexture(__fb_texture_RGB24);
+	}
+	if (__ltdc_texture_RGB565) {
+		SDL_DestroyTexture(__ltdc_texture_RGB565);
+	}
+
+	std::cout << "Textured destroyed" << std::endl;
+
+	current_width = sizeX;
+	current_height = sizeY;
+	SDL_SetWindowSize(window, sizeX, sizeY);
+
+	std::cout << "Window size set" << std::endl;
+
+	__fb_texture_RGB24 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, SYSTEM_WIDTH, SYSTEM_HEIGHT);
+	__ltdc_texture_RGB565 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_TARGET, SYSTEM_WIDTH * 2, SYSTEM_HEIGHT * 2);
+
+	std::cout << "Textured recreated" << std::endl;
+
+	std::cout << "Device reset" << std::endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -253,24 +300,23 @@ int main(int argc, char *argv[]) {
 
 	printf("Init Done\n");
 
-	t_system_loop = SDL_CreateThread(system_loop, "Run", (void *)NULL);
+	t_system_timer = SDL_CreateThread(system_timer, "Run", (void *)NULL);
 
-	while (running) {
-		SDL_Event event;
+	SDL_Event event;
 
-		while (SDL_PollEvent(&event)) {
-			if (event.type == SDL_QUIT) {
+	while (running && SDL_WaitEvent(&event)) {
+		switch (event.type) {
+			case SDL_QUIT:
 				running = false;
 				break;
-			}
-			if (event.type == SDL_WINDOWEVENT) {
+
+			case SDL_WINDOWEVENT:
 				if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-					need_resize = 1;
-					last_resize = SDL_GetTicks();
+					resize_renderer(event.window.data1, event.window.data2);
 				}
 				break;
-			}
-			if (event.type == SDL_MOUSEBUTTONDOWN) {
+
+			case SDL_MOUSEBUTTONDOWN:
 				if(event.button.button == SDL_BUTTON_LEFT){
 					if(left_ctrl){
 						virtual_tilt(event.button.x, event.button.y);
@@ -283,13 +329,14 @@ int main(int argc, char *argv[]) {
 					}
 				}
 				break;
-			}
-			if (event.type == SDL_MOUSEBUTTONUP) {
+
+			case SDL_MOUSEBUTTONUP:
 				if(event.button.button == SDL_BUTTON_LEFT){
 					virtual_analog(0, 0);
 				}
-			}
-			if (event.type == SDL_MOUSEMOTION) {
+				break;
+
+			case SDL_MOUSEMOTION:
 				if(event.motion.state & SDL_MOUSEBUTTONDOWN){
 					if(left_ctrl){
 						virtual_tilt(event.motion.x, event.motion.y);
@@ -302,124 +349,84 @@ int main(int argc, char *argv[]) {
 					}
 				}
 				break;
-			}
-			if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
-				auto iter = keys.find(event.key.keysym.sym);
-				if (iter == keys.end()) {
-					switch (event.key.keysym.sym) {
-					case SDLK_LCTRL:
-						left_ctrl = event.type == SDL_KEYDOWN;
-						break;
-#ifndef NO_FFMPEG_CAPTURE
-					case SDLK_r:
-						if (event.type == SDL_KEYDOWN && SDL_GetTicks() - last_record_startstop > 1000) {
-							if (!recording) {
-								SDL_LockMutex(mutex_window_resize);
-								std::stringstream filename;
-								filename << argv[0];
-								filename << "-";
-								filename << "capture-";
-								if (mode == blit::screen_mode::lores) {
-									filename << "160x120-";
-									filename << getTimeStamp().c_str();
-									filename << ".mp4";
-									open_stream(filename.str().c_str(), 160, 120, AV_PIX_FMT_RGB24, (uint8_t *)__fb.data);
-								} else {
-									filename << "320x240-";
-									filename << getTimeStamp().c_str();
-									filename << ".mp4";
-									open_stream(filename.str().c_str(), 320, 240, AV_PIX_FMT_RGB565, (uint8_t *)__ltdc.data);
-								}
-								recording = true;
-								SDL_UnlockMutex(mutex_window_resize);
-								std::cout << "Starting capture to " << filename.str() << std::endl;
-							}
-							else
-							{
-								SDL_LockMutex(mutex_window_resize);
-								recording = false;
-								close_stream();
-								SDL_UnlockMutex(mutex_window_resize);
-								std::cout << "Finished capture." << std::endl;
-							}
-							last_record_startstop = SDL_GetTicks();
-						}
-#endif
-					}
-					break;
-				}
 
-				if (event.type == SDL_KEYDOWN) {
-					blit::buttons |= iter->second;
-				}
-				else
+			case SDL_KEYDOWN: // fall-though
+			case SDL_KEYUP:
 				{
-					blit::buttons &= ~iter->second;
+					auto iter = keys.find(event.key.keysym.sym);
+					if (iter == keys.end()) {
+						switch (event.key.keysym.sym) {
+						case SDLK_LCTRL:
+							left_ctrl = event.type == SDL_KEYDOWN;
+							break;
+	#ifndef NO_FFMPEG_CAPTURE
+						case SDLK_r:
+							if (event.type == SDL_KEYDOWN && SDL_GetTicks() - last_record_startstop > 1000) {
+								if (!recording) {
+									std::stringstream filename;
+									filename << argv[0];
+									filename << "-";
+									filename << "capture-";
+									if (mode == blit::screen_mode::lores) {
+										filename << "160x120-";
+										filename << getTimeStamp().c_str();
+										filename << ".mp4";
+										open_stream(filename.str().c_str(), 160, 120, AV_PIX_FMT_RGB24, (uint8_t *)__fb.data);
+									} else {
+										filename << "320x240-";
+										filename << getTimeStamp().c_str();
+										filename << ".mp4";
+										open_stream(filename.str().c_str(), 320, 240, AV_PIX_FMT_RGB565, (uint8_t *)__ltdc.data);
+									}
+									recording = true;
+									std::cout << "Starting capture to " << filename.str() << std::endl;
+								}
+								else
+								{
+									recording = false;
+									close_stream();
+									std::cout << "Finished capture." << std::endl;
+								}
+								last_record_startstop = SDL_GetTicks();
+							}
+	#endif
+						}
+						break;
+					}
+
+					if (event.type == SDL_KEYDOWN) {
+						blit::buttons |= iter->second;
+					}
+					else
+					{
+						blit::buttons &= ~iter->second;
+					}
 				}
-			}
-			if (event.type == SDL_RENDER_TARGETS_RESET) {
+				break;
+
+			case SDL_RENDER_TARGETS_RESET:
 				std::cout << "Targets reset" << std::endl;
-			}
-			if (event.type == SDL_RENDER_DEVICE_RESET) {
+				break;
+
+			case SDL_RENDER_DEVICE_RESET:
 				std::cout << "Device reset" << std::endl;
-			}
+				break;
+
+			case SDL_USEREVENT:
+				system_tick();
+				break;
+
+			default:
+				break;
 		}
-
-		if (need_resize && (SDL_GetTicks() > last_resize + 50)) {
-			SDL_LockMutex(mutex_window_resize);
-			// std::cout << "wtf" << std::endl;
-
-			int sizeX, sizeY;
-
-			SDL_GetWindowSize(window, &sizeX, &sizeY);
-
-			sizeX = (int)round((double)sizeX / SYSTEM_WIDTH) * SYSTEM_WIDTH;
-			sizeY = (int)round((double)sizeY / SYSTEM_HEIGHT) * SYSTEM_HEIGHT;
-
-			current_pixel_size = sizeX / SYSTEM_WIDTH;
-
-			if (sizeX / SYSTEM_WIDTH != sizeY / SYSTEM_HEIGHT) {
-				sizeY = (sizeX / SYSTEM_WIDTH) * SYSTEM_HEIGHT;
-			}
-
-			std::cout << "Resized to: " << sizeX << "x" << sizeY << std::endl;
-
-			if (__fb_texture_RGB24) {
-				SDL_SetRenderTarget(renderer, NULL);
-				SDL_DestroyTexture(__fb_texture_RGB24);
-			}
-			if (__ltdc_texture_RGB565) {
-				SDL_SetRenderTarget(renderer, NULL);
-				SDL_DestroyTexture(__ltdc_texture_RGB565);
-			}
-
-			std::cout << "Textured destroyed" << std::endl;
-
-			current_width = sizeX;
-			current_height = sizeY;
-			SDL_SetWindowSize(window, sizeX, sizeY);
-
-			std::cout << "Window size set" << std::endl;
-
-			__fb_texture_RGB24 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, SYSTEM_WIDTH, SYSTEM_HEIGHT);
-			__ltdc_texture_RGB565 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_TARGET, SYSTEM_WIDTH * 2, SYSTEM_HEIGHT * 2);
-
-			std::cout << "Textured recreated" << std::endl;
-
-			SDL_SetRenderTarget(renderer, NULL);
-			SDL_RenderClear(renderer);
-			SDL_RenderPresent(renderer);
-
-			std::cout << "Device reset" << std::endl;
-
-			need_resize = 0;
-			SDL_UnlockMutex(mutex_window_resize);
-		}
-
+	}
+	if (running) {
+		fprintf(stderr, "Main loop exited with error: %s\n", SDL_GetError());
+		running = false; // ensure timer thread quits
 	}
 
 	int returnValue;
-	SDL_WaitThread(t_system_loop, &returnValue);
+	SDL_WaitThread(t_system_timer, &returnValue);
 
 
 #ifndef NO_FFMPEG_CAPTURE
