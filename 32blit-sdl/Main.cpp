@@ -52,9 +52,6 @@ int current_pixel_size = 4;
 int current_width = SYSTEM_WIDTH * current_pixel_size;
 int current_height = SYSTEM_HEIGHT * current_pixel_size;
 
-static unsigned int need_resize = 0;
-static unsigned int last_resize;
-
 static unsigned int last_record_startstop = 0;
 
 uint32_t ticks_passed;
@@ -218,12 +215,12 @@ void resize_renderer() {
 
 	std::cout << "Resized to: " << sizeX << "x" << sizeY << std::endl;
 
+	SDL_SetRenderTarget(renderer, NULL);
+
 	if (__fb_texture_RGB24) {
-		SDL_SetRenderTarget(renderer, NULL);
 		SDL_DestroyTexture(__fb_texture_RGB24);
 	}
 	if (__ltdc_texture_RGB565) {
-		SDL_SetRenderTarget(renderer, NULL);
 		SDL_DestroyTexture(__ltdc_texture_RGB565);
 	}
 
@@ -240,12 +237,7 @@ void resize_renderer() {
 
 	std::cout << "Textured recreated" << std::endl;
 
-	SDL_SetRenderTarget(renderer, NULL);
-	SDL_RenderClear(renderer);
-	SDL_RenderPresent(renderer);
-
 	std::cout << "Device reset" << std::endl;
-
 }
 
 int main(int argc, char *argv[]) {
@@ -312,8 +304,7 @@ int main(int argc, char *argv[]) {
 			}
 			if (event.type == SDL_WINDOWEVENT) {
 				if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-					need_resize = 1;
-					last_resize = SDL_GetTicks();
+					resize_renderer();
 				}
 				break;
 			}
@@ -410,14 +401,6 @@ int main(int argc, char *argv[]) {
 				system_tick();
 			}
 		}
-
-		if (need_resize && (SDL_GetTicks() > last_resize + 50)) {
-
-			resize_renderer();
-
-			need_resize = 0;
-		}
-
 	}
 
 	int returnValue;
