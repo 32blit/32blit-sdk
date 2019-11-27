@@ -302,21 +302,21 @@ int main(int argc, char *argv[]) {
 
 	t_system_timer = SDL_CreateThread(system_timer, "Run", (void *)NULL);
 
-	while (running) {
-		SDL_Event event;
+	SDL_Event event;
 
-		while (SDL_WaitEvent(&event)) {
-			if (event.type == SDL_QUIT) {
+	while (running && SDL_WaitEvent(&event)) {
+		switch (event.type) {
+			case SDL_QUIT:
 				running = false;
 				break;
-			}
-			if (event.type == SDL_WINDOWEVENT) {
+
+			case SDL_WINDOWEVENT:
 				if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
 					resize_renderer(event.window.data1, event.window.data2);
 				}
 				break;
-			}
-			if (event.type == SDL_MOUSEBUTTONDOWN) {
+
+			case SDL_MOUSEBUTTONDOWN:
 				if(event.button.button == SDL_BUTTON_LEFT){
 					if(left_ctrl){
 						virtual_tilt(event.button.x, event.button.y);
@@ -329,13 +329,14 @@ int main(int argc, char *argv[]) {
 					}
 				}
 				break;
-			}
-			if (event.type == SDL_MOUSEBUTTONUP) {
+
+			case SDL_MOUSEBUTTONUP:
 				if(event.button.button == SDL_BUTTON_LEFT){
 					virtual_analog(0, 0);
 				}
-			}
-			if (event.type == SDL_MOUSEMOTION) {
+				break;
+
+			case SDL_MOUSEMOTION:
 				if(event.motion.state & SDL_MOUSEBUTTONDOWN){
 					if(left_ctrl){
 						virtual_tilt(event.motion.x, event.motion.y);
@@ -348,66 +349,75 @@ int main(int argc, char *argv[]) {
 					}
 				}
 				break;
-			}
-			if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
-				auto iter = keys.find(event.key.keysym.sym);
-				if (iter == keys.end()) {
-					switch (event.key.keysym.sym) {
-					case SDLK_LCTRL:
-						left_ctrl = event.type == SDL_KEYDOWN;
-						break;
-#ifndef NO_FFMPEG_CAPTURE
-					case SDLK_r:
-						if (event.type == SDL_KEYDOWN && SDL_GetTicks() - last_record_startstop > 1000) {
-							if (!recording) {
-								std::stringstream filename;
-								filename << argv[0];
-								filename << "-";
-								filename << "capture-";
-								if (mode == blit::screen_mode::lores) {
-									filename << "160x120-";
-									filename << getTimeStamp().c_str();
-									filename << ".mp4";
-									open_stream(filename.str().c_str(), 160, 120, AV_PIX_FMT_RGB24, (uint8_t *)__fb.data);
-								} else {
-									filename << "320x240-";
-									filename << getTimeStamp().c_str();
-									filename << ".mp4";
-									open_stream(filename.str().c_str(), 320, 240, AV_PIX_FMT_RGB565, (uint8_t *)__ltdc.data);
-								}
-								recording = true;
-								std::cout << "Starting capture to " << filename.str() << std::endl;
-							}
-							else
-							{
-								recording = false;
-								close_stream();
-								std::cout << "Finished capture." << std::endl;
-							}
-							last_record_startstop = SDL_GetTicks();
-						}
-#endif
-					}
-					break;
-				}
 
-				if (event.type == SDL_KEYDOWN) {
-					blit::buttons |= iter->second;
-				}
-				else
+			case SDL_KEYDOWN: // fall-though
+			case SDL_KEYUP:
 				{
-					blit::buttons &= ~iter->second;
+					auto iter = keys.find(event.key.keysym.sym);
+					if (iter == keys.end()) {
+						switch (event.key.keysym.sym) {
+						case SDLK_LCTRL:
+							left_ctrl = event.type == SDL_KEYDOWN;
+							break;
+	#ifndef NO_FFMPEG_CAPTURE
+						case SDLK_r:
+							if (event.type == SDL_KEYDOWN && SDL_GetTicks() - last_record_startstop > 1000) {
+								if (!recording) {
+									std::stringstream filename;
+									filename << argv[0];
+									filename << "-";
+									filename << "capture-";
+									if (mode == blit::screen_mode::lores) {
+										filename << "160x120-";
+										filename << getTimeStamp().c_str();
+										filename << ".mp4";
+										open_stream(filename.str().c_str(), 160, 120, AV_PIX_FMT_RGB24, (uint8_t *)__fb.data);
+									} else {
+										filename << "320x240-";
+										filename << getTimeStamp().c_str();
+										filename << ".mp4";
+										open_stream(filename.str().c_str(), 320, 240, AV_PIX_FMT_RGB565, (uint8_t *)__ltdc.data);
+									}
+									recording = true;
+									std::cout << "Starting capture to " << filename.str() << std::endl;
+								}
+								else
+								{
+									recording = false;
+									close_stream();
+									std::cout << "Finished capture." << std::endl;
+								}
+								last_record_startstop = SDL_GetTicks();
+							}
+	#endif
+						}
+						break;
+					}
+
+					if (event.type == SDL_KEYDOWN) {
+						blit::buttons |= iter->second;
+					}
+					else
+					{
+						blit::buttons &= ~iter->second;
+					}
 				}
-			}
-			if (event.type == SDL_RENDER_TARGETS_RESET) {
+				break;
+
+			case SDL_RENDER_TARGETS_RESET:
 				std::cout << "Targets reset" << std::endl;
-			}
-			if (event.type == SDL_RENDER_DEVICE_RESET) {
+				break;
+
+			case SDL_RENDER_DEVICE_RESET:
 				std::cout << "Device reset" << std::endl;
-			}
-			if (event.type == SDL_USEREVENT) {
+				break;
+
+			case SDL_USEREVENT:
 				system_tick();
-			}
+				break;
+
+			default:
+				break;
 		}
 	}
 
