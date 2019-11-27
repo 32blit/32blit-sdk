@@ -5,17 +5,7 @@
 
 #include "tilemap_test.hpp"
 
-using namespace engine;
-using namespace graphics;
-
-// define storage for the spritesheet
-rgba    __ss[(128 * 128) + (64 * 64) + (32 * 32) + (16 * 16)] __attribute__((section(".ss")));
-
-// create spritesheet surface
-surface ss((uint8_t *)__ss, size(128, 128), pixel_format::RGBA);
-
-// create spritesheet
-spritesheet sprites(ss, 8, 8);
+using namespace blit;
   
 static uint8_t layer_world[] = { 
   57, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0,
@@ -51,11 +41,11 @@ std::map<int, int> indexes = {
   {83, 8}
 };
 
-tilemap world((uint8_t *)layer_world, nullptr, size(16, 8), &sprites);
+tilemap world((uint8_t *)layer_world, nullptr, size(16, 8), fb.sprites);
 
 /* setup */
 void init() {
-  engine::set_screen_mode(screen_mode::hires);
+  blit::set_screen_mode(screen_mode::hires);
 
   // fix tile ids from .tmx file
 /*  for (auto i = 0; i < (64 * 64); i++) {
@@ -68,7 +58,7 @@ void init() {
   world.transforms = layer_world_transforms;
 
   //sprites.s.generate_mipmaps(3);
-  sprites.s.load_from_packed(packed_data);
+  fb.sprites = spritesheet::load(packed_data);
 }
 
 mat3 world_transform;
@@ -229,7 +219,6 @@ void render(uint32_t time_ms) {
     mat3::translation(vec2(-160, -120));
   point tl = point(160, 120) - (wo * 2.0f);
 
-
   world.draw(&fb, rect(0, 0, 320, 240), nullptr);
   /*
 
@@ -305,13 +294,13 @@ void render(uint32_t time_ms) {
         found = iter->first;
     }
 
-    rect sb = sprites.bounds(found);
+    rect sb = fb.sprites->sprite_bounds(found);
 
 
     fb.pen(rgba(255, 255, 255));
     fb.text(std::to_string(i), &minimal_font[0][0], point(32 + 56 + i * 16 + 6, 195));
 
-    fb.stretch_blit(&sprites.s, sb, rect(32 + 56 + i * 16, 205, 16, 16));
+    fb.stretch_blit(fb.sprites, sb, rect(32 + 56 + i * 16, 205, 16, 16));
     //sprites.draw(&fb, point(10 + i * 8, 200), found, false);
   }
 
@@ -360,15 +349,15 @@ void render(uint32_t time_ms) {
 
 uint32_t last_buttons = 0;
 void update(uint32_t current_time) {           
-  if (input::buttons != last_buttons) {
-    if (pressed(input::DPAD_DOWN)) {
+  if (buttons != last_buttons) {
+    if (pressed(button::DPAD_DOWN)) {
       effect = effect == effect_names.size() - 1 ? 0 : effect + 1;
     }
-    if (pressed(input::DPAD_UP)) {
+    if (pressed(button::DPAD_UP)) {
       effect = effect == 0 ? effect_names.size() - 1 : effect - 1;
     }
   }
 
     
-  last_buttons = input::buttons;
+  last_buttons = buttons;
 }
