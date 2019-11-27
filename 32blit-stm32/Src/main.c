@@ -82,6 +82,15 @@ void set_screen_mode(blit::screen_mode new_mode) {
   }
 }
 
+void DFUBoot(void)
+{
+  *((uint32_t *)0x2001FFFC) = 0xCAFEBABE; // Special Key to End-of-RAM
+
+  SCB_CleanDCache();
+  NVIC_SystemReset();
+}
+
+
 static void MX_I2C4_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_DMA_Init(void);

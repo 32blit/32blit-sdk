@@ -77,6 +77,7 @@ defined in linker script */
 Reset_Handler:
   ldr   sp, =_estack      /* set stack pointer */
 
+
 /* Copy the data segment initializers from flash to SRAM */
   movs  r1, #0
   b  LoopCopyDataInit
@@ -104,6 +105,25 @@ LoopFillZerobss:
   ldr  r3, = _ebss
   cmp  r2, r3
   bcc  FillZerobss
+
+  
+/* check for magic number and branch to DFuSe */
+  ldr r0, =0x2001FFFC // Magic RAM location for sekret reboot key
+  ldr r1, =0xCAFEBABE // Sekret reboot key value
+  ldr r2, [r0, #0]
+  cmp r1, r2
+  bne RegularBoot
+
+  str r0, [r0, #0]    // clear memory location to invalidate key (and prevent reboot loop into DFuSe)
+  ldr r1, =0xe000ed00 // SCB
+  ldr r0, =0x1ff09800 // ROM Base
+  str r0, [r1, #8]    // VTOR
+  ldr sp, [r0, #0]    // ROM Load stack pointer
+  ldr r0, [r0, #4]    // ROM program counter
+  bx r0               // Branch and exchange to ROM base (start of DFU firmware)
+
+RegularBoot:
+
 
 /* Call the clock system intitialization function.*/
   bl  SystemInit
