@@ -6,7 +6,6 @@
 #include "helpers.h"
 #include "msa301.h"
 #include "bq24295.h"
-#include "rgb5x5.h"
 #include "32blit.hpp"
 #include "graphics/color.hpp"
 #ifdef BLIT_ENABLE_SD
@@ -190,7 +189,6 @@ int main(void)
   blit::init();
 
   bool bq24295_ok = bq24295_init(&hi2c4);
-  //rgb5x5_init(&hi2c4);  uint32_t t_elapsed = 0;
 
 #ifdef BLIT_ENABLE_SD
   if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_11) == 1){
@@ -238,7 +236,6 @@ int main(void)
   while (true)
   {
     //blit::rgba c = blit::hsv_to_rgba((blit::now() % 5000) / 5000.0f, 1.0, 1.0);
-    //rgb5x5_rgb(&hi2c4, c.r, c.g, c.b);
     process_input();
 
     //__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, 2000 * (int(blit::now() / 100.0f) & 1));
