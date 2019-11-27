@@ -4,11 +4,6 @@
 
 #include "32blit.hpp"
 
-using namespace engine;
-using namespace graphics;
-using namespace utility;
-using namespace input;
-
 //extern surface fb;
 
 void init();
