@@ -305,7 +305,7 @@ int main(int argc, char *argv[]) {
 	while (running) {
 		SDL_Event event;
 
-		while (SDL_PollEvent(&event)) {
+		while (SDL_WaitEvent(&event)) {
 			if (event.type == SDL_QUIT) {
 				running = false;
 				break;
