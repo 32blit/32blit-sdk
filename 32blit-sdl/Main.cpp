@@ -201,6 +201,53 @@ void virtual_analog(int x, int y) {
 	blit::joystick = vec2(jx, jy);
 }
 
+void resize_renderer() {
+
+	int sizeX, sizeY;
+
+	SDL_GetWindowSize(window, &sizeX, &sizeY);
+
+	sizeX = (int)round((double)sizeX / SYSTEM_WIDTH) * SYSTEM_WIDTH;
+	sizeY = (int)round((double)sizeY / SYSTEM_HEIGHT) * SYSTEM_HEIGHT;
+
+	current_pixel_size = sizeX / SYSTEM_WIDTH;
+
+	if (sizeX / SYSTEM_WIDTH != sizeY / SYSTEM_HEIGHT) {
+		sizeY = (sizeX / SYSTEM_WIDTH) * SYSTEM_HEIGHT;
+	}
+
+	std::cout << "Resized to: " << sizeX << "x" << sizeY << std::endl;
+
+	if (__fb_texture_RGB24) {
+		SDL_SetRenderTarget(renderer, NULL);
+		SDL_DestroyTexture(__fb_texture_RGB24);
+	}
+	if (__ltdc_texture_RGB565) {
+		SDL_SetRenderTarget(renderer, NULL);
+		SDL_DestroyTexture(__ltdc_texture_RGB565);
+	}
+
+	std::cout << "Textured destroyed" << std::endl;
+
+	current_width = sizeX;
+	current_height = sizeY;
+	SDL_SetWindowSize(window, sizeX, sizeY);
+
+	std::cout << "Window size set" << std::endl;
+
+	__fb_texture_RGB24 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, SYSTEM_WIDTH, SYSTEM_HEIGHT);
+	__ltdc_texture_RGB565 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_TARGET, SYSTEM_WIDTH * 2, SYSTEM_HEIGHT * 2);
+
+	std::cout << "Textured recreated" << std::endl;
+
+	SDL_SetRenderTarget(renderer, NULL);
+	SDL_RenderClear(renderer);
+	SDL_RenderPresent(renderer);
+
+	std::cout << "Device reset" << std::endl;
+
+}
+
 int main(int argc, char *argv[]) {
 	std::cout << "Hello World" << std::endl;
 
@@ -365,48 +412,8 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (need_resize && (SDL_GetTicks() > last_resize + 50)) {
-			int sizeX, sizeY;
 
-			SDL_GetWindowSize(window, &sizeX, &sizeY);
-
-			sizeX = (int)round((double)sizeX / SYSTEM_WIDTH) * SYSTEM_WIDTH;
-			sizeY = (int)round((double)sizeY / SYSTEM_HEIGHT) * SYSTEM_HEIGHT;
-
-			current_pixel_size = sizeX / SYSTEM_WIDTH;
-
-			if (sizeX / SYSTEM_WIDTH != sizeY / SYSTEM_HEIGHT) {
-				sizeY = (sizeX / SYSTEM_WIDTH) * SYSTEM_HEIGHT;
-			}
-
-			std::cout << "Resized to: " << sizeX << "x" << sizeY << std::endl;
-
-			if (__fb_texture_RGB24) {
-				SDL_SetRenderTarget(renderer, NULL);
-				SDL_DestroyTexture(__fb_texture_RGB24);
-			}
-			if (__ltdc_texture_RGB565) {
-				SDL_SetRenderTarget(renderer, NULL);
-				SDL_DestroyTexture(__ltdc_texture_RGB565);
-			}
-
-			std::cout << "Textured destroyed" << std::endl;
-
-			current_width = sizeX;
-			current_height = sizeY;
-			SDL_SetWindowSize(window, sizeX, sizeY);
-
-			std::cout << "Window size set" << std::endl;
-
-			__fb_texture_RGB24 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, SYSTEM_WIDTH, SYSTEM_HEIGHT);
-			__ltdc_texture_RGB565 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_TARGET, SYSTEM_WIDTH * 2, SYSTEM_HEIGHT * 2);
-
-			std::cout << "Textured recreated" << std::endl;
-
-			SDL_SetRenderTarget(renderer, NULL);
-			SDL_RenderClear(renderer);
-			SDL_RenderPresent(renderer);
-
-			std::cout << "Device reset" << std::endl;
+			resize_renderer();
 
 			need_resize = 0;
 		}
