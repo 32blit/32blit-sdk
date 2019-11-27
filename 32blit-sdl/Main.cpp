@@ -42,7 +42,7 @@ std::map<int, int> keys = {
 	{SDLK_2,       button::MENU}
 };
 
-SDL_Thread *t_system_loop;
+SDL_Thread *t_system_timer;
 SDL_mutex *mutex_window_resize;
 
 static bool running = true;
@@ -126,49 +126,50 @@ std::string getTimeStamp() {
 	return s;
 }
 
-static int system_loop(void *ptr) {
-	while (running) {
-		SDL_LockMutex(mutex_window_resize);
-		// otherwise it's time for updating the game
-		uint32_t ticks_now = SDL_GetTicks();
-		ticks_passed = ticks_now - ticks_last_update;
-		
-		//std::cout << "Tick! " << ticks_now << std::endl;
+void system_tick() {
+	// it's time for updating the game
+	uint32_t ticks_now = SDL_GetTicks();
+	ticks_passed = ticks_now - ticks_last_update;
 
-		SDL_Delay(20);
+	//std::cout << "Tick! " << ticks_now << std::endl;
 
-		// TICK HERE
-		blit::tick(::now());
+	// TICK HERE
+	blit::tick(::now());
 
-		ticks_last_update = ticks_now;
+	ticks_last_update = ticks_now;
 
-		SDL_Rect dest = {};
-		dest.x = 0; dest.y = 0; dest.w = current_width; dest.h = current_height;
-		SDL_SetRenderTarget(renderer, NULL);
-		SDL_RenderClear(renderer);
+	SDL_Rect dest = {};
+	dest.x = 0; dest.y = 0; dest.w = current_width; dest.h = current_height;
+	SDL_SetRenderTarget(renderer, NULL);
+	SDL_RenderClear(renderer);
 
 
-		if (mode == blit::screen_mode::lores) {
-			SDL_UpdateTexture(__fb_texture_RGB24, NULL, (uint8_t *)__fb.data, 160 * 3);
-			SDL_RenderCopy(renderer, __fb_texture_RGB24, NULL, &dest);
-		}
-		else
-		{
-			SDL_UpdateTexture(__ltdc_texture_RGB565, NULL, (uint8_t *)__ltdc.data, 320 * sizeof(uint16_t));
-			SDL_RenderCopy(renderer, __ltdc_texture_RGB565, NULL, &dest);
-		}
-
-		SDL_RenderPresent(renderer);
-
-#ifndef NO_FFMPEG_CAPTURE
-		if (recording) {
-			capture();
-		}
-#endif
-
-		SDL_UnlockMutex(mutex_window_resize);
+	if (mode == blit::screen_mode::lores) {
+		SDL_UpdateTexture(__fb_texture_RGB24, NULL, (uint8_t *)__fb.data, 160 * 3);
+		SDL_RenderCopy(renderer, __fb_texture_RGB24, NULL, &dest);
+	}
+	else
+	{
+		SDL_UpdateTexture(__ltdc_texture_RGB565, NULL, (uint8_t *)__ltdc.data, 320 * sizeof(uint16_t));
+		SDL_RenderCopy(renderer, __ltdc_texture_RGB565, NULL, &dest);
 	}
 
+	SDL_RenderPresent(renderer);
+
+#ifndef NO_FFMPEG_CAPTURE
+	if (recording) {
+		capture();
+	}
+#endif
+}
+
+static int system_timer(void *ptr) {
+	while (running) {
+		SDL_Event event;
+		event.type = SDL_USEREVENT;
+		SDL_PushEvent(&event);
+		SDL_Delay(20);
+	}
 	return 0;
 }
 
@@ -253,7 +254,7 @@ int main(int argc, char *argv[]) {
 
 	printf("Init Done\n");
 
-	t_system_loop = SDL_CreateThread(system_loop, "Run", (void *)NULL);
+	t_system_timer = SDL_CreateThread(system_timer, "Run", (void *)NULL);
 
 	while (running) {
 		SDL_Event event;
@@ -363,6 +364,9 @@ int main(int argc, char *argv[]) {
 			if (event.type == SDL_RENDER_DEVICE_RESET) {
 				std::cout << "Device reset" << std::endl;
 			}
+			if (event.type == SDL_USEREVENT) {
+				system_tick();
+			}
 		}
 
 		if (need_resize && (SDL_GetTicks() > last_resize + 50)) {
@@ -419,7 +423,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	int returnValue;
-	SDL_WaitThread(t_system_loop, &returnValue);
+	SDL_WaitThread(t_system_timer, &returnValue);
 
 
 #ifndef NO_FFMPEG_CAPTURE
