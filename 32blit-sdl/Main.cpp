@@ -43,7 +43,6 @@ std::map<int, int> keys = {
 };
 
 SDL_Thread *t_system_timer;
-SDL_mutex *mutex_window_resize;
 
 static bool running = true;
 static bool recording = false;
@@ -315,7 +314,6 @@ int main(int argc, char *argv[]) {
 					case SDLK_r:
 						if (event.type == SDL_KEYDOWN && SDL_GetTicks() - last_record_startstop > 1000) {
 							if (!recording) {
-								SDL_LockMutex(mutex_window_resize);
 								std::stringstream filename;
 								filename << argv[0];
 								filename << "-";
@@ -332,15 +330,12 @@ int main(int argc, char *argv[]) {
 									open_stream(filename.str().c_str(), 320, 240, AV_PIX_FMT_RGB565, (uint8_t *)__ltdc.data);
 								}
 								recording = true;
-								SDL_UnlockMutex(mutex_window_resize);
 								std::cout << "Starting capture to " << filename.str() << std::endl;
 							}
 							else
 							{
-								SDL_LockMutex(mutex_window_resize);
 								recording = false;
 								close_stream();
-								SDL_UnlockMutex(mutex_window_resize);
 								std::cout << "Finished capture." << std::endl;
 							}
 							last_record_startstop = SDL_GetTicks();
@@ -370,9 +365,6 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (need_resize && (SDL_GetTicks() > last_resize + 50)) {
-			SDL_LockMutex(mutex_window_resize);
-			// std::cout << "wtf" << std::endl;
-
 			int sizeX, sizeY;
 
 			SDL_GetWindowSize(window, &sizeX, &sizeY);
@@ -417,7 +409,6 @@ int main(int argc, char *argv[]) {
 			std::cout << "Device reset" << std::endl;
 
 			need_resize = 0;
-			SDL_UnlockMutex(mutex_window_resize);
 		}
 
 	}
