@@ -48,9 +48,13 @@ static bool running = true;
 static bool recording = false;
 bool left_ctrl = false;
 
-int current_pixel_size = 4;
+float current_pixel_size = 4;
 int current_width = SYSTEM_WIDTH * current_pixel_size;
 int current_height = SYSTEM_HEIGHT * current_pixel_size;
+bool keep_aspect = true;
+bool keep_pixels = true;
+SDL_Rect renderer_dest = {0, 0, current_width, current_height};
+
 
 static unsigned int last_record_startstop = 0;
 
@@ -134,20 +138,18 @@ void system_tick() {
 
 	ticks_last_update = ticks_now;
 
-	SDL_Rect dest = {};
-	dest.x = 0; dest.y = 0; dest.w = current_width; dest.h = current_height;
 	SDL_SetRenderTarget(renderer, NULL);
 	SDL_RenderClear(renderer);
 
 
 	if (mode == blit::screen_mode::lores) {
 		SDL_UpdateTexture(__fb_texture_RGB24, NULL, (uint8_t *)__fb.data, 160 * 3);
-		SDL_RenderCopy(renderer, __fb_texture_RGB24, NULL, &dest);
+		SDL_RenderCopy(renderer, __fb_texture_RGB24, NULL, &renderer_dest);
 	}
 	else
 	{
 		SDL_UpdateTexture(__ltdc_texture_RGB565, NULL, (uint8_t *)__ltdc.data, 320 * sizeof(uint16_t));
-		SDL_RenderCopy(renderer, __ltdc_texture_RGB565, NULL, &dest);
+		SDL_RenderCopy(renderer, __ltdc_texture_RGB565, NULL, &renderer_dest);
 	}
 
 	SDL_RenderPresent(renderer);
@@ -198,19 +200,25 @@ void virtual_analog(int x, int y) {
 	blit::joystick = vec2(jx, jy);
 }
 
-void resize_renderer() {
+void resize_renderer(int sizeX, int sizeY) {
 
-	int sizeX, sizeY;
+	current_pixel_size = std::min((float)sizeX / SYSTEM_WIDTH, (float)sizeY / SYSTEM_HEIGHT);
 
-	SDL_GetWindowSize(window, &sizeX, &sizeY);
+	if (keep_pixels) current_pixel_size = (int)current_pixel_size;
 
-	sizeX = (int)round((double)sizeX / SYSTEM_WIDTH) * SYSTEM_WIDTH;
-	sizeY = (int)round((double)sizeY / SYSTEM_HEIGHT) * SYSTEM_HEIGHT;
+	current_width = sizeX;
+	current_height = sizeY;
 
-	current_pixel_size = sizeX / SYSTEM_WIDTH;
-
-	if (sizeX / SYSTEM_WIDTH != sizeY / SYSTEM_HEIGHT) {
-		sizeY = (sizeX / SYSTEM_WIDTH) * SYSTEM_HEIGHT;
+	if (keep_pixels || keep_aspect) {
+		int w = 160 * current_pixel_size;
+		int h = 120 * current_pixel_size;
+		int xoffs = (current_width - w) / 2;
+		int yoffs = (current_height - h) / 2;
+		renderer_dest.x = xoffs; renderer_dest.y = yoffs;
+		renderer_dest.w = w; renderer_dest.h = h;
+	} else {
+		renderer_dest.x = 0; renderer_dest.y = 0;
+		renderer_dest.w = current_width; renderer_dest.h = current_height;
 	}
 
 	std::cout << "Resized to: " << sizeX << "x" << sizeY << std::endl;
@@ -304,7 +312,7 @@ int main(int argc, char *argv[]) {
 			}
 			if (event.type == SDL_WINDOWEVENT) {
 				if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-					resize_renderer();
+					resize_renderer(event.window.data1, event.window.data2);
 				}
 				break;
 			}
