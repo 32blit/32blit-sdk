@@ -24,11 +24,12 @@ Unpaletted - RGB, RGBA
 Paletted - packed 2bpp (4 colours), 3bpp (8 colours), 4bpp (16 colours), etc
 """
 
-import struct
 import argparse
 import math
-from construct import *
+import sys
+
 from bitstring import BitArray
+from construct import this, Struct, Int8ul, Int16ul, Array, PrefixedArray, Computed, Switch, GreedyBytes, Enum, PaddedString
 from PIL import Image, ImagePalette
 
 
@@ -66,6 +67,7 @@ class SmartEnum(Enum):
     """Fudge to support SpriteFormat.enum.p etc"""
     def __init__(self, *args, **kwargs):
         Enum.__init__(self, *args, **kwargs)
+
         class x():
             pass
         self.enum = x()
@@ -75,24 +77,25 @@ class SmartEnum(Enum):
 
 AssetType = Enum(PaddedString(8, "utf8"), sprite='SPRITE', map='MAP', song='SONG', sfx='SFX')
 
-SpriteFormat = SmartEnum(Int8ul,
+SpriteFormat = SmartEnum(
+    Int8ul,
     rgba=0,
     rgb=1,
     p=2
 )
 
 asset_rgba = Struct(
-            'r' / Int8ul,
-            'g' / Int8ul,
-            'b' / Int8ul,
-            'a' / Int8ul
-        )
+    'r' / Int8ul,
+    'g' / Int8ul,
+    'b' / Int8ul,
+    'a' / Int8ul
+)
 
 asset_rgb = Struct(
-            'r' / Int8ul,
-            'g' / Int8ul,
-            'b' / Int8ul
-        )
+    'r' / Int8ul,
+    'g' / Int8ul,
+    'b' / Int8ul
+)
 
 asset_sprite = Struct(
     'width' / Int16ul,
@@ -147,6 +150,7 @@ def color(r, g, b, a=None):
     a = 0xff if a is None else a
     return dict(r=r, g=g, b=b, a=a)
 
+
 """
 class color():
 
@@ -177,7 +181,7 @@ if __name__ == '__main__':
     parser_sprite = subparsers.add_parser('sprite', help='Process an image file into a 32blit asset')
     parser_map = subparsers.add_parser('map', help='Process a map file into a 32blit asset')
 
-    parser.add_argument('--out', type=str, help='set output filename (default <inputfile>.blit)')
+    parser.add_argument('--out', type=str, help='set output filename (default <inputfile>.blit)', default=None)
     parser.add_argument('file', type=str, help='input file')
 
     parser_sprite.add_argument('--format', type=str, choices=('RGB', 'RGBA', 'P'))
@@ -205,15 +209,15 @@ if __name__ == '__main__':
 
         else:
             mode, palette = image.palette.getdata()
-            palette =  list(palette)
+            palette = list(palette)
             if mode == 'RGB':
                 for x in range(len(palette) // 3):
-                    r, g, b = palette[x*3:(x*3) + 3]
+                    r, g, b = palette[x * 3:(x * 3) + 3]
                     palette_colours.append(color(r, g, b))
-                #print(palette_colours)
+                # print(palette_colours)
             elif mode == 'RGBA':
                 for x in range(len(palette) // 4):
-                    r, g, b, a = palette[x*4:(x*4) + 4]
+                    r, g, b, a = palette[x * 4:(x * 4) + 4]
                     palette_colours.append(color(r, g, b, a))
 
         return palette_colours
@@ -259,18 +263,20 @@ if __name__ == '__main__':
             )
         )
 
-        with open('output.blit', 'wb+') as f:
-            f.write(packed)
+        if args.out is not None:
+            with open(args.out, 'wb+') as f:
+                f.write(packed)
+            sys.exit(0)
 
         def rgba_string(c):
             return "rgba({r}, {g}, {b}, {a})".format(**c)
 
-        #formatted_data = []
-        #row_width = image.width // 16
-        #for x in range(0, len(packed_image_data) // row_width):
-        #    offset = x * row_width
-        #    current_row = packed_image_data[offset:offset + row_width]
-        #    formatted_data.append(', '.join(['0x{:02x}'.format(x) for x in current_row]))
+        # formatted_data = []
+        # row_width = image.width // 16
+        # for x in range(0, len(packed_image_data) // row_width):
+        #     offset = x * row_width
+        #     current_row = packed_image_data[offset:offset + row_width]
+        #     formatted_data.append(', '.join(['0x{:02x}'.format(x) for x in current_row]))
 
         packed = list(packed)
         formatted_data = []
@@ -285,7 +291,7 @@ if __name__ == '__main__':
         PALETTE_SIZE = len(palette_colours) * 4
 
         palette_data = packed[HEADER_SIZE:HEADER_SIZE + PALETTE_SIZE]
-        for x in range(0, math.ceil(len(palette_data) /4)):
+        for x in range(0, math.ceil(len(palette_data) / 4)):
             offset = x * 4
             current_row = palette_data[offset:offset + 4]
             formatted_palette.append(format_hex(current_row))
@@ -315,34 +321,33 @@ uint8_t packed_data[] = {{
     {data}
 }};
 """.format(
-    type=format_hex(packed[0:8]),
-    payload_size=format_hex(packed[8:10]),
-    comment_payload_size=len(packed),
-    width=format_hex(packed[10:12]),
-    comment_width=image.width,
-    height=format_hex(packed[12:14]),
-    comment_height=image.height,
-    cols=format_hex(packed[14:16]),
-    comment_cols=image.width // args.tilesizex,
-    rows=format_hex(packed[16:18]),
-    comment_rows=image.height // args.tilesizey,
-    format=format_hex(packed[18:19]),
-    colours=format_hex(packed[19:20]),
-    data=',\n    '.join(formatted_data),
-    palette=',\n    '.join(formatted_palette)
-))
+            type=format_hex(packed[0:8]),
+            payload_size=format_hex(packed[8:10]),
+            comment_payload_size=len(packed),
+            width=format_hex(packed[10:12]),
+            comment_width=image.width,
+            height=format_hex(packed[12:14]),
+            comment_height=image.height,
+            cols=format_hex(packed[14:16]),
+            comment_cols=image.width // args.tilesizex,
+            rows=format_hex(packed[16:18]),
+            comment_rows=image.height // args.tilesizey,
+            format=format_hex(packed[18:19]),
+            colours=format_hex(packed[19:20]),
+            data=',\n    '.join(formatted_data),
+            palette=',\n    '.join(formatted_palette)
+        ))
 
 
-#        print("""
-#rgba palette_data[] = {{
-#    {palette_data}
-#}};
+#         print("""
+# rgba palette_data[] = {{
+#     {palette_data}
+# }};
 #
-#uint8_t sprite_data[] = {{
-#    {image_data}
-#}};
-#""".format(
-#    palette_data=',\n    '.join([rgba_string(x) for x in palette_colours]),
-#    image_data=',\n    '.join(formatted_data)
-#))
-
+# uint8_t sprite_data[] = {{
+#     {image_data}
+# }};
+# """.format(
+#     palette_data=',\n    '.join([rgba_string(x) for x in palette_colours]),
+#     image_data=',\n    '.join(formatted_data)
+# ))
