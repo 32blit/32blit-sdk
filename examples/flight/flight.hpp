@@ -22,7 +22,7 @@
     0x10, 0x00, // cols (16)
     0x10, 0x00, // rows (16)
 
-    0x02, // format
+    0x03, // format
 
     0x20, // number of palette colours
 //  r     g     b     a
@@ -712,7 +712,7 @@
     0x02, 0x00, // cols (2)
     0x02, 0x00, // rows (2)
 
-    0x02, // format
+    0x03, // format
 
     0x20, // number of palette colours
 //  r     g     b     a

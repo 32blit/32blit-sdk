@@ -9,8 +9,7 @@
 
 #include "flight.hpp"
 
-using namespace engine;
-using namespace graphics;
+using namespace blit;
 
 uint8_t logo[16][16] = {
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -41,9 +40,9 @@ uint8_t __sprites[(screen_width * screen_height) + (64 * 128 * 4)] __attribute__
 uint8_t __water[64 * 64] __attribute__((section(".fb")));
 
 /* create surfaces */
-surface mask((uint8_t *)__mask, size(screen_width, screen_height), pixel_format::M);
-surface sprites((uint8_t *)__sprites, size(128, 128), pixel_format::P);
-surface water((uint8_t *)__water, size(64, 64), pixel_format::P);
+surface mask((uint8_t *)__mask, pixel_format::M, size(screen_width, screen_height));
+spritesheet *sprites;
+spritesheet *water;
 
 Map map(rect(0, 0, 128, 128));
 
@@ -64,10 +63,10 @@ void init() {
   map.add_layer("ground", layer);
   map.layers["ground"].transforms = layer_transforms;
 
-  sprites.load_from_packed(packed_data);
-  sprites.generate_mipmaps(3);
+  sprites = spritesheet::load(packed_data);
+  sprites->generate_mipmaps(3);
 
-  water.load_from_packed(water_packed_data);
+  water = spritesheet::load(water_packed_data);
 
   // extract information about objects from the map data
   point p;
@@ -143,7 +142,8 @@ void render(uint32_t time_ms) {
   rect vp(0, 50, 160, 120 - 50);
   
   fb.alpha = 55;
-  fb.blit(&water, rect(0, 0, 64, 64), point(0, 50));
+
+  fb.blit(water, rect(0, 0, 64, 64), point(0, 50));
   /*
   blend_blit_func bbf = fb.bbf[water.format];
   for (int y = 50; y < 120; y++) {
@@ -156,7 +156,7 @@ void render(uint32_t time_ms) {
     }
   }*/
 
-  mode7(&fb, &sprites, &map.layers["ground"], fov, angle, pos, near, far, vp);
+  mode7(&fb, sprites, &map.layers["ground"], fov, angle, pos, near, far, vp);
 
   for (auto o : objects) {
     vec2 vo = (o.pos - pos);
@@ -171,7 +171,7 @@ void render(uint32_t time_ms) {
       int alpha = ((500 - dist) / 500) * 255;
       fb.alpha = alpha;
       rect sr(120, 112, 8, 16);
-      fb.blit(&sprites, sr, vs - point(4, 15));
+      fb.blit(sprites, sr, vs - point(4, 15));
     }
   }
   uint32_t ms_end = now();
@@ -238,26 +238,26 @@ void render(uint32_t time_ms) {
 void update(uint32_t time) {
   static float angle_delta = 0.0f;
 
-  if (pressed(input::DPAD_LEFT))  { angle_delta += 0.1f; }
-  if (pressed(input::DPAD_RIGHT)) { angle_delta -= 0.1f; }
-  if (pressed(input::DPAD_UP))    { vel.y += 0.2f; }
-  if (pressed(input::DPAD_DOWN))  { vel.y -= 0.2f; }
+  if (pressed(button::DPAD_LEFT))  { angle_delta += 0.1f; }
+  if (pressed(button::DPAD_RIGHT)) { angle_delta -= 0.1f; }
+  if (pressed(button::DPAD_UP))    { vel.y += 0.2f; }
+  if (pressed(button::DPAD_DOWN))  { vel.y -= 0.2f; }
 
   angle += deg2rad(angle_delta);   
   mat3 r = mat3::rotation(angle);    
   pos = pos - (vel * r);
 
-  if (pressed(input::A)) {
+  if (pressed(button::A)) {
     far = far + (far * 0.025f);
   }
-  if (pressed(input::B)) {
+  if (pressed(button::B)) {
     far = far - (far * 0.025f);
   }
 
-  if (pressed(input::X)) {
+  if (pressed(button::X)) {
     fov = fov + (fov * 0.025f);
   }
-  if (pressed(input::Y)) {
+  if (pressed(button::Y)) {
     fov = fov - (fov * 0.025f);
   }
 
