@@ -41,7 +41,8 @@ std::map<int, int> indexes = {
   {83, 8}
 };
 
-tilemap world((uint8_t *)layer_world, nullptr, size(16, 8), fb.sprites);
+// TODO: tilemap needs an overloaded constructor to avoid the need to pass nullptr for sprites
+tilemap world((uint8_t *)layer_world, nullptr, size(16, 8), nullptr);
 
 /* setup */
 void init() {
@@ -55,10 +56,12 @@ void init() {
       layer_environment[i]--;
   }*/
 
-  world.transforms = layer_world_transforms;
-
   //sprites.s.generate_mipmaps(3);
   fb.sprites = spritesheet::load(packed_data);
+
+  world.transforms = layer_world_transforms;
+  // TOTO: tilemap could use a public API interface to set_sprites
+  world.sprites = fb.sprites;
 }
 
 mat3 world_transform;
