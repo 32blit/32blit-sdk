@@ -409,7 +409,7 @@ int main(int argc, char *argv[]) {
 						case SDLK_LCTRL:
 							left_ctrl = event.type == SDL_KEYDOWN;
 							break;
-	#ifndef NO_FFMPEG_CAPTURE
+#ifndef NO_FFMPEG_CAPTURE
 						case SDLK_r:
 							if (event.type == SDL_KEYDOWN && SDL_GetTicks() - last_record_startstop > 1000) {
 								if (!recording) {
@@ -439,7 +439,7 @@ int main(int argc, char *argv[]) {
 								}
 								last_record_startstop = SDL_GetTicks();
 							}
-	#endif
+#endif
 						}
 						break;
 					}
