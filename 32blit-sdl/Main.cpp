@@ -44,6 +44,24 @@ std::map<int, int> keys = {
 	{SDLK_2,       button::MENU}
 };
 
+std::map<int, int> gcbuttons = {
+	// dpad
+	{SDL_CONTROLLER_BUTTON_DPAD_DOWN,   button::DPAD_DOWN},
+	{SDL_CONTROLLER_BUTTON_DPAD_UP,     button::DPAD_UP},
+	{SDL_CONTROLLER_BUTTON_DPAD_LEFT,   button::DPAD_LEFT},
+	{SDL_CONTROLLER_BUTTON_DPAD_RIGHT,  button::DPAD_RIGHT},
+
+	// action buttons
+	{SDL_CONTROLLER_BUTTON_A,           button::A},
+	{SDL_CONTROLLER_BUTTON_B,           button::B},
+	{SDL_CONTROLLER_BUTTON_X,           button::X},
+	{SDL_CONTROLLER_BUTTON_Y,           button::Y},
+
+	// system buttons
+	{SDL_CONTROLLER_BUTTON_BACK,        button::HOME},
+	{SDL_CONTROLLER_BUTTON_START,       button::MENU}
+};
+
 Uint32 shadow_buttons = 0;
 vec3 shadow_tilt = {0, 0, 0};
 vec2 shadow_joystick = {0, 0};
@@ -299,7 +317,7 @@ void resize_renderer(int sizeX, int sizeY) {
 int main(int argc, char *argv[]) {
 	std::cout << "Hello World" << std::endl;
 
-	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER) < 0) {
 		fprintf(stderr, "could not initialize SDL2: %s\n", SDL_GetError());
 		return 1;
 	}
@@ -316,6 +334,11 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	SDL_SetWindowMinimumSize(window, SYSTEM_WIDTH, SYSTEM_HEIGHT);
+
+	// Open all joysticks as game controllers
+	for(int n=0; n<SDL_NumJoysticks(); n++) {
+		SDL_GameControllerOpen(n);
+	}
 
 	//SDL_SetHint(SDL_HINT_RENDER_DRIVER, "openGL");
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -453,6 +476,42 @@ int main(int argc, char *argv[]) {
 					}
 					SDL_UnlockMutex(shadow_mutex);
 				}
+				break;
+
+			case SDL_CONTROLLERBUTTONDOWN:
+			case SDL_CONTROLLERBUTTONUP:
+				{
+					auto iter = gcbuttons.find(event.cbutton.button);
+					if (iter == gcbuttons.end()) break;
+					SDL_LockMutex(shadow_mutex);
+					if (event.type == SDL_CONTROLLERBUTTONDOWN) {
+						shadow_buttons |= iter->second;
+					}
+					else
+					{
+						shadow_buttons &= ~iter->second;
+					}
+					SDL_UnlockMutex(shadow_mutex);
+				}
+				break;
+
+			case SDL_CONTROLLERAXISMOTION:
+				SDL_LockMutex(shadow_mutex);
+				switch(event.caxis.axis) {
+					case SDL_CONTROLLER_AXIS_LEFTX:
+						shadow_joystick.x = event.caxis.value / 32768.0;
+						break;
+					case SDL_CONTROLLER_AXIS_LEFTY:
+						shadow_joystick.y = event.caxis.value / 32768.0;
+						break;
+					case SDL_CONTROLLER_AXIS_RIGHTX:
+						shadow_tilt.x = event.caxis.value / 32768.0;
+						break;
+					case SDL_CONTROLLER_AXIS_RIGHTY:
+						shadow_tilt.y = event.caxis.value / 32768.0;
+						break;
+				}
+				SDL_UnlockMutex(shadow_mutex);
 				break;
 
 			case SDL_RENDER_TARGETS_RESET:
