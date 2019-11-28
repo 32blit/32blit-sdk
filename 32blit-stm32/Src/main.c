@@ -107,7 +107,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   //MX_DMA_Init();
-  //MX_TIM4_Init();
+  MX_TIM4_Init();
   MX_TIM3_Init();
   //MX_DAC1_Init();
   //MX_HRTIM_Init();
@@ -134,10 +134,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+    // Vibration Motor
+    float scale_vibe = (sin(HAL_GetTick() / 1000.0f) + 1.0) / 2.0;
+    __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, 2000 * scale_vibe);
   
     // Backlight
     float scale_bl = (sin(HAL_GetTick() / 1000.0f) + 1.0) / 2.0;
-    __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 10000 * scale_bl);
+    __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 2000 * scale_bl);
   
     // RED Led
     float scale_r = (sin(HAL_GetTick() / 1000.0f) + 1.0) / 2.0;

@@ -190,10 +190,6 @@ void MX_TIM15_Init(void)
   {
     Error_Handler();
   }
-  if (HAL_TIM_PWM_ConfigChannel(&htim15, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
-  {
-    Error_Handler();
-  }
   sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
   sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
   sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
@@ -337,12 +333,12 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
     GPIO_InitStruct.Pin = VIBE_EN_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;
     HAL_GPIO_Init(VIBE_EN_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN TIM4_MspPostInit 1 */
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+    HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
   /* USER CODE END TIM4_MspPostInit 1 */
   }
   else if(timHandle->Instance==TIM15)
@@ -358,15 +354,13 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
     GPIO_InitStruct.Pin = LCD_BACKLIGHT_EN_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF4_TIM15;
     HAL_GPIO_Init(LCD_BACKLIGHT_EN_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN TIM15_MspPostInit 1 */
     HAL_TIM_PWM_Start(&htim15, TIM_CHANNEL_1);
-    HAL_TIM_PWM_Start(&htim15, TIM_CHANNEL_2);
-    __HAL_TIM_MOE_ENABLE(&htim15);
-    __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 10000);
+    __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 2000);
   /* USER CODE END TIM15_MspPostInit 1 */
   }
 

@@ -135,8 +135,8 @@ void Error_Handler(void);
 #define VIBE_EN_Pin GPIO_PIN_6
 #define VIBE_EN_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-#define HIGH(PORT, PIN) HAL_GPIO_WritePin(PORT, PIN, 1);
-#define LOW(PORT, PIN) HAL_GPIO_WritePin(PORT, PIN, 0);
+#define HIGH(PORT, PIN) HAL_GPIO_WritePin(PORT, PIN, GPIO_PIN_SET);
+#define LOW(PORT, PIN) HAL_GPIO_WritePin(PORT, PIN, GPIO_PIN_RESET);
 
 #define DELAY(MS)       HAL_Delay(MS)
 
