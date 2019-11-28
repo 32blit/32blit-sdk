@@ -8,11 +8,8 @@ OPT = -Os
 BUILD_DIR = build
 
 # C sources
-C_SOURCES = \
+C_SOURCES =  \
 Src/main.c \
-Src/msa301.c \
-Src/bq24295.c \
-Src/rgb5x5.c \
 Src/stm32h7xx_it.c \
 Src/stm32h7xx_hal_msp.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_adc.c \
@@ -20,8 +17,11 @@ Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_adc_ex.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_cortex.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_dac.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_dac_ex.c \
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_hrtim.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_smbus.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_ltdc.c \
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_ltdc_ex.c \
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_dsi.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_qspi.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c \
@@ -41,25 +41,28 @@ Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c_ex.c \
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c \
 Src/system_stm32h7xx.c \
-Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd.c \
-Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd_ex.c \
-Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_usb.c \
-Src/usb_device.c \
-Src/usbd_conf.c \
-Src/usbd_desc.c \
-Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c \
-Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c \
-Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c \
-Middlewares/ST/STM32_USB_Device_Library/Class/HID/Src/usbd_hid.c \
 Src/user_diskio.c \
 Src/fatfs.c \
-Src/fatfs_sd.c \
 Middlewares/Third_Party/FatFs/src/diskio.c \
 Middlewares/Third_Party/FatFs/src/ff.c \
 Middlewares/Third_Party/FatFs/src/ff_gen_drv.c \
 Middlewares/Third_Party/FatFs/src/option/syscall.c \
-Middlewares/Third_Party/FatFs/src/option/unicode.c
+Src/gpio.c \
+Src/adc.c \
+Src/dac.c \
+Src/debug.c \
+Src/dma.c \
+Src/hrtim.c \
+Src/i2c.c \
+Src/ltdc.c \
+Src/quadspi.c \
+Src/spi.c \
+Src/sys.c \
+Src/tim.c \
+Src/usb_otg.c \
+Src/32blit.c
 
 # ASM sources
 ASM_SOURCES =  \
@@ -108,10 +111,8 @@ C_INCLUDES =  \
 -IDrivers/STM32H7xx_HAL_Driver/Inc/Legacy \
 -IDrivers/CMSIS/Device/ST/STM32H7xx/Include \
 -IDrivers/CMSIS/Include \
--IMiddlewares/ST/STM32_USB_Device_Library \
--IMiddlewares/ST/STM32_USB_Device_Library/Core/Inc \
--IMiddlewares/ST/STM32_USB_Device_Library/Class/HID/Inc \
--IMiddlewares/FatFs/src \
+-IDrivers/CMSIS/Include \
+-IMiddlewares/Third_Party/FatFs/src \
 -I../32blit \
 -I$(dir $(PROJECT))
 
