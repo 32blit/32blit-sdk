@@ -15,6 +15,8 @@
 #include <string>
 #include <sstream>
 
+#define WINDOW_TITLE "TinyDebug SDL"
+
 #define SYSTEM_WIDTH 160
 #define SYSTEM_HEIGHT 120
 
@@ -43,6 +45,16 @@ std::map<int, int> keys = {
 };
 
 SDL_Thread *t_system_timer;
+SDL_Thread *t_system_loop;
+SDL_sem *system_timer_stop = SDL_CreateSemaphore(0);
+SDL_sem *system_loop_update = SDL_CreateSemaphore(0);
+SDL_sem *system_loop_redraw = SDL_CreateSemaphore(0);
+SDL_sem *system_loop_ended = SDL_CreateSemaphore(0);
+
+Uint32 USEREVENT_REDRAW = SDL_RegisterEvents(4);
+Uint32 USEREVENT_OKAY = USEREVENT_REDRAW + 1;
+Uint32 USEREVENT_SLOW = USEREVENT_REDRAW + 2;
+Uint32 USEREVENT_FROZEN = USEREVENT_REDRAW + 3;
 
 static bool running = true;
 static bool recording = false;
@@ -126,21 +138,51 @@ std::string getTimeStamp() {
 	return s;
 }
 
-void system_tick() {
-	// it's time for updating the game
-	uint32_t ticks_now = SDL_GetTicks();
-	ticks_passed = ticks_now - ticks_last_update;
+static int system_timer(void *ptr) {
+	// Signal the system loop every 20 msec.
+	int dropped = 0;
+	SDL_Event event_okay = {.type = USEREVENT_OKAY};
+	SDL_Event event_slow = {.type = USEREVENT_SLOW};
+	SDL_Event event_frozen = {.type = USEREVENT_FROZEN};
 
-	//std::cout << "Tick! " << ticks_now << std::endl;
+	while (SDL_SemWaitTimeout(system_timer_stop, 20)) {
+		int val = SDL_SemValue(system_loop_update);
+		if (val) {
+			dropped++;
+			if(dropped > 100) {
+				SDL_PushEvent(&event_frozen);
+				dropped = 100;
+			} else {
+				SDL_PushEvent(&event_slow);
+			}
+		} else {
+			SDL_SemPost(system_loop_update);
+			dropped = 0;
+			SDL_PushEvent(&event_okay);
+		}
+	}
+	return 0;
+}
 
-	// TICK HERE
-	blit::tick(::now());
+static int system_loop(void *ptr) {
+	// Run the blit user code once every time we are signalled.
+	SDL_Event event = {.type = USEREVENT_REDRAW};
+	while (true) {
+		SDL_SemWait(system_loop_update);
+		if(!running) break;
+		blit::tick(::now());
+		if(!running) break;
+		SDL_PushEvent(&event);
+		SDL_SemWait(system_loop_redraw);
+	}
+	SDL_SemPost(system_loop_ended);
+	return 0;
+}
 
-	ticks_last_update = ticks_now;
+void system_redraw() {
 
 	SDL_SetRenderTarget(renderer, NULL);
 	SDL_RenderClear(renderer);
-
 
 	if (mode == blit::screen_mode::lores) {
 		SDL_UpdateTexture(__fb_texture_RGB24, NULL, (uint8_t *)__fb.data, 160 * 3);
@@ -159,17 +201,10 @@ void system_tick() {
 		capture();
 	}
 #endif
+
+	SDL_SemPost(system_loop_redraw);
 }
 
-static int system_timer(void *ptr) {
-	while (running) {
-		SDL_Event event;
-		event.type = SDL_USEREVENT;
-		SDL_PushEvent(&event);
-		SDL_Delay(20);
-	}
-	return 0;
-}
 
 void virtual_tilt(int x, int y) {
 	int z = 80;
@@ -257,7 +292,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	window = SDL_CreateWindow(
-		"TinyDebug SDL",
+		WINDOW_TITLE,
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		current_width, current_height,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
@@ -300,7 +335,8 @@ int main(int argc, char *argv[]) {
 
 	printf("Init Done\n");
 
-	t_system_timer = SDL_CreateThread(system_timer, "Run", (void *)NULL);
+	t_system_loop = SDL_CreateThread(system_loop, "Loop", (void *)NULL);
+	t_system_timer = SDL_CreateThread(system_timer, "Timer", (void *)NULL);
 
 	SDL_Event event;
 
@@ -412,11 +448,16 @@ int main(int argc, char *argv[]) {
 				std::cout << "Device reset" << std::endl;
 				break;
 
-			case SDL_USEREVENT:
-				system_tick();
-				break;
-
 			default:
+				if(event.type == USEREVENT_REDRAW) {
+					system_redraw();
+				} else if (event.type == USEREVENT_OKAY) {
+					SDL_SetWindowTitle(window, WINDOW_TITLE);
+				} else if (event.type == USEREVENT_SLOW) {
+					SDL_SetWindowTitle(window, WINDOW_TITLE " [SLOW]");
+				} else if (event.type == USEREVENT_FROZEN) {
+					SDL_SetWindowTitle(window, WINDOW_TITLE " [FROZEN]");
+				}
 				break;
 		}
 	}
@@ -426,6 +467,15 @@ int main(int argc, char *argv[]) {
 	}
 
 	int returnValue;
+
+	if(SDL_SemWaitTimeout(system_loop_ended, 500)) {
+		fprintf(stderr, "User code appears to have frozen. Detaching thread.\n");
+		SDL_DetachThread(t_system_loop);
+	} else {
+		SDL_WaitThread(t_system_loop, &returnValue);
+	}
+
+	SDL_SemPost(system_timer_stop);
 	SDL_WaitThread(t_system_timer, &returnValue);
 
 
