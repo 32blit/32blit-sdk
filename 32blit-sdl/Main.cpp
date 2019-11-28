@@ -179,8 +179,8 @@ static int system_loop(void *ptr) {
 		blit::buttons = shadow_buttons;
 		blit::tilt = shadow_tilt;
 		blit::joystick = shadow_joystick;
-		blit::tick(::now());
 		SDL_UnlockMutex(shadow_mutex);
+		blit::tick(::now());
 		if(!running) break;
 		SDL_PushEvent(&event);
 		SDL_SemWait(system_loop_redraw);
