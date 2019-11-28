@@ -44,6 +44,10 @@ std::map<int, int> keys = {
 	{SDLK_2,       button::MENU}
 };
 
+Uint32 shadow_buttons = 0;
+vec3 shadow_tilt = {0, 0, 0};
+vec2 shadow_joystick = {0, 0};
+
 SDL_Thread *t_system_timer;
 SDL_Thread *t_system_loop;
 SDL_sem *system_timer_stop = SDL_CreateSemaphore(0);
@@ -170,6 +174,9 @@ static int system_loop(void *ptr) {
 	while (true) {
 		SDL_SemWait(system_loop_update);
 		if(!running) break;
+		blit::buttons = shadow_buttons;
+		blit::tilt = shadow_tilt;
+		blit::joystick = shadow_joystick;
 		blit::tick(::now());
 		if(!running) break;
 		SDL_PushEvent(&event);
@@ -215,13 +222,13 @@ void virtual_tilt(int x, int y) {
 	x /= current_pixel_size;
 	y /= current_pixel_size;
 
-	blit::tilt = vec3(x, y, z);
-	blit::tilt.normalize();
+	shadow_tilt = vec3(x, y, z);
+	shadow_tilt.normalize();
 }
 
 void virtual_analog(int x, int y) {
 	if(x == 0 && y == 0){
-		blit::joystick = vec2(0, 0);
+		shadow_joystick = vec2(0, 0);
 		return;
 	}
 
@@ -232,7 +239,7 @@ void virtual_analog(int x, int y) {
 
 	//printf("Joystick X/Y %f %f\n", jx, jy);
 
-	blit::joystick = vec2(jx, jy);
+	shadow_joystick = vec2(jx, jy);
 }
 
 void resize_renderer(int sizeX, int sizeY) {
@@ -431,11 +438,11 @@ int main(int argc, char *argv[]) {
 					}
 
 					if (event.type == SDL_KEYDOWN) {
-						blit::buttons |= iter->second;
+						shadow_buttons |= iter->second;
 					}
 					else
 					{
-						blit::buttons &= ~iter->second;
+						shadow_buttons &= ~iter->second;
 					}
 				}
 				break;
