@@ -47,6 +47,7 @@ std::map<int, int> keys = {
 Uint32 shadow_buttons = 0;
 vec3 shadow_tilt = {0, 0, 0};
 vec2 shadow_joystick = {0, 0};
+SDL_mutex *shadow_mutex = SDL_CreateMutex();
 
 SDL_Thread *t_system_timer;
 SDL_Thread *t_system_loop;
@@ -174,10 +175,12 @@ static int system_loop(void *ptr) {
 	while (true) {
 		SDL_SemWait(system_loop_update);
 		if(!running) break;
+		SDL_LockMutex(shadow_mutex);
 		blit::buttons = shadow_buttons;
 		blit::tilt = shadow_tilt;
 		blit::joystick = shadow_joystick;
 		blit::tick(::now());
+		SDL_UnlockMutex(shadow_mutex);
 		if(!running) break;
 		SDL_PushEvent(&event);
 		SDL_SemWait(system_loop_redraw);
@@ -222,8 +225,10 @@ void virtual_tilt(int x, int y) {
 	x /= current_pixel_size;
 	y /= current_pixel_size;
 
+	SDL_LockMutex(shadow_mutex);
 	shadow_tilt = vec3(x, y, z);
 	shadow_tilt.normalize();
+	SDL_UnlockMutex(shadow_mutex);
 }
 
 void virtual_analog(int x, int y) {
@@ -239,7 +244,9 @@ void virtual_analog(int x, int y) {
 
 	//printf("Joystick X/Y %f %f\n", jx, jy);
 
+	SDL_LockMutex(shadow_mutex);
 	shadow_joystick = vec2(jx, jy);
+	SDL_UnlockMutex(shadow_mutex);
 }
 
 void resize_renderer(int sizeX, int sizeY) {
@@ -437,6 +444,7 @@ int main(int argc, char *argv[]) {
 						break;
 					}
 
+					SDL_LockMutex(shadow_mutex);
 					if (event.type == SDL_KEYDOWN) {
 						shadow_buttons |= iter->second;
 					}
@@ -444,6 +452,7 @@ int main(int argc, char *argv[]) {
 					{
 						shadow_buttons &= ~iter->second;
 					}
+					SDL_UnlockMutex(shadow_mutex);
 				}
 				break;
 
