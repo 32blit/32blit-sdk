@@ -1,6 +1,7 @@
 /*! \file surface.cpp
 */
 #include <algorithm>
+#include <string>
 
 #include "font.hpp"
 #include "sprite.hpp"

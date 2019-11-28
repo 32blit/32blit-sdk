@@ -4,6 +4,7 @@
     Functions to emulate the mode7 graphics effect from classic consoles.
 */
 #include "math.h"
+#include <cmath>
 #include <cfloat>
 
 #include "../math/interpolation.hpp"
