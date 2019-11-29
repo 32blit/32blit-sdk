@@ -22,46 +22,46 @@
 
 std::map<int, int> keys = {
 	// arrow keys
-	{SDLK_DOWN,   button::DPAD_DOWN},
-	{SDLK_UP,     button::DPAD_UP},
-	{SDLK_LEFT,   button::DPAD_LEFT},
-	{SDLK_RIGHT,  button::DPAD_RIGHT},
+	{SDLK_DOWN,   blit::button::DPAD_DOWN},
+	{SDLK_UP,     blit::button::DPAD_UP},
+	{SDLK_LEFT,   blit::button::DPAD_LEFT},
+	{SDLK_RIGHT,  blit::button::DPAD_RIGHT},
 
 	// wasd
-	{SDLK_w,       button::DPAD_UP},
-	{SDLK_a,       button::DPAD_LEFT},
-	{SDLK_s,       button::DPAD_DOWN},
-	{SDLK_d,       button::DPAD_RIGHT},
+	{SDLK_w,       blit::button::DPAD_UP},
+	{SDLK_a,       blit::button::DPAD_LEFT},
+	{SDLK_s,       blit::button::DPAD_DOWN},
+	{SDLK_d,       blit::button::DPAD_RIGHT},
 
 	// action buttons
-	{SDLK_z,       button::A},
-	{SDLK_x,       button::B},
-	{SDLK_c,       button::X},
-	{SDLK_y,       button::Y},
+	{SDLK_z,       blit::button::A},
+	{SDLK_x,       blit::button::B},
+	{SDLK_c,       blit::button::X},
+	{SDLK_y,       blit::button::Y},
 
 	// system buttons
-	{SDLK_1,       button::HOME},
-	{SDLK_2,       button::MENU},
-	{SDLK_3,       button::JOYSTICK},
+	{SDLK_1,       blit::button::HOME},
+	{SDLK_2,       blit::button::MENU},
+	{SDLK_3,       blit::button::JOYSTICK},
 };
 
 std::map<int, int> gcbuttons = {
 	// dpad
-	{SDL_CONTROLLER_BUTTON_DPAD_DOWN,   button::DPAD_DOWN},
-	{SDL_CONTROLLER_BUTTON_DPAD_UP,     button::DPAD_UP},
-	{SDL_CONTROLLER_BUTTON_DPAD_LEFT,   button::DPAD_LEFT},
-	{SDL_CONTROLLER_BUTTON_DPAD_RIGHT,  button::DPAD_RIGHT},
+	{SDL_CONTROLLER_BUTTON_DPAD_DOWN,   blit::button::DPAD_DOWN},
+	{SDL_CONTROLLER_BUTTON_DPAD_UP,     blit::button::DPAD_UP},
+	{SDL_CONTROLLER_BUTTON_DPAD_LEFT,   blit::button::DPAD_LEFT},
+	{SDL_CONTROLLER_BUTTON_DPAD_RIGHT,  blit::button::DPAD_RIGHT},
 
 	// action buttons
-	{SDL_CONTROLLER_BUTTON_A,           button::A},
-	{SDL_CONTROLLER_BUTTON_B,           button::B},
-	{SDL_CONTROLLER_BUTTON_X,           button::X},
-	{SDL_CONTROLLER_BUTTON_Y,           button::Y},
+	{SDL_CONTROLLER_BUTTON_A,           blit::button::A},
+	{SDL_CONTROLLER_BUTTON_B,           blit::button::B},
+	{SDL_CONTROLLER_BUTTON_X,           blit::button::X},
+	{SDL_CONTROLLER_BUTTON_Y,           blit::button::Y},
 
 	// system buttons
-	{SDL_CONTROLLER_BUTTON_BACK,        button::HOME},
-	{SDL_CONTROLLER_BUTTON_START,       button::MENU},
-	{SDL_CONTROLLER_BUTTON_LEFTSTICK,   button::JOYSTICK},
+	{SDL_CONTROLLER_BUTTON_BACK,        blit::button::HOME},
+	{SDL_CONTROLLER_BUTTON_START,       blit::button::MENU},
+	{SDL_CONTROLLER_BUTTON_LEFTSTICK,   blit::button::JOYSTICK},
 };
 
 Uint32 shadow_buttons = 0;
