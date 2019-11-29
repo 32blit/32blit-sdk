@@ -137,7 +137,7 @@ int System::update_thread() {
 	return 0;
 }
 
-int System::mode() {
+Uint32 System::mode() {
 	if (_mode == blit::screen_mode::lores) {
 		return SDL_PIXELFORMAT_RGB24;
 	}
