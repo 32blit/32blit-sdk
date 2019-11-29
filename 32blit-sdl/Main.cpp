@@ -151,12 +151,11 @@ static int system_timer(void *ptr) {
 	SDL_Event event_frozen = {.type = USEREVENT_FROZEN};
 
 	while (SDL_SemWaitTimeout(system_timer_stop, 20)) {
-		int val = SDL_SemValue(system_loop_update);
-		if (val) {
+		if (SDL_SemValue(system_loop_update)) {
 			dropped++;
 			if(dropped > 100) {
-				SDL_PushEvent(&event_frozen);
 				dropped = 100;
+				SDL_PushEvent(&event_frozen);
 			} else {
 				SDL_PushEvent(&event_slow);
 			}
