@@ -41,7 +41,8 @@ std::map<int, int> keys = {
 
 	// system buttons
 	{SDLK_1,       button::HOME},
-	{SDLK_2,       button::MENU}
+	{SDLK_2,       button::MENU},
+	{SDLK_3,       button::JOYSTICK},
 };
 
 std::map<int, int> gcbuttons = {
@@ -59,7 +60,8 @@ std::map<int, int> gcbuttons = {
 
 	// system buttons
 	{SDL_CONTROLLER_BUTTON_BACK,        button::HOME},
-	{SDL_CONTROLLER_BUTTON_START,       button::MENU}
+	{SDL_CONTROLLER_BUTTON_START,       button::MENU},
+	{SDL_CONTROLLER_BUTTON_LEFTSTICK,   button::JOYSTICK},
 };
 
 Uint32 shadow_buttons = 0;
