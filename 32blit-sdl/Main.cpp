@@ -302,12 +302,6 @@ void resize_renderer(int sizeX, int sizeY) {
 
 	std::cout << "Textured destroyed" << std::endl;
 
-	current_width = sizeX;
-	current_height = sizeY;
-	SDL_SetWindowSize(window, sizeX, sizeY);
-
-	std::cout << "Window size set" << std::endl;
-
 	__fb_texture_RGB24 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, SYSTEM_WIDTH, SYSTEM_HEIGHT);
 	__ltdc_texture_RGB565 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_TARGET, SYSTEM_WIDTH * 2, SYSTEM_HEIGHT * 2);
 
