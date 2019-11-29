@@ -138,6 +138,8 @@ void system_redraw(System *sys) {
 		SDL_RenderCopy(renderer, __ltdc_texture_RGB565, NULL, &renderer_dest);
 	}
 
+	sys->notify_redraw();
+
 	SDL_RenderPresent(renderer);
 
 #ifndef NO_FFMPEG_CAPTURE
@@ -145,8 +147,6 @@ void system_redraw(System *sys) {
 		capture();
 	}
 #endif
-
-	sys->notify_redraw();
 }
 
 
