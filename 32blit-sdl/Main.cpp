@@ -115,7 +115,6 @@ typedef struct vector2d {
 vector2d mouse;
 uint8_t mouse_button = 0;
 
-std::chrono::steady_clock::time_point start;
 
 void debug(std::string message) {
 	//OutputDebugStringA(message.c_str());
@@ -133,6 +132,7 @@ void set_screen_mode(blit::screen_mode new_mode) {
 	}
 }
 
+std::chrono::steady_clock::time_point start;
 uint32_t now() {
 	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start);
 	return (uint32_t)elapsed.count();
