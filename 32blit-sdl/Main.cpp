@@ -85,7 +85,6 @@ uint32_t ticks_passed;
 uint32_t ticks_last_update;
 
 SDL_Window* window = NULL;
-SDL_Surface* screenSurface = NULL;
 SDL_Renderer* renderer;
 
 SDL_Texture* __fb_texture_RGB24;
@@ -203,8 +202,6 @@ void resize_renderer(int sizeX, int sizeY) {
 
 	std::cout << "Resized to: " << sizeX << "x" << sizeY << std::endl;
 
-	SDL_SetRenderTarget(renderer, NULL);
-
 	if (__fb_texture_RGB24) {
 		SDL_DestroyTexture(__fb_texture_RGB24);
 	}
@@ -257,8 +254,6 @@ int main(int argc, char *argv[]) {
 
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	SDL_RenderClear(renderer);
-
-	//textureBuffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, SYSTEM_WIDTH, SYSTEM_HEIGHT);
 
 	resize_renderer(current_width, current_height);
 
