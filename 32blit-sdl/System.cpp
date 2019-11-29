@@ -157,17 +157,6 @@ void System::update_texture(SDL_Texture *texture) {
 	}
 }
 
-Uint8 *System::get_framebuffer() {
-	// For video recorder. Do not use for anything else.
-	if (_mode == blit::screen_mode::lores) {
-		return __fb.data;
-	}
-	else
-	{
-		return __ltdc.data;
-	}
-}
-
 void System::notify_redraw() {
 	SDL_SemPost(s_loop_redraw);
 }

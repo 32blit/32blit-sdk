@@ -20,9 +20,6 @@ class System {
 		void set_tilt(int axis, float value);
 		void set_button(int button, bool state);
 
-		// to make the video recorder work. don't use this for anything else
-		Uint8 *get_framebuffer();
-
 	private:
 
 		SDL_Thread *t_system_timer = NULL;

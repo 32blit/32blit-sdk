@@ -90,6 +90,10 @@ SDL_Renderer* renderer;
 SDL_Texture* __fb_texture_RGB24;
 SDL_Texture* __ltdc_texture_RGB565;
 
+#ifndef NO_FFMPEG_CAPTURE
+SDL_Texture* recorder_target;
+uint8_t recorder_buffer[SYSTEM_WIDTH*2 * SYSTEM_HEIGHT*2 * 3];
+#endif
 
 typedef struct vector2d {
 	double x;
@@ -124,26 +128,30 @@ std::string getTimeStamp() {
 }
 
 void system_redraw(System *sys) {
-
-	SDL_SetRenderTarget(renderer, NULL);
-	SDL_RenderClear(renderer);
+	SDL_Texture *which = NULL;
 
 	if (sys->mode() == SDL_PIXELFORMAT_RGB24) {
-		sys->update_texture(__fb_texture_RGB24);
-		SDL_RenderCopy(renderer, __fb_texture_RGB24, NULL, &renderer_dest);
+		which = __fb_texture_RGB24;
 	}
 	else
 	{
-		sys->update_texture(__ltdc_texture_RGB565);
-		SDL_RenderCopy(renderer, __ltdc_texture_RGB565, NULL, &renderer_dest);
+		which = __ltdc_texture_RGB565;
 	}
 
+	sys->update_texture(which);
 	sys->notify_redraw();
 
+	SDL_SetRenderTarget(renderer, NULL);
+	SDL_RenderClear(renderer);
+	SDL_RenderCopy(renderer, which, NULL, &renderer_dest);
 	SDL_RenderPresent(renderer);
 
 #ifndef NO_FFMPEG_CAPTURE
 	if (recording) {
+		SDL_SetRenderTarget(renderer, recorder_target);
+		SDL_RenderClear(renderer);
+		SDL_RenderCopy(renderer, which, NULL, NULL);
+		SDL_RenderReadPixels(renderer, NULL, SDL_PIXELFORMAT_RGB24, &recorder_buffer, 320*3);
 		capture();
 	}
 #endif
@@ -213,6 +221,9 @@ void resize_renderer(int sizeX, int sizeY) {
 
 	__fb_texture_RGB24 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, SYSTEM_WIDTH, SYSTEM_HEIGHT);
 	__ltdc_texture_RGB565 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_TARGET, SYSTEM_WIDTH * 2, SYSTEM_HEIGHT * 2);
+#ifndef NO_FFMPEG_CAPTURE
+	recorder_target = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, SYSTEM_WIDTH*2, SYSTEM_HEIGHT*2);
+#endif
 
 	std::cout << "Textured recreated" << std::endl;
 
@@ -325,17 +336,9 @@ int main(int argc, char *argv[]) {
 									filename << argv[0];
 									filename << "-";
 									filename << "capture-";
-									if (sys->mode() == SDL_PIXELFORMAT_RGB24) {
-										filename << "160x120-";
-										filename << getTimeStamp().c_str();
-										filename << ".mp4";
-										open_stream(filename.str().c_str(), 160, 120, AV_PIX_FMT_RGB24, sys->get_framebuffer());
-									} else {
-										filename << "320x240-";
-										filename << getTimeStamp().c_str();
-										filename << ".mp4";
-										open_stream(filename.str().c_str(), 320, 240, AV_PIX_FMT_RGB565, sys->get_framebuffer());
-									}
+									filename << getTimeStamp().c_str();
+									filename << ".mkv";
+									open_stream(filename.str().c_str(), SYSTEM_WIDTH*2, SYSTEM_HEIGHT*2, AV_PIX_FMT_RGB24, recorder_buffer);
 									recording = true;
 									std::cout << "Starting capture to " << filename.str() << std::endl;
 								}
@@ -423,6 +426,7 @@ int main(int argc, char *argv[]) {
 		close_stream();
 		std::cout << "Finished capture." << std::endl;
 	}
+	SDL_DestroyTexture(recorder_target);
 #endif
 
 	SDL_DestroyTexture(__ltdc_texture_RGB565);
