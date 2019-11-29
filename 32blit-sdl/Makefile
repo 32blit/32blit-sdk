@@ -128,7 +128,7 @@ $(PROJECT_BUILD_DIR)/$(OUTPUT_NAME): $(ALL_OBJ_FILES)
 $(PROJECT_BUILD_DIR)/%.o: $(PROJECT)/%.cpp $(PROJECT)/%.hpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c -o $@ $<
 
-$(TESTBED_BUILD_DIR)/%.o: $(TESTBED)/%.cpp
+$(TESTBED_BUILD_DIR)/%.o: $(TESTBED)/%.cpp $(TESTBED)/%.hpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c -o $@ $<
 
 $(BUILD_DIR):
