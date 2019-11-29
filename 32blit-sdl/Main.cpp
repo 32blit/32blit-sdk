@@ -1,8 +1,6 @@
 #if defined(_WIN32) && !defined(WIN32)
 #define WIN32
 #endif
-#include "32blit.hpp"
-#include "UserCode.hpp"
 #ifndef NO_FFMPEG_CAPTURE
 #include "VideoCapture.hpp"
 #endif
@@ -14,6 +12,10 @@
 #include <ctime>
 #include <string>
 #include <sstream>
+#include <map>
+
+#include "engine/input.hpp" // Only needed for button definitions
+#include "System.hpp"
 
 #define WINDOW_TITLE "TinyDebug SDL"
 
@@ -64,22 +66,6 @@ std::map<int, int> gcbuttons = {
 	{SDL_CONTROLLER_BUTTON_LEFTSTICK,   blit::button::JOYSTICK},
 };
 
-Uint32 shadow_buttons = 0;
-vec3 shadow_tilt = {0, 0, 0};
-vec2 shadow_joystick = {0, 0};
-SDL_mutex *shadow_mutex = SDL_CreateMutex();
-
-SDL_Thread *t_system_timer;
-SDL_Thread *t_system_loop;
-SDL_sem *system_timer_stop = SDL_CreateSemaphore(0);
-SDL_sem *system_loop_update = SDL_CreateSemaphore(0);
-SDL_sem *system_loop_redraw = SDL_CreateSemaphore(0);
-SDL_sem *system_loop_ended = SDL_CreateSemaphore(0);
-
-Uint32 USEREVENT_REDRAW = SDL_RegisterEvents(4);
-Uint32 USEREVENT_OKAY = USEREVENT_REDRAW + 1;
-Uint32 USEREVENT_SLOW = USEREVENT_REDRAW + 2;
-Uint32 USEREVENT_FROZEN = USEREVENT_REDRAW + 3;
 
 static bool running = true;
 static bool recording = false;
@@ -105,9 +91,6 @@ SDL_Renderer* renderer;
 SDL_Texture* __fb_texture_RGB24;
 SDL_Texture* __ltdc_texture_RGB565;
 
-rgb565 __ltdc_buffer[320 * 240 * 2];
-surface __ltdc((uint8_t *)__ltdc_buffer, pixel_format::RGB565, size(320, 240));
-surface __fb((uint8_t *)__ltdc_buffer + (320 * 240 * 2), pixel_format::RGB, size(160, 120));
 
 typedef struct vector2d {
 	double x;
@@ -117,28 +100,6 @@ typedef struct vector2d {
 vector2d mouse;
 uint8_t mouse_button = 0;
 
-
-void debug(std::string message) {
-	//OutputDebugStringA(message.c_str());
-	//OutputDebugStringA("\n");
-}
-
-blit::screen_mode mode = blit::screen_mode::lores;
-void set_screen_mode(blit::screen_mode new_mode) {
-	mode = new_mode;
-	if (mode == blit::screen_mode::hires) {
-		blit::fb = __ltdc;
-	}
-	else {
-		blit::fb = __fb;
-	}
-}
-
-std::chrono::steady_clock::time_point start;
-uint32_t now() {
-	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start);
-	return (uint32_t)elapsed.count();
-}
 
 inline std::tm localtime_xp(std::time_t timer)
 {
@@ -163,63 +124,18 @@ std::string getTimeStamp() {
 	return s;
 }
 
-static int system_timer(void *ptr) {
-	// Signal the system loop every 20 msec.
-	int dropped = 0;
-	SDL_Event event_okay = {.type = USEREVENT_OKAY};
-	SDL_Event event_slow = {.type = USEREVENT_SLOW};
-	SDL_Event event_frozen = {.type = USEREVENT_FROZEN};
-
-	while (SDL_SemWaitTimeout(system_timer_stop, 20)) {
-		if (SDL_SemValue(system_loop_update)) {
-			dropped++;
-			if(dropped > 100) {
-				dropped = 100;
-				SDL_PushEvent(&event_frozen);
-			} else {
-				SDL_PushEvent(&event_slow);
-			}
-		} else {
-			SDL_SemPost(system_loop_update);
-			dropped = 0;
-			SDL_PushEvent(&event_okay);
-		}
-	}
-	return 0;
-}
-
-static int system_loop(void *ptr) {
-	// Run the blit user code once every time we are signalled.
-	SDL_Event event = {.type = USEREVENT_REDRAW};
-	while (true) {
-		SDL_SemWait(system_loop_update);
-		if(!running) break;
-		SDL_LockMutex(shadow_mutex);
-		blit::buttons = shadow_buttons;
-		blit::tilt = shadow_tilt;
-		blit::joystick = shadow_joystick;
-		SDL_UnlockMutex(shadow_mutex);
-		blit::tick(::now());
-		if(!running) break;
-		SDL_PushEvent(&event);
-		SDL_SemWait(system_loop_redraw);
-	}
-	SDL_SemPost(system_loop_ended);
-	return 0;
-}
-
-void system_redraw() {
+void system_redraw(System *sys) {
 
 	SDL_SetRenderTarget(renderer, NULL);
 	SDL_RenderClear(renderer);
 
-	if (mode == blit::screen_mode::lores) {
-		SDL_UpdateTexture(__fb_texture_RGB24, NULL, (uint8_t *)__fb.data, 160 * 3);
+	if (sys->mode() == SDL_PIXELFORMAT_RGB24) {
+		sys->update_texture(__fb_texture_RGB24);
 		SDL_RenderCopy(renderer, __fb_texture_RGB24, NULL, &renderer_dest);
 	}
 	else
 	{
-		SDL_UpdateTexture(__ltdc_texture_RGB565, NULL, (uint8_t *)__ltdc.data, 320 * sizeof(uint16_t));
+		sys->update_texture(__ltdc_texture_RGB565);
 		SDL_RenderCopy(renderer, __ltdc_texture_RGB565, NULL, &renderer_dest);
 	}
 
@@ -231,11 +147,11 @@ void system_redraw() {
 	}
 #endif
 
-	SDL_SemPost(system_loop_redraw);
+	sys->notify_redraw();
 }
 
 
-void virtual_tilt(int x, int y) {
+void virtual_tilt(System *sys, int x, int y) {
 	int z = 80;
 
 	x = x - (current_width / 2);
@@ -244,18 +160,14 @@ void virtual_tilt(int x, int y) {
 	x /= current_pixel_size;
 	y /= current_pixel_size;
 
-	SDL_LockMutex(shadow_mutex);
-	shadow_tilt = vec3(x, y, z);
+	vec3 shadow_tilt = vec3(x, y, z);
 	shadow_tilt.normalize();
-	SDL_UnlockMutex(shadow_mutex);
+	sys->set_tilt(0, shadow_tilt.x);
+	sys->set_tilt(1, shadow_tilt.y);
+	sys->set_tilt(2, shadow_tilt.z);
 }
 
-void virtual_analog(int x, int y) {
-	if(x == 0 && y == 0){
-		shadow_joystick = vec2(0, 0);
-		return;
-	}
-
+void virtual_analog(System *sys, int x, int y) {
 	//printf("Joystick X/Y %d %d\n", x, y);
 
 	float jx = (float)x / (current_width / 2);
@@ -263,10 +175,10 @@ void virtual_analog(int x, int y) {
 
 	//printf("Joystick X/Y %f %f\n", jx, jy);
 
-	SDL_LockMutex(shadow_mutex);
-	shadow_joystick = vec2(jx, jy);
-	SDL_UnlockMutex(shadow_mutex);
+	sys->set_joystick(0, jx);
+	sys->set_joystick(1, jy);
 }
+
 
 void resize_renderer(int sizeX, int sizeY) {
 
@@ -350,24 +262,8 @@ int main(int argc, char *argv[]) {
 
 	resize_renderer(current_width, current_height);
 
-	start = std::chrono::steady_clock::now();
-
-	uint32_t last_tick_ms = ::now();
-
-	blit::now = ::now;
-	blit::debug = ::debug;
-	blit::set_screen_mode = ::set_screen_mode;
-	blit::update = ::update;
-	blit::render = ::render;
-	//engine:init = ::init;
-
-	::set_screen_mode(blit::lores);
-	::init();
-
-	printf("Init Done\n");
-
-	t_system_loop = SDL_CreateThread(system_loop, "Loop", (void *)NULL);
-	t_system_timer = SDL_CreateThread(system_timer, "Timer", (void *)NULL);
+	System *sys = new System();
+	sys->run();
 
 	SDL_Event event;
 
@@ -386,33 +282,33 @@ int main(int argc, char *argv[]) {
 			case SDL_MOUSEBUTTONDOWN:
 				if(event.button.button == SDL_BUTTON_LEFT){
 					if(left_ctrl){
-						virtual_tilt(event.button.x, event.button.y);
+						virtual_tilt(sys, event.button.x, event.button.y);
 					} else {
 						int x = event.button.x;
 						int y = event.button.y;
 						x = x - (current_width / 2);
 						y = y - (current_height / 2);
-						virtual_analog(x, y);
+						virtual_analog(sys, x, y);
 					}
 				}
 				break;
 
 			case SDL_MOUSEBUTTONUP:
 				if(event.button.button == SDL_BUTTON_LEFT){
-					virtual_analog(0, 0);
+					virtual_analog(sys, 0, 0);
 				}
 				break;
 
 			case SDL_MOUSEMOTION:
 				if(event.motion.state & SDL_MOUSEBUTTONDOWN){
 					if(left_ctrl){
-						virtual_tilt(event.motion.x, event.motion.y);
+						virtual_tilt(sys, event.motion.x, event.motion.y);
 					} else {
 						int x = event.motion.x;
 						int y = event.motion.y;
 						x = x - (current_width / 2);
 						y = y - (current_height / 2);
-						virtual_analog(x, y);
+						virtual_analog(sys, x, y);
 					}
 				}
 				break;
@@ -434,16 +330,16 @@ int main(int argc, char *argv[]) {
 									filename << argv[0];
 									filename << "-";
 									filename << "capture-";
-									if (mode == blit::screen_mode::lores) {
+									if (sys->mode() == SDL_PIXELFORMAT_RGB24) {
 										filename << "160x120-";
 										filename << getTimeStamp().c_str();
 										filename << ".mp4";
-										open_stream(filename.str().c_str(), 160, 120, AV_PIX_FMT_RGB24, (uint8_t *)__fb.data);
+										open_stream(filename.str().c_str(), 160, 120, AV_PIX_FMT_RGB24, sys->get_framebuffer());
 									} else {
 										filename << "320x240-";
 										filename << getTimeStamp().c_str();
 										filename << ".mp4";
-										open_stream(filename.str().c_str(), 320, 240, AV_PIX_FMT_RGB565, (uint8_t *)__ltdc.data);
+										open_stream(filename.str().c_str(), 320, 240, AV_PIX_FMT_RGB565, sys->get_framebuffer());
 									}
 									recording = true;
 									std::cout << "Starting capture to " << filename.str() << std::endl;
@@ -458,18 +354,9 @@ int main(int argc, char *argv[]) {
 							}
 #endif
 						}
-						break;
+					} else {
+						sys->set_button(iter->second, event.type == SDL_KEYDOWN);
 					}
-
-					SDL_LockMutex(shadow_mutex);
-					if (event.type == SDL_KEYDOWN) {
-						shadow_buttons |= iter->second;
-					}
-					else
-					{
-						shadow_buttons &= ~iter->second;
-					}
-					SDL_UnlockMutex(shadow_mutex);
 				}
 				break;
 
@@ -478,35 +365,25 @@ int main(int argc, char *argv[]) {
 				{
 					auto iter = gcbuttons.find(event.cbutton.button);
 					if (iter == gcbuttons.end()) break;
-					SDL_LockMutex(shadow_mutex);
-					if (event.type == SDL_CONTROLLERBUTTONDOWN) {
-						shadow_buttons |= iter->second;
-					}
-					else
-					{
-						shadow_buttons &= ~iter->second;
-					}
-					SDL_UnlockMutex(shadow_mutex);
+					sys->set_button(iter->second, event.type == SDL_CONTROLLERBUTTONDOWN);
 				}
 				break;
 
 			case SDL_CONTROLLERAXISMOTION:
-				SDL_LockMutex(shadow_mutex);
 				switch(event.caxis.axis) {
 					case SDL_CONTROLLER_AXIS_LEFTX:
-						shadow_joystick.x = event.caxis.value / 32768.0;
+						sys->set_joystick(0, event.caxis.value / 32768.0);
 						break;
 					case SDL_CONTROLLER_AXIS_LEFTY:
-						shadow_joystick.y = event.caxis.value / 32768.0;
+						sys->set_joystick(1, event.caxis.value / 32768.0);
 						break;
 					case SDL_CONTROLLER_AXIS_RIGHTX:
-						shadow_tilt.x = event.caxis.value / 32768.0;
+						sys->set_tilt(0, event.caxis.value / 32768.0);
 						break;
 					case SDL_CONTROLLER_AXIS_RIGHTY:
-						shadow_tilt.y = event.caxis.value / 32768.0;
+						sys->set_tilt(1, event.caxis.value / 32768.0);
 						break;
 				}
-				SDL_UnlockMutex(shadow_mutex);
 				break;
 
 			case SDL_RENDER_TARGETS_RESET:
@@ -518,14 +395,20 @@ int main(int argc, char *argv[]) {
 				break;
 
 			default:
-				if(event.type == USEREVENT_REDRAW) {
-					system_redraw();
-				} else if (event.type == USEREVENT_OKAY) {
-					SDL_SetWindowTitle(window, WINDOW_TITLE);
-				} else if (event.type == USEREVENT_SLOW) {
-					SDL_SetWindowTitle(window, WINDOW_TITLE " [SLOW]");
-				} else if (event.type == USEREVENT_FROZEN) {
-					SDL_SetWindowTitle(window, WINDOW_TITLE " [FROZEN]");
+				if(event.type == System::loop_event) {
+					system_redraw(sys);
+				} else if (event.type == System::timer_event) {
+					switch(event.user.code) {
+						case 0:
+							SDL_SetWindowTitle(window, WINDOW_TITLE);
+							break;
+						case 1:
+							SDL_SetWindowTitle(window, WINDOW_TITLE " [SLOW]");
+							break;
+						case 2:
+							SDL_SetWindowTitle(window, WINDOW_TITLE " [FROZEN]");
+							break;
+					}
 				}
 				break;
 		}
@@ -535,17 +418,8 @@ int main(int argc, char *argv[]) {
 		running = false; // ensure timer thread quits
 	}
 
-	int returnValue;
-
-	if(SDL_SemWaitTimeout(system_loop_ended, 500)) {
-		fprintf(stderr, "User code appears to have frozen. Detaching thread.\n");
-		SDL_DetachThread(t_system_loop);
-	} else {
-		SDL_WaitThread(t_system_loop, &returnValue);
-	}
-
-	SDL_SemPost(system_timer_stop);
-	SDL_WaitThread(t_system_timer, &returnValue);
+	sys->stop();
+	delete sys;
 
 
 #ifndef NO_FFMPEG_CAPTURE

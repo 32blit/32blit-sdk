@@ -60,7 +60,7 @@ OUTPUT_NAME = $(shell basename $(PROJECT))
 SDL_LIBS = `sdl2-config --libs`
 
 # Glom all .cpp files from the testbed
-TESTBED_SRC_FILES := $(TESTBED)/Main.cpp
+TESTBED_SRC_FILES := $(TESTBED)/Main.cpp $(TESTBED)/System.cpp
 
 # Glom all .cpp files from our desired project
 PROJECT_SRC_FILES := $(wildcard $(PROJECT)/*.cpp)
