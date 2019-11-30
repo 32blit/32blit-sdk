@@ -26,7 +26,6 @@
 
 static bool running = true;
 static bool recording = false;
-bool left_ctrl = false;
 
 float current_pixel_size = 4;
 int current_width = SYSTEM_WIDTH * current_pixel_size;
@@ -51,14 +50,6 @@ SDL_Texture* __ltdc_texture_RGB565;
 SDL_Texture* recorder_target;
 uint8_t recorder_buffer[SYSTEM_WIDTH*2 * SYSTEM_HEIGHT*2 * 3];
 #endif
-
-typedef struct vector2d {
-	double x;
-	double y;
-} vector2d;
-
-vector2d mouse;
-uint8_t mouse_button = 0;
 
 
 inline std::tm localtime_xp(std::time_t timer)
@@ -112,35 +103,6 @@ void system_redraw(System *sys) {
 		capture();
 	}
 #endif
-}
-
-
-void virtual_tilt(System *sys, int x, int y) {
-	int z = 80;
-
-	x = x - (current_width / 2);
-	y = y - (current_height / 2);
-
-	x /= current_pixel_size;
-	y /= current_pixel_size;
-
-	vec3 shadow_tilt = vec3(x, y, z);
-	shadow_tilt.normalize();
-	sys->set_tilt(0, shadow_tilt.x);
-	sys->set_tilt(1, shadow_tilt.y);
-	sys->set_tilt(2, shadow_tilt.z);
-}
-
-void virtual_analog(System *sys, int x, int y) {
-	//printf("Joystick X/Y %d %d\n", x, y);
-
-	float jx = (float)x / (current_width / 2);
-	float jy = (float)y / (current_height / 2);
-
-	//printf("Joystick X/Y %f %f\n", jx, jy);
-
-	sys->set_joystick(0, jx);
-	sys->set_joystick(1, jy);
 }
 
 
@@ -225,6 +187,7 @@ int main(int argc, char *argv[]) {
 
 	resize_renderer(current_width, current_height);
 
+	Input *inp = new Input(window);
 	System *sys = new System();
 	sys->run();
 
@@ -239,52 +202,25 @@ int main(int argc, char *argv[]) {
 			case SDL_WINDOWEVENT:
 				if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
 					resize_renderer(event.window.data1, event.window.data2);
-				}
-				break;
-
-			case SDL_MOUSEBUTTONDOWN:
-				if(event.button.button == SDL_BUTTON_LEFT){
-					if(left_ctrl){
-						virtual_tilt(sys, event.button.x, event.button.y);
-					} else {
-						int x = event.button.x;
-						int y = event.button.y;
-						x = x - (current_width / 2);
-						y = y - (current_height / 2);
-						virtual_analog(sys, x, y);
-					}
+					inp->resize(event.window.data1, event.window.data2);
 				}
 				break;
 
 			case SDL_MOUSEBUTTONUP:
-				if(event.button.button == SDL_BUTTON_LEFT){
-					virtual_analog(sys, 0, 0);
-				}
+			case SDL_MOUSEBUTTONDOWN:
+				inp->handle_mouse(sys, event.button.button, event.type == SDL_MOUSEBUTTONDOWN, event.button.x, event.button.y);
 				break;
 
 			case SDL_MOUSEMOTION:
-				if(event.motion.state & SDL_MOUSEBUTTONDOWN){
-					if(left_ctrl){
-						virtual_tilt(sys, event.motion.x, event.motion.y);
-					} else {
-						int x = event.motion.x;
-						int y = event.motion.y;
-						x = x - (current_width / 2);
-						y = y - (current_height / 2);
-						virtual_analog(sys, x, y);
-					}
+				if (event.motion.state & SDL_BUTTON_LMASK) {
+					inp->handle_mouse(sys, SDL_BUTTON_LEFT, event.motion.state & SDL_MOUSEBUTTONDOWN, event.motion.x, event.motion.y);
 				}
 				break;
 
 			case SDL_KEYDOWN: // fall-though
 			case SDL_KEYUP:
-				if (int button = Input::find_key(event.key.keysym.sym)) {
-					sys->set_button(button, event.type == SDL_KEYDOWN);
-				} else {
+				if (!inp->handle_keyboard(sys, event.key.keysym.sym, event.type == SDL_KEYDOWN)) {
 					switch (event.key.keysym.sym) {
-					case SDLK_LCTRL:
-						left_ctrl = event.type == SDL_KEYDOWN;
-						break;
 #ifndef NO_FFMPEG_CAPTURE
 					case SDLK_r:
 						if (event.type == SDL_KEYDOWN && SDL_GetTicks() - last_record_startstop > 1000) {
@@ -314,26 +250,11 @@ int main(int argc, char *argv[]) {
 
 			case SDL_CONTROLLERBUTTONDOWN:
 			case SDL_CONTROLLERBUTTONUP:
-				if (int button = Input::find_button(event.cbutton.button)) {
-					sys->set_button(button, event.type == SDL_CONTROLLERBUTTONDOWN);
-				}
+				inp->handle_controller_button(sys, event.cbutton.button, event.type == SDL_CONTROLLERBUTTONDOWN);
 				break;
 
 			case SDL_CONTROLLERAXISMOTION:
-				switch(event.caxis.axis) {
-					case SDL_CONTROLLER_AXIS_LEFTX:
-						sys->set_joystick(0, event.caxis.value / 32768.0);
-						break;
-					case SDL_CONTROLLER_AXIS_LEFTY:
-						sys->set_joystick(1, event.caxis.value / 32768.0);
-						break;
-					case SDL_CONTROLLER_AXIS_RIGHTX:
-						sys->set_tilt(0, event.caxis.value / 32768.0);
-						break;
-					case SDL_CONTROLLER_AXIS_RIGHTY:
-						sys->set_tilt(1, event.caxis.value / 32768.0);
-						break;
-				}
+				inp->handle_controller_motion(sys, event.caxis.axis, event.caxis.value);
 				break;
 
 			case SDL_RENDER_TARGETS_RESET:
