@@ -16,40 +16,12 @@
 
 #include "Input.hpp"
 #include "System.hpp"
-
-#include "engine/input.hpp"
+#include "Renderer.hpp"
 
 #define WINDOW_TITLE "TinyDebug SDL"
 
 #define SYSTEM_WIDTH 160
 #define SYSTEM_HEIGHT 120
-
-static bool running = true;
-static bool recording = false;
-
-float current_pixel_size = 4;
-int current_width = SYSTEM_WIDTH * current_pixel_size;
-int current_height = SYSTEM_HEIGHT * current_pixel_size;
-bool keep_aspect = true;
-bool keep_pixels = true;
-SDL_Rect renderer_dest = {0, 0, current_width, current_height};
-
-
-static unsigned int last_record_startstop = 0;
-
-uint32_t ticks_passed;
-uint32_t ticks_last_update;
-
-SDL_Window* window = NULL;
-SDL_Renderer* renderer;
-
-SDL_Texture* __fb_texture_RGB24;
-SDL_Texture* __ltdc_texture_RGB565;
-
-#ifndef NO_FFMPEG_CAPTURE
-SDL_Texture* recorder_target;
-uint8_t recorder_buffer[SYSTEM_WIDTH*2 * SYSTEM_HEIGHT*2 * 3];
-#endif
 
 
 inline std::tm localtime_xp(std::time_t timer)
@@ -75,81 +47,19 @@ std::string getTimeStamp() {
 	return s;
 }
 
-void system_redraw(System *sys) {
-	SDL_Texture *which = NULL;
-
-	if (sys->mode() == SDL_PIXELFORMAT_RGB24) {
-		which = __fb_texture_RGB24;
-	}
-	else
-	{
-		which = __ltdc_texture_RGB565;
-	}
-
-	sys->update_texture(which);
-	sys->notify_redraw();
-
-	SDL_SetRenderTarget(renderer, NULL);
-	SDL_RenderClear(renderer);
-	SDL_RenderCopy(renderer, which, NULL, &renderer_dest);
-	SDL_RenderPresent(renderer);
-
-#ifndef NO_FFMPEG_CAPTURE
-	if (recording) {
-		SDL_SetRenderTarget(renderer, recorder_target);
-		SDL_RenderClear(renderer);
-		SDL_RenderCopy(renderer, which, NULL, NULL);
-		SDL_RenderReadPixels(renderer, NULL, SDL_PIXELFORMAT_RGB24, &recorder_buffer, 320*3);
-		capture();
-	}
-#endif
-}
-
-
-void resize_renderer(int sizeX, int sizeY) {
-
-	current_pixel_size = std::min((float)sizeX / SYSTEM_WIDTH, (float)sizeY / SYSTEM_HEIGHT);
-
-	if (keep_pixels) current_pixel_size = (int)current_pixel_size;
-
-	current_width = sizeX;
-	current_height = sizeY;
-
-	if (keep_pixels || keep_aspect) {
-		int w = 160 * current_pixel_size;
-		int h = 120 * current_pixel_size;
-		int xoffs = (current_width - w) / 2;
-		int yoffs = (current_height - h) / 2;
-		renderer_dest.x = xoffs; renderer_dest.y = yoffs;
-		renderer_dest.w = w; renderer_dest.h = h;
-	} else {
-		renderer_dest.x = 0; renderer_dest.y = 0;
-		renderer_dest.w = current_width; renderer_dest.h = current_height;
-	}
-
-	std::cout << "Resized to: " << sizeX << "x" << sizeY << std::endl;
-
-	if (__fb_texture_RGB24) {
-		SDL_DestroyTexture(__fb_texture_RGB24);
-	}
-	if (__ltdc_texture_RGB565) {
-		SDL_DestroyTexture(__ltdc_texture_RGB565);
-	}
-
-	std::cout << "Textured destroyed" << std::endl;
-
-	__fb_texture_RGB24 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, SYSTEM_WIDTH, SYSTEM_HEIGHT);
-	__ltdc_texture_RGB565 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_TARGET, SYSTEM_WIDTH * 2, SYSTEM_HEIGHT * 2);
-#ifndef NO_FFMPEG_CAPTURE
-	recorder_target = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, SYSTEM_WIDTH*2, SYSTEM_HEIGHT*2);
-#endif
-
-	std::cout << "Textured recreated" << std::endl;
-
-	std::cout << "Device reset" << std::endl;
-}
 
 int main(int argc, char *argv[]) {
+	static bool running = true;
+
+	SDL_Window* window = NULL;
+
+#ifndef NO_FFMPEG_CAPTURE
+	static bool recording = false;
+	static unsigned int last_record_startstop = 0;
+	SDL_Texture* recorder_target;
+	uint8_t recorder_buffer[SYSTEM_WIDTH*2 * SYSTEM_HEIGHT*2 * 3];
+#endif
+
 	std::cout << "Hello World" << std::endl;
 
 	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER) < 0) {
@@ -160,7 +70,7 @@ int main(int argc, char *argv[]) {
 	window = SDL_CreateWindow(
 		WINDOW_TITLE,
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-		current_width, current_height,
+		SYSTEM_WIDTH*4, SYSTEM_HEIGHT*4,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
 	);
 
@@ -175,20 +85,10 @@ int main(int argc, char *argv[]) {
 		SDL_GameControllerOpen(n);
 	}
 
-	//SDL_SetHint(SDL_HINT_RENDER_DRIVER, "openGL");
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-	if (renderer == NULL) {
-		fprintf(stderr, "could not create renderer: %s\n", SDL_GetError());
-		return 1;
-	}
-
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-	SDL_RenderClear(renderer);
-
-	resize_renderer(current_width, current_height);
-
-	Input *inp = new Input(window);
 	System *sys = new System();
+	Input *inp = new Input(window);
+	Renderer *ren = new Renderer(window, SYSTEM_WIDTH, SYSTEM_HEIGHT);
+
 	sys->run();
 
 	SDL_Event event;
@@ -201,8 +101,8 @@ int main(int argc, char *argv[]) {
 
 			case SDL_WINDOWEVENT:
 				if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-					resize_renderer(event.window.data1, event.window.data2);
 					inp->resize(event.window.data1, event.window.data2);
+					ren->resize(event.window.data1, event.window.data2);
 				}
 				break;
 
@@ -267,7 +167,17 @@ int main(int argc, char *argv[]) {
 
 			default:
 				if(event.type == System::loop_event) {
-					system_redraw(sys);
+					ren->update(sys);
+					sys->notify_redraw();
+					ren->render();
+					ren->present();
+#ifndef NO_FFMPEG_CAPTURE
+					if (recording) {
+						ren->render(recorder_target);
+						SDL_RenderReadPixels(renderer, NULL, SDL_PIXELFORMAT_RGB24, &recorder_buffer, 320*3);
+						capture();
+					}
+#endif
 				} else if (event.type == System::timer_event) {
 					switch(event.user.code) {
 						case 0:
@@ -289,9 +199,6 @@ int main(int argc, char *argv[]) {
 		running = false; // ensure timer thread quits
 	}
 
-	sys->stop();
-	delete sys;
-
 #ifndef NO_FFMPEG_CAPTURE
 	if (recording) {
 		recording = false;
@@ -301,9 +208,10 @@ int main(int argc, char *argv[]) {
 	SDL_DestroyTexture(recorder_target);
 #endif
 
-	SDL_DestroyTexture(__ltdc_texture_RGB565);
-	SDL_DestroyTexture(__fb_texture_RGB24);
-	SDL_DestroyRenderer(renderer);
+	sys->stop();
+	delete sys;
+	delete ren;
+
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 	return 0;
