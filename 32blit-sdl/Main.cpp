@@ -1,9 +1,7 @@
 #if defined(_WIN32) && !defined(WIN32)
 #define WIN32
 #endif
-#ifndef NO_FFMPEG_CAPTURE
-#include "VideoCapture.hpp"
-#endif
+
 #include <SDL.h>
 #include <random>
 #include <cmath>
@@ -17,6 +15,10 @@
 #include "Input.hpp"
 #include "System.hpp"
 #include "Renderer.hpp"
+
+#ifndef NO_FFMPEG_CAPTURE
+#include "VideoCapture.hpp"
+#endif
 
 #define WINDOW_TITLE "TinyDebug SDL"
 

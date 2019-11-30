@@ -527,12 +527,13 @@ static void close_stream(AVFormatContext *oc, OutputStream *ost)
 /* media file output */
 
 //int main(int argc, char **argv)
-int open_stream(const char *filename, int width, int height, AVPixelFormat src_fmt, uint8_t *pic_src) {
+int open_stream(const char *filename, int width, int height, uint8_t *pic_src) {
 
 	AVOutputFormat *fmt;
 	AVCodec *audio_codec = NULL, *video_codec = NULL;
 	int ret;
 	AVDictionary *opt = NULL;
+	AVPixelFormat src_fmt = AV_PIX_FMT_RGB24;
 
 	source_format = src_fmt;
 	picture_source = pic_src;
