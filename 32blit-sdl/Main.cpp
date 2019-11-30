@@ -278,49 +278,44 @@ int main(int argc, char *argv[]) {
 
 			case SDL_KEYDOWN: // fall-though
 			case SDL_KEYUP:
-				{
-					auto iter = Input::keys.find(event.key.keysym.sym);
-					if (iter == Input::keys.end()) {
-						switch (event.key.keysym.sym) {
-						case SDLK_LCTRL:
-							left_ctrl = event.type == SDL_KEYDOWN;
-							break;
+				if (int button = Input::find_key(event.key.keysym.sym)) {
+					sys->set_button(button, event.type == SDL_KEYDOWN);
+				} else {
+					switch (event.key.keysym.sym) {
+					case SDLK_LCTRL:
+						left_ctrl = event.type == SDL_KEYDOWN;
+						break;
 #ifndef NO_FFMPEG_CAPTURE
-						case SDLK_r:
-							if (event.type == SDL_KEYDOWN && SDL_GetTicks() - last_record_startstop > 1000) {
-								if (!recording) {
-									std::stringstream filename;
-									filename << argv[0];
-									filename << "-";
-									filename << "capture-";
-									filename << getTimeStamp().c_str();
-									filename << ".mkv";
-									open_stream(filename.str().c_str(), SYSTEM_WIDTH*2, SYSTEM_HEIGHT*2, AV_PIX_FMT_RGB24, recorder_buffer);
-									recording = true;
-									std::cout << "Starting capture to " << filename.str() << std::endl;
-								}
-								else
-								{
-									recording = false;
-									close_stream();
-									std::cout << "Finished capture." << std::endl;
-								}
-								last_record_startstop = SDL_GetTicks();
+					case SDLK_r:
+						if (event.type == SDL_KEYDOWN && SDL_GetTicks() - last_record_startstop > 1000) {
+							if (!recording) {
+								std::stringstream filename;
+								filename << argv[0];
+								filename << "-";
+								filename << "capture-";
+								filename << getTimeStamp().c_str();
+								filename << ".mkv";
+								open_stream(filename.str().c_str(), SYSTEM_WIDTH*2, SYSTEM_HEIGHT*2, AV_PIX_FMT_RGB24, recorder_buffer);
+								recording = true;
+								std::cout << "Starting capture to " << filename.str() << std::endl;
 							}
-#endif
+							else
+							{
+								recording = false;
+								close_stream();
+								std::cout << "Finished capture." << std::endl;
+							}
+							last_record_startstop = SDL_GetTicks();
 						}
-					} else {
-						sys->set_button(iter->second, event.type == SDL_KEYDOWN);
+#endif
 					}
 				}
 				break;
 
 			case SDL_CONTROLLERBUTTONDOWN:
 			case SDL_CONTROLLERBUTTONUP:
-				{
-					auto iter = Input::buttons.find(event.cbutton.button);
-					if (iter == Input::buttons.end()) break;
-					sys->set_button(iter->second, event.type == SDL_CONTROLLERBUTTONDOWN);
+				if (int button = Input::find_button(event.cbutton.button)) {
+					sys->set_button(button, event.type == SDL_CONTROLLERBUTTONDOWN);
 				}
 				break;
 
@@ -375,7 +370,6 @@ int main(int argc, char *argv[]) {
 
 	sys->stop();
 	delete sys;
-
 
 #ifndef NO_FFMPEG_CAPTURE
 	if (recording) {

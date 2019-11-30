@@ -46,3 +46,15 @@ std::map<int, int> Input::buttons = {
 	{SDL_CONTROLLER_BUTTON_START,       blit::button::MENU},
 	{SDL_CONTROLLER_BUTTON_LEFTSTICK,   blit::button::JOYSTICK},
 };
+
+int Input::find_key(int key) {
+	auto iter = keys.find(key);
+	if (iter == keys.end()) return 0;
+	else return iter->second;
+}
+
+int Input::find_button(int button) {
+	auto iter = buttons.find(button);
+	if (iter == buttons.end()) return 0;
+	else return iter->second;
+}
