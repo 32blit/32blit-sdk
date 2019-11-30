@@ -37,7 +37,7 @@ void Renderer::set_mode(Mode new_mode) {
 	} else {
 		float current_pixel_size = std::min((float)win_width / sys_width, (float)win_height / sys_height);
 		if (mode == KeepPixels) current_pixel_size = (int)current_pixel_size;
-		if (mode == KeepPixelsx2) current_pixel_size = 2*(int)(current_pixel_size/2);
+		else if (mode == KeepPixelsLores) current_pixel_size = ((int)(2*current_pixel_size)) / 2.0;
 		dest.w = sys_width * current_pixel_size;
 		dest.h = sys_height * current_pixel_size;
 		dest.x = (win_width - dest.w) / 2;
@@ -60,9 +60,9 @@ void Renderer::resize(int width, int height) {
 		SDL_DestroyTexture(record_target);
 	}
 
-	fb_texture_RGB24 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, sys_width, sys_height);
-	ltdc_texture_RGB565 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_TARGET, sys_width * 2, sys_height * 2);
-	record_target = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, sys_width * 2, sys_height * 2);
+	fb_texture_RGB24 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, sys_width/2, sys_height/2);
+	ltdc_texture_RGB565 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_TARGET, sys_width, sys_height);
+	record_target = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, sys_width, sys_height);
 }
 
 void Renderer::update(System *sys) {

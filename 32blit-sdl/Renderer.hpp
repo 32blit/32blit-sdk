@@ -5,7 +5,7 @@ class Renderer {
 		Renderer(SDL_Window *window, int width, int height);
 		~Renderer();
 
-		enum Mode {Stretch, KeepAspect, KeepPixels, KeepPixelsx2};
+		enum Mode {Stretch, KeepAspect, KeepPixels, KeepPixelsLores};
 
 		void resize(int width, int height);
 		void update(System *sys);

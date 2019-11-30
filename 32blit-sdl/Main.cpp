@@ -22,9 +22,6 @@
 
 #define WINDOW_TITLE "TinyDebug SDL"
 
-#define SYSTEM_WIDTH 160
-#define SYSTEM_HEIGHT 120
-
 
 inline std::tm localtime_xp(std::time_t timer)
 {
@@ -58,7 +55,7 @@ int main(int argc, char *argv[]) {
 #ifndef NO_FFMPEG_CAPTURE
 	static bool recording = false;
 	static unsigned int last_record_startstop = 0;
-	uint8_t record_buffer[SYSTEM_WIDTH*2 * SYSTEM_HEIGHT*2 * 3];
+	uint8_t record_buffer[System::width * System::height * 3];
 #endif
 
 	std::cout << "Hello World" << std::endl;
@@ -71,7 +68,7 @@ int main(int argc, char *argv[]) {
 	window = SDL_CreateWindow(
 		WINDOW_TITLE,
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-		SYSTEM_WIDTH*4, SYSTEM_HEIGHT*4,
+		System::width*2, System::height*2,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
 	);
 
@@ -79,7 +76,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "could not create window: %s\n", SDL_GetError());
 		return 1;
 	}
-	SDL_SetWindowMinimumSize(window, SYSTEM_WIDTH, SYSTEM_HEIGHT);
+	SDL_SetWindowMinimumSize(window, System::width, System::height);
 
 	// Open all joysticks as game controllers
 	for(int n=0; n<SDL_NumJoysticks(); n++) {
@@ -88,7 +85,7 @@ int main(int argc, char *argv[]) {
 
 	System *sys = new System();
 	Input *inp = new Input(window);
-	Renderer *ren = new Renderer(window, SYSTEM_WIDTH, SYSTEM_HEIGHT);
+	Renderer *ren = new Renderer(window, System::width, System::height);
 
 	sys->run();
 
@@ -132,7 +129,7 @@ int main(int argc, char *argv[]) {
 								filename << getTimeStamp().c_str();
 								filename << ".mpg";
 								ren->start_recording(record_buffer);
-								open_stream(filename.str().c_str(), SYSTEM_WIDTH*2, SYSTEM_HEIGHT*2, record_buffer);
+								open_stream(filename.str().c_str(), System::width, System::height, record_buffer);
 								recording = true;
 								std::cout << "Starting capture to " << filename.str() << std::endl;
 							}
