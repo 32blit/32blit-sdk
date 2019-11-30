@@ -1,6 +1,3 @@
-struct SDL_Window;
-struct SDL_Texture;
-
 class System;
 
 class Renderer {
@@ -12,12 +9,14 @@ class Renderer {
 
 		void resize(int width, int height);
 		void update(System *sys);
-		void render(SDL_Texture *target);
-		void render();
 		void present();
 		void set_mode(Mode mode);
+		void start_recording(Uint8 *buffer);
+		void stop_recording();
 
 	private:
+		void _render(SDL_Texture *target, SDL_Rect *destination);
+
 		int sys_width, sys_height;
 		int win_width, win_height;
 
@@ -28,4 +27,7 @@ class Renderer {
 		SDL_Texture *fb_texture_RGB24 = NULL;
 		SDL_Texture *ltdc_texture_RGB565 = NULL;
 		SDL_Texture *current = NULL;
+
+		Uint8 *record_buffer = NULL;
+		SDL_Texture *record_target = NULL;
 };

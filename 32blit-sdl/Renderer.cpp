@@ -56,9 +56,13 @@ void Renderer::resize(int width, int height) {
 	if (ltdc_texture_RGB565) {
 		SDL_DestroyTexture(ltdc_texture_RGB565);
 	}
+	if (record_target) {
+		SDL_DestroyTexture(record_target);
+	}
 
 	fb_texture_RGB24 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, sys_width, sys_height);
 	ltdc_texture_RGB565 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_TARGET, sys_width * 2, sys_height * 2);
+	record_target = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, sys_width * 2, sys_height * 2);
 }
 
 void Renderer::update(System *sys) {
@@ -67,17 +71,27 @@ void Renderer::update(System *sys) {
 	sys->update_texture(current);
 }
 
-void Renderer::render(SDL_Texture *target) {
+void Renderer::_render(SDL_Texture *target, SDL_Rect *destination) {
 	SDL_SetRenderTarget(renderer, target);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	SDL_RenderClear(renderer);
-	SDL_RenderCopy(renderer, current, NULL, &dest);
-}
-
-void Renderer::render() {
-	render(NULL);
+	SDL_RenderCopy(renderer, current, NULL, destination);
 }
 
 void Renderer::present() {
+	_render(NULL, &dest);
 	SDL_RenderPresent(renderer);
+	if (record_buffer) {
+		_render(record_target, NULL);
+		SDL_RenderReadPixels(renderer, NULL, SDL_PIXELFORMAT_RGB24, record_buffer, 320*3);
+	}
 }
+
+void Renderer::start_recording(Uint8 *buffer) {
+	record_buffer = buffer;
+}
+
+void Renderer::stop_recording() {
+	record_buffer = NULL;
+}
+

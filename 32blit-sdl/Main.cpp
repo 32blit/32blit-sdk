@@ -56,8 +56,7 @@ int main(int argc, char *argv[]) {
 #ifndef NO_FFMPEG_CAPTURE
 	static bool recording = false;
 	static unsigned int last_record_startstop = 0;
-	SDL_Texture* recorder_target;
-	uint8_t recorder_buffer[SYSTEM_WIDTH*2 * SYSTEM_HEIGHT*2 * 3];
+	uint8_t record_buffer[SYSTEM_WIDTH*2 * SYSTEM_HEIGHT*2 * 3];
 #endif
 
 	std::cout << "Hello World" << std::endl;
@@ -127,17 +126,18 @@ int main(int argc, char *argv[]) {
 							if (!recording) {
 								std::stringstream filename;
 								filename << argv[0];
-								filename << "-";
-								filename << "capture-";
+								filename << "-capture-";
 								filename << getTimeStamp().c_str();
-								filename << ".mkv";
-								open_stream(filename.str().c_str(), SYSTEM_WIDTH*2, SYSTEM_HEIGHT*2, AV_PIX_FMT_RGB24, recorder_buffer);
+								filename << ".mpg";
+								ren->start_recording(record_buffer);
+								open_stream(filename.str().c_str(), SYSTEM_WIDTH*2, SYSTEM_HEIGHT*2, record_buffer);
 								recording = true;
 								std::cout << "Starting capture to " << filename.str() << std::endl;
 							}
 							else
 							{
 								recording = false;
+								ren->stop_recording();
 								close_stream();
 								std::cout << "Finished capture." << std::endl;
 							}
@@ -169,14 +169,9 @@ int main(int argc, char *argv[]) {
 				if(event.type == System::loop_event) {
 					ren->update(sys);
 					sys->notify_redraw();
-					ren->render();
 					ren->present();
 #ifndef NO_FFMPEG_CAPTURE
-					if (recording) {
-						ren->render(recorder_target);
-						SDL_RenderReadPixels(renderer, NULL, SDL_PIXELFORMAT_RGB24, &recorder_buffer, 320*3);
-						capture();
-					}
+					if (recording) capture();
 #endif
 				} else if (event.type == System::timer_event) {
 					switch(event.user.code) {
@@ -202,10 +197,10 @@ int main(int argc, char *argv[]) {
 #ifndef NO_FFMPEG_CAPTURE
 	if (recording) {
 		recording = false;
+		ren->stop_recording();
 		close_stream();
 		std::cout << "Finished capture." << std::endl;
 	}
-	SDL_DestroyTexture(recorder_target);
 #endif
 
 	sys->stop();
