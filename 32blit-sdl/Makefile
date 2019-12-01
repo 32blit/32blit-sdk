@@ -74,7 +74,7 @@ ifeq ($(ENABLE_FFMPEG), true)
 FFMPEG_LIBS = -Wl,-Bstatic -lavformat -lavcodec -lavdevice -lavfilter -lavutil -lswresample -lswscale -Wl,-Bdynamic -llzma -lz
 LDFLAGS +=  -L$(FFMPEG)/lib $(FFMPEG_LIBS)
 CPPFLAGS +=  -I$(FFMPEG)/include
-TESTBED_SRC_FILES += $(TESTBED)/VideoCapture.cpp
+TESTBED_SRC_FILES += $(TESTBED)/VideoCaptureFfmpeg.cpp
 else
 FFMPEG_LIBS = 
 CPPFLAGS += -DNO_FFMPEG_CAPTURE

@@ -17,7 +17,7 @@
 #include "Renderer.hpp"
 
 #ifndef NO_FFMPEG_CAPTURE
-#include "VideoCapture.hpp"
+#include "VideoCaptureFfmpeg.hpp"
 #endif
 
 #define WINDOW_TITLE "TinyDebug SDL"
@@ -128,14 +128,14 @@ int main(int argc, char *argv[]) {
 								filename << "-capture-";
 								filename << getTimeStamp().c_str();
 								filename << ".mpg";
-								open_stream(filename.str().c_str(), System::width, System::height, record_buffer);
+								ffmpeg_open_stream(filename.str().c_str(), System::width, System::height, record_buffer);
 								recording = true;
 								std::cout << "Starting capture to " << filename.str() << std::endl;
 							}
 							else
 							{
 								recording = false;
-								close_stream();
+								ffmpeg_close_stream();
 								std::cout << "Finished capture." << std::endl;
 							}
 							last_record_startstop = SDL_GetTicks();
@@ -170,7 +170,7 @@ int main(int argc, char *argv[]) {
 #ifndef NO_FFMPEG_CAPTURE
 					if (recording) {
 						ren->read_pixels(System::width, System::height, SDL_PIXELFORMAT_RGB24, record_buffer);
-						capture();
+						ffmpeg_capture();
 					}
 #endif
 				} else if (event.type == System::timer_event) {
@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
 #ifndef NO_FFMPEG_CAPTURE
 	if (recording) {
 		recording = false;
-		close_stream();
+		ffmpeg_close_stream();
 		std::cout << "Finished capture." << std::endl;
 	}
 #endif

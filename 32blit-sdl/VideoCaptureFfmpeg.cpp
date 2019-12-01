@@ -527,7 +527,7 @@ static void close_stream(AVFormatContext *oc, OutputStream *ost)
 /* media file output */
 
 //int main(int argc, char **argv)
-int open_stream(const char *filename, int width, int height, uint8_t *pic_src) {
+int ffmpeg_open_stream(const char *filename, int width, int height, uint8_t *pic_src) {
 
 	AVOutputFormat *fmt;
 	AVCodec *audio_codec = NULL, *video_codec = NULL;
@@ -590,7 +590,7 @@ int open_stream(const char *filename, int width, int height, uint8_t *pic_src) {
 	return 0;
 }
 
-int capture(void)
+int ffmpeg_capture(void)
 {
 	if (encode_video || encode_audio) {
 		/* select the stream to encode */
@@ -607,7 +607,7 @@ int capture(void)
 	return 0;
 }
 
-int close_stream(void) {
+int ffmpeg_close_stream(void) {
 	/* Write the trailer, if any. The trailer must be written before you
 	 * close the CodecContexts open when you wrote the header; otherwise
 	 * av_write_trailer() may try to use memory that was freed on
