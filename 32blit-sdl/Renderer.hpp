@@ -11,8 +11,7 @@ class Renderer {
 		void update(System *sys);
 		void present();
 		void set_mode(Mode mode);
-		void start_recording(Uint8 *buffer);
-		void stop_recording();
+		void read_pixels(int width, int height, Uint32 format, Uint8 *buffer);
 
 	private:
 		void _render(SDL_Texture *target, SDL_Rect *destination);
@@ -27,7 +26,4 @@ class Renderer {
 		SDL_Texture *fb_texture_RGB24 = NULL;
 		SDL_Texture *ltdc_texture_RGB565 = NULL;
 		SDL_Texture *current = NULL;
-
-		Uint8 *record_buffer = NULL;
-		SDL_Texture *record_target = NULL;
 };

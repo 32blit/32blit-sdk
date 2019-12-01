@@ -128,7 +128,6 @@ int main(int argc, char *argv[]) {
 								filename << "-capture-";
 								filename << getTimeStamp().c_str();
 								filename << ".mpg";
-								ren->start_recording(record_buffer);
 								open_stream(filename.str().c_str(), System::width, System::height, record_buffer);
 								recording = true;
 								std::cout << "Starting capture to " << filename.str() << std::endl;
@@ -136,7 +135,6 @@ int main(int argc, char *argv[]) {
 							else
 							{
 								recording = false;
-								ren->stop_recording();
 								close_stream();
 								std::cout << "Finished capture." << std::endl;
 							}
@@ -170,7 +168,10 @@ int main(int argc, char *argv[]) {
 					sys->notify_redraw();
 					ren->present();
 #ifndef NO_FFMPEG_CAPTURE
-					if (recording) capture();
+					if (recording) {
+						ren->read_pixels(System::width, System::height, SDL_PIXELFORMAT_RGB24, record_buffer);
+						capture();
+					}
 #endif
 				} else if (event.type == System::timer_event) {
 					switch(event.user.code) {
@@ -196,7 +197,6 @@ int main(int argc, char *argv[]) {
 #ifndef NO_FFMPEG_CAPTURE
 	if (recording) {
 		recording = false;
-		ren->stop_recording();
 		close_stream();
 		std::cout << "Finished capture." << std::endl;
 	}
