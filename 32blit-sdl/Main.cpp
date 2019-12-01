@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	System *sys = new System();
-	Input *inp = new Input(window);
+	Input *inp = new Input(window, sys);
 	Renderer *ren = new Renderer(window, System::width, System::height);
 
 	sys->run();
@@ -106,18 +106,18 @@ int main(int argc, char *argv[]) {
 
 			case SDL_MOUSEBUTTONUP:
 			case SDL_MOUSEBUTTONDOWN:
-				inp->handle_mouse(sys, event.button.button, event.type == SDL_MOUSEBUTTONDOWN, event.button.x, event.button.y);
+				inp->handle_mouse(event.button.button, event.type == SDL_MOUSEBUTTONDOWN, event.button.x, event.button.y);
 				break;
 
 			case SDL_MOUSEMOTION:
 				if (event.motion.state & SDL_BUTTON_LMASK) {
-					inp->handle_mouse(sys, SDL_BUTTON_LEFT, event.motion.state & SDL_MOUSEBUTTONDOWN, event.motion.x, event.motion.y);
+					inp->handle_mouse(SDL_BUTTON_LEFT, event.motion.state & SDL_MOUSEBUTTONDOWN, event.motion.x, event.motion.y);
 				}
 				break;
 
 			case SDL_KEYDOWN: // fall-though
 			case SDL_KEYUP:
-				if (!inp->handle_keyboard(sys, event.key.keysym.sym, event.type == SDL_KEYDOWN)) {
+				if (!inp->handle_keyboard(event.key.keysym.sym, event.type == SDL_KEYDOWN)) {
 					switch (event.key.keysym.sym) {
 #ifndef NO_FFMPEG_CAPTURE
 					case SDLK_r:
@@ -149,11 +149,11 @@ int main(int argc, char *argv[]) {
 
 			case SDL_CONTROLLERBUTTONDOWN:
 			case SDL_CONTROLLERBUTTONUP:
-				inp->handle_controller_button(sys, event.cbutton.button, event.type == SDL_CONTROLLERBUTTONDOWN);
+				inp->handle_controller_button(event.cbutton.button, event.type == SDL_CONTROLLERBUTTONDOWN);
 				break;
 
 			case SDL_CONTROLLERAXISMOTION:
-				inp->handle_controller_motion(sys, event.caxis.axis, event.caxis.value);
+				inp->handle_controller_motion(event.caxis.axis, event.caxis.value);
 				break;
 
 			case SDL_RENDER_TARGETS_RESET:

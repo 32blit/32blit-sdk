@@ -60,7 +60,7 @@ int Input::find_button(int button) {
 	else return iter->second;
 }
 
-Input::Input(SDL_Window *window) {
+Input::Input(SDL_Window *window, System *target) : target(target) {
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
 	resize(w, h);
@@ -71,27 +71,27 @@ void Input::resize(int width, int height) {
 	win_height = height;
 }
 
-bool Input::handle_mouse(System *sys, int button, bool state, int x, int y) {
+bool Input::handle_mouse(int button, bool state, int x, int y) {
 	if (button == SDL_BUTTON_LEFT) {
 		if (state) {
 			if(left_ctrl){
-				_virtual_tilt(sys, x, y);
+				_virtual_tilt(x, y);
 			} else {
 				x = x - (win_width / 2);
 				y = y - (win_height / 2);
-				_virtual_analog(sys, x, y);
+				_virtual_analog(x, y);
 			}
 		} else {
-			_virtual_analog(sys, 0, 0);
+			_virtual_analog(0, 0);
 		}
 		return true;
 	}
 	return false;
 }
 
-bool Input::handle_keyboard(System *sys, int key, bool state) {
+bool Input::handle_keyboard(int key, bool state) {
 	if (int blit_button = find_key(key)) {
-		sys->set_button(blit_button, state);
+		target->set_button(blit_button, state);
 		return true;
 	} else if (key == SDLK_LCTRL) {
 		left_ctrl = state;
@@ -100,28 +100,28 @@ bool Input::handle_keyboard(System *sys, int key, bool state) {
 	return false;
 }
 
-bool Input::handle_controller_button(System *sys, int button, bool state) {
+bool Input::handle_controller_button(int button, bool state) {
 	if (int blit_button = find_button(button)) {
-		sys->set_button(blit_button, state);
+		target->set_button(blit_button, state);
 		return true;
 	}
 	return false;
 }
 
-bool Input::handle_controller_motion(System *sys, int axis, int value) {
+bool Input::handle_controller_motion(int axis, int value) {
 	float fvalue = value / 32768.0;
 	switch(axis) {
 		case SDL_CONTROLLER_AXIS_LEFTX:
-			sys->set_joystick(0, fvalue);
+			target->set_joystick(0, fvalue);
 			return true;
 		case SDL_CONTROLLER_AXIS_LEFTY:
-			sys->set_joystick(1, fvalue);
+			target->set_joystick(1, fvalue);
 			return true;
 		case SDL_CONTROLLER_AXIS_RIGHTX:
-			sys->set_tilt(0, fvalue);
+			target->set_tilt(0, fvalue);
 			return true;
 		case SDL_CONTROLLER_AXIS_RIGHTY:
-			sys->set_tilt(1, fvalue);
+			target->set_tilt(1, fvalue);
 			return true;
 		default:
 			break;
@@ -129,20 +129,20 @@ bool Input::handle_controller_motion(System *sys, int axis, int value) {
 	return false;
 }
 
-void Input::_virtual_tilt(System *sys, int x, int y) {
+void Input::_virtual_tilt(int x, int y) {
 	int z = 80;
 	x = x - (win_width / 2);
 	y = y - (win_height / 2);
 	vec3 shadow_tilt = vec3(x, y, z);
 	shadow_tilt.normalize();
-	sys->set_tilt(0, shadow_tilt.x);
-	sys->set_tilt(1, shadow_tilt.y);
-	sys->set_tilt(2, shadow_tilt.z);
+	target->set_tilt(0, shadow_tilt.x);
+	target->set_tilt(1, shadow_tilt.y);
+	target->set_tilt(2, shadow_tilt.z);
 }
 
-void Input::_virtual_analog(System *sys, int x, int y) {
+void Input::_virtual_analog(int x, int y) {
 	float jx = (float)x / (win_width / 2);
 	float jy = (float)y / (win_height / 2);
-	sys->set_joystick(0, jx);
-	sys->set_joystick(1, jy);
+	target->set_joystick(0, jx);
+	target->set_joystick(1, jy);
 }
