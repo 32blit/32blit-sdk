@@ -17,46 +17,16 @@
 #include "Renderer.hpp"
 
 #ifndef NO_FFMPEG_CAPTURE
-#include "VideoCaptureFfmpeg.hpp"
+#include "VideoCapture.hpp"
 #endif
 
 #define WINDOW_TITLE "TinyDebug SDL"
-
-
-inline std::tm localtime_xp(std::time_t timer)
-{
-	// Don't ignore unsafe warnings - https://stackoverflow.com/questions/38034033/c-localtime-this-function-or-variable-may-be-unsafe
-	std::tm bt{};
-#if defined(__unix__)
-	localtime_r(&timer, &bt);
-#elif defined(_MSC_VER)
-	localtime_s(&bt, &timer);
-#else
-	static std::mutex mtx;
-	std::lock_guard<std::mutex> lock(mtx);
-	bt = *std::localtime(&timer);
-#endif
-	return bt;
-}
-
-std::string getTimeStamp() {
-	auto bt = localtime_xp(std::time(0));
-	std::string s(30, '\0');
-	std::strftime(&s[0], s.size(), "%Y-%m-%d-%H-%M-%S", &bt);
-	return s;
-}
 
 
 int main(int argc, char *argv[]) {
 	static bool running = true;
 
 	SDL_Window* window = NULL;
-
-#ifndef NO_FFMPEG_CAPTURE
-	static bool recording = false;
-	static unsigned int last_record_startstop = 0;
-	uint8_t record_buffer[System::width * System::height * 3];
-#endif
 
 	std::cout << "Hello World" << std::endl;
 
@@ -86,6 +56,11 @@ int main(int argc, char *argv[]) {
 	System *sys = new System();
 	Input *inp = new Input(window, sys);
 	Renderer *ren = new Renderer(window, System::width, System::height);
+
+#ifndef NO_FFMPEG_CAPTURE
+	VideoCapture *cap = new VideoCapture(argv[0]);
+	unsigned int last_record_startstop = 0;
+#endif
 
 	sys->run();
 
@@ -122,22 +97,8 @@ int main(int argc, char *argv[]) {
 #ifndef NO_FFMPEG_CAPTURE
 					case SDLK_r:
 						if (event.type == SDL_KEYDOWN && SDL_GetTicks() - last_record_startstop > 1000) {
-							if (!recording) {
-								std::stringstream filename;
-								filename << argv[0];
-								filename << "-capture-";
-								filename << getTimeStamp().c_str();
-								filename << ".mpg";
-								ffmpeg_open_stream(filename.str().c_str(), System::width, System::height, record_buffer);
-								recording = true;
-								std::cout << "Starting capture to " << filename.str() << std::endl;
-							}
-							else
-							{
-								recording = false;
-								ffmpeg_close_stream();
-								std::cout << "Finished capture." << std::endl;
-							}
+							if (cap->recording()) cap->stop();
+							else cap->start();
 							last_record_startstop = SDL_GetTicks();
 						}
 #endif
@@ -168,10 +129,7 @@ int main(int argc, char *argv[]) {
 					sys->notify_redraw();
 					ren->present();
 #ifndef NO_FFMPEG_CAPTURE
-					if (recording) {
-						ren->read_pixels(System::width, System::height, SDL_PIXELFORMAT_RGB24, record_buffer);
-						ffmpeg_capture();
-					}
+					if (cap->recording()) cap->capture(ren);
 #endif
 				} else if (event.type == System::timer_event) {
 					switch(event.user.code) {
@@ -195,11 +153,8 @@ int main(int argc, char *argv[]) {
 	}
 
 #ifndef NO_FFMPEG_CAPTURE
-	if (recording) {
-		recording = false;
-		ffmpeg_close_stream();
-		std::cout << "Finished capture." << std::endl;
-	}
+	if (cap->recording()) cap->stop();
+	delete cap;
 #endif
 
 	sys->stop();
