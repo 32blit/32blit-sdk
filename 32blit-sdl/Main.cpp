@@ -3,14 +3,7 @@
 #endif
 
 #include <SDL.h>
-#include <random>
-#include <cmath>
 #include <iostream>
-#include <chrono>
-#include <ctime>
-#include <string>
-#include <sstream>
-#include <map>
 
 #include "Input.hpp"
 #include "System.hpp"
