@@ -2,7 +2,11 @@
 
 import argparse
 import sys
+import pathlib
 import zlib
+
+import construct
+
 from bitstring import BitArray
 from construct import this, len_, Struct, Padded, CString, Rebuild, Computed, RawCopy, Checksum, Hex, Bytes, Int8ul, Int16ul, Int32ul, Const, Flag, Padding, Array, Prefixed, GreedyBytes, GreedyRange, PaddedString
 
@@ -29,11 +33,11 @@ def DFU_file_length(ctx):
     for target in ctx.targets:
         # Each target has a 274 byte header consisting
         # of the following fields:
-        size += Const(DFU_SIGNATURE).sizeof()          # szSignature ("Target" in bytes)
+        size += Const(DFU_SIGNATURE).sizeof()          # szSignature ('Target' in bytes)
         size += Int8ul.sizeof()                        # bAlternateSetting
         size += Int8ul.sizeof()                        # bTargetNamed
         size += Padding(3).sizeof()                    # Padding
-        size += Padded(255, CString("utf8")).sizeof()  # szTargetName
+        size += Padded(255, CString('utf8')).sizeof()  # szTargetName
         size += Int32ul.sizeof()                       # dwTargetSize
         size += Int32ul.sizeof()                       # dwNbElements
         size += DFU_target_size(target)
@@ -70,7 +74,7 @@ DFU_target = Struct(
     'bAlternateSetting' / Int8ul,          # Gives device alternate setting for which this image can be used
     'bTargetNamed' / Flag,                 # Boolean determining if the target is named
     Padding(3),                            # Mystery bytes!
-    'szTargetName' / Padded(255, CString("utf8")),         # Target name
+    'szTargetName' / Padded(255, CString('utf8')),         # Target name
                                                            # DFU File Manager does not initialise this
                                                            # memory, so our file will not exactly match
                                                            # its output.
@@ -102,18 +106,28 @@ DFU = Struct(
                        this.fields.data)
 )
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help='Commands', dest='command')
     parser_build = subparsers.add_parser('build', help='Build a DFU image')
     parser_read = subparsers.add_parser('read', help='Read a DFU image')
-    parser_build.add_argument('--out', type=str, help='Output file', default=None)
+    parser_build.add_argument('--out', type=pathlib.Path, help='Output file', default=None)
     parser_build.add_argument('--address', type=int, default=0x08000000)
-    parser.add_argument('file', type=str, help='Input file')
+    parser_build.add_argument('--force', action='store_true')
+    parser.add_argument('file', type=pathlib.Path, help='Input file')
 
     args = parser.parse_args()
 
+    if not args.file.is_file():
+        raise parser.error(f'Invalid input file "{args.file}"')
+
     if args.command == 'build':
+        if not args.out.parent.is_dir():
+            raise parser.error(f'Output directory "{args.out.parent}" does not exist!')
+        elif args.out.is_file() and not args.force:
+            raise parser.error(f'Existing output file "{args.out}", use --force to overwrite!')
+
         data = DFU.build({'fields': {'value': {
             'targets': [{
                 'bAlternateSetting': 0,
@@ -132,7 +146,11 @@ if __name__ == '__main__':
         open(args.out, 'wb').write(data)
 
     if args.command == 'read':
-        parsed = DFU.parse(open(args.file, 'rb').read())
+        try:
+            parsed = DFU.parse(open(args.file, 'rb').read())
+        except construct.core.ConstructError as error:
+            parser.error(f'Invalid dfu file {args.file} ({error})')
+
         print(f'''
 Device: {parsed.fields.value.bcdDevice}
 Target: {parsed.fields.value.idProduct:04x}:{parsed.fields.value.idVendor:04x}
