@@ -4,6 +4,7 @@
 #include "main.h"
 #include "adc.h"
 #include "ltdc.h"
+#include "tim.h"
 
 #include "32blit.hpp"
 
@@ -137,6 +138,20 @@ void blit_clear_framebuffer() {
       *pc++ = (((x / 10) + (y / 10)) & 0b1) ?  0x38E7 : 0x7BEF;
     }
   }
+}
+
+void blit_update_led() {
+    // RED Led
+    float compare_r = (LED.r * 10000) / 255;
+    __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_3, compare_r);
+
+    // GREEN Led
+    float compare_g = (LED.g * 10000) / 255;
+    __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_4, compare_g);
+  
+    // BLUE Led
+    float compare_b = (LED.b * 10000) / 255;
+    __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2, compare_b);
 }
 
 void blit_process_input() {

@@ -2,6 +2,7 @@
 
 #include "engine/engine.hpp"
 #include "engine/utility.hpp"
+#include "engine/output.hpp"
 #include "engine/input.hpp"
 #include "engine/timer.hpp"
 #include "graphics/blend.hpp"

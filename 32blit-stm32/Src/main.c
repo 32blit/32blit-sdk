@@ -136,26 +136,15 @@ int main(void)
   {
 
     // Vibration Motor
-    float scale_vibe = (sin(HAL_GetTick() / 1000.0f) + 1.0) / 2.0;
-    __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, 2000 * scale_vibe);
+    //float scale_vibe = (sin(HAL_GetTick() / 1000.0f) + 1.0) / 2.0;
+    __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, 0);
   
     // Backlight
-    float scale_bl = (sin(HAL_GetTick() / 1000.0f) + 1.0) / 2.0;
-    __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 2000 * scale_bl);
-  
-    // RED Led
-    float scale_r = (sin(HAL_GetTick() / 1000.0f) + 1.0) / 2.0;
-    __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_3, 10000 * scale_r);
-
-    // GREEN Led
-    float scale_g = (cos(HAL_GetTick() / 1000.0f) + 1.0) / 2.0;
-    __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_4, 5000 * scale_g);
-  
-    // BLUE Led
-    float scale_b = (sin(HAL_GetTick() / 1000.0f) + 1.0) / 2.0;
-    __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2, 10000 * scale_b);
+    //float scale_bl = (sin(HAL_GetTick() / 1000.0f) + 1.0) / 2.0;
+    //__HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 2000 * scale_bl);
 
     blit_process_input();
+    blit_update_led();
     blit_swap();
     blit_tick();
     blit_flip();
