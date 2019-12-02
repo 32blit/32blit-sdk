@@ -36,7 +36,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include <string.h>
 #include "ff_gen_drv.h"
-#include "fatfs_sd.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -83,7 +82,8 @@ DSTATUS USER_initialize (
 )
 {
   /* USER CODE BEGIN INIT */
-	return SD_disk_initialize(pdrv);
+    Stat = STA_NOINIT;
+    return Stat;
   /* USER CODE END INIT */
 }
  
@@ -97,7 +97,8 @@ DSTATUS USER_status (
 )
 {
   /* USER CODE BEGIN STATUS */
-	return SD_disk_status(pdrv);
+    Stat = STA_NOINIT;
+    return Stat;
   /* USER CODE END STATUS */
 }
 
@@ -117,7 +118,7 @@ DRESULT USER_read (
 )
 {
   /* USER CODE BEGIN READ */
-	return SD_disk_read(pdrv, buff, sector, count);
+    return RES_OK;
   /* USER CODE END READ */
 }
 
@@ -139,7 +140,7 @@ DRESULT USER_write (
 { 
   /* USER CODE BEGIN WRITE */
   /* USER CODE HERE */
-	return SD_disk_write(pdrv, buff, sector, count);
+    return RES_OK;
   /* USER CODE END WRITE */
 }
 #endif /* _USE_WRITE == 1 */
@@ -159,7 +160,8 @@ DRESULT USER_ioctl (
 )
 {
   /* USER CODE BEGIN IOCTL */
-	return SD_disk_ioctl(pdrv, cmd, buff);
+    DRESULT res = RES_ERROR;
+    return res;
   /* USER CODE END IOCTL */
 }
 #endif /* _USE_IOCTL == 1 */

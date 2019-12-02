@@ -30,10 +30,10 @@ namespace blit {
 
     tilemap(uint8_t *tiles, uint8_t *transforms, size bounds, spritesheet *sprites);
 
-    inline int32_t offset(const point &p) __attribute__((always_inline));
-    int32_t offset(const int16_t &x, const int16_t &y) __attribute__((always_inline));
-    uint8_t tile_at(const point &p) __attribute__((always_inline));
-    uint8_t transform_at(const point &p) __attribute__((always_inline));
+    inline int32_t offset(const point &p); // __attribute__((always_inline));
+    int32_t offset(const int16_t &x, const int16_t &y); // __attribute__((always_inline));
+    uint8_t tile_at(const point &p); // __attribute__((always_inline));
+    uint8_t transform_at(const point &p); // __attribute__((always_inline));
 
     void draw(surface *dest, rect viewport, std::function<mat3(uint8_t)> scanline_callback);
 

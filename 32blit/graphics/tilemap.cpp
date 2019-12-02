@@ -46,7 +46,7 @@ namespace blit {
    * \param[in] x
    * \param[in] y
    */
-  inline int32_t tilemap::offset(const int16_t &x, const int16_t &y) {
+  int32_t tilemap::offset(const int16_t &x, const int16_t &y) {
     int32_t cx = ((uint16_t)x) & (bounds.w - 1);
     int32_t cy = ((uint16_t)y) & (bounds.h - 1);
 
@@ -69,7 +69,7 @@ namespace blit {
    * \param[in] p Point denoting the tile x/y position in the map.
    * \return Bitmask of flags for specified tile.
    */
-  inline uint8_t tilemap::tile_at(const point &p) {
+  uint8_t tilemap::tile_at(const point &p) {
     int32_t o = offset(p);
 
     if(o != -1)
@@ -84,7 +84,7 @@ namespace blit {
    * \param[in] p Point denoting the tile x/y position in the map.
    * \return Bitmask of transforms for specified tile.
    */
-  inline uint8_t tilemap::transform_at(const point &p) {
+  uint8_t tilemap::transform_at(const point &p) {
     int32_t o = offset(p);
 
     if (o != -1 && transforms)

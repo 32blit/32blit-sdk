@@ -6,9 +6,7 @@
 
 #include "logo.hpp"
 
-using namespace graphics;
-using namespace engine;
-using namespace input;
+using namespace blit;
 
 const size screen_size(160, 120);
 
@@ -19,8 +17,8 @@ uint8_t __m[160 * 120] __attribute__((section(".m")));
 
 /* create surfaces */
 //surface fb((uint8_t *)__fb, screen_size, pixel_format::RGB);
-surface ss((uint8_t *)__ss, size(128, 128), pixel_format::RGBA);
-surface m((uint8_t *)__m, screen_size, pixel_format::M);
+surface ss((uint8_t *)__ss, pixel_format::RGBA, size(128, 128));
+surface m((uint8_t *)__m, pixel_format::M, screen_size);
 
 uint8_t logo[] = {
   1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 2,

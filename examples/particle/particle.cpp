@@ -5,14 +5,13 @@
 
 #include "particle.hpp"
 
-using namespace engine;
-using namespace graphics;
+using namespace blit;
 
 
 
 /* setup */
 void init() {
-  engine::set_screen_mode(screen_mode::hires);
+  blit::set_screen_mode(screen_mode::hires);
 }
 
 struct test_particle {
@@ -275,7 +274,7 @@ void update(uint32_t time_ms) {
 //  smoke_generator.update(time_ms);
   basic_rain_generator.update(time_ms);
 
-  if (pressed(input::DPAD_LEFT)) {
+  if (pressed(button::DPAD_LEFT)) {
     g.rotate(0.1f);
   }
 }

@@ -6,9 +6,7 @@
 
 #include "platformer.hpp"
 
-using namespace graphics;
-using namespace engine;
-using namespace input;
+using namespace blit;
 
 size screen_size(160, 120);
 
@@ -17,14 +15,11 @@ rgba    __ss[128 * 128] __attribute__((section(".ss")));
 uint8_t __m[320 * 240] __attribute__((section(".m")));  
 
 /* create surfaces */
-surface ss((uint8_t *)__ss, size(128, 128), pixel_format::RGBA);
-surface m((uint8_t *)__m, screen_size, pixel_format::M);
+surface m((uint8_t *)__m, pixel_format::M, screen_size);
 
 const int max_light_radius = 60;
 uint8_t __mshad[(max_light_radius * 2 + 1) * (max_light_radius * 2 + 1)] __attribute__((section(".m")));
-surface mshad((uint8_t *)__mshad, size(max_light_radius * 2 + 1, max_light_radius * 2 + 1), pixel_format::M);
-
-spritesheet sprites(ss, 8, 8);
+surface mshad((uint8_t *)__mshad, pixel_format::M, size(max_light_radius * 2 + 1, max_light_radius * 2 + 1));
 
 point world_to_screen(const vec2 &p);
 point world_to_screen(const point &p);
@@ -135,11 +130,11 @@ struct Player {
     static float duration = 0.01f;
     static vec2 gravity(0, 9.8f * 5.0f);   // normal gravity is boring!
 
-    if (pressed(input::DPAD_LEFT)) {
+    if (pressed(button::DPAD_LEFT)) {
       vel.x = vel.x - (on_ground() ? ground_acceleration_x : air_acceleration_x);
     }
 
-    if (pressed(input::DPAD_RIGHT)) {
+    if (pressed(button::DPAD_RIGHT)) {
       vel.x = vel.x + (on_ground() ? ground_acceleration_x : air_acceleration_x);
     }
 
@@ -178,9 +173,9 @@ struct Player {
     uint8_t si = animation_sprite_index(animation);
 
     point sp = world_to_screen(point(pos.x - 4, pos.y - 7));
-    sprites.draw(&fb, sp, si, flip);
+    fb.sprite(si, sp, flip);
     sp.y -= 8;
-    sprites.draw(&fb, sp, si - 16, flip);
+    fb.sprite(si - 16, sp, flip);
 
 
     rect bb = aabb();
@@ -341,11 +336,11 @@ void render(uint32_t time) {
 
   // bat
   point sp = world_to_screen(point(bat1.pos.x - 4, bat1.pos.y));
-  sprites.draw(&fb, sp, bat1.frames[bat1.current_frame], bat1.vel.x < 0 ? false : true);
+  fb.sprite(bat1.frames[bat1.current_frame], sp, bat1.vel.x < 0 ? false : true);
 
   // slime
   sp = world_to_screen(point(slime1.pos.x - 4, slime1.pos.y));
-  sprites.draw(&fb, sp, slime1.frames[slime1.current_frame], slime1.vel.x < 0 ? true : false);
+  fb.sprite(slime1.frames[slime1.current_frame], sp, slime1.vel.x < 0 ? false : true);
 
 
   // overlay water
@@ -378,9 +373,9 @@ void render(uint32_t time) {
   tick++;
   fb.mask = nullptr;
   fb.alpha = 255;
-  sprites.draw(&fb, point(2, 2), 139, false);
-  sprites.draw(&fb, point(12, 2), 139, false);
-  sprites.draw(&fb, point(22, 2), 139, false);
+  fb.sprite(139, point(2, 2));
+  fb.sprite(139, point(12, 2));
+  fb.sprite(139, point(22, 2));
 
   
   // draw FPS meter
@@ -427,27 +422,27 @@ void update(uint32_t time) {
   /*
   // player is on the ground and not moving left or right, friction!
   if (player.in_water()) {
-    if ((pressed(input::A) | pressed(input::DPAD_UP))) {
+    if ((pressed(button::A) | pressed(button::DPAD_UP))) {
       player.vel.y = 0;
     }
 
-    if ((pressed(input::A) | pressed(input::DPAD_LEFT))) {
+    if ((pressed(button::A) | pressed(button::DPAD_LEFT))) {
       player.vel.x = 0;
     }
 
-    if ((pressed(input::A) | pressed(input::DPAD_RIGHT))) {
+    if ((pressed(button::A) | pressed(button::DPAD_RIGHT))) {
       player.vel.x = 0;
     }
 
   }
   else {
-    if (pressed(input::DPAD_LEFT)) {
+    if (pressed(button::DPAD_LEFT)) {
       player.vel.x = player.vel.x - (player.on_ground() ? ground_acceleration_x : air_acceleration_x);
       player.vel.x = std::max(-max_speed_x, player.vel.x);
       player.flip = true;
     }
 
-    if (pressed(input::DPAD_RIGHT)) {
+    if (pressed(button::DPAD_RIGHT)) {
       player.vel.x = player.vel.x + (player.on_ground() ? ground_acceleration_x : air_acceleration_x);
       player.vel.x = std::min(max_speed_x, player.vel.x);
       player.flip = false;
@@ -456,11 +451,11 @@ void update(uint32_t time) {
     if (player.on_ground()) {
       jumping = false;
 
-      if (!pressed(input::DPAD_RIGHT) && !pressed(input::DPAD_LEFT)) {
+      if (!pressed(button::DPAD_RIGHT) && !pressed(button::DPAD_LEFT)) {
         player.vel.x = player.vel.x * 0.90;
       }
 
-      if ((pressed(input::A) | pressed(input::DPAD_UP)) && !jumping) {
+      if ((pressed(button::A) | pressed(button::DPAD_UP)) && !jumping) {
         player.vel.y = -jump_velocity;
         jumping = true;
       }
@@ -733,7 +728,7 @@ void load_assets() {
   std::vector<uint8_t> layer_objects = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,51,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,68,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,11,0,0,0,0,0,0,0,0,0,0,0,0,0,0,84,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12,0,39,0,0,0,0,0,0,0,0,68,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,39,0,0,0,0,0,0,0,0,0,0,85,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,84,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
   map.add_layer("objects", layer_objects);
 
-  sprites.s.load_from_packed(packed_data);
+  fb.sprites = spritesheet::load(packed_data);
 }
 
 
@@ -790,7 +785,7 @@ void draw_layer(MapLayer &layer) {
       if (ti != -1) {
         uint8_t si = layer.tiles[ti];
         if (si != 0) {
-          sprites.draw(&fb, pt, si, false);
+          fb.sprite(si, pt);
         }
       }
     }

@@ -6,6 +6,11 @@ TESTBED_BUILD_DIR = $(BUILD_DIR)/testbed
 # Build project object files and binaries into here
 PROJECT_BUILD_DIR = $(BUILD_DIR)/project
 
+SDL2_CONFIG := sdl2-config
+
+PREFIX := 
+CXX = $(PREFIX)g++
+
 # Location of the TestBed project
 # Does not need to be compiled, VideoCapture.cpp and Main.cpp are used directly by this tool
 TESTBED := .
@@ -50,23 +55,23 @@ export BOILERPLATE_HPP
 
 PROJECTS := $(wildcard $(PROJECT_DIR)/*)
 PROJECT := $(PROJECT_DIR)/$(NAME)
-LIB32BLIT := $(32BLIT)/build.32blit-sdl
+LIB32BLIT := $(32BLIT)/build.$(PREFIX)32blit-sdl
 INC32BLIT := $(32BLIT)
 
 # Use the project folder name as the output binary name
 # This is also the name that will prefix video recordings if ENABLE_FFMPEG=true
 OUTPUT_NAME = $(shell basename $(PROJECT))
 
-SDL_LIBS = `sdl2-config --libs`
+SDL_LIBS = `$(SDL2_CONFIG) --libs`
 
 # Glom all .cpp files from the testbed
-TESTBED_SRC_FILES := $(wildcard $(TESTBED)/*.cpp)
+TESTBED_SRC_FILES := $(TESTBED)/Input.cpp $(TESTBED)/Main.cpp $(TESTBED)/Renderer.cpp $(TESTBED)/System.cpp
 
 # Glom all .cpp files from our desired project
 PROJECT_SRC_FILES := $(wildcard $(PROJECT)/*.cpp)
 
 LDFLAGS += -l32blit -L$(LIB32BLIT) -L$(TESTBED)
-CPPFLAGS += -g -Wall `sdl2-config --cflags` -D__STDC_CONSTANT_MACROS -std=c++11 -I$(INC32BLIT)
+CPPFLAGS += -g -Wall `$(SDL2_CONFIG)  --cflags` -D__STDC_CONSTANT_MACROS -std=c++11 -I$(INC32BLIT)
 CXXFLAGS +=
 
 # Handle requirements for FFMPEG if it's enabled
@@ -74,13 +79,13 @@ ifeq ($(ENABLE_FFMPEG), true)
 FFMPEG_LIBS = -Wl,-Bstatic -lavformat -lavcodec -lavdevice -lavfilter -lavutil -lswresample -lswscale -Wl,-Bdynamic -llzma -lz
 LDFLAGS +=  -L$(FFMPEG)/lib $(FFMPEG_LIBS)
 CPPFLAGS +=  -I$(FFMPEG)/include
+TESTBED_SRC_FILES += $(TESTBED)/VideoCapture.cpp $(TESTBED)/VideoCaptureFfmpeg.cpp
 else
 FFMPEG_LIBS = 
 CPPFLAGS += -DNO_FFMPEG_CAPTURE
-TESTBED_SRC_FILES = $(TESTBED)/Main.cpp
 endif
 
-LDFLAGS += $(SDL_LIBS) -lpthread
+LDFLAGS += $(SDL_LIBS)
 
 # Convert our lists of .cpp files into lists of target .o files
 TESTBED_OBJ_FILES = $(patsubst $(TESTBED)/%.cpp,$(TESTBED_BUILD_DIR)/%.o,$(TESTBED_SRC_FILES))
@@ -96,13 +101,15 @@ list:
 	@echo "\nAvailable projects:"
 	@ls $(PROJECT_DIR)
 
+all: $(PROJECTS)
+
 .PHONY: force
 
 $(PROJECTS): force
 	$(MAKE) single_project PROJECT=$@ ENABLE_FFMPEG=$(ENABLE_FFMPEG)
 
 lib32blit-sdl:
-	make -C ../32blit 32blit-sdl
+	make -C ../32blit 32blit-sdl PREFIX=$(PREFIX)
 
 clean:
 	rm -r build
@@ -118,7 +125,7 @@ new:
 	echo "$$BOILERPLATE_HPP" > $(PROJECT_DIR)/$(NAME)/$(NAME).hpp
 
 $(LIB32BLIT)/lib32blit.a:
-	$(MAKE) -C $(32BLIT) PREFIX= MCU= CXXFLAGS="-fPIC -std=c++11" BUILDDIR=build.testbed
+	$(MAKE) -C $(32BLIT) PREFIX=$(PREFIX) MCU= CXXFLAGS="-fPIC -std=c++11" BUILDDIR=build.$(PREFIX)testbed
 
 $(PROJECT_BUILD_DIR)/$(OUTPUT_NAME): $(ALL_OBJ_FILES)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
@@ -126,7 +133,7 @@ $(PROJECT_BUILD_DIR)/$(OUTPUT_NAME): $(ALL_OBJ_FILES)
 $(PROJECT_BUILD_DIR)/%.o: $(PROJECT)/%.cpp $(PROJECT)/%.hpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c -o $@ $<
 
-$(TESTBED_BUILD_DIR)/%.o: $(TESTBED)/%.cpp
+$(TESTBED_BUILD_DIR)/%.o: $(TESTBED)/%.cpp $(TESTBED)/%.hpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c -o $@ $<
 
 $(BUILD_DIR):

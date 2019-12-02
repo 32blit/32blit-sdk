@@ -5,8 +5,7 @@
 
 #include "sprite-test.hpp"
 
-using namespace engine;
-using namespace graphics;
+using namespace blit;
 
 const uint16_t screen_width = 320;
 const uint16_t screen_height = 240;
@@ -18,8 +17,8 @@ uint8_t __pb[screen_width * screen_height] __attribute__((section(".fb")));
 
 /* create surfaces */
 //surface fb((uint8_t *)__fb, size(screen_width, screen_height), pixel_format::RGB);
-surface m((uint8_t *)__m, size(screen_width, screen_height), pixel_format::M);
-surface fbb((uint8_t *)__pb, size(screen_width, screen_height), pixel_format::P);
+surface m((uint8_t *)__m, pixel_format::M, size(screen_width, screen_height));
+surface fbb((uint8_t *)__pb, pixel_format::P, size(screen_width, screen_height));
 
 /* setup */
 void init() {
