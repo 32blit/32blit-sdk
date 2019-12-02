@@ -107,6 +107,25 @@ DFU = Struct(
 )
 
 
+def display_dfu_info(parsed):
+    print(f'''
+Device: {parsed.fields.value.bcdDevice}
+Target: {parsed.fields.value.idProduct:04x}:{parsed.fields.value.idVendor:04x}
+Size: {parsed.fields.value.DFUImageSize:,} bytes
+Targets: {parsed.fields.value.bTargets}''')
+    for target in parsed.fields.value.targets:
+        print(f'''
+    Name: {target.szTargetName}
+    Alternate Setting: {target.bAlternateSetting}
+    Size: {target.dwTargetSize:,} bytes
+    Images: {target.dwNbElements}''')
+        for image in target.images:
+            print(f'''
+        Offset: {image.dwElementAddress}
+        Size: {len(image.data):,} bytes
+''')
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help='Commands', dest='command')
@@ -116,6 +135,7 @@ if __name__ == '__main__':
     parser_build.add_argument('--address', type=int, default=0x08000000)
     parser_build.add_argument('--force', action='store_true')
     parser.add_argument('file', type=pathlib.Path, help='Input file')
+    parser.add_argument('--verbose', action='store_true')
 
     args = parser.parse_args()
 
@@ -128,7 +148,10 @@ if __name__ == '__main__':
         elif args.out.is_file() and not args.force:
             raise parser.error(f'Existing output file "{args.out}", use --force to overwrite!')
 
-        data = DFU.build({'fields': {'value': {
+        if not args.file.suffix == ".bin":
+            raise parser.error(f'Input file "{args.file}", is not a .bin file?')
+
+        output = DFU.build({'fields': {'value': {
             'targets': [{
                 'bAlternateSetting': 0,
                 'bTargetNamed': True,
@@ -143,7 +166,11 @@ if __name__ == '__main__':
             'idVendor': 0x0483
         }}})
 
-        open(args.out, 'wb').write(data)
+        if args.verbose:
+            print(f'''Packing "{args.file}" into "{args.out}"''')
+            display_dfu_info(DFU.parse(output))
+
+        open(args.out, 'wb').write(output)
 
     if args.command == 'read':
         try:
@@ -151,19 +178,4 @@ if __name__ == '__main__':
         except construct.core.ConstructError as error:
             parser.error(f'Invalid dfu file {args.file} ({error})')
 
-        print(f'''
-Device: {parsed.fields.value.bcdDevice}
-Target: {parsed.fields.value.idProduct:04x}:{parsed.fields.value.idVendor:04x}
-Size: {parsed.fields.value.DFUImageSize:,} bytes
-Targets: {parsed.fields.value.bTargets}''')
-        for target in parsed.fields.value.targets:
-            print(f'''
-    Name: {target.szTargetName}
-    Alternate Setting: {target.bAlternateSetting}
-    Size: {target.dwTargetSize:,} bytes
-    Images: {target.dwNbElements}''')
-            for image in target.images:
-                print(f'''
-        Offset: {image.dwElementAddress}
-        Size: {len(image.data):,} bytes
-''')
+        display_dfu_info(parsed)
