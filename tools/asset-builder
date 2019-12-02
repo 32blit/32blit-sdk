@@ -188,8 +188,13 @@ if __name__ == '__main__':
     # either we need a hard limit on the size of assets built in RGBA or RGB native formats (24/32bpp)
     # or drop output format altogether.
     parser_sprite.add_argument('--format', type=str, choices=('RGB', 'RGBA', 'P'), help='data output format (UNIMPLEMENTED)')
-    parser_sprite.add_argument('--tilesizex', type=int, help='tile size x', default=32)
-    parser_sprite.add_argument('--tilesizey', type=int, help='tile size y', default=32)
+
+    # The engine presently only supports 8x8 tile sizes
+    parser_sprite.add_argument('--tilesizex', type=int, help='tile size x', default=8)
+    parser_sprite.add_argument('--tilesizey', type=int, help='tile size y', default=8)
+
+    # A palette file should be a PNG file containing a series of pixels in the desired colours and order of the output palette.
+    # If it's indexed, 8bpp colour then its palette will be used directly, otherwise the pixel data will be converted automatically.
     parser_sprite.add_argument('--palette', type=str, help='image or palette file', default=None)
 
     parser_map.add_argument('--sizex', type=int, help='map size x')
@@ -207,21 +212,17 @@ if __name__ == '__main__':
             mode = image.mode
             w, h = image.size
 
-            if mode == 'RGB':
+            if mode in ['RGB', 'RGBA']:
                 for y in range(h):
                     for x in range(w):
-                        r, g, b = image.getpixel((x, y))
-                        c = color(r, g, b)
+                        # The spread operator will take both RGB and RGBA
+                        # tuples and pass them into color() properly.
+                        c = color(*image.getpixel((x, y)))
                         if c not in palette_colours:
                             palette_colours.append(c)
 
-            elif mode == 'RGBA':
-                for y in range(h):
-                    for x in range(w):
-                        r, g, b, a = image.getpixel((x, y))
-                        c = color(r, g, b, a)
-                        if c not in palette_colours:
-                            palette_colours.append(c)
+            else:
+                raise RuntimeError(f"Unsupported image mode: {mode}")
 
         else:
             mode, palette = image.palette.getdata()
