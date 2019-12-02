@@ -73,6 +73,8 @@ System::~System() {
 void System::run() {
 	running = true;
 
+	start = std::chrono::steady_clock::now();
+
 	blit::now = ::now;
 	blit::debug = ::debug;
 	blit::set_screen_mode = ::set_screen_mode;
