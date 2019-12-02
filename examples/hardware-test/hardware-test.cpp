@@ -96,6 +96,12 @@ void render(uint32_t time) {
     fb.text(buf_tilt_y, &minimal_font[0][0], point(80, 80+14));
     fb.text(buf_tilt_z, &minimal_font[0][0], point(80, 80+21));
 
+    blit::LED = rgb(
+        (float)((sin(blit::now()) + 1) / 2.0f),
+        (float)((cos(blit::now()) + 1) / 2.0f),
+        (float)((sin(blit::now()) + 1) / 2.0f)
+    );
+
 }
 
 void update(uint32_t time) {
