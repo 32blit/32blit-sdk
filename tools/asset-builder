@@ -184,7 +184,10 @@ if __name__ == '__main__':
     parser.add_argument('--out', type=str, help='set output filename (default <inputfile>.blit)', default=None)
     parser.add_argument('file', type=str, help='input file')
 
-    parser_sprite.add_argument('--format', type=str, choices=('RGB', 'RGBA', 'P'))
+    # TODO: Right now unpacked data is ridiculously huge and probably impractical to use,
+    # either we need a hard limit on the size of assets built in RGBA or RGB native formats (24/32bpp)
+    # or drop output format altogether.
+    parser_sprite.add_argument('--format', type=str, choices=('RGB', 'RGBA', 'P'), help='data output format (UNIMPLEMENTED)')
     parser_sprite.add_argument('--tilesizex', type=int, help='tile size x', default=32)
     parser_sprite.add_argument('--tilesizey', type=int, help='tile size y', default=32)
     parser_sprite.add_argument('--palette', type=str, help='image or palette file', default=None)
@@ -201,11 +204,24 @@ if __name__ == '__main__':
             # Divine the palette from the individual pixels in the image
             # they will be inserted into our target palette in the order
             # found in the palette image
+            mode = image.mode
             w, h = image.size
-            for y in range(h):
-                for x in range(w):
-                    r, g, b = image.getpixel((x, y))
-                    palette_colours.append(color(r, g, b))
+
+            if mode == 'RGB':
+                for y in range(h):
+                    for x in range(w):
+                        r, g, b = image.getpixel((x, y))
+                        c = color(r, g, b)
+                        if c not in palette_colours:
+                            palette_colours.append(c)
+
+            elif mode == 'RGBA':
+                for y in range(h):
+                    for x in range(w):
+                        r, g, b, a = image.getpixel((x, y))
+                        c = color(r, g, b, a)
+                        if c not in palette_colours:
+                            palette_colours.append(c)
 
         else:
             mode, palette = image.palette.getdata()
@@ -214,50 +230,76 @@ if __name__ == '__main__':
                 for x in range(len(palette) // 3):
                     r, g, b = palette[x * 3:(x * 3) + 3]
                     palette_colours.append(color(r, g, b))
-                # print(palette_colours)
+
             elif mode == 'RGBA':
                 for x in range(len(palette) // 4):
                     r, g, b, a = palette[x * 4:(x * 4) + 4]
                     palette_colours.append(color(r, g, b, a))
 
+        if len(palette_colours) > 255:
+            raise RuntimeError(f"Too many colours in palette! ({len(palette_colours)})")
+
         return palette_colours
 
     if args.command == 'sprite':
 
-        image = Image.open(args.file)
-        palette_colours = load_palette(image)
+        source_image = Image.open(args.file)
+        target_image = source_image
+        source_mode = source_image.mode
+        source_palette_colours = load_palette(source_image)
+        target_palette_colours = source_palette_colours
 
-        bit_length = (len(palette_colours) - 1).bit_length()
+        bit_length = (len(source_palette_colours) - 1).bit_length()
 
-        if args.palette is not None:
-            palette_image = Image.open(args.palette)
-            target_palette_colours = load_palette(palette_image)
+        if source_mode == 'P':
+            if args.palette is not None:
+                palette_image = Image.open(args.palette)
+                target_palette_colours = load_palette(palette_image)
 
-            w, h = image.size
+                w, h = source_image.size
+                for y in range(h):
+                    for x in range(w):
+                        p = source_image.getpixel((x, y))
+                        c = source_palette_colours[p]
+                        try:
+                            new_p = target_palette_colours.index(c)
+                            target_image.putpixel((x, y), new_p)
+                        except ValueError:
+                            raise RuntimeError("Colour {},{},{},{} not found in target palette!".format(*c.rgba()))
+
+                source_palette_colours = target_palette_colours
+        else:
+            target_image = Image.new('P', source_image.size)
+            w, h = source_image.size
             for y in range(h):
                 for x in range(w):
-                    p = image.getpixel((x, y))
-                    c = palette_colours[p]
+                    if source_mode == 'RGBA':
+                        r, g, b, a = source_image.getpixel((x, y))
+                        c = color(r, g, b, a)
+                    elif source_mode == 'RGB':
+                        r, g, b, a = source_image.getpixel((x, y))
+                        c = color(r, g, b)
+
                     try:
                         new_p = target_palette_colours.index(c)
-                        image.putpixel((x, y), new_p)
+                        target_image.putpixel((x, y), new_p)
                     except ValueError:
                         raise RuntimeError("Colour {},{},{},{} not found in target palette!".format(*c.rgba()))
 
-            palette_colours = target_palette_colours
 
-        packed_image_data = BitArray().join(BitArray(uint=x, length=bit_length) for x in image.tobytes()).tobytes()
+
+        packed_image_data = BitArray().join(BitArray(uint=x, length=bit_length) for x in target_image.tobytes()).tobytes()
 
         packed = build_asset(
             'sprite',
             dict(
-                width=image.width,
-                height=image.height,
-                columns=image.width // args.tilesizex,
-                rows=image.height // args.tilesizey,
+                width=target_image.width,
+                height=target_image.height,
+                columns=target_image.width // args.tilesizex,
+                rows=target_image.height // args.tilesizey,
                 format='p',
                 palette=dict(
-                    colours=palette_colours
+                    colours=source_palette_colours
                 ),
                 data=packed_image_data
             )
@@ -288,7 +330,7 @@ if __name__ == '__main__':
 
         HEADER_SIZE = 20
 
-        PALETTE_SIZE = len(palette_colours) * 4
+        PALETTE_SIZE = len(source_palette_colours) * 4
 
         palette_data = packed[HEADER_SIZE:HEADER_SIZE + PALETTE_SIZE]
         for x in range(0, math.ceil(len(palette_data) / 4)):
@@ -325,13 +367,13 @@ uint8_t packed_data[] = {{
             payload_size=format_hex(packed[8:10]),
             comment_payload_size=len(packed),
             width=format_hex(packed[10:12]),
-            comment_width=image.width,
+            comment_width=target_image.width,
             height=format_hex(packed[12:14]),
-            comment_height=image.height,
+            comment_height=target_image.height,
             cols=format_hex(packed[14:16]),
-            comment_cols=image.width // args.tilesizex,
+            comment_cols=target_image.width // args.tilesizex,
             rows=format_hex(packed[16:18]),
-            comment_rows=image.height // args.tilesizey,
+            comment_rows=target_image.height // args.tilesizey,
             format=format_hex(packed[18:19]),
             colours=format_hex(packed[19:20]),
             data=',\n    '.join(formatted_data),
