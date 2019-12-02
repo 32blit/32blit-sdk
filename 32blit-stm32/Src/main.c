@@ -68,7 +68,13 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void DFUBoot(void)
+{
+  *((uint32_t *)0x2001FFFC) = 0xCAFEBABE; // Special Key to End-of-RAM
 
+  SCB_CleanDCache();
+  NVIC_SystemReset();
+}
 /* USER CODE END 0 */
 
 /**
