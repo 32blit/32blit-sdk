@@ -1,9 +1,10 @@
-BUILDDIR = build.32blit-stm32
+
+PREFIX := arm-none-eabi-
+
+BUILDDIR := build.$(PREFIX)32blit-stm32
 TARGET = $(BUILDDIR)/lib32blit.a
 SOURCES = $(wildcard *.cpp, */*.cpp)
 OBJECTS = $(addprefix $(BUILDDIR)/, $(notdir $(SOURCES:.cpp=.o)) )
-
-PREFIX := arm-none-eabi-
 
 INCLUDES = -I32blit -Itypes -Igraphics -Iengine #-I../lua
 
@@ -29,7 +30,7 @@ dirs:
 	mkdir -p $(BUILDDIR)
 
 32blit-sdl:
-	make MCU= PREFIX= BUILDDIR=build.32blit-sdl
+	make MCU= PREFIX=$(PREFIX) BUILDDIR=build.$(PREFIX)32blit-sdl
 
 clean:
 	rm $(OBJECTS) $(TARGET)
