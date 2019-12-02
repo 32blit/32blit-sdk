@@ -59,7 +59,7 @@ DISPLAY=:0.0 ../build/project/<project_name>
 Then build your 32blit project with:
 
 ```
-make ../example/<project_name> ENABLE_FFMPG=true FFMPEG=../FFmpeg-n4.1.4/build
+make ../example/<project_name> ENABLE_FFMPEG=true FFMPEG=../FFmpeg-n4.1.4/build
 ```
 
 When running, you can now hit `r` to start and stop recording.
