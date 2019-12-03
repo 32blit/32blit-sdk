@@ -62,7 +62,7 @@ void MX_TIM3_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 5000;
+  sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_LOW;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
@@ -113,7 +113,7 @@ void MX_TIM4_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 2000; // TODO: Exported from STM Cube as 0
+  sConfigOC.Pulse = 0; // TODO: Exported from STM Cube as 0
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
@@ -180,7 +180,7 @@ void MX_TIM15_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 5000;  // TODO: Exported from STM Cube as 0
+  sConfigOC.Pulse = 0;  // TODO: Exported from STM Cube as 0
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
@@ -315,9 +315,6 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3); // Red LED
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4); // Green LED
 
-    __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2, 10000);
-    __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_3, 0);
-    __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_4, 0);
   /* USER CODE END TIM3_MspPostInit 1 */
   }
   else if(timHandle->Instance==TIM4)
@@ -360,7 +357,6 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
 
   /* USER CODE BEGIN TIM15_MspPostInit 1 */
     HAL_TIM_PWM_Start(&htim15, TIM_CHANNEL_1);
-    __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 2000);
   /* USER CODE END TIM15_MspPostInit 1 */
   }
 
