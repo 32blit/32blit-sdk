@@ -13,7 +13,9 @@
 #include "VideoCapture.hpp"
 #endif
 
+#ifndef WINDOW_TITLE
 #define WINDOW_TITLE "TinyDebug SDL"
+#endif
 
 
 int main(int argc, char *argv[]) {
