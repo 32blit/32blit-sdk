@@ -1,0 +1,1 @@
+"C:\Program Files (x86)\STMicroelectronics\Software\DfuSe v3.0.6\Sources\Binary\Release\DfuSeCommand.exe" -c -d --r --fn "%1.dfu"
