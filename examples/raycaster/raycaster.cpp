@@ -210,9 +210,11 @@ void update(uint32_t time) {
 	if (pressed(button::DPAD_UP)) {
 		move.x = 0.02f;
 	}
-
-	if (pressed(button::DPAD_DOWN)) {
+	else if (pressed(button::DPAD_DOWN)) {
 		move.x = -0.02f;
+	}
+	else if (joystick.y < -0.1f || joystick.y > 0.1f) {
+		move.x = -joystick.y * 0.02f;
 	}
 
 	/*if (blit::joystick.x != 0) {
@@ -297,10 +299,13 @@ void update(uint32_t time) {
 		flip_doom_guy = false;
 		player1.direction = rotate_vector(player1.direction, -0.02);
 	}
-
-	if (pressed(button::DPAD_RIGHT)) {
+	else if (pressed(button::DPAD_RIGHT)) {
 		flip_doom_guy = true;
 		player1.direction = rotate_vector(player1.direction, 0.02);
+	}
+	else if (joystick.x < -0.1f || joystick.x > 0.1f) {
+		player1.direction = rotate_vector(player1.direction, joystick.x * 0.02f);
+		flip_doom_guy = joystick.x > 0;
 	}
 
 	player1.direction.normalize();
