@@ -277,7 +277,7 @@ void update(uint32_t time) {
     if (pressed(button::DPAD_UP))    { movement.y -= 0.03f; }
     if (pressed(button::DPAD_DOWN))  { movement.y += 0.03f; }
 
-    player1.rotational_velocity += joystick.x * M_PI / 720;
+    player1.rotational_velocity -= joystick.x * M_PI / 720;
     movement.y += joystick.y / 10.0f;
 
     if (pressed(button::A) && time - player1.t_shot_fired > 500) {
