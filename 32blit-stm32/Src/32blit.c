@@ -5,6 +5,7 @@
 #include "adc.h"
 #include "ltdc.h"
 #include "tim.h"
+#include "spi.h"
 
 #include "32blit.hpp"
 
@@ -94,7 +95,7 @@ void blit_flip() {
                 uint8_t r = src->r >> 3;
                 uint8_t g = src->g >> 2;
                 uint8_t b = src->b >> 3;
-                uint16_t c = (b << 11) | (g << 5) | (r);
+                uint16_t c = (r << 11) | (g << 5) | (b);
                 *dest++ = c;
                 *dest++ = c;
                 src++;

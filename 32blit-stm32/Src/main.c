@@ -124,13 +124,18 @@ int main(void)
   //MX_ADC3_Init();
   //MX_USB_OTG_HS_USB_Init();
   //MX_SPI1_Init();
-  //MX_SPI4_Init();
+  MX_SPI4_Init();
   //MX_TIM6_Init();
   //MX_TIM15_Init();
   //MX_FATFS_Init();
 
   /* USER CODE BEGIN 2 */
   LCD_RESET();
+
+  uint8_t lcd_bgr[2] = {0x19, 0xec | 0b00010000}; // Set the SBGR bit to swap DR[7:0] with DB[7:0]
+  LCD_CS(1);
+  HAL_SPI_Transmit(&hspi4, lcd_bgr, 2, HAL_MAX_DELAY);
+  LCD_CS(0);
 
   blit_clear_framebuffer();
   blit_init();
@@ -139,7 +144,7 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  {
+  { 
     // Backlight
     //float scale_bl = (sin(HAL_GetTick() / 1000.0f) + 1.0) / 2.0;
     //__HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 2000 * scale_bl);
@@ -237,7 +242,7 @@ void SystemClock_Config(void)
   PeriphClkInitStruct.PLL3.PLL3FRACN = 0;
   PeriphClkInitStruct.QspiClockSelection = RCC_QSPICLKSOURCE_D1HCLK;
   PeriphClkInitStruct.Spi123ClockSelection = RCC_SPI123CLKSOURCE_PLL;
-  PeriphClkInitStruct.Spi45ClockSelection = RCC_SPI45CLKSOURCE_D2PCLK1;
+  PeriphClkInitStruct.Spi45ClockSelection = RCC_SPI45CLKSOURCE_HSI;
   PeriphClkInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
   PeriphClkInitStruct.I2c4ClockSelection = RCC_I2C4CLKSOURCE_D3PCLK1;
   PeriphClkInitStruct.AdcClockSelection = RCC_ADCCLKSOURCE_PLL2;
