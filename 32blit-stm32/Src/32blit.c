@@ -140,6 +140,10 @@ void blit_clear_framebuffer() {
   }
 }
 
+void blit_update_vibration() {
+    __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, vibration * 2000.0f);
+}
+
 void blit_update_led() {
     // RED Led
     float compare_r = (LED.r * 10000) / 255;

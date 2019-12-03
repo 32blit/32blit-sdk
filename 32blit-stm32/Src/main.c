@@ -140,17 +140,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-    // Vibration Motor
-    //float scale_vibe = (sin(HAL_GetTick() / 1000.0f) + 1.0) / 2.0;
-    __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, 0);
-  
     // Backlight
     //float scale_bl = (sin(HAL_GetTick() / 1000.0f) + 1.0) / 2.0;
     //__HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 2000 * scale_bl);
 
     blit_process_input();
     blit_update_led();
+    blit_update_vibration();
     blit_swap();
     blit_tick();
     blit_flip();

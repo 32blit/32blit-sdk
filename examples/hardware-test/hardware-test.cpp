@@ -22,6 +22,12 @@ void render(uint32_t time) {
     bool dpad_u = blit::buttons & blit::button::DPAD_UP;
     bool dpad_d = blit::buttons & blit::button::DPAD_DOWN;
 
+    vibration = 0.0;
+    if(button_a){vibration += 0.1;}
+    if(button_b){vibration += 0.2;}
+    if(button_x){vibration += 0.3;}
+    if(button_y){vibration += 0.4;}
+
     fb.pen(button_a ? rgba(255, 0, 0) : rgba(128, 128, 128));
     fb.text("A", &minimal_font[0][0], point(150, 15));
 
