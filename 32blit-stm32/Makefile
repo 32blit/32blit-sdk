@@ -134,7 +134,7 @@ LDSCRIPT = STM32H750VBTx_FLASH.ld
 
 # libraries
 LIBS =  -l32blit -lc -lm -lnosys #-llua
-LIBDIR = -L../32blit/build.32blit-stm32 #-L../lua
+LIBDIR = -L../32blit/build.$(PREFIX)32blit-stm32 #-L../lua
 LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) -static $(LIBDIR) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
 
 # default action: build all
