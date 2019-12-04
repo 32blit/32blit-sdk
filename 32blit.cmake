@@ -1,0 +1,8 @@
+if (NOT DEFINED BLIT_LIBRARIES)
+	include (${CMAKE_CURRENT_LIST_DIR}/32blit/32blit.cmake)
+	if (${CMAKE_SYSTEM_NAME} STREQUAL 32blit)
+		include (${CMAKE_CURRENT_LIST_DIR}/32blit-stm32/32blit-stm32.cmake)
+	else()
+		include (${CMAKE_CURRENT_LIST_DIR}/32blit-sdl/32blit-sdl.cmake)
+	endif()
+endif()

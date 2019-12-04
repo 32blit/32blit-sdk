@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 2.8.9)
+include (../../32blit.cmake)
+project (fizzlefade)
+include_directories(${BLIT_INCLUDE_DIRS})
+add_executable (fizzlefade fizzlefade.cpp)
+target_link_libraries(fizzlefade ${BLIT_LIBRARIES})
