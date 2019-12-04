@@ -8,12 +8,18 @@ add_library(BlitHalSDL STATIC
 )
 
 target_include_directories(BlitHalSDL
-	PRIVATE
-		${SDL2_INCLUDE_DIRS}
+	PRIVATE	${SDL2_INCLUDE_DIRS}
 )
 
 target_link_libraries(BlitHalSDL BlitEngine ${SDL2_LIBRARIES})
 
-add_definitions(-DWINDOW_TITLE=\"CMake!\" -DNO_FFMPEG_CAPTURE)
+target_compile_definitions(BlitHalSDL
+	PUBLIC
+		-DWINDOW_TITLE=\"CMake!\"
+		-DNO_FFMPEG_CAPTURE
+)
 
-set(BLIT_HAL BlitHalSDL PARENT_SCOPE)
+function(blit_executable NAME SOURCES)
+	add_executable(${NAME} ${SOURCES})
+  	target_link_libraries(${NAME} BlitHalSDL BlitEngine)
+endfunction()
