@@ -56,9 +56,12 @@ Src/debug.c \
 Src/dma.c \
 Src/hrtim.c \
 Src/i2c.c \
+Src/i2c-msa301.c \
+Src/i2c-bq24295.c \
 Src/ltdc.c \
 Src/quadspi.c \
 Src/spi.c \
+Src/spi-st7272a.c \
 Src/sys.c \
 Src/tim.c \
 Src/usb_otg.c \
