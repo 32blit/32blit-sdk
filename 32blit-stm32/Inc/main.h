@@ -139,9 +139,6 @@ void Error_Handler(void);
 #define LOW(PORT, PIN) HAL_GPIO_WritePin(PORT, PIN, GPIO_PIN_RESET);
 
 #define DELAY(MS)       HAL_Delay(MS)
-
-#define LCD_CS(active)    if(active) {LOW(LCD_CS_GPIO_Port, LCD_CS_Pin)} else {HIGH(LCD_CS_GPIO_Port, LCD_CS_Pin)}
-#define LCD_RESET()       LOW(LCD_RESET_GPIO_Port, LCD_RESET_Pin); DELAY(100); HIGH(LCD_RESET_GPIO_Port, LCD_RESET_Pin); DELAY(100);
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

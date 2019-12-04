@@ -6,6 +6,10 @@
 #include "ltdc.h"
 #include "tim.h"
 #include "spi.h"
+#include "spi-st7272a.h"
+#include "i2c.h"
+#include "i2c-msa301.h"
+#include "i2c-bq24295.h"
 
 #include "32blit.hpp"
 
@@ -34,6 +38,13 @@ void blit_tick() {
 }
 
 void blit_init() {
+    ST7272A_RESET();
+
+    st7272a_set_bgr();
+
+    msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_125HZ);
+    //bq24295_init(&hi2c4);
+
     blit::now = HAL_GetTick;
     blit::set_screen_mode = ::set_screen_mode;
     ::set_screen_mode(blit::lores);
@@ -200,4 +211,19 @@ void blit_process_input() {
     (HAL_GPIO_ReadPin(BUTTON_HOME_GPIO_Port,  BUTTON_HOME_Pin)  ? blit::HOME       : 0) |  // INVERTED LOGIC!
     (!HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port, BUTTON_MENU_Pin)  ? blit::MENU       : 0) |
     (!HAL_GPIO_ReadPin(JOYSTICK_BUTTON_GPIO_Port, JOYSTICK_BUTTON_Pin) ? blit::JOYSTICK   : 0);
+
+  // Read accelerometer
+
+  int16_t acceleration_data_buffer[3];
+  acceleration_data_buffer[0] = 0;
+  acceleration_data_buffer[1] = 0;
+  acceleration_data_buffer[2] = 0;
+  msa301_get_accel(&hi2c4, acceleration_data_buffer);
+
+  blit::tilt = vec3(
+    -acceleration_data_buffer[0],
+    -acceleration_data_buffer[1],
+    -acceleration_data_buffer[2]
+    );
+  blit::tilt.normalize();
 }

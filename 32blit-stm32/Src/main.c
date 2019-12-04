@@ -130,13 +130,6 @@ int main(void)
   //MX_FATFS_Init();
 
   /* USER CODE BEGIN 2 */
-  LCD_RESET();
-
-  uint8_t lcd_bgr[2] = {0x19, 0xec | 0b00010000}; // Set the SBGR bit to swap DR[7:0] with DB[7:0]
-  LCD_CS(1);
-  HAL_SPI_Transmit(&hspi4, lcd_bgr, 2, HAL_MAX_DELAY);
-  LCD_CS(0);
-
   blit_clear_framebuffer();
   blit_init();
   /* USER CODE END 2 */
