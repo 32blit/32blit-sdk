@@ -45,6 +45,7 @@ Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c \
 Src/system_stm32h7xx.c \
 Src/user_diskio.c \
 Src/fatfs.c \
+Src/fatfs_sd.c \
 Middlewares/Third_Party/FatFs/src/diskio.c \
 Middlewares/Third_Party/FatFs/src/ff.c \
 Middlewares/Third_Party/FatFs/src/ff_gen_drv.c \
