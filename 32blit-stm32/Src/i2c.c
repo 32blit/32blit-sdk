@@ -27,12 +27,11 @@
 I2C_HandleTypeDef hi2c4;
 
 /* I2C4 init function */
-
 void MX_I2C4_Init(void)
 {
+
   hi2c4.Instance = I2C4;
-  hi2c4.Init.Timing = 0x10C0ECFF; // ORIGINAL VALUE, WTF IS THIS SO CRYPTIC!!?!?!?
-  //hi2c4.Init.Timing = 0x103039FF; // WHO KNOWS!
+  hi2c4.Init.Timing = 0x307075B1;
   hi2c4.Init.OwnAddress1 = 0;
   hi2c4.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c4.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -44,32 +43,32 @@ void MX_I2C4_Init(void)
   {
     Error_Handler();
   }
-
-    /**Configure Analogue filter
-    */
+  /** Configure Analogue filter 
+  */
   if (HAL_I2CEx_ConfigAnalogFilter(&hi2c4, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
   {
     Error_Handler();
   }
-
-    /**Configure Digital filter
-    */
+  /** Configure Digital filter 
+  */
   if (HAL_I2CEx_ConfigDigitalFilter(&hi2c4, 0) != HAL_OK)
   {
     Error_Handler();
   }
+
 }
 
-void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
+void HAL_I2C_MspInit(I2C_HandleTypeDef* i2cHandle)
 {
 
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-  if(hi2c->Instance==I2C4)
+  if(i2cHandle->Instance==I2C4)
   {
   /* USER CODE BEGIN I2C4_MspInit 0 */
 
   /* USER CODE END I2C4_MspInit 0 */
   
+    __HAL_RCC_GPIOD_CLK_ENABLE();
     /**I2C4 GPIO Configuration    
     PD12     ------> I2C4_SCL
     PD13     ------> I2C4_SDA 
@@ -89,10 +88,10 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
   }
 }
 
-void HAL_I2C_MspDeInit(I2C_HandleTypeDef* hi2c)
+void HAL_I2C_MspDeInit(I2C_HandleTypeDef* i2cHandle)
 {
 
-  if(hi2c->Instance==I2C4)
+  if(i2cHandle->Instance==I2C4)
   {
   /* USER CODE BEGIN I2C4_MspDeInit 0 */
 
