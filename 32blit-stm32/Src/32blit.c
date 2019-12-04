@@ -159,32 +159,31 @@ void blit_update_led() {
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2, compare_b);
 }
 
+void ADC_update_joystick_axis(float *axis){
+  if (HAL_ADC_PollForConversion(&hadc1, 1000000) == HAL_OK)
+  {
+    int adc = (HAL_ADC_GetValue(&hadc1) >> 1) - 16384;
+    adc = std::max(-8192, std::min(8192, adc));
+    if (adc < -1024) {
+      adc += 1024;
+    }
+    else if (adc > 1024) {
+      adc -= 1024;
+    }
+    else {
+      adc = 0;
+    }
+    *axis = adc / 7168.0f;
+  }
+}
+
 void blit_process_input() {
   // read x axis of joystick
-  uint16_t adc;
   bool joystick_button = false;
 
   HAL_ADC_Start(&hadc1);
-  if (HAL_ADC_PollForConversion(&hadc1, 1000000) == HAL_OK)
-  {
-    adc = HAL_ADC_GetValue(&hadc1);
-    float f = adc / 4096.0f;
-    f += -0.5f;
-    blit::joystick.x = f;
-  }
-  /*if (HAL_ADC_PollForConversion(&hadc1, 1000000) == HAL_OK)
-  {
-    adc = HAL_ADC_GetValue(&hadc1);
-    float f = adc / 4096.0f;
-    joystick_button = f > 0.5;
-  }*/
-  if (HAL_ADC_PollForConversion(&hadc1, 1000000) == HAL_OK)
-  {
-    adc = HAL_ADC_GetValue(&hadc1);
-    float f = adc / 4096.0f;
-    f += -0.5f;
-    blit::joystick.y = f;
-  }
+  ADC_update_joystick_axis(&blit::joystick.x);
+  ADC_update_joystick_axis(&blit::joystick.y);
   HAL_ADC_Stop(&hadc1);
 
   // Read buttons
