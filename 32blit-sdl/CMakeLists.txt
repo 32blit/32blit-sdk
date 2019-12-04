@@ -20,6 +20,6 @@ target_compile_definitions(BlitHalSDL
 )
 
 function(blit_executable NAME SOURCES)
-	add_executable(${NAME} ${SOURCES})
+	add_executable(${NAME} ${SOURCES} ${ARGN})
   	target_link_libraries(${NAME} BlitHalSDL BlitEngine)
 endfunction()
