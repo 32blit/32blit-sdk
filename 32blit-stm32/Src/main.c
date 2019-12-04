@@ -117,7 +117,7 @@ int main(void)
   MX_TIM3_Init();
   //MX_DAC1_Init();
   //MX_HRTIM_Init();
-  //MX_I2C4_SMBUS_Init();
+  MX_I2C4_Init();
   MX_LTDC_Init();
   //MX_QUADSPI_Init();
   MX_ADC1_Init();
