@@ -1,6 +1,4 @@
 cmake_minimum_required(VERSION 2.8.9)
-include (../../32blit.cmake)
 project (fire)
-include_directories(${BLIT_INCLUDE_DIRS})
-add_executable (fire fire.cpp)
-target_link_libraries(fire ${BLIT_LIBRARIES})
+include (../../32blit.cmake)
+blit_executable (fire fire.cpp)
