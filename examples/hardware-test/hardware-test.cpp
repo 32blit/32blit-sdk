@@ -4,7 +4,7 @@
 using namespace blit;
 
 void init() {
-    set_screen_mode(screen_mode::hires);
+    set_screen_mode(screen_mode::lores);
 }
 
 void render(uint32_t time) {
@@ -80,9 +80,9 @@ void render(uint32_t time) {
     fb.text(buf_joystick_x, &minimal_font[0][0], point(5, 80+7));
     fb.text(buf_joystick_y, &minimal_font[0][0], point(5, 80+14));
 
-    char buf_tilt_x[60] = "";
-    char buf_tilt_y[60] = "";
-    char buf_tilt_z[60] = "";
+    char buf_tilt_x[10] = "";
+    char buf_tilt_y[10] = "";
+    char buf_tilt_z[10] = "";
 
     sprintf(buf_tilt_x, "X: %d", (int)(blit::tilt.x * 1024));
     sprintf(buf_tilt_y, "Y: %d", (int)(blit::tilt.y * 1024));
@@ -103,10 +103,25 @@ void render(uint32_t time) {
     fb.text(buf_tilt_z, &minimal_font[0][0], point(80, 80+21));
 
     blit::LED = rgb(
-        (float)((sin(blit::now()) + 1) / 2.0f),
-        (float)((cos(blit::now()) + 1) / 2.0f),
-        (float)((sin(blit::now()) + 1) / 2.0f)
+        (float)((sin(blit::now() / 100.0f) + 1) / 2.0f),
+        (float)((cos(blit::now() / 100.0f) + 1) / 2.0f),
+        (float)((sin(blit::now() / 100.0f) + 1) / 2.0f)
     );
+
+    if (dpad_u) {
+        blit::backlight += 1.0f / 256.0f;
+    }
+    if (dpad_d) {
+        blit::backlight -= 1.0f / 256.0f;
+    }
+    blit::backlight = std::fmin(1.0f, std::fmax(0.0f, blit::backlight));
+
+    char buf_backlight[10] = "";
+    sprintf(buf_backlight, "%d", (int)(blit::backlight * 1024));
+
+    fb.pen(rgba(255, 255, 255));
+    fb.text("Backlight:", &minimal_font[0][0], point(5, 80+21));
+    fb.text(buf_backlight, &minimal_font[0][0], point(5, 80+28));
 
 }
 
