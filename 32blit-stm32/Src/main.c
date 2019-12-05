@@ -139,7 +139,7 @@ int main(void)
   while (1)
   { 
     // Backlight
-    __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 1024 * (1.0 - blit::backlight));
+    __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 962 - (962 * blit::backlight));
 
     blit_process_input();
     blit_update_led();
