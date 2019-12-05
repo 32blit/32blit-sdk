@@ -86,15 +86,17 @@ target_compile_definitions(BlitHalSTM32
 )
 
 set(MCU_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}" PARENT_SCOPE)
-set(CMAKE_EXE_LINKER_FLAGS "-specs nosys.specs -Wl,--gc-sections -T ${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}" PARENT_SCOPE)
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -specs=nano.specs -T ${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}" PARENT_SCOPE)
 
 function(blit_executable NAME SOURCES)
 	add_executable(${NAME}.elf ${SOURCES} ${ARGN})
   	target_link_libraries(${NAME}.elf BlitHalSTM32 BlitEngine)
 	set_target_properties(${NAME}.elf PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT})
+	set_property(TARGET ${NAME}.elf APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Map=${NAME}.map,--cref")
   	add_custom_command(TARGET ${NAME}.elf POST_BUILD
-		COMMAND ${CMAKE_OBJCOPY} -Oihex $<TARGET_FILE:${NAME}.elf> ${NAME}.hex
-		COMMAND ${CMAKE_OBJCOPY} -Obinary $<TARGET_FILE:${NAME}.elf> ${NAME}.bin
+		COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${NAME}.elf> ${NAME}.hex
+		COMMAND ${CMAKE_OBJCOPY} -O binary -S $<TARGET_FILE:${NAME}.elf> ${NAME}.bin
+		COMMAND arm-none-eabi-size $<TARGET_FILE:${NAME}.elf>
 		COMMENT "Building ${NAME}.hex \nBuilding ${NAME}.bin"
 	)
 endfunction()
