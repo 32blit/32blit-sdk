@@ -44,7 +44,7 @@ void blit_init() {
 
     msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_125HZ);
     //bq24295_init(&hi2c4);
-
+    blit::backlight = 1.0f;
     blit::now = HAL_GetTick;
     blit::set_screen_mode = ::set_screen_mode;
     ::set_screen_mode(blit::lores);

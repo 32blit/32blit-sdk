@@ -126,7 +126,7 @@ int main(void)
   //MX_SPI1_Init();
   MX_SPI4_Init();
   //MX_TIM6_Init();
-  //MX_TIM15_Init();
+  MX_TIM15_Init();
   //MX_FATFS_Init();
 
   /* USER CODE BEGIN 2 */
@@ -139,8 +139,7 @@ int main(void)
   while (1)
   { 
     // Backlight
-    //float scale_bl = (sin(HAL_GetTick() / 1000.0f) + 1.0) / 2.0;
-    //__HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 2000 * scale_bl);
+    __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 1024 * (1.0 - blit::backlight));
 
     blit_process_input();
     blit_update_led();
