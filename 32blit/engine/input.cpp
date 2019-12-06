@@ -8,6 +8,9 @@ namespace blit {
   uint32_t buttons;
   vec2 joystick;
   vec3 tilt;
+  float hack_left;
+  float hack_right;
+  int battery;
 
   /**
    * Return pressed state of a button or buttons.

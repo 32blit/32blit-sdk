@@ -23,6 +23,9 @@ namespace blit {
   extern uint32_t buttons;
   extern vec2 joystick;
   extern vec3 tilt;
+  extern float hack_left;
+  extern float hack_right;
+  extern int battery;
 
   extern bool pressed(uint32_t button);
  

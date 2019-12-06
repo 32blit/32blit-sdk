@@ -121,7 +121,7 @@ int main(void)
   MX_LTDC_Init();
   //MX_QUADSPI_Init();
   MX_ADC1_Init();
-  //MX_ADC3_Init();
+  MX_ADC3_Init();
   //MX_USB_OTG_HS_USB_Init();
   //MX_SPI1_Init();
   MX_SPI4_Init();

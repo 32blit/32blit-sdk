@@ -116,16 +116,20 @@ void MX_ADC3_Init(void)
   hadc3.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DR;
   hadc3.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc3.Init.LeftBitShift = ADC_LEFTBITSHIFT_NONE;
-  hadc3.Init.OversamplingMode = DISABLE;
+  hadc3.Init.OversamplingMode = ENABLE;
+  hadc3.Init.Oversampling.Ratio = 256;  // Number of ADC samples to be summed together
+  hadc3.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_8; // Right bit shift (division effectively) for resulting ADC sum
+  hadc3.Init.Oversampling.TriggeredMode = ADC_TRIGGEREDMODE_SINGLE_TRIGGER;
+  hadc3.Init.Oversampling.OversamplingStopReset = ADC_REGOVERSAMPLING_CONTINUED_MODE;
   if (HAL_ADC_Init(&hadc3) != HAL_OK)
   {
     Error_Handler();
   }
   /** Configure Regular Channel 
   */
-  sConfig.Channel = ADC_CHANNEL_0;
+  sConfig.Channel = ADC_CHANNEL_11;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_32CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
@@ -135,7 +139,7 @@ void MX_ADC3_Init(void)
   }
   /** Configure Regular Channel 
   */
-  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = ADC_REGULAR_RANK_2;
   if (HAL_ADC_ConfigChannel(&hadc3, &sConfig) != HAL_OK)
   {
@@ -143,7 +147,7 @@ void MX_ADC3_Init(void)
   }
   /** Configure Regular Channel 
   */
-  sConfig.Channel = ADC_CHANNEL_11;
+  sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = ADC_REGULAR_RANK_3;
   if (HAL_ADC_ConfigChannel(&hadc3, &sConfig) != HAL_OK)
   {
@@ -167,8 +171,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     __HAL_RCC_GPIOC_CLK_ENABLE();
     /**ADC1 GPIO Configuration    
     PC0     ------> ADC1_INP10
-    PC4     ------> ADC1_INP4
-    PC5     ------> ADC1_INP8 
+    PC4     ------> ADC1_INP4 
     */
     GPIO_InitStruct.Pin = JOYSTICK_Y_Pin|JOYSTICK_X_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
@@ -221,10 +224,9 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
   
     /**ADC1 GPIO Configuration    
     PC0     ------> ADC1_INP10
-    PC4     ------> ADC1_INP4
-    PC5     ------> ADC1_INP8 
+    PC4     ------> ADC1_INP4 
     */
-    HAL_GPIO_DeInit(GPIOC, JOYSTICK_Y_Pin|JOYSTICK_X_Pin|JOYSTICK_BUTTON_Pin);
+    HAL_GPIO_DeInit(GPIOC, JOYSTICK_Y_Pin|JOYSTICK_X_Pin);
 
   /* USER CODE BEGIN ADC1_MspDeInit 1 */
 

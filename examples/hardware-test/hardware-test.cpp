@@ -7,6 +7,13 @@ void init() {
     set_screen_mode(screen_mode::lores);
 }
 
+#define COL1 5
+#define COL2 65
+#define COL3 105
+
+#define ROW1 70
+#define ROW2 98
+
 void render(uint32_t time) {
     fb.pen(rgba(0x4e, 0xb3, 0xf7));
     fb.clear();
@@ -70,15 +77,15 @@ void render(uint32_t time) {
     sprintf(buf_joystick_y, "Y: %d", (int)(blit::joystick.y * 1024));
 
     if(blit::buttons & blit::button::JOYSTICK) {
-        fb.text("Joystick: (o)", &minimal_font[0][0], point(5, 80));
+        fb.text("Joystick: (o)", &minimal_font[0][0], point(COL1, ROW1));
     }
     else
     {
-        fb.text("Joystick: ( )", &minimal_font[0][0], point(5, 80));
+        fb.text("Joystick: ( )", &minimal_font[0][0], point(COL1, ROW1));
     }
 
-    fb.text(buf_joystick_x, &minimal_font[0][0], point(5, 80+7));
-    fb.text(buf_joystick_y, &minimal_font[0][0], point(5, 80+14));
+    fb.text(buf_joystick_x, &minimal_font[0][0], point(COL1, ROW1+7));
+    fb.text(buf_joystick_y, &minimal_font[0][0], point(COL1, ROW1+14));
 
     char buf_tilt_x[10] = "";
     char buf_tilt_y[10] = "";
@@ -92,15 +99,21 @@ void render(uint32_t time) {
     for(int b = 0; b < 90; b++){
         for(int v = 0; v < 40; v++){
             fb.pen(blit::hsv_to_rgba(float(b) / (float)90.0, 1.0, (float)v / (float)40.0));
-            fb.pixel(point(b + 35, 40 + v));
+            fb.pixel(point(b + 35, 30 + v));
         }
     }
 
     fb.pen(rgba(255, 255, 255));
-    fb.text("Tilt:", &minimal_font[0][0], point(80, 80));
-    fb.text(buf_tilt_x, &minimal_font[0][0], point(80, 80+7));
-    fb.text(buf_tilt_y, &minimal_font[0][0], point(80, 80+14));
-    fb.text(buf_tilt_z, &minimal_font[0][0], point(80, 80+21));
+    fb.text("Tilt:", &minimal_font[0][0], point(COL2, ROW1));
+    fb.text(buf_tilt_x, &minimal_font[0][0], point(COL2, ROW1+7));
+    fb.text(buf_tilt_y, &minimal_font[0][0], point(COL2, ROW1+14));
+    fb.text(buf_tilt_z, &minimal_font[0][0], point(COL2, ROW1+21));
+
+    char buf_battery[10] = "";
+    sprintf(buf_battery, "%d", blit::battery);
+
+    fb.text("Battery:", &minimal_font[0][0], point(COL3, ROW1));
+    fb.text(buf_battery, &minimal_font[0][0], point(COL3, ROW1+7));
 
     blit::LED = rgb(
         (float)((sin(blit::now() / 100.0f) + 1) / 2.0f),
@@ -119,9 +132,8 @@ void render(uint32_t time) {
     char buf_backlight[10] = "";
     sprintf(buf_backlight, "%d", (int)(blit::backlight * 1024));
 
-    fb.pen(rgba(255, 255, 255));
-    fb.text("Backlight:", &minimal_font[0][0], point(5, 80+21));
-    fb.text(buf_backlight, &minimal_font[0][0], point(5, 80+28));
+    fb.text("Backlight:", &minimal_font[0][0], point(COL1, ROW2));
+    fb.text(buf_backlight, &minimal_font[0][0], point(COL1, ROW2+7));
 
 }
 
