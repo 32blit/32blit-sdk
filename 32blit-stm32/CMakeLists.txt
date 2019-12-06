@@ -62,7 +62,7 @@ list(APPEND SOURCES
 
 set_source_files_properties( ${SOURCES} PROPERTIES LANGUAGE CXX )
 
-add_library(BlitHalSTM32 STATIC ${SOURCES})
+add_library(BlitHalSTM32 OBJECT ${SOURCES})
 
 
 target_include_directories(BlitHalSTM32
@@ -74,12 +74,11 @@ target_include_directories(BlitHalSTM32
 		Drivers/CMSIS/Include
 		Drivers/CMSIS/Include
 		Middlewares/Third_Party/FatFs/src
+		../32blit
 )
 
-target_link_libraries(BlitHalSTM32 BlitEngine)
-
 target_compile_definitions(BlitHalSTM32
-	PUBLIC
+	PRIVATE
 		-DUSE_HAL_DRIVER
 		-DUSE_USB_HS
 		-DSTM32H750xx
@@ -89,8 +88,8 @@ set(MCU_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}" PARENT_SC
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -specs=nano.specs -T ${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}" PARENT_SCOPE)
 
 function(blit_executable NAME SOURCES)
-	add_executable(${NAME}.elf ${SOURCES} ${ARGN})
-  	target_link_libraries(${NAME}.elf BlitHalSTM32 BlitEngine)
+	add_executable(${NAME}.elf $<TARGET_OBJECTS:BlitHalSTM32> ${SOURCES} ${ARGN})
+  	target_link_libraries(${NAME}.elf BlitEngine)
 	set_target_properties(${NAME}.elf PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT})
 	set_property(TARGET ${NAME}.elf APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Map=${NAME}.map,--cref")
   	add_custom_command(TARGET ${NAME}.elf POST_BUILD
