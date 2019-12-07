@@ -19,10 +19,13 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "dac.h"
+#include "fatfs.h"
 
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
+
+extern uint8_t dma_status;
 
 DAC_HandleTypeDef hdac1;
 DMA_HandleTypeDef hdma_dac1_ch2;
@@ -42,7 +45,7 @@ void MX_DAC1_Init(void)
   /** DAC channel OUT2 config 
   */
   sConfig.DAC_SampleAndHold = DAC_SAMPLEANDHOLD_DISABLE;
-  sConfig.DAC_Trigger = DAC_TRIGGER_HR1_TRGO1;
+  sConfig.DAC_Trigger = DAC_TRIGGER_T6_TRGO;
   sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
   sConfig.DAC_ConnectOnChipPeripheral = DAC_CHIPCONNECT_DISABLE;
   sConfig.DAC_UserTrimming = DAC_TRIMMING_FACTORY;
@@ -53,10 +56,19 @@ void MX_DAC1_Init(void)
 
 }
 
+void HAL_DACEx_ConvHalfCpltCallbackCh2(DAC_HandleTypeDef *hdac){
+  dma_status = DAC_DMA_HALF_COMPLETE;
+}
+
+void HAL_DACEx_ConvCpltCallbackCh2(DAC_HandleTypeDef *hdac){
+  dma_status = DAC_DMA_COMPLETE;
+}
+
 void HAL_DAC_MspInit(DAC_HandleTypeDef* dacHandle)
 {
 
   GPIO_InitTypeDef GPIO_InitStruct = {0};
+  HAL_DMA_MuxSyncConfigTypeDef pSyncConfig= {0};
   if(dacHandle->Instance==DAC1)
   {
   /* USER CODE BEGIN DAC1_MspInit 0 */
@@ -81,11 +93,15 @@ void HAL_DAC_MspInit(DAC_HandleTypeDef* dacHandle)
     hdma_dac1_ch2.Init.Direction = DMA_MEMORY_TO_PERIPH;
     hdma_dac1_ch2.Init.PeriphInc = DMA_PINC_DISABLE;
     hdma_dac1_ch2.Init.MemInc = DMA_MINC_ENABLE;
-    hdma_dac1_ch2.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-    hdma_dac1_ch2.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_dac1_ch2.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+    hdma_dac1_ch2.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
     hdma_dac1_ch2.Init.Mode = DMA_CIRCULAR;
-    hdma_dac1_ch2.Init.Priority = DMA_PRIORITY_LOW;
+    hdma_dac1_ch2.Init.Priority = DMA_PRIORITY_HIGH;
     hdma_dac1_ch2.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    hdma_dac1_ch2.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
+    hdma_dac1_ch2.Init.MemBurst = DMA_MBURST_SINGLE;
+    hdma_dac1_ch2.Init.PeriphBurst = DMA_PBURST_SINGLE;
+
     if (HAL_DMA_Init(&hdma_dac1_ch2) != HAL_OK)
     {
       Error_Handler();
@@ -93,9 +109,6 @@ void HAL_DAC_MspInit(DAC_HandleTypeDef* dacHandle)
 
     __HAL_LINKDMA(dacHandle,DMA_Handle2,hdma_dac1_ch2);
 
-    /* DAC1 interrupt Init */
-    HAL_NVIC_SetPriority(TIM6_DAC_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(TIM6_DAC_IRQn);
   /* USER CODE BEGIN DAC1_MspInit 1 */
 
   /* USER CODE END DAC1_MspInit 1 */
@@ -120,16 +133,6 @@ void HAL_DAC_MspDeInit(DAC_HandleTypeDef* dacHandle)
 
     /* DAC1 DMA DeInit */
     HAL_DMA_DeInit(dacHandle->DMA_Handle2);
-
-    /* DAC1 interrupt Deinit */
-  /* USER CODE BEGIN DAC1:TIM6_DAC_IRQn disable */
-    /**
-    * Uncomment the line below to disable the "TIM6_DAC_IRQn" interrupt
-    * Be aware, disabling shared interrupt may affect other IPs
-    */
-    /* HAL_NVIC_DisableIRQ(TIM6_DAC_IRQn); */
-  /* USER CODE END DAC1:TIM6_DAC_IRQn disable */
-
   /* USER CODE BEGIN DAC1_MspDeInit 1 */
 
   /* USER CODE END DAC1_MspDeInit 1 */

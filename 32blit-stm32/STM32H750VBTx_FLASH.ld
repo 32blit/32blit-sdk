@@ -195,6 +195,12 @@ SECTIONS
     *(.m)           /* framebuffer */
   } >RAM_D2
 
+  .dac_data (NOLOAD):
+  {
+    . = ALIGN(4);
+    *(.dac_data)           /* dac_data */
+  } >RAM_D3
+
   /* Remove information from the standard libraries */
   /DISCARD/ :
   {

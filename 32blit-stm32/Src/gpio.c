@@ -68,12 +68,6 @@ void MX_GPIO_Init(void)
   HAL_GPIO_Init(LCD_BACKLIGHT_EN_GPIO_Port, &GPIO_InitStruct);
   HAL_GPIO_WritePin(LCD_BACKLIGHT_EN_GPIO_Port, LCD_BACKLIGHT_EN_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = USB_5V_SENSE_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  HAL_GPIO_Init(USB_5V_SENSE_GPIO_Port, &GPIO_InitStruct);
-
   /*Configure GPIO pins : PCPin PCPin PCPin */
   GPIO_InitStruct.Pin = USER_LEFT2_Pin|USER_RIGHT2_Pin|EXTENSION_GPIO_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;

@@ -64,8 +64,8 @@ void Error_Handler(void);
 #define LCD_BACKLIGHT_EN_GPIO_Port GPIOE
 #define LCD_SPI4_MOSI_Pin GPIO_PIN_6
 #define LCD_SPI4_MOSI_GPIO_Port GPIOE
-#define USB_5V_SENSE_Pin GPIO_PIN_13
-#define USB_5V_SENSE_GPIO_Port GPIOC
+#define AMP_SHUTDOWN_Pin GPIO_PIN_13
+#define AMP_SHUTDOWN_GPIO_Port GPIOC
 #define USER_LEFT2_Pin GPIO_PIN_14
 #define USER_LEFT2_GPIO_Port GPIOC
 #define USER_RIGHT2_Pin GPIO_PIN_15
@@ -88,8 +88,6 @@ void Error_Handler(void);
 #define JOYSTICK_X_GPIO_Port GPIOC
 #define JOYSTICK_BUTTON_Pin GPIO_PIN_5
 #define JOYSTICK_BUTTON_GPIO_Port GPIOC
-#define AMP_SHUTDOWN_Pin GPIO_PIN_13
-#define AMP_SHUTDOWN_GPIO_Port GPIOB
 #define USB_SWAP_Pin GPIO_PIN_8
 #define USB_SWAP_GPIO_Port GPIOD
 #define DPAD_UP_Pin GPIO_PIN_9
