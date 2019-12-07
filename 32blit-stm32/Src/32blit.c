@@ -42,7 +42,7 @@ void blit_init() {
 
     st7272a_set_bgr();
 
-    msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_125HZ);
+    msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
     //bq24295_init(&hi2c4);
     blit::backlight = 1.0f;
     blit::now = HAL_GetTick;
@@ -188,6 +188,11 @@ void ADC_update_joystick_axis(ADC_HandleTypeDef *adc, float *axis){
   }
 }
 
+#define ACCEL_OVER_SAMPLE 16
+
+uint8_t tilt_sample_offset = 0;
+int16_t acceleration_data_buffer[3 * ACCEL_OVER_SAMPLE] = {0};
+
 void blit_process_input() {
   // read x axis of joystick
   bool joystick_button = false;
@@ -223,16 +228,25 @@ void blit_process_input() {
 
   // Read accelerometer
 
-  int16_t acceleration_data_buffer[3];
-  acceleration_data_buffer[0] = 0;
-  acceleration_data_buffer[1] = 0;
-  acceleration_data_buffer[2] = 0;
-  msa301_get_accel(&hi2c4, acceleration_data_buffer);
+  msa301_get_accel(&hi2c4, &acceleration_data_buffer[tilt_sample_offset * 3]);
+
+  tilt_sample_offset += 1;
+  if(tilt_sample_offset >= ACCEL_OVER_SAMPLE){
+    tilt_sample_offset = 0;
+  }
+
+  float tilt_x, tilt_y, tilt_z;
+  for(int x = 0; x < ACCEL_OVER_SAMPLE; x++) {
+    int offset = x * 3;
+    tilt_x += acceleration_data_buffer[offset + 0];
+    tilt_y += acceleration_data_buffer[offset + 1];
+    tilt_z += acceleration_data_buffer[offset + 2];
+  }
 
   blit::tilt = vec3(
-    -acceleration_data_buffer[0],
-    -acceleration_data_buffer[1],
-    -acceleration_data_buffer[2]
+    -(tilt_x / ACCEL_OVER_SAMPLE),
+    -(tilt_y / ACCEL_OVER_SAMPLE),
+    -(tilt_z / ACCEL_OVER_SAMPLE)
     );
   blit::tilt.normalize();
 }
