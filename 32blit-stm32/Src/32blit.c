@@ -202,7 +202,7 @@ void blit_process_input() {
   ADC_update_joystick_axis(&hadc3, &blit::hack_right);
   if (HAL_ADC_PollForConversion(&hadc3, 1000000) == HAL_OK)
   {
-    blit::battery = HAL_ADC_GetValue(&hadc3);
+    blit::battery = 6.6 * HAL_ADC_GetValue(&hadc3) / 65535.0f;
   }
   HAL_ADC_Stop(&hadc3);
 
