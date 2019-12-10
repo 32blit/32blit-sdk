@@ -25,7 +25,7 @@ namespace blit {
   extern vec3 tilt;
   extern float hack_left;
   extern float hack_right;
-  extern int battery;
+  extern float battery;
 
   extern bool pressed(uint32_t button);
  

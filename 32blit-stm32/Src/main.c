@@ -31,6 +31,7 @@
 #include "spi.h"
 #include "tim.h"
 #include "usb_otg.h"
+#include "dma2d.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -68,13 +69,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void DFUBoot(void)
-{
-  *((uint32_t *)0x2001FFFC) = 0xCAFEBABE; // Special Key to End-of-RAM
 
-  SCB_CleanDCache();
-  NVIC_SystemReset();
-}
 /* USER CODE END 0 */
 
 /**
@@ -86,7 +81,6 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
-
 
   /* Enable I-Cache---------------------------------------------------------*/
   SCB_EnableICache();
@@ -112,40 +106,55 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  //MX_DMA_Init();
+  MX_DMA_Init();
   MX_TIM4_Init();
   MX_TIM3_Init();
-  //MX_DAC1_Init();
-  //MX_HRTIM_Init();
+  MX_DAC1_Init();
+  MX_HRTIM_Init();
   MX_I2C4_Init();
   MX_LTDC_Init();
-  //MX_QUADSPI_Init();
+  MX_QUADSPI_Init();
   MX_ADC1_Init();
   MX_ADC3_Init();
   //MX_USB_OTG_HS_USB_Init();
-  //MX_SPI1_Init();
+  MX_SPI1_Init();
   MX_SPI4_Init();
-  //MX_TIM6_Init();
+  MX_TIM6_Init();
   MX_TIM15_Init();
-  //MX_FATFS_Init();
+  MX_FATFS_Init();
+  MX_DMA2D_Init();
 
   /* USER CODE BEGIN 2 */
   blit_clear_framebuffer();
   blit_init();
+
+  char sd_card_label[12];
+  uint32_t freespace = 0;
+  uint32_t totalspace = 0;
+  uint32_t total_samples = 0;
+  FIL audio_file;
+  bool audio_file_available = false;
+  if (blit_mount_sd(sd_card_label, freespace, totalspace)) {
+    audio_file_available = blit_open_file(audio_file, "u8mono16.raw");
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  { 
-    // Backlight
-    __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 962 - (962 * blit::backlight));
-
+  {
+    uint32_t t_start = blit::now();
     blit_process_input();
     blit_update_led();
     blit_update_vibration();
     blit_swap();
+
     blit_tick();
+
+    if(audio_file_available && blit_sd_detected()){
+      total_samples += blit_update_dac(&audio_file);
+    }
+    uint32_t t_elapsed = blit::now() - t_start;
     blit_flip();
     /* USER CODE END WHILE */
   
@@ -163,6 +172,7 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
   RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+  RCC_CRSInitTypeDef RCC_CRSInitStruct = {0};
 
   /** Supply configuration update enable 
   */
@@ -238,11 +248,25 @@ void SystemClock_Config(void)
   PeriphClkInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
   PeriphClkInitStruct.I2c4ClockSelection = RCC_I2C4CLKSOURCE_D3PCLK1;
   PeriphClkInitStruct.AdcClockSelection = RCC_ADCCLKSOURCE_PLL2;
-  PeriphClkInitStruct.Hrtim1ClockSelection = RCC_HRTIM1CLK_TIMCLK;
+  PeriphClkInitStruct.Hrtim1ClockSelection = RCC_HRTIM1CLK_CPUCLK;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     Error_Handler();
   }
+  /** Enable the SYSCFG APB clock
+  */
+
+  __HAL_RCC_CRS_CLK_ENABLE();
+  /** Configures CRS
+  */
+  RCC_CRSInitStruct.Prescaler = RCC_CRS_SYNC_DIV1;
+  RCC_CRSInitStruct.Source = RCC_CRS_SYNC_SOURCE_USB1;
+  RCC_CRSInitStruct.Polarity = RCC_CRS_SYNC_POLARITY_RISING;
+  RCC_CRSInitStruct.ReloadValue = __HAL_RCC_CRS_RELOADVALUE_CALCULATE(48000000,1000);
+  RCC_CRSInitStruct.ErrorLimitValue = 34;
+  RCC_CRSInitStruct.HSI48CalibrationValue = 32;
+
+  HAL_RCCEx_CRSConfig(&RCC_CRSInitStruct);
   /** Enable USB Voltage detector 
   */
   HAL_PWREx_EnableUSBVoltageDetector();

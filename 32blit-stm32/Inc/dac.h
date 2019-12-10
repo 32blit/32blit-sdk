@@ -20,9 +20,6 @@
 #ifndef __dac_H
 #define __dac_H
 
-#define DAC_DMA_COMPLETE 2
-#define DAC_DMA_HALF_COMPLETE 1
-
 #ifdef __cplusplus
  extern "C" {
 #endif

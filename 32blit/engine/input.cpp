@@ -10,7 +10,7 @@ namespace blit {
   vec3 tilt;
   float hack_left;
   float hack_right;
-  int battery;
+  float battery;
 
   /**
    * Return pressed state of a button or buttons.

@@ -3,8 +3,8 @@
 #include "i2c-msa301.h"
 
 //functions 
-void msa301_init(I2C_HandleTypeDef *i2c_port, uint8_t power_mode , uint8_t low_power_bandwidth , uint8_t update_rate ){
-  _i2c_send_8(i2c_port, MSA301_DEVICE_ADDRESS, MSA301_CONTROL1_REGISTER, update_rate );
+void msa301_init(I2C_HandleTypeDef *i2c_port, uint8_t power_mode, uint8_t low_power_bandwidth, uint8_t update_rate){
+  _i2c_send_8(i2c_port, MSA301_DEVICE_ADDRESS, MSA301_CONTROL1_REGISTER, update_rate);
   _i2c_send_8(i2c_port, MSA301_DEVICE_ADDRESS, MSA301_CONTROL2_REGISTER, (power_mode | low_power_bandwidth));
 }
 
@@ -26,12 +26,12 @@ void msa301_get_accel(I2C_HandleTypeDef *i2c_port, int16_t *data_buffer) {
   *data_buffer++ = ((int8_t(b[5]) << 8) | (b[4] << 2)) >> 2;
 }
 
-uint16_t _i2c_receive_16(I2C_HandleTypeDef *i2c_port,  uint16_t address, uint8_t reg ){
+uint16_t _i2c_receive_16(I2C_HandleTypeDef *i2c_port, uint16_t address, uint8_t reg ){
   uint8_t receive_buffer[2];
   uint16_t ret_16b;
-  HAL_I2C_Master_Transmit(i2c_port, address, &reg , 1 ,HAL_TIMEOUT); //set register pointer   
-  HAL_Delay(1); 
-  HAL_I2C_Master_Receive(i2c_port, address, &receive_buffer[0] , 2 ,HAL_TIMEOUT); //read twoo bytes from register 
+  HAL_I2C_Master_Transmit(i2c_port, address, &reg, 1, HAL_TIMEOUT); //set register pointer
+  HAL_Delay(1);
+  HAL_I2C_Master_Receive(i2c_port, address, &receive_buffer[0], 2, HAL_TIMEOUT); //read twoo bytes from register
   
   ret_16b = (receive_buffer[0] << 8) + receive_buffer [1]; //combine MSB LSB
 

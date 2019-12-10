@@ -3,6 +3,9 @@
 
 using namespace blit;
 
+#define SCREEN_WIDTH 160
+#define SCREEN_HEIGHT 120
+
 void init() {
     set_screen_mode(screen_mode::lores);
 }
@@ -15,9 +18,6 @@ void init() {
 #define ROW2 98
 
 void render(uint32_t time) {
-    fb.pen(rgba(0x4e, 0xb3, 0xf7));
-    fb.clear();
-
     bool button_a = blit::buttons & blit::button::A;
     bool button_b = blit::buttons & blit::button::B;
     bool button_x = blit::buttons & blit::button::X;
@@ -29,11 +29,18 @@ void render(uint32_t time) {
     bool dpad_u = blit::buttons & blit::button::DPAD_UP;
     bool dpad_d = blit::buttons & blit::button::DPAD_DOWN;
 
-    vibration = 0.0;
-    if(button_a){vibration += 0.1;}
-    if(button_b){vibration += 0.2;}
-    if(button_x){vibration += 0.3;}
-    if(button_y){vibration += 0.4;}
+    for(int b = 0; b < SCREEN_WIDTH; b++){
+        for(int v = 0; v < SCREEN_HEIGHT; v++){
+            fb.pen(blit::hsv_to_rgba(float(b) / (float)(SCREEN_WIDTH), 1.0f, float(v) / (float)(SCREEN_HEIGHT)));
+            fb.pixel(point(b, v));
+        }
+    }
+
+    vibration = 0.0f;
+    if(button_a){vibration += 0.1f;}
+    if(button_b){vibration += 0.2f;}
+    if(button_x){vibration += 0.3f;}
+    if(button_y){vibration += 0.4f;}
 
     fb.pen(button_a ? rgba(255, 0, 0) : rgba(128, 128, 128));
     fb.text("A", &minimal_font[0][0], point(150, 15));
@@ -60,6 +67,7 @@ void render(uint32_t time) {
     fb.pen(dpad_l ? rgba(255, 0, 0) : rgba(128, 128, 128));
     fb.text("L", &minimal_font[0][0], point(5, 15));
 
+
     fb.pen(button_m ? rgba(255, 0, 0) : rgba(128, 128, 128));
     fb.text("MENU", &minimal_font[0][0], point(55, 15));
 
@@ -67,6 +75,11 @@ void render(uint32_t time) {
     fb.text("HOME", &minimal_font[0][0], point(85, 15));
 
 
+    fb.pen(rgba(255, 0, 0));
+    fb.pixel(point(
+        (SCREEN_WIDTH / 2) + blit::joystick.x * 30,
+        (SCREEN_HEIGHT / 2) + blit::joystick.y * 30
+    ));
 
     fb.pen(rgba(255, 255, 255));
 
@@ -95,22 +108,14 @@ void render(uint32_t time) {
     sprintf(buf_tilt_y, "Y: %d", (int)(blit::tilt.y * 1024));
     sprintf(buf_tilt_z, "Z: %d", (int)(blit::tilt.z * 1024));
 
-
-    for(int b = 0; b < 90; b++){
-        for(int v = 0; v < 40; v++){
-            fb.pen(blit::hsv_to_rgba(float(b) / (float)90.0, 1.0, (float)v / (float)40.0));
-            fb.pixel(point(b + 35, 30 + v));
-        }
-    }
-
     fb.pen(rgba(255, 255, 255));
     fb.text("Tilt:", &minimal_font[0][0], point(COL2, ROW1));
     fb.text(buf_tilt_x, &minimal_font[0][0], point(COL2, ROW1+7));
     fb.text(buf_tilt_y, &minimal_font[0][0], point(COL2, ROW1+14));
     fb.text(buf_tilt_z, &minimal_font[0][0], point(COL2, ROW1+21));
 
-    char buf_battery[10] = "";
-    sprintf(buf_battery, "%d", blit::battery);
+    char buf_battery[20] = "";
+    sprintf(buf_battery, "%d", (int)(blit::battery * 1000.f));
 
     fb.text("Battery:", &minimal_font[0][0], point(COL3, ROW1));
     fb.text(buf_battery, &minimal_font[0][0], point(COL3, ROW1+7));

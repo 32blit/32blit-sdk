@@ -56,14 +56,6 @@ void MX_DAC1_Init(void)
 
 }
 
-void HAL_DACEx_ConvHalfCpltCallbackCh2(DAC_HandleTypeDef *hdac){
-  dma_status = DAC_DMA_HALF_COMPLETE;
-}
-
-void HAL_DACEx_ConvCpltCallbackCh2(DAC_HandleTypeDef *hdac){
-  dma_status = DAC_DMA_COMPLETE;
-}
-
 void HAL_DAC_MspInit(DAC_HandleTypeDef* dacHandle)
 {
 
