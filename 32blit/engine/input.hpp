@@ -6,7 +6,7 @@
 
 namespace blit {
 
-  enum button {
+  enum button : unsigned int {
     DPAD_LEFT = 1,
     DPAD_RIGHT = 2,
     DPAD_UP = 4,
