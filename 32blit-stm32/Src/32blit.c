@@ -14,6 +14,7 @@
 #include "fatfs.h"
 
 #include "32blit.hpp"
+#include "graphics/color.hpp"
 
 using namespace blit;
 
@@ -68,10 +69,12 @@ uint32_t blit_update_dac(FIL *audio_file) {
   uint8_t buf[DAC_BUFFER_SIZE / 2] = {0};
 
   if(dma_status){
-    FRESULT err = f_read(audio_file, buf, DAC_BUFFER_SIZE / 2, &read);
     if(dma_status == DAC_DMA_COMPLETE){
       buffer_offset = (DAC_BUFFER_SIZE / 2);
     }
+    dma_status = 0;
+    FRESULT err = f_read(audio_file, buf, DAC_BUFFER_SIZE / 2, &read);
+
     if(err == FR_OK){
       for(unsigned int x = 0; x < read; x++){
         dac_buffer[x + buffer_offset] = buf[x] * 16.0f * blit::volume;
@@ -80,13 +83,12 @@ uint32_t blit_update_dac(FIL *audio_file) {
         // If we have a short read, seek back to 0 in our audio file
         // and fill the rest of the DMA buffer with zeros cos it's
         // slightly easier than filling it with data.
-        //f_lseek(&fil, 0);
+        f_lseek(audio_file, 0);
         for(unsigned int x = 0; x < (DAC_BUFFER_SIZE / 2) - read; x++){
           dac_buffer[x + buffer_offset] = 0;
         }
       }
     }
-    dma_status = 0;
   }
 
   return read;
@@ -143,7 +145,7 @@ void blit_init() {
     st7272a_set_bgr();
 
     msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
-    //bq24295_init(&hi2c4);
+    bq24295_init(&hi2c4);
     blit::backlight = 1.0f;
     blit::volume = 1.5f / 16.0f;
     blit::debug = blit_debug;
@@ -156,6 +158,169 @@ void blit_init() {
     blit::init   = ::init;
 
     blit::init();
+}
+
+int menu_item = 0;
+
+void blit_menu_update(uint32_t time) {
+  static uint32_t last_buttons = 0;
+  uint32_t changed_buttons = blit::buttons ^ last_buttons;
+  if(blit::buttons & changed_buttons & blit::button::DPAD_UP) {
+    menu_item -= 1;
+    if(menu_item < 0){
+      menu_item = 0;
+    }
+  } else if (blit::buttons & changed_buttons & blit::button::DPAD_DOWN) {
+    menu_item += 1;
+    if(menu_item > 3){
+      menu_item = 3;
+    }
+  } else if (blit::buttons & blit::button::DPAD_RIGHT ) {
+    switch(menu_item) {
+      case 0: // Backlight
+        blit::backlight += 1.0f / 256.0f;
+        blit::backlight = std::fmin(1.0f, std::fmax(0.0f, blit::backlight));
+        break;
+      case 1: // Volume
+        blit::volume += 1.0f / 256.0f;
+        blit::volume = std::fmin(1.0f, std::fmax(0.0f, blit::volume));
+        break;
+    }
+  } else if (blit::buttons & blit::button::DPAD_LEFT ) {
+    switch(menu_item) {
+      case 0: // Brightness
+        blit::backlight -= 1.0f / 256.0f;
+        blit::backlight = std::fmin(1.0f, std::fmax(0.0f, blit::backlight));
+        break;
+      case 1: // Volume
+        blit::volume -= 1.0f / 256.0f;
+        blit::volume = std::fmin(1.0f, std::fmax(0.0f, blit::volume));
+        break;
+    }
+  } else if (blit::buttons & changed_buttons & blit::button::A) {
+      switch(menu_item) {
+        case 2:
+          DFUBoot();
+          break;
+        case 3:
+          bq24295_enable_shipping_mode(&hi2c4);
+          break;
+      }
+  }
+
+  last_buttons = blit::buttons;
+}
+
+void blit_menu_render(uint32_t time) {
+  ::render(time);
+  int screen_width = 160;
+  int screen_height = 120;
+  if (mode == blit::screen_mode::hires) {
+    screen_width = 320;
+    screen_height = 240;
+  }
+
+  const rgba bar_background_color = rgba(40, 40, 60);
+
+  fb.pen(rgba(30, 30, 50, 200));
+  fb.clear();
+
+  fb.pen(rgba(255, 255, 255));
+
+  fb.text("System Menu", &minimal_font[0][0], point(5, 5));
+
+  fb.text("bat", &minimal_font[0][0], point(screen_width / 2, 5));
+  uint16_t battery_meter_width = 55;
+  battery_meter_width = float(battery_meter_width) * (blit::battery - 3.0f) / 1.1f;
+  battery_meter_width = std::max((uint16_t)0, std::min((uint16_t)55, battery_meter_width));
+
+  fb.pen(bar_background_color);
+  fb.rectangle(rect((screen_width / 2) + 20, 6, 55, 5));
+
+  switch(battery_vbus_status){
+    case 0b00: // Unknown
+        fb.pen(rgba(255, 128, 0));
+        break;
+    case 0b01: // USB Host
+        fb.pen(rgba(0, 255, 0));
+        break;
+    case 0b10: // Adapter Port
+        fb.pen(rgba(0, 255, 0));
+        break;
+    case 0b11: // OTG
+        fb.pen(rgba(255, 0, 0));
+        break;
+  }
+  fb.rectangle(rect((screen_width / 2) + 20, 6, battery_meter_width, 5));
+  if(battery_charge_status == 0b01 || battery_charge_status == 0b10){
+    uint16_t battery_fill_width = uint32_t(time / 100.0f) % battery_meter_width;
+    battery_fill_width = std::max((uint16_t)0, std::min((uint16_t)battery_meter_width, battery_fill_width));
+    fb.pen(rgba(100, 255, 200));
+    fb.rectangle(rect((screen_width / 2) + 20, 6, battery_fill_width, 5));
+  }
+
+  // Horizontal Line
+  fb.pen(rgba(255, 255, 255));
+  fb.rectangle(rect(0, 15, screen_width, 1));
+
+  if(menu_item == 0){
+    fb.pen(rgba(50, 50, 70));
+    fb.rectangle(rect(0, 19, screen_width, 9));
+    fb.pen(rgba(255, 255, 255));
+  }
+
+  fb.text("Backlight", &minimal_font[0][0], point(5, 20));
+  fb.pen(bar_background_color);
+  fb.rectangle(rect(screen_width / 2, 21, 75, 5));
+  fb.pen(rgba(255, 255, 255));
+  fb.rectangle(rect(screen_width / 2, 21, 75 * blit::backlight, 5));
+
+  if(menu_item == 1){
+    fb.pen(rgba(50, 50, 70));
+    fb.rectangle(rect(0, 29, screen_width, 9));
+    fb.pen(rgba(255, 255, 255));
+  }
+
+  fb.text("Volume", &minimal_font[0][0], point(5, 30));
+  fb.pen(bar_background_color);
+  fb.rectangle(rect(screen_width / 2, 31, 75, 5));
+  fb.pen(rgba(255, 255, 255));
+  fb.rectangle(rect(screen_width / 2, 31, 75 * blit::volume, 5));
+
+  if(menu_item == 2){
+    fb.pen(rgba(50, 50, 70));
+    fb.rectangle(rect(0, 39, screen_width, 9));
+    fb.pen(rgba(255, 255, 255));
+  }
+
+  fb.text("DFU", &minimal_font[0][0], point(5, 40));
+  fb.text("Press A", &minimal_font[0][0], point(screen_width / 2, 40));
+
+  if(menu_item == 3){
+    fb.pen(rgba(50, 50, 70));
+    fb.rectangle(rect(0, 49, screen_width, 9));
+    fb.pen(rgba(255, 255, 255));
+  }
+
+  fb.text("Shipping", &minimal_font[0][0], point(5, 50));
+  fb.text("Press A", &minimal_font[0][0], point(screen_width / 2, 50));
+
+  // Horizontal Line
+  fb.pen(rgba(255, 255, 255));
+  fb.rectangle(rect(0, screen_height - 15, screen_width, 1));
+
+}
+
+void blit_menu() {
+  if(blit::update == blit_menu_update) {
+    blit::update = ::update;
+    blit::render = ::render;
+  }
+  else
+  {
+    blit::update = blit_menu_update;
+    blit::render = blit_menu_render;
+  }
 }
 
 void blit_swap() {
@@ -299,6 +464,7 @@ uint8_t tilt_sample_offset = 0;
 int16_t acceleration_data_buffer[3 * ACCEL_OVER_SAMPLE] = {0};
 
 void blit_process_input() {
+  static uint32_t blit_last_buttons = 0;
   // read x axis of joystick
   bool joystick_button = false;
 
@@ -334,6 +500,12 @@ void blit_process_input() {
   // Read accelerometer
   msa301_get_accel(&hi2c4, &acceleration_data_buffer[tilt_sample_offset * 3]);
 
+  uint8_t status = bq24295_get_status(&hi2c4);
+  blit::battery_vbus_status = status >> 6; // 00 - Unknown, 01 - USB Host, 10 - Adapter port, 11 - OTG
+  blit::battery_charge_status = (status >> 4) & 0b11; // 00 - Not Charging, 01 - Pre-charge, 10 - Fast Charging, 11 - Charge Termination Done
+
+  blit::battery_fault = bq24295_get_fault(&hi2c4);
+
   tilt_sample_offset += 1;
   if(tilt_sample_offset >= ACCEL_OVER_SAMPLE){
     tilt_sample_offset = 0;
@@ -353,6 +525,12 @@ void blit_process_input() {
     -(tilt_z / ACCEL_OVER_SAMPLE)
     );
   blit::tilt.normalize();
+
+  if(blit::buttons & blit::MENU && !(blit_last_buttons & blit::MENU)) {
+    blit_menu();
+  }
+
+  blit_last_buttons = blit::buttons;
 }
 
 char *get_fr_err_text(FRESULT err){
