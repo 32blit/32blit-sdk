@@ -31,7 +31,6 @@
 #include "spi.h"
 #include "tim.h"
 #include "usb_otg.h"
-#include "dma2d.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -122,7 +121,7 @@ int main(void)
   MX_TIM6_Init();
   MX_TIM15_Init();
   MX_FATFS_Init();
-  MX_DMA2D_Init();
+  //MX_DMA2D_Init();
 
   /* USER CODE BEGIN 2 */
   blit_clear_framebuffer();
