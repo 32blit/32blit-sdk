@@ -74,7 +74,7 @@ uint32_t blit_update_dac(FIL *audio_file) {
     }
     if(err == FR_OK){
       for(unsigned int x = 0; x < read; x++){
-        dac_buffer[x + buffer_offset] = buf[x] * 1.5;
+        dac_buffer[x + buffer_offset] = buf[x] * 16.0f * blit::volume;
       }
       if(read < DAC_BUFFER_SIZE / 2){
         // If we have a short read, seek back to 0 in our audio file
@@ -145,6 +145,7 @@ void blit_init() {
     msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
     //bq24295_init(&hi2c4);
     blit::backlight = 1.0f;
+    blit::volume = 1.5f / 16.0f;
     blit::debug = blit_debug;
     blit::now = HAL_GetTick;
     blit::set_screen_mode = ::set_screen_mode;

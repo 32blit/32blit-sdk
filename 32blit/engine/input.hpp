@@ -26,6 +26,7 @@ namespace blit {
   extern float hack_left;
   extern float hack_right;
   extern float battery;
+  extern float volume;
 
   extern bool pressed(uint32_t button);
  

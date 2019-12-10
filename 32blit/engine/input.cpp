@@ -11,6 +11,7 @@ namespace blit {
   float hack_left;
   float hack_right;
   float battery;
+  float volume;
 
   /**
    * Return pressed state of a button or buttons.
