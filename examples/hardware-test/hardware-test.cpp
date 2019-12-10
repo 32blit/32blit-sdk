@@ -11,13 +11,15 @@ void init() {
 }
 
 #define COL1 5
-#define COL2 65
+#define COL2 55
 #define COL3 105
 
-#define ROW1 70
-#define ROW2 98
+#define ROW1 38
+#define ROW2 70
+#define ROW3 102
 
 void render(uint32_t time) {
+    char text_buf[100] = {0};
     bool button_a = blit::buttons & blit::button::A;
     bool button_b = blit::buttons & blit::button::B;
     bool button_x = blit::buttons & blit::button::X;
@@ -76,49 +78,45 @@ void render(uint32_t time) {
 
 
     fb.pen(rgba(255, 0, 0));
+
     fb.pixel(point(
         (SCREEN_WIDTH / 2) + blit::joystick.x * 30,
         (SCREEN_HEIGHT / 2) + blit::joystick.y * 30
     ));
 
+
     fb.pen(rgba(255, 255, 255));
 
-    char buf_joystick_x[60] = "";
-    char buf_joystick_y[60] = "";
+    fb.text("Joystick:", &minimal_font[0][0], point(COL1, ROW1));
 
-    sprintf(buf_joystick_x, "X: %d", (int)(blit::joystick.x * 1024));
-    sprintf(buf_joystick_y, "Y: %d", (int)(blit::joystick.y * 1024));
+    sprintf(text_buf, "X: %d", (int)(blit::joystick.x * 1024));
+    fb.text(text_buf, &minimal_font[0][0], point(COL1, ROW1+7));
 
+    sprintf(text_buf, "Y: %d", (int)(blit::joystick.y * 1024));
+    fb.text(text_buf, &minimal_font[0][0], point(COL1, ROW1+14));
+
+    fb.text("B:", &minimal_font[0][0], point(COL1, ROW1+21));
     if(blit::buttons & blit::button::JOYSTICK) {
-        fb.text("Joystick: (o)", &minimal_font[0][0], point(COL1, ROW1));
+        fb.rectangle(rect(
+            COL1+10, ROW1+22,
+            5, 5
+        ));
     }
-    else
-    {
-        fb.text("Joystick: ( )", &minimal_font[0][0], point(COL1, ROW1));
-    }
 
-    fb.text(buf_joystick_x, &minimal_font[0][0], point(COL1, ROW1+7));
-    fb.text(buf_joystick_y, &minimal_font[0][0], point(COL1, ROW1+14));
-
-    char buf_tilt_x[10] = "";
-    char buf_tilt_y[10] = "";
-    char buf_tilt_z[10] = "";
-
-    sprintf(buf_tilt_x, "X: %d", (int)(blit::tilt.x * 1024));
-    sprintf(buf_tilt_y, "Y: %d", (int)(blit::tilt.y * 1024));
-    sprintf(buf_tilt_z, "Z: %d", (int)(blit::tilt.z * 1024));
-
-    fb.pen(rgba(255, 255, 255));
     fb.text("Tilt:", &minimal_font[0][0], point(COL2, ROW1));
-    fb.text(buf_tilt_x, &minimal_font[0][0], point(COL2, ROW1+7));
-    fb.text(buf_tilt_y, &minimal_font[0][0], point(COL2, ROW1+14));
-    fb.text(buf_tilt_z, &minimal_font[0][0], point(COL2, ROW1+21));
 
-    char buf_battery[20] = "";
-    sprintf(buf_battery, "%d", (int)(blit::battery * 1000.f));
+    sprintf(text_buf, "X: %d", (int)(blit::tilt.x * 1024));
+    fb.text(text_buf, &minimal_font[0][0], point(COL2, ROW1+7));
 
+    sprintf(text_buf, "Y: %d", (int)(blit::tilt.y * 1024));
+    fb.text(text_buf, &minimal_font[0][0], point(COL2, ROW1+14));
+
+    sprintf(text_buf, "Z: %d", (int)(blit::tilt.z * 1024));
+    fb.text(text_buf, &minimal_font[0][0], point(COL2, ROW1+21));
+
+    sprintf(text_buf, "%d", (int)(blit::battery * 1000.f));
     fb.text("Battery:", &minimal_font[0][0], point(COL3, ROW1));
-    fb.text(buf_battery, &minimal_font[0][0], point(COL3, ROW1+7));
+    fb.text(text_buf, &minimal_font[0][0], point(COL3, ROW1+7));
 
     blit::LED = rgb(
         (float)((sin(blit::now() / 100.0f) + 1) / 2.0f),
@@ -134,12 +132,21 @@ void render(uint32_t time) {
     }
     blit::backlight = std::fmin(1.0f, std::fmax(0.0f, blit::backlight));
 
-    char buf_backlight[10] = "";
-    sprintf(buf_backlight, "%d", (int)(blit::backlight * 1024));
+    if (dpad_r) {
+        blit::volume += 1.0f / 256.0f;
+    }
+    if (dpad_l) {
+        blit::volume -= 1.0f / 256.0f;
+    }
+    blit::volume = std::fmin(1.0f, std::fmax(0.0f, blit::volume));
 
-    fb.text("Backlight:", &minimal_font[0][0], point(COL1, ROW2));
-    fb.text(buf_backlight, &minimal_font[0][0], point(COL1, ROW2+7));
+    sprintf(text_buf, "%d", (int)(blit::backlight * 1024));
+    fb.text("B-light:", &minimal_font[0][0], point(COL1, ROW2));
+    fb.text(text_buf, &minimal_font[0][0], point(COL1, ROW2+7));
 
+    sprintf(text_buf, "%d", (int)(blit::volume * 1024));
+    fb.text("Volume:", &minimal_font[0][0], point(COL2, ROW2));
+    fb.text(text_buf, &minimal_font[0][0], point(COL2, ROW2+7));
 }
 
 void update(uint32_t time) {
