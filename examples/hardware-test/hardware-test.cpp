@@ -114,10 +114,6 @@ void render(uint32_t time) {
     sprintf(text_buf, "Z: %d", (int)(blit::tilt.z * 1024));
     fb.text(text_buf, &minimal_font[0][0], point(COL2, ROW1+21));
 
-    sprintf(text_buf, "%d", (int)(blit::battery * 1000.f));
-    fb.text("Battery:", &minimal_font[0][0], point(COL3, ROW1));
-    fb.text(text_buf, &minimal_font[0][0], point(COL3, ROW1+7));
-
     blit::LED = rgb(
         (float)((sin(blit::now() / 100.0f) + 1) / 2.0f),
         (float)((cos(blit::now() / 100.0f) + 1) / 2.0f),
@@ -147,6 +143,47 @@ void render(uint32_t time) {
     sprintf(text_buf, "%d", (int)(blit::volume * 1024));
     fb.text("Volume:", &minimal_font[0][0], point(COL2, ROW2));
     fb.text(text_buf, &minimal_font[0][0], point(COL2, ROW2+7));
+
+
+    fb.text("Bat VBUS:", &minimal_font[0][0], point(COL1, ROW3));
+    switch(battery_vbus_status){
+        case 0b00: // Unknown
+            fb.text("Unknown", &minimal_font[0][0], point(COL1, ROW3+7));
+            break;
+        case 0b01: // USB Host
+            fb.text("USB Host", &minimal_font[0][0], point(COL1, ROW3+7));
+            break;
+        case 0b10: // Adapter Port
+            fb.text("Adapter", &minimal_font[0][0], point(COL1, ROW3+7));
+            break;
+        case 0b11: // OTG
+            fb.text("OTG", &minimal_font[0][0], point(COL1, ROW3+7));
+            break;
+    }
+
+    fb.text("Bat Chrg:", &minimal_font[0][0], point(COL2, ROW3));
+    switch(battery_charge_status){
+        case 0b00: // Not Charging
+            fb.text("Nope", &minimal_font[0][0], point(COL2, ROW3+7));
+            break;
+        case 0b01: // Pre-charge
+            fb.text("Pre", &minimal_font[0][0], point(COL2, ROW3+7));
+            break;
+        case 0b10: // Fast Charging
+            fb.text("Fast", &minimal_font[0][0], point(COL2, ROW3+7));
+            break;
+        case 0b11: // Charge Done
+            fb.text("Done", &minimal_font[0][0], point(COL2, ROW3+7));
+            break;
+    }
+
+    sprintf(text_buf, "%d", (int)(blit::battery * 1000.f));
+    fb.text("Battery:", &minimal_font[0][0], point(COL3, ROW3));
+    fb.text(text_buf, &minimal_font[0][0], point(COL3, ROW3+7));
+
+    sprintf(text_buf, "%d", blit::battery_fault);
+    fb.text("Fault:", &minimal_font[0][0], point(COL3, ROW1));
+    fb.text(text_buf, &minimal_font[0][0], point(COL3, ROW1+7));
 }
 
 void update(uint32_t time) {
