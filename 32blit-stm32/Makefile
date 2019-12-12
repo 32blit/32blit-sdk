@@ -67,7 +67,6 @@ Src/spi-st7272a.c \
 Src/sys.c \
 Src/tim.c \
 Src/usb_otg.c \
-Src/dma2d.c \
 Src/32blit.c
 
 # ASM sources
