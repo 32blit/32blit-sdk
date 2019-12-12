@@ -42,6 +42,7 @@ Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c_ex.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c \
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_dma2d.c \
 Src/system_stm32h7xx.c \
 Src/user_diskio.c \
 Src/fatfs.c \
@@ -66,6 +67,7 @@ Src/spi-st7272a.c \
 Src/sys.c \
 Src/tim.c \
 Src/usb_otg.c \
+Src/dma2d.c \
 Src/32blit.c
 
 # ASM sources
@@ -121,10 +123,10 @@ C_INCLUDES =  \
 -I$(dir $(PROJECT))
 
 # compile gcc flags
-ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections
+ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections -fshort-wchar
 
 # TODO: fix warnings that we're suppressing with -Wno-write-strings
-CFLAGS = $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections -Wattributes -Wdouble-promotion -Wno-unused-variable -Wno-write-strings -std=c++14
+CFLAGS = $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections -Wattributes -Wdouble-promotion -Wno-unused-variable -Wno-write-strings -std=c++14 -fshort-wchar
 
 ifeq ($(DEBUG), 1)
 CFLAGS += -g -gdwarf-2
@@ -139,7 +141,7 @@ LDSCRIPT = STM32H750VBTx_FLASH.ld
 # libraries
 LIBS =  -l32blit -lc -lm -lnosys #-llua
 LIBDIR = -L../32blit/build.$(PREFIX)32blit-stm32 #-L../lua
-LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) -static $(LIBDIR) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
+LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) -static $(LIBDIR) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections -Wl,--no-wchar-size-warning
 
 # default action: build all
 all: lib32blit-stm32 $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
@@ -156,7 +158,7 @@ OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(ASM_SOURCES:.s=.o)))
 vpath %.s $(sort $(dir $(ASM_SOURCES)))
 
 lib32blit-stm32:
-	make -C ../32blit
+	make PREFIX=$(PREFIX) -C ../32blit
 
 $(BUILD_DIR)/%.o: %.cpp Makefile | $(BUILD_DIR)
 	$(CC) -c $(CFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.cpp=.lst)) $< -o $@
