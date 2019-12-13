@@ -17,7 +17,7 @@ namespace blit {
 
     uint32_t duration = 0;
     int32_t loops = -1;
-    uint32_t elapsed = 0;
+    uint32_t started = 0;
 
     enum state {
       STOPPED, 
@@ -35,14 +35,13 @@ namespace blit {
     bool is_paused()    { return this->state == PAUSED; }
     bool is_stopped()   { return this->state == STOPPED; }
     bool is_finished()  { return this->state == FINISHED; }
-
-    tween();
   };
 
   extern std::vector<tween *> tweens;
 
   void update_tweens(uint32_t time);
 
+  float tween_sine(uint32_t t, float b, float c, uint32_t d);
   float tween_linear(uint32_t t, float b, float c, uint32_t d);
   float tween_ease_in_quad(uint32_t t, float b, float c, uint32_t d);
   float tween_ease_out_quad(uint32_t t, float b, float c, uint32_t d);

@@ -1,13 +1,12 @@
 #include <vector>
 #include <algorithm>
+#include <cmath>
+
+#include "engine.hpp"
 #include "tweening.hpp"
 
 namespace blit {
   std::vector<tween *> tweens;
-  uint32_t tween_last_time = 0;
-
-  tween::tween() {
-  }
 
   /**
    * Initialize the tween.
@@ -31,6 +30,7 @@ namespace blit {
    * Start the tween.
    */
   void tween::start() {
+    this->started = blit::now();
     this->state = RUNNING;
   }
 
@@ -39,6 +39,10 @@ namespace blit {
    */
   void tween::stop() {
     this->state = STOPPED;
+  }
+
+  float tween_sine(uint32_t t, float b, float c, uint32_t d) {
+    return b + (sin((float(t) / float(d) * M_PI * 2.0f) + (M_PI / 2.0f)) + 1.0f) / 2.0f * (c - b);
   }
 
   float tween_linear(uint32_t t, float b, float c, uint32_t d) {
@@ -68,21 +72,19 @@ namespace blit {
    * @param time in milliseconds.
    */
   void update_tweens(uint32_t time) {
-    uint32_t elapsed_time = (uint32_t)(time - tween_last_time);
-
     for (auto tween : tweens) {
       if (tween->state == tween::RUNNING){
-        tween->elapsed += elapsed_time;
-        tween->value = (*tween->function)(tween->elapsed, tween->from, tween->to, tween->duration);
+        uint32_t elapsed = blit::now() - tween->started;
+        tween->value = tween->function(elapsed, tween->from, tween->to, tween->duration);
 
-        if (tween->elapsed >= tween->duration) {
+        if (elapsed >= tween->duration) {
           if(tween->loops == -1){
-            tween->elapsed = 0;
+            tween->started = blit::now();
           }
           else
           {
             tween->loops--;
-            tween->elapsed = 0;
+            tween->started = blit::now();
             if (tween->loops == 0){
               tween->state = tween::FINISHED;
             }
@@ -90,7 +92,5 @@ namespace blit {
         }
       }
     }
-
-    tween_last_time = time;
   }
 }
