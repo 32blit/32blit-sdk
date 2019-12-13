@@ -5,6 +5,7 @@
 #include "engine/output.hpp"
 #include "engine/input.hpp"
 #include "engine/timer.hpp"
+#include "engine/tweening.hpp"
 #include "graphics/blend.hpp"
 #include "graphics/surface.hpp"
 #include "graphics/sprite.hpp"

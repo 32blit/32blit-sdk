@@ -1,32 +1,44 @@
 #include <vector>
 #include <algorithm>
-/*
-extern "C" {
-  #include "lua.h"
-  #include "lualib.h"
-  #include "lauxlib.h"
-}
-*/
 #include "tweening.hpp"
 
-namespace tge {
-  /*
-  std::vector<tge::Tween> tweens;
-  uint32_t last_time;
+namespace blit {
+  std::vector<tween *> tweens;
+  uint32_t tween_last_time = 0;
 
-  int lua_tween(lua_State* L) {
-    int nargs = lua_gettop(L);
+  tween::tween() {
+  }
 
-    Tween t;    
-    t.variable  = lua_tostring(L, 1); // start value
-    t.start     = lua_tonumber(L, 2); // start value
-    t.end       = lua_tonumber(L, 3); // end value
-    t.duration  = int32_t(lua_tonumber(L, 4) * 1000.0f); // duration
-    lua_pop(L, nargs);
+  /**
+   * Initialize the tween.
+   *
+   * @param function Callback function to provide tween value.
+   * @param value to tween from
+   * @param value to tween to
+   * @param duration Duration of the tween in milliseconds.
+   * @param loops Number of times the tween should repeat, -1 = forever.
+   */
+  void tween::init(tween_function function, float from, float to, uint32_t duration, int32_t loops = -1) {
+    this->function = function;
+    this->from = from;
+    this->to = to;
+    this->duration = duration;
+    this->loops = loops;
+    tweens.push_back(this);
+  }
 
-    tweens.push_back(t);
+  /**
+   * Start the tween.
+   */
+  void tween::start() {
+    this->state = RUNNING;
+  }
 
-    return 0;
+  /**
+   * Stop the running tween.
+   */
+  void tween::stop() {
+    this->state = STOPPED;
   }
 
   float tween_linear(uint32_t t, float b, float c, uint32_t d) {
@@ -50,25 +62,35 @@ namespace tge {
     return -c / 2 * (ft*(ft - 2) - 1) + b;
   }
 
-  void update_tweens(lua_State* L, uint32_t time) {
-    uint32_t elapsed_time = (uint32_t)(time - last_time);
+  /**
+   * Update tweens.
+   *
+   * @param time in milliseconds.
+   */
+  void update_tweens(uint32_t time) {
+    uint32_t elapsed_time = (uint32_t)(time - tween_last_time);
 
-    for (Tween &tween : tweens) {
-      tween.elapsed += elapsed_time;
+    for (auto tween : tweens) {
+      if (tween->state == tween::RUNNING){
+        tween->elapsed += elapsed_time;
+        tween->value = (*tween->function)(tween->elapsed, tween->from, tween->to, tween->duration);
 
-      float v = tween_linear(tween.elapsed, tween.start, tween.end, tween.duration);
-      
-      lua_pushinteger(L, (int32_t)v);
-      lua_setglobal(L, tween.variable.c_str());
-      
-      
-      if (tween.elapsed >= tween.duration) {
-        // remove the tween
-        tween.elapsed = 0;
+        if (tween->elapsed >= tween->duration) {
+          if(tween->loops == -1){
+            tween->elapsed = 0;
+          }
+          else
+          {
+            tween->loops--;
+            tween->elapsed = 0;
+            if (tween->loops == 0){
+              tween->state = tween::FINISHED;
+            }
+          }
+        }
       }
     }
 
-    last_time = time;
-  }*/
-
+    tween_last_time = time;
+  }
 }
