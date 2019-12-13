@@ -32,16 +32,28 @@ You'll need to make sure you:
 
 1. `sudo apt install libsdl2-dev`
 
-Then, to build your project for testing, run:
+Then, to build your project for testing, go into the *32blit-sdl* directory 
 
 ```
-make ../example/<project_name>
+cd 32blit-sdl
 ```
 
-And run your project with:
+and compile the application:
 
 ```
-DISPLAY=:0.0 ../build/project/<project_name>
+make ../examples/<project_name>
+```
+
+To run the application on your computer, use the following command (from within the same directory):
+
+```
+DISPLAY=:0.0 ./build/<project_name>/<project_name>
+```
+
+For example, to run the Shmup game, do this:
+
+```
+DISPLAY=:0.0 ./build/shmup/shmup
 ```
 
 ### Video Capture
