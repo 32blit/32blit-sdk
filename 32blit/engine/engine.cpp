@@ -2,6 +2,7 @@
 */
 #include "engine.hpp"
 #include "timer.hpp"
+#include "tweening.hpp"
 
 namespace blit {
 
@@ -31,6 +32,7 @@ namespace blit {
 
     // update timers
     update_timers(time);
+    update_tweens(time);
 
     // catch up on updates if any pending
     pending_update_time += (time - last_tick_time);
