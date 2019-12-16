@@ -95,7 +95,13 @@ uint32_t blit_update_dac(FIL *audio_file) {
 }
 
 void blit_tick() {
-    blit::tick(blit::now());
+  blit_process_input();
+  blit_update_led();
+  blit_update_vibration();
+
+  if(blit::tick(blit::now())){
+    blit_flip();
+  }
 }
 
 bool blit_sd_detected() {
@@ -323,27 +329,11 @@ void blit_menu() {
   }
 }
 
-void blit_swap() {
-    if (mode == blit::screen_mode::hires) {
-        // LTDC framebuffer swap mode
-        // 2 x 320x240 16-bit framebuffers are used alternately. Once drawing is
-        // complete the data cache is invalidated and the LTDC hardware is pointed
-        // to the freshly drawn framebuffer. Then the drawing framebuffer is swapped
-        // for the next frame.
-
-        // flip to non visible buffer for render
-        ltdc_buffer_id = ltdc_buffer_id == 0 ? 1 : 0;
-        blit::fb.data = (uint8_t *)(&__ltdc_start) + (ltdc_buffer_id * 320 * 240 * 2);
-    }else {
-        ltdc_buffer_id = 0;
-
-        // set the LTDC layer framebuffer pointer shadow register
-        LTDC_Layer1->CFBAR = (uint32_t)(&__ltdc_start);
-        // force LTDC driver to reload shadow registers
-        LTDC->SRCR = LTDC_SRCR_IMR;
-    }
-}
-
+/**
+ * In low-res mode this copies the low-res RGB framebuffer into the larger RGB565 buffer, applying pixel doubling.
+ * Since the LTDC display is refreshed from this high-res buffer, the low-res one can then be safely redrawn.
+ * In high-res mode it simply points LTDC at the freshly drawn buffer and gives 32blit the other buffer to draw into.
+ */
 void blit_flip() {
     if(mode == screen_mode::hires) {
         // HIRES mode
@@ -356,12 +346,12 @@ void blit_flip() {
         LTDC_Layer1->CFBAR = (uint32_t)(&__ltdc_start + (ltdc_buffer_id * 320 * 240 * 2));
         // force LTDC driver to reload shadow registers
         LTDC->SRCR = LTDC_SRCR_IMR;
+
+        // Swap blit's output framebuffer over
+        ltdc_buffer_id = ltdc_buffer_id == 0 ? 1 : 0;
+        blit::fb.data = (uint8_t *)(&__ltdc_start) + (ltdc_buffer_id * 320 * 240 * 2);
     } else {
         // LORES mode
-
-        // wait for next frame if LTDC hardware currently drawing, ensures
-        // no tearing
-        while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS));
 
         // pixel double the framebuffer to the LTDC buffer
         rgb *src = (rgb *)blit::fb.data;
@@ -385,6 +375,19 @@ void blit_flip() {
         }
 
         SCB_CleanInvalidateDCache_by_Addr((uint32_t *)&__ltdc_start, 320 * 240 * 2);
+
+        // wait for next frame if LTDC hardware currently drawing, ensures
+        // no tearing
+        while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS));
+
+        // set the LTDC layer framebuffer pointer shadow register
+        LTDC_Layer1->CFBAR = (uint32_t)(&__ltdc_start);
+        // force LTDC driver to reload shadow registers
+        LTDC->SRCR = LTDC_SRCR_IMR;
+
+        // No need to swap framebuffer since we've copied from the engine's
+        // 160 x 120 framebuffer to the 320 x 240 LTDC buffer
+        ltdc_buffer_id = 0;
     }
 }
 

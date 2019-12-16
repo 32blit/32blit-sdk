@@ -143,18 +143,16 @@ int main(void)
   while (1)
   {
     uint32_t t_start = blit::now();
-    blit_process_input();
-    blit_update_led();
-    blit_update_vibration();
-    blit_swap();
 
     blit_tick();
 
+    // TODO: this is really just experimental code and should
+    // be removed in favour of generic sound support
     if(audio_file_available && blit_sd_detected()){
       total_samples += blit_update_dac(&audio_file);
     }
+
     uint32_t t_elapsed = blit::now() - t_start;
-    blit_flip();
     /* USER CODE END WHILE */
   
     /* USER CODE BEGIN 3 */

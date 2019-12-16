@@ -21,7 +21,7 @@ namespace blit {
   extern uint32_t (*read_file)        (std::string file, uint32_t offset, uint32_t length, uint8_t* buffer);
   extern void     (*reset)            ();
 
-  void tick(uint32_t time);
+  bool tick(uint32_t time);
   void fast_tick(uint32_t time);
 
   // hal methods: read_file, reset

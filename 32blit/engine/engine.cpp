@@ -24,7 +24,8 @@ namespace blit {
 
   uint32_t last_tick_time = 0;
 
-  void tick(uint32_t time) {
+  bool tick(uint32_t time) {
+    bool has_rendered = false;
 
     if (last_tick_time == 0) {
       last_tick_time = time;
@@ -46,9 +47,11 @@ namespace blit {
     if (pending_render_time >= render_rate_ms) {
       render(time);
       pending_render_time -= render_rate_ms;
+      has_rendered = true;
     }
 
     last_tick_time = time;
+    return has_rendered;
   }
 
 }
