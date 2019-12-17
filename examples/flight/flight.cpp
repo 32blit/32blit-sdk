@@ -11,32 +11,16 @@
 
 using namespace blit;
 
-uint8_t logo[16][16] = {
-  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 2, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0},
-  {0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 2, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 1, 0, 0, 0, 0, 1, 0, 2, 0, 1, 0, 0, 0, 0},
-  {0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0},
-  {0, 0, 2, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0},
-  {0, 0, 2, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0},
-  {0, 0, 2, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-};
-
 const uint16_t screen_width = 160;
 const uint16_t screen_height = 120;
 
 /* define storage for the framebuffer, spritesheet, and mask */
 uint8_t __mask[screen_width * screen_height] __attribute__((section(".m")));
+
 // extra space allocated to take mipmaps
 uint8_t __sprites[(screen_width * screen_height) + (64 * 128 * 4)] __attribute__((section(".fb")));
+
+// storage for the water spritesheet
 uint8_t __water[64 * 64] __attribute__((section(".fb")));
 
 /* create surfaces */
@@ -45,7 +29,6 @@ spritesheet *sprites;
 spritesheet *water;
 
 Map map(rect(0, 0, 128, 128));
-
 
 struct object {
   vec2 pos;
@@ -56,17 +39,32 @@ struct object {
 
 std::vector<object> objects;
 
-/* setup */
-void init() {
-  //set_screen_mode(screen_mode::hires);
+static vec2 vel(0, 0);
+static float angle = -15.0f * (M_PI / 180.0f);
+vec2 pos(512, 512);
 
+float map_size = 128;
+float fov = 95.0f * (M_PI / 180.0f);
+float far = 500.0f;
+float near = 10.0f;
+
+float deg2rad(float a) {
+  return a * (M_PI / 180.0f);
+}
+
+float rad2deg(float r) {
+  return r * (180.0f / M_PI);
+}
+
+void init() {
   map.add_layer("ground", layer);
   map.layers["ground"].transforms = layer_transforms;
 
-  sprites = spritesheet::load(packed_data);
+  // Load our map sprites into the __sprites space we've reserved
+  sprites = spritesheet::load(packed_data, __sprites);
   sprites->generate_mipmaps(3);
 
-  water = spritesheet::load(water_packed_data);
+  water = spritesheet::load(water_packed_data, __water);
 
   // extract information about objects from the map data
   point p;
@@ -99,35 +97,10 @@ void init() {
       }
     }
   }
-
-  /*
-// draw objects
-
-fb.alpha = 255;*/
-
 }
-
-static vec2 vel(0, 0);
-static float angle = -15.0f * (M_PI / 180.0f);
-vec2 pos(512, 512);
-
-float map_size = 128;
-float fov = 95.0f * (M_PI / 180.0f);
-float far = 500.0f;
-float near = 10.0f;
-
-float deg2rad(float a) {
-  return a * (M_PI / 180.0f);
-}
-
-float rad2deg(float r) {
-  return r * (180.0f / M_PI);
-}
-
 
 void render(uint32_t time_ms) {
   static int tick_count = 0; tick_count++;
-
 
   fb.alpha = 255;
   fb.mask = nullptr;
@@ -136,7 +109,6 @@ void render(uint32_t time_ms) {
 
   fb.pen(rgba(91, 110, 225));
   fb.rectangle(rect(0, 50, 160, 120 - 50));
-
   uint32_t ms_start = now();
 
   rect vp(0, 50, 160, 120 - 50);
@@ -144,17 +116,6 @@ void render(uint32_t time_ms) {
   fb.alpha = 55;
 
   fb.blit(water, rect(0, 0, 64, 64), point(0, 50));
-  /*
-  blend_blit_func bbf = fb.bbf[water.format];
-  for (int y = 50; y < 120; y++) {
-    for (int x = 0; x < 160; x++) {
-      point tx(x, y);      
-      tx.x %= 64;
-      tx.y %= 64;
-
-      bbf(&water, water.offset(tx), &fb, fb.offset(x, y), 1, 1);
-    }
-  }*/
 
   mode7(&fb, sprites, &map.layers["ground"], fov, angle, pos, near, far, vp);
 
@@ -175,15 +136,16 @@ void render(uint32_t time_ms) {
     }
   }
   uint32_t ms_end = now();
-  /*
+
+  // Orientation debug info
   fb.alpha = 255;
   fb.pen(rgba(255, 255, 255));
   fb.text("N: " + std::to_string(int(near)) + " - F:" + std::to_string(int(far)), &minimal_font[0][0], rect(0, 0, 100, 10));
   fb.text("X: " + std::to_string(int(pos.x)) + " - Y:" + std::to_string(int(pos.y)), &minimal_font[0][0], rect(0, 10, 100, 10));
   fb.text("A: " + std::to_string(int(rad2deg(angle))), &minimal_font[0][0], rect(0, 20, 100, 10));
-  */
+
   // draw the mini map
-  /*
+  fb.alpha = 200;
   fb.pen(rgba(0, 0, 0, 100));
   fb.rectangle(rect(160 - 64, 120 - 64, 64, 64));
   vec2 mmp;
@@ -199,13 +161,13 @@ void render(uint32_t time_ms) {
           (tile_id / 16)
         ); // sprite sheet coordinates
 
-        rgba *spr = (rgba *)sprites.mipmaps[2].data;
+        rgba *spr = (rgba *)sprites->mipmaps[2]->data;
         rgba *mmv = &spr[sp.x + sp.y * 16];
         fb.pen(*mmv);
         fb.pixel(mmp + vec2(160 - 64, 120 - 64));
       }
     }
-  }*/
+  }
   
   vec2 mmpos = (pos / 16.0f) + vec2(160 - 64, 120 - 64);
   fb.pen(rgba(255, 255, 255));
