@@ -14,17 +14,14 @@ using namespace blit;
 const uint16_t screen_width = 160;
 const uint16_t screen_height = 120;
 
-/* define storage for the framebuffer, spritesheet, and mask */
-uint8_t __mask[screen_width * screen_height] __attribute__((section(".m")));
-
 // extra space allocated to take mipmaps
-uint8_t __sprites[(screen_width * screen_height) + (64 * 128 * 4)] __attribute__((section(".fb")));
+// mipmaps are stored as RGBA since they're the blended result of scaling the paletted image data
+uint8_t __sprites[(128 * 128) + (64 * 128 * sizeof(rgba))] __attribute__((section(".ss")));
 
 // storage for the water spritesheet
-uint8_t __water[64 * 64] __attribute__((section(".fb")));
+uint8_t __water[64 * 64] __attribute__((section(".ss")));
 
 /* create surfaces */
-surface mask((uint8_t *)__mask, pixel_format::M, size(screen_width, screen_height));
 spritesheet *sprites;
 spritesheet *water;
 
