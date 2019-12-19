@@ -18,11 +18,12 @@ namespace blit {
    * @param loops Number of times the tween should repeat, -1 = forever.
    */
   void tween::init(tween_function function, float from, float to, uint32_t duration, int32_t loops = -1) {
+    this->loops = loops;
     this->function = function;
     this->from = from;
     this->to = to;
     this->duration = duration;
-    this->loops = loops;
+    this->loop_count = 0;
     tweens.push_back(this);
   }
 
@@ -31,6 +32,7 @@ namespace blit {
    */
   void tween::start() {
     this->started = blit::now();
+    this->loop_count = 0;
     this->state = RUNNING;
   }
 
@@ -83,9 +85,9 @@ namespace blit {
           }
           else
           {
-            tween->loops--;
+            tween->loop_count++;
             tween->started = blit::now();
-            if (tween->loops == 0){
+            if (tween->loop_count == tween->loops){
               tween->state = tween::FINISHED;
             }
           }

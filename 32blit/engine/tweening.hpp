@@ -3,6 +3,10 @@
 #include <stdint.h>
 #include <string>
 
+#ifndef M_PI
+  #define M_PI           3.14159265358979323846f  /* pi */
+#endif
+
 
 namespace blit {
   const uint32_t LINEAR = 1UL << 0;
@@ -17,6 +21,7 @@ namespace blit {
 
     uint32_t duration = 0;
     int32_t loops = -1;
+    int32_t loop_count = 0;
     uint32_t started = 0;
 
     enum state {
