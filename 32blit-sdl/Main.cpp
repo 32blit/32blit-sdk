@@ -9,7 +9,7 @@
 #include "System.hpp"
 #include "Renderer.hpp"
 
-#ifndef NO_FFMPEG_CAPTURE
+#ifdef VIDEO_CAPTURE
 #include "VideoCapture.hpp"
 #endif
 
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
 	Input *inp = new Input(window, sys);
 	Renderer *ren = new Renderer(window, System::width, System::height);
 
-#ifndef NO_FFMPEG_CAPTURE
+#ifdef VIDEO_CAPTURE
 	VideoCapture *cap = new VideoCapture(argv[0]);
 	unsigned int last_record_startstop = 0;
 #endif
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
 			case SDL_KEYUP:
 				if (!inp->handle_keyboard(event.key.keysym.sym, event.type == SDL_KEYDOWN)) {
 					switch (event.key.keysym.sym) {
-#ifndef NO_FFMPEG_CAPTURE
+#ifdef VIDEO_CAPTURE
 					case SDLK_r:
 						if (event.type == SDL_KEYDOWN && SDL_GetTicks() - last_record_startstop > 1000) {
 							if (cap->recording()) cap->stop();
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
 					ren->update(sys);
 					sys->notify_redraw();
 					ren->present();
-#ifndef NO_FFMPEG_CAPTURE
+#ifdef VIDEO_CAPTURE
 					if (cap->recording()) cap->capture(ren);
 #endif
 				} else if (event.type == System::timer_event) {
@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
 		running = false; // ensure timer thread quits
 	}
 
-#ifndef NO_FFMPEG_CAPTURE
+#ifdef VIDEO_CAPTURE
 	if (cap->recording()) cap->stop();
 	delete cap;
 #endif

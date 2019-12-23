@@ -1,0 +1,23 @@
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_PROCESSOR arm)
+
+set(CMAKE_C_COMPILER arm-none-eabi-gcc)
+set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
+
+set(MCU_LINKER_SCRIPT STM32H750VBTx_FLASH.ld)
+set(MCU_ARCH cortex-m7)
+set(MCU_FLOAT_ABI hard)
+set(MCU_FPU fpv5-d16)
+set(MCU_FLAGS "-mcpu=${MCU_ARCH} -mthumb -mfloat-abi=${MCU_FLOAT_ABI} ")
+
+if (MCU_FLOAT_ABI STREQUAL hard)
+    set(MCU_FLAGS "${MCU_FLAGS} -mfpu=${MCU_FPU}")
+endif ()
+
+set(COMMON_FLAGS "${MCU_FLAGS} -Os -Wall -fdata-sections -ffunction-sections -Wattributes -Wdouble-promotion -Wno-unused-variable -Wno-write-strings")
+
+set(CMAKE_C_FLAGS_INIT "${COMMON_FLAGS}")
+set(CMAKE_CXX_FLAGS_INIT "${COMMON_FLAGS} -fpermissive")
+#set(CMAKE_EXE_LINKER_FLAGS_INIT "-specs=nano.specs -T ${MCU_LINKER_SCRIPT} -Wl,--gc-sections")
+
+set(CMAKE_EXE_LINKER_FLAGS_INIT "-specs=nosys.specs -Wl,--gc-sections")

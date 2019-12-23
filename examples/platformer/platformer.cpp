@@ -249,7 +249,7 @@ void animation_timer_callback(timer &timer) {
   slime1.update();
 }
 
-timer *t;
+timer t;
 
 
 
@@ -263,7 +263,8 @@ void init() {
   bat1.pos = vec2(200, 22);
   slime1.pos = vec2(50, 112);
 
-  t = new timer(animation_timer_callback, 50, -1);
+  t.init(animation_timer_callback, 50, -1);
+  t.start();
 
   screen_size.w = 160;
   screen_size.h = 120;
