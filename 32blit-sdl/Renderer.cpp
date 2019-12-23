@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstdio>
 #include <SDL.h>
 
 #include "Renderer.hpp"

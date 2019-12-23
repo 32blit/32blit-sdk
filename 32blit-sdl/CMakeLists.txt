@@ -50,5 +50,5 @@ endif()
 
 function(blit_executable NAME SOURCES)
 	add_executable(${NAME} ${SOURCES} ${ARGN})
-  	target_link_libraries(${NAME} BlitHalSDL)
+  	target_link_libraries(${NAME} -Wl,--whole-archive BlitHalSDL -Wl,--no-whole-archive)
 endfunction()
