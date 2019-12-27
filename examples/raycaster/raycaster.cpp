@@ -11,12 +11,17 @@ using namespace blit;
 const uint16_t screen_width = 160;
 const uint16_t screen_height = 120;
 
+#ifdef __APPLE__
+uint8_t __ss[160 * 160] __attribute__((section("__DATA,.ss")));
+uint8_t __m[160 * 120] __attribute__((section("__DATA,.m")));
+#else
 #ifndef _WIN32
 uint8_t __ss[160 * 160] __attribute__((section(".ss")));
 uint8_t __m[160 * 120] __attribute__((section(".m")));
 #else
 uint8_t __ss[160 * 160];
 uint8_t __m[160 * 120];
+#endif
 #endif
 
 float z_buffer[SCREEN_WIDTH];

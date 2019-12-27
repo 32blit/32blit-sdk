@@ -11,14 +11,23 @@ using namespace blit;
 size screen_size(160, 120);
 
 /* define storage for the framebuffer, spritesheet, and mask */
+#ifdef __APPLE__
+rgba    __ss[128 * 128] __attribute__((section("__DATA,.ss")));
+uint8_t __m[320 * 240] __attribute__((section("__DATA,.m")));  
+#else
 rgba    __ss[128 * 128] __attribute__((section(".ss")));
 uint8_t __m[320 * 240] __attribute__((section(".m")));  
+#endif
 
 /* create surfaces */
 surface m((uint8_t *)__m, pixel_format::M, screen_size);
 
 const int max_light_radius = 60;
+#ifdef __APPLE__
+uint8_t __mshad[(max_light_radius * 2 + 1) * (max_light_radius * 2 + 1)] __attribute__((section("__DATA,.m")));
+#else
 uint8_t __mshad[(max_light_radius * 2 + 1) * (max_light_radius * 2 + 1)] __attribute__((section(".m")));
+#endif
 surface mshad((uint8_t *)__mshad, pixel_format::M, size(max_light_radius * 2 + 1, max_light_radius * 2 + 1));
 
 point world_to_screen(const vec2 &p);
