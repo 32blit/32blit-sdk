@@ -1,5 +1,8 @@
 #include "hardware-test.hpp"
 #include "graphics/color.hpp"
+#ifdef __APPLE__
+#include <cmath>
+#endif
 
 using namespace blit;
 
