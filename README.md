@@ -121,7 +121,7 @@ And then `make` as normal.
 The result of your build will be a `.bin`, `.hex` and `.elf` file. You can turn the `.bin` into a DfuSe-compatible DFU file using th provided `dfu` tool:
 
 ```
-../../../tools/dfu build --out palette-cycle.hex palette-cycle.bin
+../../../tools/dfu build --out palette-cycle.dfu palette-cycle.bin
 ```
 
 ### Video Capture
