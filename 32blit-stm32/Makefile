@@ -43,6 +43,7 @@ Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c_ex.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_dma2d.c \
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rng.c \
 Src/system_stm32h7xx.c \
 Src/user_diskio.c \
 Src/fatfs.c \
@@ -66,6 +67,7 @@ Src/spi.c \
 Src/spi-st7272a.c \
 Src/sys.c \
 Src/tim.c \
+Src/rng.c \
 Src/usb_otg.c \
 Src/32blit.c
 
