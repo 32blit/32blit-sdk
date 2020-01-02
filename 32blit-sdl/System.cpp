@@ -1,5 +1,6 @@
 #include <chrono>
 #include <iostream>
+#include <random>
 #include <SDL.h>
 
 #include "System.hpp"
@@ -37,8 +38,17 @@ uint32_t now() {
 }
 
 // blit random callback
-uint32_t random() {
-	return std::rand();
+#ifdef __MINGW32__
+// Windows/MinGW doesn't support a non-deterministic source of randomness, so we fall back upon the age-old time seed once more
+// Without this, random_device() will always return the same number and thus our mersenne twister will always produce the same sequence.
+std::mt19937 random_generator(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
+#else
+std::random_device random_device;
+std::mt19937 random_generator(random_device());
+#endif
+std::uniform_int_distribution<uint32_t> random_distribution;
+uint32_t blit_random() {
+	return random_distribution(random_generator);
 }
 
 // SDL events
@@ -81,7 +91,7 @@ void System::run() {
 	start = std::chrono::steady_clock::now();
 
 	blit::now = ::now;
-	blit::random = ::random;
+	blit::random = ::blit_random;
 	blit::debug = ::debug;
 	blit::set_screen_mode = ::set_screen_mode;
 	blit::update = ::update;
