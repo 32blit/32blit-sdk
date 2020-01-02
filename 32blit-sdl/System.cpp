@@ -36,6 +36,11 @@ uint32_t now() {
 	return (uint32_t)elapsed.count();
 }
 
+// blit random callback
+uint32_t random() {
+	return std::rand();
+}
+
 // SDL events
 const Uint32 System::timer_event = SDL_RegisterEvents(2);
 const Uint32 System::loop_event = System::timer_event + 1;
@@ -76,6 +81,7 @@ void System::run() {
 	start = std::chrono::steady_clock::now();
 
 	blit::now = ::now;
+	blit::random = ::random;
 	blit::debug = ::debug;
 	blit::set_screen_mode = ::set_screen_mode;
 	blit::update = ::update;

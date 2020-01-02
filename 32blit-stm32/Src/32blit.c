@@ -6,6 +6,7 @@
 #include "ltdc.h"
 #include "dac.h"
 #include "tim.h"
+#include "rng.h"
 #include "spi.h"
 #include "spi-st7272a.h"
 #include "i2c.h"
@@ -156,6 +157,7 @@ void blit_init() {
     blit::volume = 1.5f / 16.0f;
     blit::debug = blit_debug;
     blit::now = HAL_GetTick;
+    blit::random = HAL_GetRandom;
     blit::set_screen_mode = ::set_screen_mode;
     ::set_screen_mode(blit::lores);
 

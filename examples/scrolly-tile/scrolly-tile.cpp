@@ -73,16 +73,16 @@ uint8_t count_set_bits(uint16_t number) {
 void generate_new_row_mask() {
     uint16_t new_row_mask = row_mask;
 
-    uint8_t bits = rand() % 4;
+    uint8_t bits = blit::random() % 4;
 
     while(count_set_bits(new_row_mask) < 14){
-        uint8_t set_bit = std::rand() % 16;
+        uint8_t set_bit = blit::random() % 16;
         new_row_mask |= (1 << set_bit);
     }
 
-    uint8_t turning_size = std::rand() % 8;
+    uint8_t turning_size = blit::random() % 8;
 
-    switch(std::rand() % 3){
+    switch(blit::random() % 3){
         case 0:
             while(turning_size--){
                 new_row_mask &= (new_row_mask >> 1);
