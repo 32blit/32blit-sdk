@@ -110,7 +110,7 @@ You will need build tools and CMAKE. Assuming you have [homebrew](https://docs.b
 
 ``` shell
 xcode-select --install
-brew install clang
+brew install cmake
 ```
 
 You'll also need to build and install SDL2...

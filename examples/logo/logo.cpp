@@ -11,14 +11,10 @@ using namespace blit;
 const size screen_size(160, 120);
 
 /* define storage for the framebuffer, spritesheet, and mask */
-//rgb     __fb[160 * 120] __attribute__((section(".fb")));
-#ifdef __APPLE__
-rgba    __ss[128 * 128] __attribute__((section("__DATA,.ss")));
-uint8_t __m[160 * 120] __attribute__((section("__DATA,.m")));
-#else
-rgba    __ss[128 * 128] __attribute__((section(".ss")));
-uint8_t __m[160 * 120] __attribute__((section(".m")));
-#endif
+//rgb     __fb[160 * 120] __SECTION__(".fb")));
+rgba    __ss[128 * 128] __SECTION__(".ss");
+uint8_t __m[160 * 120] __SECTION__(".m");
+
 /* create surfaces */
 //surface fb((uint8_t *)__fb, screen_size, pixel_format::RGB);
 surface ss((uint8_t *)__ss, pixel_format::RGBA, size(128, 128));
