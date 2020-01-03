@@ -94,8 +94,8 @@ std::vector<uint8_t> map_data_floor = {
 
 void get_random_empty_tile_location(point &pos) {
 	while (1) {
-		pos.x = rand() % MAP_WIDTH;
-		pos.y = rand() % MAP_HEIGHT;
+		pos.x = blit::random() % MAP_WIDTH;
+		pos.y = blit::random() % MAP_HEIGHT;
 		if (map.has_flag(pos, TileFlags::NO_GRASS)) continue;
 		return;
 	}
@@ -133,16 +133,16 @@ void init() {
 	srand(0x32bl);
 	//stars.resize((const int)num_stars);
 	for (int s = 0; s < num_stars; s++) {
-		stars[s].position.x = rand() % 360;
-		stars[s].position.y = rand() % (HORIZON / 2);
-		stars[s].brightness = 32 + (rand() % 128);
+		stars[s].position.x = blit::random() % 360;
+		stars[s].position.y = blit::random() % (HORIZON / 2);
+		stars[s].brightness = 32 + (blit::random() % 128);
 	}
 
 	point tile;
 	vec2 offset;
 	//map_sprites.resize((const int)num_sprites);
 	for (int s = 0; s < num_sprites; s++) {
-		int texture = rand() % 100;
+		int texture = blit::random() % 100;
 		if (texture == 0) {
 			map_sprites[s].texture = 0;
 		}
@@ -159,11 +159,11 @@ void init() {
 			map_sprites[s].texture = 4 + (texture % 3);
 		}
 		get_random_empty_tile_location(tile);
-		offset.x = (float)rand() / RAND_MAX;
-		offset.y = (float)rand() / RAND_MAX;
+		offset.x = (float)blit::random() / 4294967295.0f;
+		offset.y = (float)blit::random() / 4294967295.0f;
 		map_sprites[s].position.x = tile.x + offset.x;
 		map_sprites[s].position.y = tile.y + offset.y;
-		map_sprites[s].color = rand() % 3;
+		map_sprites[s].color = blit::random() % 3;
 	}
 
 	//printf("Init: FINISHED\n");
@@ -196,7 +196,7 @@ void update(uint32_t time) {
 	static uint32_t last_time;
 	elapsed = time - last_time;
 	last_time = time;
-	static vec2 size(0.2, 0.2);
+	static vec2 size(0.2f, 0.2f);
 	static vec2 rmove(0, 0);
 	vec2 move(0, 0);
 
@@ -428,10 +428,10 @@ void render_sky() {
 		//float r = abs(atan2(ray.x, ray.y) * 180.0 / M_PI);
 
 		float r = atan2f(ray.x, ray.y);
-		r = (r > 0 ? r : (2 * M_PI + r)) * 360 / (2 * M_PI);
+		r = (r > 0.0f ? r : (2.0f * float(M_PI) + r)) * 360.0f / (2.0f * float(M_PI));
 
 
-		point uv(24 + (int(r * 3) % 16), 160 - 32);
+		point uv(24 + (int(r * 3.0f) % 16), 160 - 32);
 
 		fb.stretch_blit_vspan(fb.sprites, uv, 32, point(column, 0), HORIZON); // TODO: blit from spritesheet?
 
@@ -445,7 +445,7 @@ void render_sky() {
 void render_stars() {
 	// Get the player's facing angle in degrees from 0 to 359
 	float r = atan2f(player1.direction.x, player1.direction.y);
-	r = (r > 0 ? r : (2 * M_PI + r)) * 360 / (2 * M_PI);
+	r = (r > 0.0f ? r : (2.0f * float(M_PI) + r)) * 360.0f / (2.0f * float(M_PI));
 
 	for (int s = 0; s < num_stars; s++) {
 		star *sp = &stars[s];
@@ -509,8 +509,8 @@ void render_world(uint32_t time) {
 		);
 
 		vec2 delta_dist(
-			(float)abs(1.0 / ray.x),
-			(float)abs(1.0 / ray.y)
+			(float)abs(1.0f / ray.x),
+			(float)abs(1.0f / ray.y)
 		);
 
 		vec2 side_dist(0, 0);
@@ -523,7 +523,7 @@ void render_world(uint32_t time) {
 		else
 		{
 			step_x = 1;
-			side_dist.x = (map_location.x + 1.0 - player1.position.x) * delta_dist.x;
+			side_dist.x = (map_location.x + 1.0f - player1.position.x) * delta_dist.x;
 		}
 
 		if (ray.y < 0) {
@@ -533,7 +533,7 @@ void render_world(uint32_t time) {
 		else
 		{
 			step_y = 1;
-			side_dist.y = (map_location.y + 1.0 - player1.position.y) * delta_dist.y;
+			side_dist.y = (map_location.y + 1.0f - player1.position.y) * delta_dist.y;
 		}
 
 		bool hit = false;
@@ -579,7 +579,7 @@ void render_world(uint32_t time) {
 			uint8_t texture_wall = map_layer_walls->tile_at(map_location) - 1;// tile & 0x0f;
 
 			if (side == 0) {
-				perpendicular_wall_distance = ((float)map_location.x - player1.position.x + (1 - step_x) / 2.0) / ray.x;
+				perpendicular_wall_distance = ((float)map_location.x - player1.position.x + (1 - step_x) / 2.0f) / ray.x;
 				wall_x = player1.position.y + perpendicular_wall_distance * ray.y;
 				/*if (ray.x > 0) {
 					tfacing = TileFacing::WEST;
@@ -590,7 +590,7 @@ void render_world(uint32_t time) {
 				}*/
 			}
 			else {
-				perpendicular_wall_distance = ((float)map_location.y - player1.position.y + (1 - step_y) / 2.0) / ray.y;
+				perpendicular_wall_distance = ((float)map_location.y - player1.position.y + (1 - step_y) / 2.0f) / ray.y;
 				wall_x = player1.position.x + perpendicular_wall_distance * ray.x;
 				/*if (ray.y > 0) {
 					tfacing = TileFacing::NORTH;
@@ -622,7 +622,7 @@ void render_world(uint32_t time) {
 
 			int width = wall_half_height / 8.0f;
 
-			if (column > 0 && (side != last_side) && line_distance < 0.5 && !(map_location.x == last_map_location.x && map_location.y == last_map_location.y)) {
+			if (column > 0 && (side != last_side) && line_distance < 0.5f && !(map_location.x == last_map_location.x && map_location.y == last_map_location.y)) {
 
 				for (int c = column - width; c < column + width; c++) {
 					int alpha = (abs(column - c) * 160) / width;
@@ -706,7 +706,7 @@ void render_world(uint32_t time) {
 				floor_wall.y += wall_x;
 			}
 			else if (side == 0 && ray.x < 0) {
-				floor_wall.x += 1.0;
+				floor_wall.x += 1.0f;
 				floor_wall.y += wall_x;
 			}
 			else if (side == 1 && ray.y > 0) {
@@ -714,18 +714,18 @@ void render_world(uint32_t time) {
 			}
 			else {
 				floor_wall.x += wall_x;
-				floor_wall.y += 1.0;
+				floor_wall.y += 1.0f;
 			}
 
 			//printf("render_world: drawing floor\n");
 				// Draw the floor
 			for (int y = end_y + 1; y < VIEW_HEIGHT + 1; y++) {
-				float distance = (float)VIEW_HEIGHT / (2.0 * y - VIEW_HEIGHT);
+				float distance = (float)VIEW_HEIGHT / (2.0f * y - VIEW_HEIGHT);
 				float weight = distance / perpendicular_wall_distance;
 
 				vec2 current_floor(
-					weight * floor_wall.x + (1.0 - weight) * player1.position.x,
-					weight * floor_wall.y + (1.0 - weight) * player1.position.y
+					weight * floor_wall.x + (1.0f - weight) * player1.position.x,
+					weight * floor_wall.y + (1.0f - weight) * player1.position.y
 				);
 
 				// Get the tile-relative x/y texture coordinates
@@ -769,7 +769,7 @@ void render_world(uint32_t time) {
 
 void render_sprites(uint32_t time) {
 
-	float inverse_det = 1.0 / (player1.camera.x * player1.direction.y - player1.direction.x * player1.camera.y);
+	float inverse_det = 1.0f / (player1.camera.x * player1.direction.y - player1.direction.x * player1.camera.y);
 
 	// Calculate distance from player to each sprite
 	for (int i = 0; i < num_sprites; i++) {

@@ -3,6 +3,8 @@
 FILENAME_SRC=$1
 FILENAME_TGT=$(echo $FILENAME_SRC | sed 's/\.bin/\.dfu/')
 
+BASE_DIR=`dirname $0`
+
 # Do some rudimentary path fiddling for Windows-compatible path names
 FILEPATH_WIN=$(pwd | sed 's/\//\\/g' | sed 's/\\mnt\\c/C:/')\\
 FILENAME_WIN=$(echo $FILENAME_TGT | sed 's/\//\\/g')
@@ -12,7 +14,7 @@ if [ "$FILENAME_SRC" == "" ]; then
     exit 1
 fi
 
-../tools/dfu --verbose build --force --out $FILENAME_TGT $FILENAME_SRC
+$BASE_DIR/dfu --verbose build --force --out $FILENAME_TGT $FILENAME_SRC
 
 # Call DfuSeCommand.exe
 # Ideally you should use the modified version at https://github.com/pimoroni/DfuSE/ since it will reset the hardware after flashing

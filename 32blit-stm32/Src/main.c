@@ -28,6 +28,7 @@
 #include "i2c.h"
 #include "ltdc.h"
 #include "quadspi.h"
+#include "rng.h"
 #include "spi.h"
 #include "tim.h"
 #include "usb_otg.h"
@@ -122,6 +123,7 @@ int main(void)
   MX_TIM15_Init();
   MX_FATFS_Init();
   //MX_DMA2D_Init();
+  MX_RNG_Init();
 
   /* USER CODE BEGIN 2 */
   blit_clear_framebuffer();

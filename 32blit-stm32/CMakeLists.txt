@@ -32,6 +32,7 @@ list(APPEND SOURCES
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c_ex.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c
+	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rng.c
 	Src/system_stm32h7xx.c
 	Src/user_diskio.c
 	Src/fatfs.c
@@ -56,6 +57,7 @@ list(APPEND SOURCES
 	Src/sys.c
 	Src/tim.c
 	Src/usb_otg.c
+	Src/rng.c
 	Src/32blit.c
 	startup_stm32h750xx.s
 )

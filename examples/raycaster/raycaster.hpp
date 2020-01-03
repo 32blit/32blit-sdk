@@ -32,7 +32,7 @@
 #define TEXTURE_CEILING 1
 #define TEXTURE_WALL 2
 
-#define SPRITE_SCALE 1.6
+#define SPRITE_SCALE 1.6f
 
 
 vec2 rotate_point(vec2 p, vec2 v);

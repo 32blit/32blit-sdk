@@ -1,27 +1,54 @@
 #!/usr/bin/env python3
 
 """
-32blit asset file format (extension always .blit)
+32blit sprite file format
 
-12 byte common header
+# 12 byte common header
 
-- 8: Type of file identifier ("SPRITE  ", "MAP     ", "SONG    ", "SFX     ")
-- 4: Total file size
+- 8: Type of file identifier ("SPRITEPK", "SPRITERW")
+- 2: Total file size
 
-SPRITE header
+# SPRITEPK header (Packed paletted sprite)
+
+A packed sprite can have a variable number of palette colours up to 255.
+
+Data is packed at the number of bits-per-pixel required to index each palette entry.
+
+IE: a two colour image will be packed with 1bpp
 
 - 2: Sprite width
 - 2: Sprite height
 - 2: Sprite columns
 - 2: Sprite rows
-- 1: Format (RGBA, RGB, 8-bit palette, 6-bit palette + 2-bit alpha)
-- 1: Palette size (if relevant)
-- 1: Palette transparent colour index
+- 1: Format (always paletted)
+- 1: Palette size
 - X * 4: Pallete entries (where X = number of palette entries)
 - Y: Image data
 
-Unpaletted - RGB, RGBA
-Paletted - packed 2bpp (4 colours), 3bpp (8 colours), 4bpp (16 colours), etc
+Usage: ./sprite-builder packed input-file.png
+"input-file.png" should contain no more than 255 colours!
+
+# SPRITERW header (Raw sprite - RGBA, RGB888 or RGB565)
+
+An unpacked sprite is just a block of raw surface data
+in either RGBA (4 bytes), RGB888 (3 bytes) or RGB565 (2 bytes) format.
+
+Unpacked sprites are *huge* but useful for streaming into the framebuffer from storage.
+
+The max power of two sprite sizes supported by this file format are-
+
+- 64x64 in RGBA and RGB888 mode
+- 128x128 in RGB565 mode
+
+- 2: Sprite width
+- 2: Sprite height
+- 2: Sprite columns
+- 2: Sprite rows
+- 1: Format (RGBA, RGB888 or RGB565)
+- Y: Image data
+
+Usage: ./sprite-builder raw --format RGB565 input-file.png
+
 """
 
 import argparse
@@ -29,7 +56,7 @@ import math
 import sys
 
 from bitstring import BitArray
-from construct import this, Struct, Int8ul, Int16ul, Array, PrefixedArray, Computed, Switch, GreedyBytes, Enum, PaddedString
+from construct import this, BitStruct, BitsInteger, Struct, Int8ul, Int16ul, Array, PrefixedArray, Computed, Switch, GreedyBytes, Enum, PaddedString
 from PIL import Image, ImagePalette
 
 
@@ -43,9 +70,11 @@ def compute_bit_length(ctx):
     if ctx.format == SpriteFormat.enum.p:
         return (len(ctx.palette.colours) - 1).bit_length()
     elif ctx.format == SpriteFormat.enum.rgba:
-        return 8 * 4
-    elif ctx.format == SpriteFormat.enum.rgb:
-        return 8 * 3
+        return 32
+    elif ctx.format == SpriteFormat.enum.rgb888:
+        return 24
+    elif ctx.format == SpriteFormat.enum.rgb565:
+        return 16
     else:
         return 0
 
@@ -75,13 +104,14 @@ class SmartEnum(Enum):
             self.enum.__dict__[e] = e
 
 
-AssetType = Enum(PaddedString(8, "utf8"), sprite='SPRITE', map='MAP', song='SONG', sfx='SFX')
+AssetType = Enum(PaddedString(8, "utf8"), packed='SPRITEPK', raw='SPRITERW')
 
 SpriteFormat = SmartEnum(
     Int8ul,
     rgba=0,
-    rgb=1,
-    p=2
+    rgb888=1,
+    rgb565=2,
+    p=3
 )
 
 asset_rgba = Struct(
@@ -97,7 +127,13 @@ asset_rgb = Struct(
     'b' / Int8ul
 )
 
-asset_sprite = Struct(
+asset_rgb565 = BitStruct(
+    'r' / BitsInteger(5),
+    'g' / BitsInteger(6),
+    'b' / BitsInteger(5)
+)
+
+asset_packed = Struct(
     'width' / Int16ul,
     'height' / Int16ul,
     'columns' / Int16ul,
@@ -108,10 +144,21 @@ asset_sprite = Struct(
     ),
     'bit_length' / Computed(compute_bit_length),
     'data_length' / Computed(compute_data_length),
+    'data' / Array(this.data_length, Int8ul)
+)
+
+asset_raw = Struct( 
+    'width' / Int16ul,
+    'height' / Int16ul,
+    'columns' / Int16ul,
+    'rows' / Int16ul,
+    'format' / SpriteFormat,
+    'bit_length' / Computed(compute_bit_length),
+    'data_length' / Computed(compute_data_length),
     'data' / Switch(this.format, {
         'rgba': Array(this.data_length, asset_rgba),
-        'rgb': Array(this.data_length, asset_rgb),
-        'p': Array(this.data_length, Int8ul)
+        'rgb888': Array(this.data_length, asset_rgb),
+        'rgb565': Array(this.data_length, asset_rgb565),
     })
 )
 
@@ -124,7 +171,8 @@ asset = Struct(
 )
 
 typemap = {
-    'sprite': asset_sprite
+    'packed': asset_packed,
+    'raw': asset_raw
 }
 
 
@@ -137,10 +185,13 @@ def unpack_asset(asset_data):
 def build_asset(asset_type, asset_data):
     builder = typemap[asset_type]
     packed = builder.build(asset_data)
+    total_size = len(packed) + asset.header.sizeof()
+    if total_size > 65535:
+        raise RuntimeError("Sprite exceeds maximum filesize: {} > 65535".format(total_size))
     return asset.build(dict(
         header=dict(
             type=asset_type,
-            size=len(packed) + asset.header.sizeof(),
+            size=total_size,
         ),
         data=packed
     ))
@@ -151,100 +202,119 @@ def color(r, g, b, a=None):
     return dict(r=r, g=g, b=b, a=a)
 
 
-"""
-class color():
+def rgba_string(c):
+    return "rgba({r}, {g}, {b}, {a})".format(**c)
 
-    def __init__(self, r, g, b, a=None):
-        a = 0xff if a is None else a
-        self.r = r
-        self.g = g
-        self.b = b
-        self.a = a
 
-    def rgba(self):
-        return (self.r, self.g, self.b, self.a)
+def format_hex(data):
+    return ', '.join(['0x{:02x}'.format(x) for x in data])
 
-    def rgba_dict(self):
-        return {'r': self.r, 'g': self.g, 'b': self.b, 'a': self.a}
 
-    def __eq__(self, other):
-        return self.rgba() == other.rgba()
+def load_palette(image):
+    palette_colours = []
 
-    def __iter__(self):
-        return self.rgba_dict().__iter__()
-"""
+    if image.palette is None:
+        # Divine the palette from the individual pixels in the image
+        # they will be inserted into our target palette in the order
+        # found in the palette image
+        mode = image.mode
+        w, h = image.size
+
+        if mode in ['RGB', 'RGBA']:
+            for y in range(h):
+                for x in range(w):
+                    # The spread operator will take both RGB and RGBA
+                    # tuples and pass them into color() properly.
+                    c = color(*image.getpixel((x, y)))
+                    if c not in palette_colours:
+                        palette_colours.append(c)
+
+        else:
+            raise RuntimeError(f"Unsupported image mode: {mode}")
+
+    else:
+        mode, palette = image.palette.getdata()
+        palette = list(palette)
+        if mode == 'RGB':
+            for x in range(len(palette) // 3):
+                r, g, b = palette[x * 3:(x * 3) + 3]
+                palette_colours.append(color(r, g, b))
+
+        elif mode == 'RGBA':
+            for x in range(len(palette) // 4):
+                r, g, b, a = palette[x * 4:(x * 4) + 4]
+                palette_colours.append(color(r, g, b, a))
+
+    if len(palette_colours) > 255:
+        raise RuntimeError(f"Too many colours in palette! ({len(palette_colours)})")
+
+    return palette_colours
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help='Commands', dest='command')
-    parser_sprite = subparsers.add_parser('sprite', help='Process an image file into a 32blit asset')
-    parser_map = subparsers.add_parser('map', help='Process a map file into a 32blit asset')
+    parser_packed = subparsers.add_parser('packed', help='Process an image file into a paletted 32blit sprite')
+    parser_raw = subparsers.add_parser('raw', help='Process an image file into a raw (rgba, rgb888, rgb565) 32blit sprite')
 
     parser.add_argument('--out', type=str, help='set output filename (default <inputfile>.blit)', default=None)
     parser.add_argument('file', type=str, help='input file')
 
-    # TODO: Right now unpacked data is ridiculously huge and probably impractical to use,
-    # either we need a hard limit on the size of assets built in RGBA or RGB native formats (24/32bpp)
-    # or drop output format altogether.
-    parser_sprite.add_argument('--format', type=str, choices=('RGB', 'RGBA', 'P'), help='data output format (UNIMPLEMENTED)')
-
     # The engine presently only supports 8x8 tile sizes
-    parser_sprite.add_argument('--tilesizex', type=int, help='tile size x', default=8)
-    parser_sprite.add_argument('--tilesizey', type=int, help='tile size y', default=8)
+    parser.add_argument('--tilesizex', type=int, help='tile size x', default=8)
+    parser.add_argument('--tilesizey', type=int, help='tile size y', default=8)
+
+    # Raw input can be given as any image type, and will be packed into:
+    # * RGBA (full fidelity)
+    # * RGB888 (discard alpha)
+    # * RGB565 (discard alpha, convert colours with bitshift: R >> 3, G >> 2 B >> 3)
+    parser_raw.add_argument('--format', type=str, choices=('RGBA', 'RGB888', 'RGB565'), help='raw data output format', default='RGBA')
 
     # A palette file should be a PNG file containing a series of pixels in the desired colours and order of the output palette.
     # If it's indexed, 8bpp colour then its palette will be used directly, otherwise the pixel data will be converted automatically.
-    parser_sprite.add_argument('--palette', type=str, help='image or palette file', default=None)
-
-    parser_map.add_argument('--sizex', type=int, help='map size x')
-    parser_map.add_argument('--sizey', type=int, help='map size y')
+    parser_packed.add_argument('--palette', type=str, help='image or palette file', default=None)
 
     args = parser.parse_args()
 
-    def load_palette(image):
-        palette_colours = []
+    source_image = Image.open(args.file)
 
-        if image.palette is None:
-            # Divine the palette from the individual pixels in the image
-            # they will be inserted into our target palette in the order
-            # found in the palette image
-            mode = image.mode
-            w, h = image.size
+    if args.command == 'raw':
+        # Make sure we're always working with the same type of image
+        source_image = source_image.convert('RGBA')
 
-            if mode in ['RGB', 'RGBA']:
-                for y in range(h):
-                    for x in range(w):
-                        # The spread operator will take both RGB and RGBA
-                        # tuples and pass them into color() properly.
-                        c = color(*image.getpixel((x, y)))
-                        if c not in palette_colours:
-                            palette_colours.append(c)
+        raw_data = []
 
-            else:
-                raise RuntimeError(f"Unsupported image mode: {mode}")
+        for y in range(source_image.height):
+            for x in range(source_image.width):
+                r, g, b, a = source_image.getpixel((x, y))
+                if args.format == 'RGBA':
+                    raw_data.append({'r': r, 'g': g, 'b': b, 'a': a})
+                if args.format == 'RGB888':
+                    raw_data.append({'r': r, 'g': g, 'b': b})
+                if args.format == 'RGB565':
+                    r >>= 3
+                    g >>= 2
+                    b >>= 3
+                    raw_data.append({'r': r, 'g': g, 'b': b})
 
-        else:
-            mode, palette = image.palette.getdata()
-            palette = list(palette)
-            if mode == 'RGB':
-                for x in range(len(palette) // 3):
-                    r, g, b = palette[x * 3:(x * 3) + 3]
-                    palette_colours.append(color(r, g, b))
+        raw = build_asset(
+            'raw',
+            dict(
+                width=source_image.width,
+                height=source_image.height,
+                columns=source_image.width // args.tilesizex,
+                rows=source_image.height // args.tilesizey,
+                format=args.format.lower(),
+                data=raw_data
+            )
+        )
 
-            elif mode == 'RGBA':
-                for x in range(len(palette) // 4):
-                    r, g, b, a = palette[x * 4:(x * 4) + 4]
-                    palette_colours.append(color(r, g, b, a))
+        if args.out is not None:
+            with open(args.out, 'wb+') as f:
+                f.write(raw)
+            sys.exit(0)
 
-        if len(palette_colours) > 255:
-            raise RuntimeError(f"Too many colours in palette! ({len(palette_colours)})")
-
-        return palette_colours
-
-    if args.command == 'sprite':
-
-        source_image = Image.open(args.file)
+    if args.command == 'packed':
         target_image = source_image
         source_mode = source_image.mode
         source_palette_colours = load_palette(source_image)
@@ -292,7 +362,7 @@ if __name__ == '__main__':
         packed_image_data = BitArray().join(BitArray(uint=x, length=bit_length) for x in target_image.tobytes()).tobytes()
 
         packed = build_asset(
-            'sprite',
+            'packed',
             dict(
                 width=target_image.width,
                 height=target_image.height,
@@ -311,23 +381,10 @@ if __name__ == '__main__':
                 f.write(packed)
             sys.exit(0)
 
-        def rgba_string(c):
-            return "rgba({r}, {g}, {b}, {a})".format(**c)
-
-        # formatted_data = []
-        # row_width = image.width // 16
-        # for x in range(0, len(packed_image_data) // row_width):
-        #     offset = x * row_width
-        #     current_row = packed_image_data[offset:offset + row_width]
-        #     formatted_data.append(', '.join(['0x{:02x}'.format(x) for x in current_row]))
-
         packed = list(packed)
         formatted_data = []
         formatted_palette = []
         row_width = 16
-
-        def format_hex(data):
-            return ', '.join(['0x{:02x}'.format(x) for x in data])
 
         HEADER_SIZE = 20
 
@@ -347,7 +404,7 @@ if __name__ == '__main__':
 
         print("""
 uint8_t packed_data[] = {{
-    {type}, // type: sprite
+    {type}, // type: spritepk (packed, paletted sprite)
     {payload_size}, // payload size ({comment_payload_size})
 
     {width}, // width ({comment_width})
@@ -355,9 +412,9 @@ uint8_t packed_data[] = {{
     {cols}, // cols ({comment_cols})
     {rows}, // rows ({comment_rows})
 
-    {format}, // format
+    {format}, // format (paletted)
 
-    {colours}, // number of palette colours
+    {colours}, // number of palette colours ({number_of_colours})
 //  r     g     b     a
     {palette},
 
@@ -377,20 +434,7 @@ uint8_t packed_data[] = {{
             comment_rows=target_image.height // args.tilesizey,
             format=format_hex(packed[18:19]),
             colours=format_hex(packed[19:20]),
+            number_of_colours=packed[19:20][0],
             data=',\n    '.join(formatted_data),
             palette=',\n    '.join(formatted_palette)
         ))
-
-
-#         print("""
-# rgba palette_data[] = {{
-#     {palette_data}
-# }};
-#
-# uint8_t sprite_data[] = {{
-#     {image_data}
-# }};
-# """.format(
-#     palette_data=',\n    '.join([rgba_string(x) for x in palette_colours]),
-#     image_data=',\n    '.join(formatted_data)
-# ))
