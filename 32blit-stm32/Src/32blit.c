@@ -137,6 +137,10 @@ bool blit_open_file(FIL &file, const char *filename) {
   return false;
 }
 
+void blit_enable_dac() {
+  HAL_GPIO_WritePin(AMP_SHUTDOWN_GPIO_Port, AMP_SHUTDOWN_Pin, GPIO_PIN_SET);
+}
+
 void blit_init() {
     for(int x = 0; x<DAC_BUFFER_SIZE; x++){
       dac_buffer[x] = 0;
@@ -144,8 +148,6 @@ void blit_init() {
     HAL_TIM_Base_Start(&htim6);
     HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
     HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2, (uint32_t*)dac_buffer, DAC_BUFFER_SIZE, DAC_ALIGN_12B_R);
-
-    HAL_GPIO_WritePin(AMP_SHUTDOWN_GPIO_Port, AMP_SHUTDOWN_Pin, GPIO_PIN_SET);
 
     ST7272A_RESET();
 

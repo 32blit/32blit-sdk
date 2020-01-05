@@ -137,6 +137,9 @@ int main(void)
   bool audio_file_available = false;
   if (blit_mount_sd(sd_card_label, freespace, totalspace)) {
     audio_file_available = blit_open_file(audio_file, "u8mono16.raw");
+    if(audio_file_available){
+      blit_enable_dac();
+    }
   }
   /* USER CODE END 2 */
 
@@ -146,13 +149,13 @@ int main(void)
   {
     uint32_t t_start = blit::now();
 
-    blit_tick();
-
     // TODO: this is really just experimental code and should
     // be removed in favour of generic sound support
     if(audio_file_available && blit_sd_detected()){
       total_samples += blit_update_dac(&audio_file);
     }
+
+    blit_tick();
 
     uint32_t t_elapsed = blit::now() - t_start;
     /* USER CODE END WHILE */
