@@ -88,7 +88,7 @@ You'll also need to cross-compile SDL2 and install it wherever you like to keep 
 ```
 wget https://www.libsdl.org/release/SDL2-2.0.10.zip
 unzip SDL2-2.0.10.zip
-cd SDL2-2.0.10.zip
+cd SDL2-2.0.10
 mkdir build.mingw
 cd build.mingw
 ../configure --target=x86_64-w64-mingw32 --host=x86_64-w64-mingw32 --build=x86_64--linux --prefix=/usr/local/cross-tools/x86_64-w64-mingw32/
