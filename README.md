@@ -81,7 +81,7 @@ DISPLAY=:0.0 ./palette-cycle
 
 TODO: Investigate why this outputs `cannot create target because another target with the same name already exists` errors.
 
-To build your project for Win32 you'll need `i686-w64-mingw32-gcc` and `i686-w64-mingw32-g++`.
+To build your project for Win32 you'll need `x86_64-w64-mingw32-gcc` and `x86_64-w64-mingw32-g++`.
 
 You'll also need to cross-compile SDL2 and install it wherever you like to keep your cross-compile libraries.
 
@@ -101,7 +101,7 @@ Finally, from the root directory of your project:
 ```
 mkdir build.mingw
 cd build.mingw
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../../../mingww.toolchain -DSDL2_DIR=/usr/local/cross-tools/x86_64-w64-mingw32/lib/cmake/SDL2
+cmake .. -DCMAKE_TOOLCHAIN_FILE=../../../mingw.toolchain -DSDL2_DIR=/usr/local/cross-tools/x86_64-w64-mingw32/lib/cmake/SDL2
 ```
 
 ### Building & Running On 32blit
