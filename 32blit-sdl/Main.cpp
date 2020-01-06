@@ -2,7 +2,7 @@
 #define WIN32
 #endif
 
-#include "SDL.h"
+#include <SDL.h>
 #include <iostream>
 
 #include "Input.hpp"

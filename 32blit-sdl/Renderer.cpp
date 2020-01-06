@@ -1,6 +1,6 @@
 #include <algorithm>
 #include <cstdio>
-#include "SDL.h"
+#include <SDL.h>
 
 #include "Renderer.hpp"
 #include "System.hpp"

@@ -1,7 +1,7 @@
 #include <chrono>
 #include <iostream>
 #include <random>
-#include "SDL.h"
+#include <SDL.h>
 
 #include "System.hpp"
 #include "32blit.hpp"
