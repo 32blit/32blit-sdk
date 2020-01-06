@@ -23,6 +23,22 @@ void init() {
 
 
 void render(uint32_t time) {
+  char text_buf[100] = {0};
+
+  for(int b = 0; b < SCREEN_WIDTH; b++){
+    for(int v = 0; v < SCREEN_HEIGHT; v++){
+        fb.pen(blit::hsv_to_rgba(float(b) / (float)(SCREEN_WIDTH), 1.0f, float(v) / (float)(SCREEN_HEIGHT)));
+        fb.pixel(point(b, v));
+    }
+  }
+
+  fb.text("Time:", &minimal_font[0][0], point(COL1, ROW1));
+
+  sprintf(text_buf, "%lu", time);
+  fb.text(text_buf, &minimal_font[0][0], point(COL2, ROW1));
+
+  blit::debugf("Hello from 32blit time = %lu\n\r", time);
+
 }
 
 void update(uint32_t time) {
