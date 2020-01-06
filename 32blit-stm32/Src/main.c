@@ -31,7 +31,7 @@
 #include "rng.h"
 #include "spi.h"
 #include "tim.h"
-#include "usb_otg.h"
+#include "usb_device.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -125,6 +125,8 @@ int main(void)
   //MX_DMA2D_Init();
   MX_RNG_Init();
 
+  MX_RNG_Init();
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
   blit_clear_framebuffer();
   blit_init();

@@ -13,6 +13,7 @@ namespace blit {
   uint32_t (*now)()                             = nullptr;
   uint32_t (*random)()                          = nullptr;
   void (*debug)(std::string message) = nullptr;
+  int  (*debugf)(const char * psFormatString, ...) 	= nullptr;
 
   surface null_surface(nullptr, pixel_format::RGB565, size(0, 0));
   surface &fb = null_surface;
