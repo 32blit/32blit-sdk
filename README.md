@@ -79,9 +79,11 @@ DISPLAY=:0.0 ./palette-cycle
 
 ### Building & Running on Win32 (WSL + MinGW)
 
-TODO: Investigate why this outputs `cannot create target because another target with the same name already exists` errors.
+To build your project for Win32 you'll need `g++-mingw-w64` and `g++-mingw-w64`.
 
-To build your project for Win32 you'll need `x86_64-w64-mingw32-gcc` and `x86_64-w64-mingw32-g++`.
+```
+sudo apt-get install gcc-mingw-w64 g++-mingw-w64
+```
 
 You'll also need to cross-compile SDL2 and install it wherever you like to keep your cross-compile libraries.
 
