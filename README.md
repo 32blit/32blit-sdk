@@ -104,7 +104,13 @@ Finally, from the root directory of your project:
 mkdir build.mingw
 cd build.mingw
 cmake .. -DCMAKE_TOOLCHAIN_FILE=../../../mingw.toolchain -DSDL2_DIR=/usr/local/cross-tools/x86_64-w64-mingw32/lib/cmake/SDL2
+make
+cp /usr/local/cross-tools/x86_64-w64-mingw32/bin/SDL2.dll .
 ```
+
+#### Troubleshooting
+
+If you see `cannot create target because another target with the same name already exists` you've probably run `cmake ..` in the wrong directory (the project directory rather than the build directory), you should remove all but your project files and `cmake ..` again from the build directory.
 
 ### Building & Running On 32blit
 
