@@ -136,10 +136,10 @@ int main(void)
   FIL audio_file;
   bool audio_file_available = false;
   if (blit_mount_sd(sd_card_label, freespace, totalspace)) {
-    audio_file_available = blit_open_file(audio_file, "u8mono16.raw");
+    /*audio_file_available = blit_open_file(audio_file, "u8mono16.raw");
     if(audio_file_available){
       blit_enable_dac();
-    }
+    }*/
   }
   /* USER CODE END 2 */
 
@@ -151,9 +151,9 @@ int main(void)
 
     // TODO: this is really just experimental code and should
     // be removed in favour of generic sound support
-    if(audio_file_available && blit_sd_detected()){
+    /*if(audio_file_available && blit_sd_detected()){
       total_samples += blit_update_dac(&audio_file);
-    }
+    }*/
 
     blit_tick();
 
@@ -229,7 +229,7 @@ void SystemClock_Config(void)
                               |RCC_PERIPHCLK_ADC|RCC_PERIPHCLK_I2C4
                               |RCC_PERIPHCLK_USB|RCC_PERIPHCLK_QSPI;
   PeriphClkInitStruct.PLL2.PLL2M = 4;
-  PeriphClkInitStruct.PLL2.PLL2N = 12; // TODO: Exported from STMCUBE as 9?
+  PeriphClkInitStruct.PLL2.PLL2N = 9; // TODO: Exported from STMCUBE as 9?
   PeriphClkInitStruct.PLL2.PLL2P = 1;
   PeriphClkInitStruct.PLL2.PLL2Q = 2;
   PeriphClkInitStruct.PLL2.PLL2R = 2;

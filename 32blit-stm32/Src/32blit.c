@@ -33,6 +33,7 @@ FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 
 uint32_t total_samples = 0;
 uint8_t dma_status = 0;
+uint8_t global_volume = 255;
 
 static blit::screen_mode mode = blit::screen_mode::lores;
 
@@ -66,14 +67,73 @@ void blit_debug(std::string message) {
     fb.text(message, &minimal_font[0][0], point(0, 0));
 }
 
-void HAL_DACEx_ConvHalfCpltCallbackCh2(DAC_HandleTypeDef *hdac){
+/*void HAL_DACEx_ConvHalfCpltCallbackCh2(DAC_HandleTypeDef *hdac){
   dma_status = DAC_DMA_HALF_COMPLETE;
 }
 
 void HAL_DACEx_ConvCpltCallbackCh2(DAC_HandleTypeDef *hdac){
   dma_status = DAC_DMA_COMPLETE;
+}*/
+
+
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+  static uint32_t c = 0;
+  static uint32_t voice_position = 0;
+
+
+  if(htim->Instance == TIM6){
+    uint16_t v = 0;
+
+    auto &channel = blit::audio.channels[0];
+
+    //for(auto &channel : blit::audio.channels) {
+      voice_position += ((channel.f * 256) << 8) / 22050;
+      v = sine_voice[(voice_position >> 8) & 0xff];
+      voice_position &= 0xffff;
+
+      channel.c++;
+/*
+      if(c &0b1000000) {
+       // channel.f++;
+      }
+      
+
+      if(channel.f > 1000) {
+        channel.f = 200;
+      }*/
+    //}
+
+/*
+    for(int i = 0; i < 100; i++) {
+    uint16_t v = HAL_GetRandom() & 0xff;
+
+    v *= blit::volume;
+*/
+
+    /*v *= blit::volume;
+    v >>= 5;
+    v += 2047;*/
+
+    v <<= 4;
+
+    hdac1.Instance->DHR12R2 = v;
+
+  //  uint16_t ts = (sin(4.4f * float(c) / 220.50f * (2.0f * M_PI)) * 2047) + 2047;
+
+   // hdac1.Instance->DHR12R2 = ts;
+    //}
+
+    
+    c++;
+  }
+  //HAL_DAC_SetValue(DAC_HandleTypeDef* hdac, uint32_t Channel, uint32_t Alignment, uint32_t Data)
+
 }
 
+
+
+/*
 uint32_t blit_update_dac(FIL *audio_file) {
   uint16_t buffer_offset = 0;
   unsigned int read = 0;
@@ -103,12 +163,14 @@ uint32_t blit_update_dac(FIL *audio_file) {
   }
 
   return read;
-}
+}*/
 
 void blit_tick() {
   blit_process_input();
   blit_update_led();
   blit_update_vibration();
+
+ // HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_14);
 
   if(blit::tick(blit::now())){
     blit_flip();
@@ -147,18 +209,22 @@ bool blit_open_file(FIL &file, const char *filename) {
   return false;
 }
 
-void blit_enable_dac() {
+void blit_enable_amp() {
   HAL_GPIO_WritePin(AMP_SHUTDOWN_GPIO_Port, AMP_SHUTDOWN_Pin, GPIO_PIN_SET);
+}
+
+void blit_global_volume(uint8_t v) {
+  global_volume = v;
 }
 
 void blit_init() {
     for(int x = 0; x<DAC_BUFFER_SIZE; x++){
       dac_buffer[x] = 0;
     }
-    HAL_TIM_Base_Start(&htim6);
+    HAL_TIM_Base_Start_IT(&htim6);
     HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
-    HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2, (uint32_t*)dac_buffer, DAC_BUFFER_SIZE, DAC_ALIGN_12B_R);
-
+    //HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2, (uint32_t*)dac_buffer, DAC_BUFFER_SIZE, DAC_ALIGN_12B_R);
+    
     ST7272A_RESET();
 
     st7272a_set_bgr();
@@ -166,17 +232,19 @@ void blit_init() {
     msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
     bq24295_init(&hi2c4);
     blit::backlight = 1.0f;
-    blit::volume = 1.5f / 16.0f;
     blit::debug = blit_debug;
     blit::debugf = blit_debugf;
     blit::now = HAL_GetTick;
     blit::random = HAL_GetRandom;
+    blit::volume = 127;
     blit::set_screen_mode = ::set_screen_mode;
     ::set_screen_mode(blit::lores);
 
     blit::update = ::update;
     blit::render = ::render;
     blit::init   = ::init;
+
+    blit_enable_amp();
 
     blit::init();
 }

@@ -18,4 +18,4 @@ echo "$FILEPATH_WIN$FILENAME_WIN"
 
 # Call DfuSeCommand.exe
 # Ideally you should use the modified version at https://github.com/pimoroni/DfuSE/ since it will reset the hardware after flashing
-/mnt/c/Program\ Files\ \(x86\)/STMicroelectronics/Software/DfuSe\ v3.0.6/Sources/Binary/Release/DfuSeCommand.exe -c -d --r --fn "$FILEPATH_WIN"
+/mnt/c/Program\ Files\ \(x86\)/STMicroelectronics/Software/DfuSe\ v3.0.6/Sources/Binary/Release/DfuSeCommand.exe -c -d --fn "$FILEPATH$FILENAME_WIN"

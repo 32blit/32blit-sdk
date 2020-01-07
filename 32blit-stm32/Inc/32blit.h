@@ -34,8 +34,8 @@ extern void blit_update_led();
 extern void blit_process_input();
 
 // Audio
-extern void blit_enable_dac();
-extern uint32_t blit_update_dac(FIL *audio_file);
+extern void blit_enable_amp();
+//extern uint32_t blit_update_dac(FIL *audio_file);
 
 void blit_menu_update(uint32_t time);
 void blit_menu_render(uint32_t time);
