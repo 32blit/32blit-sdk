@@ -333,3 +333,17 @@ ASALocalRun/
 # Object files and other build cruft
 *.o
 lib32blit.a
+
+build.*/
+build/
+
+# STM32 CubeMX Project Output (should be manually synced to 32blit-stm32 tree)
+.vscode/
+hardware/.mxproject
+hardware/Drivers/
+hardware/Inc/
+hardware/Makefile
+hardware/Middlewares/
+hardware/STM32H750VBTx_FLASH.ld
+hardware/Src/
+hardware/startup_stm32h750xx.s
