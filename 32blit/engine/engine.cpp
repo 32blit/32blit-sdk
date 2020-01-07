@@ -21,7 +21,7 @@ namespace blit {
   uint32_t update_rate_ms = 10;
   uint32_t pending_update_time = 0;
 
-  uint32_t render_rate_ms = 25;
+  uint32_t render_rate_ms = 20;
   uint32_t pending_render_time = 0;
 
   uint32_t last_tick_time = 0;
