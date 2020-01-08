@@ -99,8 +99,12 @@ void System::run() {
 
 	::set_screen_mode(blit::lores);
 
+#ifdef __EMSCRIPTEN__
+	::init();
+#else
 	t_system_loop = SDL_CreateThread(system_loop_thread, "Loop", (void *)this);
 	t_system_timer = SDL_CreateThread(system_timer_thread, "Timer", (void *)this);
+#endif
 }
 
 int System::timer_thread() {

@@ -2,6 +2,10 @@
 #define WIN32
 #endif
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
+
 #include "SDL.h"
 #include <iostream>
 
@@ -107,6 +111,19 @@ void handle_event(SDL_Event &event) {
 	}
 }
 
+#ifdef __EMSCRIPTEN__
+void em_loop() {
+	SDL_Event event;
+	while (SDL_PollEvent(&event)) {
+		handle_event(event);
+	}
+
+	sys->loop();
+	ren->update(sys);
+	ren->present();
+}
+#endif
+
 int main(int argc, char *argv[]) {
 
 	std::cout << "Hello World" << std::endl;
@@ -145,11 +162,16 @@ int main(int argc, char *argv[]) {
 
 	sys->run();
 
+#ifdef __EMSCRIPTEN__
+	emscripten_set_main_loop(em_loop, 0, 1);
+#else
 	SDL_Event event;
 
 	while (running && SDL_WaitEvent(&event)) {
 		handle_event(event);
 	}
+#endif
+
 	if (running) {
 		fprintf(stderr, "Main loop exited with error: %s\n", SDL_GetError());
 		running = false; // ensure timer thread quits
