@@ -1,5 +1,5 @@
 add_subdirectory(doom-fire)
-add_subdirectory(fire)
+add_subdirectory(rotozoom)
 add_subdirectory(fizzlefade)
 add_subdirectory(flight)
 add_subdirectory(geometry)
