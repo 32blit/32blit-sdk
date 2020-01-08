@@ -15,6 +15,8 @@ class System {
 		int update_thread();
 		int timer_thread();
 
+		void loop();
+
 		Uint32 mode();
 		void update_texture(SDL_Texture *);
 		void notify_redraw();
