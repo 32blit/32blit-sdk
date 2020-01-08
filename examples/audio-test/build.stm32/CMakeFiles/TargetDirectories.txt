@@ -1,0 +1,9 @@
+/mnt/c/Users/jon/Documents/GitHub/32blit-beta/examples/audio-test/build.stm32/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/jon/Documents/GitHub/32blit-beta/examples/audio-test/build.stm32/CMakeFiles/audio-test.elf.dir
+/mnt/c/Users/jon/Documents/GitHub/32blit-beta/examples/audio-test/build.stm32/CMakeFiles/edit_cache.dir
+/mnt/c/Users/jon/Documents/GitHub/32blit-beta/examples/audio-test/build.stm32/32blit/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/jon/Documents/GitHub/32blit-beta/examples/audio-test/build.stm32/32blit/CMakeFiles/BlitEngine.dir
+/mnt/c/Users/jon/Documents/GitHub/32blit-beta/examples/audio-test/build.stm32/32blit/CMakeFiles/edit_cache.dir
+/mnt/c/Users/jon/Documents/GitHub/32blit-beta/examples/audio-test/build.stm32/32blit-stm32/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/jon/Documents/GitHub/32blit-beta/examples/audio-test/build.stm32/32blit-stm32/CMakeFiles/BlitHalSTM32.dir
+/mnt/c/Users/jon/Documents/GitHub/32blit-beta/examples/audio-test/build.stm32/32blit-stm32/CMakeFiles/edit_cache.dir

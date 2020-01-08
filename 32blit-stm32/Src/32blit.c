@@ -79,20 +79,55 @@ void HAL_DACEx_ConvCpltCallbackCh2(DAC_HandleTypeDef *hdac){
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   static uint32_t c = 0;
-  static uint32_t voice_position = 0;
-
 
   if(htim->Instance == TIM6){
-    uint16_t v = 0;
+    int32_t v = 0;
 
     auto &channel = blit::audio.channels[0];
 
-    //for(auto &channel : blit::audio.channels) {
-      voice_position += ((channel.f * 256) << 8) / 22050;
-      v = sine_voice[(voice_position >> 8) & 0xff];
-      voice_position &= 0xffff;
+    for(auto &channel : blit::audio.channels) {    
+      if(channel.voices & 0b11110000) {
+        int16_t cv = 0;
 
-      channel.c++;
+        channel.vp += ((channel.f * 256) << 8) / 22050;
+        uint8_t so = (channel.vp >> 8) & 0xff;
+
+        //if(channel.c & audio_voice::NOISE)
+        //  v += (int16_t)HAL_GetRandom() - 128;
+
+        if(channel.c & audio_voice::SAW)
+          cv += saw_voice[so];
+
+        if(channel.c & audio_voice::SQUARE)
+          cv += square_voice[so];
+
+        if(channel.c & audio_voice::SINE)
+          cv += sine_voice[so];
+
+/*        if(channel.samples == blit::noise_voice) {
+          
+        }else{
+          v += channel.samples[(channel.vp >> 8) & 0xff];        
+        }*/
+
+        // apply sustain volume
+        cv *= channel.v;
+        cv >>= 8;
+
+        if(cv > 127)
+          cv = 127;
+
+        if(cv < -128)
+          cv = -128;
+
+        v += cv;
+
+        channel.c++;
+      }
+
+      //voice_position &= 0xffff;
+
+      
 /*
       if(c &0b1000000) {
        // channel.f++;
@@ -102,7 +137,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
       if(channel.f > 1000) {
         channel.f = 200;
       }*/
-    //}
+    }
 
 /*
     for(int i = 0; i < 100; i++) {
@@ -112,10 +147,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 */
 
     /*v *= blit::volume;
-    v >>= 5;
-    v += 2047;*/
+    v >>= 5;*/
 
-    v <<= 4;
+    v *= blit::volume;
+    v >>= 8;
+
+    v <<= 2;
+    v += 2047; // centre audio data for 12-bit DAC output
+
+    
 
     hdac1.Instance->DHR12R2 = v;
 
