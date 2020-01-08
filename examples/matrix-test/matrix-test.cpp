@@ -11,9 +11,9 @@ const uint16_t screen_width = 320;
 const uint16_t screen_height = 240;
 
 /* define storage for the framebuffer, spritesheet, and mask */
-//rgb     __fb[screen_width * screen_height] __attribute__((section(".fb")));
-uint8_t __m[screen_width * screen_height] __attribute__((section(".m")));
-uint8_t __pb[screen_width * screen_height] __attribute__((section(".fb")));
+//rgb     __fb[screen_width * screen_height] __SECTION__(".fb");
+uint8_t __m[screen_width * screen_height] __SECTION__(".m");
+uint8_t __pb[screen_width * screen_height] __SECTION__(".fb");
 
 /* create surfaces */
 //surface fb((uint8_t *)__fb, size(screen_width, screen_height), pixel_format::RGB);
