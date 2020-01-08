@@ -16,6 +16,7 @@ While the 32blit API is not finalised, this repository represents an overview of
 4. `cmake` and `make` for building 32blit libraries and examples
 5. A DFU upload tool, on Windows it's easiest to just use "DfuSe Demonstration" (available from [st.com](https://www.st.com/en/development-tools/stsw-stm32080.html))
 6. Ubuntu on Windows 10 WSL (_Windows Subsystem for Linux_), or a Linux VM if you prefer.
+7. If you intend on building DFU files (for the device itself), on Ubuntu (or in WSL) you will also need _Python3_ installed, along with _pip3_ (`sudo apt install python3 python3-pip`) and install the following Python modules: `pip3 install construct bitstring` 
 
 On Windows 10 you can either build for win32 or use XMing and run your builds in WSL by prefixing with `DISPLAY=:0.0`.
 
@@ -24,6 +25,17 @@ On Windows 10 you can either build for win32 or use XMing and run your builds in
 To enable Windows Subsystem for Linux, you must access the _Turn Windows features on or off_ dialog. Find the entry for _Windows Subsystem for Linux_ and make sure it is enabled.
 
 After that, proceed to the Microsoft Store to download Ubuntu for WSL.
+
+## XMing
+
+To run the examples from WSL on Windows you will need to have XMing (or another XWindow Server) running on Windows. Click on the following link which will help you install and setup WSL and XMing together.
+
+- [Information how to run XMing with WSL](https://virtualizationreview.com/articles/2017/02/08/graphical-programs-on-windows-subsystem-on-linux.aspx)
+- [Download XMing setup](https://sourceforge.net/projects/xming/files/Xming/6.9.0.31/Xming-6-9-0-31-setup.exe/download)
+
+You can then run code by either:
+- prefixing the command with `DISPLAY=:0.0`, or 
+- execute the command `export DISPLAY=:0.0` - which after you will not need to prefix the commands in the current session, just run them
 
 # Overview
 
