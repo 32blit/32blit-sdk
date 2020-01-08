@@ -99,8 +99,12 @@ void System::run() {
 
 	::set_screen_mode(blit::lores);
 
+#ifdef __EMSCRIPTEN__
+	::init();
+#else
 	t_system_loop = SDL_CreateThread(system_loop_thread, "Loop", (void *)this);
 	t_system_timer = SDL_CreateThread(system_timer_thread, "Timer", (void *)this);
+#endif
 }
 
 int System::timer_thread() {
@@ -138,21 +142,26 @@ int System::update_thread() {
 	while (true) {
 		SDL_SemWait(s_loop_update);
 		if(!running) break;
-		SDL_LockMutex(m_input);
-		blit::buttons = shadow_buttons;
-		blit::tilt.x = shadow_tilt[0];
-		blit::tilt.y = shadow_tilt[1];
-		blit::tilt.z = shadow_tilt[2];
-		blit::joystick.x = shadow_joystick[0];
-		blit::joystick.y = shadow_joystick[1];
-		SDL_UnlockMutex(m_input);
-		blit::tick(::now());
+		loop();
 		if(!running) break;
 		SDL_PushEvent(&event);
 		SDL_SemWait(s_loop_redraw);
 	}
 	SDL_SemPost(s_loop_ended);
 	return 0;
+}
+
+void System::loop()
+{
+	SDL_LockMutex(m_input);
+	blit::buttons = shadow_buttons;
+	blit::tilt.x = shadow_tilt[0];
+	blit::tilt.y = shadow_tilt[1];
+	blit::tilt.z = shadow_tilt[2];
+	blit::joystick.x = shadow_joystick[0];
+	blit::joystick.y = shadow_joystick[1];
+	SDL_UnlockMutex(m_input);
+	blit::tick(::now());
 }
 
 Uint32 System::mode() {
