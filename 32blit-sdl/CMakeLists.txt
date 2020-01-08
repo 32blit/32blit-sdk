@@ -64,4 +64,8 @@ function(blit_executable NAME SOURCES)
 	else()
   		target_link_libraries(${NAME} -Wl,--whole-archive BlitHalSDL -Wl,--no-whole-archive)
 	endif()
+
+	if(EMSCRIPTEN)
+		set_target_properties(${NAME} PROPERTIES SUFFIX ".html")
+	endif()
 endfunction()
