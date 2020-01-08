@@ -86,44 +86,60 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     auto &channel = blit::audio.channels[0];
 
     for(auto &channel : blit::audio.channels) {    
-      if(channel.voices & 0b11110000) {
-        int16_t cv = 0;
+      if(channel.voices & 0b11110000 && channel.voices & 0b1) {
+        int16_t cv = 0xffff;
+
+        if(!(channel.lv & 0b1) && (channel.voices & 0b1)) {
+          channel.t = 0;
+        }
 
         channel.vp += ((channel.f * 256) << 8) / 22050;
         uint8_t so = (channel.vp >> 8) & 0xff;
 
-        //if(channel.c & audio_voice::NOISE)
-        //  v += (int16_t)HAL_GetRandom() - 128;
+   //     if(channel.c & audio_voice::NOISE)
+   //       v += (int16_t)HAL_GetRandom() - 128;
 
-        if(channel.c & audio_voice::SAW)
-          cv += saw_voice[so];
+        if(channel.voices & audio_voice::SAW)
+          cv &= (saw_voice[so] + 128);
 
-        if(channel.c & audio_voice::SQUARE)
-          cv += square_voice[so];
+        if(channel.voices & audio_voice::SQUARE)
+          cv &= ((so << 4) < channel.pw) ? 0xff : 0x00;
 
-        if(channel.c & audio_voice::SINE)
-          cv += sine_voice[so];
+        if(channel.voices & audio_voice::SINE)
+          cv &= (sine_voice[so] + 128);
 
-/*        if(channel.samples == blit::noise_voice) {
-          
+        cv -= 128;
+
+        uint8_t adsr = 0;
+
+        if(channel.t < channel.a) {
+          // apply attack
+          adsr = (channel.t << 8) / channel.a;
+        }else if(channel.t < (channel.a + channel.d)) {
+          // decay is now between 0 and 255
+          uint32_t d = ((channel.t - channel.a) << 16) / channel.d;
+
+          // decay must trend from 1 down to sustain level based on "d"
+          uint32_t r = 255 - channel.s;
+          uint32_t v = (r * d) >> 16;
+          adsr = 255 - v;
         }else{
-          v += channel.samples[(channel.vp >> 8) & 0xff];        
-        }*/
+          // apply sustain volume
+          adsr = channel.s;
+        }
 
-        // apply sustain volume
-        cv *= channel.v;
+        cv *= adsr;
         cv >>= 8;
-
-        if(cv > 127)
-          cv = 127;
-
-        if(cv < -128)
-          cv = -128;
 
         v += cv;
 
+        v *= 0.75;
+
         channel.c++;
+        channel.t++;
       }
+
+      channel.lv = channel.voices;
 
       //voice_position &= 0xffff;
 
@@ -146,18 +162,25 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     v *= blit::volume;
 */
 
+    if(v > 127)
+      v = 127;
+
+    if(v < -128)
+      v = -128;
+
     /*v *= blit::volume;
     v >>= 5;*/
 
-    v *= blit::volume;
-    v >>= 8;
+  //  v *= blit::volume;
+   // v >>= 8;
 
-    v <<= 2;
-    v += 2047; // centre audio data for 12-bit DAC output
+    v += 128;
+
+    //v <<= 4;
 
     
 
-    hdac1.Instance->DHR12R2 = v;
+    hdac1.Instance->DHR8R2 = v;
 
   //  uint16_t ts = (sin(4.4f * float(c) / 220.50f * (2.0f * M_PI)) * 2047) + 2047;
 

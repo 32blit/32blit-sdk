@@ -48,12 +48,14 @@ namespace blit {
   extern int8_t saw_voice[256];  
   extern uint32_t noise_voice;
 
+  extern uint32_t a_to_frames[16];
+  extern uint32_t dr_to_frames[16];
   enum audio_voice    {NOISE = 0b10000000, SQUARE = 0b01000000, SAW = 0b00100000, SINE = 0b00010000};
 
   struct audio_channel {
       uint8_t voices = 0;
 
-      uint16_t a = 1;    // attack period (ms)
+      uint16_t a = 2205;    // attack period (frames)
       uint16_t d = 1;    // decay period (ms)
       uint8_t  s = 200;  // sustain volume
   //    uint16_t r = 1;    // release period (ms)
@@ -61,9 +63,12 @@ namespace blit {
       uint8_t  v = 255;  // channel volume
       uint16_t vp = 0;  // voice position 8:8 fixed point
 
+      uint16_t pw = 0;
       uint16_t f = 660;  // frequency (Hz)
-
+      int32_t  dc = 10; // ???
       int32_t  c = 0;
+      uint32_t t = 0;
+      uint8_t lv = 0;
   };
 
   struct _audio {
