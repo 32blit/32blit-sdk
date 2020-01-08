@@ -12,12 +12,18 @@ While the 32blit API is not finalised, this repository represents an overview of
 
 1. Some experience writing/compiling C/C++ software
 2. `gcc` for compiling test builds
-3. `arm-gcc` for compiling STM32 builds
+3. `gcc-arm-none-eabi` for compiling STM32 builds
 4. `cmake` and `make` for building 32blit libraries and examples
-5. A DFU upload tool, on Windows it's easiest to just use "DfuSe Demonstration"
-6. Ubuntu on Windows 10, or a Linux VM if you prefer.
+5. A DFU upload tool, on Windows it's easiest to just use "DfuSe Demonstration" (available from [st.com](https://www.st.com/en/development-tools/stsw-stm32080.html))
+6. Ubuntu on Windows 10 WSL (_Windows Subsystem for Linux_), or a Linux VM if you prefer.
 
 On Windows 10 you can either build for win32 or use XMing and run your builds in WSL by prefixing with `DISPLAY=:0.0`.
+
+## Windows Subsystem for Linux (WSL)
+
+To enable Windows Subsystem for Linux, you must access the _Turn Windows features on or off_ dialog. Find the entry for _Windows Subsystem for Linux_ and make sure it is enabled.
+
+After that, proceed to the Microsoft Store to download Ubuntu for WSL.
 
 # Overview
 
@@ -39,7 +45,7 @@ sudo apt install libsdl2-dev
 
 ## 32blit-stm32
 
-The `32blit-stm32` directory contains the STM32 HAL for 32blit, compatible with the STM32H750. Once you're ready to get your project running on a 32blit console you will need to ensure you have the `arm-gcc` toolchain installed and then follow the instructions below for "Building & Running On 32Blit"
+The `32blit-stm32` directory contains the STM32 HAL for 32blit, compatible with the STM32H750. Once you're ready to get your project running on a 32blit console you will need to ensure you have the `gcc-arm-none-eabi` toolchain installed and then follow the instructions below for "Building & Running On 32Blit"
 
 ## Examples / Projects
 
