@@ -1,5 +1,3 @@
-find_package(SDL2 REQUIRED)
-
 add_library(BlitHalSDL STATIC
 	Input.cpp
 	Main.cpp
@@ -7,9 +5,20 @@ add_library(BlitHalSDL STATIC
 	System.cpp
 )
 
-target_include_directories(BlitHalSDL
-	PRIVATE	${SDL2_INCLUDE_DIRS}
-)
+if(EMSCRIPTEN)
+	target_compile_options(BlitHalSDL
+		PRIVATE
+			"-s;USE_SDL=2"
+	)
+
+	set(SDL2_LIBRARIES "-s USE_SDL=2")
+else()
+	find_package(SDL2 REQUIRED)
+
+	target_include_directories(BlitHalSDL
+		PRIVATE	${SDL2_INCLUDE_DIRS}
+	)
+endif()
 
 target_link_libraries(BlitHalSDL PUBLIC BlitEngine ${SDL2_LIBRARIES})
 
