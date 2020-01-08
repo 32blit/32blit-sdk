@@ -1,4 +1,4 @@
 cmake_minimum_required(VERSION 2.8.9)
-project (fire)
+project (rotozoom)
 include (../../32blit.cmake)
-blit_executable (fire fire.cpp)
+blit_executable (rotozoom rotozoom.cpp)

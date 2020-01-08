@@ -95,9 +95,10 @@ function(blit_executable NAME SOURCES)
 	set_target_properties(${NAME}.elf PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT})
 	set_property(TARGET ${NAME}.elf APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Map=${NAME}.map,--cref")
   	add_custom_command(TARGET ${NAME}.elf POST_BUILD
+		COMMENT "Building ${NAME}.bin\nBuilding ${NAME}.dfu"
 		COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${NAME}.elf> ${NAME}.hex
 		COMMAND ${CMAKE_OBJCOPY} -O binary -S $<TARGET_FILE:${NAME}.elf> ${NAME}.bin
-		COMMAND arm-none-eabi-size $<TARGET_FILE:${NAME}.elf>
-		COMMENT "Building ${NAME}.hex \nBuilding ${NAME}.bin"
+		COMMAND ${CMAKE_DFU} build --force --out ${NAME}.dfu ${NAME}.bin
+		COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${NAME}.elf>
 	)
 endfunction()
