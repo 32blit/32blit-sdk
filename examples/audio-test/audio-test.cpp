@@ -13,13 +13,29 @@ void init() {
 
 }
 
+
 void render(uint32_t time_ms) {
 
   fb.pen(rgba(0, 0, 0, 255));
   fb.clear();  
 
   fb.watermark();
+  
+  fb.pen(rgba(255, 255, 255));
 
+  static uint16_t i = 0;
+  i++;
+  fb.pixel(point(i % 160, 0));
+
+
+fb.text(std::to_string(blit::audio.channels[0].pw), &minimal_font[0][0], point(0, 0));
+/*  for(auto i = 0; i < 20; i++) {
+    uint8_t *sample = &song[i * 25];
+    uint32_t f = (sample[1] << 8) | sample[0];
+    uint32_t fhz = (f * 98525L) / 1677721L;
+    
+  }*/
+  
 }
 
 
@@ -27,30 +43,36 @@ void update(uint32_t time_ms) {
   static uint32_t last_time_ms = time_ms;
   static uint16_t i = 0;
 
-  uint16_t scale[13] = {440, 466, 494, 523, 554, 587, 622, 659, 698, 740, 784, 831, 880};
-
   i++;
-
+  blit::volume = 255;
   uint16_t row = (i >> 1) % 900;
-  uint8_t *sample = song[row * 25];
+  uint8_t *sample = song + (row * 25);
 
-  for(auto i = 0; i < 1; i++) {
-    uint16_t f = sample[0] + (sample[1] << 8);
-    uint16_t c = sample[4];
-    uint16_t v = ((sample[6] & 0xf0) >> 4) * 16;
+  for(auto i = 0; i < 3; i++) {
+    uint32_t f = (sample[1] << 8) | sample[0];
+    uint16_t voices = sample[4];
 
-    
+    uint32_t fhz = (f * 98525L) / 1677721L;
 
-    blit::audio.channels[i].f = (f * 985250L)/16777216L;
-    blit::audio.channels[i].voices = c;
-    blit::audio.channels[i].v = v;
-
+    blit::audio.channels[i].pw = ((sample[3] & 0xf) << 8) | sample[2];
+    blit::audio.channels[i].f = fhz;
+    blit::audio.channels[i].voices = voices;
+    blit::audio.channels[i].s = sample[6] & 0xf0;
+    blit::audio.channels[i].a = a_to_frames[(sample[5] & 0xf0) >> 4];
+    blit::audio.channels[i].d = dr_to_frames[sample[5] & 0xf];
 
     sample += 7;
   }
-
-  
-
+/*
+  blit::audio.channels[0].f = 440;
+  blit::audio.channels[0].voices = 0b11110000;
+  blit::audio.channels[0].v = 128;
+*/
+/*
+  blit::audio.channels[1].f = 220;
+  blit::audio.channels[1].voices = 0b11110000;
+  blit::audio.channels[1].v = 128;
+*/
   /*blit::audio.channels[0].samples = noise_voice;
   blit::audio.channels[1].f = scale[((i / 100) + 3) % 13];
   //blit::audio.channels[1].samples = blit::square_voice;
