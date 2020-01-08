@@ -1,5 +1,6 @@
 #include "hardware-test.hpp"
 #include "graphics/color.hpp"
+#include <cmath>
 
 using namespace blit;
 

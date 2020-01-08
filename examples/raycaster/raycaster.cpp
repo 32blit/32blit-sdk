@@ -11,13 +11,8 @@ using namespace blit;
 const uint16_t screen_width = 160;
 const uint16_t screen_height = 120;
 
-#ifndef _WIN32
-uint8_t __ss[160 * 160] __attribute__((section(".ss")));
-uint8_t __m[160 * 120] __attribute__((section(".m")));
-#else
-uint8_t __ss[160 * 160];
-uint8_t __m[160 * 120];
-#endif
+uint8_t __ss[160 * 160] __SECTION__(".ss");
+uint8_t __m[160 * 120] __SECTION__(".m");
 
 float z_buffer[SCREEN_WIDTH];
 float lut_camera_displacement[SCREEN_WIDTH];

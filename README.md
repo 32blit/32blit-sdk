@@ -43,7 +43,7 @@ The `32blit-stm32` directory contains the STM32 HAL for 32blit, compatible with 
 
 ## Examples / Projects
 
-### Building & Running Locally Using The SDL HAL (Linux / WSL + XMing)
+### Building & Running on Linux or WSL + XMing
 
 To build your project for testing, go into the relevant example directory. We'll use `palette-cycle` to demonstrate:
 
@@ -108,6 +108,39 @@ make
 cp /usr/local/cross-tools/x86_64-w64-mingw32/bin/SDL2.dll .
 ```
 
+### Building & Running on OSX
+
+You will need build tools and CMAKE. Assuming you have [homebrew](https://docs.brew.sh/Installation) installed:
+
+``` shell
+xcode-select --install
+brew install cmake
+```
+
+You'll also need to build and install SDL2:
+
+``` shell
+wget https://www.libsdl.org/release/SDL2-2.0.10.zip
+unzip SDL2-2.0.10.zip
+cd SDL2-2.0.10
+mkdir build
+cd build
+../configure
+make
+sudo make install
+```
+
+Finally, from the root directory of this repository:
+
+``` shell
+mkdir build
+cd build
+cmake .. -DCMAKE_TOOLCHAIN_FILE=../darwin.toolchain
+make
+```
+
+When the build completes you should find all the examples within the build directory.
+
 #### Troubleshooting
 
 If you see `cannot create target because another target with the same name already exists` you've probably run `cmake ..` in the wrong directory (the project directory rather than the build directory), you should remove all but your project files and `cmake ..` again from the build directory.
@@ -126,11 +159,7 @@ cmake .. -DCMAKE_TOOLCHAIN_FILE=../../../32blit.toolchain
 
 And then `make` as normal.
 
-The result of your build will be a `.bin`, `.hex` and `.elf` file. You can turn the `.bin` into a DfuSe-compatible DFU file using th provided `dfu` tool:
-
-```
-../../../tools/dfu build --out palette-cycle.dfu palette-cycle.bin
-```
+The result of your build will be a `.bin`, `.hex`, `.elf` and DfuSe-compatible `.dfu` file.
 
 ### Video Capture
 

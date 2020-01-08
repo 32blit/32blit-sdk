@@ -1,6 +1,6 @@
 #include <iomanip>
 #include <sstream>
-#include <SDL.h>
+#include "SDL.h"
 
 #include "VideoCapture.hpp"
 
