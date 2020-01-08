@@ -17,11 +17,97 @@
 #define WINDOW_TITLE "TinyDebug SDL"
 #endif
 
+static bool running = true;
+
+SDL_Window* window = NULL;
+
+System *sys;
+Input *inp;
+Renderer *ren;
+
+void handle_event(SDL_Event &event) {
+	switch (event.type) {
+		case SDL_QUIT:
+			running = false;
+			break;
+
+		case SDL_WINDOWEVENT:
+			if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+				inp->resize(event.window.data1, event.window.data2);
+				ren->resize(event.window.data1, event.window.data2);
+			}
+			break;
+
+		case SDL_MOUSEBUTTONUP:
+		case SDL_MOUSEBUTTONDOWN:
+			inp->handle_mouse(event.button.button, event.type == SDL_MOUSEBUTTONDOWN, event.button.x, event.button.y);
+			break;
+
+		case SDL_MOUSEMOTION:
+			if (event.motion.state & SDL_BUTTON_LMASK) {
+				inp->handle_mouse(SDL_BUTTON_LEFT, event.motion.state & SDL_MOUSEBUTTONDOWN, event.motion.x, event.motion.y);
+			}
+			break;
+
+		case SDL_KEYDOWN: // fall-though
+		case SDL_KEYUP:
+			if (!inp->handle_keyboard(event.key.keysym.sym, event.type == SDL_KEYDOWN)) {
+				switch (event.key.keysym.sym) {
+#ifdef VIDEO_CAPTURE
+				case SDLK_r:
+					if (event.type == SDL_KEYDOWN && SDL_GetTicks() - last_record_startstop > 1000) {
+						if (cap->recording()) cap->stop();
+						else cap->start();
+						last_record_startstop = SDL_GetTicks();
+					}
+#endif
+				}
+			}
+			break;
+
+		case SDL_CONTROLLERBUTTONDOWN:
+		case SDL_CONTROLLERBUTTONUP:
+			inp->handle_controller_button(event.cbutton.button, event.type == SDL_CONTROLLERBUTTONDOWN);
+			break;
+
+		case SDL_CONTROLLERAXISMOTION:
+			inp->handle_controller_motion(event.caxis.axis, event.caxis.value);
+			break;
+
+		case SDL_RENDER_TARGETS_RESET:
+			std::cout << "Targets reset" << std::endl;
+			break;
+
+		case SDL_RENDER_DEVICE_RESET:
+			std::cout << "Device reset" << std::endl;
+			break;
+
+		default:
+			if(event.type == System::loop_event) {
+				ren->update(sys);
+				sys->notify_redraw();
+				ren->present();
+#ifdef VIDEO_CAPTURE
+				if (cap->recording()) cap->capture(ren);
+#endif
+			} else if (event.type == System::timer_event) {
+				switch(event.user.code) {
+					case 0:
+						SDL_SetWindowTitle(window, WINDOW_TITLE);
+						break;
+					case 1:
+						SDL_SetWindowTitle(window, WINDOW_TITLE " [SLOW]");
+						break;
+					case 2:
+						SDL_SetWindowTitle(window, WINDOW_TITLE " [FROZEN]");
+						break;
+				}
+			}
+			break;
+	}
+}
 
 int main(int argc, char *argv[]) {
-	static bool running = true;
-
-	SDL_Window* window = NULL;
 
 	std::cout << "Hello World" << std::endl;
 
@@ -48,9 +134,9 @@ int main(int argc, char *argv[]) {
 		SDL_GameControllerOpen(n);
 	}
 
-	System *sys = new System();
-	Input *inp = new Input(window, sys);
-	Renderer *ren = new Renderer(window, System::width, System::height);
+	sys = new System();
+	inp = new Input(window, sys);
+	ren = new Renderer(window, System::width, System::height);
 
 #ifdef VIDEO_CAPTURE
 	VideoCapture *cap = new VideoCapture(argv[0]);
@@ -62,85 +148,7 @@ int main(int argc, char *argv[]) {
 	SDL_Event event;
 
 	while (running && SDL_WaitEvent(&event)) {
-		switch (event.type) {
-			case SDL_QUIT:
-				running = false;
-				break;
-
-			case SDL_WINDOWEVENT:
-				if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-					inp->resize(event.window.data1, event.window.data2);
-					ren->resize(event.window.data1, event.window.data2);
-				}
-				break;
-
-			case SDL_MOUSEBUTTONUP:
-			case SDL_MOUSEBUTTONDOWN:
-				inp->handle_mouse(event.button.button, event.type == SDL_MOUSEBUTTONDOWN, event.button.x, event.button.y);
-				break;
-
-			case SDL_MOUSEMOTION:
-				if (event.motion.state & SDL_BUTTON_LMASK) {
-					inp->handle_mouse(SDL_BUTTON_LEFT, event.motion.state & SDL_MOUSEBUTTONDOWN, event.motion.x, event.motion.y);
-				}
-				break;
-
-			case SDL_KEYDOWN: // fall-though
-			case SDL_KEYUP:
-				if (!inp->handle_keyboard(event.key.keysym.sym, event.type == SDL_KEYDOWN)) {
-					switch (event.key.keysym.sym) {
-#ifdef VIDEO_CAPTURE
-					case SDLK_r:
-						if (event.type == SDL_KEYDOWN && SDL_GetTicks() - last_record_startstop > 1000) {
-							if (cap->recording()) cap->stop();
-							else cap->start();
-							last_record_startstop = SDL_GetTicks();
-						}
-#endif
-					}
-				}
-				break;
-
-			case SDL_CONTROLLERBUTTONDOWN:
-			case SDL_CONTROLLERBUTTONUP:
-				inp->handle_controller_button(event.cbutton.button, event.type == SDL_CONTROLLERBUTTONDOWN);
-				break;
-
-			case SDL_CONTROLLERAXISMOTION:
-				inp->handle_controller_motion(event.caxis.axis, event.caxis.value);
-				break;
-
-			case SDL_RENDER_TARGETS_RESET:
-				std::cout << "Targets reset" << std::endl;
-				break;
-
-			case SDL_RENDER_DEVICE_RESET:
-				std::cout << "Device reset" << std::endl;
-				break;
-
-			default:
-				if(event.type == System::loop_event) {
-					ren->update(sys);
-					sys->notify_redraw();
-					ren->present();
-#ifdef VIDEO_CAPTURE
-					if (cap->recording()) cap->capture(ren);
-#endif
-				} else if (event.type == System::timer_event) {
-					switch(event.user.code) {
-						case 0:
-							SDL_SetWindowTitle(window, WINDOW_TITLE);
-							break;
-						case 1:
-							SDL_SetWindowTitle(window, WINDOW_TITLE " [SLOW]");
-							break;
-						case 2:
-							SDL_SetWindowTitle(window, WINDOW_TITLE " [FROZEN]");
-							break;
-					}
-				}
-				break;
-		}
+		handle_event(event);
 	}
 	if (running) {
 		fprintf(stderr, "Main loop exited with error: %s\n", SDL_GetError());
