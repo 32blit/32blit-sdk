@@ -3,6 +3,8 @@ set(CMAKE_SYSTEM_PROCESSOR arm)
 
 set(CMAKE_C_COMPILER arm-none-eabi-gcc CACHE PATH "Path to C compiler")
 set(CMAKE_CXX_COMPILER arm-none-eabi-g++ CACHE PATH "Path to C++ compiler")
+set(CMAKE_SIZE arm-none-eabi-size CACHE PATH "Path to size tool")
+set(CMAKE_DFU "${CMAKE_CURRENT_LIST_DIR}/tools/dfu" CACHE PATH "Path to DFU builder")
 
 set(MCU_LINKER_SCRIPT STM32H750VBTx_FLASH.ld)
 set(MCU_ARCH cortex-m7)
