@@ -1,21 +1,21 @@
 #!/bin/bash
 
-FILENAME_SRC=$1
-FILENAME_TGT=$(echo $FILENAME_SRC | sed 's/\.bin/\.dfu/')
+# Invokes DfuSeCommand.exe to flash a .dfu file to 32blit
+# requires DfuSeCommand.exe - https://www.st.com/en/development-tools/stsw-stm32080.html
 
-BASE_DIR=`dirname $0`
+FILENAME=$1
 
-# Do some rudimentary path fiddling for Windows-compatible path names
-FILEPATH_WIN=$(pwd | sed 's/\//\\/g' | sed 's/\\mnt\\c/C:/')\\
-FILENAME_WIN=$(echo $FILENAME_TGT | sed 's/\//\\/g')
-
-if [ "$FILENAME_SRC" == "" ]; then
-    echo "Usage: $0 <project-name>"
+if [ "$FILENAME" == "" ]; then
+    echo "Invokes DfuSeCommand.exe to flash a .dfu file to 32blit"
+    echo "Usage: $0 <filename>.dfu"
     exit 1
 fi
 
-$BASE_DIR/dfu --verbose build --force --out $FILENAME_TGT $FILENAME_SRC
+# Do some rudimentary path fiddling for Windows-compatible path names
+FILEPATH_WIN=$(realpath $FILENAME | sed 's/\//\\/g' | sed 's/\\mnt\\c/C:/')
+
+echo "$FILEPATH_WIN$FILENAME_WIN"
 
 # Call DfuSeCommand.exe
 # Ideally you should use the modified version at https://github.com/pimoroni/DfuSE/ since it will reset the hardware after flashing
-/mnt/c/Program\ Files\ \(x86\)/STMicroelectronics/Software/DfuSe\ v3.0.6/Sources/Binary/Release/DfuSeCommand.exe -c -d --r --fn "$FILEPATH$FILENAME_WIN"
+/mnt/c/Program\ Files\ \(x86\)/STMicroelectronics/Software/DfuSe\ v3.0.6/Sources/Binary/Release/DfuSeCommand.exe -c -d --r --fn "$FILEPATH_WIN"
