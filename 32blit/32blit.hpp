@@ -4,6 +4,7 @@
 #include "engine/utility.hpp"
 #include "engine/output.hpp"
 #include "engine/input.hpp"
+#include "engine/audio.hpp"
 #include "engine/timer.hpp"
 #include "engine/tweening.hpp"
 #include "graphics/blend.hpp"
@@ -42,4 +43,3 @@ extern const uint8_t itcm_data;
 #define SRAM1 __SECTION__(".sram1")));
 #define SRAM2 __SECTION__(".sram2")));
 #define SRAM3 __SECTION__(".sram3")));
-
