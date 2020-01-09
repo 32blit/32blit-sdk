@@ -18,7 +18,7 @@
 #endif
 
 #ifndef WINDOW_TITLE
-#define WINDOW_TITLE "TinyDebug SDL"
+#define WINDOW_TITLE "32blit development (SDL)"
 #endif
 
 static bool running = true;
