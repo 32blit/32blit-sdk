@@ -2,29 +2,25 @@
 
 #include <stdint.h>
 
-namespace blit {
-
-  extern uint8_t volume;
+namespace blit {  
 
   // The duration a note is played is determined by the amount of attack, 
   // decay, and release, combined with the length of the note as defined by
   // the user.
   //
-  // - Attack:  number of quarter beats it takes for a note to hit full volume
-  // - Decay:   number of quarter beats it takes for a note to settle to sustain volume
+  // - Attack:  number of milliseconds it takes for a note to hit full volume
+  // - Decay:   number of milliseconds it takes for a note to settle to sustain volume
   // - Sustain: percentage of full volume that the note sustains at (duration implied by other factors)
-  // - Release: number of quarter beats it takes for a note to reduce to zero volume after the end of the beat
+  // - Release: number of milliseconds it takes for a note to reduce to zero volume after it has ended
   //
-  // - Voice - type of sound produced (sine, square, saw, noise)
-  //
-  // Attack 1-3     Decay 4-5              Sustain              Release (12-13)
+  // Attack (750ms) - Decay (500ms) -------- Sustain ----- Release (250ms)
   // 
   //                +         +                                  +    +
   //                |         |                                  |    |
   //                |         |                                  |    |
-  // Beat #         |         |                                  |    |
+  //                |         |                                  |    |
   //                v         v                                  v    v
-  // 1                   2                   3                   4                   5
+  // 0ms               1000ms              2000ms              3000ms              4000ms
   //                                                                                  
   // |              XXXX |                   |                   |                   |
   // |             X    X|XX                 |                   |                   |
@@ -43,38 +39,45 @@ namespace blit {
   // |X   |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |
   // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+--->
 
-  extern int8_t sine_voice[256];
-  extern int8_t square_voice[256];
-  extern int8_t saw_voice[256];  
-  extern uint32_t noise_voice;
+  namespace audio {
+    #define CHANNEL_COUNT 4
 
-  extern uint32_t a_to_frames[16];
-  extern uint32_t dr_to_frames[16];
-  enum audio_voice    {NOISE = 0b10000000, SQUARE = 0b01000000, SAW = 0b00100000, SINE = 0b00010000};
+    extern uint32_t sample_rate;
+    extern uint32_t frame_ms;       // number of milliseconds per audio frame (Q16)
+    extern uint16_t volume;
+    extern uint16_t  sine_voice[256];
 
-  struct audio_channel {
-      uint8_t voices = 0;
+    enum audio_voice {
+      NOISE     = 128, 
+      SQUARE    = 64, 
+      SAW       = 32, 
+      TRIANGLE  = 16, 
+      SINE      = 8,
+      WAVE      = 4    // to be implemented...
+    };
 
-      uint16_t a = 2205;    // attack period (frames)
-      uint16_t d = 1;    // decay period (ms)
-      uint8_t  s = 200;  // sustain volume
-  //    uint16_t r = 1;    // release period (ms)
+    struct audio_channel {
+        uint8_t   voices        = 0;      // bitmask for enabled voices (see audio_voice enum for values)
+        uint16_t  frequency     = 660;    // frequency of the voice (Hz)
+        uint32_t  time_ms       = 0;      // play time of current note in milliseconds used for ADSR calculations (Q16)
+        uint16_t  volume        = 0xffff; // channel volume (default 50%)
 
-      uint8_t  v = 255;  // channel volume
-      uint16_t vp = 0;  // voice position 8:8 fixed point
+        uint16_t  attack_ms     = 2;      // attack period
+        uint16_t  decay_ms      = 6;      // decay period
+        uint16_t  sustain       = 0xffff; // sustain volume
+        uint16_t  release_ms    = 1;      // release period
+        uint16_t  pulse_width   = 0x7f;   // duty cycle of square voice (default 50%)
+        uint16_t  noise         = 0;      // current noise value
+    
+        uint32_t  voice_offset  = 0;      // voice offset (Q8)
 
-      uint16_t pw = 0;
-      uint16_t f = 660;  // frequency (Hz)
-      int32_t  dc = 10; // ???
-      int32_t  c = 0;
-      uint32_t t = 0;
-      uint8_t lv = 0;
+        uint8_t   gate          = 0;      // gate triggers the start of a sound when set to 1, triggers the release phase when set to 0
+        uint8_t   flags         = 0;      // bit 7: last gate value
+    };
+
+    extern audio_channel channels[CHANNEL_COUNT];
+
+    uint16_t get_audio_frame();
   };
-
-  struct _audio {
-      audio_channel channels[4];
-  };
-
-  extern _audio audio;
 
 }
