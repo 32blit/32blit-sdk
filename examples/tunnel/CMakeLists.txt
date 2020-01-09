@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.1)
 project (tunnel)
 include (../../32blit.cmake)
 blit_executable (tunnel tunnel.cpp)
