@@ -15,15 +15,15 @@ then
 
 	echo " - preparing"
 
-	cmake .. -DCMAKE_TOOLCHAIN_FILE=../../../32blit.toolchain > /dev/null
+	cmake .. -DCMAKE_TOOLCHAIN_FILE=../../../32blit.toolchain # > /dev/null
 
 	echo " - building"
 
-	make -j8 > /dev/null
+	make -j8 # > /dev/null
 
 	echo " - flashing to device (make sure it's in DFU mode!)"
 
-	../../../tools/wsl-flash $PROJECT.bin > /dev/null
+	../../../tools/wsl-flash $PROJECT.bin # > /dev/null
 
 	cd ..
 	cd ..

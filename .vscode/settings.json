@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "cstdint": "c",
+        "queue": "c"
+    }
+}

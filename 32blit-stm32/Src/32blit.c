@@ -76,122 +76,15 @@ void HAL_DACEx_ConvCpltCallbackCh2(DAC_HandleTypeDef *hdac){
 }*/
 
 
-
+uint32_t audio_tick_cycle_count = 0;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-  static uint32_t c = 0;
+  if(htim->Instance == TIM6) {    
+    uint32_t scc = DWT->CYCCNT;
+    hdac1.Instance->DHR12R2 = blit::audio::get_audio_frame() >> 4;
+    audio_tick_cycle_count = DWT->CYCCNT - scc;
 
-  if(htim->Instance == TIM6){
-    int32_t v = 0;
 
-    auto &channel = blit::audio.channels[0];
-
-    for(auto &channel : blit::audio.channels) {    
-      if(channel.voices & 0b11110000 && channel.voices & 0b1) {
-        int16_t cv = 0xffff;
-
-        if(!(channel.lv & 0b1) && (channel.voices & 0b1)) {
-          channel.t = 0;
-        }
-
-        channel.vp += ((channel.f * 256) << 8) / 22050;
-        uint8_t so = (channel.vp >> 8) & 0xff;
-
-   //     if(channel.c & audio_voice::NOISE)
-   //       v += (int16_t)HAL_GetRandom() - 128;
-
-        if(channel.voices & audio_voice::SAW)
-          cv &= (saw_voice[so] + 128);
-
-        if(channel.voices & audio_voice::SQUARE)
-          cv &= ((so << 4) < channel.pw) ? 0xff : 0x00;
-
-        if(channel.voices & audio_voice::SINE)
-          cv &= (sine_voice[so] + 128);
-
-        cv -= 128;
-
-        uint8_t adsr = 0;
-
-        if(channel.t < channel.a) {
-          // apply attack
-          adsr = (channel.t << 8) / channel.a;
-        }else if(channel.t < (channel.a + channel.d)) {
-          // decay is now between 0 and 255
-          uint32_t d = ((channel.t - channel.a) << 16) / channel.d;
-
-          // decay must trend from 1 down to sustain level based on "d"
-          uint32_t r = 255 - channel.s;
-          uint32_t v = (r * d) >> 16;
-          adsr = 255 - v;
-        }else{
-          // apply sustain volume
-          adsr = channel.s;
-        }
-
-        cv *= adsr;
-        cv >>= 8;
-
-        v += cv;
-
-        v *= 0.75;
-
-        channel.c++;
-        channel.t++;
-      }
-
-      channel.lv = channel.voices;
-
-      //voice_position &= 0xffff;
-
-      
-/*
-      if(c &0b1000000) {
-       // channel.f++;
-      }
-      
-
-      if(channel.f > 1000) {
-        channel.f = 200;
-      }*/
-    }
-
-/*
-    for(int i = 0; i < 100; i++) {
-    uint16_t v = HAL_GetRandom() & 0xff;
-
-    v *= blit::volume;
-*/
-
-    if(v > 127)
-      v = 127;
-
-    if(v < -128)
-      v = -128;
-
-    /*v *= blit::volume;
-    v >>= 5;*/
-
-  //  v *= blit::volume;
-   // v >>= 8;
-
-    v += 128;
-
-    //v <<= 4;
-
-    
-
-    hdac1.Instance->DHR8R2 = v;
-
-  //  uint16_t ts = (sin(4.4f * float(c) / 220.50f * (2.0f * M_PI)) * 2047) + 2047;
-
-   // hdac1.Instance->DHR12R2 = ts;
-    //}
-
-    
-    c++;
   }
-  //HAL_DAC_SetValue(DAC_HandleTypeDef* hdac, uint32_t Channel, uint32_t Alignment, uint32_t Data)
-
 }
 
 
@@ -236,6 +129,8 @@ void blit_tick() {
  // HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_14);
 
   if(blit::tick(blit::now())){
+
+    fb.text(std::to_string(audio_tick_cycle_count), &minimal_font[0][0], point(0, 20));
     blit_flip();
   }
 }
@@ -276,7 +171,7 @@ void blit_enable_amp() {
   HAL_GPIO_WritePin(AMP_SHUTDOWN_GPIO_Port, AMP_SHUTDOWN_Pin, GPIO_PIN_SET);
 }
 
-void blit_global_volume(uint8_t v) {
+void blit_global_volume(uint32_t v) {
   global_volume = v;
 }
 
@@ -288,6 +183,10 @@ void blit_init() {
     HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
     //HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2, (uint32_t*)dac_buffer, DAC_BUFFER_SIZE, DAC_ALIGN_12B_R);
     
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CYCCNT = 0;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+
     ST7272A_RESET();
 
     st7272a_set_bgr();
@@ -299,7 +198,7 @@ void blit_init() {
     blit::debugf = blit_debugf;
     blit::now = HAL_GetTick;
     blit::random = HAL_GetRandom;
-    blit::volume = 127;
+    blit::audio::volume = 0xffff;
     blit::set_screen_mode = ::set_screen_mode;
     ::set_screen_mode(blit::lores);
 
@@ -334,8 +233,8 @@ void blit_menu_update(uint32_t time) {
         blit::backlight = std::fmin(1.0f, std::fmax(0.0f, blit::backlight));
         break;
       case 1: // Volume
-        blit::volume += 1.0f / 256.0f;
-        blit::volume = std::fmin(1.0f, std::fmax(0.0f, blit::volume));
+        //blit::volume += 1.0f / 256.0f;
+        //blit::volume = std::fmin(1.0f, std::fmax(0.0f, blit::volume));
         break;
     }
   } else if (blit::buttons & blit::button::DPAD_LEFT ) {
@@ -345,8 +244,8 @@ void blit_menu_update(uint32_t time) {
         blit::backlight = std::fmin(1.0f, std::fmax(0.0f, blit::backlight));
         break;
       case 1: // Volume
-        blit::volume -= 1.0f / 256.0f;
-        blit::volume = std::fmin(1.0f, std::fmax(0.0f, blit::volume));
+        //blit::volume -= 1.0f / 256.0f;
+        //blit::volume = std::fmin(1.0f, std::fmax(0.0f, blit::volume));
         break;
     }
   } else if (blit::buttons & changed_buttons & blit::button::A) {
@@ -433,11 +332,11 @@ void blit_menu_render(uint32_t time) {
     fb.pen(rgba(255, 255, 255));
   }
 
-  fb.text("Volume", &minimal_font[0][0], point(5, 30));
+/*  fb.text("Volume", &minimal_font[0][0], point(5, 30));
   fb.pen(bar_background_color);
   fb.rectangle(rect(screen_width / 2, 31, 75, 5));
   fb.pen(rgba(255, 255, 255));
-  fb.rectangle(rect(screen_width / 2, 31, 75 * blit::volume, 5));
+  fb.rectangle(rect(screen_width / 2, 31, 75 * blit::volume, 5));*/
 
   if(menu_item == 2){
     fb.pen(rgba(50, 50, 70));
