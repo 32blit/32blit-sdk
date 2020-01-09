@@ -33,14 +33,26 @@ list(APPEND SOURCES
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c_ex.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rng.c
-	Src/system_stm32h7xx.c
-	Src/user_diskio.c
-	Src/fatfs.c
-	Src/fatfs_sd.c
+	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd.c
+	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd_ex.c
+	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_usb.c
 	Middlewares/Third_Party/FatFs/src/diskio.c
 	Middlewares/Third_Party/FatFs/src/ff.c
 	Middlewares/Third_Party/FatFs/src/ff_gen_drv.c
 	Middlewares/Third_Party/FatFs/src/option/syscall.c
+	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c
+	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c
+	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c
+	Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c
+	Src/system_stm32h7xx.c
+	Src/user_diskio.c
+	Src/fatfs.c
+	Src/fatfs_sd.c
+	Src/usb_otg.c
+	Src/usb_device.c
+	Src/usbd_conf.c
+	Src/usbd_desc.c
+	Src/usbd_cdc_if.c
 	Src/gpio.c
 	Src/adc.c
 	Src/dac.c
@@ -56,9 +68,9 @@ list(APPEND SOURCES
 	Src/spi-st7272a.c
 	Src/sys.c
 	Src/tim.c
-	Src/usb_otg.c
 	Src/rng.c
 	Src/32blit.c
+	Src/CDCLogging.c
 	startup_stm32h750xx.s
 )
 
@@ -76,6 +88,8 @@ target_include_directories(BlitHalSTM32
 		Drivers/CMSIS/Include
 		Drivers/CMSIS/Include
 		Middlewares/Third_Party/FatFs/src
+		Middlewares/ST/STM32_USB_Device_Library/Core/Inc
+		Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
 		../32blit
 )
 
