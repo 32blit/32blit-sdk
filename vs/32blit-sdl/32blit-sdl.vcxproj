@@ -90,7 +90,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>..\sdl\include;..\..\..\32blit</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\sdl\include;..\..\32blit</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
@@ -159,16 +159,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\32blit-sdl\Input.hpp" />
-    <ClInclude Include="..\..\..\32blit-sdl\Renderer.hpp" />
-    <ClInclude Include="..\..\..\32blit-sdl\System.hpp" />
-    <ClInclude Include="..\..\..\32blit-sdl\UserCode.hpp" />
+    <ClInclude Include="..\..\32blit-sdl\Input.hpp" />
+    <ClInclude Include="..\..\32blit-sdl\Renderer.hpp" />
+    <ClInclude Include="..\..\32blit-sdl\System.hpp" />
+    <ClInclude Include="..\..\32blit-sdl\UserCode.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\32blit-sdl\Input.cpp" />
-    <ClCompile Include="..\..\..\32blit-sdl\Main.cpp" />
-    <ClCompile Include="..\..\..\32blit-sdl\Renderer.cpp" />
-    <ClCompile Include="..\..\..\32blit-sdl\System.cpp" />
+    <ClCompile Include="..\..\32blit-sdl\Input.cpp" />
+    <ClCompile Include="..\..\32blit-sdl\Main.cpp" />
+    <ClCompile Include="..\..\32blit-sdl\Renderer.cpp" />
+    <ClCompile Include="..\..\32blit-sdl\System.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -15,30 +15,30 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\32blit-sdl\Input.hpp">
+    <ClInclude Include="..\..\32blit-sdl\Input.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit-sdl\Renderer.hpp">
+    <ClInclude Include="..\..\32blit-sdl\Renderer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit-sdl\System.hpp">
+    <ClInclude Include="..\..\32blit-sdl\System.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit-sdl\UserCode.hpp">
+    <ClInclude Include="..\..\32blit-sdl\UserCode.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\32blit-sdl\Input.cpp">
+    <ClCompile Include="..\..\32blit-sdl\Input.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit-sdl\Main.cpp">
+    <ClCompile Include="..\..\32blit-sdl\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit-sdl\Renderer.cpp">
+    <ClCompile Include="..\..\32blit-sdl\Renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit-sdl\System.cpp">
+    <ClCompile Include="..\..\32blit-sdl\System.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

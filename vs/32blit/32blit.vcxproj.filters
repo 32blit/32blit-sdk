@@ -27,162 +27,162 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\32blit\32blit.hpp">
+    <ClInclude Include="..\..\32blit\32blit.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\helpers.hpp">
+    <ClInclude Include="..\..\32blit\helpers.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\engine\engine.hpp">
+    <ClInclude Include="..\..\32blit\engine\engine.hpp">
       <Filter>engine</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\engine\geometry.hpp">
+    <ClInclude Include="..\..\32blit\engine\geometry.hpp">
       <Filter>engine</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\engine\input.hpp">
+    <ClInclude Include="..\..\32blit\engine\input.hpp">
       <Filter>engine</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\engine\output.hpp">
+    <ClInclude Include="..\..\32blit\engine\output.hpp">
       <Filter>engine</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\engine\particle.hpp">
+    <ClInclude Include="..\..\32blit\engine\particle.hpp">
       <Filter>engine</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\engine\timer.hpp">
+    <ClInclude Include="..\..\32blit\engine\timer.hpp">
       <Filter>engine</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\engine\tweening.hpp">
+    <ClInclude Include="..\..\32blit\engine\tweening.hpp">
       <Filter>engine</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\engine\utility.hpp">
+    <ClInclude Include="..\..\32blit\engine\utility.hpp">
       <Filter>engine</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\graphics\blend.hpp">
+    <ClInclude Include="..\..\32blit\graphics\blend.hpp">
       <Filter>graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\graphics\color.hpp">
+    <ClInclude Include="..\..\32blit\graphics\color.hpp">
       <Filter>graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\graphics\font.hpp">
+    <ClInclude Include="..\..\32blit\graphics\font.hpp">
       <Filter>graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\graphics\mode7.hpp">
+    <ClInclude Include="..\..\32blit\graphics\mode7.hpp">
       <Filter>graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\graphics\sprite.hpp">
+    <ClInclude Include="..\..\32blit\graphics\sprite.hpp">
       <Filter>graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\graphics\surface.hpp">
+    <ClInclude Include="..\..\32blit\graphics\surface.hpp">
       <Filter>graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\graphics\tilemap.hpp">
+    <ClInclude Include="..\..\32blit\graphics\tilemap.hpp">
       <Filter>graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\math\interpolation.hpp">
+    <ClInclude Include="..\..\32blit\math\interpolation.hpp">
       <Filter>math</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\types\map.hpp">
+    <ClInclude Include="..\..\32blit\types\map.hpp">
       <Filter>types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\types\mat3.hpp">
+    <ClInclude Include="..\..\32blit\types\mat3.hpp">
       <Filter>types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\types\mat4.hpp">
+    <ClInclude Include="..\..\32blit\types\mat4.hpp">
       <Filter>types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\types\pixel_format.hpp">
+    <ClInclude Include="..\..\32blit\types\pixel_format.hpp">
       <Filter>types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\types\point.hpp">
+    <ClInclude Include="..\..\32blit\types\point.hpp">
       <Filter>types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\types\rect.hpp">
+    <ClInclude Include="..\..\32blit\types\rect.hpp">
       <Filter>types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\types\size.hpp">
+    <ClInclude Include="..\..\32blit\types\size.hpp">
       <Filter>types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\types\vec2.hpp">
+    <ClInclude Include="..\..\32blit\types\vec2.hpp">
       <Filter>types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\32blit\types\vec3.hpp">
+    <ClInclude Include="..\..\32blit\types\vec3.hpp">
       <Filter>types</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\32blit\engine\engine.cpp">
+    <ClCompile Include="..\..\32blit\engine\engine.cpp">
       <Filter>engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\engine\geometry.cpp">
+    <ClCompile Include="..\..\32blit\engine\geometry.cpp">
       <Filter>engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\engine\input.cpp">
+    <ClCompile Include="..\..\32blit\engine\input.cpp">
       <Filter>engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\engine\output.cpp">
+    <ClCompile Include="..\..\32blit\engine\output.cpp">
       <Filter>engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\engine\particle.cpp">
+    <ClCompile Include="..\..\32blit\engine\particle.cpp">
       <Filter>engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\engine\timer.cpp">
+    <ClCompile Include="..\..\32blit\engine\timer.cpp">
       <Filter>engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\engine\tweening.cpp">
+    <ClCompile Include="..\..\32blit\engine\tweening.cpp">
       <Filter>engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\engine\utility.cpp">
+    <ClCompile Include="..\..\32blit\engine\utility.cpp">
       <Filter>engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\graphics\blend.cpp">
+    <ClCompile Include="..\..\32blit\graphics\blend.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\graphics\color.cpp">
+    <ClCompile Include="..\..\32blit\graphics\color.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\graphics\filter.cpp">
+    <ClCompile Include="..\..\32blit\graphics\filter.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\graphics\font.cpp">
+    <ClCompile Include="..\..\32blit\graphics\font.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\graphics\mask.cpp">
+    <ClCompile Include="..\..\32blit\graphics\mask.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\graphics\mode7.cpp">
+    <ClCompile Include="..\..\32blit\graphics\mode7.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\graphics\primitive.cpp">
+    <ClCompile Include="..\..\32blit\graphics\primitive.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\graphics\sprite.cpp">
+    <ClCompile Include="..\..\32blit\graphics\sprite.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\graphics\surface.cpp">
+    <ClCompile Include="..\..\32blit\graphics\surface.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\graphics\text.cpp">
+    <ClCompile Include="..\..\32blit\graphics\text.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\graphics\tilemap.cpp">
+    <ClCompile Include="..\..\32blit\graphics\tilemap.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\math\interpolation.cpp">
+    <ClCompile Include="..\..\32blit\math\interpolation.cpp">
       <Filter>math</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\types\map.cpp">
+    <ClCompile Include="..\..\32blit\types\map.cpp">
       <Filter>types</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\types\mat3.cpp">
+    <ClCompile Include="..\..\32blit\types\mat3.cpp">
       <Filter>types</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\types\mat4.cpp">
+    <ClCompile Include="..\..\32blit\types\mat4.cpp">
       <Filter>types</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\types\vec2.cpp">
+    <ClCompile Include="..\..\32blit\types\vec2.cpp">
       <Filter>types</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\32blit\types\vec3.cpp">
+    <ClCompile Include="..\..\32blit\types\vec3.cpp">
       <Filter>types</Filter>
     </ClCompile>
   </ItemGroup>
