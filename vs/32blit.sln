@@ -9,17 +9,19 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "32blit-sdl", "32blit-sdl\32
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{E9DBB2E8-C9C5-4F46-9E6D-84D796FF4ABB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "logo", "logo\logo.vcxproj", "{3C0D173C-82A1-43AB-8E9C-DE3F0067AD59}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "logo", "examples\logo\logo.vcxproj", "{3C0D173C-82A1-43AB-8E9C-DE3F0067AD59}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doom-fire", "doom-fire\doom-fire.vcxproj", "{84B611CC-F139-4EC6-8ABB-7BD176E152A8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doom-fire", "examples\doom-fire\doom-fire.vcxproj", "{84B611CC-F139-4EC6-8ABB-7BD176E152A8}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fizzlefade", "fizzlefade\fizzlefade.vcxproj", "{5E4753A9-63CA-449D-A28D-E0B9F77BE1E2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fizzlefade", "examples\fizzlefade\fizzlefade.vcxproj", "{5E4753A9-63CA-449D-A28D-E0B9F77BE1E2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "flight", "flight\flight.vcxproj", "{59D4112B-F51B-4FCE-ADD0-A6DA933FE708}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "flight", "examples\flight\flight.vcxproj", "{59D4112B-F51B-4FCE-ADD0-A6DA933FE708}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "geometry", "geometry\geometry.vcxproj", "{E97885DB-2D89-40CC-B608-8E9071FB3930}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "geometry", "examples\geometry\geometry.vcxproj", "{E97885DB-2D89-40CC-B608-8E9071FB3930}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hardware-test", "hardware-test\hardware-test.vcxproj", "{388C602D-8120-40F4-B6FD-69A3559374B6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hardware-test", "examples\hardware-test\hardware-test.vcxproj", "{388C602D-8120-40F4-B6FD-69A3559374B6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "matrix-test", "examples\matrix-test\matrix-test.vcxproj", "{AEB7FC97-00B4-4264-A8E0-F265ACFD4A1F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -93,6 +95,14 @@ Global
 		{388C602D-8120-40F4-B6FD-69A3559374B6}.Release|x64.Build.0 = Release|x64
 		{388C602D-8120-40F4-B6FD-69A3559374B6}.Release|x86.ActiveCfg = Release|Win32
 		{388C602D-8120-40F4-B6FD-69A3559374B6}.Release|x86.Build.0 = Release|Win32
+		{AEB7FC97-00B4-4264-A8E0-F265ACFD4A1F}.Debug|x64.ActiveCfg = Debug|x64
+		{AEB7FC97-00B4-4264-A8E0-F265ACFD4A1F}.Debug|x64.Build.0 = Debug|x64
+		{AEB7FC97-00B4-4264-A8E0-F265ACFD4A1F}.Debug|x86.ActiveCfg = Debug|Win32
+		{AEB7FC97-00B4-4264-A8E0-F265ACFD4A1F}.Debug|x86.Build.0 = Debug|Win32
+		{AEB7FC97-00B4-4264-A8E0-F265ACFD4A1F}.Release|x64.ActiveCfg = Release|x64
+		{AEB7FC97-00B4-4264-A8E0-F265ACFD4A1F}.Release|x64.Build.0 = Release|x64
+		{AEB7FC97-00B4-4264-A8E0-F265ACFD4A1F}.Release|x86.ActiveCfg = Release|Win32
+		{AEB7FC97-00B4-4264-A8E0-F265ACFD4A1F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -104,6 +114,7 @@ Global
 		{59D4112B-F51B-4FCE-ADD0-A6DA933FE708} = {E9DBB2E8-C9C5-4F46-9E6D-84D796FF4ABB}
 		{E97885DB-2D89-40CC-B608-8E9071FB3930} = {E9DBB2E8-C9C5-4F46-9E6D-84D796FF4ABB}
 		{388C602D-8120-40F4-B6FD-69A3559374B6} = {E9DBB2E8-C9C5-4F46-9E6D-84D796FF4ABB}
+		{AEB7FC97-00B4-4264-A8E0-F265ACFD4A1F} = {E9DBB2E8-C9C5-4F46-9E6D-84D796FF4ABB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A2B87694-5EB1-4C97-9262-7E18C4A3702E}
