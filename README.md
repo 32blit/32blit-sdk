@@ -20,22 +20,7 @@ While the 32blit API is not finalised, this repository represents an overview of
 
 On Windows 10 you can either build for win32 or use XMing and run your builds in WSL by prefixing with `DISPLAY=:0.0`.
 
-## Windows Subsystem for Linux (WSL)
-
-To enable Windows Subsystem for Linux, you must access the _Turn Windows features on or off_ dialog. Find the entry for _Windows Subsystem for Linux_ and make sure it is enabled.
-
-After that, proceed to the Microsoft Store to download Ubuntu for WSL.
-
-## XMing
-
-To run the examples from WSL on Windows you will need to have XMing (or another XWindow Server) running on Windows. Click on the following link which will help you install and setup WSL and XMing together.
-
-- [Information how to run XMing with WSL](https://virtualizationreview.com/articles/2017/02/08/graphical-programs-on-windows-subsystem-on-linux.aspx)
-- [Download XMing setup](https://sourceforge.net/projects/xming/files/Xming/6.9.0.31/Xming-6-9-0-31-setup.exe/download)
-
-You can then run code by either:
-- prefixing the command with `DISPLAY=:0.0`, or 
-- execute the command `export DISPLAY=:0.0` - which after you will not need to prefix the commands in the current session, just run them
+For more information about how to build on the various systems, refer to the platform specific docs in the `docs` folder!
 
 # Overview
 
@@ -51,7 +36,7 @@ You should be careful relying upon it, however, since `32blit-sdl` is *not an em
 
 If you're planning to use the SDL HAL you'll need to make sure you:
 
-```
+``` shell
 sudo apt install libsdl2-dev
 ```
 
@@ -61,172 +46,13 @@ The `32blit-stm32` directory contains the STM32 HAL for 32blit, compatible with 
 
 ## Examples / Projects
 
-### Building & Running on Linux or WSL + XMing
 
-To build your project for testing, go into the relevant example directory. We'll use `palette-cycle` to demonstrate:
+The `examples` directory contains example projects, these can be built into both SDL or STM32 binaries and cover a range of techniques from simple concepts to complete games.
 
-```
-cd examples/palette-cycle
-```
+Refer to the OS/platform specific documentation files in the `docs/` folder for instructions on how to compile and run these examples.
 
-prepare the Makefile with CMake:
-
-```
-mkdir build
-cd build
-cmake ..
-```
-
-and compile the example:
-
-```
-make
-```
-
-To run the application on your computer, use the following command (from within the same directory):
-
-```
-./palette-cycle
-```
-
-If you're using WSL and XMing you will need to add a `DISPLAY` variable like so:
-
-```
-DISPLAY=:0.0 ./palette-cycle
-```
-
-### Building & Running on Win32 (WSL + MinGW)
-
-To build your project for Win32 you'll need `g++-mingw-w64` and `g++-mingw-w64`.
-
-```
-sudo apt-get install gcc-mingw-w64 g++-mingw-w64
-```
-
-You'll also need to cross-compile SDL2 and install it wherever you like to keep your cross-compile libraries.
-
-```
-wget https://www.libsdl.org/release/SDL2-2.0.10.zip
-unzip SDL2-2.0.10.zip
-cd SDL2-2.0.10
-mkdir build.mingw
-cd build.mingw
-../configure --target=x86_64-w64-mingw32 --host=x86_64-w64-mingw32 --build=x86_64--linux --prefix=/usr/local/cross-tools/x86_64-w64-mingw32/
-make
-sudo make install
-```
-
-Finally, from the root directory of your project:
-
-```
-mkdir build.mingw
-cd build.mingw
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../../../mingw.toolchain -DSDL2_DIR=/usr/local/cross-tools/x86_64-w64-mingw32/lib/cmake/SDL2
-make
-cp /usr/local/cross-tools/x86_64-w64-mingw32/bin/SDL2.dll .
-```
-
-### Building & Running on OSX
-
-You will need build tools and CMAKE. Assuming you have [homebrew](https://docs.brew.sh/Installation) installed:
-
-``` shell
-xcode-select --install
-brew install cmake
-```
-
-You'll also need to build and install SDL2:
-
-``` shell
-wget https://www.libsdl.org/release/SDL2-2.0.10.zip
-unzip SDL2-2.0.10.zip
-cd SDL2-2.0.10
-mkdir build
-cd build
-../configure
-make
-sudo make install
-```
-
-Finally, from the root directory of this repository:
-
-``` shell
-mkdir build
-cd build
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../darwin.toolchain
-make
-```
-
-When the build completes you should find all the examples within the build directory.
-
-#### Troubleshooting
+### Troubleshooting
 
 If you see `cannot create target because another target with the same name already exists` you've probably run `cmake ..` in the wrong directory (the project directory rather than the build directory), you should remove all but your project files and `cmake ..` again from the build directory.
 
-### Building & Running On 32blit
 
-To build your project for 32blit using arm-none-eabi-gcc you should prepare the Makefile with CMake using the provided toolchain file.
-
-From the root of your project:
-
-```
-mkdir build.stm32
-cd build.stm32
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../../../32blit.toolchain
-```
-
-And then `make` as normal.
-
-The result of your build will be a `.bin`, `.hex`, `.elf` and DfuSe-compatible `.dfu` file.
-
-### Building & Running For Web (Emscripten)
-
-Building in Emscripten - asm.js/WebAssembly - works on Linux and WSL.
-
-You will need to install the emscripten compiler. See https://emscripten.org/docs/getting_started/downloads.html for complete instructions, but generally you should just browse to your desired directory and:
-
-```
-git clone https://github.com/emscripten-core/emsdk.git
-cd emsdk
-./emsdk install latest
-./emsdk activate latest
-source ./emsdk_env.sh
-```
-
-You should now have commands like `emcc` in your path, and an `EMSDK` environment variable set ready to build your project.
-
-In your project directory:
-
-``` shell
-mkdir build.em
-cmake .. -DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -G "Unix Makefiles"
-make
-python3 -m http.server
-```
-Finally, open the URL given by Python's HTTP server in your browser and open your project's .html file.
-
-### Video Capture
-
-`32blit-sdl` supports optional FFMPEG video capture, which you can enable by grabbing a FFMPEG snapshot, building it, and turning on `ENABLE_FFMPEG` when building your project.
-
-
-1. `sudo apt install liblzma-dev`
-2. `wget https://github.com/FFmpeg/FFmpeg/archive/n4.1.4.zip`
-3. `unzip n4.1.4.zip`
-4. `cd FFmpeg-n4.1.4`
-5. `./configure --prefix=$(pwd)/build`
-6. `make && make install`
-
-Then configure your 32blit project with:
-
-```
-mkdir build
-cd build
-cmake .. -DVIDEO_CAPTURE=true
-```
-
-When running your game, you can now hit `r` to start and stop recording.
-
-## Examples
-
-The `examples` directory contains example projects, these can be built into both SDL or STM32 binaries and cover a range of techniques from simple concepts to complete games.

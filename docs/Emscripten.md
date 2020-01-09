@@ -1,4 +1,4 @@
-### Building & Running For Web (Emscripten)
+# Building & Running For Web (Emscripten)
 
 Building in Emscripten - asm.js/WebAssembly - works on Linux and WSL.
 

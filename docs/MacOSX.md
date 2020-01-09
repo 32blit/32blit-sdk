@@ -1,4 +1,4 @@
-### Building & Running on OSX
+# Building & Running on OSX
 
 You will need build tools and CMAKE. Assuming you have [homebrew](https://docs.brew.sh/Installation) installed:
 
@@ -30,3 +30,7 @@ make
 ```
 
 When the build completes you should find all the examples within the build directory.
+
+## Troubleshooting
+
+If you see `cannot create target because another target with the same name already exists` you've probably run `cmake ..` in the wrong directory (the project directory rather than the build directory), you should remove all but your project files and `cmake ..` again from the build directory.
