@@ -21,7 +21,7 @@ all: dirs $(OBJECTS) $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	$(AR) -rcs $@ $^
-	ranlib $@
+	arm-none-eabi-ranlib $@
 
 $(BUILDDIR)/%.o : */%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@

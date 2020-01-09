@@ -19,6 +19,7 @@ namespace blit {
   extern uint32_t (*now)              ();
   extern uint32_t (*random)           ();
   extern void     (*debug)            (std::string message);
+  extern int      (*debugf)           (const char * psFormatString, ...);
   extern uint32_t (*read_file)        (std::string file, uint32_t offset, uint32_t length, uint8_t* buffer);
   extern void     (*reset)            ();
 

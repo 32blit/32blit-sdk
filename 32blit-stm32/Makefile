@@ -3,8 +3,8 @@
 PROJECT = Src/32blitgame.cpp
 # Set the output filename to match the user code filename
 TARGET = $(basename $(notdir $(PROJECT)))
-DEBUG = 0
-OPT = -Os
+DEBUG = 1
+OPT = -O0
 BUILD_DIR = build
 
 # C sources
@@ -69,7 +69,19 @@ Src/sys.c \
 Src/tim.c \
 Src/rng.c \
 Src/usb_otg.c \
-Src/32blit.c
+Src/32blit.c \
+Src/usb_device.c \
+Src/usbd_conf.c \
+Src/usbd_desc.c \
+Src/usbd_cdc_if.c \
+Src/CDCLogging.c \
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd.c \
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd_ex.c \
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_usb.c \
+Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c \
+Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c \
+Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c \
+Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c
 
 # ASM sources
 ASM_SOURCES =  \
@@ -121,7 +133,9 @@ C_INCLUDES =  \
 -IDrivers/CMSIS/Include \
 -IMiddlewares/Third_Party/FatFs/src \
 -I../32blit \
--I$(dir $(PROJECT))
+-I$(dir $(PROJECT)) \
+-IMiddlewares/ST/STM32_USB_Device_Library/Core/Inc \
+-IMiddlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections -fshort-wchar
