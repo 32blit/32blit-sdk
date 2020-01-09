@@ -124,8 +124,6 @@ int main(void)
   MX_FATFS_Init();
   //MX_DMA2D_Init();
   MX_RNG_Init();
-
-  MX_RNG_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
   blit_clear_framebuffer();
