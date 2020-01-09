@@ -12,6 +12,7 @@
 #include "Input.hpp"
 #include "System.hpp"
 #include "Renderer.hpp"
+#include "Audio.hpp"
 
 #ifdef VIDEO_CAPTURE
 #include "VideoCapture.hpp"
@@ -28,6 +29,7 @@ SDL_Window* window = NULL;
 System *blit_system;
 Input *blit_input;
 Renderer *blit_renderer;
+Audio *blit_audio;
 
 #ifdef VIDEO_CAPTURE
 VideoCapture *blit_capture;
@@ -141,7 +143,7 @@ int main(int argc, char *argv[]) {
 
 	std::cout << "Hello World" << std::endl;
 
-	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER) < 0) {
+	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER|SDL_INIT_AUDIO) < 0) {
 		fprintf(stderr, "could not initialize SDL2: %s\n", SDL_GetError());
 		return 1;
 	}
@@ -167,6 +169,7 @@ int main(int argc, char *argv[]) {
 	blit_system = new System();
 	blit_input = new Input(window, blit_system);
 	blit_renderer = new Renderer(window, System::width, System::height);
+	blit_audio = new Audio();
 
 #ifdef VIDEO_CAPTURE
 	blit_capture = new VideoCapture(argv[0]);
