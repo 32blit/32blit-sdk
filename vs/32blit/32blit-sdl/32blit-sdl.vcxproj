@@ -103,6 +103,10 @@
     <Lib>
       <AdditionalLibraryDirectories>..\sdl\lib\x86</AdditionalLibraryDirectories>
     </Lib>
+    <PostBuildEvent>
+      <Command>xcopy /y /d $(SolutionDir)sdl\lib\x86\SDL2.dll $(Outdir)</Command>
+      <Message>Copy SDL2.dll into the proper place</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
