@@ -124,7 +124,7 @@ namespace blit {
 
       char_width += 2;
 
-      if (chr == 32) {
+      if (chr == ' ' && variable) {
         char_width = 3;
       }
 
