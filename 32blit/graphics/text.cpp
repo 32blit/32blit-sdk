@@ -138,4 +138,60 @@ namespace blit {
 
     //return c.y + 8;
   }
+
+  size surface::measure_text(std::string message, const uint8_t *font, bool variable) {
+    const int fixed_char_width = 6;
+    const int line_height = 9;
+
+    size bounds(0, 0);
+
+    size_t char_off = 0;
+    int line_len = 0;
+
+    while (char_off < message.length()) {
+      if (variable) {
+        uint8_t char_width = 0;
+
+        if (message[char_off] == ' ')
+          char_width = 1;
+        else {
+          uint8_t chr_idx = message[char_off] & 0x7F;
+          chr_idx = chr_idx < ' ' ? 0 : chr_idx - ' ';
+          const uint8_t* font_chr = &font[chr_idx * 6];
+
+          for (uint8_t y = 0; y < 8; y++) {
+            for (uint8_t x = 0; x < 6; x++) {
+              if (font_chr[x] & (1 << y)) {
+                char_width = char_width < x ? x : char_width;
+              }
+            }
+          }
+        }
+
+        line_len += char_width + 2;
+        char_off++;
+      } else {
+        // calculate a line at a time if using fixed-width characters
+        size_t end = message.find_first_of('\n', char_off);
+        if (end == std::string::npos)
+          end = message.length();
+
+        line_len = (end - char_off) * fixed_char_width;
+        char_off = end;
+      }
+
+      // new line/end
+      if (char_off == message.length() || message[char_off] == '\n') {
+        if (line_len > bounds.w)
+          bounds.w = line_len;
+
+        bounds.h += line_height;
+
+        line_len = 0;
+        char_off++;
+      }
+    }
+
+    return bounds;
+  }
 }

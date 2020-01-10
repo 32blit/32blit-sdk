@@ -94,8 +94,10 @@ namespace blit {
     void line(const point &p1, const point &p2);
     void triangle(point p1, point p2, point p3);
     void polygon(std::vector<point> p);
+
     void text(std::string message, const uint8_t *font, const rect &r, bool variable = true);
     void text(std::string message, const uint8_t *font, const point &p, bool variable = true);
+    size measure_text(std::string message, const uint8_t *font, bool variable = true);
 
     /*void outline_circle(const point &c, int32_t r);
     
