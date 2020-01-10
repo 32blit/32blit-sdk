@@ -264,6 +264,9 @@ if __name__ == '__main__':
     parser.add_argument('--tilesizex', type=int, help='tile size x', default=8)
     parser.add_argument('--tilesizey', type=int, help='tile size y', default=8)
 
+    # Allow for naming of the resulting packed_data array
+    parser_packed.add_argument('--arrayname', type=str, help='set output array name (default <packed_data>)', default='packed_data')
+
     # Raw input can be given as any image type, and will be packed into:
     # * RGBA (full fidelity)
     # * RGB888 (discard alpha)
@@ -403,7 +406,7 @@ if __name__ == '__main__':
             formatted_data.append(format_hex(current_row))
 
         print("""
-uint8_t packed_data[] = {{
+uint8_t {array_name}[] = {{
     {type}, // type: spritepk (packed, paletted sprite)
     {payload_size}, // payload size ({comment_payload_size})
 
@@ -421,6 +424,7 @@ uint8_t packed_data[] = {{
     {data}
 }};
 """.format(
+            array_name=args.arrayname,
             type=format_hex(packed[0:8]),
             payload_size=format_hex(packed[8:10]),
             comment_payload_size=len(packed),
