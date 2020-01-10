@@ -124,9 +124,6 @@ void em_loop() {
 }
 #endif
 
-#ifdef __cplusplus
-extern "C"
-#endif
 int main(int argc, char *argv[]) {
 
 	std::cout << "Hello World" << std::endl;
