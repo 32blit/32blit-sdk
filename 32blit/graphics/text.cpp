@@ -176,6 +176,31 @@ namespace blit {
     //return c.y + 8;
   }
 
+  uint8_t get_char_width(const uint8_t *font, char c, bool variable) {
+    const int fixed_char_width = 6;
+    if (!variable)
+      return fixed_char_width;
+
+    if (c == ' ')
+      return 3;
+
+    uint8_t char_width = 0;
+    uint8_t chr_idx = c & 0x7F;
+    chr_idx = chr_idx < ' ' ? 0 : chr_idx - ' ';
+
+    const uint8_t* font_chr = &font[chr_idx * 6];
+
+    for (uint8_t y = 0; y < 8; y++) {
+      for (uint8_t x = 0; x < 6; x++) {
+        if (font_chr[x] & (1 << y)) {
+          char_width = char_width < x ? x : char_width;
+        }
+      }
+    }
+
+    return char_width + 2;
+  }
+
   size surface::measure_text(std::string message, const uint8_t *font, bool variable) {
     const int fixed_char_width = 6;
     const int line_height = 9;
@@ -187,25 +212,7 @@ namespace blit {
 
     while (char_off < message.length()) {
       if (variable) {
-        uint8_t char_width = 0;
-
-        if (message[char_off] == ' ')
-          char_width = 1;
-        else {
-          uint8_t chr_idx = message[char_off] & 0x7F;
-          chr_idx = chr_idx < ' ' ? 0 : chr_idx - ' ';
-          const uint8_t* font_chr = &font[chr_idx * 6];
-
-          for (uint8_t y = 0; y < 8; y++) {
-            for (uint8_t x = 0; x < 6; x++) {
-              if (font_chr[x] & (1 << y)) {
-                char_width = char_width < x ? x : char_width;
-              }
-            }
-          }
-        }
-
-        line_len += char_width + 2;
+        line_len += get_char_width(font, message[char_off], true);
         char_off++;
       } else {
         // calculate a line at a time if using fixed-width characters
@@ -231,4 +238,37 @@ namespace blit {
 
     return bounds;
   }
+}
+
+std::string surface::wrap_text(std::string message, int32_t width, const uint8_t *font, bool variable) {
+  std::string ret;
+
+  int current_x = 0;
+  size_t last_space = std::string::npos;
+  size_t copied_off = 0;
+
+  for (size_t i = 0; i < message.length(); i++) {
+    if (message[i] == ' ')
+      last_space = i;
+
+    current_x += get_char_width(font, message[i], variable);
+
+    if (current_x > width) {
+      if(last_space == std::string::npos) {
+        // no space to break at
+        ret += message.substr(copied_off, i - copied_off - 1) + "\n";
+        copied_off = i - 1;
+      } else {
+        // break at last space
+        ret += message.substr(copied_off, last_space - copied_off) + "\n";
+        copied_off = last_space + 1; // don't copy the space
+        last_space = std::string::npos;
+      }
+      current_x = 0;
+    }
+  }
+
+  ret += message.substr(copied_off);
+
+  return ret;
 }

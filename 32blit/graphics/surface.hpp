@@ -116,6 +116,7 @@ namespace blit {
     void text(std::string message, const uint8_t *font, const rect &r, bool variable = true, text_align align = text_align::top_left);
     void text(std::string message, const uint8_t *font, const point &p, bool variable = true, text_align align = text_align::top_left);
     size measure_text(std::string message, const uint8_t *font, bool variable = true);
+    std::string wrap_text(std::string message, int32_t width, const uint8_t *font, bool variable = true);
 
     /*void outline_circle(const point &c, int32_t r);
     
