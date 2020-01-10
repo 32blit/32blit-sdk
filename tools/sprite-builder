@@ -265,7 +265,7 @@ if __name__ == '__main__':
     parser.add_argument('--tilesizey', type=int, help='tile size y', default=8)
 
     # Allow for naming of the resulting packed_data array
-    parser.add_argument('--arrayname', type=str, help='set output array name (default <packed_data>)', default='packed_data')
+    parser_packed.add_argument('--arrayname', type=str, help='set output array name (default <packed_data>)', default='packed_data')
 
     # Raw input can be given as any image type, and will be packed into:
     # * RGBA (full fidelity)
