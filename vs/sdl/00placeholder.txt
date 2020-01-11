@@ -1,0 +1,1 @@
+Please download and extract the SDL 2 development library for Visual C++ into this folder!

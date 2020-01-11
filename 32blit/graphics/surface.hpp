@@ -5,7 +5,10 @@
 #include <array>
 #include <stdint.h>
 
-#ifdef WIN32
+#ifdef WIN32 
+#define __attribute__(A)
+#endif
+#ifdef _MSC_VER
 #define __attribute__(A)
 #endif
 
