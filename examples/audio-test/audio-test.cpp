@@ -4,7 +4,7 @@
 #include <cstdlib>
 
 #include "audio-test.hpp"
-#include "street.h"
+#include "gng.h"
 
 using namespace blit;
 
@@ -39,11 +39,11 @@ uint32_t s_to_vol[] = {0,4369,8738,13107,17476,21845,26214,30583,34952,39321,436
 
 void update(uint32_t time_ms) {
   static uint32_t last_time_ms = time_ms;
-  static uint16_t i = 0;
+  static uint16_t tick = 0;
 
-  i++;
-  uint16_t row = (i >> 1) % 3000;
-  
+  tick++;
+  uint16_t row = (tick >> 1) % 3000;
+  /*
   for(auto i = 0; i < 3; i++) {
     uint8_t *sample = song + (row * 25) + (i * 7);
 
@@ -70,6 +70,28 @@ void update(uint32_t time_ms) {
 
     blit::audio::channels[i].volume      = 0xffff;
   }
+
+  uint8_t volume = song[(row * 25) + 24] & 0x0f;
+  uint8_t mute_3 = song[(row * 25) + 24] & 0b10000000;
+  if(mute_3) {
+    blit::audio::channels[2].volume      = 0x0000;
+  }  
+
+  blit::audio::volume      = s_to_vol[volume & 0x0f];
+*/
+
+  // seashore demo
+  blit::audio::channels[0].frequency   = 4200;
+  blit::audio::channels[0].voices      = blit::audio::audio_voice::NOISE;
+  blit::audio::channels[0].gate        = 1;
+
+  blit::audio::channels[0].attack_ms   = 0;
+  blit::audio::channels[0].decay_ms    = 0;
+  blit::audio::channels[0].sustain     = 0xffff;
+  blit::audio::channels[0].release_ms  = 0;
+
+  blit::audio::channels[0].volume      = (sin(float(tick) / 50.0f) * 6000) + 7000;
+
 
 /*
   //blit::audio::channels[i].pw         = ((sample[3] & 0xf) << 8) | sample[2];

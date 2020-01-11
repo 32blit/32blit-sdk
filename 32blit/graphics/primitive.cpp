@@ -55,12 +55,38 @@ namespace blit {
   }
 
   /**
-   * TODO: Document this function
+   * Draw a fast vertical line in the current pen colour.
    *
-   * \param[in] p
-   * \param[in] c
+   * \param[in] p `Point` describing start of the line.
+   * \ param[in] c `Count` of pixels to draw.
    */
-  void surface::clip_span(point p, int16_t c) {
+  void surface::v_span(point p, int16_t c) {
+    if (p.x < 0 || p.x >= bounds.w)
+      return;
+
+    if (p.y < 0) {
+      c -= -p.y;
+      p.y = 0;
+    }
+
+    if (p.y + c > bounds.h) {
+      c -= (p.y + c - bounds.h);
+    }
+
+    while (c > 0) {
+      bf((uint8_t *)&_pen, this, offset(p), 1);
+      p.y++;
+      c--;
+    }
+  }
+
+  /**
+   * Draw a fast horizontal line in the current pen colour.
+   *
+   * \param[in] p `Point` describing start of the line.
+   * \ param[in] c `Count` of pixels to draw.
+   */
+  void surface::h_span(point p, int16_t c) {
     if (p.y < 0 || p.y >= bounds.h)
       return;
 
@@ -97,16 +123,16 @@ namespace blit {
 
       err += y; y++; err += y;
 
-      clip_span(point(c.x - x, c.y + lastY), x * 2);
+      h_span(point(c.x - x, c.y + lastY), x * 2);
       if (lastY != 0) {
-        clip_span(point(c.x - x, c.y - lastY), x * 2);
+        h_span(point(c.x - x, c.y - lastY), x * 2);
       }
 
       if (err >= 0) {
         if (x != lastY) {
-          clip_span(point(c.x - lastY, c.y + x), lastY * 2);
+          h_span(point(c.x - lastY, c.y + x), lastY * 2);
           if (x != 0) {
-            clip_span(point(c.x - lastY, c.y - x), lastY * 2);
+            h_span(point(c.x - lastY, c.y - x), lastY * 2);
           }
 
           err -= x; x--; err -= x;
@@ -280,7 +306,7 @@ namespace blit {
       }
 
       for (uint16_t i = 0; i < n; i += 2) {
-        clip_span(point(nodes[i], p.y), nodes[i + 1] - nodes[i] + 1);
+        h_span(point(nodes[i], p.y), nodes[i + 1] - nodes[i] + 1);
       }
     }
   }
