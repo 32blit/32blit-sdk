@@ -97,7 +97,7 @@ void render(uint32_t time_ms) {
   draw_world(
     position, // player position
     angle, // player direction
-    0, // horizon position
+    10, // horizon position
     3.0f,   // near distance
     500.0f  // far distance
   ); 
