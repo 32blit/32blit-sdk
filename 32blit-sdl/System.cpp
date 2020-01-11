@@ -110,7 +110,8 @@ void System::run() {
 int System::timer_thread() {
 	// Signal the system loop every 20 msec.
 	int dropped = 0;
-	SDL_Event event = {.type = timer_event};
+	SDL_Event event = {};
+	event.type = timer_event;
 
 	while (SDL_SemWaitTimeout(s_timer_stop, 20)) {
 		if (SDL_SemValue(s_loop_update)) {
@@ -135,7 +136,8 @@ int System::timer_thread() {
 
 int System::update_thread() {
 	// Run the blit user code once every time we are signalled.
-	SDL_Event event = {.type = loop_event};
+	SDL_Event event = {};
+	event.type = loop_event;
 
 	::init(); // Run init here because the user can make it hang.
 
