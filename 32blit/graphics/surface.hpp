@@ -105,10 +105,11 @@ namespace blit {
     void pixel(const point &p);
     void _pixel(const point &p);
     void _pixel(const uint32_t &o);
-    void clip_span(point p, int16_t c);
+    void v_span(point p, int16_t c); 
+    void h_span(point p, int16_t c); 
     void rectangle(const rect &r);
     void circle(const point &c, int32_t r);
-     
+
     void line(const point &p1, const point &p2);
     void triangle(point p1, point p2, point p3);
     void polygon(std::vector<point> p);
