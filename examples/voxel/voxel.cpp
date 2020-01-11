@@ -101,9 +101,7 @@ void render(uint32_t time_ms) {
     3.0f,   // near distance
     500.0f  // far distance
   ); 
-  uint32_t ms_end = now();
-
-  
+  uint32_t ms_end = now();  
 
   // draw FPS meter & watermark
   fb.watermark();
@@ -120,6 +118,7 @@ void render(uint32_t time_ms) {
 
 void update(uint32_t time_ms) {
   static uint16_t tick = 0;
+  
   tick++;
 
   // update angle of player based on joystick input
