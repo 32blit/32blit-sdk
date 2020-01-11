@@ -6,15 +6,15 @@
 
 #define TILE_W 10
 #define TILE_H 10
-#define TILE_SOLID 0b1 << 15
-#define TILE_WATER 0b1 << 14
-#define TILE_LINKED 0b1 << 13
+#define TILE_SOLID 0b1 << 7
+#define TILE_WATER 0b1 << 6
+#define TILE_LINKED 0b1 << 5
 
 #define PLAYER_W 2
 #define PLAYER_H 4
 
-#define TILES_Y ((SCREEN_H / TILE_H) + 3)
-#define TILES_X (SCREEN_W / TILE_W)
+#define TILES_Y uint8_t((SCREEN_H / TILE_H) + 3)
+#define TILES_X uint8_t(SCREEN_W / TILE_W)
 
 #define PLAYER_TOP player_position.y
 #define PLAYER_BOTTOM player_position.y + PLAYER_H
@@ -26,7 +26,7 @@
 
 #define MAX_JUMP 3
 
-std::vector<uint16_t> tiles;
+uint8_t tiles[16 * 15] = { 0 };
 
 blit::timer tile_update;
 blit::point tile_offset(0, 0);
@@ -81,6 +81,7 @@ uint16_t get_tile_at(uint8_t x, uint8_t y) {
     if (x < 0) return TILE_SOLID;
     if (x > 15) return TILE_SOLID;
     if (y > TILES_Y) return 0;
+    if(y < 0) return TILE_SOLID;
     uint16_t index = (y * TILES_X) + x;
     return tiles[index];
 }
@@ -285,7 +286,7 @@ void generate_new_row_mask() {
     // available, to avoid the player going up a tunnel that ends
     // abruptly :(
     if(passage_width < last_passage_width) {
-        for(auto p = last_passage_width; p--; p > passage_width + 1) {
+        for (auto p = last_passage_width; p > passage_width + 1; p--) {
             auto a = std::min(passages[p - 1], passages[last_passage_width - 1]);
             auto b = std::max(passages[p - 1], passages[last_passage_width - 1]);
             
@@ -355,17 +356,15 @@ void place_player() {
 
 void new_game() {
     player_status = PLAYER_ALIVE;
-    tiles.empty();
-    tiles.reserve(TILES_X * TILES_Y);
 
     for(auto y = TILES_Y - 1; y >= 0; y--) {
         for(auto x = 0; x < TILES_X; x++) {
-            auto offset = y * TILES_X + x;
+            auto index = y * TILES_X + x;
             if(row_mask & (1 << x)) {
-                tiles[offset] = TILE_SOLID;
+                tiles[index] = TILE_SOLID;
             }
             else {
-                tiles[offset] = 0;
+                tiles[index] = 0;
             }
         }
         generate_new_row_mask();
