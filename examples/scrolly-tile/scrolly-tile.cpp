@@ -10,6 +10,10 @@
 #define TILE_WATER 0b1 << 6
 #define TILE_LINKED 0b1 << 5
 
+#define WALL_LEFT 1
+#define WALL_RIGHT 2
+#define WALL_NONE 0
+
 #define PLAYER_W 2
 #define PLAYER_H 4
 
@@ -33,6 +37,13 @@
 // much data about each tile.
 // Rounded corners are also procedural depending upon
 // tile proximity.
+// The screen allows for 16x12 10x10 tiles, but we
+// use an extra 3 vertically:
+// +1 - because an offset row means we can see 13 rows total
+// +2 - because tile features need an adjacent row to generate from
+// IE: when our screen is shifted down 5px you can see 13
+// rows and both the top and bottom visible row are next to the
+// additional two invisible rows which govern how corners are rounded.
 uint8_t tiles[16 * 15] = { 0 };
 
 blit::timer state_update;
@@ -47,7 +58,7 @@ float water_level = 0;
 uint32_t progress = 0;
 uint16_t row_mask = 0xffff;
 uint16_t linked_passage_mask = 0;
-uint8_t passage_width = 1;
+uint8_t passage_width = 0;
 uint8_t last_passage_width = 0;
 
 uint8_t passages[] = {
@@ -64,6 +75,7 @@ uint16_t last_buttons = 0;
 uint32_t jump_pressed = 0;
 uint8_t can_jump = 0;
 bool can_climb = 0;
+uint8_t climbing_wall = WALL_NONE;
 uint16_t player_tile_y = 0;
 uint8_t player_status = PLAYER_ALIVE;
 
@@ -262,12 +274,13 @@ void generate_new_row_mask() {
     // that it's always navigable without having to reject
     // procedurally generated segments
     for(auto p = 0; p < passage_count; p++){
+        if(passage_width < p) {
+            continue;
+        }
         // Controls how far a passage can snake left/right
         uint8_t turning_size = blit::random() % 7;
 
-        if(passage_width > p){
-            new_row_mask |= (0x8000 >> passages[p]);
-        }
+        new_row_mask |= (0x8000 >> passages[p]);
 
         // At every new generation we choose to branch a passage
         // either left or right, or let it continue upwards.
@@ -277,9 +290,7 @@ void generate_new_row_mask() {
                     if(passages[p] < TILES_X - 1){
                         passages[p] += 1;
                     }
-                    if(passage_width > p){
-                        new_row_mask |= (0x8000 >> passages[p]);
-                    }
+                    new_row_mask |= (0x8000 >> passages[p]);
                 }
                 break;
             case 1: // Passage goes left
@@ -287,9 +298,7 @@ void generate_new_row_mask() {
                     if(passages[p] > 0){
                         passages[p] -= 1;
                     }
-                    if(passage_width > p){
-                        new_row_mask |= (0x8000 >> passages[p]);
-                    }
+                    new_row_mask |= (0x8000 >> passages[p]);
                 }
                 break;
         }
@@ -302,16 +311,19 @@ void generate_new_row_mask() {
     // This routine picks a random passage from the ones remaining
     // and routes every orphaned passage to it.
     if(passage_width < last_passage_width) {
-        uint8_t target_passage = blit::random() % passage_width;
-        uint8_t target_passage_x = passages[target_passage];
+        uint8_t target_passage = blit::random() % (passage_width + 1);
+        uint8_t target_p_x = passages[target_passage];
 
-        for(auto x = 0; x < last_passage_width; x++){
-            auto a = std::min(target_passage_x, passages[x]);
-            auto b = std::max(target_passage_x, passages[x]);
-            
-            for(auto x = a - 1; x < b + 1; x++){
-                new_row_mask |= (0x8000 >> x);
-                linked_passage_mask |= (0x8000 >> x);
+        for(auto i = passage_width; i < last_passage_width + 1; i++){
+            new_row_mask |= (0x8000 >> passages[i]);
+            linked_passage_mask  |= (0x8000 >> passages[i]);
+
+            int8_t direction = (passages[i] < target_p_x) ? -1 : 1;
+    
+            while(passages[i] != target_p_x) {
+                passages[i] += direction;
+                new_row_mask |= (0x8000 >> passages[i]);
+                linked_passage_mask  |= (0x8000 >> passages[i]);
             }
         }
     }
@@ -353,7 +365,7 @@ void update_state(blit::timer &timer) {
     }
     player_position.y += 1;
     progress += 1;
-    passage_width = 1 + ceilf(((sin(progress / 100.0f) + 1.0f)) * ((passage_count - 1) / 2.0f));
+    passage_width = floorf(((sin(progress / 100.0f) + 1.0f) / 2.0f) * passage_count);
     tile_offset.y += 1;
 
     if(tile_offset.y >= 0) {
@@ -387,8 +399,7 @@ void new_game() {
 
     progress = 0;
     water_level = 0;
-    passage_width = 1 + ceilf(((sin(progress / 100.0f) + 1.0f)) * ((passage_count - 1) / 2.0f));
-
+    passage_width = floorf(((sin(progress / 100.0f) + 1.0f) / 2.0f) * passage_count);
     player_velocity.x = 0.0f;
     player_velocity.y = 0.0f;
 
@@ -418,19 +429,27 @@ uint16_t collide_player_lr(uint16_t tile, uint8_t x, uint8_t y, void *args) {
 
     if(tile & TILE_SOLID) {
         if((PLAYER_BOTTOM > tile_top) && (PLAYER_TOP < tile_bottom)){
+            // Collide the left-hand side of the tile right of player
             if(PLAYER_LEFT <= tile_right && PLAYER_RIGHT > tile_right){
                 player_position.x = tile_right;
                 player_velocity.x = 0.0f;
                 jump_velocity.x = 0.5f;
-                can_jump = MAX_JUMP;
+                if(climbing_wall != WALL_LEFT) {
+                    can_jump++;
+                }
                 can_climb = true;
+                climbing_wall = WALL_LEFT;
             }
+            // Collide the right-hand side of the tile left of player
             if((PLAYER_RIGHT >= tile_left) && (PLAYER_LEFT < tile_left)) {
                 player_position.x = tile_left - PLAYER_W;
                 player_velocity.x = 0.0f;
                 jump_velocity.x = -0.5f;
-                can_jump = MAX_JUMP;
+                if(climbing_wall != WALL_RIGHT) {
+                    can_jump++;
+                }
                 can_climb = true;
+                climbing_wall = WALL_RIGHT;
             }
         }
     }
@@ -459,6 +478,7 @@ uint16_t collide_player_ud(uint16_t tile, uint8_t x, uint8_t y, void *args) {
                 player_position.y = tile_top - PLAYER_H;
                 player_velocity.y = 0;
                 can_jump = MAX_JUMP;
+                climbing_wall = WALL_NONE;
             }
         }
     }
@@ -528,13 +548,19 @@ void update(uint32_t time_ms) {
         if(player_position.x <= 0){
             player_position.x = 0;
             can_climb = true;
-            can_jump = MAX_JUMP;
+            if(climbing_wall != WALL_LEFT) {
+                can_jump++;
+            }
+            climbing_wall = WALL_LEFT;
             jump_velocity.x = 0.5f;
         }
         if(player_position.x + PLAYER_W >= SCREEN_W) {
             player_position.x = SCREEN_W - PLAYER_W;
             can_climb = true;
-            can_jump = MAX_JUMP;
+            if(climbing_wall != WALL_RIGHT) {
+                can_jump++;
+            }
+            climbing_wall = WALL_RIGHT;
             jump_velocity.x = -0.5f;
 
         }
@@ -575,7 +601,7 @@ void render(uint32_t time_ms) {
     p.append("cm");
     fb.text(p, &minimal_font[0][0], point(2, 2));
 
-    p = std::to_string(passage_width);
+    p = std::to_string(passage_width + 1);
     p.append(" passages");
     fb.text(p, &minimal_font[0][0], point(2, 10));
 
