@@ -1,28 +1,104 @@
-#include <string>
+/* 
+  32blit Voxel Terrain demo
+
+  by Jonathan Williamson (lowfatcode)
+*/
+
 #include <string.h>
-#include <memory>
-#include <cstdlib>
 
 #include "voxel.hpp"
 
 using namespace blit;
 
 rgba sky_colour = rgba(127, 182, 212, 255);
-vec3 position(64, 64, 200);
+rgba colour_map_palette[256];
+
+uint16_t *tiles[32][32];
+std::vector<uint16_t *> free_tiles;
+
+vec3 position(64, 64, 100);
 float angle = 0.0f;
+float lean = 0.0f;
+uint16_t tiles_loaded = 0;
+
+uint8_t visited[32][32];
+
+uint32_t terrain_file;
 
 void init() {
-  // sad trombone
+
+  terrain_file = open_file("terrain.map");
+
+  // load palette data  
+  uint8_t buffer[768];
+  if(read_file(terrain_file, 0, 768, (char *)buffer) == 768) {
+    for(uint16_t i = 0; i < 256; i++) {
+      colour_map_palette[i] = rgba(buffer[i * 3 + 0], buffer[i * 3 + 1], buffer[i * 3 + 2]);
+    }
+  }
+
+  for(uint8_t y = 0; y < 32; y++) {
+    for(uint8_t x = 0; x < 32; x++) {
+      tiles[x][y] = nullptr;
+    }
+  }
 }
 
-void draw_world(vec3 position, float angle, int horizon, float near, float far) {
-  static int16_t height_buffer[160];
+void load_tile(int16_t x, int16_t y) {
+  uint32_t tile_size = 32 * 32 * 2;
+  uint32_t offset = 768 + ((x + y * 32) * tile_size);
+
+  if(free_tiles.size() > 0) {
+    tiles[x][y] = free_tiles.back();
+    free_tiles.pop_back();
+  }else{
+    tiles[x][y] = (uint16_t *)malloc(tile_size);  
+  }
   
+  //terrain_file = open_file("terrain.map");
+  read_file(terrain_file, offset, tile_size, (char *)tiles[x][y]);
+}
+
+uint16_t get_sample(int16_t x, int16_t y) {
+ /* if(x < 0 || y < 0 || x >= 1024 || y >= 1024) {
+    return 1;
+  }*/
+
+  // work out the tile coordinates for this sample  
+  uint8_t tx = (x >> 5) & 0x1f;
+  uint8_t ty = (y >> 5) & 0x1f;
+
+  visited[tx][ty] = 1;
+
+  if(tiles[tx][ty] == nullptr) {
+    return 0;
+  }
+
+  // work out the coordinates (within the tile) for the sample
+  uint16_t sx = x & 0x1f;
+  uint16_t sy = y & 0x1f;
+
+  return tiles[tx][ty][sx + sy * 32];
+}
+
+float deg2rad(float d) {
+  return d * float(M_PI) / 180.0f;
+}
+
+void draw_world(vec3 position, float angle, float lean, int horizon, float near, float far) {
+  static int16_t height_buffer[160];  
+  
+ 
+
+  memset(visited, 0, 32 * 32);
+
   // reset the height buffer to the bottom of the screen
   for(auto i = 0; i < fb.bounds.w; i++) {
     height_buffer[i] = fb.bounds.h;
   }
  
+  // convert angle into radians
+  angle = deg2rad(angle);
   float sina = sin(angle);
   float cosa = cos(angle);
 
@@ -36,33 +112,39 @@ void draw_world(vec3 position, float angle, int horizon, float near, float far) 
     vec2 frustrum_right = vec2( cosa * z - sina * z, -sina * z - cosa * z);
 
     // calculate the step size along the span for each screen column drawn
-    vec2 step((frustrum_right.x - frustrum_left.x) / fb.bounds.w, (frustrum_right.y - frustrum_left.y) / fb.bounds.w);
-    
+    vec2 sample_step((frustrum_right.x - frustrum_left.x) / fb.bounds.w, (frustrum_right.y - frustrum_left.y) / fb.bounds.w);
+    float lean_step = lean * 2.0f / fb.bounds.w;
+
     // pre-multiply the fog alpha for this z-distance
-    uint8_t fog_blend = (z / far / 1.2f) * 255; // value for "amount of fog" from 0 to 255
+    uint8_t fog_blend = (z / far / 1.5f) * 255; // value for "amount of fog" from 0 to 255
     rgba fog((sky_colour.r * fog_blend) >> 8, (sky_colour.g * fog_blend) >> 8, (sky_colour.b * fog_blend) >> 8);
     fog_blend = 255 - fog_blend;
 
     // point being sampled, starts on the left of the view frustrum and is stepped forward each
     // screen column drawn until it reaches the right of the view frustrum
     vec2 sample_point = frustrum_left + vec2(position.x, position.y);
+    float sample_lean = -lean;
 
-    float invz = 1.0f / z * 10.0f;
+    float invz = 1.0f / z * 100.0f;
 
     // for each column on the screen...
     for(uint8_t i = 0; i < fb.bounds.w; i++) {
 
+      uint16_t sample = get_sample(sample_point.x, sample_point.y);
+      uint8_t colour_index = sample >> 8;
+     
       // determine offset of sample from heightmap and colour map
-      uint16_t sample_offset = (int8_t(sample_point.x) & 0x7f) + (int8_t(sample_point.y) & 0x7f) * 128;
+      //uint16_t sample_offset = (int8_t(sample_point.x) & 0x7f) + (int8_t(sample_point.y) & 0x7f) * 128;
       
       // convert the height map sample into a y coordinate on screen
-      int height = (position.z - height_map[sample_offset]) * invz + float(horizon);
+      
+      int height = (position.z - (sample & 0xff)) * invz + float(horizon) + sample_lean;
 
       // if the height is smaller (further up the screen) than our current height buffer
       // value then we need to draw a new vertical strip
       if(height < height_buffer[i]) {  
         // fetch the colour for this strip from the colour map
-        rgba colour = colour_map_palette[colour_map[sample_offset]];
+        rgba colour = colour_map_palette[colour_index];
 
         // blend terrain colour with pre-multiplied fog colour
         colour.r = ((colour.r * fog_blend) >> 8) + fog.r;
@@ -79,13 +161,16 @@ void draw_world(vec3 position, float angle, int horizon, float near, float far) 
       }
                 
       // move to the next sampling coordinate
-      sample_point += step;
+      sample_point += sample_step;
+      sample_lean += lean_step;
     }
 
     // move forward (into the distance) in increasingly large steps
     z *= 1.025f;
   }
 }
+
+
 
 void render(uint32_t time_ms) {
 
@@ -97,23 +182,63 @@ void render(uint32_t time_ms) {
   draw_world(
     position, // player position
     angle, // player direction
+    lean,
     10, // horizon position
     3.0f,   // near distance
-    500.0f  // far distance
+    200.0f  // far distance
   ); 
+
+    /*
+  file_bytes_read = read_file("test.jpg", rand() & 0xffff, 20480, buffer);
+
+  sd_message = (char*)buffer;*/
+  
   uint32_t ms_end = now();  
+
+  for(uint8_t y = 0; y < 32; y++) {
+    for(uint8_t x = 0; x < 32; x++) {
+
+      if(tiles[x][y] != nullptr) {
+        fb.pen(rgba(255, 255, 255, 100));
+      }else{
+        fb.pen(rgba(0, 0, 0, 100));
+      }
+
+      fb.pixel(point(x, y));
+    }
+  }
+/*
+  for(uint8_t y = 0; y < 120; y++) {
+    for(uint8_t x = 0; x < 160; x++) {
+      uint16_t sample = get_sample(x * 2 + position.x, y * 2 + position.y);
+      uint8_t height = sample >> 8;
+      uint8_t colour_index = sample & 0xff;       
+      fb.pen(colour_map_palette[height]);
+      //fb.pen(rgba(height, height, height));
+      fb.pixel(point(x, y));
+    }
+  }*/
+
+  // work out the tile coordinates for the player position
+  uint8_t tx = (int32_t(position.x) >> 5) & 0x1f;
+  uint8_t ty = (int32_t(position.y) >> 5) & 0x1f;
+  fb.pen(rgba(0, 255, 0));
+  fb.pixel(point(tx, ty));
 
   // draw FPS meter & watermark
   fb.watermark();
   fb.mask = nullptr;
   fb.pen(rgba(255, 255, 255));
+/*
+  fb.text(std::to_string(tiles_loaded), &minimal_font[0][0], point(10, 20));
+  fb.text(std::to_string(int(position.x)) + "," + std::to_string(int(position.y)), &minimal_font[0][0], point(10, 10));
+*/
   fb.text(std::to_string(ms_end - ms_start), &minimal_font[0][0], point(1, 110));
   fb.pen(rgba(255, 0, 0));
   for (int i = 0; i < uint16_t(ms_end - ms_start); i++) {
     fb.pen(rgba(i * 5, 255 - (i * 5), 0));
     fb.rectangle(rect(i * 3 + 1, 117, 2, 2));
-  }
-  
+  }  
 }
 
 void update(uint32_t time_ms) {
@@ -122,16 +247,54 @@ void update(uint32_t time_ms) {
   tick++;
 
   // update angle of player based on joystick input
-  angle -= joystick.x / 25.0f;  
+  float old_angle = angle;
+  angle -= joystick.x * 2.0f;  
 
-  // clip players z position to ensure they are above the ground
-  uint16_t sample_offset = (int8_t(position.x) & 0x7f) + (int8_t(position.y) & 0x7f) * 128;
-  if(position.z < (height_map[sample_offset] + 50)) {
-    position.z = height_map[sample_offset] + 50;
+  lean = (angle - old_angle) * 10.0f;
+
+  if(buttons & DPAD_UP) {
+    position.z += 1.0f;
   }
 
-  // move player location if joystick y axis is forward/backwards
-  position.x += sin(angle) * joystick.y;
-  position.y += cos(angle) * joystick.y;
+  if(buttons & DPAD_DOWN) {
+    position.z -= 1.0f;
+  }
 
+  // clip players z position to ensure they are above the ground
+ /* uint16_t sample_offset = (int8_t(position.x) & 0x7f) + (int8_t(position.y) & 0x7f) * 128;
+  if(position.z < (height_map[sample_offset] + 50)) {
+    position.z = height_map[sample_offset] + 50;
+  }*/
+
+  // move player location if joystick y axis is forward/backwards
+  position.x += sin(deg2rad(angle)) * joystick.y;
+  position.y += cos(deg2rad(angle)) * joystick.y;
+
+  position.x = position.x < 0.0f ? 1023.0f : position.x;
+  position.y = position.y < 0.0f ? 1023.0f : position.y;
+
+  position.x = position.x > 1023.0f ? 0.0f : position.x;
+  position.y = position.y > 1023.0f ? 0.0f : position.y;
+
+   
+  // find any tiles that are too far away from the player and de-allocate them
+  // work out the tile coordinates for the player position
+  uint8_t tx = (int32_t(position.x) >> 5) & 0x1f;
+  uint8_t ty = (int32_t(position.y) >> 5) & 0x1f;
+  for(uint8_t y = 0; y < 32; y++) {
+    for(uint8_t x = 0; x < 32; x++) {
+
+      if(tiles[x][y] != nullptr && !visited[x][y]) {
+        free_tiles.push_back(tiles[x][y]);
+        tiles[x][y] = nullptr;
+        tiles_loaded--;
+      }
+
+      if(tiles[x][y] == nullptr && visited[x][y]) {
+        load_tile(x, y);
+        tiles_loaded++;        
+        return; // quit out early if we load a new tile
+      }
+    }
+  }
 }
