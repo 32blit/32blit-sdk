@@ -1,4 +1,5 @@
 #include "string.h"
+#include <map>
 
 #include "32blit.h"
 #include "main.h"
@@ -23,6 +24,7 @@ using namespace blit;
 __attribute__((section(".dac_data"))) uint16_t dac_buffer[DAC_BUFFER_SIZE];
 
 extern char __ltdc_start;
+extern char __fb_start;
 extern char itcm_text_start;
 extern char itcm_text_end;
 extern char itcm_data;
@@ -41,7 +43,7 @@ static blit::screen_mode mode = blit::screen_mode::lores;
 surface __ltdc((uint8_t *)&__ltdc_start, pixel_format::RGB565, size(320, 240));
 uint8_t ltdc_buffer_id = 0;
 
-surface __fb(((uint8_t *)&__ltdc_start) + (320 * 240 * 2), pixel_format::RGB, size(160, 120));
+surface __fb(((uint8_t *)&__fb_start), pixel_format::RGB, size(160, 120));
 
 void DFUBoot(void)
 {
@@ -135,16 +137,72 @@ void blit_tick() {
   }
 }
 
+std::map<uint32_t, FIL *> open_files;
+uint32_t current_file_handle = 0;
+
+int32_t open_file(std::string file) {
+  FIL *f = new FIL();
+
+  FRESULT r = f_open(f, file.c_str(), FA_READ);
+
+  if(r == FR_OK){      
+    current_file_handle++;  
+    open_files[current_file_handle] = f;
+    return current_file_handle;
+  }
+  
+  return -1;
+}
+
+int32_t read_file(uint32_t fh, uint32_t offset, uint32_t length, char *buffer) {  
+  FRESULT r;
+
+  r = f_lseek(open_files[fh], offset);
+  if(r == FR_OK){ 
+    unsigned int bytes_read;
+    r = f_read(open_files[fh], buffer, length, &bytes_read);
+    if(r == FR_OK){ 
+      return bytes_read;
+    }
+  }
+  
+  return -1;
+}
+
+int32_t close_file(uint32_t fh) {
+  FRESULT r;
+
+  r = f_close(open_files[fh]);
+
+  return r == FR_OK ? 0 : -1;
+}
+
+uint32_t read_file(std::string file, uint32_t offset, uint32_t length, char* buffer) {
+ /* FIL f;    
+  FRESULT r = f_open(&f, file.c_str(), FA_READ);
+
+  if(r == FR_OK){    
+    unsigned int bytes_read;
+    f_lseek(&f, offset);
+    f_read(&f, buffer, length, &bytes_read);
+    f_close(&f);
+    return bytes_read;
+  }
+*/
+  return 0;
+}
+
 bool blit_sd_detected() {
   return HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_11) == 1;
 }
-
+/*
 bool blit_mount_sd(char label[12], uint32_t &totalspace, uint32_t &freespace) {
   DWORD free_clusters;
   FATFS *pfs;
   if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_11) == 1){
     SD_Error = f_mount(&filesystem, "", 1);
     if(SD_Error == FR_OK){
+      LED.b = 255;
       f_getlabel("", label, 0);
       f_getfree("", &free_clusters, &pfs);
       totalspace = (uint32_t)((pfs->n_fatent - 2) * pfs->csize * 0.5);
@@ -154,9 +212,10 @@ bool blit_mount_sd(char label[12], uint32_t &totalspace, uint32_t &freespace) {
   }
   return false;
 }
-
+*/
+/* 
 bool blit_open_file(FIL &file, const char *filename) {
-  SD_FileOpenError = f_open(&file, filename, FA_READ);
+ SD_FileOpenError = f_open(&file, filename, FA_READ);
   if(SD_FileOpenError == FR_OK){
     uint8_t buf[10];
     unsigned int read;
@@ -165,7 +224,7 @@ bool blit_open_file(FIL &file, const char *filename) {
     return true;
   }
   return false;
-}
+}*/
 
 void blit_enable_amp() {
   HAL_GPIO_WritePin(AMP_SHUTDOWN_GPIO_Port, AMP_SHUTDOWN_Pin, GPIO_PIN_SET);
@@ -191,6 +250,7 @@ void blit_init() {
 
     st7272a_set_bgr();
 
+    f_mount(&filesystem, "", 1);  // this shouldn't be necessary here right?
     msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
     bq24295_init(&hi2c4);
     blit::backlight = 1.0f;
@@ -205,6 +265,9 @@ void blit_init() {
     blit::update = ::update;
     blit::render = ::render;
     blit::init   = ::init;
+    blit::open_file = ::open_file;
+    blit::read_file = ::read_file;
+    blit::close_file = ::close_file;
 
     blit_enable_amp();
 

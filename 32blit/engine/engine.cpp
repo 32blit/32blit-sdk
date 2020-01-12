@@ -15,6 +15,11 @@ namespace blit {
   void (*debug)(std::string message)                = nullptr;
   int  (*debugf)(const char * psFormatString, ...) 	= nullptr;
 
+  int32_t (*open_file)(std::string file)          = nullptr;
+  int32_t (*read_file)(uint32_t fh, uint32_t offset, uint32_t length, char* buffer) = nullptr;
+  int32_t (*close_file)(uint32_t fh)              = nullptr;
+
+
   surface null_surface(nullptr, pixel_format::RGB565, size(0, 0));
   surface &fb = null_surface;
 

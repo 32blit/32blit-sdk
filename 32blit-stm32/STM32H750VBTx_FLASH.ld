@@ -41,9 +41,10 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-DTCMRAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 128K
-RAM_D1 (xrw)        : ORIGIN = 0x24000000, LENGTH = 212K
-LTDC (rw)           : ORIGIN = 0x24035000, LENGTH = 300K
+DTCMRAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 53K
+FRAMEBUFFER (rw)    : ORIGIN = 0x2000d400, LENGTH = 75K
+RAM_D1 (xrw)        : ORIGIN = 0x24000000, LENGTH = 362K
+LTDC (rw)           : ORIGIN = 0x24035000, LENGTH = 150K
 RAM_D2 (xrw)        : ORIGIN = 0x30000000, LENGTH = 288K
 RAM_D3 (xrw)        : ORIGIN = 0x38000000, LENGTH = 64K
 ITCMISR (xrw)       : ORIGIN = 0x00000000, LENGTH = 4K
@@ -157,7 +158,7 @@ SECTIONS
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
-  } >DTCMRAM
+  } >RAM_D1
 
   itcm_data = LOADADDR(.itcm);
   .itcm :
@@ -177,23 +178,13 @@ SECTIONS
     __ltdc_end = .;
   } >LTDC
 
-  .ss (NOLOAD):
-  {
-    . = ALIGN(4);
-    *(.ss)           /* spritesheet */
-  } >RAM_D2
-
   .fb (NOLOAD):
   {
     . = ALIGN(4);
-    *(.fb)           /* framebuffer */
-  } >RAM_D1
-
-  .m (NOLOAD):
-  {
-    . = ALIGN(4);
-    *(.m)           /* framebuffer */
-  } >RAM_D2
+    __fb_start = .;
+    KEEP(*(.fb))           /* framebuffer */
+    __fb_end = .;
+  } >FRAMEBUFFER
 
   .dac_data (NOLOAD):
   {

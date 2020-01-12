@@ -12,8 +12,8 @@ extern void update(uint32_t time);
 extern void render(uint32_t time);
 
 // SD storage
-bool blit_mount_sd(char label[12], uint32_t &totalspace, uint32_t &freespace);
-bool blit_open_file(FIL &file, const char *filename);
+/*bool blit_mount_sd(char label[12], uint32_t &totalspace, uint32_t &freespace);
+bool blit_open_file(FIL &file, const char *filename);*/
 extern char *get_fr_err_text(FRESULT err);
 extern bool blit_sd_detected();
 

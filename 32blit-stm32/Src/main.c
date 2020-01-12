@@ -135,12 +135,11 @@ int main(void)
   uint32_t total_samples = 0;
   FIL audio_file;
   bool audio_file_available = false;
+
+  /*
   if (blit_mount_sd(sd_card_label, freespace, totalspace)) {
-    /*audio_file_available = blit_open_file(audio_file, "u8mono16.raw");
-    if(audio_file_available){
-      blit_enable_dac();
-    }*/
-  }
+  }*/
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
