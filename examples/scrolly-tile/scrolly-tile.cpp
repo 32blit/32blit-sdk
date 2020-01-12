@@ -24,11 +24,18 @@
 #define PLAYER_ALIVE 1
 #define PLAYER_DEAD 0
 
+// Number of times a player can jump sequentially
+// including mid-air jumps and the initial ground
+// or wall jump
 #define MAX_JUMP 3
 
+// All the art is rainbow fun time, so we don't need
+// much data about each tile.
+// Rounded corners are also procedural depending upon
+// tile proximity.
 uint8_t tiles[16 * 15] = { 0 };
 
-blit::timer tile_update;
+blit::timer state_update;
 blit::point tile_offset(0, 0);
 
 vec2 player_position(80.0f, SCREEN_H - PLAYER_H);
@@ -39,7 +46,9 @@ float water_level = 0;
 
 uint32_t progress = 0;
 uint16_t row_mask = 0xffff;
+uint16_t linked_passage_mask = 0;
 uint8_t passage_width = 1;
+uint8_t last_passage_width = 0;
 
 uint8_t passages[] = {
     7,
@@ -57,14 +66,6 @@ uint8_t can_jump = 0;
 bool can_climb = 0;
 uint16_t player_tile_y = 0;
 uint8_t player_status = PLAYER_ALIVE;
-
-enum e_mask_type {
-    UP,
-    LEFT,
-    RIGHT
-};
-
-e_mask_type mask_type = UP;
 
 typedef uint16_t (*tile_callback)(uint16_t tile, uint8_t x, uint8_t y, void *args);
 
@@ -96,6 +97,11 @@ uint16_t get_tile_at(uint8_t x, uint8_t y) {
 #define TILE_BELOW_RIGHT 1 << 0
 
 uint16_t render_tile(uint16_t tile, uint8_t x, uint8_t y, void *args) {
+    // Rendering tiles is pretty simple and involves drawing rectangles
+    // in the right places.
+    // But a large amount of this function is given over to rounding
+    // corners depending upon the content of neighbouring tiles.
+    // This could probably be rewritten to use a lookup table?
     blit::point offset = *(blit::point *)args;
 
     auto tile_x = (x * TILE_W) + offset.x;
@@ -184,11 +190,16 @@ uint16_t render_tile(uint16_t tile, uint8_t x, uint8_t y, void *args) {
             blit::fb.rectangle(rect(tile_x, tile_y, TILE_W, TILE_H));
         }
         */
+        /*
+        // This might have been a good idea but since we're getting all
+        // neighbouring tiles anyway why don't we check for solid walls
+        // all around us and fill with water?
         if(tile & TILE_WATER) {
             
             blit::fb.pen(rgba(100, 100, 255, 128));
             blit::fb.rectangle(rect(tile_x, tile_y + 5, TILE_W, 5));
         }
+        */
         if(feature_map & TILE_ABOVE) {
             if (feature_map & TILE_LEFT) {
                 blit::fb.pen(color_base);
@@ -206,6 +217,12 @@ uint16_t render_tile(uint16_t tile, uint8_t x, uint8_t y, void *args) {
             }
         }
         if(feature_map & TILE_BELOW) {
+            // If we have a tile directly to the left and right
+            // of this one then it's a little pocket we can fill with water!
+            if(feature_map & TILE_LEFT && feature_map & TILE_RIGHT) {
+                blit::fb.pen(rgba(200, 200, 255, 128));
+                blit::fb.rectangle(rect(tile_x, tile_y + (TILE_H / 2), TILE_W, TILE_H / 2));
+            }
             if(feature_map & TILE_LEFT) {
                 blit::fb.pen(color_base);
                 blit::fb.pixel(point(tile_x, tile_y + TILE_H - 1));
@@ -223,7 +240,6 @@ uint16_t render_tile(uint16_t tile, uint8_t x, uint8_t y, void *args) {
         }
     }
 
-
     return tile;
 }
 
@@ -237,8 +253,6 @@ uint8_t count_set_bits(uint16_t number) {
     return count;
 }
 
-uint8_t last_passage_width = 0;
-uint16_t linked_passage_mask = 0;
 void generate_new_row_mask() {
     uint16_t new_row_mask = 0x0000;
     linked_passage_mask = 0;
@@ -285,10 +299,15 @@ void generate_new_row_mask() {
     // for orphaned passages and link them back to the ones still
     // available, to avoid the player going up a tunnel that ends
     // abruptly :(
+    // This routine picks a random passage from the ones remaining
+    // and routes every orphaned passage to it.
     if(passage_width < last_passage_width) {
-        for (auto p = last_passage_width; p > passage_width + 1; p--) {
-            auto a = std::min(passages[p - 1], passages[last_passage_width - 1]);
-            auto b = std::max(passages[p - 1], passages[last_passage_width - 1]);
+        uint8_t target_passage = blit::random() % passage_width;
+        uint8_t target_passage_x = passages[target_passage];
+
+        for(auto x = 0; x < last_passage_width; x++){
+            auto a = std::min(target_passage_x, passages[x]);
+            auto b = std::max(target_passage_x, passages[x]);
             
             for(auto x = a - 1; x < b + 1; x++){
                 new_row_mask |= (0x8000 >> x);
@@ -301,7 +320,31 @@ void generate_new_row_mask() {
     row_mask = ~new_row_mask;
 }
 
-void update_tiles(blit::timer &timer) {
+void update_tiles() {
+    for(auto row = TILES_Y - 2; row > -1; row--){
+        for(auto x = 0; x < TILES_X; x++){
+            uint16_t tgt = ((row + 1) * TILES_X) + x;
+            uint16_t src = (row * TILES_X) + x;
+            tiles[tgt] = tiles[src];
+        }
+    }
+
+    generate_new_row_mask();
+
+    for(auto x = 0; x < TILES_X; x++) {
+        if(row_mask & (1 << x)) {
+            tiles[x] = TILE_SOLID;
+        }
+        else {
+            tiles[x] = 0;
+            if(linked_passage_mask & (1 << x)) {
+                tiles[x] |= TILE_LINKED;
+            }
+        }
+    }
+}
+
+void update_state(blit::timer &timer) {
     if (!(player_position.y < 70)) {
         return;
     }
@@ -312,31 +355,10 @@ void update_tiles(blit::timer &timer) {
     progress += 1;
     passage_width = 1 + ceilf(((sin(progress / 100.0f) + 1.0f)) * ((passage_count - 1) / 2.0f));
     tile_offset.y += 1;
+
     if(tile_offset.y >= 0) {
         tile_offset.y = -10;
-        //std::rotate(tiles.begin(), tiles.begin() + tiles.size() - TILES_X, tiles.end());
-
-        for(auto row = TILES_Y - 2; row > -1; row--){
-            for(auto x = 0; x < TILES_X; x++){
-                uint16_t tgt = ((row + 1) * TILES_X) + x;
-                uint16_t src = (row * TILES_X) + x;
-                tiles[tgt] = tiles[src];
-            }
-        }
-
-        generate_new_row_mask();
-
-        for(auto x = 0; x < TILES_X; x++) {
-            if(row_mask & (1 << x)) {
-                tiles[x] = TILE_SOLID;
-            }
-            else {
-                tiles[x] = 0;
-                if(linked_passage_mask & (1 << x)) {
-                    tiles[x] |= TILE_LINKED;
-                }
-            }
-        }
+        update_tiles();
     }
 }
 
@@ -357,17 +379,10 @@ void place_player() {
 void new_game() {
     player_status = PLAYER_ALIVE;
 
-    for(auto y = TILES_Y - 1; y >= 0; y--) {
-        for(auto x = 0; x < TILES_X; x++) {
-            auto index = y * TILES_X + x;
-            if(row_mask & (1 << x)) {
-                tiles[index] = TILE_SOLID;
-            }
-            else {
-                tiles[index] = 0;
-            }
-        }
-        generate_new_row_mask();
+    // Use update_tiles to create the initial game state
+    // instead of having a separate loop that breaks in weird ways
+    for(auto x = 0; x < TILES_Y; x++) {
+        update_tiles();
     }
 
     progress = 0;
@@ -379,12 +394,13 @@ void new_game() {
 
     place_player();
 
-    tile_update.start();
+    state_update.start();
 }
 
 void init(void) {
+    std::srand(12312897);
     blit::set_screen_mode(blit::lores);
-    tile_update.init(update_tiles, 10, -1);
+    state_update.init(update_state, 10, -1);
     new_game();
 }
 
@@ -503,6 +519,7 @@ void update(uint32_t time_ms) {
 
 
     player_position.x += player_velocity.x;
+    // Useful for debug since you can position the player directly
     //player_position.x += movement.x;
     
     if(player_status == PLAYER_ALIVE) {
@@ -526,17 +543,18 @@ void update(uint32_t time_ms) {
 
 
     player_position.y += player_velocity.y;
+    // Useful for debug since you can position the player directly
     //player_position.y += movement.y;
 
     if(player_position.y + PLAYER_H > SCREEN_H) {
         // player_position.y = SCREEN_H - PLAYER_H;
         // player_velocity.y = 0;
         // can_jump = MAX_JUMP;
-        tile_update.stop();
+        state_update.stop();
         player_status = PLAYER_DEAD;
     }
     if(player_position.y > SCREEN_H - water_level) {
-        tile_update.stop();
+        state_update.stop();
         player_status = PLAYER_DEAD;
     }
     for_each_tile(collide_player_ud, (void *)&tile_offset);
@@ -549,7 +567,6 @@ void render(uint32_t time_ms) {
     blit::fb.clear();
     for_each_tile(render_tile, (void *)&tile_offset);
 
-
     blit::fb.pen(blit::rgba(255, 255, 255));
     blit::fb.rectangle(rect(player_position.x, player_position.y, PLAYER_W, PLAYER_H));
 
@@ -557,6 +574,10 @@ void render(uint32_t time_ms) {
     std::string p = std::to_string(progress);
     p.append("cm");
     fb.text(p, &minimal_font[0][0], point(2, 2));
+
+    p = std::to_string(passage_width);
+    p.append(" passages");
+    fb.text(p, &minimal_font[0][0], point(2, 10));
 
     if(water_level > 0){
         blit::fb.pen(blit::rgba(100, 100, 255, 200));
