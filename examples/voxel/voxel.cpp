@@ -15,19 +15,23 @@ rgba colour_map_palette[256];
 
 uint16_t *tiles[32][32];
 std::vector<uint16_t *> free_tiles;
+uint16_t tile_cache[32 * 32 * 150];
 
 vec3 position(64, 64, 100);
 float angle = 0.0f;
 float lean = 0.0f;
-uint16_t tiles_loaded = 0;
+float pitch = 0.0f;
 
 uint8_t visited[32][32];
 
 uint32_t terrain_file;
+uint8_t terrain_index = 1;
 
-void init() {
 
-  terrain_file = open_file("terrain.map");
+
+void load_map() {
+  close_file(terrain_file);
+  terrain_file = open_file(std::to_string(terrain_index) + ".map");
 
   // load palette data  
   uint8_t buffer[768];
@@ -42,6 +46,15 @@ void init() {
       tiles[x][y] = nullptr;
     }
   }
+
+  free_tiles.clear();
+  for(uint8_t i = 0; i < 150; i++) {
+    free_tiles.push_back(&tile_cache[32 * 32 * i]);
+  }
+}
+
+void init() {
+  load_map();
 }
 
 void load_tile(int16_t x, int16_t y) {
@@ -51,12 +64,8 @@ void load_tile(int16_t x, int16_t y) {
   if(free_tiles.size() > 0) {
     tiles[x][y] = free_tiles.back();
     free_tiles.pop_back();
-  }else{
-    tiles[x][y] = (uint16_t *)malloc(tile_size);  
+    read_file(terrain_file, offset, tile_size, (char *)tiles[x][y]);
   }
-  
-  //terrain_file = open_file("terrain.map");
-  read_file(terrain_file, offset, tile_size, (char *)tiles[x][y]);
 }
 
 uint16_t get_sample(int16_t x, int16_t y) {
@@ -85,11 +94,9 @@ float deg2rad(float d) {
   return d * float(M_PI) / 180.0f;
 }
 
-void draw_world(vec3 position, float angle, float lean, int horizon, float near, float far) {
+void draw_world(vec3 position, float angle, float lean, float horizon, float near, float far) {
   static int16_t height_buffer[160];  
   
- 
-
   memset(visited, 0, 32 * 32);
 
   // reset the height buffer to the bottom of the screen
@@ -178,33 +185,42 @@ void render(uint32_t time_ms) {
   fb.pen(sky_colour);
   fb.clear();  
 
-  uint32_t ms_start = now();
+  
   draw_world(
     position, // player position
     angle, // player direction
     lean,
-    10, // horizon position
+    10.0f + pitch, // horizon position
     3.0f,   // near distance
-    200.0f  // far distance
+    300.0f  // far distance
   ); 
 
     /*
-  file_bytes_read = read_file("test.jpg", rand() & 0xffff, 20480, buffer);
+  
 
   sd_message = (char*)buffer;*/
   
+  uint8_t buffer[16 * 1024];
+  uint32_t ms_start = now();
+  /*for(int i = 0; i < 10; i++) {
+    read_file(terrain_file, rand() & 0xffff, 16 * 1024, buffer);
+  }*/
   uint32_t ms_end = now();  
 
   for(uint8_t y = 0; y < 32; y++) {
     for(uint8_t x = 0; x < 32; x++) {
 
       if(tiles[x][y] != nullptr) {
-        fb.pen(rgba(255, 255, 255, 100));
+        fb.pen(rgba(255, 0, 0, 100));
       }else{
         fb.pen(rgba(0, 0, 0, 100));
       }
-
       fb.pixel(point(x, y));
+
+      if(visited[x][y]) {
+        fb.pen(rgba(255, 255, 0, 100));
+        fb.pixel(point(x, y));
+      }
     }
   }
 /*
@@ -229,8 +245,11 @@ void render(uint32_t time_ms) {
   fb.watermark();
   fb.mask = nullptr;
   fb.pen(rgba(255, 255, 255));
+
+  fb.text(std::to_string(free_tiles.size()), &minimal_font[0][0], point(10, 20));
+
 /*
-  fb.text(std::to_string(tiles_loaded), &minimal_font[0][0], point(10, 20));
+  
   fb.text(std::to_string(int(position.x)) + "," + std::to_string(int(position.y)), &minimal_font[0][0], point(10, 10));
 */
   fb.text(std::to_string(ms_end - ms_start), &minimal_font[0][0], point(1, 110));
@@ -243,6 +262,7 @@ void render(uint32_t time_ms) {
 
 void update(uint32_t time_ms) {
   static uint16_t tick = 0;
+  static uint32_t last_buttons = 0;
   
   tick++;
 
@@ -269,6 +289,7 @@ void update(uint32_t time_ms) {
   // move player location if joystick y axis is forward/backwards
   position.x += sin(deg2rad(angle)) * joystick.y;
   position.y += cos(deg2rad(angle)) * joystick.y;
+  pitch = joystick.y * 10.0f;
 
   position.x = position.x < 0.0f ? 1023.0f : position.x;
   position.y = position.y < 0.0f ? 1023.0f : position.y;
@@ -277,24 +298,33 @@ void update(uint32_t time_ms) {
   position.y = position.y > 1023.0f ? 0.0f : position.y;
 
    
-  // find any tiles that are too far away from the player and de-allocate them
-  // work out the tile coordinates for the player position
-  uint8_t tx = (int32_t(position.x) >> 5) & 0x1f;
-  uint8_t ty = (int32_t(position.y) >> 5) & 0x1f;
+  // remove any unused tiles from the cache
   for(uint8_t y = 0; y < 32; y++) {
     for(uint8_t x = 0; x < 32; x++) {
-
       if(tiles[x][y] != nullptr && !visited[x][y]) {
         free_tiles.push_back(tiles[x][y]);
         tiles[x][y] = nullptr;
-        tiles_loaded--;
       }
+    }
+  }
 
+  // load the next needed tile into the cache
+  for(uint8_t y = 0; y < 32; y++) {
+    for(uint8_t x = 0; x < 32; x++) {
       if(tiles[x][y] == nullptr && visited[x][y]) {
         load_tile(x, y);
-        tiles_loaded++;        
         return; // quit out early if we load a new tile
       }
     }
   }
+
+  if(!(buttons & A) && (last_buttons & A)) {
+    terrain_index++;
+    if(terrain_index > 4) {
+      terrain_index = 1;
+    }
+    load_map();
+  }
+
+  last_buttons = buttons;
 }

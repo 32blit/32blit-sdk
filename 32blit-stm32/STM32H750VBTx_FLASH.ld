@@ -42,9 +42,9 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 MEMORY
 {
 DTCMRAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 53K
-FRAMEBUFFER (rw)    : ORIGIN = 0x2000d400, LENGTH = 75K
+FRAMEBUFFER (rw)    : ORIGIN = 0x2000D400, LENGTH = 75K
 RAM_D1 (xrw)        : ORIGIN = 0x24000000, LENGTH = 362K
-LTDC (rw)           : ORIGIN = 0x24035000, LENGTH = 150K
+LTDC (rw)           : ORIGIN = 0x2405A800, LENGTH = 150K
 RAM_D2 (xrw)        : ORIGIN = 0x30000000, LENGTH = 288K
 RAM_D3 (xrw)        : ORIGIN = 0x38000000, LENGTH = 64K
 ITCMISR (xrw)       : ORIGIN = 0x00000000, LENGTH = 4K
@@ -147,7 +147,7 @@ SECTIONS
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
-  } >DTCMRAM
+  } >RAM_D1
 
   /* User_heap_stack section, used to check that there is enough RAM left */
   ._user_heap_stack :

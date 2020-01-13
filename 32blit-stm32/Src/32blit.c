@@ -522,11 +522,11 @@ void blit_clear_framebuffer() {
   }
 
   // framebuffer 2
-  for(uint16_t y = 0; y < 240; y++) {
+  /*for(uint16_t y = 0; y < 240; y++) {
     for(uint16_t x = 0; x < 320; x++) {
       *pc++ = (((x / 10) + (y / 10)) & 0b1) ?  0x38E7 : 0x7BEF;
     }
-  }
+  }*/
 }
 
 void blit_update_vibration() {
