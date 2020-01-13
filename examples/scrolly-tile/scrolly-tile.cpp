@@ -25,8 +25,12 @@
 #define PLAYER_RIGHT player_position.x + PLAYER_W
 #define PLAYER_LEFT player_position.x
 
-#define PLAYER_ALIVE 1
-#define PLAYER_DEAD 0
+#define RANDOM_TYPE_HRNG 0
+#define RANDOM_TYPE_PRNG 1
+
+#define GAME_STATE_MENU 0
+#define GAME_STATE_PLAY 1
+#define GAME_STATE_DEAD 2
 
 // Number of times a player can jump sequentially
 // including mid-air jumps and the initial ground
@@ -61,12 +65,15 @@ uint16_t linked_passage_mask = 0;
 uint8_t passage_width = 0;
 uint8_t last_passage_width = 0;
 
+uint8_t current_random_source = RANDOM_TYPE_PRNG;
+uint32_t current_random_seed = 0xf0f0f0f0;
+
 uint8_t passages[] = {
-    7,
-    10,
     0,
-    1,
-    4
+    0,
+    0,
+    0,
+    0,
 };
 
 uint8_t passage_count = 5;
@@ -75,11 +82,30 @@ uint16_t last_buttons = 0;
 uint32_t jump_pressed = 0;
 uint8_t can_jump = 0;
 bool can_climb = 0;
+bool on_floor = false;
 uint8_t climbing_wall = WALL_NONE;
 uint16_t player_tile_y = 0;
-uint8_t player_status = PLAYER_ALIVE;
+uint8_t game_state = GAME_STATE_MENU;
 
 typedef uint16_t (*tile_callback)(uint16_t tile, uint8_t x, uint8_t y, void *args);
+
+uint32_t lfsr = 0;
+uint16_t tap = 0x74b8;
+
+uint32_t get_random_number() {
+    switch(current_random_source) {
+        case RANDOM_TYPE_HRNG:
+            return blit::random();
+        case RANDOM_TYPE_PRNG:
+            uint8_t lsb = lfsr & 1;
+            lfsr >>= 1;
+
+            if (lsb) {
+                lfsr ^= tap;
+            }
+            return lfsr;
+    }
+}
 
 void for_each_tile(tile_callback callback, void *args) {
     for (auto y = 0; y < TILES_Y; y++) {
@@ -121,11 +147,6 @@ uint16_t render_tile(uint16_t tile, uint8_t x, uint8_t y, void *args) {
 
     uint8_t feature_map = 0;
 
-    auto tile_top = tile_y;
-    auto tile_bottom = tile_y + TILE_H;
-    auto tile_left = tile_x;
-    auto tile_right = tile_x + TILE_W;
-
     feature_map |= (get_tile_at(x - 1, y) & TILE_SOLID) ? TILE_LEFT : 0;
     feature_map |= (get_tile_at(x + 1, y) & TILE_SOLID) ? TILE_RIGHT : 0;
     feature_map |= (get_tile_at(x, y - 1) & TILE_SOLID) ? TILE_ABOVE : 0;
@@ -136,62 +157,26 @@ uint16_t render_tile(uint16_t tile, uint8_t x, uint8_t y, void *args) {
     feature_map |= (get_tile_at(x - 1, y + 1) & TILE_SOLID) ? TILE_BELOW_LEFT : 0;
     feature_map |= (get_tile_at(x + 1, y + 1) & TILE_SOLID) ? TILE_BELOW_RIGHT : 0;
 
-    rgba color_base = blit::hsv_to_rgba(tile_y / 120.0f, 0.5f, 0.8f);
-    rgba color_dark = rgba(int(color_base.r * 0.75f), int(color_base.g * 0.75f), int(color_base.b * 0.75f));
-    rgba color_darker = rgba(int(color_base.r * 0.5f), int(color_base.g * 0.5f), int(color_base.b * 0.5f));
+    bool round_tl = (feature_map & (TILE_ABOVE_LEFT | TILE_ABOVE | TILE_LEFT)) == 0;
+    bool round_tr = (feature_map & (TILE_ABOVE_RIGHT | TILE_ABOVE | TILE_RIGHT)) == 0;
+    bool round_bl = (feature_map & (TILE_BELOW_LEFT | TILE_BELOW | TILE_LEFT)) == 0;
+    bool round_br = (feature_map & (TILE_BELOW_RIGHT | TILE_BELOW | TILE_RIGHT)) == 0;
+
+    rgba color_base = blit::hsv_to_rgba(((120 - tile_y) + 110.0f) / 120.0f, 0.5f, 0.8f);
 
     if(tile & TILE_SOLID) {
-        blit::fb.pen(color_base);
-        blit::fb.rectangle(rect(tile_x, tile_y, TILE_W, TILE_H));
-
-        if((PLAYER_RIGHT > tile_left) && (PLAYER_LEFT < tile_right)){
-            if(PLAYER_TOP < tile_bottom && PLAYER_BOTTOM > tile_bottom){
-                blit::fb.pen(rgba(255, 255, 255));
-                blit::fb.rectangle(rect(tile_x, tile_y, TILE_W, TILE_H));
+        // Draw tiles without anti-aliasing to save code bloat
+        // Uses the rounded corner flags to miss a pixel for a
+        // basic rounded corner effect.
+        for(auto py = 0; py < TILE_H; py++){
+            for(auto px = 0; px < TILE_W; px++){
+                if(round_tl && px == 0 && py == 0) continue;
+                if(round_tr && px == TILE_W - 1 && py == 0) continue;
+                if(round_bl && px == 0 && py == TILE_H - 1) continue;
+                if(round_br && px == TILE_H - 1 && py == TILE_H - 1) continue;
+                blit::fb.pen(color_base);
+                blit::fb.pixel(point(tile_x + px, tile_y + py));
             }
-            if((PLAYER_BOTTOM > tile_top) && (PLAYER_TOP < tile_top)){
-                blit::fb.pen(rgba(255, 255, 255));
-                blit::fb.rectangle(rect(tile_x, tile_y, TILE_W, TILE_H));
-            }
-        }
-        if((PLAYER_BOTTOM > tile_top) && (PLAYER_TOP < tile_bottom)){
-            if(PLAYER_LEFT < tile_right && PLAYER_RIGHT > tile_right){
-                blit::fb.pen(rgba(255, 255, 255));
-                blit::fb.rectangle(rect(tile_x, tile_y, TILE_W, TILE_H));
-            }
-            if((PLAYER_RIGHT > tile_left) && (PLAYER_LEFT < tile_left)) {
-                blit::fb.pen(rgba(255, 255, 255));
-                blit::fb.rectangle(rect(tile_x, tile_y, TILE_W, TILE_H));
-            }
-        }
-
-        if ((feature_map & (TILE_ABOVE_LEFT | TILE_ABOVE | TILE_LEFT)) == 0) {
-            blit::fb.pen(rgba(0, 0, 0));
-            blit::fb.pixel(point(tile_x, tile_y));
-            blit::fb.pen(color_darker);
-            blit::fb.pixel(point(tile_x + 1, tile_y));
-            blit::fb.pixel(point(tile_x, tile_y + 1));
-        }
-        if ((feature_map & (TILE_ABOVE_RIGHT | TILE_ABOVE | TILE_RIGHT)) == 0) {
-            blit::fb.pen(rgba(0, 0, 0));
-            blit::fb.pixel(point(tile_x + TILE_W - 1, tile_y));
-            blit::fb.pen(color_darker);
-            blit::fb.pixel(point(tile_x + TILE_W - 2, tile_y));
-            blit::fb.pixel(point(tile_x + TILE_W - 1, tile_y + 1));
-        }
-        if ((feature_map & (TILE_BELOW_LEFT | TILE_BELOW | TILE_LEFT)) == 0) {
-            blit::fb.pen(rgba(0, 0, 0));
-            blit::fb.pixel(point(tile_x, tile_y + TILE_H - 1));
-            blit::fb.pen(color_darker);
-            blit::fb.pixel(point(tile_x + 1, tile_y + TILE_H - 1));
-            blit::fb.pixel(point(tile_x, tile_y + TILE_H - 2));
-        }
-        if ((feature_map & (TILE_BELOW_RIGHT | TILE_BELOW | TILE_RIGHT)) == 0) {
-            blit::fb.pen(rgba(0, 0, 0));
-            blit::fb.pixel(point(tile_x + TILE_W - 1, tile_y + TILE_H - 1));
-            blit::fb.pen(color_darker);
-            blit::fb.pixel(point(tile_x + TILE_W - 2, tile_y + TILE_H - 1));
-            blit::fb.pixel(point(tile_x + TILE_W - 1, tile_y + TILE_H - 2));
         }
     } else {
         /*
@@ -216,16 +201,10 @@ uint16_t render_tile(uint16_t tile, uint8_t x, uint8_t y, void *args) {
             if (feature_map & TILE_LEFT) {
                 blit::fb.pen(color_base);
                 blit::fb.pixel(point(tile_x, tile_y));
-                blit::fb.pen(color_dark);
-                blit::fb.pixel(point(tile_x + 1, tile_y));
-                blit::fb.pixel(point(tile_x, tile_y + 1));
             }
             if (feature_map & TILE_RIGHT) {
                 blit::fb.pen(color_base);
                 blit::fb.pixel(point(tile_x + TILE_W - 1, tile_y));
-                blit::fb.pen(color_dark);
-                blit::fb.pixel(point(tile_x + TILE_W - 2, tile_y));
-                blit::fb.pixel(point(tile_x + TILE_W - 1, tile_y + 1));
             }
         }
         if(feature_map & TILE_BELOW) {
@@ -238,16 +217,10 @@ uint16_t render_tile(uint16_t tile, uint8_t x, uint8_t y, void *args) {
             if(feature_map & TILE_LEFT) {
                 blit::fb.pen(color_base);
                 blit::fb.pixel(point(tile_x, tile_y + TILE_H - 1));
-                blit::fb.pen(color_dark);
-                blit::fb.pixel(point(tile_x + 1, tile_y + TILE_H - 1));
-                blit::fb.pixel(point(tile_x, tile_y + TILE_H - 2));
             }
             if(feature_map & TILE_RIGHT) {
                 blit::fb.pen(color_base);
                 blit::fb.pixel(point(tile_x + TILE_W - 1, tile_y + TILE_H - 1));
-                blit::fb.pen(color_dark);
-                blit::fb.pixel(point(tile_x + TILE_W - 2, tile_y + TILE_H - 1));
-                blit::fb.pixel(point(tile_x + TILE_W - 1, tile_y + TILE_H - 2));
             }
         }
     }
@@ -278,13 +251,13 @@ void generate_new_row_mask() {
             continue;
         }
         // Controls how far a passage can snake left/right
-        uint8_t turning_size = blit::random() % 7;
+        uint8_t turning_size = get_random_number() % 7;
 
         new_row_mask |= (0x8000 >> passages[p]);
 
         // At every new generation we choose to branch a passage
         // either left or right, or let it continue upwards.
-        switch(blit::random() % 3){
+        switch(get_random_number() % 3){
             case 0: // Passage goes right
                 while(turning_size--){
                     if(passages[p] < TILES_X - 1){
@@ -311,7 +284,7 @@ void generate_new_row_mask() {
     // This routine picks a random passage from the ones remaining
     // and routes every orphaned passage to it.
     if(passage_width < last_passage_width) {
-        uint8_t target_passage = 0; //blit::random() % (passage_width + 1);
+        uint8_t target_passage = 0; //get_random_number() % (passage_width + 1);
         uint8_t target_p_x = passages[target_passage];
 
         for(auto i = passage_width; i < last_passage_width + 1; i++){
@@ -357,20 +330,22 @@ void update_tiles() {
 }
 
 void update_state(blit::timer &timer) {
-    if (!(player_position.y < 70)) {
-        return;
-    }
-    if(water_level > 10){
-        water_level -= 1;
-    }
-    player_position.y += 1;
-    progress += 1;
-    passage_width = floorf(((sin(progress / 100.0f) + 1.0f) / 2.0f) * passage_count);
-    tile_offset.y += 1;
+    if(game_state != GAME_STATE_DEAD) {
+        if (game_state == GAME_STATE_MENU || (game_state == GAME_STATE_PLAY && (player_position.y < 70))) {
+            if(water_level > 10){
+                water_level -= 1;
+            }
+            player_position.y += 1;
 
-    if(tile_offset.y >= 0) {
-        tile_offset.y = -10;
-        update_tiles();
+            progress += 1;
+            passage_width = floorf(((sin(progress / 100.0f) + 1.0f) / 2.0f) * passage_count);
+            tile_offset.y += 1;
+
+            if(tile_offset.y >= 0) {
+                tile_offset.y = -10;
+                update_tiles();
+            }
+        }
     }
 }
 
@@ -388,31 +363,39 @@ void place_player() {
     }
 }
 
-void new_game() {
-    player_status = PLAYER_ALIVE;
+void new_level() {
+    lfsr = current_random_seed;
+
+    progress = 0;
+    water_level = 0;
+    passage_width = floorf(((sin(progress / 100.0f) + 1.0f) / 2.0f) * passage_count);
+
+    for(auto x = 0; x < 5; x++) {
+        passages[x] = get_random_number() % 5;
+    }
 
     // Use update_tiles to create the initial game state
     // instead of having a separate loop that breaks in weird ways
     for(auto x = 0; x < TILES_Y; x++) {
         update_tiles();
     }
+}
 
-    progress = 0;
-    water_level = 0;
-    passage_width = floorf(((sin(progress / 100.0f) + 1.0f) / 2.0f) * passage_count);
+void new_game() {
+    new_level();
+
     player_velocity.x = 0.0f;
     player_velocity.y = 0.0f;
-
     place_player();
 
-    state_update.start();
+    game_state = GAME_STATE_PLAY;
 }
 
 void init(void) {
-    std::srand(12312897);
     blit::set_screen_mode(blit::lores);
     state_update.init(update_state, 10, -1);
-    new_game();
+    new_level();
+    state_update.start();
 }
 
 
@@ -470,15 +453,19 @@ uint16_t collide_player_ud(uint16_t tile, uint8_t x, uint8_t y, void *args) {
 
     if(tile & TILE_SOLID) {
         if((PLAYER_RIGHT > tile_left) && (PLAYER_LEFT < tile_right)){
+            // Collide the bottom side of the tile above player
             if(PLAYER_TOP < tile_bottom && PLAYER_BOTTOM > tile_bottom){
                 player_position.y = tile_bottom;
                 player_velocity.y = 0;
+                on_floor = false;
             }
+            // Collide the top side of the tile below player
             if((PLAYER_BOTTOM > tile_top) && (PLAYER_TOP < tile_top)){
                 player_position.y = tile_top - PLAYER_H;
                 player_velocity.y = 0;
                 can_jump = MAX_JUMP;
                 climbing_wall = WALL_NONE;
+                on_floor = true;
             }
         }
     }
@@ -491,14 +478,46 @@ void update(uint32_t time_ms) {
     uint16_t changed = blit::buttons ^ last_buttons;
     uint16_t pressed = changed & blit::buttons;
     uint16_t released = changed & ~blit::buttons;
-    vec2 movement(0, 0);
 
-    if(player_status == PLAYER_DEAD && pressed && blit::button::HOME){
-        new_game();
+    if (game_state == GAME_STATE_MENU) {
+        if(pressed & blit::button::B) {
+            new_game();
+        }
+        if(pressed & blit::button::DPAD_UP) {
+            current_random_source = RANDOM_TYPE_PRNG;
+            new_level();
+        }
+        if(pressed & blit::button::DPAD_DOWN) {
+            current_random_source = RANDOM_TYPE_HRNG;
+            new_level();
+        }
+        if(pressed & blit::button::DPAD_RIGHT) {
+            if(current_random_source = RANDOM_TYPE_PRNG) {
+                current_random_seed++;
+                new_level();
+            }
+        }
+        if(pressed & blit::button::DPAD_LEFT) {
+            if(current_random_source = RANDOM_TYPE_PRNG) {
+                current_random_seed--;
+                new_level();
+            }
+        }
+        last_buttons = blit::buttons;
         return;
     }
 
-    if(player_status == PLAYER_ALIVE){
+    if(game_state == GAME_STATE_DEAD){
+        if(pressed & blit::button::B) {
+            game_state = GAME_STATE_MENU;
+        }
+        last_buttons = blit::buttons;
+        return;
+    }
+
+    vec2 movement(0, 0);
+
+    if(game_state == GAME_STATE_PLAY){
         water_level += 0.05f;
 
         if(blit::buttons & blit::button::DPAD_LEFT) {
@@ -523,26 +542,34 @@ void update(uint32_t time_ms) {
             player_velocity.y *= 0.5f;
         }
 
-
         if(can_jump){
             if(pressed & blit::button::A) {
                 player_velocity = jump_velocity;
-
+                on_floor = false;
                 can_jump--;
             }
         }
     }
 
+    // Gravity
     player_velocity.y += 0.098f;
-    player_velocity.y *= 0.99f;
-    player_velocity.x *= 0.90f;
 
+    if(on_floor){
+        // Ground friction
+        player_velocity *= 0.8f;
+    }
+    else
+    {
+        // Air friction
+        player_velocity.y *= 0.98f;
+        player_velocity.x *= 0.95f;
+    }
 
     player_position.x += player_velocity.x;
     // Useful for debug since you can position the player directly
     //player_position.x += movement.x;
     
-    if(player_status == PLAYER_ALIVE) {
+    if(game_state == GAME_STATE_PLAY) {
         jump_velocity.x = 0.0f;
         can_climb = false;
         if(player_position.x <= 0){
@@ -567,46 +594,81 @@ void update(uint32_t time_ms) {
     }
     for_each_tile(collide_player_lr, (void *)&tile_offset);
 
-
     player_position.y += player_velocity.y;
     // Useful for debug since you can position the player directly
     //player_position.y += movement.y;
 
-    if(player_position.y + PLAYER_H > SCREEN_H) {
-        // player_position.y = SCREEN_H - PLAYER_H;
-        // player_velocity.y = 0;
-        // can_jump = MAX_JUMP;
-        state_update.stop();
-        player_status = PLAYER_DEAD;
-    }
-    if(player_position.y > SCREEN_H - water_level) {
-        state_update.stop();
-        player_status = PLAYER_DEAD;
-    }
     for_each_tile(collide_player_ud, (void *)&tile_offset);
 
+    if(player_position.y + PLAYER_H > SCREEN_H) {
+        game_state = GAME_STATE_DEAD;
+    }
+    if(player_position.y > SCREEN_H - water_level) {
+        game_state = GAME_STATE_DEAD;
+    }
+
     last_buttons = blit::buttons;
+}
+
+void render_summary() {
+    std::string text = "Game mode: ";
+
+    if(current_random_source == RANDOM_TYPE_PRNG) {
+        text.append("Competitive");
+    } else {
+        text.append("Random Practice");
+    }
+    fb.text(text, &minimal_font[0][0], point(10, (SCREEN_H / 2) + 20));
+
+    if(current_random_source == RANDOM_TYPE_PRNG) {
+        char buf[9];
+        sprintf(buf, "%08X", current_random_seed);
+        text = "Level seed: ";
+        text.append(buf);
+        fb.text(text, &minimal_font[0][0], point(10, (SCREEN_H / 2) + 30));
+    }
+
+    text = "Press B";
+    fb.text(text, &minimal_font[0][0], point(10, (SCREEN_H / 2) + 40));
 }
 
 void render(uint32_t time_ms) {
     blit::fb.pen(blit::rgba(0, 0, 0));
     blit::fb.clear();
-    for_each_tile(render_tile, (void *)&tile_offset);
 
-    blit::fb.pen(blit::rgba(255, 255, 255));
-    blit::fb.rectangle(rect(player_position.x, player_position.y, PLAYER_W, PLAYER_H));
 
-    fb.pen(rgba(255, 255, 255));
-    std::string p = std::to_string(progress);
-    p.append("cm");
-    fb.text(p, &minimal_font[0][0], point(2, 2));
+    if (game_state == GAME_STATE_MENU) {
+        std::string text = "RAINBOW ASCENT";
 
-    p = std::to_string(passage_width + 1);
-    p.append(" passages");
-    fb.text(p, &minimal_font[0][0], point(2, 10));
+        for_each_tile(render_tile, (void *)&tile_offset);
+
+        blit::fb.pen(blit::rgba(0, 0, 0, 200));
+        blit::fb.clear();
+
+        uint8_t x = 10;
+        for(auto c : text) {
+            uint8_t y = 20 + (5.0f * sin((time_ms / 250.0f) + (float(x) / text.length() * 2.0f * M_PI)));
+            rgba color_letter = blit::hsv_to_rgba((x - 10) / 140.0f, 0.5f, 0.8f);
+            blit::fb.pen(color_letter);
+            char buf[2];
+            buf[0] = c;
+            buf[1] = '\0';
+            blit::fb.text(buf, &minimal_font[0][0], point(x, y));
+            x += 10;
+        }
+        
+        blit::fb.pen(rgba(255, 255, 255, 150));
+
+        render_summary();
+
+        return;
+    }
+
+    rgba color_water = blit::hsv_to_rgba(((120 - 120) + 110.0f) / 120.0f, 1.0f, 0.5f);
+    color_water.a = 255;
 
     if(water_level > 0){
-        blit::fb.pen(blit::rgba(100, 100, 255, 200));
+        blit::fb.pen(color_water);
         blit::fb.rectangle(rect(0, SCREEN_H - water_level, SCREEN_W, water_level + 1));
 
         for(auto x = 0; x < SCREEN_W; x++){
@@ -623,10 +685,65 @@ void render(uint32_t time_ms) {
         }
     }
 
-    if(player_status == PLAYER_DEAD) {
-        fb.pen(rgba(128, 0, 0, 100));
+    for_each_tile(render_tile, (void *)&tile_offset);
+
+
+    // Draw the player
+    blit::fb.pen(blit::rgba(255, 255, 255));
+    blit::fb.rectangle(rect(player_position.x, player_position.y, PLAYER_W, PLAYER_H));
+    blit::fb.pen(blit::rgba(255, 50, 50));
+    blit::fb.rectangle(rect(player_position.x, player_position.y, PLAYER_W, 1));
+
+    /*
+    // Show number of active passages
+    p = std::to_string(passage_width + 1);
+    p.append(" passages");
+    fb.text(p, &minimal_font[0][0], point(2, 10));
+    */
+
+    if(water_level > 0){
+        color_water.a = 100;
+        blit::fb.pen(color_water);
+        blit::fb.rectangle(rect(0, SCREEN_H - water_level, SCREEN_W, water_level + 1));
+
+        for(auto x = 0; x < SCREEN_W; x++){
+            uint16_t offset = x + uint16_t(sin(time_ms / 500.0f) * 5.0f);
+            if((offset % 5) > 0){
+                blit::fb.pixel(point(x, SCREEN_H - water_level - 1));
+            }
+            if(((offset + 2) % 5) == 0){
+                blit::fb.pixel(point(x, SCREEN_H - water_level - 2));
+            }
+            if(((offset + 3) % 5) == 0){
+                blit::fb.pixel(point(x, SCREEN_H - water_level - 2));
+            }
+        }
+    }
+
+    std::string text_height = std::to_string(progress);
+    text_height.append("cm");
+
+    if(game_state == GAME_STATE_DEAD) {
+        fb.pen(rgba(128, 0, 0, 200));
         fb.rectangle(rect(0, 0, SCREEN_W, SCREEN_H));
         fb.pen(rgba(255, 0, 0, 255));
-        fb.text("YOU DIED!", &minimal_font[0][0], point(SCREEN_H / 2 - 4, SCREEN_W / 2 - 20));
+        fb.text("YOU DIED!", &minimal_font[0][0], point((SCREEN_W / 2) - 20, (SCREEN_H / 2) - 4));
+
+        // Round stats
+        fb.pen(rgba(255, 255, 255));
+
+        std::string text = "";
+
+        text = "You climbed: ";
+        text.append(text_height);
+        fb.text(text, &minimal_font[0][0], point(10, (SCREEN_H / 2) + 10));
+
+        render_summary();
+    }
+    else
+    {
+        // Draw the HUD
+        fb.pen(rgba(255, 255, 255));
+        fb.text(text_height, &minimal_font[0][0], point(2, 2));
     }
 }
