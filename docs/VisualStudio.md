@@ -19,3 +19,7 @@ Place these in the `vs\sdl\` folder.
 ## Visual Studio solution file
 
 Now you can proceed to open `vs\32blit.sln`. It contains two static linked libraries, _32blit_ and _32blit-sdl_ and all the examples that will compile to .EXE. 
+
+## Get started with your own game
+
+There is also a skeleton game created for you in `vs\game.sln`. This is an empty skeleton with some comments to get you started with your own game (if you do not want to start tweaking one of the examples).
