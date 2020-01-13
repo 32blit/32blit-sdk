@@ -1,6 +1,6 @@
-# Visual Studio 2019 
+# Visual Studio 2019
 
-You can now also use Visual Studio 2019 to examine the samples (compile them and run them in an SDL window) or to build your own apps for 32blit. Remember to also test on device!
+You can use Visual Studio 2019 to examine the samples (compile them and run them in an SDL window) or to build your own apps for the 32blit API. Remember to also test on device!
 
 ## Requirements
 
@@ -8,14 +8,43 @@ You will need Visual Studio 2019 (preferably version 16.4).
 
 Make sure you install C++ desktop development support.
 
-The solutions and projects are made to use toolset version c142. 
+There are two methods of building with Visual Studio:
 
-## SDL libraries
+## Option 1: Use the solution file
+
+This should be the most familiar option for existing Visual Studio users.
+
+The solutions and projects are made to use toolset version c142.
+
+### SDL libraries
 
 You will also need to download SDL2 development libraries from the [SDL homepage](https://www.libsdl.org/download-2.0.php). Here find the latest version of the VC development libraries (at the time of this writing SDL2-devel-2.0.10-VC.zip).
 
 Place these in the `vs\sdl\` folder.
 
-## Visual Studio solution file
-
 Now you can proceed to open `vs\32blit.sln`. It contains two static linked libraries, _32blit_ and _32blit-sdl_ and all the examples that will compile to .EXE. 
+
+
+## Option 2: Use Visual Studio's built-in CMake support
+
+This has the advantage of being closer to the build for the device and may be easier if you already use vcpkg.
+
+1. Install SDL2, the easiest way to do this is using [vcpkg](https://github.com/Microsoft/vcpkg):
+```sh
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+.\bootstrap-vcpkg.bat
+.\vcpkg integrate install
+.\vcpkg install SDL2
+.\vcpkg install SDL2:x64-windows
+```
+
+2. Open Visual Studio
+
+3. `File` > `Open` > `Folder` and open the folder where you cloned this repo. (Alternatively, if you haven't cloned the repo yet, use `File` -> `Clone ore Check Out Code`)
+
+4. Build!
+
+To find the built files use `Project` > `CMake Cache` > `Open in Explorer`.
+
+[More info about using CMake with Visual Studio](https://docs.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio?view=vs-2019)
