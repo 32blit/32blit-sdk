@@ -274,7 +274,7 @@ void generate_new_row_mask() {
     // that it's always navigable without having to reject
     // procedurally generated segments
     for(auto p = 0; p < passage_count; p++){
-        if(passage_width < p) {
+        if(p > passage_width) {
             continue;
         }
         // Controls how far a passage can snake left/right
@@ -311,19 +311,19 @@ void generate_new_row_mask() {
     // This routine picks a random passage from the ones remaining
     // and routes every orphaned passage to it.
     if(passage_width < last_passage_width) {
-        uint8_t target_passage = blit::random() % (passage_width + 1);
+        uint8_t target_passage = 0; //blit::random() % (passage_width + 1);
         uint8_t target_p_x = passages[target_passage];
 
         for(auto i = passage_width; i < last_passage_width + 1; i++){
             new_row_mask |= (0x8000 >> passages[i]);
             linked_passage_mask  |= (0x8000 >> passages[i]);
 
-            int8_t direction = (passages[i] < target_p_x) ? -1 : 1;
+            int8_t direction = (passages[i] < target_p_x) ? 1 : -1;
     
             while(passages[i] != target_p_x) {
                 passages[i] += direction;
                 new_row_mask |= (0x8000 >> passages[i]);
-                linked_passage_mask  |= (0x8000 >> passages[i]);
+                linked_passage_mask |= (0x8000 >> passages[i]);
             }
         }
     }
