@@ -492,13 +492,13 @@ void update(uint32_t time_ms) {
             new_level();
         }
         if(pressed & blit::button::DPAD_RIGHT) {
-            if(current_random_source = RANDOM_TYPE_PRNG) {
+            if(current_random_source == RANDOM_TYPE_PRNG) {
                 current_random_seed++;
                 new_level();
             }
         }
         if(pressed & blit::button::DPAD_LEFT) {
-            if(current_random_source = RANDOM_TYPE_PRNG) {
+            if(current_random_source == RANDOM_TYPE_PRNG) {
                 current_random_seed--;
                 new_level();
             }
