@@ -31,6 +31,7 @@ import os.path
 
 colour_map_filename = sys.argv[1]
 height_map_filename = sys.argv[2]
+output_filename = sys.argv[3]
 
 colour_map_image = Image.open(colour_map_filename)
 height_map_image = Image.open(height_map_filename)
@@ -54,5 +55,5 @@ for cy in range(0, chunks):
         data.append(height_map_image.getpixel((px + cx * 32, py + cy * 32)))
         data.append(colour_map_image.getpixel((px + cx * 32, py + cy * 32)))        
 
-map_file = open("terrain.map", "wb")
+map_file = open(output_filename, "wb")
 map_file.write(bytearray(data))
