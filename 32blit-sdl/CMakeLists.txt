@@ -15,9 +15,14 @@ if(EMSCRIPTEN)
 else()
 	find_package(SDL2 REQUIRED)
 
-	target_include_directories(BlitHalSDL
-		PRIVATE	${SDL2_INCLUDE_DIRS}
-	)
+	# If SDL2 was built using CMake, the generated configuration files define SDL2::* targets instead of the SDL2_* variables
+	if(TARGET SDL2::SDL2)
+		set(SDL2_LIBRARIES SDL2::SDL2 SDL2::SDL2main)
+	else()
+		target_include_directories(BlitHalSDL
+			PRIVATE	${SDL2_INCLUDE_DIRS}
+		)
+	endif()
 endif()
 
 target_link_libraries(BlitHalSDL PUBLIC BlitEngine ${SDL2_LIBRARIES})
