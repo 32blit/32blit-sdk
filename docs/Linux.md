@@ -1,4 +1,4 @@
-### Building & Running on Linux or WSL + XMing
+# Building & Running on Linux or WSL + XMing
 
 To build your project for testing, go into the relevant example directory. We'll use `palette-cycle` to demonstrate:
 
@@ -26,7 +26,7 @@ To run the application on your computer, use the following command (from within 
 ./palette-cycle
 ```
 
-\### XMing
+## XMing
 
 To run the examples from WSL on Windows you will need to have XMing (or another XWindow Server) running on Windows. Click on the following link which will help you install and setup WSL and XMing together.
 
