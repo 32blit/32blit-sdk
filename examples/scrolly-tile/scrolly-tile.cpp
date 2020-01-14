@@ -81,6 +81,7 @@ enum enum_player_state {
 };
 enum_player_state player_state = ground;
 
+uint8_t last_passage_width = 0;
 
 float water_level = 0;
 
@@ -228,7 +229,6 @@ uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
 }
 
 uint16_t generate_new_row_mask() {
-    static uint8_t last_passage_width = 0;
     uint16_t new_row_mask = 0x0000;
     uint8_t passage_width = floorf(((sin(current_row / 10.0f) + 1.0f) / 2.0f) * PASSAGE_COUNT);
 
@@ -369,10 +369,11 @@ void new_level() {
     tile_offset.y = -10;
     tile_offset.x = 0;
     water_level = 0;
+    last_passage_width = 0;
     current_row = 0;
 
     for(auto x = 0; x < 5; x++) {
-        passages[x] = get_random_number() % 5;
+        passages[x] = (get_random_number() % 14) + 1;
     }
 
     // Use update_tiles to create the initial game state
@@ -414,8 +415,8 @@ uint8_t collide_player_lr(uint8_t tile, uint8_t x, uint8_t y, void *args) {
         || ((PLAYER_TOP > tile_top) && PLAYER_TOP < tile_bottom)){
             // Collide the left-hand side of the tile right of player
             if(PLAYER_RIGHT > tile_left && (PLAYER_LEFT < tile_left)){
-                blit::fb.pen(rgba(255, 255, 255, 100));
-                blit::fb.rectangle(rect(tile_x, tile_y, TILE_W, TILE_H));
+                // blit::fb.pen(rgba(255, 255, 255, 100));
+                // blit::fb.rectangle(rect(tile_x, tile_y, TILE_W, TILE_H));
                 player_position.x = float(tile_left - PLAYER_W);
                 player_velocity.x = 0.0f;
                 player_state = wall_right;
@@ -425,8 +426,8 @@ uint8_t collide_player_lr(uint8_t tile, uint8_t x, uint8_t y, void *args) {
             }
             // Collide the right-hand side of the tile left of player
             if((PLAYER_LEFT < tile_right) && (PLAYER_RIGHT > tile_right)) {
-                blit::fb.pen(rgba(255, 255, 255, 100));
-                blit::fb.rectangle(rect(tile_x, tile_y, TILE_W, TILE_H));
+                // blit::fb.pen(rgba(255, 255, 255, 100));
+                // blit::fb.rectangle(rect(tile_x, tile_y, TILE_W, TILE_H));
                 player_position.x = float(tile_right);
                 player_velocity.x = 0.0f;
                 player_state = wall_left;
@@ -516,7 +517,7 @@ void update(uint32_t time_ms) {
     if(game_state == enum_state::play){
         static enum_player_state last_wall_jump = enum_player_state::ground;
         vec2 movement(0, 0);
-        //water_level += 0.05f;
+        water_level += 0.05f;
         jump_velocity.x = 0.0f;
 
         // Apply Gravity
@@ -754,7 +755,7 @@ void render(uint32_t time_ms) {
         text.append("cm");
         fb.text(text, &minimal_font[0][0], point(2, 2));
 
-
+        /*
         // State debug info
         text = "Jumps: ";
         text.append(std::to_string(player_jump_count));
@@ -782,22 +783,6 @@ void render(uint32_t time_ms) {
                 break;
         }
         fb.text(text, &minimal_font[0][0], point(2, 22));
-
-        /*text = "Last Jump: ";
-        switch(last_wall_jump){
-            case enum_player_state::ground:
-                text.append("GROUND");
-                break;
-            case enum_player_state::air:
-                text.append("AIR");
-                break;
-            case enum_player_state::wall_left:
-                text.append("WALL L");
-                break;
-            case enum_player_state::wall_right:
-                text.append("WALL R");
-                break;
-        }
-        fb.text(text, &minimal_font[0][0], point(2, 32));*/
+        */
     }
 }
