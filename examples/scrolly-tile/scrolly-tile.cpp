@@ -1,8 +1,8 @@
 #include "scrolly-tile.hpp"
 #include "graphics/color.hpp"
 
-#define SCREEN_W blit::fb.bounds.w
-#define SCREEN_H blit::fb.bounds.h
+#define SCREEN_W 160
+#define SCREEN_H 120
 
 #define TILE_W 10
 #define TILE_H 10
@@ -23,13 +23,13 @@
 #define PLAYER_W 2
 #define PLAYER_H 4
 
-#define TILES_Y uint8_t((SCREEN_H / TILE_H) + 3)
-#define TILES_X uint8_t(SCREEN_W / TILE_W)
+#define TILES_X 16
+#define TILES_Y 15
 
-#define PLAYER_TOP player_position.y
-#define PLAYER_BOTTOM player_position.y + PLAYER_H
-#define PLAYER_RIGHT player_position.x + PLAYER_W
-#define PLAYER_LEFT player_position.x
+#define PLAYER_TOP (player_position.y)
+#define PLAYER_BOTTOM (player_position.y + PLAYER_H)
+#define PLAYER_RIGHT (player_position.x + PLAYER_W)
+#define PLAYER_LEFT (player_position.x)
 
 #define RANDOM_TYPE_HRNG 0
 #define RANDOM_TYPE_PRNG 1
@@ -44,7 +44,7 @@
 #define MAX_JUMP 3
 
 uint8_t current_random_source = RANDOM_TYPE_PRNG;
-uint32_t current_random_seed = 0xf0f0f0f0;
+uint32_t current_random_seed = 0x64063701;
 
 // All the art is rainbow fun time, so we don't need
 // much data about each tile.
@@ -73,9 +73,11 @@ uint32_t player_progress = 0;
 bool player_on_floor = false;
 enum enum_player_state {
     ground = 0,
-    wall_left = 1,
-    wall_right = 2,
-    air = 3
+    near_wall_left = 1,
+    wall_left = 2,
+    near_wall_right = 3,
+    wall_right = 4,
+    air = 5
 };
 enum_player_state player_state = ground;
 
@@ -86,13 +88,7 @@ float water_level = 0;
 // back to those still active.
 uint16_t linked_passage_mask = 0;
 
-uint8_t passages[PASSAGE_COUNT] = {
-    0,
-    0,
-    0,
-    0,
-    0,
-};
+uint8_t passages[PASSAGE_COUNT] = {0};
 
 // Keep track of game state
 enum enum_state {
@@ -102,10 +98,10 @@ enum enum_state {
 };
 enum_state game_state = enum_state::menu;
 
-typedef uint16_t (*tile_callback)(uint16_t tile, uint8_t x, uint8_t y, void *args);
+typedef uint8_t (*tile_callback)(uint8_t tile, uint8_t x, uint8_t y, void *args);
 
 uint32_t prng_lfsr = 0;
-uint16_t prng_tap = 0x74b8;
+const uint16_t prng_tap = 0x74b8;
 
 uint32_t get_random_number() {
     switch(current_random_source) {
@@ -133,7 +129,7 @@ void for_each_tile(tile_callback callback, void *args) {
     }
 }
 
-uint16_t get_tile_at(uint8_t x, uint8_t y) {
+uint8_t get_tile_at(uint8_t x, uint8_t y) {
     // Get the tile at a given x/y grid coordinate
     if (x < 0) return TILE_SOLID;
     if (x > 15) return TILE_SOLID;
@@ -159,7 +155,7 @@ uint8_t get_adjacent_tile_solid_flags(uint8_t x, uint8_t y) {
     return feature_map;
 }
 
-uint16_t render_tile(uint16_t tile, uint8_t x, uint8_t y, void *args) {
+uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
     // Rendering tiles is pretty simple and involves drawing rectangles
     // in the right places.
     // But a large amount of this function is given over to rounding
@@ -302,10 +298,10 @@ void update_tiles() {
     // Shift all of our tile rows down by 1 starting
     // with the second-to-bottom tile which replaces
     // the bottom-most tile.
-    for(auto row = TILES_Y - 2; row > -1; row--){
+    for(auto y = TILES_Y - 2; y >= 0; y--){
         for(auto x = 0; x < TILES_X; x++){
-            uint16_t tgt = ((row + 1) * TILES_X) + x;
-            uint16_t src = (row * TILES_X) + x;
+            uint16_t tgt = ((y + 1) * TILES_X) + x;
+            uint16_t src = (y * TILES_X) + x;
             tiles[tgt] = tiles[src];
         }
     }
@@ -365,8 +361,13 @@ bool place_player() {
 void new_level() {
     prng_lfsr = current_random_seed;
 
+    player_position.x = 80.0f;
+    player_position.y = float(SCREEN_H - PLAYER_H);
+    player_velocity.x = 0.0f;
+    player_velocity.y = 0.0f;
     player_progress = 0;
     tile_offset.y = -10;
+    tile_offset.x = 0;
     water_level = 0;
     current_row = 0;
 
@@ -376,17 +377,15 @@ void new_level() {
 
     // Use update_tiles to create the initial game state
     // instead of having a separate loop that breaks in weird ways
-    for(auto x = 0; x < TILES_Y; x++) {
+    for(auto y = 0; y < TILES_Y; y++) {
         update_tiles();
     }
+
+    bool placed_successfully = place_player();
 }
 
 void new_game() {
     new_level();
-
-    player_velocity.x = 0.0f;
-    player_velocity.y = 0.0f;
-    bool placed_successfully = place_player();
 
     game_state = enum_state::play;
 }
@@ -394,12 +393,11 @@ void new_game() {
 void init(void) {
     blit::set_screen_mode(blit::lores);
     state_update.init(update_state, 10, -1);
-    new_level();
     state_update.start();
+    new_level();
 }
 
-
-uint16_t collide_player_lr(uint16_t tile, uint8_t x, uint8_t y, void *args) {
+uint8_t collide_player_lr(uint8_t tile, uint8_t x, uint8_t y, void *args) {
     blit::point offset = *(blit::point *)args;
 
     auto tile_x = (x * TILE_W) + offset.x;
@@ -411,18 +409,30 @@ uint16_t collide_player_lr(uint16_t tile, uint8_t x, uint8_t y, void *args) {
     auto tile_right = tile_x + TILE_W;
 
     if(tile & TILE_SOLID) {
-        if((PLAYER_BOTTOM > tile_top) && (PLAYER_TOP < tile_bottom)){
+        uint8_t near_wall_distance = 2;
+        if(((PLAYER_BOTTOM > tile_top) && (PLAYER_BOTTOM < tile_bottom))
+        || ((PLAYER_TOP > tile_top) && PLAYER_TOP < tile_bottom)){
             // Collide the left-hand side of the tile right of player
-            if(PLAYER_LEFT <= tile_right && PLAYER_RIGHT > tile_right){
-                player_position.x = tile_right;
+            if(PLAYER_RIGHT > tile_left && (PLAYER_LEFT < tile_left)){
+                blit::fb.pen(rgba(255, 255, 255, 100));
+                blit::fb.rectangle(rect(tile_x, tile_y, TILE_W, TILE_H));
+                player_position.x = float(tile_left - PLAYER_W);
                 player_velocity.x = 0.0f;
-                player_state = enum_player_state::wall_left;
+                player_state = wall_right;
+            }
+            else if(((PLAYER_RIGHT + near_wall_distance) > tile_left) && (PLAYER_LEFT < tile_left)) {
+                player_state = near_wall_right;
             }
             // Collide the right-hand side of the tile left of player
-            if((PLAYER_RIGHT >= tile_left) && (PLAYER_LEFT < tile_left)) {
-                player_position.x = tile_left - PLAYER_W;
+            if((PLAYER_LEFT < tile_right) && (PLAYER_RIGHT > tile_right)) {
+                blit::fb.pen(rgba(255, 255, 255, 100));
+                blit::fb.rectangle(rect(tile_x, tile_y, TILE_W, TILE_H));
+                player_position.x = float(tile_right);
                 player_velocity.x = 0.0f;
-                player_state = enum_player_state::wall_right;
+                player_state = wall_left;
+            }
+            else if(((PLAYER_LEFT - near_wall_distance) < tile_right) && (PLAYER_RIGHT > tile_right)) {
+                player_state = near_wall_left;
             }
         }
     }
@@ -430,7 +440,7 @@ uint16_t collide_player_lr(uint16_t tile, uint8_t x, uint8_t y, void *args) {
     return tile;
 }
 
-uint16_t collide_player_ud(uint16_t tile, uint8_t x, uint8_t y, void *args) {
+uint8_t collide_player_ud(uint8_t tile, uint8_t x, uint8_t y, void *args) {
     blit::point offset = *(blit::point *)args;
 
     auto tile_x = (x * TILE_W) + offset.x;
@@ -445,15 +455,15 @@ uint16_t collide_player_ud(uint16_t tile, uint8_t x, uint8_t y, void *args) {
         if((PLAYER_RIGHT > tile_left) && (PLAYER_LEFT < tile_right)){
             // Collide the bottom side of the tile above player
             if(PLAYER_TOP < tile_bottom && PLAYER_BOTTOM > tile_bottom){
-                player_position.y = tile_bottom;
+                player_position.y = float(tile_bottom);
                 player_velocity.y = 0;
             }
             // Collide the top side of the tile below player
             if((PLAYER_BOTTOM > tile_top) && (PLAYER_TOP < tile_top)){
-                player_position.y = tile_top - PLAYER_H;
+                player_position.y = float(tile_top - PLAYER_H);
                 player_velocity.y = 0;
                 player_jump_count = MAX_JUMP;
-                player_state = enum_player_state::ground;
+                player_state = ground;
             }
         }
     }
@@ -471,21 +481,21 @@ void update(uint32_t time_ms) {
         if(pressed & blit::button::B) {
             new_game();
         }
-        if(pressed & blit::button::DPAD_UP) {
+        else if(pressed & blit::button::DPAD_UP) {
             current_random_source = RANDOM_TYPE_PRNG;
             new_level();
         }
-        if(pressed & blit::button::DPAD_DOWN) {
+        else if(pressed & blit::button::DPAD_DOWN) {
             current_random_source = RANDOM_TYPE_HRNG;
             new_level();
         }
-        if(pressed & blit::button::DPAD_RIGHT) {
+        else if(pressed & blit::button::DPAD_RIGHT) {
             if(current_random_source == RANDOM_TYPE_PRNG) {
                 current_random_seed++;
                 new_level();
             }
         }
-        if(pressed & blit::button::DPAD_LEFT) {
+        else if(pressed & blit::button::DPAD_LEFT) {
             if(current_random_source == RANDOM_TYPE_PRNG) {
                 current_random_seed--;
                 new_level();
@@ -506,7 +516,7 @@ void update(uint32_t time_ms) {
     if(game_state == enum_state::play){
         static enum_player_state last_wall_jump = enum_player_state::ground;
         vec2 movement(0, 0);
-        water_level += 0.05f;
+        //water_level += 0.05f;
         jump_velocity.x = 0.0f;
 
         // Apply Gravity
@@ -521,8 +531,8 @@ void update(uint32_t time_ms) {
             movement.x = 1;
         }
         if(blit::buttons & blit::button::DPAD_UP) {
-            if(player_state == enum_player_state::wall_left
-            || player_state == enum_player_state::wall_right) {
+            if(player_state == wall_left
+            || player_state == wall_right) {
                 player_velocity.y -= 0.14f;
             }
             movement.y = -1;
@@ -533,16 +543,19 @@ void update(uint32_t time_ms) {
 
         if(player_jump_count){
             if(pressed & blit::button::A) {
-                if(player_state == enum_player_state::wall_left
-                || player_state == enum_player_state::wall_right) {
-                    jump_velocity.x = player_state == enum_player_state::wall_left ? 0.9 : -0.9;
-                    if(last_wall_jump != player_state) {
+                if(player_state == wall_left
+                || player_state == wall_right
+                || player_state == near_wall_left
+                || player_state == near_wall_right) {
+                    enum_player_state wall_jump_state = (player_state == wall_left || player_state == near_wall_left) ? wall_left : wall_right;
+                    jump_velocity.x = (wall_jump_state == wall_left) ? 0.9f : -0.9f;
+                    if(last_wall_jump != wall_jump_state) {
                         player_jump_count = MAX_JUMP;
                     }
-                    last_wall_jump = player_state;
+                    last_wall_jump = wall_jump_state;
                 }
                 player_velocity = jump_velocity;
-                player_state = enum_player_state::air;
+                player_state = air;
                 player_jump_count--;
             }
         }
@@ -553,6 +566,8 @@ void update(uint32_t time_ms) {
                 player_velocity.y *= 0.5f;
                 break;
             case air:
+            case near_wall_left:
+            case near_wall_right:
                 // Air friction
                 player_velocity.y *= 0.98f;
                 player_velocity.x *= 0.91f;
@@ -574,12 +589,12 @@ void update(uint32_t time_ms) {
         if(player_position.x <= 0){
             player_position.x = 0;
             player_velocity.x = 0;
-            player_state = enum_player_state::wall_left;
+            player_state = wall_left;
         }
         else if(player_position.x + PLAYER_W >= SCREEN_W) {
-            player_position.x = SCREEN_W - PLAYER_W;
+            player_position.x = float(SCREEN_W - PLAYER_W);
             player_velocity.x = 0;
-            player_state = enum_player_state::wall_right;
+            player_state = wall_right;
 
         }
         for_each_tile(collide_player_lr, (void *)&tile_offset);
@@ -628,6 +643,12 @@ void render(uint32_t time_ms) {
 
     if (game_state == enum_state::menu) {
         for_each_tile(render_tile, (void *)&tile_offset);
+
+        // Draw the player
+        blit::fb.pen(blit::rgba(255, 255, 255));
+        blit::fb.rectangle(rect(player_position.x, player_position.y, PLAYER_W, PLAYER_H));
+        blit::fb.pen(blit::rgba(255, 50, 50));
+        blit::fb.rectangle(rect(player_position.x, player_position.y, PLAYER_W, 1));
 
         blit::fb.pen(blit::rgba(0, 0, 0, 200));
         blit::fb.clear();
@@ -733,7 +754,7 @@ void render(uint32_t time_ms) {
         text.append("cm");
         fb.text(text, &minimal_font[0][0], point(2, 2));
 
-        /*
+
         // State debug info
         text = "Jumps: ";
         text.append(std::to_string(player_jump_count));
@@ -747,8 +768,14 @@ void render(uint32_t time_ms) {
             case enum_player_state::air:
                 text.append("AIR");
                 break;
+            case enum_player_state::near_wall_left:
+                text.append("NEAR L");
+                break;
             case enum_player_state::wall_left:
                 text.append("WALL L");
+                break;
+            case enum_player_state::near_wall_right:
+                text.append("NEAR R");
                 break;
             case enum_player_state::wall_right:
                 text.append("WALL R");
@@ -756,7 +783,7 @@ void render(uint32_t time_ms) {
         }
         fb.text(text, &minimal_font[0][0], point(2, 22));
 
-        text = "Last Jump: ";
+        /*text = "Last Jump: ";
         switch(last_wall_jump){
             case enum_player_state::ground:
                 text.append("GROUND");
@@ -771,7 +798,6 @@ void render(uint32_t time_ms) {
                 text.append("WALL R");
                 break;
         }
-        fb.text(text, &minimal_font[0][0], point(2, 32));
-        */
+        fb.text(text, &minimal_font[0][0], point(2, 32));*/
     }
 }
