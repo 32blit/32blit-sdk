@@ -9,9 +9,9 @@
 
 
 // blit framebuffer memory
-rgb565 __ltdc_buffer[320 * 240 * 2];
-surface __ltdc((uint8_t *)__ltdc_buffer, pixel_format::RGB565, size(320, 240));
-surface __fb((uint8_t *)__ltdc_buffer + (320 * 240 * 2), pixel_format::RGB, size(160, 120));
+blit::rgb565 __ltdc_buffer[320 * 240 * 2];
+blit::surface __ltdc((uint8_t *)__ltdc_buffer, blit::pixel_format::RGB565, blit::size(320, 240));
+blit::surface __fb((uint8_t *)__ltdc_buffer + (320 * 240 * 2), blit::pixel_format::RGB, blit::size(160, 120));
 
 // blit debug callback
 void debug(std::string message) {
