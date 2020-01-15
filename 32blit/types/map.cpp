@@ -3,6 +3,8 @@
 #include <algorithm>
 #include "map.hpp"
 
+using namespace blit;
+
 void Map::add_layer(std::string name, std::vector<uint8_t> tiles) {
   MapLayer &layer = layers[name];
   layer.map = this;
