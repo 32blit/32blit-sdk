@@ -8,8 +8,6 @@
 #include "../types/mat3.hpp"
 #include "../graphics/sprite.hpp"
 
-using namespace blit;
-
 namespace blit {
 
   // A `tilemap` describes a grid of tiles with optional transforms
