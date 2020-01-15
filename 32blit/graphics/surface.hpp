@@ -8,9 +8,6 @@
 #ifdef WIN32 
 #define __attribute__(A)
 #endif
-#ifdef _MSC_VER
-#define __attribute__(A)
-#endif
 
 #include "../types/rect.hpp"
 #include "../types/size.hpp"
