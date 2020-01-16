@@ -34,7 +34,7 @@ FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 uint32_t total_samples = 0;
 uint8_t dma_status = 0;
 
-blit::screen_mode mode = blit::screen_mode::lores;
+static blit::screen_mode mode = blit::screen_mode::lores;
 
 /* configure the screen surface to point at the reserved LTDC framebuffer */
 surface __ltdc((uint8_t *)&__ltdc_start, pixel_format::RGB565, size(320, 240));
