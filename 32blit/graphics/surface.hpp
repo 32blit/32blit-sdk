@@ -14,8 +14,6 @@
 #include "../types/pixel_format.hpp"
 #include "../graphics/blend.hpp"
 
-using namespace blit;
-
 namespace blit {
 
   struct spritesheet;

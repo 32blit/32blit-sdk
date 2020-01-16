@@ -174,7 +174,7 @@ uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
     bool round_bl = (feature_map & (TILE_BELOW_LEFT | TILE_BELOW | TILE_LEFT)) == 0;
     bool round_br = (feature_map & (TILE_BELOW_RIGHT | TILE_BELOW | TILE_RIGHT)) == 0;
 
-    rgba color_base = blit::hsv_to_rgba(((120 - tile_y) + 110.0f) / 120.0f, 0.5f, 0.8f);
+    blit::rgba color_base = blit::hsv_to_rgba(((120 - tile_y) + 110.0f) / 120.0f, 0.5f, 0.8f);
 
     if(tile & TILE_SOLID) {
         // Draw tiles without anti-aliasing to save code bloat
@@ -188,7 +188,7 @@ uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
                 if(round_bl && px == 0 && py == TILE_H - 1) continue;
                 if(round_br && px == TILE_H - 1 && py == TILE_H - 1) continue;
                 blit::fb.pen(color_base);
-                blit::fb.pixel(point(tile_x + px, tile_y + py));
+                blit::fb.pixel(blit::point(tile_x + px, tile_y + py));
             }
         }
     } else {
@@ -197,11 +197,11 @@ uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
             // for an empty tile.
             if (feature_map & TILE_LEFT) {
                 blit::fb.pen(color_base);
-                blit::fb.pixel(point(tile_x, tile_y));
+                blit::fb.pixel(blit::point(tile_x, tile_y));
             }
             if (feature_map & TILE_RIGHT) {
                 blit::fb.pen(color_base);
-                blit::fb.pixel(point(tile_x + TILE_W - 1, tile_y));
+                blit::fb.pixel(blit::point(tile_x + TILE_W - 1, tile_y));
             }
         }
         if(feature_map & TILE_BELOW) {
@@ -209,18 +209,18 @@ uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
             // of this one then it's a little pocket we can fill with water!
             // TODO: Make this not look rubbish
             if(feature_map & TILE_LEFT && feature_map & TILE_RIGHT) {
-                blit::fb.pen(rgba(200, 200, 255, 128));
-                blit::fb.rectangle(rect(tile_x, tile_y + (TILE_H / 2), TILE_W, TILE_H / 2));
+                blit::fb.pen(blit::rgba(200, 200, 255, 128));
+                blit::fb.rectangle(blit::rect(tile_x, tile_y + (TILE_H / 2), TILE_W, TILE_H / 2));
             }
             // Draw the bottom left/right rounded inside corners
             // for an empty tile.
             if(feature_map & TILE_LEFT) {
                 blit::fb.pen(color_base);
-                blit::fb.pixel(point(tile_x, tile_y + TILE_H - 1));
+                blit::fb.pixel(blit::point(tile_x, tile_y + TILE_H - 1));
             }
             if(feature_map & TILE_RIGHT) {
                 blit::fb.pen(color_base);
-                blit::fb.pixel(point(tile_x + TILE_W - 1, tile_y + TILE_H - 1));
+                blit::fb.pixel(blit::point(tile_x + TILE_W - 1, tile_y + TILE_H - 1));
             }
         }
     }
@@ -623,18 +623,18 @@ void render_summary() {
     } else {
         text.append("Random Practice");
     }
-    fb.text(text, &minimal_font[0][0], point(10, (SCREEN_H / 2) + 20));
+    blit::fb.text(text, &minimal_font[0][0], blit::point(10, (SCREEN_H / 2) + 20));
 
     if(current_random_source == RANDOM_TYPE_PRNG) {
         char buf[9];
         sprintf(buf, "%08lX", current_random_seed);
         text = "Level seed: ";
         text.append(buf);
-        fb.text(text, &minimal_font[0][0], point(10, (SCREEN_H / 2) + 30));
+        blit::fb.text(text, &minimal_font[0][0], blit::point(10, (SCREEN_H / 2) + 30));
     }
 
     text = "Press B";
-    fb.text(text, &minimal_font[0][0], point(10, (SCREEN_H / 2) + 40));
+    blit::fb.text(text, &minimal_font[0][0], blit::point(10, (SCREEN_H / 2) + 40));
 }
 
 void render(uint32_t time_ms) {
@@ -647,9 +647,9 @@ void render(uint32_t time_ms) {
 
         // Draw the player
         blit::fb.pen(blit::rgba(255, 255, 255));
-        blit::fb.rectangle(rect(player_position.x, player_position.y, PLAYER_W, PLAYER_H));
+        blit::fb.rectangle(blit::rect(player_position.x, player_position.y, PLAYER_W, PLAYER_H));
         blit::fb.pen(blit::rgba(255, 50, 50));
-        blit::fb.rectangle(rect(player_position.x, player_position.y, PLAYER_W, 1));
+        blit::fb.rectangle(blit::rect(player_position.x, player_position.y, PLAYER_W, 1));
 
         blit::fb.pen(blit::rgba(0, 0, 0, 200));
         blit::fb.clear();
@@ -657,39 +657,39 @@ void render(uint32_t time_ms) {
         uint8_t x = 10;
         for(auto c : text) {
             uint8_t y = 20 + (5.0f * sin((time_ms / 250.0f) + (float(x) / text.length() * 2.0f * M_PIf)));
-            rgba color_letter = blit::hsv_to_rgba((x - 10) / 140.0f, 0.5f, 0.8f);
+            blit::rgba color_letter = blit::hsv_to_rgba((x - 10) / 140.0f, 0.5f, 0.8f);
             blit::fb.pen(color_letter);
             char buf[2];
             buf[0] = c;
             buf[1] = '\0';
-            blit::fb.text(buf, &minimal_font[0][0], point(x, y));
+            blit::fb.text(buf, &minimal_font[0][0], blit::point(x, y));
             x += 10;
         }
-        
-        blit::fb.pen(rgba(255, 255, 255, 150));
+
+        blit::fb.pen(blit::rgba(255, 255, 255, 150));
 
         render_summary();
 
         return;
     }
 
-    rgba color_water = blit::hsv_to_rgba(((120 - 120) + 110.0f) / 120.0f, 1.0f, 0.5f);
+    blit::rgba color_water = blit::hsv_to_rgba(((120 - 120) + 110.0f) / 120.0f, 1.0f, 0.5f);
     color_water.a = 255;
 
     if(water_level > 0){
         blit::fb.pen(color_water);
-        blit::fb.rectangle(rect(0, SCREEN_H - water_level, SCREEN_W, water_level + 1));
+        blit::fb.rectangle(blit::rect(0, SCREEN_H - water_level, SCREEN_W, water_level + 1));
 
         for(auto x = 0; x < SCREEN_W; x++){
             uint16_t offset = x + uint16_t(sin(time_ms / 500.0f) * 5.0f);
             if((offset % 5) > 0){
-                blit::fb.pixel(point(x, SCREEN_H - water_level - 1));
+                blit::fb.pixel(blit::point(x, SCREEN_H - water_level - 1));
             }
             if(((offset + 2) % 5) == 0){
-                blit::fb.pixel(point(x, SCREEN_H - water_level - 2));
+                blit::fb.pixel(blit::point(x, SCREEN_H - water_level - 2));
             }
             if(((offset + 3) % 5) == 0){
-                blit::fb.pixel(point(x, SCREEN_H - water_level - 2));
+                blit::fb.pixel(blit::point(x, SCREEN_H - water_level - 2));
             }
         }
     }
@@ -698,9 +698,9 @@ void render(uint32_t time_ms) {
 
     // Draw the player
     blit::fb.pen(blit::rgba(255, 255, 255));
-    blit::fb.rectangle(rect(player_position.x, player_position.y, PLAYER_W, PLAYER_H));
+    blit::fb.rectangle(blit::rect(player_position.x, player_position.y, PLAYER_W, PLAYER_H));
     blit::fb.pen(blit::rgba(255, 50, 50));
-    blit::fb.rectangle(rect(player_position.x, player_position.y, PLAYER_W, 1));
+    blit::fb.rectangle(blit::rect(player_position.x, player_position.y, PLAYER_W, 1));
 
     /*
     // Show number of active passages
@@ -712,48 +712,48 @@ void render(uint32_t time_ms) {
     if(water_level > 0){
         color_water.a = 100;
         blit::fb.pen(color_water);
-        blit::fb.rectangle(rect(0, SCREEN_H - water_level, SCREEN_W, water_level + 1));
+        blit::fb.rectangle(blit::rect(0, SCREEN_H - water_level, SCREEN_W, water_level + 1));
 
         for(auto x = 0; x < SCREEN_W; x++){
             uint16_t offset = x + uint16_t(sin(time_ms / 500.0f) * 5.0f);
             if((offset % 5) > 0){
-                blit::fb.pixel(point(x, SCREEN_H - water_level - 1));
+                blit::fb.pixel(blit::point(x, SCREEN_H - water_level - 1));
             }
             if(((offset + 2) % 5) == 0){
-                blit::fb.pixel(point(x, SCREEN_H - water_level - 2));
+                blit::fb.pixel(blit::point(x, SCREEN_H - water_level - 2));
             }
             if(((offset + 3) % 5) == 0){
-                blit::fb.pixel(point(x, SCREEN_H - water_level - 2));
+                blit::fb.pixel(blit::point(x, SCREEN_H - water_level - 2));
             }
         }
     }
 
     if(game_state == enum_state::dead) {
-        fb.pen(rgba(128, 0, 0, 200));
-        fb.rectangle(rect(0, 0, SCREEN_W, SCREEN_H));
-        fb.pen(rgba(255, 0, 0, 255));
-        fb.text("YOU DIED!", &minimal_font[0][0], point((SCREEN_W / 2) - 20, (SCREEN_H / 2) - 4));
+        blit::fb.pen(blit::rgba(128, 0, 0, 200));
+        blit::fb.rectangle(blit::rect(0, 0, SCREEN_W, SCREEN_H));
+        blit::fb.pen(blit::rgba(255, 0, 0, 255));
+        blit::fb.text("YOU DIED!", &minimal_font[0][0], blit::point((SCREEN_W / 2) - 20, (SCREEN_H / 2) - 4));
 
         // Round stats
-        fb.pen(rgba(255, 255, 255));
+        blit::fb.pen(blit::rgba(255, 255, 255));
 
         std::string text = "";
 
         text = "You climbed: ";
         text.append(std::to_string(player_progress));
         text.append("cm");
-        fb.text(text, &minimal_font[0][0], point(10, (SCREEN_H / 2) + 10));
+        blit::fb.text(text, &minimal_font[0][0], blit::point(10, (SCREEN_H / 2) + 10));
 
         render_summary();
     }
     else
     {
         // Draw the HUD
-        fb.pen(rgba(255, 255, 255));
+        blit::fb.pen(blit::rgba(255, 255, 255));
 
         text = std::to_string(player_progress);
         text.append("cm");
-        fb.text(text, &minimal_font[0][0], point(2, 2));
+        blit::fb.text(text, &minimal_font[0][0], blit::point(2, 2));
 
         /*
         // State debug info

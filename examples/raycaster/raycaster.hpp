@@ -60,12 +60,12 @@ struct sprite {
 };
 
 struct star {
-	point position;
+	blit::point position;
 	uint8_t brightness;
 };
 
-extern spritesheet sprites;
-extern timer timer1;
+extern blit::spritesheet sprites;
+extern blit::timer timer1;
 
 void edges();
 void blur(uint8_t passes);
