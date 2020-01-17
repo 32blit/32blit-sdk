@@ -18,6 +18,13 @@ void debug(std::string message) {
 	std::cout << message << std::endl;
 }
 
+int blit_debugf(const char * psFormatString, ...)
+{
+	va_list args;
+	va_start(args, psFormatString);
+	return vprintf(psFormatString, args);
+}
+
 // blit screenmode callback
 blit::screen_mode _mode = blit::screen_mode::lores;
 void set_screen_mode(blit::screen_mode new_mode) {
@@ -93,6 +100,7 @@ void System::run() {
 	blit::now = ::now;
 	blit::random = ::blit_random;
 	blit::debug = ::debug;
+	blit::debugf = ::blit_debugf;
 	blit::set_screen_mode = ::set_screen_mode;
 	blit::update = ::update;
 	blit::render = ::render;
