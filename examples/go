@@ -21,6 +21,8 @@ then
 
 	make -j8 # > /dev/null
 
+	../../../tools/dfu build --force --out $PROJECT.dfu $PROJECT.bin
+
 	echo " - flashing to device (make sure it's in DFU mode!)"
 
 	../../../tools/wsl-flash $PROJECT.dfu # > /dev/null
