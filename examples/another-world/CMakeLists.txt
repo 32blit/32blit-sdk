@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 2.8.9)
+project (another-world)
+include (../../32blit.cmake)
+set(SOURCE_FILES engine.cpp)
+blit_executable (another-world another-world.cpp virtual-machine.cpp)
