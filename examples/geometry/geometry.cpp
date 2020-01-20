@@ -111,7 +111,7 @@ polygon split_polygon(polygon *poly, vec2 a, vec2 b) {
     if (split_b.size() > 0) {
         poly->points = std::vector<vec2>(split_a);
         poly->origin = middle_of_polygon(poly->points);
-        poly->rotational_velocity += 0.005;
+        poly->rotational_velocity += 0.005f;
 
         rect bounds = bounds_of_polygon(poly->points);
         poly->prune = (bounds.w * bounds.h) < 70;
@@ -221,7 +221,7 @@ void init() {
 
 void render(uint32_t time) {
     uint32_t ms_start = now();
-    float h = time / (M_PI * 2) / 100.0;
+    float h = time / (M_PI * 2) / 100.0f;
 
     fb.pen(rgba(0, 0, 0));
     fb.clear();
@@ -330,7 +330,7 @@ void update(uint32_t time) {
     polygons.erase(std::remove_if(polygons.begin(), polygons.end(), prune_polygons), polygons.end());
 
     for(auto &polygon: polygons) {
-        polygon.rotational_velocity *= 0.999;
+        polygon.rotational_velocity *= 0.999f;
         rotate_polygon(polygon.points, polygon.rotational_velocity, polygon.origin);
         translate_polygon(polygon, polygon.velocity);
 
@@ -351,11 +351,11 @@ void update(uint32_t time) {
 
         if(offset.x){
             polygon.velocity.x *= -1;
-            polygon.rotational_velocity += 0.0005;
+            polygon.rotational_velocity += 0.0005f;
         }
         if(offset.y){
             polygon.velocity.y *= -1;
-            polygon.rotational_velocity += 0.0005;
+            polygon.rotational_velocity += 0.0005f;
         }
 
         translate_polygon(polygon, offset);

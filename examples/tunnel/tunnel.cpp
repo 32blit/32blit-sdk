@@ -46,14 +46,14 @@ void tunnel_test(uint32_t time_ms) {
 	for (int scanline = 0; scanline < fb.bounds.w; scanline++) {
 
 		float z = 3.0; // Distance from our imaginary wall plane
-		z += sin((time_ms + scanline) / 1000.0);
-		y = sin((time_ms + scanline) / 200.0);
+		z += sin((time_ms + scanline) / 1000.0f);
+		y = sin((time_ms + scanline) / 200.0f);
 
 		int offset = scanline;
 
 		int wall_height = fb.bounds.h / z;
 		int wall_offset_top = (fb.bounds.h - wall_height) / 2;
-		float wall_offset = y * (wall_height / 4.0);
+		float wall_offset = y * (wall_height / 4.0f);
 
 		wall_offset_top -= wall_offset;
 
@@ -99,7 +99,7 @@ void tunnel_test(uint32_t time_ms) {
 
 		for (int ceil_y = 0; ceil_y < wall_offset_top; ceil_y++) {
 
-			float distance = (float)fb.bounds.h / (2.0 * (fb.bounds.h - ceil_y - wall_offset) - fb.bounds.h);
+			float distance = (float)fb.bounds.h / (2.0f * (fb.bounds.h - ceil_y - wall_offset) - fb.bounds.h);
 			float weight = distance / z;
 
 			float t_size = float(fb.bounds.h) / distance;
@@ -128,10 +128,10 @@ void tunnel_test(uint32_t time_ms) {
 			);
 
 			uv.x = uv.x * weight;
-			uv.x += x * (1.0 - weight);
+			uv.x += x * (1.0f - weight);
 
 			uv.y = uv.y * weight;
-			uv.y += z * (1.0 - weight);
+			uv.y += z * (1.0f - weight);
 
 			uv.x -= floor(uv.x);
 			uv.y -= floor(uv.y);
@@ -148,7 +148,7 @@ void tunnel_test(uint32_t time_ms) {
 
 		for (int floor_y = wall_offset_top + wall_height; floor_y < fb.bounds.h; floor_y++) {
 
-			float distance = (float)fb.bounds.h / (2.0 * (floor_y + wall_offset) - fb.bounds.h);
+			float distance = (float)fb.bounds.h / (2.0f * (floor_y + wall_offset) - fb.bounds.h);
 			float weight = distance / z;
 
 			float t_size = float(fb.bounds.h) / distance;
@@ -177,10 +177,10 @@ void tunnel_test(uint32_t time_ms) {
 			);
 
 			uv.x = uv.x * weight;
-			uv.x += x * (1.0 - weight);
+			uv.x += x * (1.0f - weight);
 
 			uv.y = uv.y * weight;
-			uv.y += z * (1.0 - weight);
+			uv.y += z * (1.0f - weight);
 
 			uv.x -= floor(uv.x);
 			uv.y -= floor(uv.y);
@@ -238,7 +238,7 @@ void tunnel_test1(uint8_t time_ms) {
 				c.y -= 127;
 			}*/
 
-			c.x -= (scanline - (fb.bounds.w / 2)) / 200.0;
+			c.x -= (scanline - (fb.bounds.w / 2)) / 200.0f;
 			/*while (c.x < 0) {
 				c.x = 127 - c.x;
 			}
@@ -267,8 +267,8 @@ void render(uint32_t time_ms) {
 
 	fb.alpha = 255;
 
-	int x = 20 + (sin(time_ms / 1000.0) * 10.0f);
-	int y = 40 + (sin(time_ms / 1500.0) * 30.0f);
+	int x = 20 + (sin(time_ms / 1000.0f) * 10.0f);
+	int y = 40 + (sin(time_ms / 1500.0f) * 30.0f);
 
 	fb.blit(ss_ship, rect(0, 0, 64, 32), point(x, y));
 
