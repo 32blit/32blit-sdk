@@ -22,7 +22,9 @@ int blit_debugf(const char * psFormatString, ...)
 {
 	va_list args;
 	va_start(args, psFormatString);
-	return vprintf(psFormatString, args);
+	int ret = vprintf(psFormatString, args);
+	va_end(args);
+	return ret;
 }
 
 // blit screenmode callback
