@@ -78,6 +78,14 @@ void handle_event(SDL_Event &event) {
 			blit_input->handle_controller_motion(event.caxis.axis, event.caxis.value);
 			break;
 
+		case SDL_CONTROLLERDEVICEADDED:
+			SDL_GameControllerOpen(event.cdevice.which);
+			break;
+
+		case SDL_CONTROLLERDEVICEREMOVED:
+			SDL_GameControllerClose(SDL_GameControllerFromInstanceID(event.cdevice.which));
+			break;
+
 		case SDL_RENDER_TARGETS_RESET:
 			std::cout << "Targets reset" << std::endl;
 			break;
