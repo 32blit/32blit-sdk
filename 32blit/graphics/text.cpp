@@ -20,7 +20,7 @@ namespace blit {
    * \param variable
    */
   void surface::text(std::string message, const uint8_t *font, const point &p, bool variable, text_align align) {
-    text(message, font, rect(p.x, p.y, 10000, 10000), variable, align);
+    text(message, font, rect(p.x, p.y, 0, 0), variable, align);
   }
 
   /**
@@ -95,7 +95,7 @@ namespace blit {
 
       // increment the cursor
       c.x += char_width;
-      if ((c.x > r.x + r.w) | (chr == 10)) {
+      if ((r.w && c.x > r.x + r.w) || (chr == 10)) {
         c.x = r.x;
         c.y += 9;
 

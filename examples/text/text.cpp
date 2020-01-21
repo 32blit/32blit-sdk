@@ -24,7 +24,7 @@ void render(uint32_t time) {
     blit::fb.text(text, &minimal_font[0][0], text_rect, variable_width, alignment);
 
     auto size = blit::fb.measure_text(text, &minimal_font[0][0], variable_width);
-    blit::fb.text("bounds: " + std::to_string(size.w) + "x" + std::to_string(size.h), &minimal_font[0][0], blit::point(0, 0));
+    blit::fb.text("bounds: " + std::to_string(size.w) + "x" + std::to_string(size.h), &minimal_font[0][0], blit::point(80, 0), true, blit::text_align::center_h);
 }
 
 void update(uint32_t time) {
