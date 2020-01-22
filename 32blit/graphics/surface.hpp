@@ -32,7 +32,25 @@ namespace blit {
   };
 #pragma pack(pop)
 
+  enum text_align {
+    left          = 0b0000,
+    center_h      = 0b0100,
+    right         = 0b1000,
+    top           = 0b0000,
+    center_v      = 0b0001,
+    bottom        = 0b0010,
 
+    // combinations of above
+    top_left      = top      | left,
+    center_left   = center_v | left,
+    bottom_left   = bottom   | left,
+    top_center    = top      | center_h,
+    center_center = center_v | center_h,
+    bottom_center = bottom   | center_h,
+    top_right     = top      | right,
+    center_right  = center_v | right,
+    bottom_right  = bottom   | right,
+  };
 
   struct surface {
 
@@ -94,8 +112,11 @@ namespace blit {
     void line(const point &p1, const point &p2);
     void triangle(point p1, point p2, point p3);
     void polygon(std::vector<point> p);
-    void text(std::string message, const uint8_t *font, const rect &r, bool variable = true);
-    void text(std::string message, const uint8_t *font, const point &p, bool variable = true);
+
+    void text(std::string message, const uint8_t *font, const rect &r, bool variable = true, text_align align = text_align::top_left);
+    void text(std::string message, const uint8_t *font, const point &p, bool variable = true, text_align align = text_align::top_left);
+    size measure_text(std::string message, const uint8_t *font, bool variable = true);
+    std::string wrap_text(std::string message, int32_t width, const uint8_t *font, bool variable = true);
 
     /*void outline_circle(const point &c, int32_t r);
     
