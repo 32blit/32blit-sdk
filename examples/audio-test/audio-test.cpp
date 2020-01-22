@@ -42,9 +42,11 @@ void update(uint32_t time_ms) {
   static uint16_t tick = 0;
 
   tick++;
-  uint16_t row = (tick >> 1) % 3000;
-  /*
+  uint16_t row = (tick >> 1) % 2000;
+ 
+ 
   for(auto i = 0; i < 3; i++) {
+   
     uint8_t *sample = song + (row * 25) + (i * 7);
 
     uint32_t f = (sample[1] << 8) | sample[0];
@@ -52,7 +54,7 @@ void update(uint32_t time_ms) {
 
     uint32_t fhz = (f * 98525L) / 1677721L;
 
-    blit::audio::channels[i].pulse_width = (((sample[3] & 0xf) << 8) | sample[2]) >> 4;
+    blit::audio::channels[i].pulse_width = ((((sample[3] & 0xf) << 8) | sample[2])) >> 4;
     blit::audio::channels[i].frequency   = fhz;
 
     if(voices & 0b01110000) {
@@ -61,6 +63,7 @@ void update(uint32_t time_ms) {
     }
 
     blit::audio::channels[i].voices      = voices & 0b11110000;
+    //blit::audio::channels[i].voices      = blit::audio::audio_voice::SINE;
     blit::audio::channels[i].gate        = voices & 0b1;
 
     blit::audio::channels[i].attack_ms   = a_to_ms[(sample[5] & 0xf0) >> 4];
@@ -78,11 +81,23 @@ void update(uint32_t time_ms) {
   }  
 
   blit::audio::volume      = s_to_vol[volume & 0x0f];
-*/
+
+
+
+/*
+NOISE     = 128, 
+      SQUARE    = 64, 
+      SAW       = 32, 
+      TRIANGLE  = 16, 
+      SINE      = 8,
+      WAVE      = 4 */
+/*
+  uint8_t vv[5] = {blit::audio::audio_voice::NOISE, blit::audio::audio_voice::SQUARE, blit::audio::audio_voice::SAW, blit::audio::audio_voice::TRIANGLE, blit::audio::audio_voice::SINE};
+  uint8_t v = (tick / 500) % 5;
 
   // seashore demo
-  blit::audio::channels[0].frequency   = 4200;
-  blit::audio::channels[0].voices      = blit::audio::audio_voice::NOISE;
+ blit::audio::channels[0].frequency   = 400;
+  blit::audio::channels[0].voices      = vv[v];//blit::audio::audio_voice::SQUARE;
   blit::audio::channels[0].gate        = 1;
 
   blit::audio::channels[0].attack_ms   = 0;
@@ -90,9 +105,11 @@ void update(uint32_t time_ms) {
   blit::audio::channels[0].sustain     = 0xffff;
   blit::audio::channels[0].release_ms  = 0;
 
-  blit::audio::channels[0].volume      = (sin(float(tick) / 50.0f) * 6000) + 7000;
+  blit::audio::channels[0].volume      = 0xffff;// (sin(float(tick) / 50.0f) * 0x7fff) + 0x7fff;
+  //blit::audio::volume      = (sin(float(tick) / 50.0f) * 0x3fff) + 0x3fff;
 
-
+  blit::audio::volume = 0x7fff;
+*/
 /*
   //blit::audio::channels[i].pw         = ((sample[3] & 0xf) << 8) | sample[2];
   blit::audio::channels[0].frequency  = 440;
@@ -101,15 +118,15 @@ void update(uint32_t time_ms) {
   blit::audio::channels[0].decay_ms   = 2000;
   blit::audio::channels[0].sustain    = 0xafff;
   blit::audio::channels[0].release_ms = 2000;
-
-
+*/
+/*
   if(time_ms > 5000) {
     blit::audio::channels[0].gate       = 0;
   }
   else{
     blit::audio::channels[0].gate       = 1;
-  }*/
-
+  }
+*/
 
 
   last_time_ms = time_ms;

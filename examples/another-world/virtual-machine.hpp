@@ -11,21 +11,22 @@
 
 namespace another_world {
 
-  #define HEAP_SIZE 150 * 1024
-  #define REGISTER_COUNT 256
-  #define THREAD_COUNT 64
+	constexpr uint32_t	HEAP_SIZE				= 200000;
+	constexpr uint16_t	REGISTER_COUNT	= 256;
+	constexpr uint16_t	THREAD_COUNT		= 64;
 
   extern uint16_t read_uint16_bigendian(const void* p);
   extern uint32_t read_uint32_bigendian(const void* p);
 
   extern bool (*read_file)(std::string filename, uint32_t offset, uint32_t length, char* buffer);
   extern void (*debug)(const char *fmt, ...);
-	extern void (*debug_log)(const char *fmt, ...);
   extern void (*update_screen)(uint8_t *buffer);
 	extern void (*set_palette)(uint16_t* palette);
-	extern void (*debug_yield)();
+	extern void (*debug_display_update)();
 
-  extern uint8_t heap[HEAP_SIZE];
+	void init_resources();
+	void load_chapter_resources();
+	void load_needed_resources();
 
 	// three buffers for 320 x 200 (4 bits per pixel)
 	extern uint8_t vram0[320 * 200 / 2];
@@ -35,21 +36,32 @@ namespace another_world {
 
 	extern uint8_t* vram[4];
 
+	// each chapter of the game has a set of fixed resources related to it.
+	// these include the vm code, video 1, video 2, and palette
+	struct ChapterResources {
+		uint8_t palette;
+		uint8_t code;
+		uint8_t background;
+		uint8_t characters;
+	};
+
+	struct Input {
+		bool up, down, left, right, action;
+	};
+
+	extern Input input;
+
 	struct Point {
-		int16_t x;
-		int16_t y;
+		int16_t x, y;
 	};
 
 	struct Rect {
-		int16_t x;
-		int16_t y;
-		int16_t w;
-		int16_t h;
+		int16_t x, y, w, h;
 	};
 
   struct Resource {
-    enum State { NOT_NEEDED = 0, LOADED = 1, NEEDS_LOADING = 2, END_OF_MEMLIST = 0xff };
-    enum Type { SOUND = 0, MUSIC = 1, IMAGE = 2, PALETTE = 3, BYTECODE = 4, POLYGON = 5, BANK = 6 };
+    enum class State { NOT_NEEDED = 0, LOADED = 1, NEEDS_LOADING = 2, END_OF_MEMLIST = 0xff };
+    enum class Type { SOUND = 0, MUSIC = 1, IMAGE = 2, PALETTE = 3, BYTECODE = 4, POLYGON = 5, BANK = 6 };
 
     State     state;
     Type      type;
@@ -62,7 +74,10 @@ namespace another_world {
     bool load(uint8_t* destination);
   };
   
-  extern std::vector<Resource*> resources;
+	extern std::vector<Resource*> resources;
+	extern uint32_t resource_heap_offset;
+	extern uint8_t resource_heap[HEAP_SIZE];
+	extern ChapterResources chapter_resources[10];
 
   struct VirtualMachine {
 	 uint32_t ticks = 0;
@@ -84,6 +99,7 @@ namespace another_world {
     void init();
     void initialise_chapter(uint16_t id);
     void execute_threads();
+		void process_input();
 
     uint8_t fetch_byte(uint16_t* pc);
 		uint8_t fetch_byte(uint8_t* b, uint32_t* c);
@@ -98,9 +114,6 @@ namespace another_world {
 		void point(uint8_t* target, uint8_t color, Point* point);
 
   };
-
-  void load_resource_list();
-  void load_needed_resources();
 
 	const std::string opcode_names[29] = {
 		"movi",   // 0x00   movi  d0, #1234
