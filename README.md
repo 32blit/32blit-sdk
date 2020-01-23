@@ -66,4 +66,5 @@ Refer to the OS/platform specific documentation files in the `docs/` folder for 
 
 If you see `cannot create target because another target with the same name already exists` you've probably run `cmake ..` in the wrong directory (the project directory rather than the build directory), you should remove all but your project files and `cmake ..` again from the build directory.
 
+If you are getting complaints on WSL / Linux about python modules missing, you may have accidently installed them with sudo. When using pip3 to install modules do not use sudo, this will make sure that modules are installed for the current user.
 
