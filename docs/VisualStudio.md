@@ -51,3 +51,7 @@ cd vcpkg
 To find the built files use `Project` > `CMake Cache` > `Open in Explorer`.
 
 [More info about using CMake with Visual Studio](https://docs.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio?view=vs-2019)
+
+## Troubleshooting
+
+If you see errors such as `Cannot open include file: 'SDL.h': No such file or directory` and `cannot open file 'SDL2.lib'` you've probably extracted the SDL development libraries wrong. Inside your sdl folders you should have the folders docs, include and lib not SDL2-2.0.10.
