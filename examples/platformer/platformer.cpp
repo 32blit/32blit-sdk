@@ -18,7 +18,7 @@ uint8_t __m[320 * 240] __SECTION__(".m");
 surface m((uint8_t *)__m, pixel_format::M, screen_size);
 
 const int max_light_radius = 60;
-uint8_t __mshad[(max_light_radius * 2 + 1) * (max_light_radius * 2 + 1)] __SECTION__("m");
+uint8_t __mshad[(max_light_radius * 2 + 1) * (max_light_radius * 2 + 1)] __SECTION__(".m");
 surface mshad((uint8_t *)__mshad, pixel_format::M, size(max_light_radius * 2 + 1, max_light_radius * 2 + 1));
 
 point world_to_screen(const vec2 &p);
