@@ -100,6 +100,11 @@ target_compile_definitions(BlitHalSTM32
 		-DSTM32H750xx
 )
 
+target_compile_options(BlitHalSTM32
+	PRIVATE
+		-fpermissive
+)
+
 set(MCU_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}" PARENT_SCOPE)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -specs=nano.specs -T ${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}" PARENT_SCOPE)
 
