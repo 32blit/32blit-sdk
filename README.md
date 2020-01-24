@@ -28,7 +28,7 @@ Refer to the OS specific docs:
 
 * [Linux users](docs/Linux.md)
 * [Windows users](docs/Windows.md) or if you are [Visual Studio user](docs/VisualStudio.md)
-* [MacOSX users](docs/MaxOSX.md)
+* [macOS users](docs/macOS.md)
 
 If you want to run the examples in a browser, refer to the [Emscripten docs](docs/Emscripten.md)
 

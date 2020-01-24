@@ -1,4 +1,4 @@
-# Building & Running on OSX
+# Building & Running on macOS
 
 You will need build tools and CMAKE. Assuming you have [homebrew](https://docs.brew.sh/Installation) installed:
 
