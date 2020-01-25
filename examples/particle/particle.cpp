@@ -117,7 +117,7 @@ void spark(uint32_t time_ms) {
       p.vel += gravity;
       p.pos += p.vel * td;
       if (p.pos.y > 0)
-        p.vel.y *= -0.7;
+        p.vel.y *= -0.7f;
       p.age++;
 
       int a = p.age / 2;

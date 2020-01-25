@@ -66,8 +66,8 @@ struct grain {
       np = tp;
     } else {
       // optimised -45 degree rotations
-      float rx = v.x *  0.70710 - v.y * -0.70710;
-      float ry = v.x * -0.70710 + v.y *  0.70710;
+      float rx = v.x *  0.70710f - v.y * -0.70710f;
+      float ry = v.x * -0.70710f + v.y *  0.70710f;
       v.x = rx;
       v.y = ry;
 

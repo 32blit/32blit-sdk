@@ -5,6 +5,9 @@
 #include "engine.hpp"
 #include "tweening.hpp"
 
+#undef M_PI
+#define M_PI           3.14159265358979323846f  /* pi */
+
 namespace blit {
   std::vector<tween *> tweens;
 
