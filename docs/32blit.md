@@ -16,7 +16,12 @@ The result of your build will be a `.bin`, `.hex`, `.elf` and DfuSe-compatible `
 
 ## Uploading to the 32blit via DFU
 
+### Prepare the device
+
+To enter DFU mode either hold the X & Y buttons and press the reset button or select `dfu mode` from the on device menu. The screen will go dark, this is normal.
+
 ### Linux and macOS
+
 Install `dfu-util` from your package manager then enter:
 ```
 sudo dfu-util -a 0 -s 0x08000000 -D
