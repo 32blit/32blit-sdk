@@ -41,11 +41,11 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-DTCMRAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 53K
-FRAMEBUFFER (rw)    : ORIGIN = 0x2000D400, LENGTH = 75K
+DTCMRAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 128K
 RAM_D1 (xrw)        : ORIGIN = 0x24000000, LENGTH = 362K
 LTDC (rw)           : ORIGIN = 0x2405A800, LENGTH = 150K
-RAM_D2 (xrw)        : ORIGIN = 0x30000000, LENGTH = 288K
+RAM_D2 (xrw)        : ORIGIN = 0x30000000, LENGTH = 138K
+FRAMEBUFFER (rw)    : ORIGIN = 0x30022800, LENGTH = 150K
 RAM_D3 (xrw)        : ORIGIN = 0x38000000, LENGTH = 64K
 ITCMISR (xrw)       : ORIGIN = 0x00000000, LENGTH = 4K
 ITCMRAM (xrw)       : ORIGIN = 0x00001000, LENGTH = 60K

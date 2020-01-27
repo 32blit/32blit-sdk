@@ -40,7 +40,7 @@ namespace blit {
   // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+--->
 
   namespace audio {
-    #define CHANNEL_COUNT 4
+    #define CHANNEL_COUNT 8
 
     extern uint32_t sample_rate;
     extern uint32_t frame_ms;       // number of milliseconds per audio frame (Q16)
@@ -67,7 +67,7 @@ namespace blit {
         uint16_t  sustain       = 0xffff; // sustain volume
         uint16_t  release_ms    = 1;      // release period
         uint16_t  pulse_width   = 0x7f;   // duty cycle of square voice (default 50%)
-        int16_t  noise         = 0;      // current noise value
+        int16_t   noise         = 0;      // current noise value
     
         uint32_t  voice_offset  = 0;      // voice offset (Q8)
 
@@ -76,6 +76,9 @@ namespace blit {
 
         uint16_t  adsr          = 0;
         uint16_t  attack_start_adsr     = 0;
+
+        void trigger_attack() {time_ms = 0; attack_start_adsr = adsr; gate = 1;}
+        void trigger_release() {gate = 0;}
     };
 
     extern audio_channel channels[CHANNEL_COUNT];
