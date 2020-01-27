@@ -117,19 +117,6 @@ namespace blit {
 
       sample = (sample * volume) >> 16;
 
-
-      static int32_t last_sample = 0;
-
-      // apply global volume
-      //float delay = blit::joystick.y + 1.0f;
-      //float freq = blit::joystick.x + 1.0f;
-
-      float ePow = (1-exp(- 0.02 * 2 * M_PI * 5.0));
-      
-      last_sample += (sample - last_sample) * ePow;
-      sample = last_sample;
-      // apply low pass filter
-
       // clip result to 16-bit and convert to unsigned
       sample = sample <= -0x7fff ? -0x7fff : (sample > 0x7fff ? 0x7fff : sample);      
       sample += 0x7fff;
