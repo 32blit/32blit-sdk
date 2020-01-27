@@ -23,7 +23,7 @@ If you want to deploy to the device, you will also need to download a DFU tool. 
 
 To run the examples from WSL on Windows you will need to have XMing (or another XWindow Server) running on Windows. Click on the following link which will help you install and setup WSL and XMing together.
 
-- [Information how to run XMing with WSL](https://virtualizationreview.com/articles/2017/02/08/ graphical-programs-on-windows-subsystem-on-linux.aspx)
+- [Information how to run XMing with WSL](https://virtualizationreview.com/articles/2017/02/08/graphical-programs-on-windows-subsystem-on-linux.aspx)
 - [XMing homepage](http://www.straightrunning.com/XmingNotes/)
 - Direct link to [download XMing setup](https://sourceforge.net/projects/xming/files/Xming/6.9.0.31/Xming-6-9-0-31-setup.exe/download)
 
