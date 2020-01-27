@@ -21,14 +21,6 @@ Audio::Audio() {
 
     audio_device = SDL_OpenAudioDevice(NULL, 0, desired, audio_spec, 0);
 
-    if(desired->freq != audio_spec->freq) {
-        std::cout << "Audio Init Failed: Invalid Frequency" << std::endl;
-    }
-
-    if(desired->format != audio_spec->format) {
-        std::cout << "Audio Init Failed: Invalid Format" << std::endl;
-    }
-
     delete desired;
 
     if(audio_device == 0){
