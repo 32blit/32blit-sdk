@@ -71,20 +71,12 @@ int blit_debugf(const char * psFormatString, ...)
 	va_end(args);
 	return ret;
 }
+
 void blit_debug(std::string message) {
 	printf(message.c_str());
-    fb.pen(rgba(255, 255, 255));
-    fb.text(message, &minimal_font[0][0], point(0, 0));
+  fb.pen(rgba(255, 255, 255));
+  fb.text(message, &minimal_font[0][0], point(0, 0));
 }
-
-/*void HAL_DACEx_ConvHalfCpltCallbackCh2(DAC_HandleTypeDef *hdac){
-  dma_status = DAC_DMA_HALF_COMPLETE;
-}
-
-void HAL_DACEx_ConvCpltCallbackCh2(DAC_HandleTypeDef *hdac){
-  dma_status = DAC_DMA_COMPLETE;
-}*/
-
 
 uint32_t audio_tick_cycle_count = 0;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
@@ -92,44 +84,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     uint32_t scc = DWT->CYCCNT;
     hdac1.Instance->DHR12R2 = blit::audio::get_audio_frame() >> 4;
     audio_tick_cycle_count = DWT->CYCCNT - scc;
-
-
   }
 }
-
-
-
-/*
-uint32_t blit_update_dac(FIL *audio_file) {
-  uint16_t buffer_offset = 0;
-  unsigned int read = 0;
-  uint8_t buf[DAC_BUFFER_SIZE / 2] = {0};
-
-  if(dma_status){
-    if(dma_status == DAC_DMA_COMPLETE){
-      buffer_offset = (DAC_BUFFER_SIZE / 2);
-    }
-    dma_status = 0;
-    FRESULT err = f_read(audio_file, buf, DAC_BUFFER_SIZE / 2, &read);
-
-    if(err == FR_OK){
-      for(unsigned int x = 0; x < read; x++){
-        dac_buffer[x + buffer_offset] = buf[x] * 16.0f * blit::volume;
-      }
-      if(read < DAC_BUFFER_SIZE / 2){
-        // If we have a short read, seek back to 0 in our audio file
-        // and fill the rest of the DMA buffer with zeros cos it's
-        // slightly easier than filling it with data.
-        f_lseek(audio_file, 0);
-        for(unsigned int x = 0; x < (DAC_BUFFER_SIZE / 2) - read; x++){
-          dac_buffer[x + buffer_offset] = 0;
-        }
-      }
-    }
-  }
-
-  return read;
-}*/
 
 void blit_tick() {
   if(needs_render) {
@@ -186,54 +142,9 @@ int32_t close_file(uint32_t fh) {
   return r == FR_OK ? 0 : -1;
 }
 
-uint32_t read_file(std::string file, uint32_t offset, uint32_t length, char* buffer) {
- /* FIL f;    
-  FRESULT r = f_open(&f, file.c_str(), FA_READ);
-
-  if(r == FR_OK){    
-    unsigned int bytes_read;
-    f_lseek(&f, offset);
-    f_read(&f, buffer, length, &bytes_read);
-    f_close(&f);
-    return bytes_read;
-  }
-*/
-  return 0;
-}
-
 bool blit_sd_detected() {
   return HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_11) == 1;
 }
-/*
-bool blit_mount_sd(char label[12], uint32_t &totalspace, uint32_t &freespace) {
-  DWORD free_clusters;
-  FATFS *pfs;
-  if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_11) == 1){
-    SD_Error = f_mount(&filesystem, "", 1);
-    if(SD_Error == FR_OK){
-      LED.b = 255;
-      f_getlabel("", label, 0);
-      f_getfree("", &free_clusters, &pfs);
-      totalspace = (uint32_t)((pfs->n_fatent - 2) * pfs->csize * 0.5);
-      freespace = (uint32_t)(free_clusters * pfs->csize * 0.5);
-      return true;
-    }
-  }
-  return false;
-}
-*/
-/* 
-bool blit_open_file(FIL &file, const char *filename) {
- SD_FileOpenError = f_open(&file, filename, FA_READ);
-  if(SD_FileOpenError == FR_OK){
-    uint8_t buf[10];
-    unsigned int read;
-    SD_FileOpenError = f_read(&file, buf, 10, &read);
-    f_lseek(&file, 0);
-    return true;
-  }
-  return false;
-}*/
 
 void blit_enable_amp() {
   HAL_GPIO_WritePin(AMP_SHUTDOWN_GPIO_Port, AMP_SHUTDOWN_Pin, GPIO_PIN_SET);
@@ -244,8 +155,8 @@ void blit_global_volume(uint32_t v) {
 }
 
 void blit_init() {
-    for(int x = 0; x<DAC_BUFFER_SIZE; x++){
-      dac_buffer[x] = 0;
+    for(int x = 0; x<4000; x++){
+       dac_buffer[x] = 0;
     }
     
     // enable cycle counting
@@ -258,7 +169,6 @@ void blit_init() {
 
     HAL_TIM_Base_Start_IT(&htim6);
     HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
-    //HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2, (uint32_t*)dac_buffer, DAC_BUFFER_SIZE, DAC_ALIGN_12B_R);
     
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     DWT->CYCCNT = 0;
