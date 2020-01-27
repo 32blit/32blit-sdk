@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cstdio>
+#include <iostream>
 #include "SDL.h"
 
 #include "Audio.hpp"
@@ -19,6 +20,14 @@ Audio::Audio() {
     desired->callback = _audio_callback;
 
     audio_device = SDL_OpenAudioDevice(NULL, 0, desired, audio_spec, 0);
+
+    if(desired->freq != audio_spec->freq) {
+        std::cout << "Audio Init Failed: Invalid Frequency" << std::endl;
+    }
+
+    if(desired->format != audio_spec->format) {
+        std::cout << "Audio Init Failed: Invalid Format" << std::endl;
+    }
 
     delete desired;
 
