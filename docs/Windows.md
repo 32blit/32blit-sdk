@@ -46,15 +46,13 @@ cd examples/palette-cycle
 prepare the Makefile with CMake:
 
 ```
-mkdir build
-cd build
-cmake ..
+cmake . -B build
 ```
 
 and compile the example:
 
 ```
-make
+make -C build
 ```
 
 To run the application on your computer, use the following command (from within the same directory):
@@ -93,10 +91,8 @@ sudo make install
 Finally, from the root directory of your project:
 
 ```
-mkdir build.mingw
-cd build.mingw
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../../../mingw.toolchain -DSDL2_DIR=/usr/local/cross-tools/x86_64-w64-mingw32/lib/cmake/SDL2
-make
+cmake . -B build.mingw -DCMAKE_TOOLCHAIN_FILE=../../mingw.toolchain -DSDL2_DIR=/usr/local/cross-tools/x86_64-w64-mingw32/lib/cmake/SDL2
+make -C build.mingw
 cp /usr/local/cross-tools/x86_64-w64-mingw32/bin/SDL2.dll .
 ```
 

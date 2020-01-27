@@ -13,9 +13,7 @@
 Then configure your 32blit project with:
 
 ```
-mkdir build
-cd build
-cmake .. -DVIDEO_CAPTURE=true
+cmake . -B build -DVIDEO_CAPTURE=true
 ```
 
 When running your game, you can now hit `r` to start and stop recording.

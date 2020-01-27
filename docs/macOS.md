@@ -1,6 +1,6 @@
-# Building & Running on OSX
+# Building & Running on macOS
 
-You will need build tools and CMAKE. Assuming you have [homebrew](https://docs.brew.sh/Installation) installed:
+You will need build tools and CMake. Assuming you have [homebrew](https://docs.brew.sh/Installation) installed:
 
 ``` shell
 xcode-select --install
@@ -23,10 +23,8 @@ sudo make install
 Finally, from the root directory of this repository:
 
 ``` shell
-mkdir build
-cd build
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../darwin.toolchain
-make
+cmake . -B build -DCMAKE_TOOLCHAIN_FILE=./darwin.toolchain
+make -C build
 ```
 
 When the build completes you should find all the examples within the build directory.
