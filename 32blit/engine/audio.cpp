@@ -28,7 +28,7 @@ namespace blit {
         // the current voice pattern we are
         channel.voice_offset += ((channel.frequency * 256) << 8) / sample_rate;
 
-        if(channel.voice_offset & 0xffff8000) {
+        if(channel.voice_offset & 0xfffff000) {
           // if the voice offset overflows then generate a new random
           // noise sample
           channel.noise = (rand() & 0xffff) - (0xffff >> 1); 
@@ -46,7 +46,8 @@ namespace blit {
         // check if any voices are active for this channel
         if(channel.voices) {
           int64_t channel_sample = 0;
-
+                  
+          
           if(channel.voices & audio_voice::NOISE) {
             //channel_sample += (channel.noise - 0x7fff) >> 2;
             channel_sample += channel.noise;
@@ -123,7 +124,7 @@ namespace blit {
       //float delay = blit::joystick.y + 1.0f;
       //float freq = blit::joystick.x + 1.0f;
 
-      float ePow = (1-exp(- 0.05 * 2 * M_PI * 5.0));
+      float ePow = (1-exp(- 0.02 * 2 * M_PI * 5.0));
       
       last_sample += (sample - last_sample) * ePow;
       sample = last_sample;

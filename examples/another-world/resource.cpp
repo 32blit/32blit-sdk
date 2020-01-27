@@ -155,29 +155,16 @@ namespace another_world {
     std::string bank_filename = "bank0" + hex[this->bank_id];
     read_file(bank_filename, this->bank_offset, this->packed_size, (char*)destination);
 
+    bool success = false;
+
     if (this->packed_size != this->size) {
       ByteKiller bk;
-      bool success = bk.unpack(destination, this->packed_size);
-      if (success) {
-        debug("- Unpacked successfully");
-      }
-      else {
-        debug("- Unpacking failed");
-      }
-
+      success = bk.unpack(destination, this->packed_size);
     }
 
     this->data = destination;
-    /*
-    if (this->type == Resource::Type::BYTECODE) {
-      debug("DUMP SCRIPT");
-      for (uint32_t i = 0; i < this->size; i++) {
-        debug(std::to_string(this->data[i]));
-      }
-      debug("END DUMP SCRIPT");
-    }*/
-
-    return true;
+    
+    return success;
   }
 
 }

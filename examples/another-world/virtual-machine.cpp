@@ -54,159 +54,6 @@ namespace another_world {
     vram3   // background 2
   };
 
-
-  uint8_t resource_heap[HEAP_SIZE];
-  uint32_t resource_heap_offset = 0;
-  std::vector<Resource*> resources;
-
-  ChapterResources chapter_resources[10] = {
-  {0x14, 0x15, 0x16, 0x00},
-  {0x17, 0x18, 0x19, 0x00},
-  {0x1a, 0x1b, 0x1c, 0x11},
-  {0x1d, 0x1e, 0x1f, 0x11},
-  {0x20, 0x21, 0x22, 0x11},
-  {0x23, 0x24, 0x25, 0x00},
-  {0x26, 0x27, 0x28, 0x11},
-  {0x29, 0x2a, 0x2b, 0x11},
-  {0x7d, 0x7e, 0x7f, 0x00},
-  {0x7d, 0x7e, 0x7f, 0x00}
-  };
-
-
-  // load the resource definitions from MEMLIST.BIN
-  // you must provide a pointer to a buffer than contains the
-  // file contents
-  void init_resources() {
-
-    // TODO: move file access out of here by requiring a basic set 
-    // of system calls to be provided
-    uint8_t memlist[2940];
-    uint8_t* p = memlist;
-
-    read_file("memlist.bin", 0, 2940, (char*)memlist);
-
-    while (static_cast<Resource::State>(p[0]) != Resource::State::END_OF_MEMLIST) {
-      Resource* resource = new Resource();
-
-      // each memlist entry (resource) contains 20 bytes:
-      //
-      //  0     : state
-      //  1     : type
-      //  2 -  6: unknown (always zero)
-      //  7     : bank id
-      //  8 - 11: bank data start offset
-      // 12 - 15: packed size
-      // 16 - 19: unpacked size
-
-      resource->state = (Resource::State)p[0];
-      resource->type = (Resource::Type)p[1];
-      resource->bank_id = p[7];
-      resource->bank_offset = read_uint32_bigendian(p + 8);
-      resource->packed_size = read_uint32_bigendian(p + 12);
-      resource->size = read_uint32_bigendian(p + 16);
-
-      resources.push_back(resource);
-
-      p += 20;
-    }
-  }
-
-  void load_chapter_resources(uint16_t id) {
-
-  }
-
-  // loads all resources that are currently in the NEEDS_LOADING state
-  void load_needed_resources() {
-    for (auto resource : resources) {
-      if (resource->state == Resource::State::NEEDS_LOADING) {
-
-        if (resource->type == Resource::Type::SOUND || resource->type == Resource::Type::MUSIC) {
-          // TODO: we're not currently supporting audio so no point in loading the 
-          // resources just yet...
-          continue;
-        }
-
-        uint8_t* destination;
-        if (resource->type == Resource::Type::IMAGE) {
-          destination = vram[0];
-        }
-        else {
-          destination = resource_heap + resource_heap_offset;
-          resource_heap_offset += resource->size;
-        }
-
-        //debug("Loading resource of type " + std::to_string(resource->type) + " at offset " + std::to_string(heap_offset));
-        resource->load(destination);
-
-        // TODO: if the resource was an image then it's encoded as 4 bitplanes a la mode 9
-        // we need to shuffle the pixels around to get it into our buffer format
-        if (resource->type == Resource::Type::IMAGE) {
-          uint8_t temp[320 * 200 / 2];
-          memcpy(temp, destination, 320 * 200 / 2);
-          uint8_t* p = destination;
-          for (uint16_t y = 0; y < 200; y++) {
-            for (uint16_t x = 0; x < 320; x += 8) {
-              uint8_t b1 = temp[y * 40 + x / 8 + 0];
-              uint8_t b2 = temp[y * 40 + x / 8 + 8000];
-              uint8_t b3 = temp[y * 40 + x / 8 + 16000];
-              uint8_t b4 = temp[y * 40 + x / 8 + 24000];
-
-              for (uint8_t i = 0; i < 4; i++) {
-                uint8_t v1 = (b1 & 0b10000000) >> 0;
-                uint8_t v2 = (b2 & 0b10000000) >> 1;
-                uint8_t v3 = (b3 & 0b10000000) >> 2;
-                uint8_t v4 = (b4 & 0b10000000) >> 3;
-
-                b1 <<= 1;
-                b2 <<= 1;
-                b3 <<= 1;
-                b4 <<= 1;
-
-                uint8_t v5 = (b1 & 0b10000000) >> 4;
-                uint8_t v6 = (b2 & 0b10000000) >> 5;
-                uint8_t v7 = (b3 & 0b10000000) >> 6;
-                uint8_t v8 = (b4 & 0b10000000) >> 7;
-
-                b1 <<= 1;
-                b2 <<= 1;
-                b3 <<= 1;
-                b4 <<= 1;
-
-                *p++ = v1 | v2 | v3 | v4 | v5 | v6 | v7 | v8;
-              }
-            }
-          }
-        }
-
-        if (resource->type == Resource::Type::IMAGE) {
-          resource->state = Resource::State::NOT_NEEDED;
-        }
-        else {
-          resource->state = Resource::State::LOADED;
-        }
-      }
-    }
-  }
-
-  bool Resource::load(uint8_t* destination) {
-    static std::string hex[16] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f" };
-
-    // TODO: move file access out of here by requiring a basic set 
-    // of system calls to be provided
-    std::string bank_filename = "bank0" + hex[this->bank_id];
-    read_file(bank_filename, this->bank_offset, this->packed_size, (char*)destination);
-
-    if (this->packed_size != this->size) {
-      ByteKiller bk;
-      bool success = bk.unpack(destination, this->packed_size);
-   }
-
-    this->data = destination;
-    
-    return true;
-  }
-
-
   void VirtualMachine::init() {
     init_resources();
 
@@ -269,10 +116,13 @@ namespace another_world {
     load_needed_resources();
 
     // set all thread program counters to 0xffff (inactive)
-    memset(program_counter, 0xff, sizeof(program_counter));
+    for (auto thread : threads) {
+      thread.pc = 0xffff;
+      thread.paused = false;
+    }
 
     // reset program counter for first thread
-    program_counter[0] = 0; 
+    threads[0].pc = 0;
   }
 
   uint8_t VirtualMachine::fetch_byte(uint8_t *b, uint32_t *c) {
@@ -590,7 +440,7 @@ namespace another_world {
     // to be given a new program counter for the next cycle of
     // execution, we store those here and update the program
     // counters after all threads have been processed if needed
-    uint16_t  new_program_counter[THREAD_COUNT];
+/*    uint16_t  new_program_counter[THREAD_COUNT];
     for (uint8_t i = 0; i < THREAD_COUNT; i++) {
       new_program_counter[i] = NO_UPDATE;
     }
@@ -598,615 +448,627 @@ namespace another_world {
     uint16_t new_paused_threads[THREAD_COUNT];
     for (uint8_t i = 0; i < THREAD_COUNT; i++) {
       new_paused_threads[i] = NO_UPDATE;
-    }
-
-    // step through each thread and execute the active ones
-    for(uint8_t i = 0; i < THREAD_COUNT; i++) {
-      if(program_counter[i] != THREAD_INACTIVE && program_counter[i] != 0xfffe && !paused_thread[i]) {
-        uint16_t *pc = &program_counter[i];
-
-        bool next_thread = false;
-        while(!next_thread) {          
-          uint8_t opcode = fetch_byte(pc);
-
-          std::string opcode_name = "----";
-          if (opcode <= 0x1a) {
-            opcode_name = opcode_names[opcode];
-          } else if (opcode < 0x40) {
-            // invalid
-          } else if (opcode < 0x80) {
-            opcode_name = "plyl";
-          } else {
-            opcode_name = "plys";
-          }
-          
-          if(debug) {
-            debug("%6i)  %2i [%05u] > %02x:%-6s", ticks, i, *(pc)-1, opcode, opcode_name.c_str());
-          }          
-
-          // opcodes come in three different flavours depending on the status
-          // of the two highest bits
-          //
-          // 00xxxxxx = standard opcode instruction number in bits 0-5
-          // 01xxxxxx = polygon opcode long format (translated from Eric Chahi's "different format de donnees pour spr.l")
-          // 1xxxxxxx = polygon opcode short format (high part of address in bits 0-6)
-
-          if (ticks == 48) {
-              uint8_t a = 0;
-          }
-
-          if (opcode & 0x80) {
-            // contains offset for polygon data in cinematic data resource  
-            // the high bits of the address are 0-6 from the opcode
-            uint32_t offset = (((opcode & 0x7f) << 8) | fetch_byte(pc)) * 2;
-
-            uint8_t* polygon_data = background->data;
-
-            // absolute position of shape (added to relative positions later)
-            Point pos;
-            pos.x = fetch_byte(pc);
-            pos.y = fetch_byte(pc);
-
-            // slightly weird one this. if the y value is greater than 199
-            // then the extra is added onto the x value. i assume this is because
-            // the screen resolution is 320 pixels but a byte can only hold 
-            // numbers up to 255. this "hack" allows bigger numbers (up to 311) to 
-            // be represented in the x byte (at the cost that it can only happen
-            // when y is greater than 199 (so is effectively clamped to the 
-            // bottom of the screen).
-            if (pos.y > 199) {
-              pos.x += pos.y - 199;
-              pos.y = 199;
-            }                              
-
-            draw_shape(0xff, pos, 64, polygon_data, &offset);
-
-            ticks++;
-            continue;
-          }
-          
-          if(opcode & 0x40) {   
-            // contains offset for polygon data in cinematic data resource    
-            // the offset is contained in the next two bytes in the bytecode
-            uint32_t offset = fetch_word(pc) * 2;
-            
-            uint8_t* polygon_data = background->data;
-
-            Point pos;
-            
-            // bits 0-5 of the opcode have special meaning that manipulate the
-            // x and y coordinates for this polygon.
-            //
-            // the bits 0-5 are laid out aabbcc with each pair of bits (e.g "aa")
-            // selecting an operation to perform.
-
-            if ((opcode & 0b00110000) == 0b00110000) {
-              // if xx == 11 then add 256 to x (essentially x gains an extra
-              // bit of resolution)
-              pos.x = fetch_byte(pc) + 256;
-            } else if ((opcode & 0b00110000) == 0b00010000)  {
-              // if xx == 01 then the x value is selected from the specified register
-              pos.x = registers[fetch_byte(pc)];
-            } else if ((opcode & 0b00110000) == 0b00000000) {
-              // if xx == 00 then the x value is read from the next two bytes of
-              // bytecode
-              pos.x = fetch_word(pc);
-            }
-            else {
-              // otherwise the x value is simply the next byte of bytecode
-              pos.x = fetch_byte(pc);
-            }
-
-            if ((opcode & 0b00001100) == 0b00001100) {
-              // if yy == 11 then add 256 to y (essentially y gains an extra
-              // bit of resolution)
-              pos.y = fetch_byte(pc) + 256;
-            }
-            else if ((opcode & 0b00001100) == 0b00000100) {
-              // if yy == 01 then the y value is selected from the specified register
-              pos.y = registers[fetch_byte(pc)];
-            }
-            else if ((opcode & 0b00001100) == 0b00000000) {
-              // if yy == 00 then the y value is read from the next two bytes of
-              // bytecode
-              pos.y = fetch_word(pc);
-            }
-            else {
-              // otherwise the y value is simply the next byte of bytecode
-              pos.y = fetch_byte(pc);
-            }
-
-            int16_t zoom = 64;
-
-            if ((opcode & 0b00000011) == 0b00000011) {
-              // if zz == 11 then something special happens...
-              // why? we don't know, but it does! the notes in Eric
-              // Chahi's document are not really legible, perhaps
-              // something like... "11 si Z utiliser Z~~~~ Banque et Z = 64"?
-              // Fabien Sanglard has this special case change the source of
-              // polygon data to "SegVideo2" which I think is meant to be the
-              // character data, anyway, let's try that...
-              polygon_data = characters->data;
-
-     //         assert(false); // i don't think we should end up here...
-            }
-            else if ((opcode & 0b00000011) == 0b00000001) {
-              // if zz == 01 then the z value is selected from the specified register
-              zoom = registers[fetch_byte(pc)];
-            }
-            else if ((opcode & 0b00000011) == 0b00000000) {
-              // default zoom level, already set above
-            }
-            else {
-              // otherwise the z value is simply the next byte of bytecode
-              zoom = fetch_byte(pc);
-            }
-
-            draw_shape(0xff, pos, zoom, polygon_data, &offset);
-
-            ticks++;
-            continue;}
-
-          switch(opcode) {
-            case 0x00: {
-              // movi   d0, #1234
-              // copy immediate word to register d0
-              uint8_t d0 = fetch_byte(pc);
-              int16_t w = fetch_word(pc);
-              registers[d0] = w;
-              break;
-            }
-
-            case 0x01: {
-              // mov    d0, d1
-              // copy value in register d1 into register d0
-              uint8_t d0 = fetch_byte(pc);
-              uint8_t d1 = fetch_byte(pc);
-              registers[d0] = registers[d1];
-              break;
-            }
-
-            case 0x02: {
-              // add    d0, d1
-              // add value in register d1 to to register d0
-              uint8_t d0 = fetch_byte(pc);
-              uint8_t d1 = fetch_byte(pc);
-              registers[d0] += registers[d1];
-              break;
-            }
-
-            case 0x03: {
-              // addi   d0, #1234
-              // add immediate word to register d0
-              uint8_t d0 = fetch_byte(pc);
-              int16_t w = fetch_word(pc);
-              registers[d0] += w;
-              break;
-            }
-
-            case 0x04: {              
-              // call   #1234
-              // push current program counter onto stack then jump to specified address
-              int16_t w = fetch_word(pc);
-              call_stack.push_back(*pc);
-              *pc = w;
-              break;
-            }
-
-            case 0x05: {
-              // ret
-              // pop last address off the stack and jump there (return from a call)
-              *pc = call_stack.back();
-              call_stack.pop_back();
-              break;
-            }
-
-            case 0x06: {
-              // brk
-              // stop execution of this thread and switch execution to the next thread              
-              next_thread = true;
-              break;
-            }
-
-            case 0x07: {
-              // jmp    #1234
-              // jump to specified address
-              int16_t w = fetch_word(pc);
-              *pc = w;
-              break;
-            }
-
-            case 0x08: {
-              // svec   #12, #1234
-              // change the program counter of a thread
-              uint8_t thread_id = fetch_byte(pc);
-              int16_t new_pc = fetch_word(pc);
-              new_program_counter[thread_id] = new_pc;
-              break;
-            }
-
-            case 0x09: {
-              // djnz   d0, #1234
-              // decrement register and jump to specified address if not zero
-              uint8_t d0 = fetch_byte(pc);
-              int16_t w = fetch_word(pc);
-
-              registers[d0]--;
-
-              if(registers[d0] != 0) {
-                *pc = w;
-              }
-              break;
-            }
-
-            case 0x0a: {
-              // cjmp   #12, d0, d1 or #1234, #1234
-              // conditional jump for expression when d0 compared to either
-              // d1 or an immediate byte or word value if expression result 
-              // is true then jump to specified address
-              uint8_t t = fetch_byte(pc);          
-              int16_t a = registers[fetch_byte(pc)];
-              int16_t b = fetch_byte(pc);
-
-              if(t & 0x80) {
-                // register to register comparison
-                b = registers[b];         
-              } else if (t & 0x40) {
-                // register to 16-bit literal comparison
-                b = (b << 8) | fetch_byte(pc);   
-              }
-
-              int16_t w = fetch_word(pc);
-
-              bool result = false;
-            
-              // mask out just the expression bits
-              t &= 0b111;
-              if(t == 0) { result = a == b; }
-              if(t == 1) { result = a != b; }
-              if(t == 2) { result = a  > b; }
-              if(t == 3) { result = a >= b; }
-              if(t == 4) { result = a  < b; }
-              if(t == 5) { result = a <= b; }
-
-              if(result) {
-                *pc = w;
-              }           
-              break;
-            }
-
-            case 0x0b: {
-              // pal    #12, #12
-              // specify the index of the palette to use
-              uint8_t id = fetch_byte(pc);
+    }*/
     
-              // TODO: from Eric Chahi's original notes the second byte of
-              // this instruction appears to be a speed ("a la vitesse") 
-              // for the palette change - but then parts of the notes are
-              // crossed out suggesting it was never implemented?
-              uint8_t speed = fetch_byte(pc);
+    std::map<uint8_t, Thread> requested_thread_state;
+    
+    // step through each thread and execute the active ones
+    for(auto &thread : threads) {
+      if (thread.pc == THREAD_INACTIVE || thread.paused) {
+        continue;
+      }
 
-              if (id != 0xff) {
-                // calculate the offset for the requested palette
-                uint16_t offset = id * 32;
+      uint16_t* pc = &thread.pc;
 
-                // the first 32 palettes are for the Amiga/VGA version, the
-                // following 32 palettes are for the MSDOS version              
-                //offset += (32 * 32); // offset to EGA/TGA
-                set_palette((uint16_t*)&palette->data[offset]);
-              }
+      bool next_thread = false;
+      while(!next_thread) {          
+        uint8_t opcode = fetch_byte(pc);
 
-                            
-              break;
-            }
+        std::string opcode_name = "----";
+        if (opcode <= 0x1a) {
+          opcode_name = opcode_names[opcode];
+        } else if (opcode < 0x40) {
+          // invalid
+        } else if (opcode < 0x80) {
+          opcode_name = "plyl";
+        } else {
+          opcode_name = "plys";
+        }
+          
+        if(debug) {
+          debug("%6i)  %2i [%05u] > %02x:%-6s", ticks, 0, *(pc)-1, opcode, opcode_name.c_str());
+        }          
 
-            case 0x0c: {              
-              // ???    #12, #12, #12
-              // this one is a bit cryptic with Eric Chahi's notes 
-              // referring  to the first "1st affecte"/"start" and last 
-              // "dernier affecte"/"end" vectors affected along with a 
-              // "type" of action (unlock, lock, clear)
-              // it suggests that this opcode should affect a range of
-              // threads, perhaps updating their state in bulk?
+        // opcodes come in three different flavours depending on the status
+        // of the two highest bits
+        //
+        // 00xxxxxx = standard opcode instruction number in bits 0-5
+        // 01xxxxxx = polygon opcode long format (translated from Eric Chahi's "different format de donnees pour spr.l")
+        // 1xxxxxxx = polygon opcode short format (high part of address in bits 0-6)
 
-              uint8_t first = fetch_byte(pc);
-              uint8_t last = fetch_byte(pc);
-              uint8_t type = fetch_byte(pc);
+        if (ticks == 48) {
+            uint8_t a = 0;
+        }
 
-              for (uint8_t thread_id = first; thread_id <= last; thread_id++) {
-                if(program_counter[thread_id] != THREAD_INACTIVE) {
-                  if (type == 0) {
-                    // unlock
-                    // program_counter[thread_id] = ??
-                    paused_thread[thread_id] = THREAD_UNLOCK;
-                  }
-                  if (type == 1) {
-                    // lock 
-                    // program_counter[thread_id] = ??
-                    paused_thread[thread_id] = THREAD_LOCK;
-                  }
-                  if (type == 2) {
-                    // TODO : No idea!!
-                    new_program_counter[thread_id] = 0xfffe;
-                  }
-                }
-              }
-              break;
-            }
+        if (opcode & 0x80) {
+          // contains offset for polygon data in cinematic data resource  
+          // the high bits of the address are 0-6 from the opcode
+          uint32_t offset = (((opcode & 0x7f) << 8) | fetch_byte(pc)) * 2;
 
-            // framebuffer manipulation op codes
-            // 
-            case 0x0d: {
-              // setws    #12
-              // set the working screen for drawing operations
-              uint8_t id = fetch_byte(pc);
-              uint8_t *b = get_vram_from_id(id);
+          uint8_t* polygon_data = background->data;
 
-              if(b) {
-                // TODO: why would we ever be given an invalid screen id?
-                // that doesn't seem right...
+          // absolute position of shape (added to relative positions later)
+          Point pos;
+          pos.x = fetch_byte(pc);
+          pos.y = fetch_byte(pc);
 
-                working_vram = b;
-              }
-              else {
-                assert(false);
-              }
-              break;
-            }
+          // slightly weird one this. if the y value is greater than 199
+          // then the extra is added onto the x value. i assume this is because
+          // the screen resolution is 320 pixels but a byte can only hold 
+          // numbers up to 255. this "hack" allows bigger numbers (up to 311) to 
+          // be represented in the x byte (at the cost that it can only happen
+          // when y is greater than 199 (so is effectively clamped to the 
+          // bottom of the screen).
+          if (pos.y > 199) {
+            pos.x += pos.y - 199;
+            pos.y = 199;
+          }                              
 
-            case 0x0e: {
-              // vclr   #12, #12
-              // clears an entire backbuffer with the specified palette
-              // colour              
-              uint8_t id = fetch_byte(pc);
-              uint8_t* d = get_vram_from_id(id);              
-
-              uint8_t color = fetch_byte(pc);
-              color |= color << 4;
-
-              if(d) {
-                // TODO: why would we ever be given an invalid screen id?
-                // that doesn't seem right...
-                memset(d, color, 320 * 200 / 2);
-              }
-
-              if (debug_display_update) {
-                debug_display_update();
-              }
-
-              break;
-            }
-
-            case 0x0f: {
-              // vcpy   #12, #12
-              // copy contents of one backbuffer into another
-
-              uint8_t src_id = fetch_byte(pc);
-              uint8_t dest_id = fetch_byte(pc);
-
-              if (src_id >= 0xFE || ((src_id &= ~0x40) & 0x80) == 0) {
-
-              }
-              else {
-               // assert(false); // TODO: vscroll?
-              }
-
-
-              //src_id &= ~0x40;
-              uint8_t* s = get_vram_from_id(src_id);
-              uint8_t* d = get_vram_from_id(dest_id);
-
-              if (s && d) {
-                // TODO: why would we ever be given an invalid screen id?
-                // that doesn't seem right...
-                memcpy(d, s, 320 * 200 / 2);
-              }
-
-              /*
-              uint8_t src_id = fetch_byte(pc);
-              uint8_t dest_id = fetch_byte(pc);
-
-              debug("Copy buffer %d to %d", src_id, dest_id);
-
-              //src_id &= ~0x40;
-              uint8_t* s = get_vram_from_id(src_id);
-              uint8_t* d = get_vram_from_id(dest_id);
-
-           
-              // TODO: why would we ever be given an invalid screen id?
-              // that doesn't seem right...
-              if (s && d) {
-                int16_t v_scroll = registers[0xF9];
-                uint16_t h = 200;
-
-                if (v_scroll != 0) {
-                  uint8_t a = 0;
-                }
-                h -= abs(v_scroll);
-                s -= v_scroll < 0 ? (v_scroll * 160) : 0;
-                d += v_scroll > 0 ? (v_scroll * 160) : 0;
-
-                memcpy(d, s, 320 * h / 2);
-              }*/
-              
-              
-              if (debug_display_update) {
-                debug_display_update();
-              }
-
-              // TODO: this should support vertical scrolling by looking the
-              // value in register VM_VARIABLE_SCROLL_Y
-              // e.g. video->copyPage(srcPageId, dstPageId, vmVariables[VM_VARIABLE_SCROLL_Y]);
-              break;
-            }
-
-            case 0x10: {
-              // vshw   #12
-              // copy specified backbuffer to screen
-              uint8_t id = fetch_byte(pc);
-
-              registers[0xF7] = 0; // TODO:  why?
-              
-              if(id == 0xff) {                              
-                // from Eric Chahi's notes:
-                // "si n == 255 on flip invisi et visi" so in case the
-                // id specified is 255 we swap which of the backbuffers
-                // is the woring framebuffer
-                visible_vram = visible_vram == vram[1] ? vram[2] : vram[1];                
-              }
-
-              
-              update_screen(visible_vram);
-
-              if (debug_display_update) {
-                debug_display_update();
-              }
-
-              break;
-            }
-
-            case 0x11: {
-              // kill
-              // set current threads program counter to 0xffff (inactive) and 
-              // moveto the next thread
-              *pc = THREAD_INACTIVE;
-              next_thread = true;
-              break;
-            }
-
-            case 0x12: {
-              // text   #1234, #12, #12, #12
-              uint16_t string_id = fetch_word(pc);
-              uint8_t x = fetch_byte(pc);
-              uint8_t y = fetch_byte(pc);
-              uint8_t colour = fetch_byte(pc);
-
-              if (string_id < string_table.size()) {
-                const std::string& string_entry = string_table.at(string_id);
-                
-              }
-              else {
-                // TODO: why would we ever get an invalid string id?
-                //assert(false);
-              }
-
-              // TODO: make this work?
-              break;
-            }
-
-            case 0x13: {          
-              // sub  d0, d1
-              // subtract value in register d1 from register d0
-              uint8_t d = fetch_byte(pc);
-              uint8_t s = fetch_byte(pc);
-              registers[d] -= registers[s];           
-              break;
-            }
-
-            case 0x14: {
-              // andi  d0, #1234
-              // bitwise AND register d0 with the value provided
-              uint8_t r = fetch_byte(pc);
-              int16_t v = fetch_word(pc);
-              registers[r] = (uint16_t)registers[r] & v;
-              break;
-            }
-
-            case 0x15: {
-              // andi  d0, #1234
-              // bitwise OR register d0 with the value provided
-              uint8_t r = fetch_byte(pc);
-              int16_t v = fetch_word(pc);
-              registers[r] = (uint16_t)registers[r] | v;
-              break;
-            }
-
-            case 0x16: {
-              // shli  d0, #1234
-              // shift value in register d0 left by value provided
-
-              // TODO: seems odd the shift value is 16-bit since
-              // shifting by anything more than 16 will zero out the
-              // register
-              uint8_t r = fetch_byte(pc);
-              int16_t v = fetch_word(pc);
-              registers[r] = (uint16_t)registers[r] << v;
-              break;
-            }
-
-            case 0x17: {
-              // shri  d0, #1234
-              // shift value in register d0 right by value provided
-              // note: this shift is intentionally unsigned so new bits 
-              // are zero filled
-              
-              // TODO: seems odd the shift value is 16-bit since
-              // shifting by anything more than 16 will zero out the
-              // register
-              uint8_t r = fetch_byte(pc);
-              int16_t v = fetch_word(pc);
-              registers[r] = (uint16_t)registers[r] >> v;
-              break;
-            }
-
-            case 0x18: {
-              // snd  #1234, #12, #12, #12
-              fetch_word(pc);
-              fetch_byte(pc);
-              fetch_byte(pc);
-              fetch_byte(pc);
-              break;
-            }
-
-            case 0x19: {
-              // load   #1234
-              // loads either a resource or the next chapter of the
-              // game.
-              uint16_t i = fetch_word(pc);
-
-              if (i == 0) {
-                // TODO: Eric Chahi's notes are hard to read here but say
-                // something like "libere la memoire annuler"
-                // sounds like perhaps this is "exit the game"?
-                // not sure - let's leave an assert here and see if it
-                // ever happens...
-                assert(false);
-              } else {
-                if (i <= resources.size()) {
-                  // load a resource
-                  resources[i]->state = Resource::State::NEEDS_LOADING;
-                  load_needed_resources();
-                }
-                else {
-                  // switch to a new chapter
-                  initialise_chapter(i);
-                }
-              }
-              
-              break;
-            }
-
-            case 0x1a: {
-              // music #1234, #1234, #12
-              fetch_word(pc);
-              fetch_word(pc);
-              fetch_byte(pc);
-              break;
-            }
-
-            default: {
-             // debug("- Invalid opcode " + std::to_string(opcode) + " on thread " + std::to_string(i));
-              break;
-            }
-          }
+          draw_shape(0xff, pos, 64, polygon_data, &offset);
 
           ticks++;
+          continue;
+        }
+          
+        if(opcode & 0x40) {   
+          // contains offset for polygon data in cinematic data resource    
+          // the offset is contained in the next two bytes in the bytecode
+          uint32_t offset = fetch_word(pc) * 2;
+            
+          uint8_t* polygon_data = background->data;
+
+          Point pos;
+            
+          // bits 0-5 of the opcode have special meaning that manipulate the
+          // x and y coordinates for this polygon.
+          //
+          // the bits 0-5 are laid out aabbcc with each pair of bits (e.g "aa")
+          // selecting an operation to perform.
+
+          if ((opcode & 0b00110000) == 0b00110000) {
+            // if xx == 11 then add 256 to x (essentially x gains an extra
+            // bit of resolution)
+            pos.x = fetch_byte(pc) + 256;
+          } else if ((opcode & 0b00110000) == 0b00010000)  {
+            // if xx == 01 then the x value is selected from the specified register
+            pos.x = registers[fetch_byte(pc)];
+          } else if ((opcode & 0b00110000) == 0b00000000) {
+            // if xx == 00 then the x value is read from the next two bytes of
+            // bytecode
+            pos.x = fetch_word(pc);
+          }
+          else {
+            // otherwise the x value is simply the next byte of bytecode
+            pos.x = fetch_byte(pc);
+          }
+
+          if ((opcode & 0b00001100) == 0b00001100) {
+            // if yy == 11 then add 256 to y (essentially y gains an extra
+            // bit of resolution)
+            pos.y = fetch_byte(pc) + 256;
+          }
+          else if ((opcode & 0b00001100) == 0b00000100) {
+            // if yy == 01 then the y value is selected from the specified register
+            pos.y = registers[fetch_byte(pc)];
+          }
+          else if ((opcode & 0b00001100) == 0b00000000) {
+            // if yy == 00 then the y value is read from the next two bytes of
+            // bytecode
+            pos.y = fetch_word(pc);
+          }
+          else {
+            // otherwise the y value is simply the next byte of bytecode
+            pos.y = fetch_byte(pc);
+          }
+
+          int16_t zoom = 64;
+
+          if ((opcode & 0b00000011) == 0b00000011) {
+            // if zz == 11 then something special happens...
+            // why? we don't know, but it does! the notes in Eric
+            // Chahi's document are not really legible, perhaps
+            // something like... "11 si Z utiliser Z~~~~ Banque et Z = 64"?
+            // Fabien Sanglard has this special case change the source of
+            // polygon data to "SegVideo2" which I think is meant to be the
+            // character data, anyway, let's try that...
+            polygon_data = characters->data;
+
+    //         assert(false); // i don't think we should end up here...
+          }
+          else if ((opcode & 0b00000011) == 0b00000001) {
+            // if zz == 01 then the z value is selected from the specified register
+            zoom = registers[fetch_byte(pc)];
+          }
+          else if ((opcode & 0b00000011) == 0b00000000) {
+            // default zoom level, already set above
+          }
+          else {
+            // otherwise the z value is simply the next byte of bytecode
+            zoom = fetch_byte(pc);
+          }
+
+          draw_shape(0xff, pos, zoom, polygon_data, &offset);
+
+          ticks++;
+          continue;}
+
+        switch(opcode) {
+          case 0x00: {
+            // movi   d0, #1234
+            // copy immediate word to register d0
+            uint8_t d0 = fetch_byte(pc);
+            int16_t w = fetch_word(pc);
+            registers[d0] = w;
+            break;
+          }
+
+          case 0x01: {
+            // mov    d0, d1
+            // copy value in register d1 into register d0
+            uint8_t d0 = fetch_byte(pc);
+            uint8_t d1 = fetch_byte(pc);
+            registers[d0] = registers[d1];
+            break;
+          }
+
+          case 0x02: {
+            // add    d0, d1
+            // add value in register d1 to to register d0
+            uint8_t d0 = fetch_byte(pc);
+            uint8_t d1 = fetch_byte(pc);
+            registers[d0] += registers[d1];
+            break;
+          }
+
+          case 0x03: {
+            // addi   d0, #1234
+            // add immediate word to register d0
+            uint8_t d0 = fetch_byte(pc);
+            int16_t w = fetch_word(pc);
+            registers[d0] += w;
+            break;
+          }
+
+          case 0x04: {              
+            // call   #1234
+            // push current program counter onto stack then jump to specified address
+            int16_t w = fetch_word(pc);
+            call_stack.push_back(*pc);
+            *pc = w;
+            break;
+          }
+
+          case 0x05: {
+            // ret
+            // pop last address off the stack and jump there (return from a call)
+            *pc = call_stack.back();
+            call_stack.pop_back();
+            break;
+          }
+
+          case 0x06: {
+            // brk
+            // stop execution of this thread and switch execution to the next thread              
+            next_thread = true;
+            break;
+          }
+
+          case 0x07: {
+            // jmp    #1234
+            // jump to specified address
+            int16_t w = fetch_word(pc);
+            *pc = w;
+            break;
+          }
+
+          case 0x08: {
+            // svec   #12, #1234
+            // request the change of a program counter of a thread to be applied after
+            // the current execution cycle has completed
+            uint8_t thread_id = fetch_byte(pc);
+            int16_t new_pc = fetch_word(pc);
+
+            Thread new_thread_state = threads[thread_id];
+            new_thread_state.pc = new_pc;
+            requested_thread_state[thread_id] = new_thread_state;
+  
+            break;
+          }
+
+          case 0x09: {
+            // djnz   d0, #1234
+            // decrement register and jump to specified address if not zero
+            uint8_t d0 = fetch_byte(pc);
+            int16_t w = fetch_word(pc);
+
+            registers[d0]--;
+
+            if(registers[d0] != 0) {
+              *pc = w;
+            }
+            break;
+          }
+
+          case 0x0a: {
+            // cjmp   #12, d0, d1 or #1234, #1234
+            // conditional jump for expression when d0 compared to either
+            // d1 or an immediate byte or word value if expression result 
+            // is true then jump to specified address
+            uint8_t t = fetch_byte(pc);          
+            int16_t a = registers[fetch_byte(pc)];
+            int16_t b = fetch_byte(pc);
+
+            if(t & 0x80) {
+              // register to register comparison
+              b = registers[b];         
+            } else if (t & 0x40) {
+              // register to 16-bit literal comparison
+              b = (b << 8) | fetch_byte(pc);   
+            }
+
+            int16_t w = fetch_word(pc);
+
+            bool result = false;
+            
+            // mask out just the expression bits
+            t &= 0b111;
+            if(t == 0) { result = a == b; }
+            if(t == 1) { result = a != b; }
+            if(t == 2) { result = a  > b; }
+            if(t == 3) { result = a >= b; }
+            if(t == 4) { result = a  < b; }
+            if(t == 5) { result = a <= b; }
+
+            if(result) {
+              *pc = w;
+            }           
+            break;
+          }
+
+          case 0x0b: {
+            // pal    #12, #12
+            // specify the index of the palette to use
+            uint8_t id = fetch_byte(pc);
+    
+            // TODO: from Eric Chahi's original notes the second byte of
+            // this instruction appears to be a speed ("a la vitesse") 
+            // for the palette change - but then parts of the notes are
+            // crossed out suggesting it was never implemented?
+            uint8_t speed = fetch_byte(pc);
+
+            if (id != 0xff) {
+              // calculate the offset for the requested palette
+              uint16_t offset = id * 32;
+
+              // the first 32 palettes are for the Amiga/VGA version, the
+              // following 32 palettes are for the MSDOS version              
+              //offset += (32 * 32); // offset to EGA/TGA
+              set_palette((uint16_t*)&palette->data[offset]);
+            }
+                            
+            break;
+          }
+
+          case 0x0c: {              
+            // ???    #12, #12, #12
+            // this one is a bit cryptic with Eric Chahi's notes 
+            // referring  to the first "1st affecte"/"start" and last 
+            // "dernier affecte"/"end" vectors affected along with a 
+            // "type" of action (unlock, lock, clear)
+            // it suggests that this opcode should affect a range of
+            // threads, perhaps updating their state in bulk?
+
+            uint8_t first = fetch_byte(pc);
+            uint8_t last = fetch_byte(pc);
+            uint8_t type = fetch_byte(pc);
+
+            for (uint8_t thread_id = first; thread_id <= last; thread_id++) {
+              Thread new_thread_state = threads[thread_id];
+
+              if (type == 0) {
+                // unlock
+                new_thread_state.paused = false;
+                requested_thread_state[thread_id] = new_thread_state;                  
+              }
+              if (type == 1) {
+                // lock 
+                new_thread_state.paused = true;
+                requested_thread_state[thread_id] = new_thread_state;
+              }
+              if (type == 2) {
+                // kill threads
+                new_thread_state.pc = THREAD_INACTIVE;
+                requested_thread_state[thread_id] = new_thread_state;
+              }
+            }
+            break;
+          }
+
+          // framebuffer manipulation op codes
+          // 
+          case 0x0d: {
+            // setws    #12
+            // set the working screen for drawing operations
+            uint8_t id = fetch_byte(pc);
+            uint8_t *b = get_vram_from_id(id);
+
+            if(b) {
+              // TODO: why would we ever be given an invalid screen id?
+              // that doesn't seem right...
+
+              working_vram = b;
+            }
+            else {
+              assert(false);
+            }
+            break;
+          }
+
+          case 0x0e: {
+            // vclr   #12, #12
+            // clears an entire backbuffer with the specified palette
+            // colour              
+            uint8_t id = fetch_byte(pc);
+            uint8_t* d = get_vram_from_id(id);              
+
+            uint8_t color = fetch_byte(pc);
+            color |= color << 4;
+
+            if(d) {
+              // TODO: why would we ever be given an invalid screen id?
+              // that doesn't seem right...
+              memset(d, color, 320 * 200 / 2);
+            }
+
+            if (debug_display_update) {
+              debug_display_update();
+            }
+
+            break;
+          }
+
+          case 0x0f: {
+            // vcpy   #12, #12
+            // copy contents of one backbuffer into another
+
+            uint8_t src_id = fetch_byte(pc);
+            uint8_t dest_id = fetch_byte(pc);
+
+            if (src_id >= 0xFE || ((src_id &= ~0x40) & 0x80) == 0) {
+
+            }
+            else {
+              // assert(false); // TODO: vscroll?
+            }
+
+
+            //src_id &= ~0x40;
+            uint8_t* s = get_vram_from_id(src_id);
+            uint8_t* d = get_vram_from_id(dest_id);
+
+            if (s && d) {
+              // TODO: why would we ever be given an invalid screen id?
+              // that doesn't seem right...
+              memcpy(d, s, 320 * 200 / 2);
+            }
+
+            /*
+            uint8_t src_id = fetch_byte(pc);
+            uint8_t dest_id = fetch_byte(pc);
+
+            debug("Copy buffer %d to %d", src_id, dest_id);
+
+            //src_id &= ~0x40;
+            uint8_t* s = get_vram_from_id(src_id);
+            uint8_t* d = get_vram_from_id(dest_id);
+
+           
+            // TODO: why would we ever be given an invalid screen id?
+            // that doesn't seem right...
+            if (s && d) {
+              int16_t v_scroll = registers[0xF9];
+              uint16_t h = 200;
+
+              if (v_scroll != 0) {
+                uint8_t a = 0;
+              }
+              h -= abs(v_scroll);
+              s -= v_scroll < 0 ? (v_scroll * 160) : 0;
+              d += v_scroll > 0 ? (v_scroll * 160) : 0;
+
+              memcpy(d, s, 320 * h / 2);
+            }*/
+              
+              
+            if (debug_display_update) {
+              debug_display_update();
+            }
+
+            // TODO: this should support vertical scrolling by looking the
+            // value in register VM_VARIABLE_SCROLL_Y
+            // e.g. video->copyPage(srcPageId, dstPageId, vmVariables[VM_VARIABLE_SCROLL_Y]);
+            break;
+          }
+
+          case 0x10: {
+            // vshw   #12
+            // copy specified backbuffer to screen
+            uint8_t id = fetch_byte(pc);
+
+            registers[0xF7] = 0; // TODO:  why?
+              
+            if(id == 0xff) {                              
+              // from Eric Chahi's notes:
+              // "si n == 255 on flip invisi et visi" so in case the
+              // id specified is 255 we swap which of the backbuffers
+              // is the woring framebuffer
+              visible_vram = visible_vram == vram[1] ? vram[2] : vram[1];                
+            }
+
+              
+            update_screen(visible_vram);
+
+            if (debug_display_update) {
+              debug_display_update();
+            }
+
+            break;
+          }
+
+          case 0x11: {
+            // kill
+            // set current threads program counter to 0xffff (inactive) and 
+            // moveto the next thread
+            *pc = THREAD_INACTIVE;
+            next_thread = true;
+            break;
+          }
+
+          case 0x12: {
+            // text   #1234, #12, #12, #12
+            uint16_t string_id = fetch_word(pc);
+            uint8_t x = fetch_byte(pc);
+            uint8_t y = fetch_byte(pc);
+            uint8_t colour = fetch_byte(pc);
+
+            if (string_id < string_table.size()) {
+              const std::string& string_entry = string_table.at(string_id);
+                
+            }
+            else {
+              // TODO: why would we ever get an invalid string id?
+              //assert(false);
+            }
+
+            // TODO: make this work?
+            break;
+          }
+
+          case 0x13: {          
+            // sub  d0, d1
+            // subtract value in register d1 from register d0
+            uint8_t d = fetch_byte(pc);
+            uint8_t s = fetch_byte(pc);
+            registers[d] -= registers[s];           
+            break;
+          }
+
+          case 0x14: {
+            // andi  d0, #1234
+            // bitwise AND register d0 with the value provided
+            uint8_t r = fetch_byte(pc);
+            int16_t v = fetch_word(pc);
+            registers[r] = (uint16_t)registers[r] & v;
+            break;
+          }
+
+          case 0x15: {
+            // andi  d0, #1234
+            // bitwise OR register d0 with the value provided
+            uint8_t r = fetch_byte(pc);
+            int16_t v = fetch_word(pc);
+            registers[r] = (uint16_t)registers[r] | v;
+            break;
+          }
+
+          case 0x16: {
+            // shli  d0, #1234
+            // shift value in register d0 left by value provided
+
+            // TODO: seems odd the shift value is 16-bit since
+            // shifting by anything more than 16 will zero out the
+            // register
+            uint8_t r = fetch_byte(pc);
+            int16_t v = fetch_word(pc);
+            registers[r] = (uint16_t)registers[r] << v;
+            break;
+          }
+
+          case 0x17: {
+            // shri  d0, #1234
+            // shift value in register d0 right by value provided
+            // note: this shift is intentionally unsigned so new bits 
+            // are zero filled
+              
+            // TODO: seems odd the shift value is 16-bit since
+            // shifting by anything more than 16 will zero out the
+            // register
+            uint8_t r = fetch_byte(pc);
+            int16_t v = fetch_word(pc);
+            registers[r] = (uint16_t)registers[r] >> v;
+            break;
+          }
+
+          case 0x18: {
+            // snd  #1234, #12, #12, #12
+            fetch_word(pc);
+            fetch_byte(pc);
+            fetch_byte(pc);
+            fetch_byte(pc);
+            break;
+          }
+
+          case 0x19: {
+            // load   #1234
+            // loads either a resource or the next chapter of the
+            // game.
+            uint16_t i = fetch_word(pc);
+
+            if (i == 0) {
+              // TODO: Eric Chahi's notes are hard to read here but say
+              // something like "libere la memoire annuler"
+              // sounds like perhaps this is "exit the game"?
+              // not sure - let's leave an assert here and see if it
+              // ever happens...
+              assert(false);
+            } else {
+              if (i <= resources.size()) {
+                // load a resource
+                resources[i]->state = Resource::State::NEEDS_LOADING;
+                load_needed_resources();
+              }
+              else {
+                // switch to a new chapter
+                initialise_chapter(i);
+              }
+            }
+              
+            break;
+          }
+
+          case 0x1a: {
+            // music #1234, #1234, #12
+            fetch_word(pc);
+            fetch_word(pc);
+            fetch_byte(pc);
+            break;
+          }
+
+          default: {
+            // debug("- Invalid opcode " + std::to_string(opcode) + " on thread " + std::to_string(i));
+            break;
+          }
         }
       }
     }
 
-    // set thread program counters to their new requested
-    // values
+    // set thread program counters and pause states if new values
+    // have been requested
+    for (auto const& p : requested_thread_state) {      
+      threads[p.first] = p.second;
+    }
+    
+    /*
     for (uint8_t i = 0; i < THREAD_COUNT; i++) {
       if (new_program_counter[i] == 0xfffe) {
         program_counter[i] = THREAD_INACTIVE;
@@ -1224,6 +1086,6 @@ namespace another_world {
       if (new_paused_threads[i] == THREAD_UNLOCK) {
         paused_thread[i] = false;
       }
-    }
+    }*/
   }
 }

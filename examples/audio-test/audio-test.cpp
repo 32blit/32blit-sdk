@@ -8,126 +8,95 @@
 
 using namespace blit;
 
+// gadgetoid's amazing masterpiece!
+int16_t notes[3][384] = {
+  { // melody notes
+    147, 0, 0, 0, 0, 0, 0, 0, 175, 0, 196, 0, 220, 0, 262, 0, 247, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 175, 0, 0, 0, 0, 0, 0, 0, 175, 0, 196, 0, 220, 0, 262, 0, 330, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 349, 0, 0, 0, 0, 0, 0, 0, 349, 0, 330, 0, 294, 0, 220, 0, 262, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 247, 0, 0, 0, 0, 0, 0, 0, 247, 0, 220, 0, 196, 0, 147, 0, 175, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0,
+    147, 0, 0, 0, 0, 0, 0, 0, 175, 0, 196, 0, 220, 0, 262, 0, 247, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 175, 0, 0, 0, 0, 0, 0, 0, 175, 0, 196, 0, 220, 0, 262, 0, 330, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 349, 0, 0, 0, 0, 0, 0, 0, 349, 0, 330, 0, 294, 0, 220, 0, 262, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 247, 0, 0, 0, 0, 0, 0, 0, 247, 0, 220, 0, 196, 0, 147, 0, 175, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0,
+    147, 0, 0, 0, 0, 0, 0, 0, 175, 0, 196, 0, 220, 0, 262, 0, 247, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 175, 0, 0, 0, 0, 0, 0, 0, 175, 0, 196, 0, 220, 0, 262, 0, 330, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 349, 0, 0, 0, 0, 0, 0, 0, 349, 0, 330, 0, 294, 0, 220, 0, 262, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 247, 0, 0, 0, 0, 0, 0, 0, 247, 0, 262, 0, 294, 0, 392, 0, 440, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  },  
+  { // rhythm notes
+    294, 0, 440, 0, 587, 0, 440, 0, 294, 0, 440, 0, 587, 0, 440, 0, 294, 0, 440, 0, 587, 0, 440, 0, 294, 0, 440, 0, 587, 0, 440, 0, 294, 0, 440, 0, 587, 0, 440, 0, 294, 0, 440, 0, 587, 0, 440, 0, 392, 0, 523, 0, 659, 0, 523, 0, 392, 0, 523, 0, 659, 0, 523, 0, 698, 0, 587, 0, 440, 0, 587, 0, 698, 0, 587, 0, 440, 0, 587, 0, 523, 0, 440, 0, 330, 0, 440, 0, 523, 0, 440, 0, 330, 0, 440, 0, 349, 0, 294, 0, 220, 0, 294, 0, 349, 0, 294, 0, 220, 0, 294, 0, 262, 0, 247, 0, 220, 0, 175, 0, 165, 0, 147, 0, 131, 0, 98, 0,
+    294, 0, 440, 0, 587, 0, 440, 0, 294, 0, 440, 0, 587, 0, 440, 0, 294, 0, 440, 0, 587, 0, 440, 0, 294, 0, 440, 0, 587, 0, 440, 0, 294, 0, 440, 0, 587, 0, 440, 0, 294, 0, 440, 0, 587, 0, 440, 0, 392, 0, 523, 0, 659, 0, 523, 0, 392, 0, 523, 0, 659, 0, 523, 0, 698, 0, 587, 0, 440, 0, 587, 0, 698, 0, 587, 0, 440, 0, 587, 0, 523, 0, 440, 0, 330, 0, 440, 0, 523, 0, 440, 0, 330, 0, 440, 0, 349, 0, 294, 0, 220, 0, 294, 0, 349, 0, 294, 0, 220, 0, 294, 0, 262, 0, 247, 0, 220, 0, 175, 0, 165, 0, 147, 0, 131, 0, 98, 0,
+    294, 0, 440, 0, 587, 0, 440, 0, 294, 0, 440, 0, 587, 0, 440, 0, 294, 0, 440, 0, 587, 0, 440, 0, 294, 0, 440, 0, 587, 0, 440, 0, 294, 0, 440, 0, 587, 0, 440, 0, 294, 0, 440, 0, 587, 0, 440, 0, 392, 0, 523, 0, 659, 0, 523, 0, 392, 0, 523, 0, 659, 0, 523, 0, 698, 0, 587, 0, 440, 0, 587, 0, 698, 0, 587, 0, 440, 0, 587, 0, 523, 0, 440, 0, 330, 0, 440, 0, 523, 0, 440, 0, 330, 0, 440, 0, 349, 0, 294, 0, 220, 0, 294, 0, 349, 0, 294, 0, 220, 0, 294, 0, 262, 0, 247, 0, 220, 0, 175, 0, 165, 0, 147, 0, 131, 0, 98, 0,
+  },  
+  { // drum beats
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 587, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 587, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 587, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 587, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 587, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 587, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 587, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 587, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 587, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 587, 0, 0, 0, 0, 0, 0, 0,
+    110, 0, 110, 0, 1047, 1175, 1175, 1175, 587, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 587, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 262, 0, 0, 1175, 587, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 587, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 587, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 587, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 262, 0, 0, 0, 587, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 587, 0, 0, 0, 0, 0, 0, 0,
+  }
+};
+
 /* setup */
 void init() {
+  // configure voices
 
-}
+  // melody track
+  audio::channels[0].voices      = audio::audio_voice::TRIANGLE | audio::audio_voice::SQUARE;
+  audio::channels[0].attack_ms   = 16;
+  audio::channels[0].decay_ms    = 168;
+  audio::channels[0].sustain     = 0xafff;
+  audio::channels[0].release_ms  = 168;
 
+  // rhythm track
+  audio::channels[1].voices      = audio::audio_voice::SQUARE;
+  audio::channels[1].attack_ms   = 38;
+  audio::channels[1].decay_ms    = 300;
+  audio::channels[1].sustain     = 0;
+  audio::channels[1].release_ms  = 0;
 
-void render(uint32_t time_ms) {
+  // drum track
+  audio::channels[2].voices       = audio::audio_voice::NOISE;
+  audio::channels[2].attack_ms   = 10;
+  audio::channels[2].decay_ms    = 750;
+  audio::channels[2].sustain     = 0;
+  audio::channels[2].release_ms  = 100;
 
+  // set global volume
+  audio::volume = 0x3fff;
+  
   fb.pen(rgba(0, 0, 0, 255));
   fb.clear();  
-
-  fb.watermark();
-  
-  fb.pen(rgba(255, 255, 255));
-
-  static uint16_t i = 0;
-  i++;
-  fb.pixel(point(i % 160, 0));
-
-  
 }
 
+uint16_t beat = 0;
 
-// map of SID chip ADSR 4-bit values to millisecond timings
-uint32_t  a_to_ms[] = {2,  8, 16, 24,  38,  56,  68,  80, 100, 250,  500,  800, 1000, 3000,  5000,  8000};
-uint32_t dr_to_ms[] = {6, 24, 48, 72, 114, 168, 204, 240, 300, 750, 1500, 2400, 3000, 9000, 15000, 24000};
-uint32_t s_to_vol[] = {0,4369,8738,13107,17476,21845,26214,30583,34952,39321,43690,48059,52428,56797,61166,65535};
+void render(uint32_t time_ms) {
+  fb.pen(rgba(20, 30, 40, 100));
+  fb.clear();
+  
+  // yeah, this is ugly... let's find a way to get a real
+  // waveform out of the audio functionality
+  for(int i = 0; i < 160; i++) {
+    uint8_t no = (i + beat) % 384;
+    uint8_t n1 = notes[0][no] >> 4;
+    uint8_t n2 = notes[1][no] >> 4;
+    uint8_t n3 = notes[2][no] >> 4;
 
+    fb.pen(rgba(255, 0, 0, 100));
+    fb.line(point(i, 120), point(i, 120 - n1));
+    fb.pen(rgba(0, 255, 0, 100));
+    fb.line(point(i, 120), point(i, 120 - n2));
+    fb.pen(rgba(0, 0, 255, 100));
+    fb.line(point(i, 120), point(i, 120 - n3));
+  }
+
+  fb.watermark();  
+} 
 
 void update(uint32_t time_ms) {
-  static uint32_t last_time_ms = time_ms;
   static uint16_t tick = 0;
-
   tick++;
-  uint16_t row = (tick >> 1) % 2000;
- 
- 
-  for(auto i = 0; i < 3; i++) {
-   
-    uint8_t *sample = song + (row * 25) + (i * 7);
-
-    uint32_t f = (sample[1] << 8) | sample[0];
-    uint16_t voices = sample[4];
-
-    uint32_t fhz = (f * 98525L) / 1677721L;
-
-    blit::audio::channels[i].pulse_width = ((((sample[3] & 0xf) << 8) | sample[2])) >> 4;
-    blit::audio::channels[i].frequency   = fhz;
-
-    if(voices & 0b01110000) {
-      // if any non-noise voice is active then disable noise channel      
-      voices &= ~0b10000000;      
+  
+  beat = (tick / 5) % 384; // 100ms per beat
+  
+  for(uint8_t i = 0; i < 3; i++) {
+    if(notes[i][beat] > 0) {
+      audio::channels[i].frequency = notes[i][beat];
+      audio::channels[i].trigger_attack();
+    } else if (notes[i][beat] == -1) {
+      audio::channels[i].trigger_release();
     }
-
-    blit::audio::channels[i].voices      = voices & 0b11110000;
-    //blit::audio::channels[i].voices      = blit::audio::audio_voice::SINE;
-    blit::audio::channels[i].gate        = voices & 0b1;
-
-    blit::audio::channels[i].attack_ms   = a_to_ms[(sample[5] & 0xf0) >> 4];
-    blit::audio::channels[i].decay_ms    = dr_to_ms[sample[5] & 0xf];
-    blit::audio::channels[i].sustain     = s_to_vol[(sample[6] & 0xf0) >> 4];
-    blit::audio::channels[i].release_ms  = dr_to_ms[sample[6] & 0xf];
-
-    blit::audio::channels[i].volume      = 0xffff;
   }
-
-  uint8_t volume = song[(row * 25) + 24] & 0x0f;
-  uint8_t mute_3 = song[(row * 25) + 24] & 0b10000000;
-  if(mute_3) {
-    blit::audio::channels[2].volume      = 0x0000;
-  }  
-
-  blit::audio::volume      = s_to_vol[volume & 0x0f];
-
-
-
-/*
-NOISE     = 128, 
-      SQUARE    = 64, 
-      SAW       = 32, 
-      TRIANGLE  = 16, 
-      SINE      = 8,
-      WAVE      = 4 */
-/*
-  uint8_t vv[5] = {blit::audio::audio_voice::NOISE, blit::audio::audio_voice::SQUARE, blit::audio::audio_voice::SAW, blit::audio::audio_voice::TRIANGLE, blit::audio::audio_voice::SINE};
-  uint8_t v = (tick / 500) % 5;
-
-  // seashore demo
- blit::audio::channels[0].frequency   = 400;
-  blit::audio::channels[0].voices      = vv[v];//blit::audio::audio_voice::SQUARE;
-  blit::audio::channels[0].gate        = 1;
-
-  blit::audio::channels[0].attack_ms   = 0;
-  blit::audio::channels[0].decay_ms    = 0;
-  blit::audio::channels[0].sustain     = 0xffff;
-  blit::audio::channels[0].release_ms  = 0;
-
-  blit::audio::channels[0].volume      = 0xffff;// (sin(float(tick) / 50.0f) * 0x7fff) + 0x7fff;
-  //blit::audio::volume      = (sin(float(tick) / 50.0f) * 0x3fff) + 0x3fff;
-
-  blit::audio::volume = 0x7fff;
-*/
-/*
-  //blit::audio::channels[i].pw         = ((sample[3] & 0xf) << 8) | sample[2];
-  blit::audio::channels[0].frequency  = 440;
-  blit::audio::channels[0].voices     = blit::audio::audio_voice::SINE;
-  blit::audio::channels[0].attack_ms  = 250;
-  blit::audio::channels[0].decay_ms   = 2000;
-  blit::audio::channels[0].sustain    = 0xafff;
-  blit::audio::channels[0].release_ms = 2000;
-*/
-/*
-  if(time_ms > 5000) {
-    blit::audio::channels[0].gate       = 0;
-  }
-  else{
-    blit::audio::channels[0].gate       = 1;
-  }
-*/
-
-
-  last_time_ms = time_ms;
 }
+  
