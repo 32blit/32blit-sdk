@@ -7,21 +7,16 @@
 #include "engine/audio.hpp"
 
 Audio::Audio() {
-    SDL_AudioSpec *desired;
+    SDL_AudioSpec desired = {}, audio_spec = {};
 
-    desired = new SDL_AudioSpec();
-    audio_spec = new SDL_AudioSpec();
+    desired.freq = _sample_rate;
+    desired.format = AUDIO_U16LSB;
+    desired.channels = 1;
 
-    desired->freq = _sample_rate;
-    desired->format = AUDIO_U16LSB;
-    desired->channels = 1;
+    desired.samples = 128;
+    desired.callback = _audio_callback;
 
-    desired->samples = 128;
-    desired->callback = _audio_callback;
-
-    audio_device = SDL_OpenAudioDevice(NULL, 0, desired, audio_spec, 0);
-
-    delete desired;
+    audio_device = SDL_OpenAudioDevice(NULL, 0, &desired, &audio_spec, 0);
 
     if(audio_device == 0){
         std::cout << "Audio Init Failed: " << SDL_GetError() << std::endl;
