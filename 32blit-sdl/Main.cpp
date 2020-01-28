@@ -169,9 +169,7 @@ int main(int argc, char *argv[]) {
 	blit_system = new System();
 	blit_input = new Input(window, blit_system);
 	blit_renderer = new Renderer(window, System::width, System::height);
-#ifndef __EMSCRIPTEN__
 	blit_audio = new Audio();
-#endif
 
 #ifdef VIDEO_CAPTURE
 	blit_capture = new VideoCapture(argv[0]);

@@ -13,7 +13,7 @@ Audio::Audio() {
     desired.format = AUDIO_U16LSB;
     desired.channels = 1;
 
-    desired.samples = 128;
+    desired.samples = 256;
     desired.callback = _audio_callback;
 
     audio_device = SDL_OpenAudioDevice(NULL, 0, &desired, &audio_spec, 0);
