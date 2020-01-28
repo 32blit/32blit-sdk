@@ -86,10 +86,13 @@ void render(uint32_t time_ms) {
 
 void update(uint32_t time_ms) {
   static uint16_t tick = 0;
-  tick++;
-  
+  static uint16_t prev_beat = 1;
   beat = (tick / 5) % 384; // 100ms per beat
-  
+  tick++;
+
+  if (beat == prev_beat) return;
+  prev_beat = beat;
+
   for(uint8_t i = 0; i < 3; i++) {
     if(notes[i][beat] > 0) {
       audio::channels[i].frequency = notes[i][beat];
