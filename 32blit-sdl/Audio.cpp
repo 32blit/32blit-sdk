@@ -7,21 +7,16 @@
 #include "engine/audio.hpp"
 
 Audio::Audio() {
-    SDL_AudioSpec *desired;
+    SDL_AudioSpec desired = {}, audio_spec = {};
 
-    desired = new SDL_AudioSpec();
-    audio_spec = new SDL_AudioSpec();
+    desired.freq = _sample_rate;
+    desired.format = AUDIO_S16LSB;
+    desired.channels = 1;
 
-    desired->freq = _sample_rate;
-    desired->format = AUDIO_U16LSB;
-    desired->channels = 1;
+    desired.samples = 256;
+    desired.callback = _audio_callback;
 
-    desired->samples = 128;
-    desired->callback = _audio_callback;
-
-    audio_device = SDL_OpenAudioDevice(NULL, 0, desired, audio_spec, 0);
-
-    delete desired;
+    audio_device = SDL_OpenAudioDevice(NULL, 0, &desired, &audio_spec, 0);
 
     if(audio_device == 0){
         std::cout << "Audio Init Failed: " << SDL_GetError() << std::endl;
@@ -37,14 +32,14 @@ Audio::~Audio() {
     SDL_CloseAudioDevice(audio_device);
 }
 
-void _audio_bufferfill(unsigned short *buffer, int buffer_size){
+void _audio_bufferfill(short *buffer, int buffer_size){
     memset(buffer, 0, buffer_size);
 
     for(auto sample = 0; sample < buffer_size; sample++){
-        buffer[sample] = blit::audio::get_audio_frame();
+        buffer[sample] = (int)blit::audio::get_audio_frame() - 0x7fff;
     }
 }
 
 void _audio_callback(void *userdata, uint8_t *stream, int len){
-    _audio_bufferfill((unsigned short *)stream, len / 2);
+    _audio_bufferfill((short *)stream, len / 2);
 }
