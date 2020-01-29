@@ -15,5 +15,6 @@ before_install:
 
 script:
   - docker exec -it emscripten mkdir build.em
-  - docker exec -it cd build.em
+  - docker exec -it emscripten cd build.em
   - docker exec -it emscripten emcmake cmake .. -G "Unix Makefiles"
+  - docker exec -it emscripten make
