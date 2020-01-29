@@ -66,7 +66,7 @@ namespace blit {
         uint16_t  decay_ms      = 6;      // decay period
         uint16_t  sustain       = 0xffff; // sustain volume
         uint16_t  release_ms    = 1;      // release period
-        uint16_t  pulse_width   = 0x7f;   // duty cycle of square voice (default 50%)
+        uint16_t  pulse_width   = 0x80;   // duty cycle of square voice (default 50%)
         int16_t   noise         = 0;      // current noise value
     
         uint32_t  voice_offset  = 0;      // voice offset (Q8)
