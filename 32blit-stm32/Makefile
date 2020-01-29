@@ -88,7 +88,7 @@ ASM_SOURCES =  \
 startup_stm32h750xx.s
 
 
-PREFIX := arm-none-eabi-
+PREFIX = arm-none-eabi-
 # The gcc compiler bin path can be either defined in make command via GCC_PATH variable (> make GCC_PATH=xxx)
 # either it can be added to the PATH environment variable.
 ifdef GCC_PATH
