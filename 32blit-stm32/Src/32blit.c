@@ -22,8 +22,6 @@
 #include "stdarg.h"
 using namespace blit;
 
-__attribute__((section(".dma_data"))) uint16_t dac_buffer[DAC_BUFFER_SIZE];
-
 extern char __ltdc_start;
 extern char __fb_start;
 extern char itcm_text_start;
@@ -155,10 +153,6 @@ void blit_global_volume(uint32_t v) {
 }
 
 void blit_init() {
-    for(int x = 0; x<4000; x++){
-       dac_buffer[x] = 0;
-    }
-    
     // enable cycle counting
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     DWT->CYCCNT = 0;
