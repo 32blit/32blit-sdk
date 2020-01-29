@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "cstdint": "c",
-        "queue": "c",
-        "vector": "cpp",
-        "random": "cpp",
-        "xutility": "cpp"
-    }
-}
