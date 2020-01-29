@@ -502,7 +502,9 @@ void update(uint32_t time_ms) {
     if (water_dist < 0) {
         water_dist = 0;
     }
+#ifdef __AUDIO__
     audio::channels[0].volume      = 4000 + (sin(float(time_ms) / 1000.0f) * 3000);
+#endif
 
     if (game_state == enum_state::menu) {
         if(pressed & button::B) {
