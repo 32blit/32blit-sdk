@@ -4,7 +4,6 @@
 #include <cstdlib>
 
 #include "audio-test.hpp"
-#include "gng.h"
 
 using namespace blit;
 
