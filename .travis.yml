@@ -3,6 +3,7 @@ notifications:
 
 language: cpp
 
+os: linux
 dist: bionic
 
 jobs:
@@ -18,8 +19,7 @@ jobs:
         - docker exec -it emscripten make -C build.em
     
     # linux
-    - env: TOOLCHAIN=
-      addons:
+    - addons:
         apt:
           libsdl2-dev
 
@@ -30,6 +30,19 @@ jobs:
           gcc-arm-none-eabi
           libnewlib-arm-none-eabi
           libstdc++-arm-none-eabi-newlib
+          
+    - os: windows
+      script:
+        - export PATH=$PATH:"c:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin"
+        - curl https://libsdl.org/release/SDL2-devel-2.0.10-VC.zip -o SDL2.zip
+        - unzip SDL2.zip -d vs/sdl
+        # move dirs up
+        - mv vs/sdl/SDL2-2.0.10/* vs/sdl
+        #- msbuild.exe vs/32blit.sln #toolset is too old
+        # use cmake instead
+        - mv vs/sdl/lib/x86 vs/sdl/lib/Win32 #small hack
+        - cmake -B build -DSDL2_DIR=$PWD/vs/sdl .
+        - cmake --build build
 
 script:
   - mkdir build && cd build
