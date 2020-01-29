@@ -18,6 +18,7 @@ In your project directory:
 
 ``` shell
 mkdir build.em
+cd build.em
 emcmake cmake .. -G "Unix Makefiles"
 make
 python3 -m http.server
