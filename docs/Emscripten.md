@@ -17,8 +17,9 @@ You should now have commands like `emcc` in your path, and an `EMSDK` environmen
 In your project directory:
 
 ``` shell
-emcmake cmake . -B build.em -G "Unix Makefiles"
-make -C build.em
+mkdir build.em
+emcmake cmake .. -G "Unix Makefiles"
+make
 python3 -m http.server
 ```
 Finally, open the URL given by Python's HTTP server in your browser and open your project's .html file.

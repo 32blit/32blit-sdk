@@ -23,8 +23,10 @@ sudo make install
 Finally, from the root directory of this repository:
 
 ``` shell
-cmake . -B build -DCMAKE_TOOLCHAIN_FILE=./darwin.toolchain
-make -C build
+mkdir build
+cd build
+cmake .. -DCMAKE_TOOLCHAIN_FILE=../darwin.toolchain
+make
 ```
 
 When the build completes you should find all the examples within the build directory.
