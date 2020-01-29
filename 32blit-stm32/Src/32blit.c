@@ -31,9 +31,8 @@ FATFS filesystem;
 FRESULT SD_Error = FR_INVALID_PARAMETER;
 FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 
-uint32_t total_samples = 0;
-uint8_t dma_status = 0;
-uint8_t global_volume = 255;
+float global_volume = 0.5f;
+float volume_log_base = 2.0f;
 
 static blit::screen_mode mode = blit::screen_mode::lores;
 
@@ -135,10 +134,6 @@ void blit_enable_amp() {
   HAL_GPIO_WritePin(AMP_SHUTDOWN_GPIO_Port, AMP_SHUTDOWN_Pin, GPIO_PIN_SET);
 }
 
-void blit_global_volume(uint32_t v) {
-  global_volume = v;
-}
-
 void blit_init() {
     HAL_TIM_Base_Start_IT(&htim6);
     HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
@@ -159,7 +154,7 @@ void blit_init() {
     blit::debugf = blit_debugf;
     blit::now = HAL_GetTick;
     blit::random = HAL_GetRandom;
-    blit::audio::volume = 0xffff;
+    blit::audio::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
     blit::set_screen_mode = ::set_screen_mode;
     ::set_screen_mode(blit::lores);
 
@@ -197,8 +192,9 @@ void blit_menu_update(uint32_t time) {
         blit::backlight = std::fmin(1.0f, std::fmax(0.0f, blit::backlight));
         break;
       case 1: // Volume
-        //blit::volume += 1.0f / 256.0f;
-        //blit::volume = std::fmin(1.0f, std::fmax(0.0f, blit::volume));
+        global_volume += 1.0f / 256.0f;
+        global_volume = std::fmin(1.0f, std::fmax(0.0f, global_volume));
+        blit::audio::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
         break;
     }
   } else if (blit::buttons & blit::button::DPAD_LEFT ) {
@@ -208,8 +204,9 @@ void blit_menu_update(uint32_t time) {
         blit::backlight = std::fmin(1.0f, std::fmax(0.0f, blit::backlight));
         break;
       case 1: // Volume
-        //blit::volume -= 1.0f / 256.0f;
-        //blit::volume = std::fmin(1.0f, std::fmax(0.0f, blit::volume));
+        global_volume -= 1.0f / 256.0f;
+        global_volume = std::fmin(1.0f, std::fmax(0.0f, global_volume));
+        blit::audio::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
         break;
     }
   } else if (blit::buttons & changed_buttons & blit::button::A) {
@@ -296,11 +293,11 @@ void blit_menu_render(uint32_t time) {
     fb.pen(rgba(255, 255, 255));
   }
 
-/*  fb.text("Volume", &minimal_font[0][0], point(5, 30));
+  fb.text("Volume", &minimal_font[0][0], point(5, 30));
   fb.pen(bar_background_color);
   fb.rectangle(rect(screen_width / 2, 31, 75, 5));
   fb.pen(rgba(255, 255, 255));
-  fb.rectangle(rect(screen_width / 2, 31, 75 * blit::volume, 5));*/
+  fb.rectangle(rect(screen_width / 2, 31, 75 * global_volume, 5));
 
   if(menu_item == 2){
     fb.pen(rgba(50, 50, 70));
