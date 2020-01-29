@@ -113,7 +113,7 @@ uint32_t get_random_number() {
         default:
             return 0;
         case RANDOM_TYPE_HRNG:
-            return random();
+            return blit::random();
         case RANDOM_TYPE_PRNG:
             uint8_t lsb = prng_lfsr & 1;
             prng_lfsr >>= 1;
@@ -498,7 +498,7 @@ void update(uint32_t time_ms) {
     uint16_t pressed = changed & buttons;
     uint16_t released = changed & ~buttons;
 
-    uint32_t water_dist = player_position.y - (SCREEN_H - water_level);
+    int32_t water_dist = player_position.y - (SCREEN_H - water_level);
     if (water_dist < 0) {
         water_dist = 0;
     }
