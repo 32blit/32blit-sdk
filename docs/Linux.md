@@ -15,13 +15,15 @@ cd examples/palette-cycle
 prepare the Makefile with CMake:
 
 ```
-cmake . -B build
+mkdir build
+cd build
+cmake ..
 ```
 
 and compile the example:
 
 ```
-make -C build
+make
 ```
 
 To run the application on your computer, use the following command (from within the same directory):
