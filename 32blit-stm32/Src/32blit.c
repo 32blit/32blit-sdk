@@ -21,8 +21,6 @@
 #include "stdarg.h"
 using namespace blit;
 
-__attribute__((section(".dac_data"))) uint16_t dac_buffer[4000];
-
 extern char __ltdc_start;
 extern char __fb_start;
 extern char itcm_text_start;
@@ -142,9 +140,6 @@ void blit_global_volume(uint32_t v) {
 }
 
 void blit_init() {
-    for(int x = 0; x<4000; x++){
-       dac_buffer[x] = 0;
-    }
     HAL_TIM_Base_Start_IT(&htim6);
     HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
     
