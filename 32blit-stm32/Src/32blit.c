@@ -8,6 +8,7 @@
 #include "tim.h"
 #include "rng.h"
 #include "spi.h"
+#include "ltdc.h"
 #include "spi-st7272a.h"
 #include "i2c.h"
 #include "i2c-msa301.h"
@@ -33,6 +34,7 @@ FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 
 uint32_t total_samples = 0;
 uint8_t dma_status = 0;
+bool needs_render = true;
 
 static blit::screen_mode mode = blit::screen_mode::lores;
 
@@ -106,13 +108,22 @@ uint32_t blit_update_dac(FIL *audio_file) {
 }
 
 void blit_tick() {
+  if(needs_render) {
+    blit::render(blit::now());
+    
+    needs_render = false;
+    blit::LED.r = ~blit::LED.r;
+  }
+
+  blit::LED.g++;
+
   blit_process_input();
   blit_update_led();
   blit_update_vibration();
 
-  if(blit::tick(blit::now())){
-    blit_flip();
-  }
+
+
+  blit::tick(blit::now());
 }
 
 bool blit_sd_detected() {
@@ -155,10 +166,10 @@ void blit_init() {
     for(int x = 0; x<DAC_BUFFER_SIZE; x++){
       dac_buffer[x] = 0;
     }
-    HAL_TIM_Base_Start(&htim6);
+  /*  HAL_TIM_Base_Start(&htim6);
     HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
     HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2, (uint32_t*)dac_buffer, DAC_BUFFER_SIZE, DAC_ALIGN_12B_R);
-
+*/
     ST7272A_RESET();
 
     st7272a_set_bgr();
@@ -178,7 +189,24 @@ void blit_init() {
     blit::render = ::render;
     blit::init   = ::init;
 
+//   
+
     blit::init();
+
+
+  HAL_NVIC_SetPriority(LTDC_IRQn, 2, 0);
+  HAL_NVIC_EnableIRQ(LTDC_IRQn);
+  HAL_LTDC_ProgramLineEvent(&hltdc, 220);
+}
+
+void HAL_LTDC_LineEventCallback(LTDC_HandleTypeDef *p) {
+  blit_flip();
+  
+  needs_render = true;
+  blit::LED.b++;
+  blit_update_led();
+
+  HAL_LTDC_ProgramLineEvent(&hltdc, 220);
 }
 
 int menu_item = 0;
@@ -354,9 +382,6 @@ void blit_flip() {
         // HIRES mode
         SCB_CleanInvalidateDCache_by_Addr((uint32_t *)blit::fb.data, 320 * 240 * 2);
 
-        // wait until next VSYNC period
-        while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS));
-
         // set the LTDC layer framebuffer pointer shadow register
         LTDC_Layer1->CFBAR = (uint32_t)(&__ltdc_start + (ltdc_buffer_id * 320 * 240 * 2));
         // force LTDC driver to reload shadow registers
@@ -367,10 +392,6 @@ void blit_flip() {
         blit::fb.data = (uint8_t *)(&__ltdc_start) + (ltdc_buffer_id * 320 * 240 * 2);
     } else {
         // LORES mode
-
-        // wait for next frame if LTDC hardware currently drawing, ensures
-        // no tearing
-        while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS));
 
         // pixel double the framebuffer to the LTDC buffer
         rgb *src = (rgb *)blit::fb.data;
@@ -393,16 +414,7 @@ void blit_flip() {
             dest += 320;
         }
 
-        SCB_CleanInvalidateDCache_by_Addr((uint32_t *)&__ltdc_start, 320 * 240 * 2);
-
-        // set the LTDC layer framebuffer pointer shadow register
-        LTDC_Layer1->CFBAR = (uint32_t)(&__ltdc_start);
-        // force LTDC driver to reload shadow registers
-        LTDC->SRCR = LTDC_SRCR_IMR;
-
-        // No need to swap framebuffer since we've copied from the engine's
-        // 160 x 120 framebuffer to the 320 x 240 LTDC buffer
-        ltdc_buffer_id = 0;
+      //  SCB_CleanInvalidateDCache_by_Addr((uint32_t *)&__ltdc_start, 320 * 240 * 2);
     }
 }
 

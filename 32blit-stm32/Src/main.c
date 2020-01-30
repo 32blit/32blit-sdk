@@ -106,7 +106,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
+  //MX_DMA_Init();
   MX_TIM4_Init();
   MX_TIM3_Init();
   MX_DAC1_Init();
@@ -119,13 +119,17 @@ int main(void)
   //MX_USB_OTG_HS_USB_Init();
   MX_SPI1_Init();
   MX_SPI4_Init();
-  MX_TIM6_Init();
+  //MX_TIM6_Init();
   MX_TIM15_Init();
   MX_FATFS_Init();
   //MX_DMA2D_Init();
   MX_RNG_Init();
-  MX_USB_DEVICE_Init();
+  //MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
+
+  
+
+
   blit_clear_framebuffer();
   blit_init();
 
@@ -148,12 +152,6 @@ int main(void)
   while (1)
   {
     uint32_t t_start = blit::now();
-
-    // TODO: this is really just experimental code and should
-    // be removed in favour of generic sound support
-    if(audio_file_available && blit_sd_detected()){
-      total_samples += blit_update_dac(&audio_file);
-    }
 
     blit_tick();
 
