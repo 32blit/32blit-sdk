@@ -4,7 +4,7 @@
 
 using namespace blit;
 
-//#define __AUDIO__
+#define __AUDIO__
 
 #define SCREEN_W 160
 #define SCREEN_H 120
