@@ -27,8 +27,10 @@ extern char itcm_text_start;
 extern char itcm_text_end;
 extern char itcm_data;
 
-ALIGN_32BYTES (static uint16_t adc1data[32]);
-ALIGN_32BYTES (static uint16_t adc3data[32]);
+#define ADC_BUFFER_SIZE 32
+
+__attribute__((section(".dac_data"))) ALIGN_32BYTES(__IO uint16_t adc1data[ADC_BUFFER_SIZE]);
+__attribute__((section(".dac_data"))) ALIGN_32BYTES(__IO uint16_t adc3data[ADC_BUFFER_SIZE]);
 
 FATFS filesystem;
 FRESULT SD_Error = FR_INVALID_PARAMETER;
@@ -158,12 +160,12 @@ void blit_init() {
     for(int x = 0; x<DAC_BUFFER_SIZE; x++){
       dac_buffer[x] = 0;
     }
-    //HAL_TIM_Base_Start(&htim6);
-    //HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
-    //HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2, (uint32_t*)dac_buffer, DAC_BUFFER_SIZE, DAC_ALIGN_12B_R);
+    HAL_TIM_Base_Start(&htim6);
+    HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
+    HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2, (uint32_t*)dac_buffer, DAC_BUFFER_SIZE, DAC_ALIGN_12B_R);
 
-    HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc1data, 32);
-    HAL_ADC_Start_DMA(&hadc3, (uint32_t *)adc3data, 32);
+    HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc1data, ADC_BUFFER_SIZE);
+    HAL_ADC_Start_DMA(&hadc3, (uint32_t *)adc3data, ADC_BUFFER_SIZE);
 
     ST7272A_RESET();
 
@@ -464,56 +466,22 @@ void blit_update_led() {
     __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 962 - (962 * blit::backlight));
 }
 
-/*
-void ADC_update_joystick_axis(ADC_HandleTypeDef *adc, float *axis){
-  if (HAL_ADC_PollForConversion(adc, 1000000) == HAL_OK)
-  {
-    int adc_reading = (HAL_ADC_GetValue(adc) >> 1) - 16384;
-    adc_reading = std::max(-8192, std::min(8192, adc_reading));
-    if (adc_reading < -1024) {
-      adc_reading += 1024;
-    }
-    else if (adc_reading > 1024) {
-      adc_reading -= 1024;
-    }
-    else {
-      adc_reading = 0;
-    }
-    *axis = adc_reading / 7168.0f;
-  }
+void HAL_ADC_ErrorCallback(ADC_HandleTypeDef* hadc){
 }
-*/
 
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc){
-  blit::LED.g = 255;
-  blit_update_led();
   if(hadc->Instance == ADC1) {
-    SCB_InvalidateDCache_by_Addr((uint32_t *) &adc1data[0], 32);
+    SCB_InvalidateDCache_by_Addr((uint32_t *) &adc1data[0], ADC_BUFFER_SIZE);
   } else if (hadc->Instance == ADC3) {
-    SCB_InvalidateDCache_by_Addr((uint32_t *) &adc3data[0], 32);
+    SCB_InvalidateDCache_by_Addr((uint32_t *) &adc3data[0], ADC_BUFFER_SIZE);
   }
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
-  blit::LED.r = 255;
-  blit_update_led();
   if(hadc->Instance == ADC1) {
-    SCB_InvalidateDCache_by_Addr((uint32_t *) &adc1data[16], 16);
-  /*
+    SCB_InvalidateDCache_by_Addr((uint32_t *) &adc1data[ADC_BUFFER_SIZE / 2], ADC_BUFFER_SIZE / 2);
 
-    int joystick_y = (adc1data[0] >> 1) - 16384;
-    joystick_y = std::max(-8192, std::min(8192, joystick_y));
-    if(joystick_y < -1024) {
-      joystick_y += 1024;
-    }
-    else if(joystick_y > 1024) {
-      joystick_y -= 1024;
-    } else {
-      joystick_y = 0;
-    }
-    blit::joystick.y = joystick_y / 7168.0f;
-
-    int joystick_x = (adc1data[1] >> 1) - 16384;
+    int joystick_x = (adc1data[0] >> 1) - 16384;
     joystick_x = std::max(-8192, std::min(8192, joystick_x));
     if(joystick_x < -1024) {
       joystick_x += 1024;
@@ -524,10 +492,47 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
       joystick_x = 0;
     }
     blit::joystick.x = joystick_x / 7168.0f;
-  */
-  } else if (hadc->Instance == ADC3) {
-    SCB_InvalidateDCache_by_Addr((uint32_t *) &adc3data[16], 16);
 
+    int joystick_y = (adc1data[1] >> 1) - 16384;
+    joystick_y = std::max(-8192, std::min(8192, joystick_y));
+    if(joystick_y < -1024) {
+      joystick_y += 1024;
+    }
+    else if(joystick_y > 1024) {
+      joystick_y -= 1024;
+    } else {
+      joystick_y = 0;
+    }
+    blit::joystick.y = -joystick_y / 7168.0f;
+
+  } else if (hadc->Instance == ADC3) {
+    SCB_InvalidateDCache_by_Addr((uint32_t *) &adc3data[ADC_BUFFER_SIZE / 2], ADC_BUFFER_SIZE / 2);
+
+    int hack_left = (adc3data[0] >> 1) - 16384;
+    hack_left = std::max(-8192, std::min(8192, hack_left));
+    if(hack_left < -1024) {
+      hack_left += 1024;
+    }
+    else if(hack_left > 1024) {
+      hack_left -= 1024;
+    } else {
+      hack_left = 0;
+    }
+    blit::hack_left = hack_left / 7168.0f;
+
+    int hack_right = (adc3data[1] >> 1) - 16384;
+    hack_right = std::max(-8192, std::min(8192, hack_right));
+    if(hack_right < -1024) {
+      hack_right += 1024;
+    }
+    else if(hack_right > 1024) {
+      hack_right -= 1024;
+    } else {
+      hack_right = 0;
+    }
+    blit::hack_right = -hack_right / 7168.0f;
+
+    blit::battery = 6.6 * adc3data[2] / 65535.0f;
   }
 }
 
@@ -540,21 +545,6 @@ void blit_process_input() {
   static uint32_t blit_last_buttons = 0;
   // read x axis of joystick
   bool joystick_button = false;
-
-  /*HAL_ADC_Start(&hadc1);
-  ADC_update_joystick_axis(&hadc1, &blit::joystick.x);
-  ADC_update_joystick_axis(&hadc1, &blit::joystick.y);
-  blit::joystick.y = -blit::joystick.y;
-  HAL_ADC_Stop(&hadc1);
-
-  HAL_ADC_Start(&hadc3);
-  ADC_update_joystick_axis(&hadc3, &blit::hack_left);
-  ADC_update_joystick_axis(&hadc3, &blit::hack_right);
-  if (HAL_ADC_PollForConversion(&hadc3, 1000000) == HAL_OK)
-  {
-    blit::battery = 6.6f * HAL_ADC_GetValue(&hadc3) / 65535.0f;
-  }
-  HAL_ADC_Stop(&hadc3);*/
 
   // Read buttons
   blit::buttons =
