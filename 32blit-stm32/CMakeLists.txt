@@ -143,7 +143,8 @@ target_compile_options(BlitHalSTM32Ext
 		-fpermissive
 )
 
-set(MCU_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}" PARENT_SCOPE)
+set(MCU_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}")
+set(MCU_LINKER_SCRIPT "${MCU_LINKER_SCRIPT}" PARENT_SCOPE)
 set(MCU_LINKER_SCRIPT_EXT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT_EXT}" PARENT_SCOPE)
 
 function(blit_executable_common NAME)
@@ -174,3 +175,9 @@ function(blit_executable_int_flash NAME SOURCES)
 
 	blit_executable_common(${NAME})
 endfunction()
+
+blit_executable_int_flash(flash-loader Src/flash-loader.cpp)
+target_include_directories(flash-loader PRIVATE ${INCLUDE_DIRS})
+target_compile_definitions(flash-loader
+	PRIVATE
+		${DEFINITIONS})
