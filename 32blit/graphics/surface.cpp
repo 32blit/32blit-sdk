@@ -35,7 +35,7 @@ namespace blit {
     switch (format) {
     case pixel_format::RGBA: {
       bf = RGBA_RGBA;
-      bbf = { nullptr, nullptr, nullptr, nullptr, nullptr };
+      bbf = { nullptr, nullptr, nullptr, P_RGBA, nullptr };
     }break;
     case pixel_format::RGB: {
       bf = RGBA_RGB;

@@ -49,7 +49,7 @@ void render_smoke() {
   }
 }
 
-/*
+
 void smoke_generate(test_particle &p) {
   p.pos = vec2((rand() % 20) - 10, (rand() % 20) - 10);
   p.vel = vec2(((rand() % 40) - 20) / 2, (rand() % 20) - 60);
@@ -87,7 +87,7 @@ void smoke(uint32_t time_ms) {
   
   last_time_ms = time_ms;
 };
-*/
+
 
 void spark_generate(test_particle &p) {
   p.pos = vec2((rand() % 10) - 5, -100);
@@ -250,10 +250,10 @@ uint16_t height;
   //render_smoke();
 
   uint32_t ms_start = now();
-  //spark(time_ms);
-  //smoke(time_ms); 
-  //rain(time_ms);
-  render_basic_rain();
+  spark(time_ms);
+  smoke(time_ms); 
+  rain(time_ms);
+  //render_basic_rain();
   uint32_t ms_end = now();
 
   // draw grid
