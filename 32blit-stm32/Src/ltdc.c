@@ -71,7 +71,9 @@ void MX_LTDC_Init(void)
   {
     Error_Handler();
   } 
+
 }
+
 
 void HAL_LTDC_MspInit(LTDC_HandleTypeDef* ltdcHandle)
 {

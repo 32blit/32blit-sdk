@@ -21,6 +21,7 @@ namespace blit {
   extern void P_P(uint8_t *pen, surface *dest, uint32_t offset, uint16_t count);
   extern void P_P(surface *src, int32_t src_offset, surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step);
   extern void P_RGB(surface *src, int32_t src_offset, surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step);
+  extern void P_RGBA(surface *src, int32_t src_offset, surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step);
   extern void P_RGB565(surface *src, int32_t src_offset, surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step);
 
 }

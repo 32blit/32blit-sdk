@@ -8,6 +8,7 @@
 #include "tim.h"
 #include "rng.h"
 #include "spi.h"
+#include "ltdc.h"
 #include "spi-st7272a.h"
 #include "i2c.h"
 #include "i2c-msa301.h"
@@ -20,12 +21,19 @@
 #include "stdarg.h"
 using namespace blit;
 
-__attribute__((section(".dac_data"))) uint16_t dac_buffer[DAC_BUFFER_SIZE];
+__attribute__((section(".dma_data"))) uint16_t dac_buffer[DAC_BUFFER_SIZE];
 
 extern char __ltdc_start;
+extern char __fb_start;
+
 extern char itcm_text_start;
 extern char itcm_text_end;
 extern char itcm_data;
+
+#define ADC_BUFFER_SIZE 32
+
+__attribute__((section(".dma_data"))) ALIGN_32BYTES(__IO uint16_t adc1data[ADC_BUFFER_SIZE]);
+__attribute__((section(".dma_data"))) ALIGN_32BYTES(__IO uint16_t adc3data[ADC_BUFFER_SIZE]);
 
 FATFS filesystem;
 FRESULT SD_Error = FR_INVALID_PARAMETER;
@@ -33,14 +41,16 @@ FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 
 uint32_t total_samples = 0;
 uint8_t dma_status = 0;
+bool needs_render = true;
+uint32_t flip_cycle_count = 0;
 
 static blit::screen_mode mode = blit::screen_mode::lores;
 
 /* configure the screen surface to point at the reserved LTDC framebuffer */
 surface __ltdc((uint8_t *)&__ltdc_start, pixel_format::RGB565, size(320, 240));
-uint8_t ltdc_buffer_id = 0;
 
-surface __fb(((uint8_t *)&__ltdc_start) + (320 * 240 * 2), pixel_format::RGB, size(160, 120));
+surface __fb_hires((uint8_t *)&__fb_start, pixel_format::RGB565, size(320, 240));
+surface __fb_lores((uint8_t *)&__fb_start, pixel_format::RGBA, size(160, 120));
 
 void DFUBoot(void)
 {
@@ -106,13 +116,18 @@ uint32_t blit_update_dac(FIL *audio_file) {
 }
 
 void blit_tick() {
+  if(needs_render) {
+    blit::render(blit::now());
+
+    HAL_LTDC_ProgramLineEvent(&hltdc, 252);
+    needs_render = false;
+  }
+
   blit_process_input();
   blit_update_led();
   blit_update_vibration();
 
-  if(blit::tick(blit::now())){
-    blit_flip();
-  }
+  blit::tick(blit::now());
 }
 
 bool blit_sd_detected() {
@@ -155,9 +170,14 @@ void blit_init() {
     for(int x = 0; x<DAC_BUFFER_SIZE; x++){
       dac_buffer[x] = 0;
     }
-    HAL_TIM_Base_Start(&htim6);
-    HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
-    HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2, (uint32_t*)dac_buffer, DAC_BUFFER_SIZE, DAC_ALIGN_12B_R);
+    
+    // enable cycle counting
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CYCCNT = 0;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+
+    HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc1data, ADC_BUFFER_SIZE);
+    HAL_ADC_Start_DMA(&hadc3, (uint32_t *)adc3data, ADC_BUFFER_SIZE);
 
     ST7272A_RESET();
 
@@ -179,6 +199,17 @@ void blit_init() {
     blit::init   = ::init;
 
     blit::init();
+
+
+  HAL_NVIC_SetPriority(LTDC_IRQn, 4, 4);
+  HAL_NVIC_EnableIRQ(LTDC_IRQn);
+  HAL_LTDC_ProgramLineEvent(&hltdc, 252);
+}
+
+void HAL_LTDC_LineEventCallback(LTDC_HandleTypeDef *p) {
+  blit_flip();
+  
+  needs_render = true;
 }
 
 int menu_item = 0;
@@ -350,90 +381,52 @@ void blit_menu() {
  * In high-res mode it simply points LTDC at the freshly drawn buffer and gives 32blit the other buffer to draw into.
  */
 void blit_flip() {
-    if(mode == screen_mode::hires) {
-        // HIRES mode
-        SCB_CleanInvalidateDCache_by_Addr((uint32_t *)blit::fb.data, 320 * 240 * 2);
+  uint32_t scc = DWT->CYCCNT;
 
-        // wait until next VSYNC period
-        while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS));
-
-        // set the LTDC layer framebuffer pointer shadow register
-        LTDC_Layer1->CFBAR = (uint32_t)(&__ltdc_start + (ltdc_buffer_id * 320 * 240 * 2));
-        // force LTDC driver to reload shadow registers
-        LTDC->SRCR = LTDC_SRCR_IMR;
-
-        // Swap blit's output framebuffer over
-        ltdc_buffer_id = ltdc_buffer_id == 0 ? 1 : 0;
-        blit::fb.data = (uint8_t *)(&__ltdc_start) + (ltdc_buffer_id * 320 * 240 * 2);
-    } else {
-        // LORES mode
-
-        // wait for next frame if LTDC hardware currently drawing, ensures
-        // no tearing
-        while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS));
-
-        // pixel double the framebuffer to the LTDC buffer
-        rgb *src = (rgb *)blit::fb.data;
-
-        uint16_t *dest = (uint16_t *)(&__ltdc_start);
-        for(uint8_t y = 0; y < 120; y++) {
-            // pixel double the current row while converting from RGBA to RGB565
-            for(uint8_t x = 0; x < 160; x++) {
-                uint8_t r = src->r >> 3;
-                uint8_t g = src->g >> 2;
-                uint8_t b = src->b >> 3;
-                uint16_t c = (r << 11) | (g << 5) | (b);
-                *dest++ = c;
-                *dest++ = c;
-                src++;
-            }
-
-            // copy the previous converted row (640 bytes / 320 x 2-byte pixels)
-            memcpy((uint8_t *)(dest), (uint8_t *)(dest) - 640, 640);
-            dest += 320;
-        }
-
-        SCB_CleanInvalidateDCache_by_Addr((uint32_t *)&__ltdc_start, 320 * 240 * 2);
-
-        // set the LTDC layer framebuffer pointer shadow register
-        LTDC_Layer1->CFBAR = (uint32_t)(&__ltdc_start);
-        // force LTDC driver to reload shadow registers
-        LTDC->SRCR = LTDC_SRCR_IMR;
-
-        // No need to swap framebuffer since we've copied from the engine's
-        // 160 x 120 framebuffer to the 320 x 240 LTDC buffer
-        ltdc_buffer_id = 0;
+  if(mode == screen_mode::hires) {
+    uint32_t c = (320 * 240 * 2) / 4 / 8;
+    uint32_t *d = (uint32_t *)(__ltdc.data);
+    uint32_t *s = (uint32_t *)(__fb_hires.data);
+    while(c--) {
+      *d++ = *s++;
+      *d++ = *s++;
+      *d++ = *s++;
+      *d++ = *s++;
+      *d++ = *s++;
+      *d++ = *s++;
+      *d++ = *s++;
+      *d++ = *s++;      
     }
+  } else {
+    // pixel double the framebuffer to the LTDC buffer
+    uint32_t *src = (uint32_t *)__fb_lores.data;
+    uint32_t *dest = (uint32_t *)(&__ltdc_start);
+    for(uint8_t y = 0; y < 120; y++) {
+      // pixel double the current row while converting from RGBA to RGB565
+      for(uint8_t x = 0; x < 160; x++) {
+        uint32_t s = *src++;
+        uint16_t c = ((s & 0xf8000000) >> 27) | ((s & 0x00fc0000) >> 13) | ((s & 0x0000f800));        
+        *(dest) = c | (c << 16);
+        *(dest + 160) = c | (c << 16);
+        dest++;
+      }
+
+      dest += 160; // skip the doubled row
+    }
+  }  
+
+  //flip_cycle_count = DWT->CYCCNT - scc;
+
+  SCB_CleanInvalidateDCache_by_Addr((uint32_t *)&__ltdc_start, 320 * 240 * 2);
 }
 
 void set_screen_mode(blit::screen_mode new_mode) {
   mode = new_mode;
 
   if(mode == blit::screen_mode::hires) {
-    blit::fb = __ltdc;
+    blit::fb = __fb_hires;
   } else {
-    blit::fb = __fb;
-  }
-}
-
-void blit_clear_framebuffer() { 
-  // initialise the LTDC buffer with a checkerboard pattern so it's clear
-  // when it hasn't been written to yet
-
-  uint16_t *pc = (uint16_t *)&__ltdc_start;
-
-  // framebuffer 1
-  for(uint16_t y = 0; y < 240; y++) {
-    for(uint16_t x = 0; x < 320; x++) {
-      *pc++ = (((x / 10) + (y / 10)) & 0b1) ?  0x7BEF : 0x38E7;
-    }
-  }
-
-  // framebuffer 2
-  for(uint16_t y = 0; y < 240; y++) {
-    for(uint16_t x = 0; x < 320; x++) {
-      *pc++ = (((x / 10) + (y / 10)) & 0b1) ?  0x38E7 : 0x7BEF;
-    }
+    blit::fb = __fb_lores;
   }
 }
 
@@ -458,21 +451,22 @@ void blit_update_led() {
     __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 962 - (962 * blit::backlight));
 }
 
-void ADC_update_joystick_axis(ADC_HandleTypeDef *adc, float *axis){
-  if (HAL_ADC_PollForConversion(adc, 1000000) == HAL_OK)
-  {
-    int adc_reading = (HAL_ADC_GetValue(adc) >> 1) - 16384;
-    adc_reading = std::max(-8192, std::min(8192, adc_reading));
-    if (adc_reading < -1024) {
-      adc_reading += 1024;
-    }
-    else if (adc_reading > 1024) {
-      adc_reading -= 1024;
-    }
-    else {
-      adc_reading = 0;
-    }
-    *axis = adc_reading / 7168.0f;
+void HAL_ADC_ErrorCallback(ADC_HandleTypeDef* hadc){
+}
+
+void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc){
+  if(hadc->Instance == ADC1) {
+    SCB_InvalidateDCache_by_Addr((uint32_t *) &adc1data[0], ADC_BUFFER_SIZE);
+  } else if (hadc->Instance == ADC3) {
+    SCB_InvalidateDCache_by_Addr((uint32_t *) &adc3data[0], ADC_BUFFER_SIZE);
+  }
+}
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
+  if(hadc->Instance == ADC1) {
+    SCB_InvalidateDCache_by_Addr((uint32_t *) &adc1data[ADC_BUFFER_SIZE / 2], ADC_BUFFER_SIZE / 2);
+  } else if (hadc->Instance == ADC3) {
+    SCB_InvalidateDCache_by_Addr((uint32_t *) &adc3data[ADC_BUFFER_SIZE / 2], ADC_BUFFER_SIZE / 2);
   }
 }
 
@@ -482,24 +476,13 @@ uint8_t tilt_sample_offset = 0;
 int16_t acceleration_data_buffer[3 * ACCEL_OVER_SAMPLE] = {0};
 
 void blit_process_input() {
+  static uint32_t last_battery_update = 0;
+  static uint32_t last_tilt_update = 0;
+
+  uint32_t scc = DWT->CYCCNT;
   static uint32_t blit_last_buttons = 0;
   // read x axis of joystick
   bool joystick_button = false;
-
-  HAL_ADC_Start(&hadc1);
-  ADC_update_joystick_axis(&hadc1, &blit::joystick.x);
-  ADC_update_joystick_axis(&hadc1, &blit::joystick.y);
-  blit::joystick.y = -blit::joystick.y;
-  HAL_ADC_Stop(&hadc1);
-
-  HAL_ADC_Start(&hadc3);
-  ADC_update_joystick_axis(&hadc3, &blit::hack_left);
-  ADC_update_joystick_axis(&hadc3, &blit::hack_right);
-  if (HAL_ADC_PollForConversion(&hadc3, 1000000) == HAL_OK)
-  {
-    blit::battery = 6.6f * HAL_ADC_GetValue(&hadc3) / 65535.0f;
-  }
-  HAL_ADC_Stop(&hadc3);
 
   // Read buttons
   blit::buttons =
@@ -515,40 +498,81 @@ void blit_process_input() {
     (!HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port, BUTTON_MENU_Pin)  ? blit::MENU       : 0) |
     (!HAL_GPIO_ReadPin(JOYSTICK_BUTTON_GPIO_Port, JOYSTICK_BUTTON_Pin) ? blit::JOYSTICK   : 0);
 
-  // Read accelerometer
-  msa301_get_accel(&hi2c4, &acceleration_data_buffer[tilt_sample_offset * 3]);
+  // Process ADC readings
+  int joystick_x = (adc1data[0] >> 1) - 16384;
+  joystick_x = std::max(-8192, std::min(8192, joystick_x));
+  if(joystick_x < -1024) {
+    joystick_x += 1024;
+  }
+  else if(joystick_x > 1024) {
+    joystick_x -= 1024;
+  } else {
+    joystick_x = 0;
+  }
+  blit::joystick.x = joystick_x / 7168.0f;
 
-  uint8_t status = bq24295_get_status(&hi2c4);
-  blit::battery_vbus_status = status >> 6; // 00 - Unknown, 01 - USB Host, 10 - Adapter port, 11 - OTG
-  blit::battery_charge_status = (status >> 4) & 0b11; // 00 - Not Charging, 01 - Pre-charge, 10 - Fast Charging, 11 - Charge Termination Done
+  int joystick_y = (adc1data[1] >> 1) - 16384;
+  joystick_y = std::max(-8192, std::min(8192, joystick_y));
+  if(joystick_y < -1024) {
+    joystick_y += 1024;
+  }
+  else if(joystick_y > 1024) {
+    joystick_y -= 1024;
+  } else {
+    joystick_y = 0;
+  }
+  blit::joystick.y = -joystick_y / 7168.0f;
 
-  blit::battery_fault = bq24295_get_fault(&hi2c4);
+  blit::hack_left = (adc3data[0] >> 1) / 32768.0f;
+  blit::hack_right = (adc3data[1] >> 1)  / 32768.0f;
 
-  tilt_sample_offset += 1;
-  if(tilt_sample_offset >= ACCEL_OVER_SAMPLE){
-    tilt_sample_offset = 0;
+  blit::battery = 6.6f * adc3data[2] / 65535.0f;
+
+  if(blit::now() - last_battery_update > 5000) {
+    uint8_t status = bq24295_get_status(&hi2c4);
+    blit::battery_vbus_status = status >> 6; // 00 - Unknown, 01 - USB Host, 10 - Adapter port, 11 - OTG
+    blit::battery_charge_status = (status >> 4) & 0b11; // 00 - Not Charging, 01 - Pre-charge, 10 - Fast Charging, 11 - Charge Termination Done
+
+    blit::battery_fault = bq24295_get_fault(&hi2c4);
+
+    last_battery_update = blit::now();
   }
 
-  float tilt_x = 0, tilt_y = 0, tilt_z = 0;
-  for(int x = 0; x < ACCEL_OVER_SAMPLE; x++) {
-    int offset = x * 3;
-    tilt_x += acceleration_data_buffer[offset + 0];
-    tilt_y += acceleration_data_buffer[offset + 1];
-    tilt_z += acceleration_data_buffer[offset + 2];
-  }
+  if(blit::now() - last_tilt_update > 10) {
+    // Do tilt every 8th tick of this function
+    // TODO: Find a better way to handle this
+    // Read accelerometer
+    msa301_get_accel(&hi2c4, &acceleration_data_buffer[tilt_sample_offset * 3]);
 
-  blit::tilt = vec3(
-    -(tilt_x / ACCEL_OVER_SAMPLE),
-    -(tilt_y / ACCEL_OVER_SAMPLE),
-    -(tilt_z / ACCEL_OVER_SAMPLE)
-    );
-  blit::tilt.normalize();
+    tilt_sample_offset += 1;
+    if(tilt_sample_offset >= ACCEL_OVER_SAMPLE){
+      tilt_sample_offset = 0;
+    }
+
+    float tilt_x = 0, tilt_y = 0, tilt_z = 0;
+    for(int x = 0; x < ACCEL_OVER_SAMPLE; x++) {
+      int offset = x * 3;
+      tilt_x += acceleration_data_buffer[offset + 0];
+      tilt_y += acceleration_data_buffer[offset + 1];
+      tilt_z += acceleration_data_buffer[offset + 2];
+    }
+
+    blit::tilt = vec3(
+      -(tilt_x / ACCEL_OVER_SAMPLE),
+      -(tilt_y / ACCEL_OVER_SAMPLE),
+      -(tilt_z / ACCEL_OVER_SAMPLE)
+      );
+    blit::tilt.normalize();
+
+    last_tilt_update = blit::now();
+  }
 
   if(blit::buttons & blit::MENU && !(blit_last_buttons & blit::MENU)) {
     blit_menu();
   }
 
   blit_last_buttons = blit::buttons;
+  //flip_cycle_count = DWT->CYCCNT - scc;
 }
 
 char *get_fr_err_text(FRESULT err){

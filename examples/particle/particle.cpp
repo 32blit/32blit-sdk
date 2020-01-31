@@ -49,7 +49,7 @@ void render_smoke() {
   }
 }
 
-/*
+
 void smoke_generate(test_particle &p) {
   p.pos = vec2((rand() % 20) - 10, (rand() % 20) - 10);
   p.vel = vec2(((rand() % 40) - 20) / 2, (rand() % 20) - 60);
@@ -87,7 +87,7 @@ void smoke(uint32_t time_ms) {
   
   last_time_ms = time_ms;
 };
-*/
+
 
 void spark_generate(test_particle &p) {
   p.pos = vec2((rand() % 10) - 5, -100);
@@ -226,8 +226,23 @@ void render_basic_rain() {
   }
 }
 
+uint32_t prev_buttons = blit::buttons;
 
 void render(uint32_t time_ms) {
+
+uint16_t width;
+uint16_t height;
+    if ((blit::buttons ^ prev_buttons) & blit::button::A) {
+        blit::set_screen_mode(blit::lores);
+        width = 160;
+        height = 120;
+    }
+    else if ((blit::buttons ^ prev_buttons) & blit::button::B) {
+        blit::set_screen_mode(blit::hires);
+        width = 320;
+        height = 240;
+    }
+    prev_buttons = blit::buttons;
 
   fb.pen(rgba(0, 0, 0, 255));
   fb.clear();
@@ -235,10 +250,10 @@ void render(uint32_t time_ms) {
   //render_smoke();
 
   uint32_t ms_start = now();
-  //spark(time_ms);
-  //smoke(time_ms); 
-  //rain(time_ms);
-  render_basic_rain();
+  spark(time_ms);
+  smoke(time_ms); 
+  rain(time_ms);
+  //render_basic_rain();
   uint32_t ms_end = now();
 
   // draw grid

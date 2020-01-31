@@ -253,6 +253,39 @@ namespace blit {
     } while (--count);
   }
 
+ 
+  void P_RGBA(surface *src, int32_t src_offset, surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step) {
+    uint8_t   *ps = (uint8_t *)src->data;     // source pointer
+    rgba      *pd = (rgba *)dest->data;        // destination pointer
+    uint8_t   *pm = nullptr;                  // mask pointer
+    uint16_t   ga = dest->alpha + 1;          // global alpha
+
+    if (dest->mask) {
+      pm = dest->mask->data;
+      pm += dest_offset;
+    }
+
+    ps += src_offset;
+    pd += dest_offset;
+
+    rgba* palette = src->palette.data();
+
+    do {
+      rgba *pps = &palette[*ps];
+
+      COMBINE_ALPHA(a, pps->a, ga, pm)
+
+      if (a == 255) {
+        pd->r = pps->r; pd->g = pps->g; pd->b = pps->b;
+      } else if (a == 0) {
+      } else {
+        RGB_BLEND(pps->r, pps->g, pps->b, pd->r, pd->g, pd->b, a)
+      }
+
+      ps += src_step;
+      pd++;
+    } while (--count);
+  }
   
   void P_RGB(surface *src, int32_t src_offset, surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step) {
     uint8_t   *ps = (uint8_t *)src->data;     // source pointer
