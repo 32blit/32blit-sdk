@@ -116,8 +116,8 @@ void blit_tick() {
     blit::render(blit::now());
     
     // debug cycle count for flip
-    blit::fb.pen(rgba(255, 255, 255));
-    blit::fb.text(std::to_string(flip_cycle_count), &minimal_font[0][0], point(10, 20));
+//    blit::fb.pen(rgba(255, 255, 255));
+  //  blit::fb.text(std::to_string(flip_cycle_count), &minimal_font[0][0], point(10, 20));
 
     HAL_LTDC_ProgramLineEvent(&hltdc, 252);
 
