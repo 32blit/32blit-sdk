@@ -275,7 +275,7 @@ void render(uint32_t time_ms) {
 	uint32_t ms_end = now();
 	fb.mask = nullptr;
 	fb.pen(rgba(255, 0, 0));
-	for (int i = 0; i < (ms_end - ms_start); i++) {
+	for (uint32_t i = 0; i < (ms_end - ms_start); i++) {
 		fb.pen(rgba(i * 5, 255 - (i * 5), 0));
 		fb.rectangle(rect(i * 3 + 1, fb.bounds.h - 3, 2, 2));
 	}

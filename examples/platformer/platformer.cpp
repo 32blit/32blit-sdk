@@ -383,7 +383,7 @@ void render(uint32_t time) {
   uint32_t ms_end = now();
   fb.mask = nullptr;
   fb.pen(rgba(255, 0, 0));
-  for (int i = 0; i < (ms_end - ms_start); i++) {
+  for (uint32_t i = 0; i < (ms_end - ms_start); i++) {
     fb.pen(rgba(i * 5, 255 - (i * 5), 0));
     fb.rectangle(rect(i * 3 + 1, 117, 2, 2));
   }
@@ -782,7 +782,7 @@ void draw_layer(MapLayer &layer) {
   for (uint8_t y = tlt.y; y <= brt.y; y++) {
     for (uint8_t x = tlt.x; x <= brt.x; x++) {
       point pt = world_to_screen(point(x * 8, y * 8));
-      uint32_t ti = layer.map->tile_index(point(x, y));
+      int32_t ti = layer.map->tile_index(point(x, y));
       if (ti != -1) {
         uint8_t si = layer.tiles[ti];
         if (si != 0) {
