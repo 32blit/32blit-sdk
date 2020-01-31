@@ -37,6 +37,7 @@ FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 uint32_t total_samples = 0;
 uint8_t dma_status = 0;
 bool needs_render = true;
+uint32_t flip_cycle_count = 0;
 
 static blit::screen_mode mode = blit::screen_mode::lores;
 
@@ -111,10 +112,11 @@ uint32_t blit_update_dac(FIL *audio_file) {
 
 void blit_tick() {
   
-  if(needs_render) {
+  if(needs_render) {    
     blit::render(blit::now());
- 
     
+    HAL_LTDC_ProgramLineEvent(&hltdc, 252);
+
     needs_render = false;
     blit::LED.r = ~blit::LED.r;
   }
@@ -170,10 +172,12 @@ void blit_init() {
     for(int x = 0; x<DAC_BUFFER_SIZE; x++){
       dac_buffer[x] = 0;
     }
-  /*  HAL_TIM_Base_Start(&htim6);
-    HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
-    HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2, (uint32_t*)dac_buffer, DAC_BUFFER_SIZE, DAC_ALIGN_12B_R);
-*/
+    
+    // enable cycle counting
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CYCCNT = 0;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+
     ST7272A_RESET();
 
     st7272a_set_bgr();
@@ -200,7 +204,7 @@ void blit_init() {
 
   HAL_NVIC_SetPriority(LTDC_IRQn, 4, 4);
   HAL_NVIC_EnableIRQ(LTDC_IRQn);
-  HAL_LTDC_ProgramLineEvent(&hltdc, 250);
+  HAL_LTDC_ProgramLineEvent(&hltdc, 252);
 }
 
 void HAL_LTDC_LineEventCallback(LTDC_HandleTypeDef *p) {
@@ -209,8 +213,6 @@ void HAL_LTDC_LineEventCallback(LTDC_HandleTypeDef *p) {
   needs_render = true;
   blit::LED.b++;
   blit_update_led();
-
-  HAL_LTDC_ProgramLineEvent(&hltdc, 250);
 }
 
 int menu_item = 0;
@@ -383,7 +385,12 @@ void blit_menu() {
  */
 void blit_flip() {
   if(mode == screen_mode::hires) {
-    memcpy((uint8_t *)(__ltdc.data), (uint8_t *)(__fb_hires.data), 320 * 240 * 2);
+    uint32_t c = (320 * 240 * 2) / 4;
+    uint32_t *d = (uint32_t *)(__ltdc.data);
+    uint32_t *s = (uint32_t *)(__fb_hires.data);
+    while(c--) {
+      *d++ = *s++;
+    }
   } else {
     // pixel double the framebuffer to the LTDC buffer
     rgb *src = (rgb *)__fb_lores.data;
@@ -402,10 +409,16 @@ void blit_flip() {
       }
 
       // copy the previous converted row (640 bytes / 320 x 2-byte pixels)
-      memcpy((uint8_t *)(dest), (uint8_t *)(dest) - 640, 640);
+      uint32_t c = 640 / 4;
+      uint32_t *d = (uint32_t *)(dest);
+      uint32_t *s = (uint32_t *)(dest - 320);
+      while(c--) {
+        *d++ = *s++;
+      }
+      
       dest += 320;
     }
-  }
+  }  
 
   SCB_CleanInvalidateDCache_by_Addr((uint32_t *)&__ltdc_start, 320 * 240 * 2);
 }
@@ -442,7 +455,7 @@ void blit_update_led() {
 }
 
 void ADC_update_joystick_axis(ADC_HandleTypeDef *adc, float *axis){
-  if (HAL_ADC_PollForConversion(adc, 1000000) == HAL_OK)
+  if (HAL_ADC_PollForConversion(adc, 1) == HAL_OK)
   {
     int adc_reading = (HAL_ADC_GetValue(adc) >> 1) - 16384;
     adc_reading = std::max(-8192, std::min(8192, adc_reading));
@@ -478,7 +491,7 @@ void blit_process_input() {
   HAL_ADC_Start(&hadc3);
   ADC_update_joystick_axis(&hadc3, &blit::hack_left);
   ADC_update_joystick_axis(&hadc3, &blit::hack_right);
-  if (HAL_ADC_PollForConversion(&hadc3, 1000000) == HAL_OK)
+  if (HAL_ADC_PollForConversion(&hadc3, 1) == HAL_OK)
   {
     blit::battery = 6.6f * HAL_ADC_GetValue(&hadc3) / 65535.0f;
   }
