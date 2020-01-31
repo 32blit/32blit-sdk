@@ -121,8 +121,9 @@ target_compile_options(BlitHalSTM32
 	PRIVATE
 		-fpermissive
 )
+target_compile_options(BlitHalSTM32 PUBLIC "$<$<CONFIG:RELEASE>:-Os>")
 
-
+# 2nd build for external flash
 add_library(BlitHalSTM32Ext OBJECT ${SOURCES})
 
 target_include_directories(BlitHalSTM32Ext
