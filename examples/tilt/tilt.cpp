@@ -62,7 +62,7 @@ struct grain {
     vec2 np = p;
     vec2 tp = p + (v * td);
     bool found = false;
-    if (found = test_move(tp)) {
+    if ((found = test_move(tp))) {
       np = tp;
     } else {
       // optimised -45 degree rotations
@@ -73,7 +73,7 @@ struct grain {
 
       tp = p + (v * td);
 
-      if (found = test_move(tp)) {
+      if ((found = test_move(tp))) {
         np = tp;
       }
       else {
@@ -85,7 +85,7 @@ struct grain {
 
         tp = p + (v * td);
 
-        if (found = test_move(tp)) {
+        if ((found = test_move(tp))) {
           np = tp;
         }
       }
@@ -151,7 +151,7 @@ void render(uint32_t time_ms) {
   fb.text(fms, &minimal_font[0][0], rect(3, 120 - 9, 10, 16));
 
   int block_size = 4;
-  for (int i = 0; i < update_time_ms; i++) {
+  for (uint32_t i = 0; i < update_time_ms; i++) {
     fb.pen(rgba(i * 5, 255 - (i * 5), 0));
     fb.rectangle(rect(i * (block_size + 1) + 1 + 13, fb.bounds.h - block_size - 1, block_size, block_size));
   }

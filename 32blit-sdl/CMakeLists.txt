@@ -64,7 +64,10 @@ endif()
 
 function(blit_executable NAME SOURCES)
 	add_executable(${NAME} ${SOURCES} ${ARGN})
-	if (${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
+
+	if (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
+		target_link_libraries(${NAME} BlitHalSDL)
+	elseif(${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
   		target_link_libraries(${NAME} -Wl,-force_load BlitHalSDL)
 	else()
   		target_link_libraries(${NAME} -Wl,--whole-archive BlitHalSDL -Wl,--no-whole-archive)

@@ -1,3 +1,4 @@
+#include <cinttypes>
 #include "scrolly-tile.hpp"
 #include "graphics/color.hpp"
 
@@ -685,7 +686,7 @@ void render_summary() {
 
     if(current_random_source == RANDOM_TYPE_PRNG) {
         char buf[9];
-        sprintf(buf, "%08lX", current_random_seed);
+        sprintf(buf, "%08" PRIX32, current_random_seed);
         text = "Level seed: ";
         text.append(buf);
         fb.text(text, &minimal_font[0][0], point(10, (SCREEN_H / 2) + 30));
