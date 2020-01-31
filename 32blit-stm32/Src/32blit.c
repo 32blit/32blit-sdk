@@ -24,6 +24,8 @@ using namespace blit;
 __attribute__((section(".dac_data"))) uint16_t dac_buffer[DAC_BUFFER_SIZE];
 
 extern char __ltdc_start;
+extern char __fb_start;
+
 extern char itcm_text_start;
 extern char itcm_text_end;
 extern char itcm_data;
@@ -40,9 +42,9 @@ static blit::screen_mode mode = blit::screen_mode::lores;
 
 /* configure the screen surface to point at the reserved LTDC framebuffer */
 surface __ltdc((uint8_t *)&__ltdc_start, pixel_format::RGB565, size(320, 240));
-uint8_t ltdc_buffer_id = 0;
 
-surface __fb(((uint8_t *)&__ltdc_start) + (320 * 240 * 2), pixel_format::RGB, size(160, 120));
+surface __fb_hires((uint8_t *)&__fb_start, pixel_format::RGB565, size(320, 240));
+surface __fb_lores((uint8_t *)&__fb_start, pixel_format::RGB, size(160, 120));
 
 void DFUBoot(void)
 {
@@ -108,8 +110,10 @@ uint32_t blit_update_dac(FIL *audio_file) {
 }
 
 void blit_tick() {
+  
   if(needs_render) {
     blit::render(blit::now());
+ 
     
     needs_render = false;
     blit::LED.r = ~blit::LED.r;
@@ -194,9 +198,9 @@ void blit_init() {
     blit::init();
 
 
-  HAL_NVIC_SetPriority(LTDC_IRQn, 2, 0);
+  HAL_NVIC_SetPriority(LTDC_IRQn, 4, 4);
   HAL_NVIC_EnableIRQ(LTDC_IRQn);
-  HAL_LTDC_ProgramLineEvent(&hltdc, 220);
+  HAL_LTDC_ProgramLineEvent(&hltdc, 250);
 }
 
 void HAL_LTDC_LineEventCallback(LTDC_HandleTypeDef *p) {
@@ -206,7 +210,7 @@ void HAL_LTDC_LineEventCallback(LTDC_HandleTypeDef *p) {
   blit::LED.b++;
   blit_update_led();
 
-  HAL_LTDC_ProgramLineEvent(&hltdc, 220);
+  HAL_LTDC_ProgramLineEvent(&hltdc, 250);
 }
 
 int menu_item = 0;
@@ -378,74 +382,41 @@ void blit_menu() {
  * In high-res mode it simply points LTDC at the freshly drawn buffer and gives 32blit the other buffer to draw into.
  */
 void blit_flip() {
-    if(mode == screen_mode::hires) {
-        // HIRES mode
-        SCB_CleanInvalidateDCache_by_Addr((uint32_t *)blit::fb.data, 320 * 240 * 2);
+  if(mode == screen_mode::hires) {
+    memcpy((uint8_t *)(__ltdc.data), (uint8_t *)(__fb_hires.data), 320 * 240 * 2);
+  } else {
+    // pixel double the framebuffer to the LTDC buffer
+    rgb *src = (rgb *)__fb_lores.data;
 
-        // set the LTDC layer framebuffer pointer shadow register
-        LTDC_Layer1->CFBAR = (uint32_t)(&__ltdc_start + (ltdc_buffer_id * 320 * 240 * 2));
-        // force LTDC driver to reload shadow registers
-        LTDC->SRCR = LTDC_SRCR_IMR;
+    uint16_t *dest = (uint16_t *)(&__ltdc_start);
+    for(uint8_t y = 0; y < 120; y++) {
+      // pixel double the current row while converting from RGBA to RGB565
+      for(uint8_t x = 0; x < 160; x++) {
+        uint8_t r = src->r >> 3;
+        uint8_t g = src->g >> 2;
+        uint8_t b = src->b >> 3;
+        uint16_t c = (r << 11) | (g << 5) | (b);
+        *dest++ = c;
+        *dest++ = c;
+        src++;
+      }
 
-        // Swap blit's output framebuffer over
-        ltdc_buffer_id = ltdc_buffer_id == 0 ? 1 : 0;
-        blit::fb.data = (uint8_t *)(&__ltdc_start) + (ltdc_buffer_id * 320 * 240 * 2);
-    } else {
-        // LORES mode
-
-        // pixel double the framebuffer to the LTDC buffer
-        rgb *src = (rgb *)blit::fb.data;
-
-        uint16_t *dest = (uint16_t *)(&__ltdc_start);
-        for(uint8_t y = 0; y < 120; y++) {
-            // pixel double the current row while converting from RGBA to RGB565
-            for(uint8_t x = 0; x < 160; x++) {
-                uint8_t r = src->r >> 3;
-                uint8_t g = src->g >> 2;
-                uint8_t b = src->b >> 3;
-                uint16_t c = (r << 11) | (g << 5) | (b);
-                *dest++ = c;
-                *dest++ = c;
-                src++;
-            }
-
-            // copy the previous converted row (640 bytes / 320 x 2-byte pixels)
-            memcpy((uint8_t *)(dest), (uint8_t *)(dest) - 640, 640);
-            dest += 320;
-        }
-
-      //  SCB_CleanInvalidateDCache_by_Addr((uint32_t *)&__ltdc_start, 320 * 240 * 2);
+      // copy the previous converted row (640 bytes / 320 x 2-byte pixels)
+      memcpy((uint8_t *)(dest), (uint8_t *)(dest) - 640, 640);
+      dest += 320;
     }
+  }
+
+  SCB_CleanInvalidateDCache_by_Addr((uint32_t *)&__ltdc_start, 320 * 240 * 2);
 }
 
 void set_screen_mode(blit::screen_mode new_mode) {
   mode = new_mode;
 
   if(mode == blit::screen_mode::hires) {
-    blit::fb = __ltdc;
+    blit::fb = __fb_hires;
   } else {
-    blit::fb = __fb;
-  }
-}
-
-void blit_clear_framebuffer() { 
-  // initialise the LTDC buffer with a checkerboard pattern so it's clear
-  // when it hasn't been written to yet
-
-  uint16_t *pc = (uint16_t *)&__ltdc_start;
-
-  // framebuffer 1
-  for(uint16_t y = 0; y < 240; y++) {
-    for(uint16_t x = 0; x < 320; x++) {
-      *pc++ = (((x / 10) + (y / 10)) & 0b1) ?  0x7BEF : 0x38E7;
-    }
-  }
-
-  // framebuffer 2
-  for(uint16_t y = 0; y < 240; y++) {
-    for(uint16_t x = 0; x < 320; x++) {
-      *pc++ = (((x / 10) + (y / 10)) & 0b1) ?  0x38E7 : 0x7BEF;
-    }
+    blit::fb = __fb_lores;
   }
 }
 

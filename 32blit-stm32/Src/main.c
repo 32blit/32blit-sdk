@@ -129,8 +129,7 @@ int main(void)
 
   
 
-
-  blit_clear_framebuffer();
+  //NVIC_SetPriority(SysTick_IRQn, 0x0);
   blit_init();
 
   char sd_card_label[12];
