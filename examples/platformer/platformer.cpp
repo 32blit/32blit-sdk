@@ -115,7 +115,7 @@ struct Player {
 
   rect viewport() {
     point c = camera();
-    rect vprect(
+    return rect(
       c.x - fb.bounds.w / 2,
       c.y - fb.bounds.h / 2,
       fb.bounds.w,
