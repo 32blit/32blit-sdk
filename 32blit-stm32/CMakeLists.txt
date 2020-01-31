@@ -84,30 +84,37 @@ set_source_files_properties( ${SOURCES} PROPERTIES LANGUAGE CXX )
 
 add_library(BlitHalSTM32 OBJECT ${SOURCES})
 
+set(INCLUDE_DIRS 
+	Inc
+	Drivers/STM32H7xx_HAL_Driver/Inc
+	Drivers/STM32H7xx_HAL_Driver/Inc/Legacy
+	Drivers/CMSIS/Device/ST/STM32H7xx/Include
+	Drivers/CMSIS/Include
+	Drivers/CMSIS/Include
+	Middlewares/Third_Party/FatFs/src
+	Middlewares/ST/STM32_USB_Device_Library/Core/Inc
+	Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
+	../32blit
+)
+
+set(DEFINITIONS
+	-DUSE_HAL_DRIVER
+	-DUSE_USB_HS
+	-DSTM32H750xx
+	-DCDC_FIFO_BUFFERS=${CDC_FIFO_BUFFERS}
+)
 
 target_include_directories(BlitHalSTM32
 	PRIVATE
-		Inc
-		Drivers/STM32H7xx_HAL_Driver/Inc
-		Drivers/STM32H7xx_HAL_Driver/Inc/Legacy
-		Drivers/CMSIS/Device/ST/STM32H7xx/Include
-		Drivers/CMSIS/Include
-		Drivers/CMSIS/Include
-		Middlewares/Third_Party/FatFs/src
-		Middlewares/ST/STM32_USB_Device_Library/Core/Inc
-		Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
-		../32blit
+		${INCLUDE_DIRS}
 )
 
 target_compile_definitions(BlitHalSTM32
 	PRIVATE
-		-DUSE_HAL_DRIVER
-		-DUSE_USB_HS
-		-DSTM32H750xx
+		${DEFINITIONS}
 		-DAPPLICATION_VTOR=${APPLICATION_VTOR}
 		-DEXTERNAL_LOAD_ADDRESS=${EXTERNAL_LOAD_ADDRESS}
 		-DINITIALISE_QSPI=${INITIALISE_QSPI}
-		-DCDC_FIFO_BUFFERS=${CDC_FIFO_BUFFERS}
 )
 
 target_compile_options(BlitHalSTM32
@@ -115,13 +122,35 @@ target_compile_options(BlitHalSTM32
 		-fpermissive
 )
 
+
+add_library(BlitHalSTM32Ext OBJECT ${SOURCES})
+
+target_include_directories(BlitHalSTM32Ext
+	PRIVATE
+		${INCLUDE_DIRS}
+)
+
+target_compile_definitions(BlitHalSTM32Ext
+	PRIVATE
+		${DEFINITIONS}
+		-DAPPLICATION_VTOR=${APPLICATION_VTOR_EXT}
+		-DEXTERNAL_LOAD_ADDRESS=${EXTERNAL_LOAD_ADDRESS_EXT}
+		-DINITIALISE_QSPI=${INITIALISE_QSPI_EXT}
+)
+
+target_compile_options(BlitHalSTM32Ext
+	PRIVATE
+		-fpermissive
+)
+
 set(MCU_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}" PARENT_SCOPE)
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -specs=nano.specs -T ${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}" PARENT_SCOPE)
+set(MCU_LINKER_SCRIPT_EXT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT_EXT}" PARENT_SCOPE)
 
 function(blit_executable NAME SOURCES)
 	add_executable(${NAME} $<TARGET_OBJECTS:BlitHalSTM32> ${SOURCES} ${ARGN})
 	target_link_libraries(${NAME} BlitEngine)
 	set_target_properties(${NAME} PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT} SUFFIX ".elf")
+	set_target_properties(${NAME} PROPERTIES LINK_FLAGS "-specs=nano.specs -T ${MCU_LINKER_SCRIPT}")
 	set_property(TARGET ${NAME} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Map=${NAME}.map,--cref")
 	add_custom_command(TARGET ${NAME} POST_BUILD
 		COMMENT "Building ${NAME}.bin\nBuilding ${NAME}.dfu"
