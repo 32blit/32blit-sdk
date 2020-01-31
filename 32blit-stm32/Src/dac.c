@@ -80,7 +80,7 @@ void HAL_DAC_MspInit(DAC_HandleTypeDef* dacHandle)
 
     /* DAC1 DMA Init */
     /* DAC1_CH2 Init */
-    hdma_dac1_ch2.Instance = DMA1_Stream0;
+    hdma_dac1_ch2.Instance = DMA1_Stream2;
     hdma_dac1_ch2.Init.Request = DMA_REQUEST_DAC2;
     hdma_dac1_ch2.Init.Direction = DMA_MEMORY_TO_PERIPH;
     hdma_dac1_ch2.Init.PeriphInc = DMA_PINC_DISABLE;
@@ -88,13 +88,23 @@ void HAL_DAC_MspInit(DAC_HandleTypeDef* dacHandle)
     hdma_dac1_ch2.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
     hdma_dac1_ch2.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
     hdma_dac1_ch2.Init.Mode = DMA_CIRCULAR;
-    hdma_dac1_ch2.Init.Priority = DMA_PRIORITY_HIGH;
+    hdma_dac1_ch2.Init.Priority = DMA_PRIORITY_LOW;
     hdma_dac1_ch2.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
     hdma_dac1_ch2.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
     hdma_dac1_ch2.Init.MemBurst = DMA_MBURST_SINGLE;
     hdma_dac1_ch2.Init.PeriphBurst = DMA_PBURST_SINGLE;
 
     if (HAL_DMA_Init(&hdma_dac1_ch2) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    pSyncConfig.SyncSignalID = HAL_DMAMUX1_SYNC_EXTI0;
+    pSyncConfig.SyncPolarity = HAL_DMAMUX_SYNC_NO_EVENT;
+    pSyncConfig.SyncEnable = DISABLE;
+    pSyncConfig.EventEnable = ENABLE;
+    pSyncConfig.RequestNumber = 1;
+    if (HAL_DMAEx_ConfigMuxSync(&hdma_dac1_ch2, &pSyncConfig) != HAL_OK)
     {
       Error_Handler();
     }

@@ -62,8 +62,13 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern DMA_HandleTypeDef hdma_adc1;
+extern DMA_HandleTypeDef hdma_adc3;
+extern ADC_HandleTypeDef hadc1;
+extern ADC_HandleTypeDef hadc3;
 extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
 extern DMA_HandleTypeDef hdma_dac1_ch2;
+extern LTDC_HandleTypeDef hltdc;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -212,11 +217,52 @@ void DMA1_Stream0_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Stream0_IRQn 0 */
 
   /* USER CODE END DMA1_Stream0_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_dac1_ch2);
-
+  HAL_DMA_IRQHandler(&hdma_adc1);
   /* USER CODE BEGIN DMA1_Stream0_IRQn 1 */
-    
+
   /* USER CODE END DMA1_Stream0_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA1 stream1 global interrupt.
+  */
+void DMA1_Stream1_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream1_IRQn 0 */
+
+  /* USER CODE END DMA1_Stream1_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_adc3);
+  /* USER CODE BEGIN DMA1_Stream1_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA1 stream2 global interrupt.
+  */
+void DMA1_Stream2_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream2_IRQn 0 */
+
+  /* USER CODE END DMA1_Stream2_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_dac1_ch2);
+  /* USER CODE BEGIN DMA1_Stream2_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream2_IRQn 1 */
+}
+
+/**
+  * @brief This function handles ADC1 and ADC2 global interrupts.
+  */
+void ADC_IRQHandler(void)
+{
+  /* USER CODE BEGIN ADC_IRQn 0 */
+
+  /* USER CODE END ADC_IRQn 0 */
+  HAL_ADC_IRQHandler(&hadc1);
+  /* USER CODE BEGIN ADC_IRQn 1 */
+
+  /* USER CODE END ADC_IRQn 1 */
 }
 
 /**
@@ -246,6 +292,20 @@ void DMAMUX1_OVR_IRQHandler(void)
   /* USER CODE BEGIN DMAMUX1_OVR_IRQn 1 */
 
   /* USER CODE END DMAMUX1_OVR_IRQn 1 */
+}
+
+/**
+  * @brief This function handles ADC3 global interrupt.
+  */
+void ADC3_IRQHandler(void)
+{
+  /* USER CODE BEGIN ADC3_IRQn 0 */
+
+  /* USER CODE END ADC3_IRQn 0 */
+  HAL_ADC_IRQHandler(&hadc3);
+  /* USER CODE BEGIN ADC3_IRQn 1 */
+
+  /* USER CODE END ADC3_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
