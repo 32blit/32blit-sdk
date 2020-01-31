@@ -62,7 +62,7 @@ struct grain {
     vec2 np = p;
     vec2 tp = p + (v * td);
     bool found = false;
-    if (found = test_move(tp)) {
+    if ((found = test_move(tp))) {
       np = tp;
     } else {
       // optimised -45 degree rotations
@@ -73,7 +73,7 @@ struct grain {
 
       tp = p + (v * td);
 
-      if (found = test_move(tp)) {
+      if ((found = test_move(tp))) {
         np = tp;
       }
       else {
@@ -85,7 +85,7 @@ struct grain {
 
         tp = p + (v * td);
 
-        if (found = test_move(tp)) {
+        if ((found = test_move(tp))) {
           np = tp;
         }
       }
