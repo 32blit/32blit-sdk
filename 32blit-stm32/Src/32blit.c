@@ -116,8 +116,8 @@ void blit_tick() {
     blit::render(blit::now());
     
     // debug cycle count for flip
-    //blit::fb.pen(rgba(255, 255, 255));
-    //blit::fb.text(std::to_string(flip_cycle_count), &minimal_font[0][0], point(10, 20));
+    blit::fb.pen(rgba(255, 255, 255));
+    blit::fb.text(std::to_string(flip_cycle_count), &minimal_font[0][0], point(10, 20));
 
     HAL_LTDC_ProgramLineEvent(&hltdc, 252);
 
@@ -407,29 +407,18 @@ void blit_flip() {
   } else {
     // pixel double the framebuffer to the LTDC buffer
     uint32_t *src = (uint32_t *)__fb_lores.data;
-    uint16_t *dest = (uint16_t *)(&__ltdc_start);
+    uint32_t *dest = (uint32_t *)(&__ltdc_start);
     for(uint8_t y = 0; y < 120; y++) {
       // pixel double the current row while converting from RGBA to RGB565
       for(uint8_t x = 0; x < 160; x++) {
-        uint32_t s = *src;
-
-        uint16_t c = ((s & 0xf8000000) >> 27) | ((s & 0x00fc0000) >> 13) | ((s & 0x0000f800));
-        
-        *dest++ = c;
-        *dest++ = c;
-
-        src++;
+        uint32_t s = *src++;
+        uint16_t c = ((s & 0xf8000000) >> 27) | ((s & 0x00fc0000) >> 13) | ((s & 0x0000f800));        
+        *(dest) = c | (c << 16);
+        *(dest + 160) = c | (c << 16);
+        dest++;
       }
 
-      // copy the previous converted row (640 bytes / 320 x 2-byte pixels)
-      uint32_t c = 640 / 4;
-      uint32_t *d = (uint32_t *)(dest);
-      uint32_t *s = (uint32_t *)(dest - 320);
-      while(c--) {
-        *d++ = *s++;
-      }
-      
-      dest += 320;
+      dest += 160; // skip the doubled row
     }
   }  
 
