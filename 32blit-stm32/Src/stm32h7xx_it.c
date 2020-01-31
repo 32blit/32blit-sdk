@@ -69,11 +69,8 @@ extern ADC_HandleTypeDef hadc1;
 extern ADC_HandleTypeDef hadc3;
 extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
 extern DMA_HandleTypeDef hdma_dac1_ch2;
-<<<<<<< HEAD
 extern LTDC_HandleTypeDef hltdc;
-=======
 extern TIM_HandleTypeDef htim6;
->>>>>>> Audio testing
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
