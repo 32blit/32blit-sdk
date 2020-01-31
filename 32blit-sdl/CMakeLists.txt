@@ -77,3 +77,7 @@ function(blit_executable NAME SOURCES)
 		set_target_properties(${NAME} PROPERTIES SUFFIX ".html")
 	endif()
 endfunction()
+
+function(blit_executable_int_flash NAME SOURCES)
+	blit_executable(${NAME} ${SOURCES} ${ARGN})
+endfunction()
