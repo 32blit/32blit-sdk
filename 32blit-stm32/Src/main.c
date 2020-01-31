@@ -126,7 +126,10 @@ int main(void)
   MX_RNG_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-  blit_clear_framebuffer();
+
+  
+
+  //NVIC_SetPriority(SysTick_IRQn, 0x0);
   blit_init();
 
   char sd_card_label[12];
@@ -148,12 +151,6 @@ int main(void)
   while (1)
   {
     uint32_t t_start = blit::now();
-
-    // TODO: this is really just experimental code and should
-    // be removed in favour of generic sound support
-    if(audio_file_available && blit_sd_detected()){
-      total_samples += blit_update_dac(&audio_file);
-    }
 
     blit_tick();
 

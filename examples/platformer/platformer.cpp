@@ -11,8 +11,8 @@ using namespace blit;
 size screen_size(160, 120);
 
 /* define storage for the framebuffer, spritesheet, and mask */
-rgba    __ss[128 * 128] __SECTION__(".ss");
-uint8_t __m[320 * 240] __SECTION__(".m");  
+rgba    __ss[128 * 128];
+uint8_t __m[320 * 240]; 
 
 /* create surfaces */
 surface m((uint8_t *)__m, pixel_format::M, screen_size);

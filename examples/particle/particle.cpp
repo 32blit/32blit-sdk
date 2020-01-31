@@ -226,8 +226,23 @@ void render_basic_rain() {
   }
 }
 
+uint32_t prev_buttons = blit::buttons;
 
 void render(uint32_t time_ms) {
+
+uint16_t width;
+uint16_t height;
+    if ((blit::buttons ^ prev_buttons) & blit::button::A) {
+        blit::set_screen_mode(blit::lores);
+        width = 160;
+        height = 120;
+    }
+    else if ((blit::buttons ^ prev_buttons) & blit::button::B) {
+        blit::set_screen_mode(blit::hires);
+        width = 320;
+        height = 240;
+    }
+    prev_buttons = blit::buttons;
 
   fb.pen(rgba(0, 0, 0, 255));
   fb.clear();
