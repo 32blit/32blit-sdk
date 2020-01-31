@@ -142,7 +142,6 @@ int main(void)
 #endif
 
   blit_init();
-  blit_clear_framebuffer();
 
 
   // card needs to be mounted in init
