@@ -45,7 +45,7 @@ static blit::screen_mode mode = blit::screen_mode::lores;
 surface __ltdc((uint8_t *)&__ltdc_start, pixel_format::RGB565, size(320, 240));
 
 surface __fb_hires((uint8_t *)&__fb_start, pixel_format::RGB565, size(320, 240));
-surface __fb_lores((uint8_t *)&__fb_start, pixel_format::RGB, size(160, 120));
+surface __fb_lores((uint8_t *)&__fb_start, pixel_format::RGBA, size(160, 120));
 
 void DFUBoot(void)
 {
@@ -115,6 +115,10 @@ void blit_tick() {
   if(needs_render) {    
     blit::render(blit::now());
     
+    // debug cycle count for flip
+    //blit::fb.pen(rgba(255, 255, 255));
+    //blit::fb.text(std::to_string(flip_cycle_count), &minimal_font[0][0], point(10, 20));
+
     HAL_LTDC_ProgramLineEvent(&hltdc, 252);
 
     needs_render = false;
@@ -384,27 +388,36 @@ void blit_menu() {
  * In high-res mode it simply points LTDC at the freshly drawn buffer and gives 32blit the other buffer to draw into.
  */
 void blit_flip() {
+  uint32_t scc = DWT->CYCCNT;
+
   if(mode == screen_mode::hires) {
-    uint32_t c = (320 * 240 * 2) / 4;
+    uint32_t c = (320 * 240 * 2) / 4 / 8;
     uint32_t *d = (uint32_t *)(__ltdc.data);
     uint32_t *s = (uint32_t *)(__fb_hires.data);
     while(c--) {
       *d++ = *s++;
+      *d++ = *s++;
+      *d++ = *s++;
+      *d++ = *s++;
+      *d++ = *s++;
+      *d++ = *s++;
+      *d++ = *s++;
+      *d++ = *s++;      
     }
   } else {
     // pixel double the framebuffer to the LTDC buffer
-    rgb *src = (rgb *)__fb_lores.data;
-
+    uint32_t *src = (uint32_t *)__fb_lores.data;
     uint16_t *dest = (uint16_t *)(&__ltdc_start);
     for(uint8_t y = 0; y < 120; y++) {
       // pixel double the current row while converting from RGBA to RGB565
       for(uint8_t x = 0; x < 160; x++) {
-        uint8_t r = src->r >> 3;
-        uint8_t g = src->g >> 2;
-        uint8_t b = src->b >> 3;
-        uint16_t c = (r << 11) | (g << 5) | (b);
+        uint32_t s = *src;
+
+        uint16_t c = ((s & 0xf8000000) >> 27) | ((s & 0x00fc0000) >> 13) | ((s & 0x0000f800));
+        
         *dest++ = c;
         *dest++ = c;
+
         src++;
       }
 
@@ -419,6 +432,8 @@ void blit_flip() {
       dest += 320;
     }
   }  
+
+  flip_cycle_count = DWT->CYCCNT - scc;
 
   SCB_CleanInvalidateDCache_by_Addr((uint32_t *)&__ltdc_start, 320 * 240 * 2);
 }
