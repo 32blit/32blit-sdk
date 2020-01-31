@@ -22,6 +22,7 @@ namespace blit {
   extern int      (*debugf)           (const char * psFormatString, ...);
   extern uint32_t (*read_file)        (std::string file, uint32_t offset, uint32_t length, uint8_t* buffer);
   extern void     (*reset)            ();
+  extern void			(*switch_execution) ();
 
   bool tick(uint32_t time);
   void fast_tick(uint32_t time);

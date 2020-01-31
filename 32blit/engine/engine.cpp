@@ -12,8 +12,9 @@ namespace blit {
   void (*set_screen_mode)(screen_mode new_mode) = nullptr;
   uint32_t (*now)()                             = nullptr;
   uint32_t (*random)()                          = nullptr;
-  void (*debug)(std::string message) = nullptr;
+  void (*debug)(std::string message) 								= nullptr;
   int  (*debugf)(const char * psFormatString, ...) 	= nullptr;
+  void (*switch_execution)()												= nullptr;
 
   surface null_surface(nullptr, pixel_format::RGB565, size(0, 0));
   surface &fb = null_surface;

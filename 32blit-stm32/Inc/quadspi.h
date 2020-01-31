@@ -36,7 +36,7 @@ extern QSPI_HandleTypeDef hqspi;
 #define APPLICATION_ADDRESS                  QSPI_BASE
 
 // Flash example
-#define QSPI_FLASH_SIZE                      22
+#define QSPI_FLASH_SIZE                      POSITION_VAL(0x2000000)-1
 #define QSPI_PAGE_SIZE                       256
 
 /* Reset Operations */
@@ -161,6 +161,9 @@ HAL_StatusTypeDef qspi_sector_erase(uint32_t BlockAddress);
 HAL_StatusTypeDef qspi_write_buffer(size_t offset, const uint8_t* buffer, size_t length);
 HAL_StatusTypeDef qspi_read_buffer(size_t address, const uint8_t* buffer, size_t length);
 HAL_StatusTypeDef qspi_enable_memorymapped_mode(void);
+void QSPI_WriteEnable(QSPI_HandleTypeDef *hqspi);
+void qspi_chip_erase();
+
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
