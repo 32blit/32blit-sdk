@@ -116,16 +116,12 @@ uint32_t blit_update_dac(FIL *audio_file) {
 }
 
 void blit_tick() {
-  
-  if(needs_render) {    
+  if(needs_render) {
     blit::render(blit::now());
-    
-    // debug cycle count for flip
-//    blit::fb.pen(rgba(255, 255, 255));
-  //  blit::fb.text(std::to_string(flip_cycle_count), &minimal_font[0][0], point(10, 20));
+    blit::fb.pen(rgba(255, 255, 255));
+    blit::fb.text(std::to_string(flip_cycle_count), &minimal_font[0][0], point(0, 0));
 
     HAL_LTDC_ProgramLineEvent(&hltdc, 252);
-
     needs_render = false;
   }
 
@@ -421,7 +417,7 @@ void blit_flip() {
     }
   }  
 
-  flip_cycle_count = DWT->CYCCNT - scc;
+  //flip_cycle_count = DWT->CYCCNT - scc;
 
   SCB_CleanInvalidateDCache_by_Addr((uint32_t *)&__ltdc_start, 320 * 240 * 2);
 }
@@ -471,59 +467,8 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc){
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
   if(hadc->Instance == ADC1) {
     SCB_InvalidateDCache_by_Addr((uint32_t *) &adc1data[ADC_BUFFER_SIZE / 2], ADC_BUFFER_SIZE / 2);
-
-    int joystick_x = (adc1data[0] >> 1) - 16384;
-    joystick_x = std::max(-8192, std::min(8192, joystick_x));
-    if(joystick_x < -1024) {
-      joystick_x += 1024;
-    }
-    else if(joystick_x > 1024) {
-      joystick_x -= 1024;
-    } else {
-      joystick_x = 0;
-    }
-    blit::joystick.x = joystick_x / 7168.0f;
-
-    int joystick_y = (adc1data[1] >> 1) - 16384;
-    joystick_y = std::max(-8192, std::min(8192, joystick_y));
-    if(joystick_y < -1024) {
-      joystick_y += 1024;
-    }
-    else if(joystick_y > 1024) {
-      joystick_y -= 1024;
-    } else {
-      joystick_y = 0;
-    }
-    blit::joystick.y = -joystick_y / 7168.0f;
-
   } else if (hadc->Instance == ADC3) {
     SCB_InvalidateDCache_by_Addr((uint32_t *) &adc3data[ADC_BUFFER_SIZE / 2], ADC_BUFFER_SIZE / 2);
-
-    int hack_left = (adc3data[0] >> 1) - 16384;
-    hack_left = std::max(-8192, std::min(8192, hack_left));
-    if(hack_left < -1024) {
-      hack_left += 1024;
-    }
-    else if(hack_left > 1024) {
-      hack_left -= 1024;
-    } else {
-      hack_left = 0;
-    }
-    blit::hack_left = hack_left / 7168.0f;
-
-    int hack_right = (adc3data[1] >> 1) - 16384;
-    hack_right = std::max(-8192, std::min(8192, hack_right));
-    if(hack_right < -1024) {
-      hack_right += 1024;
-    }
-    else if(hack_right > 1024) {
-      hack_right -= 1024;
-    } else {
-      hack_right = 0;
-    }
-    blit::hack_right = -hack_right / 7168.0f;
-
-    blit::battery = 6.6f * adc3data[2] / 65535.0f;
   }
 }
 
@@ -533,6 +478,10 @@ uint8_t tilt_sample_offset = 0;
 int16_t acceleration_data_buffer[3 * ACCEL_OVER_SAMPLE] = {0};
 
 void blit_process_input() {
+  static uint32_t last_battery_update = 0;
+  static uint32_t last_tilt_update = 0;
+
+  uint32_t scc = DWT->CYCCNT;
   static uint32_t blit_last_buttons = 0;
   // read x axis of joystick
   bool joystick_button = false;
@@ -551,40 +500,81 @@ void blit_process_input() {
     (!HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port, BUTTON_MENU_Pin)  ? blit::MENU       : 0) |
     (!HAL_GPIO_ReadPin(JOYSTICK_BUTTON_GPIO_Port, JOYSTICK_BUTTON_Pin) ? blit::JOYSTICK   : 0);
 
-  // Read accelerometer
-  msa301_get_accel(&hi2c4, &acceleration_data_buffer[tilt_sample_offset * 3]);
+  // Process ADC readings
+  int joystick_x = (adc1data[0] >> 1) - 16384;
+  joystick_x = std::max(-8192, std::min(8192, joystick_x));
+  if(joystick_x < -1024) {
+    joystick_x += 1024;
+  }
+  else if(joystick_x > 1024) {
+    joystick_x -= 1024;
+  } else {
+    joystick_x = 0;
+  }
+  blit::joystick.x = joystick_x / 7168.0f;
 
-  uint8_t status = bq24295_get_status(&hi2c4);
-  blit::battery_vbus_status = status >> 6; // 00 - Unknown, 01 - USB Host, 10 - Adapter port, 11 - OTG
-  blit::battery_charge_status = (status >> 4) & 0b11; // 00 - Not Charging, 01 - Pre-charge, 10 - Fast Charging, 11 - Charge Termination Done
+  int joystick_y = (adc1data[1] >> 1) - 16384;
+  joystick_y = std::max(-8192, std::min(8192, joystick_y));
+  if(joystick_y < -1024) {
+    joystick_y += 1024;
+  }
+  else if(joystick_y > 1024) {
+    joystick_y -= 1024;
+  } else {
+    joystick_y = 0;
+  }
+  blit::joystick.y = -joystick_y / 7168.0f;
 
-  blit::battery_fault = bq24295_get_fault(&hi2c4);
+  blit::hack_left = (adc3data[0] >> 1) / 32768.0f;
+  blit::hack_right = (adc3data[1] >> 1)  / 32768.0f;
 
-  tilt_sample_offset += 1;
-  if(tilt_sample_offset >= ACCEL_OVER_SAMPLE){
-    tilt_sample_offset = 0;
+  blit::battery = 6.6f * adc3data[2] / 65535.0f;
+
+  if(blit::now() - last_battery_update > 5000) {
+    uint8_t status = bq24295_get_status(&hi2c4);
+    blit::battery_vbus_status = status >> 6; // 00 - Unknown, 01 - USB Host, 10 - Adapter port, 11 - OTG
+    blit::battery_charge_status = (status >> 4) & 0b11; // 00 - Not Charging, 01 - Pre-charge, 10 - Fast Charging, 11 - Charge Termination Done
+
+    blit::battery_fault = bq24295_get_fault(&hi2c4);
+
+    last_battery_update = blit::now();
   }
 
-  float tilt_x = 0, tilt_y = 0, tilt_z = 0;
-  for(int x = 0; x < ACCEL_OVER_SAMPLE; x++) {
-    int offset = x * 3;
-    tilt_x += acceleration_data_buffer[offset + 0];
-    tilt_y += acceleration_data_buffer[offset + 1];
-    tilt_z += acceleration_data_buffer[offset + 2];
-  }
+  if(blit::now() - last_tilt_update > 10) {
+    // Do tilt every 8th tick of this function
+    // TODO: Find a better way to handle this
+    // Read accelerometer
+    msa301_get_accel(&hi2c4, &acceleration_data_buffer[tilt_sample_offset * 3]);
 
-  blit::tilt = vec3(
-    -(tilt_x / ACCEL_OVER_SAMPLE),
-    -(tilt_y / ACCEL_OVER_SAMPLE),
-    -(tilt_z / ACCEL_OVER_SAMPLE)
-    );
-  blit::tilt.normalize();
+    tilt_sample_offset += 1;
+    if(tilt_sample_offset >= ACCEL_OVER_SAMPLE){
+      tilt_sample_offset = 0;
+    }
+
+    float tilt_x = 0, tilt_y = 0, tilt_z = 0;
+    for(int x = 0; x < ACCEL_OVER_SAMPLE; x++) {
+      int offset = x * 3;
+      tilt_x += acceleration_data_buffer[offset + 0];
+      tilt_y += acceleration_data_buffer[offset + 1];
+      tilt_z += acceleration_data_buffer[offset + 2];
+    }
+
+    blit::tilt = vec3(
+      -(tilt_x / ACCEL_OVER_SAMPLE),
+      -(tilt_y / ACCEL_OVER_SAMPLE),
+      -(tilt_z / ACCEL_OVER_SAMPLE)
+      );
+    blit::tilt.normalize();
+
+    last_tilt_update = blit::now();
+  }
 
   if(blit::buttons & blit::MENU && !(blit_last_buttons & blit::MENU)) {
     blit_menu();
   }
 
   blit_last_buttons = blit::buttons;
+  flip_cycle_count = DWT->CYCCNT - scc;
 }
 
 char *get_fr_err_text(FRESULT err){
