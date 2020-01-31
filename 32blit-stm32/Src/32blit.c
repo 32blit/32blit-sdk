@@ -118,8 +118,6 @@ uint32_t blit_update_dac(FIL *audio_file) {
 void blit_tick() {
   if(needs_render) {
     blit::render(blit::now());
-    blit::fb.pen(rgba(255, 255, 255));
-    blit::fb.text(std::to_string(flip_cycle_count), &minimal_font[0][0], point(0, 0));
 
     HAL_LTDC_ProgramLineEvent(&hltdc, 252);
     needs_render = false;
@@ -574,7 +572,7 @@ void blit_process_input() {
   }
 
   blit_last_buttons = blit::buttons;
-  flip_cycle_count = DWT->CYCCNT - scc;
+  //flip_cycle_count = DWT->CYCCNT - scc;
 }
 
 char *get_fr_err_text(FRESULT err){
