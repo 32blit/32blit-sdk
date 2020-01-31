@@ -1,3 +1,4 @@
+#include <cinttypes>
 #include <stdint.h>
 
 #include "serial-debug.hpp"
@@ -34,7 +35,7 @@ void render(uint32_t time) {
 
   fb.text("Time:", &minimal_font[0][0], point(COL1, ROW1));
 
-  sprintf(text_buf, "%lu", time);
+  sprintf(text_buf, "%" PRIu32, time);
   fb.text(text_buf, &minimal_font[0][0], point(COL2, ROW1));
 
   blit::debugf("Hello from 32blit time = %lu\n\r", time);
