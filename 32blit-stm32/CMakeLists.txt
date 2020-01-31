@@ -146,11 +146,8 @@ target_compile_options(BlitHalSTM32Ext
 set(MCU_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}" PARENT_SCOPE)
 set(MCU_LINKER_SCRIPT_EXT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT_EXT}" PARENT_SCOPE)
 
-function(blit_executable NAME SOURCES)
-	add_executable(${NAME} $<TARGET_OBJECTS:BlitHalSTM32> ${SOURCES} ${ARGN})
+function(blit_executable_common NAME)
 	target_link_libraries(${NAME} BlitEngine)
-	set_target_properties(${NAME} PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT} SUFFIX ".elf")
-	set_target_properties(${NAME} PROPERTIES LINK_FLAGS "-specs=nano.specs -T ${MCU_LINKER_SCRIPT}")
 	set_property(TARGET ${NAME} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Map=${NAME}.map,--cref")
 	add_custom_command(TARGET ${NAME} POST_BUILD
 		COMMENT "Building ${NAME}.bin\nBuilding ${NAME}.dfu"
@@ -160,4 +157,20 @@ function(blit_executable NAME SOURCES)
 		COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${NAME}>
 		COMMAND ${CMAKE_READELF} -S $<TARGET_FILE:${NAME}>
 	)
+endfunction()
+
+function(blit_executable NAME SOURCES)
+	add_executable(${NAME} $<TARGET_OBJECTS:BlitHalSTM32Ext> ${SOURCES} ${ARGN})
+	set_target_properties(${NAME} PROPERTIES LINK_FLAGS "-specs=nano.specs -T ${MCU_LINKER_SCRIPT_EXT}")
+	set_target_properties(${NAME} PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT_EXT} SUFFIX ".elf")
+
+	blit_executable_common(${NAME})
+endfunction()
+
+function(blit_executable_int_flash NAME SOURCES)
+	add_executable(${NAME} $<TARGET_OBJECTS:BlitHalSTM32> ${SOURCES} ${ARGN})
+	set_target_properties(${NAME} PROPERTIES LINK_FLAGS "-specs=nano.specs -T ${MCU_LINKER_SCRIPT}")
+	set_target_properties(${NAME} PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT} SUFFIX ".elf")
+
+	blit_executable_common(${NAME})
 endfunction()
