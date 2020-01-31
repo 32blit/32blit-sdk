@@ -39,6 +39,10 @@
 #include "32blit.h"
 #include "32blit.hpp"
 #include "graphics/color.hpp"
+#include "CDCResetHandler.h"
+#include "CDCInfoHandler.h"
+#include "CDCCommandStream.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -58,6 +62,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+extern CDCCommandStream g_commandStream;
+CDCResetHandler g_resetHandler;
+CDCInfoHandler g_infoHandler;
 
 /* USER CODE END PV */
 
@@ -69,7 +76,6 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 /**
@@ -112,8 +118,9 @@ int main(void)
   MX_DAC1_Init();
   MX_HRTIM_Init();
   MX_I2C4_Init();
- // MX_LTDC_Init();
+#if (INITIALISE_QSPI==1)
   MX_QUADSPI_Init();
+#endif
   MX_ADC1_Init();
   MX_ADC3_Init();
   //MX_USB_OTG_HS_USB_Init();
@@ -127,11 +134,18 @@ int main(void)
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
-  
 
   //NVIC_SetPriority(SysTick_IRQn, 0x0);
-  blit_init();
 
+#if (INITIALISE_QSPI==1)
+  qspi_init();
+#endif
+
+  blit_init();
+  blit_clear_framebuffer();
+
+
+  // card needs to be mounted in init
   char sd_card_label[12];
   uint32_t freespace = 0;
   uint32_t totalspace = 0;
@@ -144,6 +158,13 @@ int main(void)
       blit_enable_dac();
     }
   }
+
+  // add CDC handler to reset device on receiving "_RST"
+	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', 'R', 'S', 'T'>::value, &g_resetHandler);
+
+  // add CDC handler to log info device on receiving "INFO"
+	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'I', 'N', 'F', 'O'>::value, &g_infoHandler);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -153,6 +174,9 @@ int main(void)
     uint32_t t_start = blit::now();
 
     blit_tick();
+
+    // handle CDC input
+    g_commandStream.Stream();
 
     uint32_t t_elapsed = blit::now() - t_start;
     /* USER CODE END WHILE */

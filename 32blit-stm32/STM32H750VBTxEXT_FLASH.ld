@@ -42,14 +42,13 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 MEMORY
 {
 DTCMRAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 128K
-RAM_D1 (xrw)        : ORIGIN = 0x24000000, LENGTH = 362K
-LTDC (rw)           : ORIGIN = 0x2405A800, LENGTH = 150K
-RAM_D2 (xrw)        : ORIGIN = 0x30000000, LENGTH = 138K
-FRAMEBUFFER (rw)    : ORIGIN = 0x30022800, LENGTH = 150K
+RAM_D1 (xrw)        : ORIGIN = 0x24000000, LENGTH = 212K
+LTDC (rw)           : ORIGIN = 0x24035000, LENGTH = 300K
+RAM_D2 (xrw)        : ORIGIN = 0x30000000, LENGTH = 288K
 RAM_D3 (xrw)        : ORIGIN = 0x38000000, LENGTH = 64K
 ITCMISR (xrw)       : ORIGIN = 0x00000000, LENGTH = 4K
 ITCMRAM (xrw)       : ORIGIN = 0x00001000, LENGTH = 60K
-FLASH (rx)          : ORIGIN = 0x08000000, LENGTH = 128K
+FLASH (rx)          : ORIGIN = 0x90000000, LENGTH = 32768K
 }
 
 /* Define output sections */
@@ -147,7 +146,7 @@ SECTIONS
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
-  } >RAM_D1
+  } >DTCMRAM
 
   /* User_heap_stack section, used to check that there is enough RAM left */
   ._user_heap_stack :
@@ -158,7 +157,7 @@ SECTIONS
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
-  } >RAM_D1
+  } >DTCMRAM
 
   itcm_data = LOADADDR(.itcm);
   .itcm :
@@ -178,18 +177,28 @@ SECTIONS
     __ltdc_end = .;
   } >LTDC
 
+  .ss (NOLOAD):
+  {
+    . = ALIGN(4);
+    *(.ss)           /* spritesheet */
+  } >RAM_D2
+
   .fb (NOLOAD):
   {
     . = ALIGN(4);
-    __fb_start = .;
-    KEEP(*(.fb))           /* framebuffer */
-    __fb_end = .;
-  } >FRAMEBUFFER
+    *(.fb)           /* framebuffer */
+  } >RAM_D1
 
-  .dma_data (NOLOAD):
+  .m (NOLOAD):
   {
     . = ALIGN(4);
-    *(.dma_data)           /* dma_data */
+    *(.m)           /* framebuffer */
+  } >RAM_D2
+
+  .dac_data (NOLOAD):
+  {
+    . = ALIGN(4);
+    *(.dac_data)           /* dac_data */
   } >RAM_D3
 
   /* Remove information from the standard libraries */
@@ -202,4 +211,5 @@ SECTIONS
 
   .ARM.attributes 0 : { *(.ARM.attributes) }
 }
+
 

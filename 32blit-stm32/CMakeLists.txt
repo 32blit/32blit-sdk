@@ -40,6 +40,7 @@ list(APPEND SOURCES
 	Middlewares/Third_Party/FatFs/src/ff.c
 	Middlewares/Third_Party/FatFs/src/ff_gen_drv.c
 	Middlewares/Third_Party/FatFs/src/option/syscall.c
+	Middlewares/Third_Party/FatFs/src/option/ccsbcs.c
 	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c
 	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c
 	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c
@@ -72,6 +73,11 @@ list(APPEND SOURCES
 	Src/32blit.c
 	Src/CDCLogging.c
 	startup_stm32h750xx.s
+	Src/CDCDataStream.cpp 
+	Src/CDCCommandStream.cpp 
+	Src/CDCCommandHandler.cpp 
+	Src/CDCResetHandler.cpp
+	Src/CDCInfoHandler.cpp 
 )
 
 set_source_files_properties( ${SOURCES} PROPERTIES LANGUAGE CXX )
@@ -98,6 +104,10 @@ target_compile_definitions(BlitHalSTM32
 		-DUSE_HAL_DRIVER
 		-DUSE_USB_HS
 		-DSTM32H750xx
+		-DAPPLICATION_VTOR=${APPLICATION_VTOR}
+		-DEXTERNAL_LOAD_ADDRESS=${EXTERNAL_LOAD_ADDRESS}
+		-DINITIALISE_QSPI=${INITIALISE_QSPI}
+		-DCDC_FIFO_BUFFERS=${CDC_FIFO_BUFFERS}
 )
 
 target_compile_options(BlitHalSTM32
@@ -119,5 +129,6 @@ function(blit_executable NAME SOURCES)
 		COMMAND ${CMAKE_OBJCOPY} -O binary -S $<TARGET_FILE:${NAME}> ${NAME}.bin
 		COMMAND ${CMAKE_DFU} build --force --out ${NAME}.dfu ${NAME}.bin
 		COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${NAME}>
+		COMMAND ${CMAKE_READELF} -S $<TARGET_FILE:${NAME}>
 	)
 endfunction()
