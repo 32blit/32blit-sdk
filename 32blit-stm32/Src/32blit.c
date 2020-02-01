@@ -87,14 +87,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 }
 
 void blit_tick() {
-  blit::LED.b++;
-  blit_update_led();
-
   if(display::needs_render) {
-
-    blit::LED.g = 255;
-    blit_update_led();
-
     blit::render(blit::now());
     display::enable_vblank_interrupt();
   }
@@ -170,10 +163,6 @@ void blit_init() {
     DWT->CYCCNT = 0;
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
-    ST7272A_RESET();
-
-    st7272a_set_bgr();
-
     f_mount(&filesystem, "", 1);  // this shouldn't be necessary here right?
     msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
     bq24295_init(&hi2c4);
@@ -183,8 +172,8 @@ void blit_init() {
     blit::now = HAL_GetTick;
     blit::random = HAL_GetRandom;
     blit::audio::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
-    blit::set_screen_mode = ::set_screen_mode;
-    ::set_screen_mode(blit::lores);
+    blit::set_screen_mode = display::set_screen_mode;
+    display::set_screen_mode(blit::lores);
 
     blit::update = ::update;
     blit::render = ::render;
@@ -193,13 +182,13 @@ void blit_init() {
     blit::read_file = ::read_file;
     blit::close_file = ::close_file;
 
+    blit::switch_execution = blit_switch_execution;
+
     blit_enable_amp();
 
-//  display::screen_init();
   display::init();
   
   blit::init();
-
 
 }
 
@@ -434,12 +423,14 @@ int16_t acceleration_data_buffer[3 * ACCEL_OVER_SAMPLE] = {0};
 
 void blit_disable_ADC()
 {
-	bDisableADC = true;
+  // TODO: Flesh this out if it's still necessary in interrupt-driven ADC mode
+  return;
 }
 
 void blit_enable_ADC()
 {
-	bDisableADC = false;
+  // TODO: Flesh this out if it's still necessary in interrupt-driven ADC mode
+  return;
 }
 
 void blit_process_input() {
@@ -601,11 +592,25 @@ pFunction JumpToApplication;
 
 void blit_switch_execution(void)
 {
-	// stop the DAC DMA
-  HAL_DAC_Stop_DMA(&hdac1, DAC_CHANNEL_2);
+  // Stop the ADC DMA
+  HAL_ADC_Stop_DMA(&hadc1);
+  HAL_ADC_Stop_DMA(&hadc3);
+
+  // Stop the audio
+  HAL_TIM_Base_Stop_IT(&htim6);
+  HAL_DAC_Stop(&hdac1, DAC_CHANNEL_2);
 
   // stop USB
   USBD_Stop(&hUsbDeviceHS);
+  
+  // Disable all the interrupts... just to be sure
+  HAL_NVIC_DisableIRQ(LTDC_IRQn);
+  HAL_NVIC_DisableIRQ(ADC_IRQn);
+  HAL_NVIC_DisableIRQ(ADC3_IRQn);
+  HAL_NVIC_DisableIRQ(DMA1_Stream0_IRQn);
+  HAL_NVIC_DisableIRQ(DMA1_Stream1_IRQn);
+  HAL_NVIC_DisableIRQ(TIM6_DAC_IRQn);
+  HAL_NVIC_DisableIRQ(OTG_HS_IRQn);
 
 	volatile uint32_t uAddr = EXTERNAL_LOAD_ADDRESS;
 	// enable qspi memory mapping if needed
