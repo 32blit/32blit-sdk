@@ -20,7 +20,7 @@ namespace utility {
     FILE_READ_ERROR = -3,
   };
 
-  tga tga_header(std::string file) {
+  tga tga_header(const std::string & file) {
     FILE *fp = fopen(file.c_str(), "rb");
 
     tga tga;
@@ -29,7 +29,7 @@ namespace utility {
     return tga;
   }
   
-  int8_t tga_load(std::string file, void *data, bool auto_alpha) {
+  int8_t tga_load(const std::string & file, void *data, bool auto_alpha) {
     FILE *fp = fopen(file.c_str(), "rb");
 
     tga tga;
@@ -112,7 +112,7 @@ namespace utility {
     return tga_status::OK;
   }
 
-  int8_t map_load(std::string file, uint8_t *data) {
+  int8_t map_load(const std::string & file, uint8_t *data) {
     FILE *fp = fopen(file.c_str(), "rb");
 
     uint8_t width, height;
