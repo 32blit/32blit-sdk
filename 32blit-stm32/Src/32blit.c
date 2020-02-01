@@ -148,6 +148,10 @@ void blit_enable_amp() {
 }
 
 void hook_render(uint32_t time) {
+  /*
+  Replace blit::render = ::render; with blit::render = hook_render;
+  and do silly on-screen debug stuff here for the great justice.
+  */
   ::render(time);
 
   blit::fb.pen(rgba(255, 255, 255));
@@ -187,7 +191,7 @@ void blit_init() {
     display::set_screen_mode(blit::lores);
 
     blit::update = ::update;
-    blit::render = hook_render;
+    blit::render = ::render;
     blit::init   = ::init;
     blit::open_file = ::open_file;
     blit::read_file = ::read_file;
