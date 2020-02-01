@@ -1,4 +1,5 @@
 #include "string.h"
+#include <map>
 
 #include "32blit.h"
 #include "main.h"
@@ -22,10 +23,8 @@
 #include "stdarg.h"
 using namespace blit;
 
-__attribute__((section(".dma_data"))) uint16_t dac_buffer[DAC_BUFFER_SIZE];
-
-
-
+extern char __ltdc_start;
+extern char __fb_start;
 extern char itcm_text_start;
 extern char itcm_text_end;
 extern char itcm_data;
@@ -40,9 +39,18 @@ FATFS filesystem;
 FRESULT SD_Error = FR_INVALID_PARAMETER;
 FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 
-uint32_t total_samples = 0;
-uint8_t dma_status = 0;
-bool    bDisableADC = false;
+bool needs_render = true;
+uint32_t flip_cycle_count = 0;
+float global_volume = 0.5f;
+float volume_log_base = 2.0f;
+
+static blit::screen_mode mode = blit::screen_mode::lores;
+
+/* configure the screen surface to point at the reserved LTDC framebuffer */
+surface __ltdc((uint8_t *)&__ltdc_start, pixel_format::RGB565, size(320, 240));
+
+surface __fb_hires((uint8_t *)&__fb_start, pixel_format::RGB565, size(320, 240));
+surface __fb_lores((uint8_t *)&__fb_start, pixel_format::RGBA, size(160, 120));
 
 void DFUBoot(void)
 {
@@ -62,49 +70,20 @@ int blit_debugf(const char * psFormatString, ...)
 	va_end(args);
 	return ret;
 }
+
 void blit_debug(std::string message) {
 	printf(message.c_str());
-    fb.pen(rgba(255, 255, 255));
-    fb.text(message, &minimal_font[0][0], point(0, 0));
+  fb.pen(rgba(255, 255, 255));
+  fb.text(message, &minimal_font[0][0], point(0, 0));
 }
 
-void HAL_DACEx_ConvHalfCpltCallbackCh2(DAC_HandleTypeDef *hdac){
-  dma_status = DAC_DMA_HALF_COMPLETE;
-}
-
-void HAL_DACEx_ConvCpltCallbackCh2(DAC_HandleTypeDef *hdac){
-  dma_status = DAC_DMA_COMPLETE;
-}
-
-uint32_t blit_update_dac(FIL *audio_file) {
-  uint16_t buffer_offset = 0;
-  unsigned int read = 0;
-  uint8_t buf[DAC_BUFFER_SIZE / 2] = {0};
-
-  if(dma_status){
-    if(dma_status == DAC_DMA_COMPLETE){
-      buffer_offset = (DAC_BUFFER_SIZE / 2);
-    }
-    dma_status = 0;
-    FRESULT err = f_read(audio_file, buf, DAC_BUFFER_SIZE / 2, &read);
-
-    if(err == FR_OK){
-      for(unsigned int x = 0; x < read; x++){
-        dac_buffer[x + buffer_offset] = buf[x] * 16.0f * blit::volume;
-      }
-      if(read < DAC_BUFFER_SIZE / 2){
-        // If we have a short read, seek back to 0 in our audio file
-        // and fill the rest of the DMA buffer with zeros cos it's
-        // slightly easier than filling it with data.
-        f_lseek(audio_file, 0);
-        for(unsigned int x = 0; x < (DAC_BUFFER_SIZE / 2) - read; x++){
-          dac_buffer[x + buffer_offset] = 0;
-        }
-      }
-    }
+uint32_t audio_tick_cycle_count = 0;
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+  if(htim->Instance == TIM6) {    
+    uint32_t scc = DWT->CYCCNT;
+    hdac1.Instance->DHR12R2 = blit::audio::get_audio_frame() >> 4;
+    audio_tick_cycle_count = DWT->CYCCNT - scc;
   }
-
-  return read;
 }
 
 void blit_tick() {
@@ -127,84 +106,94 @@ void blit_tick() {
   blit::tick(blit::now());
 }
 
+std::map<uint32_t, FIL *> open_files;
+uint32_t current_file_handle = 0;
+
+int32_t open_file(std::string file) {
+  FIL *f = new FIL();
+
+  FRESULT r = f_open(f, file.c_str(), FA_READ);
+
+  if(r == FR_OK){      
+    current_file_handle++;  
+    open_files[current_file_handle] = f;
+    return current_file_handle;
+  }
+  
+  return -1;
+}
+
+int32_t read_file(uint32_t fh, uint32_t offset, uint32_t length, char *buffer) {  
+  FRESULT r;
+
+  r = f_lseek(open_files[fh], offset);
+  if(r == FR_OK){ 
+    unsigned int bytes_read;
+    r = f_read(open_files[fh], buffer, length, &bytes_read);
+    if(r == FR_OK){ 
+      return bytes_read;
+    }
+  }
+  
+  return -1;
+}
+
+int32_t close_file(uint32_t fh) {
+  FRESULT r;
+
+  r = f_close(open_files[fh]);
+
+  return r == FR_OK ? 0 : -1;
+}
+
 bool blit_sd_detected() {
   return HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_11) == 1;
 }
 
-bool blit_mount_sd(char label[12], uint32_t &totalspace, uint32_t &freespace) {
-  DWORD free_clusters;
-  FATFS *pfs;
-  if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_11) == 1){
-    SD_Error = f_mount(&filesystem, "", 1);
-    if(SD_Error == FR_OK){
-      f_getlabel("", label, 0);
-      f_getfree("", &free_clusters, &pfs);
-      totalspace = (uint32_t)((pfs->n_fatent - 2) * pfs->csize * 0.5);
-      freespace = (uint32_t)(free_clusters * pfs->csize * 0.5);
-      return true;
-    }
-  }
-  return false;
-}
-
-bool blit_open_file(FIL &file, const char *filename) {
-  SD_FileOpenError = f_open(&file, filename, FA_READ);
-  if(SD_FileOpenError == FR_OK){
-    uint8_t buf[10];
-    unsigned int read;
-    SD_FileOpenError = f_read(&file, buf, 10, &read);
-    f_lseek(&file, 0);
-    return true;
-  }
-  return false;
-}
-
-void blit_enable_dac() {
+void blit_enable_amp() {
   HAL_GPIO_WritePin(AMP_SHUTDOWN_GPIO_Port, AMP_SHUTDOWN_Pin, GPIO_PIN_SET);
 }
 
 void blit_init() {
-  for(int x = 0; x<DAC_BUFFER_SIZE; x++){
-    dac_buffer[x] = 0;
-  }
-  
-  // enable cycle counting
-  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-  DWT->CYCCNT = 0;
-  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+    // enable cycle counting
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CYCCNT = 0;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
-  HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc1data, ADC_BUFFER_SIZE);
-  HAL_ADC_Start_DMA(&hadc3, (uint32_t *)adc3data, ADC_BUFFER_SIZE);
+    HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc1data, ADC_BUFFER_SIZE);
+    HAL_ADC_Start_DMA(&hadc3, (uint32_t *)adc3data, ADC_BUFFER_SIZE);
 
-  msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
-  bq24295_init(&hi2c4);
-  blit::backlight = 1.0f;
-  blit::volume = 1.5f / 16.0f;
-  blit::debug = blit_debug;
-  blit::debugf = blit_debugf;
-  blit::now = HAL_GetTick;
-  blit::random = HAL_GetRandom;
-  blit::set_screen_mode = display::set_screen_mode;
-  display::set_screen_mode(blit::lores);
+    HAL_TIM_Base_Start_IT(&htim6);
+    HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
+    
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CYCCNT = 0;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
-  blit::update = ::update;
-  blit::render = ::render;
-  blit::init   = ::init;
+    ST7272A_RESET();
 
-  blit::switch_execution = blit_switch_execution;
+    st7272a_set_bgr();
 
-  char sd_card_label[12];
-  uint32_t freespace = 0;
-  uint32_t totalspace = 0;
-  uint32_t total_samples = 0;
-  FIL audio_file;
-  bool audio_file_available = false;
-  if (blit_mount_sd(sd_card_label, freespace, totalspace)) {
-    audio_file_available = blit_open_file(audio_file, "u8mono16.raw");
-    if(audio_file_available){
-      blit_enable_dac();
-    }
-  }
+    f_mount(&filesystem, "", 1);  // this shouldn't be necessary here right?
+    msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
+    bq24295_init(&hi2c4);
+    blit::backlight = 1.0f;
+    blit::debug = blit_debug;
+    blit::debugf = blit_debugf;
+    blit::now = HAL_GetTick;
+    blit::random = HAL_GetRandom;
+    blit::audio::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
+    blit::set_screen_mode = ::set_screen_mode;
+    ::set_screen_mode(blit::lores);
+
+    blit::update = ::update;
+    blit::render = ::render;
+    blit::init   = ::init;
+    blit::open_file = ::open_file;
+    blit::read_file = ::read_file;
+    blit::close_file = ::close_file;
+
+    blit_enable_amp();
 
 //  display::screen_init();
   display::init();
@@ -237,8 +226,9 @@ void blit_menu_update(uint32_t time) {
         blit::backlight = std::fmin(1.0f, std::fmax(0.0f, blit::backlight));
         break;
       case 1: // Volume
-        blit::volume += 1.0f / 256.0f;
-        blit::volume = std::fmin(1.0f, std::fmax(0.0f, blit::volume));
+        global_volume += 1.0f / 256.0f;
+        global_volume = std::fmin(1.0f, std::fmax(0.0f, global_volume));
+        blit::audio::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
         break;
     }
   } else if (blit::buttons & blit::button::DPAD_LEFT ) {
@@ -248,8 +238,9 @@ void blit_menu_update(uint32_t time) {
         blit::backlight = std::fmin(1.0f, std::fmax(0.0f, blit::backlight));
         break;
       case 1: // Volume
-        blit::volume -= 1.0f / 256.0f;
-        blit::volume = std::fmin(1.0f, std::fmax(0.0f, blit::volume));
+        global_volume -= 1.0f / 256.0f;
+        global_volume = std::fmin(1.0f, std::fmax(0.0f, global_volume));
+        blit::audio::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
         break;
     }
   } else if (blit::buttons & changed_buttons & blit::button::A) {
@@ -346,7 +337,7 @@ void blit_menu_render(uint32_t time) {
   fb.pen(bar_background_color);
   fb.rectangle(rect(screen_width / 2, 31, 75, 5));
   fb.pen(rgba(255, 255, 255));
-  fb.rectangle(rect(screen_width / 2, 31, 75 * blit::volume, 5));
+  fb.rectangle(rect(screen_width / 2, 31, 75 * global_volume, 5));
 
   if(menu_item == 2){
     fb.pen(rgba(50, 50, 70));

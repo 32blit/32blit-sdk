@@ -143,21 +143,6 @@ int main(void)
 
   blit_init();
 
-
-  // card needs to be mounted in init
-  char sd_card_label[12];
-  uint32_t freespace = 0;
-  uint32_t totalspace = 0;
-  uint32_t total_samples = 0;
-  FIL audio_file;
-  bool audio_file_available = false;
-  if (blit_mount_sd(sd_card_label, freespace, totalspace)) {
-    audio_file_available = blit_open_file(audio_file, "u8mono16.raw");
-    if(audio_file_available){
-      blit_enable_dac();
-    }
-  }
-
   // add CDC handler to reset device on receiving "_RST"
 	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', 'R', 'S', 'T'>::value, &g_resetHandler);
 
@@ -249,7 +234,7 @@ void SystemClock_Config(void)
                               |RCC_PERIPHCLK_ADC|RCC_PERIPHCLK_I2C4
                               |RCC_PERIPHCLK_USB|RCC_PERIPHCLK_QSPI;
   PeriphClkInitStruct.PLL2.PLL2M = 4;
-  PeriphClkInitStruct.PLL2.PLL2N = 12; // TODO: Exported from STMCUBE as 9?
+  PeriphClkInitStruct.PLL2.PLL2N = 9; // TODO: Exported from STMCUBE as 9?
   PeriphClkInitStruct.PLL2.PLL2P = 1;
   PeriphClkInitStruct.PLL2.PLL2Q = 2;
   PeriphClkInitStruct.PLL2.PLL2R = 2;

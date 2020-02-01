@@ -21,6 +21,8 @@ x64/
 x86/
 bld/
 build/
+build.stm32/
+build.mingw/
 [Bb]in/
 [Oo]bj/
 [Ll]og/

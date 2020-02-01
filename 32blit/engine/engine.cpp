@@ -6,15 +6,20 @@
 
 namespace blit {
 
-  void (*init)()                                = nullptr;
-  void (*update)(uint32_t time)                 = nullptr;
-  void (*render)(uint32_t time)                 = nullptr;
-  void (*set_screen_mode)(screen_mode new_mode) = nullptr;
-  uint32_t (*now)()                             = nullptr;
-  uint32_t (*random)()                          = nullptr;
-  void (*debug)(std::string message) 								= nullptr;
+  void (*init)()                                    = nullptr;
+  void (*update)(uint32_t time)                     = nullptr;
+  void (*render)(uint32_t time)                     = nullptr;
+  void (*set_screen_mode)(screen_mode new_mode)     = nullptr;
+  uint32_t (*now)()                                 = nullptr;
+  uint32_t (*random)()                              = nullptr;
+  void (*debug)(std::string message)                = nullptr;
   int  (*debugf)(const char * psFormatString, ...) 	= nullptr;
   void (*switch_execution)()												= nullptr;
+
+  int32_t (*open_file)(std::string file)          = nullptr;
+  int32_t (*read_file)(uint32_t fh, uint32_t offset, uint32_t length, char* buffer) = nullptr;
+  int32_t (*close_file)(uint32_t fh)              = nullptr;
+
 
   surface null_surface(nullptr, pixel_format::RGB565, size(0, 0));
   surface &fb = null_surface;
@@ -22,7 +27,7 @@ namespace blit {
   uint32_t update_rate_ms = 10;
   uint32_t pending_update_time = 0;
 
-  uint32_t render_rate_ms = 25;
+  uint32_t render_rate_ms = 20;
   uint32_t pending_render_time = 0;
 
   uint32_t last_tick_time = 0;
