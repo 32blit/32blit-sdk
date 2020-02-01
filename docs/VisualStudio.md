@@ -48,7 +48,7 @@ cd vcpkg
 
 2. Open Visual Studio
 
-3. `File` > `Open` > `Folder` and open the folder where you cloned this repo. (Alternatively, if you haven't cloned the repo yet, use `File` -> `Clone ore Check Out Code`)
+3. `File` > `Open` > `Folder` and open the folder where you cloned this repo. (Alternatively, if you haven't cloned the repo yet, use `File` -> `Clone or check out code`)
 
 4. Build!
 
