@@ -6,3 +6,7 @@ add_subdirectory(examples)
 if(${CMAKE_SYSTEM_NAME} STREQUAL Generic)
     add_subdirectory(firmware)
 endif()
+
+if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL Generic AND NOT EMSCRIPTEN)
+    add_subdirectory(tools)
+endif()
