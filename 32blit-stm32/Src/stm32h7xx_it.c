@@ -23,7 +23,6 @@
 #include "stm32h7xx_it.h"
 #include "fatfs.h"
 #include "dac.h"
-#include "ltdc.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -69,7 +68,7 @@ extern ADC_HandleTypeDef hadc1;
 extern ADC_HandleTypeDef hadc3;
 extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
 extern DMA_HandleTypeDef hdma_dac1_ch2;
-extern LTDC_HandleTypeDef hltdc;
+//extern LTDC_HandleTypeDef hltdc;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -307,19 +306,6 @@ void ADC3_IRQHandler(void)
   /* USER CODE BEGIN ADC3_IRQn 1 */
 
   /* USER CODE END ADC3_IRQn 1 */
-}
-
-
-/**
-* @brief This function handles LTDC global interrupt.
-*/
-void LTDC_IRQHandler(void)
-{
-  /* USER CODE BEGIN LTDC_IRQn 0 */
-  /* USER CODE END LTDC_IRQn 0 */
-  HAL_LTDC_IRQHandler(&hltdc);
-  /* USER CODE BEGIN LTDC_IRQn 1 */
-  /* USER CODE END LTDC_IRQn 1 */
 }
 
 

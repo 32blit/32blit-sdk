@@ -2,14 +2,13 @@
 
 #include "32blit.h"
 #include "main.h"
+#include "display.h"
+
 #include "adc.h"
-#include "ltdc.h"
 #include "dac.h"
 #include "tim.h"
 #include "rng.h"
 #include "spi.h"
-#include "ltdc.h"
-#include "spi-st7272a.h"
 #include "i2c.h"
 #include "i2c-msa301.h"
 #include "i2c-bq24295.h"
@@ -23,8 +22,7 @@ using namespace blit;
 
 __attribute__((section(".dma_data"))) uint16_t dac_buffer[DAC_BUFFER_SIZE];
 
-extern char __ltdc_start;
-extern char __fb_start;
+
 
 extern char itcm_text_start;
 extern char itcm_text_end;
@@ -41,16 +39,6 @@ FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 
 uint32_t total_samples = 0;
 uint8_t dma_status = 0;
-bool needs_render = true;
-uint32_t flip_cycle_count = 0;
-
-static blit::screen_mode mode = blit::screen_mode::lores;
-
-/* configure the screen surface to point at the reserved LTDC framebuffer */
-surface __ltdc((uint8_t *)&__ltdc_start, pixel_format::RGB565, size(320, 240));
-
-surface __fb_hires((uint8_t *)&__fb_start, pixel_format::RGB565, size(320, 240));
-surface __fb_lores((uint8_t *)&__fb_start, pixel_format::RGBA, size(160, 120));
 
 void DFUBoot(void)
 {
@@ -116,11 +104,16 @@ uint32_t blit_update_dac(FIL *audio_file) {
 }
 
 void blit_tick() {
-  if(needs_render) {
-    blit::render(blit::now());
+  blit::LED.b++;
+  blit_update_led();
 
-    HAL_LTDC_ProgramLineEvent(&hltdc, 252);
-    needs_render = false;
+  if(display::needs_render) {
+
+    blit::LED.g = 255;
+    blit_update_led();
+
+    blit::render(blit::now());
+    display::enable_vblank_interrupt();
   }
 
   blit_process_input();
@@ -167,50 +160,41 @@ void blit_enable_dac() {
 }
 
 void blit_init() {
-    for(int x = 0; x<DAC_BUFFER_SIZE; x++){
-      dac_buffer[x] = 0;
-    }
-    
-    // enable cycle counting
-    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-    DWT->CYCCNT = 0;
-    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-
-    HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc1data, ADC_BUFFER_SIZE);
-    HAL_ADC_Start_DMA(&hadc3, (uint32_t *)adc3data, ADC_BUFFER_SIZE);
-
-    ST7272A_RESET();
-
-    st7272a_set_bgr();
-
-    msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
-    bq24295_init(&hi2c4);
-    blit::backlight = 1.0f;
-    blit::volume = 1.5f / 16.0f;
-    blit::debug = blit_debug;
-    blit::debugf = blit_debugf;
-    blit::now = HAL_GetTick;
-    blit::random = HAL_GetRandom;
-    blit::set_screen_mode = ::set_screen_mode;
-    ::set_screen_mode(blit::lores);
-
-    blit::update = ::update;
-    blit::render = ::render;
-    blit::init   = ::init;
-
-    blit::init();
-
-
-  HAL_NVIC_SetPriority(LTDC_IRQn, 4, 4);
-  HAL_NVIC_EnableIRQ(LTDC_IRQn);
-  HAL_LTDC_ProgramLineEvent(&hltdc, 252);
-}
-
-void HAL_LTDC_LineEventCallback(LTDC_HandleTypeDef *p) {
-  blit_flip();
+  for(int x = 0; x<DAC_BUFFER_SIZE; x++){
+    dac_buffer[x] = 0;
+  }
   
-  needs_render = true;
+  // enable cycle counting
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CYCCNT = 0;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc1data, ADC_BUFFER_SIZE);
+  HAL_ADC_Start_DMA(&hadc3, (uint32_t *)adc3data, ADC_BUFFER_SIZE);
+
+  msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
+  bq24295_init(&hi2c4);
+  blit::backlight = 1.0f;
+  blit::volume = 1.5f / 16.0f;
+  blit::debug = blit_debug;
+  blit::debugf = blit_debugf;
+  blit::now = HAL_GetTick;
+  blit::random = HAL_GetRandom;
+  blit::set_screen_mode = display::set_screen_mode;
+  display::set_screen_mode(blit::lores);
+
+  blit::update = ::update;
+  blit::render = ::render;
+  blit::init   = ::init;
+
+//  display::screen_init();
+  display::init();
+  
+  blit::init();
+
+
 }
+
 
 int menu_item = 0;
 
@@ -267,7 +251,7 @@ void blit_menu_render(uint32_t time) {
   ::render(time);
   int screen_width = 160;
   int screen_height = 120;
-  if (mode == blit::screen_mode::hires) {
+  if (display::mode == blit::screen_mode::hires) {
     screen_width = 320;
     screen_height = 240;
   }
@@ -375,60 +359,7 @@ void blit_menu() {
   }
 }
 
-/**
- * In low-res mode this copies the low-res RGB framebuffer into the larger RGB565 buffer, applying pixel doubling.
- * Since the LTDC display is refreshed from this high-res buffer, the low-res one can then be safely redrawn.
- * In high-res mode it simply points LTDC at the freshly drawn buffer and gives 32blit the other buffer to draw into.
- */
-void blit_flip() {
-  uint32_t scc = DWT->CYCCNT;
 
-  if(mode == screen_mode::hires) {
-    uint32_t c = (320 * 240 * 2) / 4 / 8;
-    uint32_t *d = (uint32_t *)(__ltdc.data);
-    uint32_t *s = (uint32_t *)(__fb_hires.data);
-    while(c--) {
-      *d++ = *s++;
-      *d++ = *s++;
-      *d++ = *s++;
-      *d++ = *s++;
-      *d++ = *s++;
-      *d++ = *s++;
-      *d++ = *s++;
-      *d++ = *s++;      
-    }
-  } else {
-    // pixel double the framebuffer to the LTDC buffer
-    uint32_t *src = (uint32_t *)__fb_lores.data;
-    uint32_t *dest = (uint32_t *)(&__ltdc_start);
-    for(uint8_t y = 0; y < 120; y++) {
-      // pixel double the current row while converting from RGBA to RGB565
-      for(uint8_t x = 0; x < 160; x++) {
-        uint32_t s = *src++;
-        uint16_t c = ((s & 0xf8000000) >> 27) | ((s & 0x00fc0000) >> 13) | ((s & 0x0000f800));        
-        *(dest) = c | (c << 16);
-        *(dest + 160) = c | (c << 16);
-        dest++;
-      }
-
-      dest += 160; // skip the doubled row
-    }
-  }  
-
-  //flip_cycle_count = DWT->CYCCNT - scc;
-
-  SCB_CleanInvalidateDCache_by_Addr((uint32_t *)&__ltdc_start, 320 * 240 * 2);
-}
-
-void set_screen_mode(blit::screen_mode new_mode) {
-  mode = new_mode;
-
-  if(mode == blit::screen_mode::hires) {
-    blit::fb = __fb_hires;
-  } else {
-    blit::fb = __fb_lores;
-  }
-}
 
 void blit_update_vibration() {
     __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, vibration * 2000.0f);

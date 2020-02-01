@@ -53,6 +53,7 @@ list(APPEND SOURCES
 	Src/usbd_conf.c
 	Src/usbd_desc.c
 	Src/usbd_cdc_if.c
+	Src/display.c
 	Src/gpio.c
 	Src/adc.c
 	Src/dac.c
@@ -62,7 +63,6 @@ list(APPEND SOURCES
 	Src/i2c.c
 	Src/i2c-msa301.c
 	Src/i2c-bq24295.c
-	Src/ltdc.c
 	Src/quadspi.c
 	Src/spi.c
 	Src/spi-st7272a.c

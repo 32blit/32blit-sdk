@@ -26,7 +26,7 @@
 #include "fatfs.h"
 #include "hrtim.h"
 #include "i2c.h"
-#include "ltdc.h"
+
 #include "quadspi.h"
 #include "rng.h"
 #include "spi.h"
@@ -112,7 +112,7 @@ int main(void)
   MX_DAC1_Init();
   MX_HRTIM_Init();
   MX_I2C4_Init();
-  MX_LTDC_Init();
+ // MX_LTDC_Init();
   MX_QUADSPI_Init();
   MX_ADC1_Init();
   MX_ADC3_Init();
