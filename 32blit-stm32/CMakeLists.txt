@@ -168,6 +168,10 @@ function(blit_executable NAME SOURCES)
 	set_target_properties(${NAME} PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT_EXT} SUFFIX ".elf")
 
 	blit_executable_common(${NAME})
+
+	if(32BLIT_TOOL)
+		add_custom_target(${NAME}.flash DEPENDS ${NAME} COMMAND ${32BLIT_TOOL} PROG ${FLASH_PORT} ${NAME}.bin)
+	endif()
 endfunction()
 
 function(blit_executable_int_flash NAME SOURCES)
