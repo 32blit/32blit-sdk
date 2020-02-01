@@ -104,7 +104,7 @@ namespace display {
   void ltdc_init() { 
 
     // enable ltdc clock
-    RCC->APB2ENR |= RCC_APB2ENR_LTDCEN;
+    __HAL_RCC_LTDC_CLK_ENABLE();
   
     // TODO: move the gpio clock enabling to a common location where they
     // are all setup ahead of anything else
