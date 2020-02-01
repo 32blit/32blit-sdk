@@ -22,7 +22,19 @@ On Windows 10 you can either build for win32 or use XMing and run your builds in
 
 For more information about how to build on the various systems, refer to the platform specific docs in the `docs` folder!
 
-# Overview
+# More docs!
+
+Refer to the OS specific docs:
+
+* [Linux users](docs/Linux.md)
+* [Windows users](docs/Windows.md) or if you are [Visual Studio user](docs/VisualStudio.md)
+* [macOS users](docs/macOS.md)
+
+If you want to run the examples in a browser, refer to the [Emscripten docs](docs/Emscripten.md)
+
+If you want to run on device, refer to the [32blit docs](docs/32blit.md)
+
+# Overview of what is inside?
 
 ## 32blit
 
@@ -46,13 +58,13 @@ The `32blit-stm32` directory contains the STM32 HAL for 32blit, compatible with 
 
 ## Examples / Projects
 
-
 The `examples` directory contains example projects, these can be built into both SDL or STM32 binaries and cover a range of techniques from simple concepts to complete games.
 
 Refer to the OS/platform specific documentation files in the `docs/` folder for instructions on how to compile and run these examples.
 
-### Troubleshooting
+## Troubleshooting
 
 If you see `cannot create target because another target with the same name already exists` you've probably run `cmake ..` in the wrong directory (the project directory rather than the build directory), you should remove all but your project files and `cmake ..` again from the build directory.
 
+If you are getting complaints on WSL / Linux about python modules missing, you may have accidently installed them with sudo. When using pip3 to install modules do not use sudo, this will make sure that modules are installed for the current user.
 

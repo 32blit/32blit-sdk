@@ -1,6 +1,8 @@
 /*! \file mat3.cpp
 */
 #include <math.h>
+
+#undef M_PI
 #define M_PI           3.14159265358979323846f  /* pi */
 
 #include "mat3.hpp"

@@ -18,7 +18,8 @@ In your project directory:
 
 ``` shell
 mkdir build.em
-cmake .. -DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -G "Unix Makefiles"
+cd build.em
+emcmake cmake .. -G "Unix Makefiles"
 make
 python3 -m http.server
 ```

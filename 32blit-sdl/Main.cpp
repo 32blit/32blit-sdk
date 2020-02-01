@@ -29,6 +29,11 @@ System *blit_system;
 Input *blit_input;
 Renderer *blit_renderer;
 
+#ifdef VIDEO_CAPTURE
+VideoCapture *blit_capture;
+unsigned int last_record_startstop = 0;
+#endif
+
 void handle_event(SDL_Event &event) {
 	switch (event.type) {
 		case SDL_QUIT:
@@ -76,6 +81,14 @@ void handle_event(SDL_Event &event) {
 
 		case SDL_CONTROLLERAXISMOTION:
 			blit_input->handle_controller_motion(event.caxis.axis, event.caxis.value);
+			break;
+
+		case SDL_CONTROLLERDEVICEADDED:
+			SDL_GameControllerOpen(event.cdevice.which);
+			break;
+
+		case SDL_CONTROLLERDEVICEREMOVED:
+			SDL_GameControllerClose(SDL_GameControllerFromInstanceID(event.cdevice.which));
 			break;
 
 		case SDL_RENDER_TARGETS_RESET:
@@ -156,8 +169,7 @@ int main(int argc, char *argv[]) {
 	blit_renderer = new Renderer(window, System::width, System::height);
 
 #ifdef VIDEO_CAPTURE
-	VideoCapture *blit_capture = new VideoCapture(argv[0]);
-	unsigned int last_record_startstop = 0;
+	blit_capture = new VideoCapture(argv[0]);
 #endif
 
 	blit_system->run();

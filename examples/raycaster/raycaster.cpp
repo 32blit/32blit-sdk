@@ -11,8 +11,7 @@ using namespace blit;
 const uint16_t screen_width = 160;
 const uint16_t screen_height = 120;
 
-uint8_t __ss[160 * 160] __SECTION__(".ss");
-uint8_t __m[160 * 120] __SECTION__(".m");
+uint8_t __m[160 * 120];
 
 float z_buffer[SCREEN_WIDTH];
 float lut_camera_displacement[SCREEN_WIDTH];
@@ -24,10 +23,7 @@ const int num_stars = 100;
 std::vector<star> stars(num_stars);
 
 /* create surfaces */
-//surface ss((uint8_t *)__ss, size(160, 160), pixel_format::P);
-surface m((uint8_t *)__m, pixel_format::M, size(screen_width, screen_height));
-
-//spritesheet my_sprites(ss, 8, 8);
+surface mask((uint8_t *)__m, pixel_format::M, size(screen_width, screen_height));
 
 
 player player1{ vec2(0,0), vec2(0,0), vec2(0,0), 0 };
@@ -315,9 +311,9 @@ void render(uint32_t time) {
 	uint32_t ms_start = now();
 
 	// clear the mask
-	m.alpha = 255;
-	m.pen(rgba(0));
-	m.clear();
+	mask.alpha = 255;
+	mask.pen(rgba(0));
+	mask.clear();
 
 	// clear the canvas
 	fb.alpha = 255;
@@ -348,9 +344,9 @@ void render(uint32_t time) {
 
 	fb.pen(rgba(10, 36, 24));
 	fb.mask = nullptr;
-	for (int y = 0; y < m.bounds.h; y++) {
-		for (int x = 0; x < m.bounds.w; x++) {
-			uint8_t v = *m.ptr(x, y);
+	for (int y = 0; y < mask.bounds.h; y++) {
+		for (int x = 0; x < mask.bounds.w; x++) {
+			uint8_t v = *mask.ptr(x, y);
 			fb.alpha = v;
 			fb.pixel(point(x, y));
 		}
@@ -615,8 +611,8 @@ void render_world(uint32_t time) {
 			//printf("render_world: updating z_buffer\n");
 			z_buffer[column] = perpendicular_wall_distance;
 
-			//m.pen(int(alpha));
-			m.pen(200);
+			//mask.pen(int(alpha));
+			mask.pen(200);
 
 			float line_distance = abs(perpendicular_wall_distance - last_wall_distance);
 
@@ -626,23 +622,23 @@ void render_world(uint32_t time) {
 
 				for (int c = column - width; c < column + width; c++) {
 					int alpha = (abs(column - c) * 160) / width;
-					m.pen(160 - alpha);
-					m.line(point(c, start_y), point(c, end_y));
+					mask.pen(160 - alpha);
+					mask.line(point(c, start_y), point(c, end_y));
 				};
-				/*m.rectangle(rect(
+				/*mask.rectangle(rect(
 					point(column - width, start_y),
 					point(column + width, end_y)
 				));*/
-				//m.line(point(column-1, start_y), point(column-1, end_y));
-				//m.line(point(column, start_y), point(column, end_y));
-				//m.line(point(column+1, start_y), point(column+1, end_y));
+				//mask.line(point(column-1, start_y), point(column-1, end_y));
+				//mask.line(point(column, start_y), point(column, end_y));
+				//mask.line(point(column+1, start_y), point(column+1, end_y));
 			}
 			else {
 				for (int r = end_y - width; r < end_y + width; r++) {
 					int alpha = (abs(end_y - r) * 160) / width;
-					m.pen(160 - alpha);
-					m.pixel(point(column, r));
-					/*m.rectangle(rect(
+					mask.pen(160 - alpha);
+					mask.pixel(point(column, r));
+					/*mask.rectangle(rect(
 						point(column, end_y - width - width + 2),
 						point(column + 1, end_y + 2)
 					));*/
@@ -692,8 +688,8 @@ void render_world(uint32_t time) {
 			fb.line(point(column, start_y), point(column, end_y));
 
 
-			/*m.pen(rgba(255));
-			m.line(point(column, start_y), point(column, end_y));
+			/*mask.pen(rgba(255));
+			mask.line(point(column, start_y), point(column, end_y));
 			*/
 
 
@@ -894,7 +890,7 @@ void update_player_camera_plane(void) {
 }
 
 void edges() {
-	uint8_t *p = (uint8_t *)m.data + 160;
+	uint8_t *p = (uint8_t *)mask.data + 160;
 	for (uint16_t y = 1; y < 119; y++) {
 		p++;
 
@@ -908,7 +904,7 @@ void edges() {
 		p++;
 	}
 
-	p = (uint8_t *)m.data + (120 * 160) - 1 - 160;
+	p = (uint8_t *)mask.data + (120 * 160) - 1 - 160;
 	for (uint16_t y = 1; y < 119; y++) {
 		p--;
 
@@ -927,7 +923,7 @@ void blur(uint8_t passes) {
 	uint8_t last;
 
 	for (uint8_t pass = 0; pass < passes; pass++) {
-		uint8_t *p = (uint8_t *)m.data;
+		uint8_t *p = (uint8_t *)mask.data;
 		for (uint16_t y = 0; y < 120; y++) {
 			last = *p;
 			p++;
@@ -945,7 +941,7 @@ void blur(uint8_t passes) {
 	// vertical      
 	for (uint8_t pass = 0; pass < passes; pass++) {
 		for (uint16_t x = 0; x < 160; x++) {
-			uint8_t *p = (uint8_t *)m.data + x;
+			uint8_t *p = (uint8_t *)mask.data + x;
 
 			last = *p;
 			p += 160;

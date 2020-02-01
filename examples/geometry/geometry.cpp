@@ -111,7 +111,7 @@ polygon split_polygon(polygon *poly, vec2 a, vec2 b) {
     if (split_b.size() > 0) {
         poly->points = std::vector<vec2>(split_a);
         poly->origin = middle_of_polygon(poly->points);
-        poly->rotational_velocity += 0.005;
+        poly->rotational_velocity += 0.005f;
 
         rect bounds = bounds_of_polygon(poly->points);
         poly->prune = (bounds.w * bounds.h) < 70;
@@ -148,7 +148,7 @@ std::vector<vec2> random_convex_polygon(vec2 origin, float radius) {
     unsigned int count = (rand() % 7) + 3;
     origin += vec2(radius, radius);
     std::vector<float> angles;
-    for (auto a = 0; a < count; a++) {
+    for (auto a = 0u; a < count; a++) {
         angles.push_back(float(rand() % 360) * M_PI / (float)180);
     }
     std::sort(angles.begin(), angles.end());
@@ -195,7 +195,7 @@ void rotate_polygon(std::vector<vec2> &points, float angle) {
 
 void init() {
     set_screen_mode(screen_mode::hires);
-    for(int i = 0; i < POLYGON_COUNT; i++){
+    for(unsigned int i = 0; i < POLYGON_COUNT; i++){
         polygon p;
         float x = rand() % fb.bounds.w;
         float y = rand() % fb.bounds.h;
@@ -221,7 +221,7 @@ void init() {
 
 void render(uint32_t time) {
     uint32_t ms_start = now();
-    float h = time / (M_PI * 2) / 100.0;
+    float h = time / (M_PI * 2) / 100.0f;
 
     fb.pen(rgba(0, 0, 0));
     fb.clear();
@@ -256,7 +256,7 @@ void render(uint32_t time) {
     fb.text(fms, &minimal_font[0][0], rect(3, fb.bounds.h - 9, 10, 16));
 
     int block_size = 4;
-    for (int i = 0; i < (ms_end - ms_start); i++) {
+    for (uint32_t i = 0; i < (ms_end - ms_start); i++) {
       fb.pen(rgba(i * 5, 255 - (i * 5), 0));
       fb.rectangle(rect(i * (block_size + 1) + 1 + 13, fb.bounds.h - block_size - 1, block_size, block_size));
     }
@@ -330,7 +330,7 @@ void update(uint32_t time) {
     polygons.erase(std::remove_if(polygons.begin(), polygons.end(), prune_polygons), polygons.end());
 
     for(auto &polygon: polygons) {
-        polygon.rotational_velocity *= 0.999;
+        polygon.rotational_velocity *= 0.999f;
         rotate_polygon(polygon.points, polygon.rotational_velocity, polygon.origin);
         translate_polygon(polygon, polygon.velocity);
 
@@ -351,11 +351,11 @@ void update(uint32_t time) {
 
         if(offset.x){
             polygon.velocity.x *= -1;
-            polygon.rotational_velocity += 0.0005;
+            polygon.rotational_velocity += 0.0005f;
         }
         if(offset.y){
             polygon.velocity.y *= -1;
-            polygon.rotational_velocity += 0.0005;
+            polygon.rotational_velocity += 0.0005f;
         }
 
         translate_polygon(polygon, offset);

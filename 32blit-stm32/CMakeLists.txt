@@ -53,6 +53,7 @@ list(APPEND SOURCES
 	Src/usbd_conf.c
 	Src/usbd_desc.c
 	Src/usbd_cdc_if.c
+	Src/display.c
 	Src/gpio.c
 	Src/adc.c
 	Src/dac.c
@@ -62,7 +63,6 @@ list(APPEND SOURCES
 	Src/i2c.c
 	Src/i2c-msa301.c
 	Src/i2c-bq24295.c
-	Src/ltdc.c
 	Src/quadspi.c
 	Src/spi.c
 	Src/spi-st7272a.c
@@ -100,19 +100,24 @@ target_compile_definitions(BlitHalSTM32
 		-DSTM32H750xx
 )
 
+target_compile_options(BlitHalSTM32
+	PRIVATE
+		-fpermissive
+)
+
 set(MCU_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}" PARENT_SCOPE)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -specs=nano.specs -T ${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}" PARENT_SCOPE)
 
 function(blit_executable NAME SOURCES)
-	add_executable(${NAME}.elf $<TARGET_OBJECTS:BlitHalSTM32> ${SOURCES} ${ARGN})
-  	target_link_libraries(${NAME}.elf BlitEngine)
-	set_target_properties(${NAME}.elf PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT})
-	set_property(TARGET ${NAME}.elf APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Map=${NAME}.map,--cref")
-  	add_custom_command(TARGET ${NAME}.elf POST_BUILD
+	add_executable(${NAME} $<TARGET_OBJECTS:BlitHalSTM32> ${SOURCES} ${ARGN})
+	target_link_libraries(${NAME} BlitEngine)
+	set_target_properties(${NAME} PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT} SUFFIX ".elf")
+	set_property(TARGET ${NAME} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Map=${NAME}.map,--cref")
+	add_custom_command(TARGET ${NAME} POST_BUILD
 		COMMENT "Building ${NAME}.bin\nBuilding ${NAME}.dfu"
-		COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${NAME}.elf> ${NAME}.hex
-		COMMAND ${CMAKE_OBJCOPY} -O binary -S $<TARGET_FILE:${NAME}.elf> ${NAME}.bin
+		COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${NAME}> ${NAME}.hex
+		COMMAND ${CMAKE_OBJCOPY} -O binary -S $<TARGET_FILE:${NAME}> ${NAME}.bin
 		COMMAND ${CMAKE_DFU} build --force --out ${NAME}.dfu ${NAME}.bin
-		COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${NAME}.elf>
+		COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${NAME}>
 	)
 endfunction()

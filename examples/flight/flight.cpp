@@ -188,7 +188,7 @@ void render(uint32_t time_ms) {
   fb.text(fms, &minimal_font[0][0], rect(3, 120 - 9, 10, 16));
 
   int block_size = 4;
-  for (int i = 0; i < (ms_end - ms_start); i++) {
+  for (uint32_t i = 0; i < (ms_end - ms_start); i++) {
     fb.pen(rgba(i * 5, 255 - (i * 5), 0));
     fb.rectangle(rect(i * (block_size + 1) + 1 + 13, fb.bounds.h - block_size - 1, block_size, block_size));
   }

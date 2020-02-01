@@ -1,6 +1,6 @@
-# Building & Running on OSX
+# Building & Running on macOS
 
-You will need build tools and CMAKE. Assuming you have [homebrew](https://docs.brew.sh/Installation) installed:
+You will need build tools and CMake. Assuming you have [homebrew](https://docs.brew.sh/Installation) installed:
 
 ``` shell
 xcode-select --install

@@ -26,7 +26,7 @@
 #include "fatfs.h"
 #include "hrtim.h"
 #include "i2c.h"
-#include "ltdc.h"
+
 #include "quadspi.h"
 #include "rng.h"
 #include "spi.h"
@@ -112,7 +112,7 @@ int main(void)
   MX_DAC1_Init();
   MX_HRTIM_Init();
   MX_I2C4_Init();
-  MX_LTDC_Init();
+ // MX_LTDC_Init();
   MX_QUADSPI_Init();
   MX_ADC1_Init();
   MX_ADC3_Init();
@@ -126,7 +126,10 @@ int main(void)
   MX_RNG_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-  blit_clear_framebuffer();
+
+  
+
+  //NVIC_SetPriority(SysTick_IRQn, 0x0);
   blit_init();
 
   char sd_card_label[12];
@@ -148,12 +151,6 @@ int main(void)
   while (1)
   {
     uint32_t t_start = blit::now();
-
-    // TODO: this is really just experimental code and should
-    // be removed in favour of generic sound support
-    if(audio_file_available && blit_sd_detected()){
-      total_samples += blit_update_dac(&audio_file);
-    }
 
     blit_tick();
 
@@ -240,7 +237,7 @@ void SystemClock_Config(void)
   PeriphClkInitStruct.PLL3.PLL3N = 129;
   PeriphClkInitStruct.PLL3.PLL3P = 2;
   PeriphClkInitStruct.PLL3.PLL3Q = 2;
-  PeriphClkInitStruct.PLL3.PLL3R = 28;
+  PeriphClkInitStruct.PLL3.PLL3R = 53;
   PeriphClkInitStruct.PLL3.PLL3RGE = RCC_PLL3VCIRANGE_1;
   PeriphClkInitStruct.PLL3.PLL3VCOSEL = RCC_PLL3VCOWIDE;
   PeriphClkInitStruct.PLL3.PLL3FRACN = 0;
