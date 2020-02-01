@@ -1,3 +1,4 @@
+add_subdirectory(audio-test)
 add_subdirectory(doom-fire)
 add_subdirectory(fizzlefade)
 add_subdirectory(flight)
