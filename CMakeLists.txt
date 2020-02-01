@@ -8,5 +8,5 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Generic)
 endif()
 
 if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL Generic AND NOT EMSCRIPTEN)
-    add_subdirectory(tools)
+    add_subdirectory(tools/src)
 endif()

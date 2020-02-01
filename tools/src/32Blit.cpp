@@ -1,4 +1,4 @@
-#ifdef WIN32
+#if defined(WIN32) || defined(__MINGW32__)
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
