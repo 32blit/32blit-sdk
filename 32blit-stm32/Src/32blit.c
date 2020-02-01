@@ -147,6 +147,21 @@ void blit_enable_amp() {
   HAL_GPIO_WritePin(AMP_SHUTDOWN_GPIO_Port, AMP_SHUTDOWN_Pin, GPIO_PIN_SET);
 }
 
+void hook_render(uint32_t time) {
+  /*
+  Replace blit::render = ::render; with blit::render = hook_render;
+  and do silly on-screen debug stuff here for the great justice.
+  */
+  ::render(time);
+
+  blit::fb.pen(rgba(255, 255, 255));
+  for(auto i = 0; i < ADC_BUFFER_SIZE; i++) {
+    int x = i / 8;
+    int y = i % 8;
+    blit::fb.text(std::to_string(adc1data[i]), &minimal_font[0][0], point(x * 30, y * 10));
+  }
+}
+
 void blit_init() {
     // enable cycle counting
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
@@ -373,8 +388,6 @@ void blit_menu() {
     blit::render = blit_menu_render;
   }
 }
-
-
 
 void blit_update_vibration() {
     __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, vibration * 2000.0f);
