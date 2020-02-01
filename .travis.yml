@@ -1,0 +1,50 @@
+notifications:
+  email: false
+
+language: cpp
+
+os: linux
+dist: bionic
+
+jobs:
+  include:
+    # emscripten
+    - env: TOOLCHAIN=emscripten #not used, but provides a nice label
+      services:
+        - docker
+      before_install:
+        - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
+      script:
+        - docker exec -it emscripten emcmake cmake -B build.em -G "Unix Makefiles"
+        - docker exec -it emscripten make -C build.em
+    
+    # linux
+    - addons:
+        apt:
+          libsdl2-dev
+
+    # stm32
+    - env: TOOLCHAIN=../32blit.toolchain
+      addons:
+        apt:
+          gcc-arm-none-eabi
+          libnewlib-arm-none-eabi
+          libstdc++-arm-none-eabi-newlib
+          
+    - os: windows
+      script:
+        - export PATH=$PATH:"c:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin"
+        - curl https://libsdl.org/release/SDL2-devel-2.0.10-VC.zip -o SDL2.zip
+        - unzip SDL2.zip -d vs/sdl
+        # move dirs up
+        - mv vs/sdl/SDL2-2.0.10/* vs/sdl
+        #- msbuild.exe vs/32blit.sln #toolset is too old
+        # use cmake instead
+        - mv vs/sdl/lib/x86 vs/sdl/lib/Win32 #small hack
+        - cmake -B build -DSDL2_DIR=$PWD/vs/sdl .
+        - cmake --build build
+
+script:
+  - mkdir build && cd build
+  - cmake -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN ..
+  - make
