@@ -9,14 +9,15 @@ extern char __fb_start, __fb_end;
 
 
 void LTDC_IRQHandler() {
-  if(((LTDC->ISR & LTDC_ISR_LIF) != RESET) && ((LTDC->IER & LTDC_IER_LIE) != RESET))
+  // check that interrupt triggered was line end event
+  if(LTDC->ISR & LTDC_ISR_LIF)
   {
-    // disable line interrupt
+    // disable line interrupt and clear flag
     LTDC->IER &= ~LTDC_IT_LI;
-
-    // clear interrupt flag
     LTDC->ICR = LTDC_FLAG_LI;
 
+    // flip the framebuffer to the ltdc buffer and request
+    // a new frame to be rendered
     display::flip(blit::fb);
     display::needs_render = true; 
   }
@@ -46,9 +47,6 @@ namespace display {
   }
   
   void enable_vblank_interrupt() {
-    // disable line interrupt
-    LTDC->IER &= ~LTDC_IT_LI;
-
     // trigger interrupt when screen refresh reaches the 252nd scanline
     LTDC->LIPCR = 252;
 
@@ -101,116 +99,81 @@ namespace display {
     st7272a_set_bgr();
   }
 
-  // TODO: could use some better structure and constants to make
-  // what's happening clearer
+  // configure ltdc peripheral setting up the clocks, pin states, panel
+  // parameters, and layers
   void ltdc_init() { 
-    // configure ltdc peripheral
 
-    __HAL_RCC_LTDC_CLK_ENABLE();
+    // enable ltdc clock
+    RCC->APB2ENR |= RCC_APB2ENR_LTDCEN;
   
+    // TODO: move the gpio clock enabling to a common location where they
+    // are all setup ahead of anything else
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_GPIOE_CLK_ENABLE();
     __HAL_RCC_GPIOC_CLK_ENABLE();
     __HAL_RCC_GPIOD_CLK_ENABLE();
-    // LTDC GPIO Configuration    
-    // PA1     ------> LTDC_R2
-    // PA3     ------> LTDC_B5
-    // PA4     ------> LTDC_VSYNC
-    // PA6     ------> LTDC_G2
-    // PB0     ------> LTDC_R3
-    // PB1     ------> LTDC_R6
-    // PE11     ------> LTDC_G3
-    // PE12     ------> LTDC_B4
-    // PE13     ------> LTDC_DE
-    // PE14     ------> LTDC_CLK
-    // PE15     ------> LTDC_R7
-    // PB10     ------> LTDC_G4
-    // PB11     ------> LTDC_G5
-    // PC6     ------> LTDC_HSYNC
-    // PC7     ------> LTDC_G6
-    // PA8     ------> LTDC_B3
-    // PA9     ------> LTDC_R5
-    // PA11     ------> LTDC_R4
-    // PD3     ------> LTDC_G7
-    // PD6     ------> LTDC_B2
-    // PB8     ------> LTDC_B6
-    // PB9     ------> LTDC_B7 
-    
-      GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_6 
-                          |GPIO_PIN_9|USB_DFU_DM___LTDC_R4_Pin;
+    // configure the ltdc interface gpio pins
+    //
+    // vsync = PA4    hsync = PC6     de = PE13     clk = PE14
+    //
+    //      |    7 |    6 |    5 |    4 |    3 |    2 |    1 |    0 |
+    // -----+------+------+------+------+------+------+------+------+
+    //  r   | PE15 |  PB1 |  PA9 | PA11 |  PB0 |  PA1 |  -/- |  -/- |
+    //  g   |  PD3 |  PC7 | PB11 | PB10 | PE11 |  PA6 |  -/- |  -/- |
+    //  b   |  PB9 |  PB8 |  PA3 | PE12 |  PA8 |  PD6 |  -/- |  -/- |
+    // -----+------+------+------+------+------+------+------+------+    
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+
+    GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_6|GPIO_PIN_9|USB_DFU_DM___LTDC_R4_Pin;
     GPIO_InitStruct.Alternate = GPIO_AF14_LTDC;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF9_LTDC;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14 
-                          |GPIO_PIN_15;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
     GPIO_InitStruct.Alternate = GPIO_AF14_LTDC;
     HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_8|GPIO_PIN_9;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF14_LTDC;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF14_LTDC;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = GPIO_PIN_8;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF13_LTDC;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_6;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF14_LTDC;
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-
+    // configure the panel timings and signal polarity
     LTDC->GCR &= ~LTDC_GCR_PCPOL;   // synch signal polarity setting
     LTDC->SSCR = (3 << 16) | 3;     // hsync and vsync
     LTDC->BPCR = (46 << 16) | 15;   // accumulated horizonal and vertical back porch
     LTDC->AWCR = (366 << 16) | 255; // accumulated active width and height
     LTDC->TWCR = (374 << 16) | 257; // accumulated total width and height
-    LTDC->BCCR = 0x00000000;        // background colour
 
-    LTDC->IER = LTDC_IT_TE | LTDC_IT_FU; // enable transfer and fifo error interrupts
+    // enable ltdc transfer and fifo underrun error interrupts
+    LTDC->IER = LTDC_IT_TE | LTDC_IT_FU;
 
-    // configure layer    
+    // configure ltdc layer    
     rect window(0, 0, 320, 240);
 
-    uint32_t tmp;
-
-    tmp = ((window.w + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> 16U)) << 16U);
     LTDC_Layer1->WHPCR &= ~(LTDC_LxWHPCR_WHSTPOS | LTDC_LxWHPCR_WHSPPOS);
-    LTDC_Layer1->WHPCR = ((window.x + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> 16U) + 1U) | tmp);
-    tmp = ((window.h + (LTDC->BPCR & LTDC_BPCR_AVBP)) << 16U);
+    LTDC_Layer1->WHPCR = ((window.x + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> 16U) + 1U) | ((window.w + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> 16U)) << 16U));
     LTDC_Layer1->WVPCR &= ~(LTDC_LxWVPCR_WVSTPOS | LTDC_LxWVPCR_WVSPPOS);
-    LTDC_Layer1->WVPCR  = ((window.y + (LTDC->BPCR & LTDC_BPCR_AVBP) + 1U) | tmp);  
+    LTDC_Layer1->WVPCR  = ((window.y + (LTDC->BPCR & LTDC_BPCR_AVBP) + 1U) | ((window.h + (LTDC->BPCR & LTDC_BPCR_AVBP)) << 16U));  
     LTDC_Layer1->PFCR   = LTDC_PIXEL_FORMAT_RGB565;  
     LTDC_Layer1->DCCR   = 0xff000000;     // layer default color (back, 100% alpha)
     LTDC_Layer1->CFBAR  = (uint32_t)&__ltdc_start;  // frame buffer start address
