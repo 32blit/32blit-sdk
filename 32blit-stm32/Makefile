@@ -1,11 +1,18 @@
 
 # Single user cpp file containing game code to build into firmware
-PROJECT = Src/32blitgame.cpp
+PROJECT = Src/flash-loader.cpp
 # Set the output filename to match the user code filename
 TARGET = $(basename $(notdir $(PROJECT)))
 DEBUG = 1
-OPT = -O0
+OPT = -Og -g -DEXTERNAL_LOAD_ADDRESS=0x90000000 -DAPPLICATION_VTOR=0x08000000 -DINITIALISE_QSPI=1 -DCDC_FIFO_BUFFERS=64
 BUILD_DIR = build
+
+CPP_SOURCES = \
+Src/CDCDataStream.cpp \
+Src/CDCCommandStream.cpp \
+Src/CDCCommandHandler.cpp \
+Src/CDCResetHandler.cpp \
+Src/CDCInfoHandler.cpp
 
 # C sources
 C_SOURCES =  \
@@ -48,6 +55,7 @@ Src/system_stm32h7xx.c \
 Src/user_diskio.c \
 Src/fatfs.c \
 Src/fatfs_sd.c \
+Src/fatfs/option/ccsbcs.c \
 Middlewares/Third_Party/FatFs/src/diskio.c \
 Middlewares/Third_Party/FatFs/src/ff.c \
 Middlewares/Third_Party/FatFs/src/ff_gen_drv.c \
@@ -164,6 +172,9 @@ all: lib32blit-stm32 $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUI
 # list of objects
 OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o)))
 vpath %.c $(sort $(dir $(C_SOURCES)))
+
+OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(CPP_SOURCES:.cpp=.o)))
+vpath %.cpp $(sort $(dir $(C_SOURCES)))
 
 OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(PROJECT:.cpp=.o)))
 vpath %.cpp $(sort $(dir $(PROJECT)))

@@ -37,6 +37,12 @@ extern void blit_process_input();
 extern void blit_enable_dac();
 extern uint32_t blit_update_dac(FIL *audio_file);
 
+// Switching execution
+extern void blit_switch_execution(void);
+
 void blit_menu_update(uint32_t time);
 void blit_menu_render(uint32_t time);
 void blit_menu();
+
+extern void blit_enable_ADC();
+extern void blit_disable_ADC();

@@ -1,0 +1,1 @@
+add_executable(32Blit 32Blit.cpp)

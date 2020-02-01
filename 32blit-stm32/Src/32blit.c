@@ -13,6 +13,8 @@
 #include "i2c-msa301.h"
 #include "i2c-bq24295.h"
 #include "fatfs.h"
+#include "quadspi.h"
+#include "usbd_core.h"
 
 #include "32blit.hpp"
 #include "graphics/color.hpp"
@@ -27,6 +29,7 @@ __attribute__((section(".dma_data"))) uint16_t dac_buffer[DAC_BUFFER_SIZE];
 extern char itcm_text_start;
 extern char itcm_text_end;
 extern char itcm_data;
+extern USBD_HandleTypeDef hUsbDeviceHS;
 
 #define ADC_BUFFER_SIZE 32
 
@@ -39,6 +42,7 @@ FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 
 uint32_t total_samples = 0;
 uint8_t dma_status = 0;
+bool    bDisableADC = false;
 
 void DFUBoot(void)
 {
@@ -187,6 +191,21 @@ void blit_init() {
   blit::render = ::render;
   blit::init   = ::init;
 
+  blit::switch_execution = blit_switch_execution;
+
+  char sd_card_label[12];
+  uint32_t freespace = 0;
+  uint32_t totalspace = 0;
+  uint32_t total_samples = 0;
+  FIL audio_file;
+  bool audio_file_available = false;
+  if (blit_mount_sd(sd_card_label, freespace, totalspace)) {
+    audio_file_available = blit_open_file(audio_file, "u8mono16.raw");
+    if(audio_file_available){
+      blit_enable_dac();
+    }
+  }
+
 //  display::screen_init();
   display::init();
   
@@ -208,8 +227,8 @@ void blit_menu_update(uint32_t time) {
     }
   } else if (blit::buttons & changed_buttons & blit::button::DPAD_DOWN) {
     menu_item += 1;
-    if(menu_item > 3){
-      menu_item = 3;
+    if(menu_item > 4){
+      menu_item = 4;
     }
   } else if (blit::buttons & blit::button::DPAD_RIGHT ) {
     switch(menu_item) {
@@ -240,6 +259,9 @@ void blit_menu_update(uint32_t time) {
           break;
         case 3:
           bq24295_enable_shipping_mode(&hi2c4);
+          break;
+        case 4:
+          blit::switch_execution();
           break;
       }
   }
@@ -305,6 +327,9 @@ void blit_menu_render(uint32_t time) {
     fb.pen(rgba(255, 255, 255));
   }
 
+  // menu bar
+
+
   fb.text("Backlight", &minimal_font[0][0], point(5, 20));
   fb.pen(bar_background_color);
   fb.rectangle(rect(screen_width / 2, 21, 75, 5));
@@ -340,6 +365,16 @@ void blit_menu_render(uint32_t time) {
 
   fb.text("Shipping", &minimal_font[0][0], point(5, 50));
   fb.text("Press A", &minimal_font[0][0], point(screen_width / 2, 50));
+
+
+  if(menu_item == 4){
+    fb.pen(rgba(50, 50, 70));
+    fb.rectangle(rect(0, 59, screen_width, 9));
+    fb.pen(rgba(255, 255, 255));
+  }
+
+  fb.text("Switch Exe", &minimal_font[0][0], point(5, 60));
+  fb.text("Press A", &minimal_font[0][0], point(screen_width / 2, 60));
 
   // Horizontal Line
   fb.pen(rgba(255, 255, 255));
@@ -405,6 +440,16 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
 
 uint8_t tilt_sample_offset = 0;
 int16_t acceleration_data_buffer[3 * ACCEL_OVER_SAMPLE] = {0};
+
+void blit_disable_ADC()
+{
+	bDisableADC = true;
+}
+
+void blit_enable_ADC()
+{
+	bDisableADC = false;
+}
 
 void blit_process_input() {
   static uint32_t last_battery_update = 0;
@@ -551,4 +596,47 @@ char *get_fr_err_text(FRESULT err){
     default:
       return "INVALID_ERR_CODE";
   }
+}
+
+
+
+// blit_switch_execution
+//
+// Switches execution to new location defined by EXTERNAL_LOAD_ADDRESS
+// EXTERNAL_LOAD_ADDRESS is the start of the Vector Table location
+//
+typedef  void (*pFunction)(void);
+pFunction JumpToApplication;
+
+void blit_switch_execution(void)
+{
+	// stop the DAC DMA
+  HAL_DAC_Stop_DMA(&hdac1, DAC_CHANNEL_2);
+
+  // stop USB
+  USBD_Stop(&hUsbDeviceHS);
+
+	volatile uint32_t uAddr = EXTERNAL_LOAD_ADDRESS;
+	// enable qspi memory mapping if needed
+	if(EXTERNAL_LOAD_ADDRESS >= 0x90000000)
+		qspi_enable_memorymapped_mode();
+
+	/* Disable I-Cache */
+	SCB_DisableICache();
+
+	/* Disable D-Cache */
+	SCB_DisableDCache();
+
+	/* Disable Systick interrupt */
+	SysTick->CTRL = 0;
+
+	/* Initialize user application's Stack Pointer & Jump to user application */
+	JumpToApplication = (pFunction) (*(__IO uint32_t*) (EXTERNAL_LOAD_ADDRESS + 4));
+	__set_MSP(*(__IO uint32_t*) EXTERNAL_LOAD_ADDRESS);
+	JumpToApplication();
+
+	/* We should never get here as execution is now on user application */
+	while(1)
+	{
+	}
 }
