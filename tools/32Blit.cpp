@@ -51,7 +51,9 @@ const char *getFileName(const char *pszPath)
 
 
 #ifdef WIN32
+#ifndef __MINGW32__
 typedef long ssize_t;
+#endif
 HANDLE hComm = INVALID_HANDLE_VALUE;
 OVERLAPPED osRX = { 0 };
 OVERLAPPED osTX = { 0 };
