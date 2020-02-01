@@ -1,10 +1,6 @@
 add_subdirectory(doom-fire)
 add_subdirectory(fizzlefade)
-
-if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL Generic) # currently doesn't build
-  add_subdirectory(flight)
-endif()
-
+add_subdirectory(flight)
 add_subdirectory(geometry)
 add_subdirectory(hardware-test)
 add_subdirectory(logo)
