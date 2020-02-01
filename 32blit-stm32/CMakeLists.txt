@@ -85,17 +85,18 @@ set_source_files_properties( ${SOURCES} PROPERTIES LANGUAGE CXX )
 add_library(BlitHalSTM32 OBJECT ${SOURCES})
 
 set(INCLUDE_DIRS 
-	Inc
-	Drivers/STM32H7xx_HAL_Driver/Inc
-	Drivers/STM32H7xx_HAL_Driver/Inc/Legacy
-	Drivers/CMSIS/Device/ST/STM32H7xx/Include
-	Drivers/CMSIS/Include
-	Drivers/CMSIS/Include
-	Middlewares/Third_Party/FatFs/src
-	Middlewares/ST/STM32_USB_Device_Library/Core/Inc
-	Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
-	../32blit
+	${CMAKE_CURRENT_SOURCE_DIR}/Inc
+	${CMAKE_CURRENT_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Inc
+	${CMAKE_CURRENT_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Inc/Legacy
+	${CMAKE_CURRENT_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32H7xx/Include
+	${CMAKE_CURRENT_SOURCE_DIR}/Drivers/CMSIS/Include
+	${CMAKE_CURRENT_SOURCE_DIR}/Drivers/CMSIS/Include
+	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/FatFs/src
+	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/ST/STM32_USB_Device_Library/Core/Inc
+	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
+	${CMAKE_CURRENT_SOURCE_DIR}/../32blit
 )
+set(HAL_INCLUDE_DIRS ${INCLUDE_DIRS} PARENT_SCOPE)
 
 set(DEFINITIONS
 	-DUSE_HAL_DRIVER
@@ -103,6 +104,7 @@ set(DEFINITIONS
 	-DSTM32H750xx
 	-DCDC_FIFO_BUFFERS=${CDC_FIFO_BUFFERS}
 )
+set(HAL_DEFINITIONS ${DEFINITIONS} PARENT_SCOPE)
 
 target_include_directories(BlitHalSTM32
 	PRIVATE
@@ -175,10 +177,7 @@ function(blit_executable_int_flash NAME SOURCES)
 	set_target_properties(${NAME} PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT} SUFFIX ".elf")
 
 	blit_executable_common(${NAME})
-endfunction()
 
-blit_executable_int_flash(flash-loader Src/flash-loader.cpp)
-target_include_directories(flash-loader PRIVATE ${INCLUDE_DIRS})
-target_compile_definitions(flash-loader
-	PRIVATE
-		${DEFINITIONS})
+	target_include_directories(${NAME} PRIVATE ${HAL_INCLUDE_DIRS})
+	target_compile_definitions(${NAME} PRIVATE ${HAL_DEFINITIONS})
+endfunction()
