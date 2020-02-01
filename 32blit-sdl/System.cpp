@@ -187,6 +187,7 @@ Uint32 System::mode() {
 }
 
 void System::update_texture(SDL_Texture *texture) {
+	blit::render(::now());
 	if (_mode == blit::screen_mode::lores) {
 		SDL_UpdateTexture(texture, NULL, (uint8_t *)__fb.data, 160 * 3);
 	}
