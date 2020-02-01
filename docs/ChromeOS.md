@@ -1,4 +1,4 @@
-Chrome OS (Chromebook) uses a Linux virtual machine to run Linux software. Once the virtual machine is set up you can follow the the root README.md and the * [Linux](Linux.md) instructions
+Chrome OS (Chromebook) uses a Linux virtual machine to run Linux software. Once the virtual machine is set up you can follow the the [root Readme](../README.md) and the [Linux](Linux.md) instructions
 
 # Installing the Linux Beta
 
