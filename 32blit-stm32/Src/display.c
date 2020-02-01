@@ -168,7 +168,7 @@ namespace display {
     LTDC->IER = LTDC_IT_TE | LTDC_IT_FU;
 
     // configure ltdc layer    
-    rect window(0, 0, 320, 240);
+    rect window(1, 1, 320, 240);
 
     LTDC_Layer1->WHPCR &= ~(LTDC_LxWHPCR_WHSTPOS | LTDC_LxWHPCR_WHSPPOS);
     LTDC_Layer1->WHPCR = ((window.x + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> 16U) + 1U) | ((window.w + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> 16U)) << 16U));
