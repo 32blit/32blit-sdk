@@ -1,19 +1,15 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include <time.h>
+
 #if defined(WIN32) || defined(__MINGW32__)
 #include <windows.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-#include <time.h>
 #else
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <termios.h>
-#include <time.h>
 #include <errno.h>
 #endif
 
