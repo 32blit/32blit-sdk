@@ -32,7 +32,8 @@
 #include "spi.h"
 #include "tim.h"
 #include "usb_device.h"
-#include "gpio.h"
+
+#include "gpio.hpp"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -111,7 +112,9 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
+  gpio::init();
+  //MX_GPIO_Init();
+
   MX_DMA_Init();
   MX_TIM4_Init();
   MX_TIM3_Init();

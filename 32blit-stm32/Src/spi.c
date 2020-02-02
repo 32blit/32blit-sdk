@@ -20,6 +20,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "spi.h"
 
+#include "gpio.hpp"
+
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
@@ -104,26 +106,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
     /* SPI1 clock enable */
     __HAL_RCC_SPI1_CLK_ENABLE();
   
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-    /**SPI1 GPIO Configuration    
-    PA7     ------> SPI1_MOSI
-    PB3 (JTDO/TRACESWO)     ------> SPI1_SCK
-    PB4 (NJTRST)     ------> SPI1_MISO 
-    */
-    GPIO_InitStruct.Pin = SD_SPI1_MOSI_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
-    HAL_GPIO_Init(SD_SPI1_MOSI_GPIO_Port, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = SD_SPI1_SCK_Pin|SD_SPI1_MISO_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* USER CODE BEGIN SPI1_MspInit 1 */
 
@@ -137,17 +120,6 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
     /* SPI4 clock enable */
     __HAL_RCC_SPI4_CLK_ENABLE();
   
-    __HAL_RCC_GPIOE_CLK_ENABLE();
-    /**SPI4 GPIO Configuration    
-    PE2     ------> SPI4_SCK
-    PE6     ------> SPI4_MOSI 
-    */
-    GPIO_InitStruct.Pin = LCD_SPI4_SCK_Pin|LCD_SPI4_MOSI_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF5_SPI4;
-    HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /* USER CODE BEGIN SPI4_MspInit 1 */
 

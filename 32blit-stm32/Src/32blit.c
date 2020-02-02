@@ -3,7 +3,10 @@
 
 #include "32blit.h"
 #include "main.h"
-#include "display.h"
+
+#include "display.hpp"
+#include "gpio.hpp"
+
 
 #include "adc.h"
 #include "dac.h"
