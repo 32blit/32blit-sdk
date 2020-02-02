@@ -29,7 +29,7 @@ namespace blit {
   extern uint8_t battery_vbus_status;
   extern uint8_t battery_charge_status;
   extern uint8_t battery_fault;
-  extern float volume;
+  
 
   extern bool pressed(uint32_t button);
  

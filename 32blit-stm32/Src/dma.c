@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -50,11 +50,11 @@ void MX_DMA_Init(void)
   HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 4, 4);
   HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
   /* DMA1_Stream2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream2_IRQn, 4, 4);
-  HAL_NVIC_EnableIRQ(DMA1_Stream2_IRQn);
+  //HAL_NVIC_SetPriority(DMA1_Stream2_IRQn, 4, 4);
+  //HAL_NVIC_EnableIRQ(DMA1_Stream2_IRQn);
   /* DMAMUX1_OVR_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMAMUX1_OVR_IRQn, 4, 4);
-  HAL_NVIC_EnableIRQ(DMAMUX1_OVR_IRQn);
+  //HAL_NVIC_SetPriority(DMAMUX1_OVR_IRQn, 4, 4);
+  //HAL_NVIC_EnableIRQ(DMAMUX1_OVR_IRQn);
 
 }
 

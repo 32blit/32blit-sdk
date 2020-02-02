@@ -20,9 +20,13 @@ namespace utility {
     uint8_t   descriptor;
   };
   #pragma pack(pop)
+  
+  tga     tga_header(const char * file);
+  int8_t  tga_load(const char * file, void *data, bool auto_alpha);
+  int8_t  map_load(const char * file, uint8_t *data);
 
-  tga     tga_header(std::string file);
-  int8_t  tga_load(std::string file, void *data, bool auto_alpha);
-  int8_t  map_load(std::string file, uint8_t *data);
+  tga     tga_header(const std::string & file);
+  int8_t  tga_load(const std::string & file, void *data, bool auto_alpha);
+  int8_t  map_load(const std::string & file, uint8_t *data);
   
 }

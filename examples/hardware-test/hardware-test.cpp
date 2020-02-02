@@ -121,31 +121,6 @@ void render(uint32_t time) {
         (float)((sin(blit::now() / 100.0f) + 1) / 2.0f)
     );
 
-    if (dpad_u) {
-        blit::backlight += 1.0f / 256.0f;
-    }
-    if (dpad_d) {
-        blit::backlight -= 1.0f / 256.0f;
-    }
-    blit::backlight = std::fmin(1.0f, std::fmax(0.0f, blit::backlight));
-
-    if (dpad_r) {
-        blit::volume += 1.0f / 256.0f;
-    }
-    if (dpad_l) {
-        blit::volume -= 1.0f / 256.0f;
-    }
-    blit::volume = std::fmin(1.0f, std::fmax(0.0f, blit::volume));
-
-    sprintf(text_buf, "%d", (int)(blit::backlight * 1024));
-    fb.text("B-light:", &minimal_font[0][0], point(COL1, ROW2));
-    fb.text(text_buf, &minimal_font[0][0], point(COL1, ROW2+7));
-
-    sprintf(text_buf, "%d", (int)(blit::volume * 1024));
-    fb.text("Volume:", &minimal_font[0][0], point(COL2, ROW2));
-    fb.text(text_buf, &minimal_font[0][0], point(COL2, ROW2+7));
-
-
     fb.text("Bat VBUS:", &minimal_font[0][0], point(COL1, ROW3));
     switch(battery_vbus_status){
         case 0b00: // Unknown

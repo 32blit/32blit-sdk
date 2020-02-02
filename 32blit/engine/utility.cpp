@@ -20,8 +20,8 @@ namespace utility {
     FILE_READ_ERROR = -3,
   };
 
-  tga tga_header(std::string file) {
-    FILE *fp = fopen(file.c_str(), "rb");
+  tga tga_header(const char * file) {
+    FILE *fp = fopen(file, "rb");
 
     tga tga;
     fread((void *)&tga, sizeof(tga), 1, fp);
@@ -29,8 +29,8 @@ namespace utility {
     return tga;
   }
   
-  int8_t tga_load(std::string file, void *data, bool auto_alpha) {
-    FILE *fp = fopen(file.c_str(), "rb");
+  int8_t tga_load(const char * file, void *data, bool auto_alpha) {
+    FILE *fp = fopen(file, "rb");
 
     tga tga;
     fread((void *)&tga, sizeof(tga), 1, fp);
@@ -112,8 +112,8 @@ namespace utility {
     return tga_status::OK;
   }
 
-  int8_t map_load(std::string file, uint8_t *data) {
-    FILE *fp = fopen(file.c_str(), "rb");
+  int8_t map_load(const char * file, uint8_t *data) {
+    FILE *fp = fopen(file, "rb");
 
     uint8_t width, height;
     fread((void *)&width, sizeof(width), 1, fp);
@@ -195,5 +195,17 @@ namespace utility {
     return tga_status::OK;*/
 
     return 1;
+  }
+
+  tga     tga_header(const std::string & file) {
+    return tga_header(file.c_str());
+  }
+  
+  int8_t  tga_load(const std::string & file, void *data, bool auto_alpha) {
+    return tga_load(file.c_str(), data, auto_alpha);
+  }
+  
+  int8_t  map_load(const std::string & file, uint8_t *data) {
+    return map_load(file.c_str(), data);
   }
 }

@@ -18,6 +18,7 @@
   ******************************************************************************
   */
 /* USER CODE END Header */
+#include "CDCCommandStream.h"
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc_if.h"
@@ -32,7 +33,7 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
+CDCCommandStream g_commandStream;
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -94,7 +95,7 @@
 /* Create buffer for reception and transmission           */
 /* It's up to user to redefine and/or remove those define */
 /** Received data over USB are stored in this buffer      */
-uint8_t UserRxBufferHS[APP_RX_DATA_SIZE];
+// uint8_t UserRxBufferHS[APP_RX_DATA_SIZE];
 
 /** Data to send over USB CDC are stored in this buffer   */
 uint8_t UserTxBufferHS[APP_TX_DATA_SIZE];
@@ -159,7 +160,7 @@ static int8_t CDC_Init_HS(void)
   /* USER CODE BEGIN 8 */
   /* Set Application Buffers */
   USBD_CDC_SetTxBuffer(&hUsbDeviceHS, UserTxBufferHS, 0);
-  USBD_CDC_SetRxBuffer(&hUsbDeviceHS, UserRxBufferHS);
+  USBD_CDC_SetRxBuffer(&hUsbDeviceHS, g_commandStream.GetFifoWriteBuffer());
   return (USBD_OK);
   /* USER CODE END 8 */
 }
@@ -268,8 +269,24 @@ static int8_t CDC_Control_HS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_HS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 11 */
-  USBD_CDC_SetRxBuffer(&hUsbDeviceHS, &Buf[0]);
-  USBD_CDC_ReceivePacket(&hUsbDeviceHS);
+
+	// release the old write buffer for reading and set length
+	g_commandStream.ReleaseFifoWriteBuffer(*Len);
+
+	// If a new writebuffer is available, set RxBuffer and requext next USB packet
+	if(uint8_t *pBuffer = g_commandStream.GetFifoWriteBuffer())
+	{
+	  USBD_CDC_SetRxBuffer(&hUsbDeviceHS, pBuffer);
+		USBD_CDC_ReceivePacket(&hUsbDeviceHS);
+	}
+
+////  g_commandStream.AddToFifo(Buf, *Len);
+//	if(*Len)
+//		g_commandStream.Stream(Buf, *Len);
+//
+//	USBD_CDC_ReceivePacket(&hUsbDeviceHS);
+
+
   return (USBD_OK);
   /* USER CODE END 11 */
 }

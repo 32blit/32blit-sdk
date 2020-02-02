@@ -143,6 +143,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\32blit\32blit.hpp" />
+    <ClInclude Include="..\..\32blit\engine\audio.hpp" />
     <ClInclude Include="..\..\32blit\engine\engine.hpp" />
     <ClInclude Include="..\..\32blit\engine\geometry.hpp" />
     <ClInclude Include="..\..\32blit\engine\input.hpp" />
@@ -171,6 +172,7 @@
     <ClInclude Include="..\..\32blit\types\vec3.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\32blit\engine\audio.cpp" />
     <ClCompile Include="..\..\32blit\engine\engine.cpp" />
     <ClCompile Include="..\..\32blit\engine\geometry.cpp" />
     <ClCompile Include="..\..\32blit\engine\input.cpp" />

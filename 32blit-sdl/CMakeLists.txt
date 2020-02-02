@@ -2,6 +2,7 @@ add_library(BlitHalSDL STATIC
 	Input.cpp
 	Main.cpp
 	Renderer.cpp
+	Audio.cpp
 	System.cpp
 )
 
@@ -76,4 +77,8 @@ function(blit_executable NAME SOURCES)
 	if(EMSCRIPTEN)
 		set_target_properties(${NAME} PROPERTIES SUFFIX ".html")
 	endif()
+endfunction()
+
+function(blit_executable_int_flash NAME SOURCES)
+	blit_executable(${NAME} ${SOURCES} ${ARGN})
 endfunction()

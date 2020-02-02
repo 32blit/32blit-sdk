@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -39,6 +39,10 @@
 #include "32blit.h"
 #include "32blit.hpp"
 #include "graphics/color.hpp"
+#include "CDCResetHandler.h"
+#include "CDCInfoHandler.h"
+#include "CDCCommandStream.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -58,6 +62,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+extern CDCCommandStream g_commandStream;
+CDCResetHandler g_resetHandler;
+CDCInfoHandler g_infoHandler;
 
 /* USER CODE END PV */
 
@@ -69,7 +76,6 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 /**
@@ -112,8 +118,9 @@ int main(void)
   MX_DAC1_Init();
   MX_HRTIM_Init();
   MX_I2C4_Init();
- // MX_LTDC_Init();
+#if (INITIALISE_QSPI==1)
   MX_QUADSPI_Init();
+#endif
   MX_ADC1_Init();
   MX_ADC3_Init();
   //MX_USB_OTG_HS_USB_Init();
@@ -127,23 +134,21 @@ int main(void)
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
-  
 
   //NVIC_SetPriority(SysTick_IRQn, 0x0);
+
+#if (INITIALISE_QSPI==1)
+  qspi_init();
+#endif
+
   blit_init();
 
-  char sd_card_label[12];
-  uint32_t freespace = 0;
-  uint32_t totalspace = 0;
-  uint32_t total_samples = 0;
-  FIL audio_file;
-  bool audio_file_available = false;
-  if (blit_mount_sd(sd_card_label, freespace, totalspace)) {
-    audio_file_available = blit_open_file(audio_file, "u8mono16.raw");
-    if(audio_file_available){
-      blit_enable_dac();
-    }
-  }
+  // add CDC handler to reset device on receiving "_RST"
+	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', 'R', 'S', 'T'>::value, &g_resetHandler);
+
+  // add CDC handler to log info device on receiving "INFO"
+	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'I', 'N', 'F', 'O'>::value, &g_infoHandler);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -153,6 +158,9 @@ int main(void)
     uint32_t t_start = blit::now();
 
     blit_tick();
+
+    // handle CDC input
+    g_commandStream.Stream();
 
     uint32_t t_elapsed = blit::now() - t_start;
     /* USER CODE END WHILE */
@@ -178,7 +186,7 @@ void SystemClock_Config(void)
   HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
   /** Configure the main internal regulator output voltage 
   */
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0); // TODO: Exported from STMCUBE as PWR_REGULATOR_VOLTAGE_SCALE0?
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
 
   while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
   /** Macro to configure the PLL clock source 
@@ -222,11 +230,12 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_LTDC|RCC_PERIPHCLK_HRTIM1
-                              |RCC_PERIPHCLK_SPI4|RCC_PERIPHCLK_SPI1
-                              |RCC_PERIPHCLK_ADC|RCC_PERIPHCLK_I2C4
-                              |RCC_PERIPHCLK_USB|RCC_PERIPHCLK_QSPI;
+                              |RCC_PERIPHCLK_RNG|RCC_PERIPHCLK_SPI4
+                              |RCC_PERIPHCLK_SPI1|RCC_PERIPHCLK_ADC
+                              |RCC_PERIPHCLK_I2C4|RCC_PERIPHCLK_USB
+                              |RCC_PERIPHCLK_QSPI;
   PeriphClkInitStruct.PLL2.PLL2M = 4;
-  PeriphClkInitStruct.PLL2.PLL2N = 12; // TODO: Exported from STMCUBE as 9?
+  PeriphClkInitStruct.PLL2.PLL2N = 9;
   PeriphClkInitStruct.PLL2.PLL2P = 1;
   PeriphClkInitStruct.PLL2.PLL2Q = 2;
   PeriphClkInitStruct.PLL2.PLL2R = 2;
@@ -244,6 +253,7 @@ void SystemClock_Config(void)
   PeriphClkInitStruct.QspiClockSelection = RCC_QSPICLKSOURCE_D1HCLK;
   PeriphClkInitStruct.Spi123ClockSelection = RCC_SPI123CLKSOURCE_PLL;
   PeriphClkInitStruct.Spi45ClockSelection = RCC_SPI45CLKSOURCE_HSI;
+  PeriphClkInitStruct.RngClockSelection = RCC_RNGCLKSOURCE_HSI48;
   PeriphClkInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
   PeriphClkInitStruct.I2c4ClockSelection = RCC_I2C4CLKSOURCE_D3PCLK1;
   PeriphClkInitStruct.AdcClockSelection = RCC_ADCCLKSOURCE_PLL2;
@@ -252,11 +262,10 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Enable the SYSCFG APB clock
+  /** Enable the SYSCFG APB clock 
   */
-
   __HAL_RCC_CRS_CLK_ENABLE();
-  /** Configures CRS
+  /** Configures CRS 
   */
   RCC_CRSInitStruct.Prescaler = RCC_CRS_SYNC_DIV1;
   RCC_CRSInitStruct.Source = RCC_CRS_SYNC_SOURCE_USB1;

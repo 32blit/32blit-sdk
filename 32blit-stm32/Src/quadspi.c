@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -21,7 +21,6 @@
 #include "quadspi.h"
 
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 QSPI_HandleTypeDef hqspi;
@@ -31,7 +30,7 @@ void MX_QUADSPI_Init(void)
 {
 
   hqspi.Instance = QUADSPI;
-  hqspi.Init.ClockPrescaler = 128;
+  hqspi.Init.ClockPrescaler = 5;
   hqspi.Init.FifoThreshold = 1;
   hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
   hqspi.Init.FlashSize = QSPI_FLASH_SIZE;
@@ -136,7 +135,7 @@ void HAL_QSPI_MspDeInit(QSPI_HandleTypeDef* qspiHandle)
   * @param  hqspi: QSPI handle
   * @retval None
   */
-static void QSPI_WriteEnable(QSPI_HandleTypeDef *hqspi)
+void QSPI_WriteEnable(QSPI_HandleTypeDef *hqspi)
 {
     QSPI_CommandTypeDef     sCommand;
     QSPI_AutoPollingTypeDef sConfig;
@@ -175,7 +174,7 @@ static void QSPI_WriteEnable(QSPI_HandleTypeDef *hqspi)
     }
 }
 
-static uint8_t QSPI_AutoPollingMemReady(QSPI_HandleTypeDef *hqspi, uint32_t Timeout)
+static HAL_StatusTypeDef QSPI_AutoPollingMemReady(QSPI_HandleTypeDef *hqspi, uint32_t Timeout)
 {
     QSPI_CommandTypeDef     s_command;
     QSPI_AutoPollingTypeDef s_config;
@@ -198,12 +197,9 @@ static uint8_t QSPI_AutoPollingMemReady(QSPI_HandleTypeDef *hqspi, uint32_t Time
     s_config.Mask            = 0x01;
     s_config.StatusBytesSize = 1;
 
-    if (HAL_QSPI_AutoPolling(hqspi, &s_command, &s_config, Timeout) != HAL_OK)
-    {
-        Error_Handler();
-    }
+    HAL_StatusTypeDef status = HAL_QSPI_AutoPolling(hqspi, &s_command, &s_config, Timeout);
 
-    return QSPI_OK;
+    return status;
 }
 
 /**
@@ -369,17 +365,13 @@ HAL_StatusTypeDef qspi_write_buffer(size_t offset, const uint8_t* buffer, size_t
     s_command.Address     = offset;
     s_command.NbData      = length;
 
-    if ((status = HAL_QSPI_Command(&hqspi, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)) != HAL_OK)
+    if ((status = HAL_QSPI_Command(&hqspi, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)) == HAL_OK)
     {
-        Error_Handler();
+    	if ((status = HAL_QSPI_Transmit(&hqspi, (uint8_t *)buffer, HAL_QPSI_TIMEOUT_DEFAULT_VALUE )) == HAL_OK)
+    	{
+        status = QSPI_AutoPollingMemReady(&hqspi, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
+    	}
     }
-
-    if ((status = HAL_QSPI_Transmit(&hqspi, buffer, HAL_QPSI_TIMEOUT_DEFAULT_VALUE )) != HAL_OK)
-    {
-        Error_Handler();
-    }
-
-    status = QSPI_AutoPollingMemReady(&hqspi, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
 
     return status;
 }
@@ -404,15 +396,12 @@ HAL_StatusTypeDef qspi_read_buffer(size_t address, const uint8_t* buffer, size_t
     s_command.Address     = address;
     s_command.NbData      = length;
 
-    if ((status = HAL_QSPI_Command(&hqspi, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)) != HAL_OK) {
-        Error_Handler();
+    if ((status = HAL_QSPI_Command(&hqspi, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)) == HAL_OK)
+    {
+    	status = HAL_QSPI_Receive(&hqspi, (uint8_t *)buffer, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
     }
 
-    if ((status = HAL_QSPI_Receive(&hqspi, buffer, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)) != HAL_OK) {
-        Error_Handler();
-    }
-
-    return QSPI_OK;
+    return status;
 }
 
 static HAL_StatusTypeDef qspi_enable_quad(QSPI_HandleTypeDef *hqspi)
@@ -471,10 +460,17 @@ HAL_StatusTypeDef qspi_enable_memorymapped_mode(void)
     return QSPI_OK;
 }
 
+// for some godforsaken reason if this is optimised in any way when returning from the function
+// it jumps off into the normal SPI code!
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
 int qspi_init(void) {
   qspi_reset(&hqspi);
   qspi_enable_quad(&hqspi);
+  return(0);
 }
+#pragma GCC pop_options
+
 /* USER CODE END 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
