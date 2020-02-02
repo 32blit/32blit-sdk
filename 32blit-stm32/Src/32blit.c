@@ -4,12 +4,12 @@
 #include "32blit.h"
 #include "main.h"
 
+#include "sound.hpp"
 #include "display.hpp"
 #include "gpio.hpp"
 
 
 #include "adc.h"
-#include "dac.h"
 #include "tim.h"
 #include "rng.h"
 #include "spi.h"
@@ -80,14 +80,7 @@ void blit_debug(std::string message) {
   fb.text(message, &minimal_font[0][0], point(0, 0));
 }
 
-uint32_t audio_tick_cycle_count = 0;
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-  if(htim->Instance == TIM6) {    
-    uint32_t scc = DWT->CYCCNT;
-    hdac1.Instance->DHR12R2 = blit::audio::get_audio_frame() >> 4;
-    audio_tick_cycle_count = DWT->CYCCNT - scc;
-  }
-}
+
 
 void blit_tick() {
   if(display::needs_render) {
@@ -174,8 +167,6 @@ void blit_init() {
     HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc1data, ADC_BUFFER_SIZE);
     HAL_ADC_Start_DMA(&hadc3, (uint32_t *)adc3data, ADC_BUFFER_SIZE);
 
-    HAL_TIM_Base_Start_IT(&htim6);
-    HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
     
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     DWT->CYCCNT = 0;
@@ -613,7 +604,7 @@ void blit_switch_execution(void)
   HAL_ADC_Stop_DMA(&hadc3);
 
   // Stop the audio
-  HAL_TIM_Base_Stop_IT(&htim6);
+//  HAL_TIM_Base_Stop_IT(&htim6);
   HAL_DAC_Stop(&hdac1, DAC_CHANNEL_2);
 
   // stop USB
@@ -625,7 +616,7 @@ void blit_switch_execution(void)
   HAL_NVIC_DisableIRQ(ADC3_IRQn);
   HAL_NVIC_DisableIRQ(DMA1_Stream0_IRQn);
   HAL_NVIC_DisableIRQ(DMA1_Stream1_IRQn);
-  HAL_NVIC_DisableIRQ(TIM6_DAC_IRQn);
+ // HAL_NVIC_DisableIRQ(TIM6_DAC_IRQn);
   HAL_NVIC_DisableIRQ(OTG_HS_IRQn);
 
 	volatile uint32_t uAddr = EXTERNAL_LOAD_ADDRESS;

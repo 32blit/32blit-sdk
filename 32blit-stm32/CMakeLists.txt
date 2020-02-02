@@ -56,8 +56,8 @@ list(APPEND SOURCES
 	Src/usbd_cdc_if.c
 	Src/display.cpp
 	Src/gpio.cpp
+	Src/sound.cpp
 	Src/adc.c
-	Src/dac.c
 	Src/debug.c
 	Src/dma.c
 	Src/hrtim.c
