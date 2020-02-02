@@ -8,8 +8,8 @@ dist: bionic
 
 jobs:
   include:
-    # emscripten
-    - env: TOOLCHAIN=emscripten #not used, but provides a nice label
+    - name: "Emscripten"
+      env: TOOLCHAIN=emscripten #not used, but provides a nice label
       services:
         - docker
       before_install:
@@ -18,21 +18,21 @@ jobs:
         - docker exec -it emscripten emcmake cmake -B build.em -G "Unix Makefiles"
         - docker exec -it emscripten make -C build.em
     
-    # linux
-    - addons:
+    - name: "Linux"
+      addons:
         apt:
           libsdl2-dev
 
-    # stm32
-    - env: TOOLCHAIN=../32blit.toolchain
+    - name: "STM32"
+      env: TOOLCHAIN=../32blit.toolchain
       addons:
         apt:
           gcc-arm-none-eabi
           libnewlib-arm-none-eabi
           libstdc++-arm-none-eabi-newlib
 
-    # mingw
-    - env:
+    - name: "MinGW"
+      env:
         - TOOLCHAIN=../mingw.toolchain
         - CMAKE_ARGS=-DSDL2_DIR=$TRAVIS_BUILD_DIR/SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/
       addons:
@@ -42,8 +42,9 @@ jobs:
         - curl https://libsdl.org/release/SDL2-devel-2.0.10-mingw.tar.gz -o SDL2.tar.gz
         - tar -xf SDL2.tar.gz
         - sed -i "s|/opt/local|$PWD/SDL2-2.0.10|g" ./SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/sdl2-config.cmake
-          
-    - os: windows
+
+    - name: "Visual Studio (CMake)"
+      os: windows
       env: CMAKE_ARGS=-DSDL2_DIR=$TRAVIS_BUILD_DIR/vs/sdl
       before_script:
         - curl https://libsdl.org/release/SDL2-devel-2.0.10-VC.zip -o SDL2.zip
@@ -52,7 +53,8 @@ jobs:
         - mv vs/sdl/SDL2-2.0.10/* vs/sdl
         - mv vs/sdl/lib/x86 vs/sdl/lib/Win32 #small hack
 
-    - os: windows
+    - name: "Visual Studio (.sln)"
+      os: windows
       before_install:
         - choco install -y visualstudio2019buildtools visualstudio2019-workload-vctools
       script:
