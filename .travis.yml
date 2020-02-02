@@ -32,14 +32,13 @@ jobs:
           libstdc++-arm-none-eabi-newlib
           
     - os: windows
-      script:
+      env: CMAKE_ARGS=-DSDL2_DIR=$TRAVIS_BUILD_DIR/vs/sdl
+      before_script:
         - curl https://libsdl.org/release/SDL2-devel-2.0.10-VC.zip -o SDL2.zip
         - unzip SDL2.zip -d vs/sdl
         # move dirs up
         - mv vs/sdl/SDL2-2.0.10/* vs/sdl
         - mv vs/sdl/lib/x86 vs/sdl/lib/Win32 #small hack
-        - cmake -B build -DSDL2_DIR=$PWD/vs/sdl .
-        - cmake --build build
 
     - os: windows
       before_install:
@@ -54,5 +53,5 @@ jobs:
 
 script:
   - mkdir build && cd build
-  - cmake -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN ..
-  - make
+  - cmake -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN $CMAKE_ARGS ..
+  - cmake --build .
