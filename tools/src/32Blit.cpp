@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string>
 #include <string.h>
 #include <time.h>
 
@@ -23,10 +24,12 @@ bool Get32BlitInfo(uint32_t &uAck);
 
 void usage(void)
 {
-  printf("Usage: 32blit <process> <comport> <binfile>\n");
+  printf("Usage: 32blit <process> <comport> <binfile> <options>\n");
   printf("  <process> : Either _RST, SAVE or PROG\n");
   printf("  <comport> : Com port, eg COM1 or /dev/cu.usbmodem\n");
   printf("  <binfile> : Bin file path (optional, needed for SAVE and PROG)\n");
+  printf("\nOptions:\n");
+  printf("\t--reconnect: Re-open port after PROG to show debug output\n");
 }
 
 const char *getFileName(const char *pszPath)
@@ -378,7 +381,9 @@ int main(int argc, char *argv[])
   const char *pszComPort = argv[2];
   const char *pszBinPath = NULL;
   const char *pszBinFile = NULL;
-  if (argc == 4)
+  bool bShouldReconnect = false;
+
+  if (argc >= 4)
   {
     pszBinPath = argv[3];
     pszBinFile = getFileName(pszBinPath);
@@ -393,11 +398,19 @@ int main(int argc, char *argv[])
   }
   else
   {
-    if (*puProcess != FourCCMake<'_', 'R', 'S', 'T'>::value && argc != 4)
+    if (*puProcess != FourCCMake<'_', 'R', 'S', 'T'>::value && argc < 4)
     {
       usage();
       exit(1);
     }
+  }
+
+  for(int i = 4; i < argc; i++)
+  {
+    std::string sArg(argv[i]);
+
+    if(sArg == "--reconnect")
+      bShouldReconnect = true;
   }
 
   bool bComPortOpen = OpenComPort(pszComPort);
@@ -525,7 +538,7 @@ int main(int argc, char *argv[])
   }
 
   printf("Sending complete.\n");
-  if (*puProcess == FourCCMake<'P', 'R', 'O', 'G'>::value)
+  if (*puProcess == FourCCMake<'P', 'R', 'O', 'G'>::value && bShouldReconnect)
   {
     printf("Waiting for USB connection for debug logging, please wait...\n");
     // wait for reconnect
