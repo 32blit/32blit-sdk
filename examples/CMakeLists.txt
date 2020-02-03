@@ -1,3 +1,6 @@
+cmake_minimum_required(VERSION 3.1)
+project (examples)
+include (../32blit.cmake)
 add_subdirectory(audio-test)
 add_subdirectory(doom-fire)
 add_subdirectory(fizzlefade)
