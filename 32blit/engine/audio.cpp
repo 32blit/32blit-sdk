@@ -88,12 +88,16 @@ namespace blit {
           } else {
             // sustain phase
             channel.adsr = channel.sustain;
-          }  
+          }
+
+          if((channel.time_ms >> 16) < channel.attack_ms + channel.decay_ms)
+            channel.time_ms += frame_ms;
         }else{
           if((channel.time_ms >> 16) < channel.release_ms) {
             // release phase
             uint32_t release = channel.time_ms / channel.release_ms;
             channel.adsr = channel.sustain - ((channel.sustain * release) >> 16);
+            channel.time_ms += frame_ms;
           }
         }      
 
@@ -104,8 +108,6 @@ namespace blit {
 
         // combine channel sample into the final sample
         sample += channel_sample;     
-
-        channel.time_ms += frame_ms;          
       }
 
       // copy the current gate value into the status flags
