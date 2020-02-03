@@ -93,7 +93,7 @@ namespace blit {
           if((channel.time_ms >> 16) < channel.attack_ms + channel.decay_ms)
             channel.time_ms += frame_ms;
         }else{
-          if((channel.time_ms >> 16) < channel.release_ms) {
+          if((channel.time_ms >> 16) < channel.release_ms && channel.adsr) {
             // release phase
             uint32_t release = channel.time_ms / channel.release_ms;
             channel.adsr = channel.sustain - ((channel.sustain * release) >> 16);
