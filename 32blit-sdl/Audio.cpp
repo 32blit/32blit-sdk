@@ -36,7 +36,7 @@ void _audio_bufferfill(short *buffer, int buffer_size){
     memset(buffer, 0, buffer_size);
 
     for(auto sample = 0; sample < buffer_size; sample++){
-        buffer[sample] = (int)blit::audio::get_audio_frame() - 0x7fff;
+        buffer[sample] = (int)blit::get_audio_frame() - 0x7fff;
     }
 }
 
