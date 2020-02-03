@@ -399,7 +399,7 @@ void new_game() {
 void init(void) {
     set_screen_mode(lores);
 #ifdef __AUDIO__
-    channels[0].voices      = AudioVoice::NOISE;
+    channels[0].voices      = audio_voice::NOISE;
     channels[0].frequency   = 4200;
     channels[0].attack_ms   = 1;
     channels[0].decay_ms    = 1;
@@ -407,7 +407,7 @@ void init(void) {
     channels[0].release_ms  = 1;
     channels[0].trigger_attack();
 
-    channels[1].voices      = AudioVoice::SQUARE;
+    channels[1].voices      = audio_voice::SQUARE;
     channels[1].frequency   = 0;
     channels[1].attack_ms   = 30;
     channels[1].decay_ms    = 100;

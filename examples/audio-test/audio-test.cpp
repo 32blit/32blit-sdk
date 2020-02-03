@@ -31,28 +31,28 @@ void init() {
   // configure voices
 
   // melody track
-  audio::channels[0].voices      = audio::audio_voice::TRIANGLE | audio::audio_voice::SQUARE;
-  audio::channels[0].attack_ms   = 16;
-  audio::channels[0].decay_ms    = 168;
-  audio::channels[0].sustain     = 0xafff;
-  audio::channels[0].release_ms  = 168;
+  channels[0].voices      = audio_voice::TRIANGLE | audio_voice::SQUARE;
+  channels[0].attack_ms   = 16;
+  channels[0].decay_ms    = 168;
+  channels[0].sustain     = 0xafff;
+  channels[0].release_ms  = 168;
 
   // rhythm track
-  audio::channels[1].voices      = audio::audio_voice::SQUARE;
-  audio::channels[1].attack_ms   = 38;
-  audio::channels[1].decay_ms    = 300;
-  audio::channels[1].sustain     = 0;
-  audio::channels[1].release_ms  = 0;
+  channels[1].voices      = audio_voice::SQUARE;
+  channels[1].attack_ms   = 38;
+  channels[1].decay_ms    = 300;
+  channels[1].sustain     = 0;
+  channels[1].release_ms  = 0;
 
   // drum track
-  audio::channels[2].voices       = audio::audio_voice::NOISE;
-  audio::channels[2].attack_ms   = 10;
-  audio::channels[2].decay_ms    = 750;
-  audio::channels[2].sustain     = 0;
-  audio::channels[2].release_ms  = 100;
+  channels[2].voices       = audio_voice::NOISE;
+  channels[2].attack_ms   = 10;
+  channels[2].decay_ms    = 750;
+  channels[2].sustain     = 0;
+  channels[2].release_ms  = 100;
 
   // set global volume
-  audio::volume = 0x3fff;
+  volume = 0x3fff;
   
   fb.pen(RGBA(0, 0, 0, 255));
   fb.clear();  
@@ -94,10 +94,10 @@ void update(uint32_t time_ms) {
 
   for(uint8_t i = 0; i < 3; i++) {
     if(notes[i][beat] > 0) {
-      audio::channels[i].frequency = notes[i][beat];
-      audio::channels[i].trigger_attack();
+      channels[i].frequency = notes[i][beat];
+      channels[i].trigger_attack();
     } else if (notes[i][beat] == -1) {
-      audio::channels[i].trigger_release();
+      channels[i].trigger_release();
     }
   }
 }
