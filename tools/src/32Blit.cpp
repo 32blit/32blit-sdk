@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <termios.h>
 #include <errno.h>
+#include <dirent.h>
 #endif
 
 template <int a, int b, int c, int d>
@@ -155,6 +156,12 @@ bool HandleRX(void)
   return bResult;
 }
 
+std::string GuessPortName()
+{
+  // TODO: windows
+  return "";
+}
+
 void usleep(uint32_t uSecs)
 {
   Sleep(uSecs / 1000);
@@ -236,6 +243,34 @@ bool OpenComPort(const char *pszComPort, bool bTestConnection = false)
       bComPortOpen = true;
   }
   return bComPortOpen;
+}
+
+std::string GuessPortName()
+{
+#ifdef __linux__
+  // look for a serial device with "32Blit" in its name
+  std::string sSearchDir = "/dev/serial/by-id";
+
+  DIR *pDir = opendir(sSearchDir.c_str());
+
+  if(!pDir)
+    return "";
+
+  struct dirent *pEntry;
+
+  while((pEntry = readdir(pDir)))
+  {
+    std::string sName(pEntry->d_name);
+    if(sName.find("32Blit") != std::string::npos)
+      return sSearchDir + "/" + sName;
+  }
+
+  return "";
+
+#else
+  // TODO: macOS
+  return "";
+#endif
 }
 
 #endif
@@ -413,7 +448,21 @@ int main(int argc, char *argv[])
       bShouldReconnect = true;
   }
 
-  bool bComPortOpen = OpenComPort(pszComPort);
+  bool bComPortOpen = false;
+
+  if(std::string(pszComPort) == "AUTO")
+  {
+    auto sDetectedPort = GuessPortName();
+    if(sDetectedPort.empty())
+      printf("Failed to autodetect port\n");
+    else
+    {
+      printf("Detected port as: %s\n", sDetectedPort.c_str());
+      bComPortOpen = OpenComPort(sDetectedPort.c_str());
+    }
+  }
+  else
+    bComPortOpen = OpenComPort(pszComPort);
 
   if (!bComPortOpen)
   {
