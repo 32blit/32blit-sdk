@@ -12,7 +12,7 @@ namespace blit {
   /**
    * Clear the surface to the current pen colour.
    */
-  void surface::clear() {
+  void Surface::clear() {
     rectangle(clip);
   }
 
@@ -21,8 +21,8 @@ namespace blit {
    *
    * \param[in] r `Rect` describing the desired rectangle.
    */
-  void surface::rectangle(const rect &r) {
-    rect cr = clip.intersection(r);
+  void Surface::rectangle(const Rect &r) {
+    Rect cr = clip.intersection(r);
     if (cr.empty())
       return;
 
@@ -34,11 +34,11 @@ namespace blit {
     }
   }
 
-  void surface::_pixel(const uint32_t &o) {
+  void Surface::_pixel(const uint32_t &o) {
     bf((uint8_t *)&_pen, this, o, 1);
   }
 
-  void surface::_pixel(const point &p) {
+  void Surface::_pixel(const Point &p) {
     bf((uint8_t *)&_pen, this, offset(p), 1);
   }
 
@@ -47,7 +47,7 @@ namespace blit {
    *
    * \param[in] p `Point` describing the pixel location.
    */
-  void surface::pixel(const point &p) {
+  void Surface::pixel(const Point &p) {
     if (!clip.contains(p))
       return;
 
@@ -60,7 +60,7 @@ namespace blit {
    * \param[in] p `Point` describing start of the line.
    * \ param[in] c `Count` of pixels to draw.
    */
-  void surface::v_span(point p, int16_t c) {
+  void Surface::v_span(Point p, int16_t c) {
     if (p.x < 0 || p.x >= bounds.w)
       return;
 
@@ -86,7 +86,7 @@ namespace blit {
    * \param[in] p `Point` describing start of the line.
    * \ param[in] c `Count` of pixels to draw.
    */
-  void surface::h_span(point p, int16_t c) {
+  void Surface::h_span(Point p, int16_t c) {
     if (p.y < 0 || p.y >= bounds.h)
       return;
 
@@ -110,9 +110,9 @@ namespace blit {
    * \param[in] c `Point` describing the center of the circle.
    * \param[in] r Radius of the circle.
    */
-  void surface::circle(const point &c, int32_t r) {
+  void Surface::circle(const Point &c, int32_t r) {
     // if circle completely out of bounds then don't bother!
-    if (!clip.intersects(rect(c.x - r, c.y - r, r * 2, r * 2))) {
+    if (!clip.intersects(Rect(c.x - r, c.y - r, r * 2, r * 2))) {
       return;
     }
 
@@ -123,16 +123,16 @@ namespace blit {
 
       err += y; y++; err += y;
 
-      h_span(point(c.x - x, c.y + lastY), x * 2);
+      h_span(Point(c.x - x, c.y + lastY), x * 2);
       if (lastY != 0) {
-        h_span(point(c.x - x, c.y - lastY), x * 2);
+        h_span(Point(c.x - x, c.y - lastY), x * 2);
       }
 
       if (err >= 0) {
         if (x != lastY) {
-          h_span(point(c.x - lastY, c.y + x), lastY * 2);
+          h_span(Point(c.x - lastY, c.y + x), lastY * 2);
           if (x != 0) {
-            h_span(point(c.x - lastY, c.y - x), lastY * 2);
+            h_span(Point(c.x - lastY, c.y - x), lastY * 2);
           }
 
           err -= x; x--; err -= x;
@@ -147,7 +147,7 @@ namespace blit {
    * \param[in] p1 `Point` describing the start of the line.
    * \param[in] p2 `Point` describing the end of the line.
    */
-  void surface::line(const point &p1, const point &p2) {
+  void Surface::line(const Point &p1, const Point &p2) {
     int32_t dx = int32_t(abs(p2.x - p1.x));
     int32_t dy = -int32_t(abs(p2.y - p1.y));
 
@@ -156,7 +156,7 @@ namespace blit {
 
     int32_t err = dx + dy;
 
-    point p(p1);
+    Point p(p1);
 
     while (true) {
       if (clip.contains(p)) {
@@ -178,7 +178,7 @@ namespace blit {
    * \param[in] p2
    * \param[in] p3
    */
-  int32_t orient2d(point p1, point p2, point p3) {
+  int32_t orient2d(Point p1, Point p2, Point p3) {
     return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
   }
   
@@ -188,7 +188,7 @@ namespace blit {
    * \param[in] p1
    * \param[in] p2
    */
-  bool is_top_left(const point &p1, const point &p2) {
+  bool is_top_left(const Point &p1, const Point &p2) {
     return (p1.y == p2.y && p1.x > p2.x) || (p1.y < p2.y);
   }
 
@@ -199,13 +199,13 @@ namespace blit {
    * \param[in] p2 Second `Point` of triangle.
    * \param[in] p3 This `Point` of triangle.
    */
-  void surface::triangle(point p1, point p2, point p3) {
-    rect bounds(
-      point(std::min(p1.x, std::min(p2.x, p3.x)), std::min(p1.y, std::min(p2.y, p3.y))),
-      point(std::max(p1.x, std::max(p2.x, p3.x)), std::max(p1.y, std::max(p2.y, p3.y))));
+  void Surface::triangle(Point p1, Point p2, Point p3) {
+    Rect bounds(
+      Point(std::min(p1.x, std::min(p2.x, p3.x)), std::min(p1.y, std::min(p2.y, p3.y))),
+      Point(std::max(p1.x, std::max(p2.x, p3.x)), std::max(p1.y, std::max(p2.y, p3.y))));
 
     // clip extremes to frame buffer size
-    rect mclip = clip; mclip.w--; mclip.h--;
+    Rect mclip = clip; mclip.w--; mclip.h--;
     bounds = mclip.intersection(bounds);
 
     // if triangle completely out of bounds then don't bother!
@@ -216,7 +216,7 @@ namespace blit {
     // fix "winding" of vertices if needed
     int32_t winding = orient2d(p1, p2, p3);
     if (winding < 0) {
-      point t;
+      Point t;
       t = p1; p1 = p3; p3 = t;
     }
 
@@ -232,12 +232,12 @@ namespace blit {
     int32_t a20 = p3.y - p1.y;
     int32_t b20 = p1.x - p3.x;
 
-    point tl(bounds.x, bounds.y);
+    Point tl(bounds.x, bounds.y);
     int32_t w0row = orient2d(p2, p3, tl) + bias0;
     int32_t w1row = orient2d(p3, p1, tl) + bias1;
     int32_t w2row = orient2d(p1, p2, tl) + bias2;
 
-    point p;
+    Point p;
 
     for (p.y = bounds.y; p.y <= bounds.y + bounds.h; p.y++) {
       int32_t w0 = w0row;
@@ -265,7 +265,7 @@ namespace blit {
    *
    * \param[in] points `std::vector<point>` of points describing the polygon.
    */
-  void surface::polygon(std::vector<point> points) {
+  void Surface::polygon(std::vector<Point> points) {
     static int32_t nodes[64]; // maximum allowed number of nodes per scanline for polygon rendering
 
     int32_t miny = points[0].y, maxy = points[0].y;
@@ -276,7 +276,7 @@ namespace blit {
     }
 
     // for each scanline within the polygon bounds (clipped to clip rect)
-    point p;
+    Point p;
 
     for (p.y = std::max(clip.y, miny); p.y <= std::min(clip.y + clip.h, maxy); p.y++) {
       uint8_t n = 0;
@@ -306,7 +306,7 @@ namespace blit {
       }
 
       for (uint16_t i = 0; i < n; i += 2) {
-        h_span(point(nodes[i], p.y), nodes[i + 1] - nodes[i] + 1);
+        h_span(Point(nodes[i], p.y), nodes[i + 1] - nodes[i] + 1);
       }
     }
   }

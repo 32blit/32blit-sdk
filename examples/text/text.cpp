@@ -1,47 +1,49 @@
 #include "text.hpp"
 
+using namespace blit;
+
 bool variable_width = true;
-uint32_t prev_buttons = blit::buttons;
-blit::text_align alignment = blit::text_align::top_left;
+uint32_t prev_buttons = buttons;
+TextAlign alignment = TextAlign::top_left;
 
 void init() {
-    blit::set_screen_mode(blit::screen_mode::lores);
+    set_screen_mode(ScreenMode::lores);
 }
 
 void render(uint32_t time) {
-    blit::fb.pen(blit::rgba(0x80, 0x80, 0x80));
-    blit::fb.clear();
+    screen.pen(RGBA(0x80, 0x80, 0x80));
+    screen.clear();
 
-    blit::rect text_rect(20, 20, 120, 80);
+    Rect text_rect(20, 20, 120, 80);
 
-    blit::fb.pen(blit::rgba(0xFF));
-    blit::fb.rectangle(text_rect);
+    screen.pen(RGBA(0xFF));
+    screen.rectangle(text_rect);
 
     std::string text = "This is some aligned text!\nUse the dpad to change the alignment\nand A to toggle variable-width.";
-    text = blit::fb.wrap_text(text, text_rect.w, &minimal_font[0][0], variable_width);
+    text = screen.wrap_text(text, text_rect.w, &minimal_font[0][0], variable_width);
 
-    blit::fb.pen(blit::rgba(0xFF, 0xFF, 0xFF));
-    blit::fb.text(text, &minimal_font[0][0], text_rect, variable_width, alignment);
+    screen.pen(RGBA(0xFF, 0xFF, 0xFF));
+    screen.text(text, &minimal_font[0][0], text_rect, variable_width, alignment);
 
-    auto size = blit::fb.measure_text(text, &minimal_font[0][0], variable_width);
-    blit::fb.text("bounds: " + std::to_string(size.w) + "x" + std::to_string(size.h), &minimal_font[0][0], blit::point(80, 0), true, blit::text_align::center_h);
+    auto size = screen.measure_text(text, &minimal_font[0][0], variable_width);
+    screen.text("bounds: " + std::to_string(size.w) + "x" + std::to_string(size.h), &minimal_font[0][0], Point(80, 0), true, TextAlign::center_h);
 }
 
 void update(uint32_t time) {
-    if ((prev_buttons & blit::button::A) && !(blit::buttons & blit::button::A))
+    if ((prev_buttons & Button::A) && !(buttons & Button::A))
         variable_width = !variable_width;
 
-    alignment = blit::text_align::top_left;
+    alignment = TextAlign::top_left;
 
-    if (blit::buttons & blit::button::DPAD_DOWN)
-        alignment = (blit::text_align)(alignment | blit::text_align::bottom);
-    else if (!(blit::buttons & blit::button::DPAD_UP))
-        alignment = (blit::text_align)(alignment | blit::text_align::center_v);
+    if (buttons & Button::DPAD_DOWN)
+        alignment = (TextAlign)(alignment | TextAlign::bottom);
+    else if (!(buttons & Button::DPAD_UP))
+        alignment = (TextAlign)(alignment | TextAlign::center_v);
 
-    if (blit::buttons & blit::button::DPAD_RIGHT)
-        alignment = (blit::text_align)(alignment | blit::text_align::right);
-    else if (!(blit::buttons & blit::button::DPAD_LEFT))
-        alignment = (blit::text_align)(alignment | blit::text_align::center_h);
+    if (buttons & Button::DPAD_RIGHT)
+        alignment = (TextAlign)(alignment | TextAlign::right);
+    else if (!(buttons & Button::DPAD_LEFT))
+        alignment = (TextAlign)(alignment | TextAlign::center_h);
 
-    prev_buttons = blit::buttons;
+    prev_buttons = buttons;
 }

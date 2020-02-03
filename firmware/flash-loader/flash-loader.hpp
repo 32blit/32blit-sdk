@@ -8,7 +8,7 @@
 #define MAX_FILENAMES 30
 #define MAX_FILENAME_LENGTH 32
 #define ROW_SPACE 10
-#define ROW(x) point(0,x * ROW_SPACE)
+#define ROW(x) Point(0,x * ROW_SPACE)
 #define MAX_FILENAME 256+1
 #define MAX_FILELEN 5+1
 #define PAGE_SIZE 256

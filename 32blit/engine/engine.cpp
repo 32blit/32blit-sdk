@@ -9,7 +9,7 @@ namespace blit {
   void (*init)()                                    = nullptr;
   void (*update)(uint32_t time)                     = nullptr;
   void (*render)(uint32_t time)                     = nullptr;
-  void (*set_screen_mode)(screen_mode new_mode)     = nullptr;
+  void (*set_screen_mode)(ScreenMode new_mode)      = nullptr;
   uint32_t (*now)()                                 = nullptr;
   uint32_t (*random)()                              = nullptr;
   void (*debug)(std::string message)                = nullptr;
@@ -21,8 +21,8 @@ namespace blit {
   int32_t (*close_file)(uint32_t fh)              = nullptr;
 
 
-  surface null_surface(nullptr, pixel_format::RGB565, size(0, 0));
-  surface &fb = null_surface;
+  Surface null_surface(nullptr, PixelFormat::RGB565, Size(0, 0));
+  Surface &screen = null_surface;
 
   uint32_t update_rate_ms = 10;
   uint32_t pending_update_time = 0;

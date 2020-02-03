@@ -46,7 +46,7 @@ namespace blit {
   extern uint16_t volume;
   extern int16_t  sine_voice[256];
 
-  enum audio_voice {
+  enum AudioVoice {
     NOISE     = 128, 
     SQUARE    = 64, 
     SAW       = 32, 
@@ -55,7 +55,7 @@ namespace blit {
     WAVE      = 4    // to be implemented...
   };
 
-  struct audio_channel {
+  struct AudioChannel {
       uint8_t   voices        = 0;      // bitmask for enabled voices (see audio_voice enum for values)
       uint16_t  frequency     = 660;    // frequency of the voice (Hz)
       uint32_t  time_ms       = 0;      // play time of current note in milliseconds used for ADSR calculations (Q16)
@@ -80,7 +80,7 @@ namespace blit {
       void trigger_release() {gate = 0;}
   };
 
-  extern audio_channel channels[CHANNEL_COUNT];
+  extern AudioChannel channels[CHANNEL_COUNT];
 
   uint16_t get_audio_frame();
 

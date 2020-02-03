@@ -1,18 +1,18 @@
 #pragma once
 
-struct vec3;
+struct Vec3;
 
-struct mat4 {
+struct Mat4 {
   float v00, v10, v20, v30;
   float v01, v11, v21, v31;
   float v02, v12, v22, v32;
   float v03, v13, v23, v33;
 
-  mat4();
-  mat4(const mat4 &m);
+  Mat4();
+  Mat4(const Mat4 &m);
 
 
-  inline  mat4& operator*= (const mat4 &m) {
+  inline  Mat4& operator*= (const Mat4 &m) {
     float r00 = this->v00 * m.v00 + this->v01 * m.v10 + this->v02 * m.v20 + this->v03 * m.v30;
     float r01 = this->v00 * m.v01 + this->v01 * m.v11 + this->v02 * m.v21 + this->v03 * m.v31;
     float r02 = this->v00 * m.v02 + this->v01 * m.v12 + this->v02 * m.v22 + this->v03 * m.v32;
@@ -38,11 +38,11 @@ struct mat4 {
     return *this;
   }
 
-  static mat4 identity();
-  static mat4 rotation(float a, vec3 v);
-  static mat4 translation(vec3 v);
-  static mat4 scale(vec3 v);
+  static Mat4 identity();
+  static Mat4 rotation(float a, Vec3 v);
+  static Mat4 translation(Vec3 v);
+  static Mat4 scale(Vec3 v);
   void inverse();
 };
 
-inline mat4 operator*  (mat4 lhs, const mat4 &m) { lhs *= m; return lhs; }
+inline Mat4 operator*  (Mat4 lhs, const Mat4 &m) { lhs *= m; return lhs; }

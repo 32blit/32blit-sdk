@@ -11,32 +11,32 @@ using namespace blit;
 
 /* setup */
 void init() {
-  blit::set_screen_mode(screen_mode::hires);
+  blit::set_screen_mode(ScreenMode::hires);
 }
 
 struct test_particle {
-  vec2 pos;
-  vec2 vel;
+  Vec2 pos;
+  Vec2 vel;
   int age;
   bool generated = false;
 };
 
 
-struct smoke_particle : particle {
+struct smoke_particle : Particle {
   float age_boost;
 
-  smoke_particle(vec2 pos, vec2 vel, float age_boost) : particle(pos, vel), age_boost(age_boost) {};
+  smoke_particle(Vec2 pos, Vec2 vel, float age_boost) : Particle(pos, vel), age_boost(age_boost) {};
 };
 
-particle* generate_smoke() {
+Particle* generate_smoke() {
   return new smoke_particle(
-    vec2((rand() % 20) - 10, (rand() % 20) - 10),
-    vec2(((rand() % 40) - 20) / 2, (rand() % 20) - 60),
+    Vec2((rand() % 20) - 10, (rand() % 20) - 10),
+    Vec2(((rand() % 40) - 20) / 2, (rand() % 20) - 60),
     (rand() % 3000) / 3000.0f
   );
 }
 
-generator smoke_generator(150, 4000, generate_smoke);
+ParticleGenerator smoke_generator(150, 4000, generate_smoke);
 
 void render_smoke() {
   for (auto p : smoke_generator.particles) {
@@ -44,15 +44,15 @@ void render_smoke() {
     float age = sp->age + sp->age_boost;
     int alpha = (255 - (age * 75.0f)) / 8.0f;
     int radius = (age * 150.0f) / 16.0f;
-    fb.pen(rgba(255, 255, 255, alpha));
-    fb.circle(p->pos + point(50, 240), radius);
+    screen.pen(RGBA(255, 255, 255, alpha));
+    screen.circle(p->pos + Point(50, 240), radius);
   }
 }
 
 
 void smoke_generate(test_particle &p) {
-  p.pos = vec2((rand() % 20) - 10, (rand() % 20) - 10);
-  p.vel = vec2(((rand() % 40) - 20) / 2, (rand() % 20) - 60);
+  p.pos = Vec2((rand() % 20) - 10, (rand() % 20) - 10);
+  p.vel = Vec2(((rand() % 40) - 20) / 2, (rand() % 20) - 60);
   p.age = rand() % 200;
   p.generated = true;
 };
@@ -74,13 +74,13 @@ void smoke(uint32_t time_ms) {
   for (auto &p : s) {
     if (p.generated) {
       p.pos += p.vel * td;
-      p.vel += vec2(w, 0);
+      p.vel += Vec2(w, 0);
       p.age++;
 
       int alpha = (255 - (p.age / 2)) / 8.0f;
       int radius = (p.age) / 16.0f;
-      fb.pen(rgba(255, 255, 255, alpha));
-      fb.circle(p.pos + point(50, 240), radius);
+      screen.pen(RGBA(255, 255, 255, alpha));
+      screen.circle(p.pos + Point(50, 240), radius);
     }
   }
 
@@ -90,8 +90,8 @@ void smoke(uint32_t time_ms) {
 
 
 void spark_generate(test_particle &p) {
-  p.pos = vec2((rand() % 10) - 5, -100);
-  p.vel = vec2(((rand() % 40) - 20), (rand() % 80) - 70);
+  p.pos = Vec2((rand() % 10) - 5, -100);
+  p.vel = Vec2(((rand() % 40) - 20), (rand() % 80) - 70);
   p.age = 0;// rand() % 255;
   p.generated = true;
 };
@@ -110,7 +110,7 @@ void spark(uint32_t time_ms) {
 
   float w = sin(time_ms / 1000.0f) * 0.05f;
 
-  vec2 gravity = vec2(0, 9.8 * 2) * td;
+  Vec2 gravity = Vec2(0, 9.8 * 2) * td;
 
   for (auto &p : s) {
     if (p.generated) {
@@ -128,13 +128,13 @@ void spark(uint32_t time_ms) {
       b = b < 0 ? 0 : b;
 
       int bloom = (255 - a) / 64;
-      fb.pen(rgba(r, g, b, 16));
-      fb.circle(p.pos + point(160, 240), bloom);
-      fb.pen(rgba(r, g, b, 16));
-      fb.circle(p.pos + point(160, 240), bloom / 2);
+      screen.pen(RGBA(r, g, b, 16));
+      screen.circle(p.pos + Point(160, 240), bloom);
+      screen.pen(RGBA(r, g, b, 16));
+      screen.circle(p.pos + Point(160, 240), bloom / 2);
 
-      fb.pen(rgba(r, g, b));
-      fb.pixel(p.pos + point(160, 240));
+      screen.pen(RGBA(r, g, b));
+      screen.pixel(p.pos + Point(160, 240));
 
     }
   }
@@ -144,13 +144,13 @@ void spark(uint32_t time_ms) {
 
 
 void rain_generate(test_particle &p) {
-  p.pos = vec2((rand() % 80) - 40, (rand() % 10) - 250);
-  p.vel = vec2(0, 140);
+  p.pos = Vec2((rand() % 80) - 40, (rand() % 10) - 250);
+  p.vel = Vec2(0, 140);
   p.age = 0;// rand() % 255;
   p.generated = true;
 };
 
-vec2 g = vec2(0, 9.8 * 5);
+Vec2 g = Vec2(0, 9.8 * 5);
 
 void rain(uint32_t time_ms) {
   static test_particle s[200];
@@ -166,7 +166,7 @@ void rain(uint32_t time_ms) {
 
   float w = sin(time_ms / 1000.0f) * 0.05f;
 
-  vec2 gravity = g * td;
+  Vec2 gravity = g * td;
 
   for (auto &p : s) {
     if (p.generated) {
@@ -191,13 +191,13 @@ void rain(uint32_t time_ms) {
       int b = 255;// -(a * 4);
 
       if(p.vel.length() > 20) {
-        fb.pen(rgba(r, g, b, 100));
-        fb.pixel(p.pos + point(270, 239));
-        fb.pen(rgba(r, g, b, 160));
-        fb.pixel(p.pos + point(270, 241));
+        screen.pen(RGBA(r, g, b, 100));
+        screen.pixel(p.pos + Point(270, 239));
+        screen.pen(RGBA(r, g, b, 160));
+        screen.pixel(p.pos + Point(270, 241));
       }
-      fb.pen(rgba(r, g, b, 180));
-      fb.pixel(p.pos + point(270, 242));
+      screen.pen(RGBA(r, g, b, 180));
+      screen.pixel(p.pos + Point(270, 242));
     }
   }
 
@@ -206,23 +206,23 @@ void rain(uint32_t time_ms) {
 
 
 
-particle* generate_basic_rain() {  
-  return new particle(
-    vec2((std::rand() % 120) + 100, 0),
-    vec2(0, 100)
+Particle* generate_basic_rain() {  
+  return new Particle(
+    Vec2((std::rand() % 120) + 100, 0),
+    Vec2(0, 100)
   );
 }
 
-generator basic_rain_generator(250, 4000, generate_basic_rain);
+ParticleGenerator basic_rain_generator(250, 4000, generate_basic_rain);
 
 void render_basic_rain() {
   for (auto p : basic_rain_generator.particles) {
-    particle *sp = static_cast<particle*>(p);
+    Particle *sp = static_cast<Particle*>(p);
     if (sp->pos.y >= 239) {
       sp->pos.y = 239;
     }
-    fb.pen(rgba(128, 128, 255));
-    fb.pixel(sp->pos);
+    screen.pen(RGBA(128, 128, 255));
+    screen.pixel(sp->pos);
   }
 }
 
@@ -232,20 +232,20 @@ void render(uint32_t time_ms) {
 
 uint16_t width;
 uint16_t height;
-    if ((blit::buttons ^ prev_buttons) & blit::button::A) {
+    if ((blit::buttons ^ prev_buttons) & blit::Button::A) {
         blit::set_screen_mode(blit::lores);
         width = 160;
         height = 120;
     }
-    else if ((blit::buttons ^ prev_buttons) & blit::button::B) {
+    else if ((blit::buttons ^ prev_buttons) & blit::Button::B) {
         blit::set_screen_mode(blit::hires);
         width = 320;
         height = 240;
     }
     prev_buttons = blit::buttons;
 
-  fb.pen(rgba(0, 0, 0, 255));
-  fb.clear();
+  screen.pen(RGBA(0, 0, 0, 255));
+  screen.clear();
 
   //render_smoke();
 
@@ -257,39 +257,39 @@ uint16_t height;
   uint32_t ms_end = now();
 
   // draw grid
-  fb.alpha = 255;
-  fb.pen(rgba(255, 255, 255));
-  fb.rectangle(rect(0, 0, 320, 14));
-  fb.pen(rgba(0, 0, 0));
-  fb.text("Rain demo", &minimal_font[0][0], point(5, 4));
+  screen.alpha = 255;
+  screen.pen(RGBA(255, 255, 255));
+  screen.rectangle(Rect(0, 0, 320, 14));
+  screen.pen(RGBA(0, 0, 0));
+  screen.text("Rain demo", &minimal_font[0][0], Point(5, 4));
 
- /* fb.pen(rgba(255, 255, 255));  
-  fb.text("Smoke:", &minimal_font[0][0], point(10, 20));
-  fb.text("Sparks:", &minimal_font[0][0], point(120, 20));
-  fb.text("Rain:", &minimal_font[0][0], point(220, 20));  */
+ /* screen.pen(rgba(255, 255, 255));  
+  screen.text("Smoke:", &minimal_font[0][0], point(10, 20));
+  screen.text("Sparks:", &minimal_font[0][0], point(120, 20));
+  screen.text("Rain:", &minimal_font[0][0], point(220, 20));  */
 
   // draw FPS meter
-  /*fb.alpha = 255;
-  fb.pen(rgba(0, 0, 0));
-  fb.rectangle(rect(1, 240 - 10, 12, 9));
-  fb.pen(rgba(255, 255, 255, 200));
+  /*screen.alpha = 255;
+  screen.pen(rgba(0, 0, 0));
+  screen.rectangle(rect(1, 240 - 10, 12, 9));
+  screen.pen(rgba(255, 255, 255, 200));
   std::string fms = std::to_string(ms_end - ms_start);
-  fb.text(fms, &minimal_font[0][0], rect(3, 240 - 9, 10, 16));
+  screen.text(fms, &minimal_font[0][0], rect(3, 240 - 9, 10, 16));
 
   int block_size = 4;
   for (int i = 0; i < (ms_end - ms_start); i++) {
-    fb.pen(rgba(i * 5, 255 - (i * 5), 0));
-    fb.rectangle(rect(i * (block_size + 1) + 1 + 13, fb.bounds.h - block_size - 1, block_size, block_size));
+    screen.pen(rgba(i * 5, 255 - (i * 5), 0));
+    screen.rectangle(rect(i * (block_size + 1) + 1 + 13, screen.bounds.h - block_size - 1, block_size, block_size));
   }*/
 
-  fb.watermark();
+  screen.watermark();
 }
 
 void update(uint32_t time_ms) {
 //  smoke_generator.update(time_ms);
   basic_rain_generator.update(time_ms);
 
-  if (pressed(button::DPAD_LEFT)) {
+  if (pressed(Button::DPAD_LEFT)) {
     g.rotate(0.1f);
   }
 }

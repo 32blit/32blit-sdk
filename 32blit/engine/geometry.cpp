@@ -22,8 +22,8 @@
  *
  * \return `true` if intersection occurs
  */
-bool ray_sphere_intersect(vec3 ray_origin, vec3 ray_vector, vec3 sphere_origin, float sphere_radius, vec3 *point = NULL, float *distance = NULL, vec3 *normal = NULL) {
-  vec3 l = sphere_origin - ray_origin;
+bool ray_sphere_intersect(Vec3 ray_origin, Vec3 ray_vector, Vec3 sphere_origin, float sphere_radius, Vec3 *point = NULL, float *distance = NULL, Vec3 *normal = NULL) {
+  Vec3 l = sphere_origin - ray_origin;
   float tca = l.dot(ray_vector);
   float d2 = l.dot(l) - tca * tca;
 
@@ -73,8 +73,8 @@ bool ray_sphere_intersect(vec3 ray_origin, vec3 ray_vector, vec3 sphere_origin, 
  *
  * \return `true` if intersection occurs
  */
-bool ray_circle_intersect(vec2 ray_origin, vec2 ray_vector, vec2 circle_origin, float circle_radius, vec2 *point = NULL, float *distance = NULL, vec2 *normal = NULL) {  
-  vec2 l = ray_origin - circle_origin;
+bool ray_circle_intersect(Vec2 ray_origin, Vec2 ray_vector, Vec2 circle_origin, float circle_radius, Vec2 *point = NULL, float *distance = NULL, Vec2 *normal = NULL) {  
+  Vec2 l = ray_origin - circle_origin;
 
   float a = ray_vector.length() * ray_vector.length();
   float b = 2.0f * ray_vector.dot(l);
@@ -123,10 +123,10 @@ bool ray_circle_intersect(vec2 ray_origin, vec2 ray_vector, vec2 circle_origin, 
  *
  * \return `true` if intersection occurs
  */
-bool ray_line_intersect(vec2 ray_origin, vec2 ray_vector, vec2 start, vec2 end, vec2 *point = NULL, float *distance = NULL) {
-  vec2 v1 = ray_origin - start;
-  vec2 v2 = end - start;
-  vec2 v3 = vec2(-ray_vector.y, ray_vector.x);
+bool ray_line_intersect(Vec2 ray_origin, Vec2 ray_vector, Vec2 start, Vec2 end, Vec2 *point = NULL, float *distance = NULL) {
+  Vec2 v1 = ray_origin - start;
+  Vec2 v2 = end - start;
+  Vec2 v3 = Vec2(-ray_vector.y, ray_vector.x);
   float d = v2.dot(v3);
 
   if (fabsf(d) < FLT_EPSILON) {

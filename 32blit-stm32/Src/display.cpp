@@ -18,7 +18,7 @@ void LTDC_IRQHandler() {
 
     // flip the framebuffer to the ltdc buffer and request
     // a new frame to be rendered
-    display::flip(blit::fb);
+    display::flip(blit::screen);
     display::needs_render = true; 
   }
 }
@@ -26,13 +26,13 @@ void LTDC_IRQHandler() {
 namespace display {  
 
   // surface mapped directly to the ltdc memory buffer
-  surface __ltdc((uint8_t *)&__ltdc_start, pixel_format::RGB565, size(320, 240));
+  Surface __ltdc((uint8_t *)&__ltdc_start, PixelFormat::RGB565, Size(320, 240));
 
   // lo and hi res screen back buffers
-  surface __fb_hires((uint8_t *)&__fb_start, pixel_format::RGB565, size(320, 240));
-  surface __fb_lores((uint8_t *)&__fb_start, pixel_format::RGBA, size(160, 120));
+  Surface __fb_hires((uint8_t *)&__fb_start, PixelFormat::RGB565, Size(320, 240));
+  Surface __fb_lores((uint8_t *)&__fb_start, PixelFormat::RGBA, Size(160, 120));
 
-  screen_mode mode = screen_mode::lores;
+  ScreenMode mode = ScreenMode::lores;
   bool needs_render = false;
 
   void init() {
@@ -56,16 +56,16 @@ namespace display {
     display::needs_render = false;
   }
 
-  void set_screen_mode(screen_mode new_mode) {
+  void set_screen_mode(ScreenMode new_mode) {
     mode = new_mode;
-    fb = mode == screen_mode::hires ? __fb_hires : __fb_lores;
+    screen = mode == ScreenMode::hires ? __fb_hires : __fb_lores;
   }
 
-  void flip(const surface &source) {
+  void flip(const Surface &source) {
     uint32_t *s = (uint32_t *)source.data;
     uint32_t *d = (uint32_t *)(&__ltdc_start);
 
-    if(mode == screen_mode::lores) {
+    if(mode == ScreenMode::lores) {
       // pixel double the framebuffer to the ltdc buffer
       for(uint8_t y = 0; y < 120; y++) {
         // pixel double the current row while converting from RGBA to RGB565

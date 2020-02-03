@@ -31,21 +31,21 @@ void init() {
   // configure voices
 
   // melody track
-  channels[0].voices      = audio_voice::TRIANGLE | audio_voice::SQUARE;
+  channels[0].voices      = AudioVoice::TRIANGLE | AudioVoice::SQUARE;
   channels[0].attack_ms   = 16;
   channels[0].decay_ms    = 168;
   channels[0].sustain     = 0xafff;
   channels[0].release_ms  = 168;
 
   // rhythm track
-  channels[1].voices      = audio_voice::SQUARE;
+  channels[1].voices      = AudioVoice::SQUARE;
   channels[1].attack_ms   = 38;
   channels[1].decay_ms    = 300;
   channels[1].sustain     = 0;
   channels[1].release_ms  = 0;
 
   // drum track
-  channels[2].voices       = audio_voice::NOISE;
+  channels[2].voices       = AudioVoice::NOISE;
   channels[2].attack_ms   = 10;
   channels[2].decay_ms    = 750;
   channels[2].sustain     = 0;
@@ -54,15 +54,15 @@ void init() {
   // set global volume
   volume = 0x3fff;
   
-  fb.pen(rgba(0, 0, 0, 255));
-  fb.clear();  
+  screen.pen(RGBA(0, 0, 0, 255));
+  screen.clear();  
 }
 
 uint16_t beat = 0;
 
 void render(uint32_t time_ms) {
-  fb.pen(rgba(20, 30, 40, 100));
-  fb.clear();
+  screen.pen(RGBA(20, 30, 40, 100));
+  screen.clear();
   
   // yeah, this is ugly... let's find a way to get a real
   // waveform out of the audio functionality
@@ -72,15 +72,15 @@ void render(uint32_t time_ms) {
     uint8_t n2 = notes[1][no] >> 4;
     uint8_t n3 = notes[2][no] >> 4;
 
-    fb.pen(rgba(255, 0, 0, 100));
-    fb.line(point(i, 120), point(i, 120 - n1));
-    fb.pen(rgba(0, 255, 0, 100));
-    fb.line(point(i, 120), point(i, 120 - n2));
-    fb.pen(rgba(0, 0, 255, 100));
-    fb.line(point(i, 120), point(i, 120 - n3));
+    screen.pen(RGBA(255, 0, 0, 100));
+    screen.line(Point(i, 120), Point(i, 120 - n1));
+    screen.pen(RGBA(0, 255, 0, 100));
+    screen.line(Point(i, 120), Point(i, 120 - n2));
+    screen.pen(RGBA(0, 0, 255, 100));
+    screen.line(Point(i, 120), Point(i, 120 - n3));
   }
 
-  fb.watermark();  
+  screen.watermark();  
 } 
 
 void update(uint32_t time_ms) {
