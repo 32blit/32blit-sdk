@@ -1,6 +1,10 @@
 # Building & Running on Win32 (WSL or MinGW)
 
-## Setting things up
+These instructions assume a basic knowledge of the Linux command-line, installing tools and compiling code from source.
+
+If you're more familiar with Visual Studio then you should [follow the instructions in VisualStudio.md](VisualStudio.md)
+
+## Setting Up
 
 ### Windows Subsystem for Linux (WSL)
 
@@ -39,50 +43,61 @@ The following sections contain information on how to build and run example proje
 
 To build your project for testing, go into the relevant example directory. We'll use `palette-cycle` to demonstrate:
 
-```
+```shell
 cd examples/palette-cycle
 ```
 
-prepare the Makefile with CMake:
+Prepare the Makefile with CMake:
 
-```
+```shell
 mkdir build
 cd build
 cmake ..
 ```
 
-and compile the example:
+And compile the example:
 
-```
+```shell
 make
 ```
 
 To run the application on your computer, use the following command (from within the same directory):
 
-```
+```shell
 ./palette-cycle
 ```
 
 If you're using WSL and XMing you will need to add a `DISPLAY` variable like so:
 
-```
+```shell
 DISPLAY=:0.0 ./palette-cycle
 ```
 
+Note: Sound does not work with WSL/XMing (this is a WSL problem, not a 32Blit problem).
+
 ### Building & Running on Win32 (WSL + MinGW)
 
-To build your project for Win32 you'll need `g++-mingw-w64` and `g++-mingw-w64`.
+You can use WSL on Windows to cross-compile your project (or any 32Blit example) into a Windows .exe.
 
-```
-sudo apt-get install gcc-mingw-w64 g++-mingw-w64
+To build your project for Win32 you'll need `g++-mingw-w64`, `g++-mingw-w64` and `unzip` for extracting the SDL source code.
+
+```shell
+sudo apt-get install gcc-mingw-w64 g++-mingw-w64 unzip
 ```
 
-You'll also need to cross-compile SDL2 and install it wherever you like to keep your cross-compile libraries.
+You'll also need to cross-compile SDL2 and install it.
 
-```
+Grab the SDL2 source code and unzip it with the following commands:
+
+```shell
 wget https://www.libsdl.org/release/SDL2-2.0.10.zip
 unzip SDL2-2.0.10.zip
 cd SDL2-2.0.10
+```
+
+Then build and install it:
+
+```shell
 mkdir build.mingw
 cd build.mingw
 ../configure --target=x86_64-w64-mingw32 --host=x86_64-w64-mingw32 --build=x86_64--linux --prefix=/usr/local/cross-tools/x86_64-w64-mingw32/
@@ -90,15 +105,18 @@ make
 sudo make install
 ```
 
-Finally, from the root directory of your project:
+This will install the SDL2 development headers and libraries into `/usr/local/cross-tools/x86_64-w64-mingw32/` if you use a different directory then you will have to supply the SDL2 dir to the `cmake` command below using `-DSDL2_DIR=/usr/local/cross-tools/x86_64-w64-mingw32/lib/cmake/SDL2`
 
-```
+Finally, from the root directory of your project with the following commands:
+
+```shell
 mkdir build.mingw
 cd build.mingw
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../../../mingw.toolchain -DSDL2_DIR=/usr/local/cross-tools/x86_64-w64-mingw32/lib/cmake/SDL2
+cmake .. -DCMAKE_TOOLCHAIN_FILE=../../../mingw.toolchain
 make
-cp /usr/local/cross-tools/x86_64-w64-mingw32/bin/SDL2.dll .
 ```
+
+This will give you a `project-name.exe` in your build directory and will additionally copy the required `SDL2.dll`. Don't forget to include this if you want to share your game.
 
 ### Troubleshooting
 
