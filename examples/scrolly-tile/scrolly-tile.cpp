@@ -399,20 +399,20 @@ void new_game() {
 void init(void) {
     set_screen_mode(lores);
 #ifdef __AUDIO__
-    audio::channels[0].voices      = audio::audio_voice::NOISE;
-    audio::channels[0].frequency   = 4200;
-    audio::channels[0].attack_ms   = 1;
-    audio::channels[0].decay_ms    = 1;
-    audio::channels[0].sustain     = 0xffff;
-    audio::channels[0].release_ms  = 1;
-    audio::channels[0].trigger_attack();
+    channels[0].voices      = audio_voice::NOISE;
+    channels[0].frequency   = 4200;
+    channels[0].attack_ms   = 1;
+    channels[0].decay_ms    = 1;
+    channels[0].sustain     = 0xffff;
+    channels[0].release_ms  = 1;
+    channels[0].trigger_attack();
 
-    audio::channels[1].voices      = audio::audio_voice::SQUARE;
-    audio::channels[1].frequency   = 0;
-    audio::channels[1].attack_ms   = 30;
-    audio::channels[1].decay_ms    = 100;
-    audio::channels[1].sustain     = 0;
-    audio::channels[1].release_ms  = 0;
+    channels[1].voices      = audio_voice::SQUARE;
+    channels[1].frequency   = 0;
+    channels[1].attack_ms   = 30;
+    channels[1].decay_ms    = 100;
+    channels[1].sustain     = 0;
+    channels[1].release_ms  = 0;
 #endif
     state_update.init(update_state, 10, -1);
     state_update.start();
@@ -504,7 +504,7 @@ void update(uint32_t time_ms) {
         water_dist = 0;
     }
 #ifdef __AUDIO__
-    audio::channels[0].volume      = 4000 + (sin(float(time_ms) / 1000.0f) * 3000);
+    channels[0].volume      = 4000 + (sin(float(time_ms) / 1000.0f) * 3000);
 #endif
 
     if (game_state == enum_state::menu) {
@@ -601,14 +601,14 @@ void update(uint32_t time_ms) {
                 player_state = air;
                 player_jump_count--;
 #ifdef __AUDIO__
-                audio::channels[1].trigger_attack();
+                channels[1].trigger_attack();
                 jump_sweep = 1.0f;
 #endif
             }
         }
 #ifdef __AUDIO__
         if(jump_sweep > 0) {
-            audio::channels[1].frequency = 880 - (880.0f * jump_sweep);
+            channels[1].frequency = 880 - (880.0f * jump_sweep);
             jump_sweep -= 0.05f;
         }
 #endif
