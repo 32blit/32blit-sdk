@@ -180,7 +180,7 @@ void blit_init() {
     blit::debugf = blit_debugf;
     blit::now = HAL_GetTick;
     blit::random = HAL_GetRandom;
-    blit::audio::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
+    blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
     blit::set_screen_mode = display::set_screen_mode;
     display::set_screen_mode(blit::lores);
 
@@ -226,7 +226,7 @@ void blit_menu_update(uint32_t time) {
       case 1: // Volume
         global_volume += 1.0f / 256.0f;
         global_volume = std::fmin(1.0f, std::fmax(0.0f, global_volume));
-        blit::audio::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
+        blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
         break;
     }
   } else if (blit::buttons & blit::button::DPAD_LEFT ) {
@@ -238,7 +238,7 @@ void blit_menu_update(uint32_t time) {
       case 1: // Volume
         global_volume -= 1.0f / 256.0f;
         global_volume = std::fmin(1.0f, std::fmax(0.0f, global_volume));
-        blit::audio::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
+        blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
         break;
     }
   } else if (blit::buttons & changed_buttons & blit::button::A) {

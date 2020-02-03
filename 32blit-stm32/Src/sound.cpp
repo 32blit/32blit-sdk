@@ -14,7 +14,7 @@ void TIM6_DAC_IRQHandler(void) {
       __HAL_TIM_CLEAR_IT(&htim6, TIM_IT_UPDATE);
 
       // timer period elapsed, update audio sample
-      hdac1.Instance->DHR12R2 = blit::audio::get_audio_frame() >> 4;
+      hdac1.Instance->DHR12R2 = blit::get_audio_frame() >> 4;
     }
   }
 
