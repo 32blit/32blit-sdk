@@ -54,14 +54,14 @@ void init() {
   // set global volume
   audio::volume = 0x3fff;
   
-  fb.pen(rgba(0, 0, 0, 255));
+  fb.pen(RGBA(0, 0, 0, 255));
   fb.clear();  
 }
 
 uint16_t beat = 0;
 
 void render(uint32_t time_ms) {
-  fb.pen(rgba(20, 30, 40, 100));
+  fb.pen(RGBA(20, 30, 40, 100));
   fb.clear();
   
   // yeah, this is ugly... let's find a way to get a real
@@ -72,12 +72,12 @@ void render(uint32_t time_ms) {
     uint8_t n2 = notes[1][no] >> 4;
     uint8_t n3 = notes[2][no] >> 4;
 
-    fb.pen(rgba(255, 0, 0, 100));
-    fb.line(point(i, 120), point(i, 120 - n1));
-    fb.pen(rgba(0, 255, 0, 100));
-    fb.line(point(i, 120), point(i, 120 - n2));
-    fb.pen(rgba(0, 0, 255, 100));
-    fb.line(point(i, 120), point(i, 120 - n3));
+    fb.pen(RGBA(255, 0, 0, 100));
+    fb.line(Point(i, 120), Point(i, 120 - n1));
+    fb.pen(RGBA(0, 255, 0, 100));
+    fb.line(Point(i, 120), Point(i, 120 - n2));
+    fb.pen(RGBA(0, 0, 255, 100));
+    fb.line(Point(i, 120), Point(i, 120 - n3));
   }
 
   fb.watermark();  

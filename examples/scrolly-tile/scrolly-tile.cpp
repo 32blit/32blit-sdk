@@ -66,13 +66,13 @@ uint8_t tiles[16 * 15] = { 0 };
 
 uint32_t current_row = 0;
 
-timer state_update;
-point tile_offset(0, 0);
+Timer state_update;
+Point tile_offset(0, 0);
 
 
-vec2 player_position(80.0f, SCREEN_H - PLAYER_H);
-vec2 player_velocity(0.0f, 0.0f);
-vec2 jump_velocity(0.0f, -2.0f);
+Vec2 player_position(80.0f, SCREEN_H - PLAYER_H);
+Vec2 player_velocity(0.0f, 0.0f);
+Vec2 jump_velocity(0.0f, -2.0f);
 uint8_t player_jump_count = 0;
 uint32_t player_progress = 0;
 bool player_on_floor = false;
@@ -167,7 +167,7 @@ uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
     // But a large amount of this function is given over to rounding
     // corners depending upon the content of neighbouring tiles.
     // This could probably be rewritten to use a lookup table?
-    point offset = *(point *)args;
+    Point offset = *(Point *)args;
 
     auto tile_x = (x * TILE_W) + offset.x;
     auto tile_y = (y * TILE_H) + offset.y;
@@ -179,7 +179,7 @@ uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
     bool round_bl = (feature_map & (TILE_BELOW_LEFT | TILE_BELOW | TILE_LEFT)) == 0;
     bool round_br = (feature_map & (TILE_BELOW_RIGHT | TILE_BELOW | TILE_RIGHT)) == 0;
 
-    rgba color_base = hsv_to_rgba(((120 - tile_y) + 110.0f) / 120.0f, 0.5f, 0.8f);
+    RGBA color_base = hsv_to_rgba(((120 - tile_y) + 110.0f) / 120.0f, 0.5f, 0.8f);
 
     if(tile & TILE_SOLID) {
         // Draw tiles without anti-aliasing to save code bloat
@@ -192,8 +192,8 @@ uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
                 if(round_tr && px == TILE_W - 1 && py == 0) continue;
                 if(round_bl && px == 0 && py == TILE_H - 1) continue;
                 if(round_br && px == TILE_H - 1 && py == TILE_H - 1) continue;
-                fb.pen(color_base);
-                fb.pixel(point(tile_x + px, tile_y + py));
+                screen.pen(color_base);
+                screen.pixel(Point(tile_x + px, tile_y + py));
             }
         }
     } else {
@@ -201,12 +201,12 @@ uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
             // Draw the top left/right rounded inside corners
             // for an empty tile.
             if (feature_map & TILE_LEFT) {
-                fb.pen(color_base);
-                fb.pixel(point(tile_x, tile_y));
+                screen.pen(color_base);
+                screen.pixel(Point(tile_x, tile_y));
             }
             if (feature_map & TILE_RIGHT) {
-                fb.pen(color_base);
-                fb.pixel(point(tile_x + TILE_W - 1, tile_y));
+                screen.pen(color_base);
+                screen.pixel(Point(tile_x + TILE_W - 1, tile_y));
             }
         }
         if(feature_map & TILE_BELOW) {
@@ -214,18 +214,18 @@ uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
             // of this one then it's a little pocket we can fill with water!
             // TODO: Make this not look rubbish
             if(feature_map & TILE_LEFT && feature_map & TILE_RIGHT) {
-                fb.pen(rgba(200, 200, 255, 128));
-                fb.rectangle(rect(tile_x, tile_y + (TILE_H / 2), TILE_W, TILE_H / 2));
+                screen.pen(RGBA(200, 200, 255, 128));
+                screen.rectangle(Rect(tile_x, tile_y + (TILE_H / 2), TILE_W, TILE_H / 2));
             }
             // Draw the bottom left/right rounded inside corners
             // for an empty tile.
             if(feature_map & TILE_LEFT) {
-                fb.pen(color_base);
-                fb.pixel(point(tile_x, tile_y + TILE_H - 1));
+                screen.pen(color_base);
+                screen.pixel(Point(tile_x, tile_y + TILE_H - 1));
             }
             if(feature_map & TILE_RIGHT) {
-                fb.pen(color_base);
-                fb.pixel(point(tile_x + TILE_W - 1, tile_y + TILE_H - 1));
+                screen.pen(color_base);
+                screen.pixel(Point(tile_x + TILE_W - 1, tile_y + TILE_H - 1));
             }
         }
     }
@@ -325,7 +325,7 @@ void update_tiles() {
     }
 }
 
-void update_state(timer &timer) {
+void update_state(Timer &timer) {
     if (game_state == enum_state::menu) {
         tile_offset.y += 1;
     }
@@ -399,20 +399,20 @@ void new_game() {
 void init(void) {
     set_screen_mode(lores);
 #ifdef __AUDIO__
-    audio::channels[0].voices      = audio::audio_voice::NOISE;
-    audio::channels[0].frequency   = 4200;
-    audio::channels[0].attack_ms   = 1;
-    audio::channels[0].decay_ms    = 1;
-    audio::channels[0].sustain     = 0xffff;
-    audio::channels[0].release_ms  = 1;
-    audio::channels[0].trigger_attack();
+    channels[0].voices      = AudioVoice::NOISE;
+    channels[0].frequency   = 4200;
+    channels[0].attack_ms   = 1;
+    channels[0].decay_ms    = 1;
+    channels[0].sustain     = 0xffff;
+    channels[0].release_ms  = 1;
+    channels[0].trigger_attack();
 
-    audio::channels[1].voices      = audio::audio_voice::SQUARE;
-    audio::channels[1].frequency   = 0;
-    audio::channels[1].attack_ms   = 30;
-    audio::channels[1].decay_ms    = 100;
-    audio::channels[1].sustain     = 0;
-    audio::channels[1].release_ms  = 0;
+    channels[1].voices      = AudioVoice::SQUARE;
+    channels[1].frequency   = 0;
+    channels[1].attack_ms   = 30;
+    channels[1].decay_ms    = 100;
+    channels[1].sustain     = 0;
+    channels[1].release_ms  = 0;
 #endif
     state_update.init(update_state, 10, -1);
     state_update.start();
@@ -420,7 +420,7 @@ void init(void) {
 }
 
 uint8_t collide_player_lr(uint8_t tile, uint8_t x, uint8_t y, void *args) {
-    point offset = *(point *)args;
+    Point offset = *(Point *)args;
 
     auto tile_x = (x * TILE_W) + offset.x;
     auto tile_y = (y * TILE_H) + offset.y;
@@ -436,8 +436,8 @@ uint8_t collide_player_lr(uint8_t tile, uint8_t x, uint8_t y, void *args) {
         || ((PLAYER_TOP > tile_top) && PLAYER_TOP < tile_bottom)){
             // Collide the left-hand side of the tile right of player
             if(PLAYER_RIGHT > tile_left && (PLAYER_LEFT < tile_left)){
-                // fb.pen(rgba(255, 255, 255, 100));
-                // fb.rectangle(rect(tile_x, tile_y, TILE_W, TILE_H));
+                // screen.pen(rgba(255, 255, 255, 100));
+                // screen.rectangle(rect(tile_x, tile_y, TILE_W, TILE_H));
                 player_position.x = float(tile_left - PLAYER_W);
                 player_velocity.x = 0.0f;
                 player_state = wall_right;
@@ -447,8 +447,8 @@ uint8_t collide_player_lr(uint8_t tile, uint8_t x, uint8_t y, void *args) {
             }
             // Collide the right-hand side of the tile left of player
             if((PLAYER_LEFT < tile_right) && (PLAYER_RIGHT > tile_right)) {
-                // fb.pen(rgba(255, 255, 255, 100));
-                // fb.rectangle(rect(tile_x, tile_y, TILE_W, TILE_H));
+                // screen.pen(rgba(255, 255, 255, 100));
+                // screen.rectangle(rect(tile_x, tile_y, TILE_W, TILE_H));
                 player_position.x = float(tile_right);
                 player_velocity.x = 0.0f;
                 player_state = wall_left;
@@ -463,7 +463,7 @@ uint8_t collide_player_lr(uint8_t tile, uint8_t x, uint8_t y, void *args) {
 }
 
 uint8_t collide_player_ud(uint8_t tile, uint8_t x, uint8_t y, void *args) {
-    point offset = *(point *)args;
+    Point offset = *(Point *)args;
 
     auto tile_x = (x * TILE_W) + offset.x;
     auto tile_y = (y * TILE_H) + offset.y;
@@ -504,28 +504,28 @@ void update(uint32_t time_ms) {
         water_dist = 0;
     }
 #ifdef __AUDIO__
-    audio::channels[0].volume      = 4000 + (sin(float(time_ms) / 1000.0f) * 3000);
+    channels[0].volume      = 4000 + (sin(float(time_ms) / 1000.0f) * 3000);
 #endif
 
     if (game_state == enum_state::menu) {
-        if(pressed & button::B) {
+        if(pressed & Button::B) {
             new_game();
         }
-        else if(pressed & button::DPAD_UP) {
+        else if(pressed & Button::DPAD_UP) {
             current_random_source = RANDOM_TYPE_PRNG;
             new_level();
         }
-        else if(pressed & button::DPAD_DOWN) {
+        else if(pressed & Button::DPAD_DOWN) {
             current_random_source = RANDOM_TYPE_HRNG;
             new_level();
         }
-        else if(pressed & button::DPAD_RIGHT) {
+        else if(pressed & Button::DPAD_RIGHT) {
             if(current_random_source == RANDOM_TYPE_PRNG) {
                 current_random_seed++;
                 new_level();
             }
         }
-        else if(pressed & button::DPAD_LEFT) {
+        else if(pressed & Button::DPAD_LEFT) {
             if(current_random_source == RANDOM_TYPE_PRNG) {
                 current_random_seed--;
                 new_level();
@@ -536,7 +536,7 @@ void update(uint32_t time_ms) {
     }
 
     if(game_state == enum_state::dead){
-        if(pressed & button::B) {
+        if(pressed & Button::B) {
             game_state = enum_state::menu;
         }
         last_buttons = buttons;
@@ -549,18 +549,18 @@ void update(uint32_t time_ms) {
         static float jump_sweep = 0.0;
 #endif
 
-        vec2 movement(0, 0);
+        Vec2 movement(0, 0);
         water_level += 0.05f;
         jump_velocity.x = 0.0f;
 
         // Apply Gravity
         player_velocity.y += 0.098f;
 
-        if(buttons & button::DPAD_LEFT) {
+        if(buttons & Button::DPAD_LEFT) {
             player_velocity.x -= 0.1f;
             movement.x = -1;
 
-            if(buttons & button::DPAD_UP) {
+            if(buttons & Button::DPAD_UP) {
                 if(player_state == wall_left
                 || player_state == near_wall_left) {
                     player_velocity.y -= 0.12f;
@@ -568,11 +568,11 @@ void update(uint32_t time_ms) {
                 movement.y = -1;
             }
         }
-        if(buttons & button::DPAD_RIGHT) {
+        if(buttons & Button::DPAD_RIGHT) {
             player_velocity.x += 0.1f;
             movement.x = 1;
 
-            if(buttons & button::DPAD_UP) {
+            if(buttons & Button::DPAD_UP) {
                 if(player_state == wall_right
                 || player_state == near_wall_right) {
                     player_velocity.y -= 0.12f;
@@ -580,12 +580,12 @@ void update(uint32_t time_ms) {
                 movement.y = -1;
             }
         }
-        if(buttons & button::DPAD_DOWN) {
+        if(buttons & Button::DPAD_DOWN) {
             movement.y = 1;
         }
 
         if(player_jump_count){
-            if(pressed & button::A) {
+            if(pressed & Button::A) {
                 if(player_state == wall_left
                 || player_state == wall_right
                 || player_state == near_wall_left
@@ -601,14 +601,14 @@ void update(uint32_t time_ms) {
                 player_state = air;
                 player_jump_count--;
 #ifdef __AUDIO__
-                audio::channels[1].trigger_attack();
+                channels[1].trigger_attack();
                 jump_sweep = 1.0f;
 #endif
             }
         }
 #ifdef __AUDIO__
         if(jump_sweep > 0) {
-            audio::channels[1].frequency = 880 - (880.0f * jump_sweep);
+            channels[1].frequency = 880 - (880.0f * jump_sweep);
             jump_sweep -= 0.05f;
         }
 #endif
@@ -618,11 +618,11 @@ void update(uint32_t time_ms) {
             case wall_right:
             case near_wall_left:
             case near_wall_right:
-                if ((buttons & button::DPAD_LEFT) && (player_state == wall_left || player_state == near_wall_left)){
+                if ((buttons & Button::DPAD_LEFT) && (player_state == wall_left || player_state == near_wall_left)){
                     player_velocity.y *= 0.5f;
                     break;
                 }
-                if ((buttons & button::DPAD_RIGHT) && (player_state == wall_right || player_state == near_wall_right)){
+                if ((buttons & Button::DPAD_RIGHT) && (player_state == wall_right || player_state == near_wall_right)){
                     player_velocity.y *= 0.5f;
                     break;
                 }
@@ -682,73 +682,73 @@ void render_summary() {
     } else {
         text.append("Random Practice");
     }
-    fb.text(text, &minimal_font[0][0], point(10, (SCREEN_H / 2) + 20));
+    screen.text(text, &minimal_font[0][0], Point(10, (SCREEN_H / 2) + 20));
 
     if(current_random_source == RANDOM_TYPE_PRNG) {
         char buf[9];
         sprintf(buf, "%08" PRIX32, current_random_seed);
         text = "Level seed: ";
         text.append(buf);
-        fb.text(text, &minimal_font[0][0], point(10, (SCREEN_H / 2) + 30));
+        screen.text(text, &minimal_font[0][0], Point(10, (SCREEN_H / 2) + 30));
     }
 
     text = "Press B";
-    fb.text(text, &minimal_font[0][0], point(10, (SCREEN_H / 2) + 40));
+    screen.text(text, &minimal_font[0][0], Point(10, (SCREEN_H / 2) + 40));
 }
 
 void render(uint32_t time_ms) {
-    fb.pen(rgba(0, 0, 0));
-    fb.clear();
+    screen.pen(RGBA(0, 0, 0));
+    screen.clear();
     std::string text = "RAINBOW ASCENT";
 
     if (game_state == enum_state::menu) {
         for_each_tile(render_tile, (void *)&tile_offset);
 
         // Draw the player
-        fb.pen(rgba(255, 255, 255));
-        fb.rectangle(rect(player_position.x, player_position.y, PLAYER_W, PLAYER_H));
-        fb.pen(rgba(255, 50, 50));
-        fb.rectangle(rect(player_position.x, player_position.y, PLAYER_W, 1));
+        screen.pen(RGBA(255, 255, 255));
+        screen.rectangle(Rect(player_position.x, player_position.y, PLAYER_W, PLAYER_H));
+        screen.pen(RGBA(255, 50, 50));
+        screen.rectangle(Rect(player_position.x, player_position.y, PLAYER_W, 1));
 
-        fb.pen(rgba(0, 0, 0, 200));
-        fb.clear();
+        screen.pen(RGBA(0, 0, 0, 200));
+        screen.clear();
 
         uint8_t x = 10;
         for(auto c : text) {
             uint8_t y = 20 + (5.0f * sin((time_ms / 250.0f) + (float(x) / text.length() * 2.0f * M_PIf)));
-            rgba color_letter = hsv_to_rgba((x - 10) / 140.0f, 0.5f, 0.8f);
-            fb.pen(color_letter);
+            RGBA color_letter = hsv_to_rgba((x - 10) / 140.0f, 0.5f, 0.8f);
+            screen.pen(color_letter);
             char buf[2];
             buf[0] = c;
             buf[1] = '\0';
-            fb.text(buf, &minimal_font[0][0], point(x, y));
+            screen.text(buf, &minimal_font[0][0], Point(x, y));
             x += 10;
         }
 
-        fb.pen(rgba(255, 255, 255, 150));
+        screen.pen(RGBA(255, 255, 255, 150));
 
         render_summary();
 
         return;
     }
 
-    rgba color_water = hsv_to_rgba(((120 - 120) + 110.0f) / 120.0f, 1.0f, 0.5f);
+    RGBA color_water = hsv_to_rgba(((120 - 120) + 110.0f) / 120.0f, 1.0f, 0.5f);
     color_water.a = 255;
 
     if(water_level > 0){
-        fb.pen(color_water);
-        fb.rectangle(rect(0, SCREEN_H - water_level, SCREEN_W, water_level + 1));
+        screen.pen(color_water);
+        screen.rectangle(Rect(0, SCREEN_H - water_level, SCREEN_W, water_level + 1));
 
         for(auto x = 0; x < SCREEN_W; x++){
             uint16_t offset = x + uint16_t(sin(time_ms / 500.0f) * 5.0f);
             if((offset % 5) > 0){
-                fb.pixel(point(x, SCREEN_H - water_level - 1));
+                screen.pixel(Point(x, SCREEN_H - water_level - 1));
             }
             if(((offset + 2) % 5) == 0){
-                fb.pixel(point(x, SCREEN_H - water_level - 2));
+                screen.pixel(Point(x, SCREEN_H - water_level - 2));
             }
             if(((offset + 3) % 5) == 0){
-                fb.pixel(point(x, SCREEN_H - water_level - 2));
+                screen.pixel(Point(x, SCREEN_H - water_level - 2));
             }
         }
     }
@@ -756,69 +756,69 @@ void render(uint32_t time_ms) {
     for_each_tile(render_tile, (void *)&tile_offset);
 
     // Draw the player
-    fb.pen(rgba(255, 255, 255));
-    fb.rectangle(rect(player_position.x, player_position.y, PLAYER_W, PLAYER_H));
-    fb.pen(rgba(255, 50, 50));
-    fb.rectangle(rect(player_position.x, player_position.y, PLAYER_W, 1));
+    screen.pen(RGBA(255, 255, 255));
+    screen.rectangle(Rect(player_position.x, player_position.y, PLAYER_W, PLAYER_H));
+    screen.pen(RGBA(255, 50, 50));
+    screen.rectangle(Rect(player_position.x, player_position.y, PLAYER_W, 1));
 
     /*
     // Show number of active passages
     p = std::to_string(passage_width + 1);
     p.append(" passages");
-    fb.text(p, &minimal_font[0][0], point(2, 10));
+    screen.text(p, &minimal_font[0][0], point(2, 10));
     */
 
     if(water_level > 0){
         color_water.a = 100;
-        fb.pen(color_water);
-        fb.rectangle(rect(0, SCREEN_H - water_level, SCREEN_W, water_level + 1));
+        screen.pen(color_water);
+        screen.rectangle(Rect(0, SCREEN_H - water_level, SCREEN_W, water_level + 1));
 
         for(auto x = 0; x < SCREEN_W; x++){
             uint16_t offset = x + uint16_t(sin(time_ms / 500.0f) * 5.0f);
             if((offset % 5) > 0){
-                fb.pixel(point(x, SCREEN_H - water_level - 1));
+                screen.pixel(Point(x, SCREEN_H - water_level - 1));
             }
             if(((offset + 2) % 5) == 0){
-                fb.pixel(point(x, SCREEN_H - water_level - 2));
+                screen.pixel(Point(x, SCREEN_H - water_level - 2));
             }
             if(((offset + 3) % 5) == 0){
-                fb.pixel(point(x, SCREEN_H - water_level - 2));
+                screen.pixel(Point(x, SCREEN_H - water_level - 2));
             }
         }
     }
 
     if(game_state == enum_state::dead) {
-        fb.pen(rgba(128, 0, 0, 200));
-        fb.rectangle(rect(0, 0, SCREEN_W, SCREEN_H));
-        fb.pen(rgba(255, 0, 0, 255));
-        fb.text("YOU DIED!", &minimal_font[0][0], point((SCREEN_W / 2) - 20, (SCREEN_H / 2) - 4));
+        screen.pen(RGBA(128, 0, 0, 200));
+        screen.rectangle(Rect(0, 0, SCREEN_W, SCREEN_H));
+        screen.pen(RGBA(255, 0, 0, 255));
+        screen.text("YOU DIED!", &minimal_font[0][0], Point((SCREEN_W / 2) - 20, (SCREEN_H / 2) - 4));
 
         // Round stats
-        fb.pen(rgba(255, 255, 255));
+        screen.pen(RGBA(255, 255, 255));
 
         std::string text = "";
 
         text = "You climbed: ";
         text.append(std::to_string(player_progress));
         text.append("cm");
-        fb.text(text, &minimal_font[0][0], point(10, (SCREEN_H / 2) + 10));
+        screen.text(text, &minimal_font[0][0], Point(10, (SCREEN_H / 2) + 10));
 
         render_summary();
     }
     else
     {
         // Draw the HUD
-        fb.pen(rgba(255, 255, 255));
+        screen.pen(RGBA(255, 255, 255));
 
         text = std::to_string(player_progress);
         text.append("cm");
-        fb.text(text, &minimal_font[0][0], point(2, 2));
+        screen.text(text, &minimal_font[0][0], Point(2, 2));
 
         /*
         // State debug info
         text = "Jumps: ";
         text.append(std::to_string(player_jump_count));
-        fb.text(text, &minimal_font[0][0], point(2, 12));
+        screen.text(text, &minimal_font[0][0], point(2, 12));
 
         text = "State: ";
         switch(player_state){
@@ -841,7 +841,7 @@ void render(uint32_t time_ms) {
                 text.append("WALL R");
                 break;
         }
-        fb.text(text, &minimal_font[0][0], point(2, 22));
+        screen.text(text, &minimal_font[0][0], point(2, 22));
         */
     }
 }

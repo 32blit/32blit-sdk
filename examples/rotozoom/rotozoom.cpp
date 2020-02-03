@@ -39,7 +39,7 @@ void init() {
 void rotozoom(uint32_t time_ms) {
   static float angle = 0.0f;
 
-  static rgba palette[] = { rgba(0, 0, 0), rgba(255, 255, 255), rgba(0, 255, 0) };
+  static RGBA palette[] = { RGBA(0, 0, 0), RGBA(255, 255, 255), RGBA(0, 255, 0) };
 
   float c = cos(angle * M_PI / 180.0f);
   float s = sin(angle * M_PI / 180.0f);
@@ -47,10 +47,10 @@ void rotozoom(uint32_t time_ms) {
   angle += 0.25f;
   angle = angle >= 360.0f ? 0.0f : angle;
 
-  point p;
+  Point p;
 
-  int16_t w = fb.bounds.w;
-  int16_t h = fb.bounds.h;
+  int16_t w = screen.bounds.w;
+  int16_t h = screen.bounds.h;
 
   int16_t hw = w / 2;
   int16_t hh = h / 2;
@@ -64,11 +64,11 @@ void rotozoom(uint32_t time_ms) {
       uint8_t pi = logo[15 - u][v];
 
       // ~ 19ms/frame
-      // fb.pen(palette[pi]);
-      // fb.pixel(p);
+      // screen.pen(palette[pi]);
+      // screen.pixel(p);
 
       // ~ 13ms/frame
-      fb.bf((uint8_t *)&palette[pi], &fb, o, 1);
+      screen.bf((uint8_t *)&palette[pi], &screen, o, 1);
       o++;
     }
   }
@@ -76,13 +76,13 @@ void rotozoom(uint32_t time_ms) {
 
 int tick_count = 0;
 void render(uint32_t time_ms) {
-  fb.pen(rgba(0, 0, 0, 255));
-  fb.clear();
+  screen.pen(RGBA(0, 0, 0, 255));
+  screen.clear();
 
   tick_count++;
 
-  fb.alpha = 255;
-  fb.mask = nullptr;
+  screen.alpha = 255;
+  screen.mask = nullptr;
 
   uint32_t ms_start = now();
 
@@ -91,16 +91,16 @@ void render(uint32_t time_ms) {
   uint32_t ms_end = now();
 
   // draw FPS meter
-  fb.pen(rgba(0, 0, 0, 200));
-  fb.rectangle(rect(5, 5, 20, 16));
-  fb.pen(rgba(255, 0, 0));
+  screen.pen(RGBA(0, 0, 0, 200));
+  screen.rectangle(Rect(5, 5, 20, 16));
+  screen.pen(RGBA(255, 0, 0));
   std::string fms = std::to_string(ms_end - ms_start);
-  fb.text(fms, &minimal_font[0][0], rect(10, 10, 10, 16));
+  screen.text(fms, &minimal_font[0][0], Rect(10, 10, 10, 16));
 
   int block_size = 4;
   for (uint32_t i = 0; i < (ms_end - ms_start); i++) {
-    fb.pen(rgba(i * 5, 255 - (i * 5), 0));
-    fb.rectangle(rect(i * (block_size + 1) + 1, fb.bounds.h - block_size - 1, block_size, block_size));
+    screen.pen(RGBA(i * 5, 255 - (i * 5), 0));
+    screen.rectangle(Rect(i * (block_size + 1) + 1, screen.bounds.h - block_size - 1, block_size, block_size));
   }
 
 }

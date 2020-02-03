@@ -5,7 +5,7 @@
 
 namespace blit {
 
-  extern rgb LED;
+  extern RGB LED;
   extern float vibration;
   extern float backlight;
  

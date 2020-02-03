@@ -4,9 +4,9 @@
 #include "timer.hpp"
 
 namespace blit {
-  std::vector<timer *> timers;
+  std::vector<Timer *> timers;
 
-  timer::timer() {
+  Timer::Timer() {
   }
 
   /**
@@ -16,7 +16,7 @@ namespace blit {
    * @param duration Duration of the timer in milliseconds.
    * @param loops Number of times the timer should repeat, -1 = forever.
    */
-  void timer::init(timer_callback callback, uint32_t duration, int32_t loops = -1) {
+  void Timer::init(TimerCallback callback, uint32_t duration, int32_t loops = -1) {
     this->callback = callback;
     this->duration = duration;
     this->loops = loops;
@@ -26,7 +26,7 @@ namespace blit {
   /**
    * Start the timer.
    */
-  void timer::start() {
+  void Timer::start() {
     this->started = blit::now();
     this->state = RUNNING;
   }
@@ -34,7 +34,7 @@ namespace blit {
   /**
    * Stop the running timer.
    */
-  void timer::stop() {
+  void Timer::stop() {
     this->state = STOPPED;
   }
 
@@ -45,7 +45,7 @@ namespace blit {
    */
   void update_timers(uint32_t time) {
     for (auto t: timers) {
-      if (t->state == timer::RUNNING){
+      if (t->state == Timer::RUNNING){
         if (time > (t->started + t->duration)) { // timer triggered
           t->callback(*t);
 
@@ -57,7 +57,7 @@ namespace blit {
             t->loops--;
             t->started = time;
             if (t->loops == 0){
-              t->state = timer::FINISHED;
+              t->state = Timer::FINISHED;
             }
           }
         }

@@ -23,10 +23,10 @@ const uint16_t screen_height = 120;
 
 #define FADE_STEPS 3
 
-rgba fade_to[FADE_STEPS]{
-	rgba(128, 64, 15, 64),
-	rgba(15, 128, 15, 64),
-	rgba(15, 64, 128, 64)
+RGBA fade_to[FADE_STEPS]{
+	RGBA(128, 64, 15, 64),
+	RGBA(15, 128, 15, 64),
+	RGBA(15, 64, 128, 64)
 };
 
 uint16_t taps[FADE_STEPS]{
@@ -39,17 +39,17 @@ int8_t fade_current = 0;
 
 /* setup */
 void init() {
-	fb.alpha = 255;
-	fb.mask = nullptr;
-	fb.pen(fade_to[FADE_STEPS - 1]);
-	fb.clear();
+	screen.alpha = 255;
+	screen.mask = nullptr;
+	screen.pen(fade_to[FADE_STEPS - 1]);
+	screen.clear();
 
-	fb.pen(fade_to[0]);
+	screen.pen(fade_to[0]);
 }
 
 uint32_t lfsr = 1;
 uint16_t tap = 0x74b8;
-point fizzlefade() {
+Point fizzlefade() {
 	uint16_t x = lfsr & 0x00ff;
 	uint16_t y = (lfsr & 0x7f00) >> 8;
 
@@ -61,21 +61,21 @@ point fizzlefade() {
 	}
 
 	if (x - 1 < 160 && y < 120) {
-		return point(x - 1, y);
+		return Point(x - 1, y);
 	}
 
-	return point(-1, -1);
+	return Point(-1, -1);
 }
 
 void render(uint32_t time_ms) {
 	uint32_t ms_start = now();
 
-	fb.pen(fade_to[fade_current]);
+	screen.pen(fade_to[fade_current]);
 
 	for (int c = 0; c < 500; c++) {
-		point ff = fizzlefade();
+		Point ff = fizzlefade();
 		if (ff.x > -1) {
-			fb.pixel(ff);
+			screen.pixel(ff);
 		}
 		if (lfsr == 1) {
 			fade_current += 1;
@@ -86,11 +86,11 @@ void render(uint32_t time_ms) {
 	}
 
 	uint32_t ms_end = now();
-	fb.mask = nullptr;
-	fb.pen(rgba(255, 0, 0));
+	screen.mask = nullptr;
+	screen.pen(RGBA(255, 0, 0));
 	for (uint32_t i = 0; i < (ms_end - ms_start); i++) {
-		fb.pen(rgba(i * 5, 255 - (i * 5), 0));
-		fb.rectangle(rect(i * 3 + 1, 117, 2, 2));
+		screen.pen(RGBA(i * 5, 255 - (i * 5), 0));
+		screen.rectangle(Rect(i * 3 + 1, 117, 2, 2));
 	}
 }
 

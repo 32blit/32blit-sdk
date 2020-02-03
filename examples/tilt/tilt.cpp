@@ -12,15 +12,15 @@ using namespace blit;
 
 uint8_t grain_mask[160 * 120];
 
-bool is_occupied(const point &p) {
+bool is_occupied(const Point &p) {
   return grain_mask[p.x + (p.y * 160)] != 0;
 }
 
-void set_occupied(const point &p) {
+void set_occupied(const Point &p) {
   grain_mask[p.x + (p.y * 160)] = 1;
 }
 
-void clear_occupied(const point &p) {
+void clear_occupied(const Point &p) {
   grain_mask[p.x + (p.y * 160)] = 0;
 }
 
@@ -28,20 +28,20 @@ float deg2rad(float a) {
   return a * (M_PI / 180.0f);
 }
 
-vec2 gravity(0, 1000.0f);
+Vec2 gravity(0, 1000.0f);
 
-rgba colours[] = {
-  rgba(7, 254, 9),
-  rgba(230, 194, 41),
-  rgba(239, 45, 86),
-  rgba(241, 113, 5),
-  rgba(26, 143, 227),
-  rgba(201, 26, 227),
+RGBA colours[] = {
+  RGBA(7, 254, 9),
+  RGBA(230, 194, 41),
+  RGBA(239, 45, 86),
+  RGBA(241, 113, 5),
+  RGBA(26, 143, 227),
+  RGBA(201, 26, 227),
 };
 
 struct grain {
-  bool test_move(const point &tp) {
-    if (fb.bounds.contains(tp)) {
+  bool test_move(const Point &tp) {
+    if (screen.bounds.contains(tp)) {
       if ( (tp.x == (int)p.x && tp.y == (int)p.y) ||
            !is_occupied(tp) ) {
         return true;
@@ -59,8 +59,8 @@ struct grain {
     }
 
     // test point is along the velocity vector
-    vec2 np = p;
-    vec2 tp = p + (v * td);
+    Vec2 np = p;
+    Vec2 tp = p + (v * td);
     bool found = false;
     if ((found = test_move(tp))) {
       np = tp;
@@ -98,15 +98,15 @@ struct grain {
       set_occupied(np);
     }
     else {
-      v = vec2(0, 0);
+      v = Vec2(0, 0);
     }
 
     return true;
   }
 
 public:
-  vec2 p = vec2(0, 0);
-  vec2 v = vec2(0, 1);
+  Vec2 p = Vec2(0, 0);
+  Vec2 v = Vec2(0, 1);
   uint8_t c = 0;
 };
 
@@ -117,7 +117,7 @@ grain grains[GRAIN_COUNT];
 void init() {
   for (auto &g : grains) {
     do {
-      g.p = vec2(vec2(rand() % 160, rand() % 120));
+      g.p = Vec2(Vec2(rand() % 160, rand() % 120));
       g.c = rand() % 6;
     } while (is_occupied(g.p));    
   }
@@ -127,33 +127,33 @@ uint32_t update_time_ms = 0;
 
 void render(uint32_t time_ms) {
 
-  fb.pen(rgba(0, 0, 0, 255));
-  fb.clear();
+  screen.pen(RGBA(0, 0, 0, 255));
+  screen.clear();
 
   for (auto &g : grains) {
-    fb.pen(colours[g.c]);
-    fb.pixel(g.p);
+    screen.pen(colours[g.c]);
+    screen.pixel(g.p);
   }
 
-  fb.pen(rgba(255, 255, 255));
-  point centre = point(80, 60);
-  fb.line(centre, centre + (gravity * 20.0f));  
+  screen.pen(RGBA(255, 255, 255));
+  Point centre = Point(80, 60);
+  screen.line(centre, centre + (gravity * 20.0f));  
 
-  fb.watermark();
+  screen.watermark();
 
 
   // draw FPS meter
-  fb.alpha = 255;
-  fb.pen(rgba(0, 0, 0));
-  fb.rectangle(rect(1, 120 - 10, 12, 9));
-  fb.pen(rgba(255, 255, 255, 200));
+  screen.alpha = 255;
+  screen.pen(RGBA(0, 0, 0));
+  screen.rectangle(Rect(1, 120 - 10, 12, 9));
+  screen.pen(RGBA(255, 255, 255, 200));
   std::string fms = std::to_string(update_time_ms);
-  fb.text(fms, &minimal_font[0][0], rect(3, 120 - 9, 10, 16));
+  screen.text(fms, &minimal_font[0][0], Rect(3, 120 - 9, 10, 16));
 
   int block_size = 4;
   for (uint32_t i = 0; i < update_time_ms; i++) {
-    fb.pen(rgba(i * 5, 255 - (i * 5), 0));
-    fb.rectangle(rect(i * (block_size + 1) + 1 + 13, fb.bounds.h - block_size - 1, block_size, block_size));
+    screen.pen(RGBA(i * 5, 255 - (i * 5), 0));
+    screen.rectangle(Rect(i * (block_size + 1) + 1 + 13, screen.bounds.h - block_size - 1, block_size, block_size));
   }
 }
 

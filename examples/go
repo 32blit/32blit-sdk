@@ -25,7 +25,7 @@ then
 
 	echo " - flashing to device (make sure it's in DFU mode!)"
 
-	../../../../../32Blit.exe SAVE COM4 $PROJECT.bin
+	../../../../32Blit.exe SAVE COM4 $PROJECT.bin
 #	../../../tools/wsl-flash $PROJECT.dfu # > /dev/null
 
 	cd ..

@@ -8,25 +8,25 @@
 #include "mat3.hpp"
 #include "vec2.hpp"
 
-mat3::mat3() {
+Mat3::Mat3() {
   v00 = 0.0f; v10 = 0.0f; v20 = 0.0f;
   v01 = 0.0f; v11 = 0.0f; v21 = 0.0f;
   v02 = 0.0f; v12 = 0.0f; v22 = 0.0f;
 }
 
-mat3::mat3(const mat3 &m) = default;
+Mat3::Mat3(const Mat3 &m) = default;
 
-mat3 mat3::identity() {
-  mat3 m;
+Mat3 Mat3::identity() {
+  Mat3 m;
   m.v00 = 1.0f; m.v11 = 1.0f; m.v22 = 1.0f;
   return m;
 }
 
-mat3 mat3::rotation(float a) {
+Mat3 Mat3::rotation(float a) {
   float c = cosf(a);
   float s = sinf(a);
 
-  mat3 r = mat3::identity();
+  Mat3 r = Mat3::identity();
 
   r.v00 = c;
   r.v01 = s;
@@ -36,20 +36,20 @@ mat3 mat3::rotation(float a) {
   return r;
 }
 
-mat3 mat3::translation(vec2 v) {
-  mat3 r = mat3::identity();
+Mat3 Mat3::translation(Vec2 v) {
+  Mat3 r = Mat3::identity();
   r.v02 = v.x; r.v12 = v.y;
   return r;
 }
 
-mat3 mat3::scale(vec2 v) {
-  mat3 r = mat3::identity();
+Mat3 Mat3::scale(Vec2 v) {
+  Mat3 r = Mat3::identity();
   r.v00 = v.x; r.v11 = v.y;
   return r;
 }
 
-void mat3::inverse() {
-  mat3 m(*this);
+void Mat3::inverse() {
+  Mat3 m(*this);
 
   float invdet = 1.0f / 
     ( m.v00 * (m.v11 * m.v22 - m.v21 * m.v12) -
