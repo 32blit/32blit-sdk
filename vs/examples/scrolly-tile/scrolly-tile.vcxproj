@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{F9E896C3-C52E-47B9-96A8-58B819D69373}</ProjectGuid>
-    <RootNamespace>doomfire</RootNamespace>
+    <RootNamespace>scrollytile</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
