@@ -26,9 +26,11 @@ For more information about how to build on the various systems, refer to the pla
 
 Refer to the OS specific docs:
 
-* [Linux users](docs/Linux.md)
-* [Windows users](docs/Windows.md) or if you are [Visual Studio user](docs/VisualStudio.md)
-* [macOS users](docs/macOS.md)
+* [Linux](docs/Linux.md)
+* [Linux - ChromeOS](docs/ChromeOS.md)
+* [Windows - Visual Studio](docs/Windows-VisualStudio.md)
+* [Windows - WSL (Advanced)](docs/Windows-WSL.md)
+* [macOS](docs/macOS.md)
 
 If you want to run the examples in a browser, refer to the [Emscripten docs](docs/Emscripten.md)
 

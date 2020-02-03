@@ -2,7 +2,7 @@
 
 These instructions assume a basic knowledge of the Linux command-line, installing tools and compiling code from source.
 
-If you're more familiar with Visual Studio then you should [follow the instructions in VisualStudio.md](VisualStudio.md)
+If you're more familiar with Visual Studio then you should [follow the instructions in Windows-VisualStudio.md](Windows-VisualStudio.md)
 
 ## Setting Up
 
