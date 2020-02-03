@@ -158,7 +158,17 @@ bool HandleRX(void)
 
 std::string GuessPortName()
 {
-  // TODO: windows
+  TCHAR targetPath[1024];
+
+  for (int i = 1; i < 256; i++)
+  {
+    auto portName = "COM" + std::to_string(i);
+
+    // just return the first USB serial
+    if (QueryDosDevice(portName.c_str(), targetPath, 1024) && std::string(targetPath).find("USB") != std::string::npos)
+      return portName;
+  }
+
   return "";
 }
 
