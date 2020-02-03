@@ -144,6 +144,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio-test", "examples\audi
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text", "examples\text\text.vcxproj", "{479BBF48-BF4B-42AF-AF55-6D4E0A74C987}"
+	ProjectSection(ProjectDependencies) = postProject
+		{280015A3-83D7-416F-A181-7CF88BCCE12F} = {280015A3-83D7-416F-A181-7CF88BCCE12F}
+		{85DB89B5-DEA0-4429-B41E-0CAA7DB907BA} = {85DB89B5-DEA0-4429-B41E-0CAA7DB907BA}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
