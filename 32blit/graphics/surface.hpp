@@ -32,7 +32,7 @@ namespace blit {
   };
 #pragma pack(pop)
 
-  enum text_align {
+  enum TextAlign {
     left          = 0b0000,
     center_h      = 0b0100,
     right         = 0b1000,
@@ -114,8 +114,8 @@ namespace blit {
     void triangle(Point p1, Point p2, Point p3);
     void polygon(std::vector<Point> p);
 
-    void text(std::string message, const uint8_t *font, const Rect &r, bool variable = true, text_align align = text_align::top_left);
-    void text(std::string message, const uint8_t *font, const Point &p, bool variable = true, text_align align = text_align::top_left);
+    void text(std::string message, const uint8_t *font, const Rect &r, bool variable = true, TextAlign align = TextAlign::top_left);
+    void text(std::string message, const uint8_t *font, const Point &p, bool variable = true, TextAlign align = TextAlign::top_left);
     Size measure_text(std::string message, const uint8_t *font, bool variable = true);
     std::string wrap_text(std::string message, int32_t width, const uint8_t *font, bool variable = true);
 
