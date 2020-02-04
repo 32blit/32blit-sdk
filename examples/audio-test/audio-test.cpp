@@ -52,7 +52,7 @@ void init() {
   channels[2].release_ms  = 100;
 
   // set global volume
-  volume = 0x3fff;
+  // volume = 2048;
   
   screen.pen(RGBA(0, 0, 0, 255));
   screen.clear();  

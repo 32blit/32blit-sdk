@@ -42,7 +42,6 @@ namespace blit {
   #define CHANNEL_COUNT 8
 
   extern uint32_t sample_rate;
-  extern uint32_t frame_ms;       // number of milliseconds per audio frame (Q16)
   extern uint16_t volume;
 
   enum Waveform {
@@ -65,7 +64,6 @@ namespace blit {
   struct AudioChannel {
       uint8_t   waveforms     = 0;      // bitmask for enabled waveforms (see AudioWaveform enum for values)
       uint16_t  frequency     = 660;    // frequency of the voice (Hz)
-      uint32_t  adsr_phase_ms = 0;      // play time of current note in milliseconds used for ADSR calculations (Q16)
       uint16_t  volume        = 0xffff; // channel volume (default 50%)
 
       uint16_t  attack_ms     = 2;      // attack period
@@ -77,15 +75,41 @@ namespace blit {
   
       uint32_t  waveform_offset  = 0;   // voice offset (Q8)
 
-      uint16_t  adsr          = 0;
-      uint16_t  attack_start_adsr     = 0;
+      uint32_t  adsr_frame    = 0;      // number of frames into the current ADSR phase
+      uint32_t  adsr_end_frame = 0;     // frame target at which the ADSR changes to the next phase
+      uint32_t  adsr          = 0;
       ADSRPhase adsr_phase    = ADSRPhase::OFF;
+	    int32_t   adsr_step	    = 0;
 
-      void trigger_attack()  {adsr_phase_ms = 0; adsr_phase = ADSRPhase::ATTACK; attack_start_adsr = adsr;}
-      void trigger_sustain() {adsr_phase_ms = 0; adsr_phase = ADSRPhase::SUSTAIN;}
-      void trigger_decay()   {adsr_phase_ms = 0; adsr_phase = ADSRPhase::DECAY;}
-      void trigger_release() {adsr_phase_ms = 0; adsr_phase = ADSRPhase::RELEASE;}
-      void off()             {adsr_phase_ms = 0; adsr_phase = ADSRPhase::OFF;}
+      void trigger_attack()  {
+        adsr_frame = 0;
+		    adsr_phase = ADSRPhase::ATTACK;
+        adsr_end_frame = (attack_ms * sample_rate) / 1000;
+		    adsr_step = (int32_t(0xffffff) - int32_t(adsr)) / int32_t(adsr_end_frame);
+	    }
+	    void trigger_decay() {
+        adsr_frame = 0;
+		    adsr_phase = ADSRPhase::DECAY;
+        adsr_end_frame = (decay_ms * sample_rate) / 1000;
+		    adsr_step = (int32_t(sustain << 8) - int32_t(adsr)) / int32_t(adsr_end_frame);
+	    }
+      void trigger_sustain() {
+        adsr_frame = 0;
+		    adsr_phase = ADSRPhase::SUSTAIN;
+        adsr_end_frame = 0;
+		    adsr_step = 0;
+	    }
+      void trigger_release() {
+        adsr_frame = 0;
+		    adsr_phase = ADSRPhase::RELEASE;
+        adsr_end_frame = (release_ms * sample_rate) / 1000;
+		    adsr_step = (int32_t(0) - int32_t(adsr)) / int32_t(adsr_end_frame);
+	    }
+      void off() {
+        adsr_frame = 0;
+		    adsr_phase = ADSRPhase::OFF;
+		    adsr_step = 0;
+	    }
   };
 
   extern AudioChannel channels[CHANNEL_COUNT];
