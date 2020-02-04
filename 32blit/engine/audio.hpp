@@ -75,6 +75,10 @@ namespace blit {
   
       uint32_t  waveform_offset  = 0;   // voice offset (Q8)
 
+      bool      filter_enable = false;
+      uint16_t  filter_cutoff_frequency = 0;
+      int64_t   filter_last_sample = 0;
+
       uint32_t  adsr_frame    = 0;      // number of frames into the current ADSR phase
       uint32_t  adsr_end_frame = 0;     // frame target at which the ADSR changes to the next phase
       uint32_t  adsr          = 0;

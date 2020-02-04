@@ -3,6 +3,7 @@
 */
 #include "engine.hpp"
 #include "input.hpp"
+#include "../32blit.hpp"
 
 #include "audio.hpp"
 
@@ -49,7 +50,7 @@ namespace blit {
       if(channel.waveform_offset & 0xfffff000) {
         // if the waveform offset overflows then generate a new
         // random noise sample
-        channel.noise = (rand() & 0xffff) - (0xffff >> 1); 
+        channel.noise = (rand() & 0xffff) - 32768;
       }
 
       channel.waveform_offset &= 0xffff;
@@ -64,34 +65,47 @@ namespace blit {
         }
 
         if(channel.waveforms & Waveform::SAW) {
-          channel_sample += (int32_t)channel.waveform_offset - 0x7fff;
+          channel_sample += (int32_t)channel.waveform_offset - 32768;
         }
 
-        if(channel.waveforms & Waveform::TRIANGLE) {
-          if(channel.waveform_offset < 0x3fff) {
+        // creates a triangle wave of /\
+        //                              \/
+        // this is to approximate a sine wave of 0 - 2 * PI
+        if (channel.waveforms & Waveform::TRIANGLE) {
+          if (channel.waveform_offset < 16383) { // initial quarter up slope
             channel_sample += channel.waveform_offset * 2;
-          } else if(channel.waveform_offset < 0xbfff) {
-            channel_sample += (int32_t)0x7fff - (((int32_t)channel.waveform_offset - 0x3fff) * 2);              
-          } else {
-            channel_sample += -(int32_t)0x7fff + (((int32_t)channel.waveform_offset - 0xbfff) * 2);              
-          }            
+          }
+          else if (channel.waveform_offset < 49151) { // two quarters down slope
+            channel_sample += (int32_t)32767 - (((int32_t)channel.waveform_offset - 16383) * 2);
+          }
+          else { // final quarter up slope
+            channel_sample += -(int32_t)32767 + (((int32_t)channel.waveform_offset - 49151) * 2);
+          }
         }
 
         if(channel.waveforms & Waveform::SQUARE) {
-          channel_sample += ((channel.waveform_offset >> 8) < channel.pulse_width) ? 0x7fff : -0x7fff;
+          channel_sample &= ((channel.waveform_offset >> 8) < channel.pulse_width) ? 32767 : -32768;
         }
 
         if(channel.waveforms & Waveform::SINE) {
           // the sine_waveform sample contains 256 samples in
           // total so we'll just use the most significant bits
           // of the current waveform position to index into it
-          channel_sample += sine_waveform[channel.waveform_offset >> 8];
+          channel_sample &= sine_waveform[channel.waveform_offset >> 8];
         }
 
         channel_sample = (channel_sample * int32_t(channel.adsr >> 8)) >> 16;
 
         // apply channel volume
         channel_sample = (channel_sample * int32_t(channel.volume)) >> 16;
+
+        // apply channel filter
+        if (channel.filter_enable) {
+          float filter_epow = 1 - exp(-(1.0f / 22050.0f) * 2.0f * pi * int32_t(channel.filter_cutoff_frequency));
+          channel_sample += (channel_sample - channel.filter_last_sample) * filter_epow;
+        }
+
+        channel.filter_last_sample = channel_sample;
 
         // combine channel sample into the final sample
         sample += channel_sample;
@@ -101,8 +115,8 @@ namespace blit {
     sample = (sample * int32_t(volume)) >> 16;
 
     // clip result to 16-bit and convert to unsigned
-    sample = sample <= -0x7fff ? -0x7fff : (sample > 0x7fff ? 0x7fff : sample);      
-    sample += 0x7fff;
+    sample = sample <= -32768 ? -32768 : (sample > 32767 ? 32767 : sample);
+    sample += 32768;
 
     return sample;
   }
