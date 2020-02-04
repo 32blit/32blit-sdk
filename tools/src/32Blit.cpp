@@ -13,6 +13,12 @@
 #include <termios.h>
 #include <errno.h>
 #include <dirent.h>
+
+#ifdef __APPLE__
+#include <IOKit/IOKitLib.h>
+#include <IOKit/serial/IOSerialKeys.h>
+#include <IOKit/usb/USBSpec.h>
+#endif
 #endif
 
 template <int a, int b, int c, int d>
@@ -277,6 +283,60 @@ std::string GuessPortName()
 
   return "";
 
+#elif __APPLE__
+  auto classesToMatch = IOServiceMatching(kIOSerialBSDServiceValue);
+  if(!classesToMatch)
+    return "";
+
+  mach_port_t masterPort;
+  auto kernResult = IOMasterPort(MACH_PORT_NULL, &masterPort);
+  if(kernResult != KERN_SUCCESS)
+    return "";
+
+  io_iterator_t matchingServices;
+  kernResult = IOServiceGetMatchingServices(masterPort, classesToMatch, &matchingServices);
+  if(kernResult != KERN_SUCCESS)
+    return "";
+
+  io_object_t portService;
+  char devicePath[1024]{};
+  bool found = false;
+
+  while((portService = IOIteratorNext(matchingServices)) && !found)
+  {
+    // check product string
+    auto productString = (CFStringRef)IORegistryEntrySearchCFProperty(portService, kIOServicePlane, CFSTR(kUSBProductString), kCFAllocatorDefault, kIORegistryIterateRecursively | kIORegistryIterateParents);
+
+    if(!productString)
+    {
+      IOObjectRelease(portService);
+      continue;
+    }
+
+    if(CFStringCompare(productString, CFSTR("32Blit CDC"), 0) != 0)
+    {
+      // not a blit
+      CFRelease(productString);
+      IOObjectRelease(portService);
+      continue;
+    }
+
+    CFRelease(productString);
+
+    // get device path
+    auto devicePathAsCFString = (CFStringRef)IORegistryEntryCreateCFProperty(portService, CFSTR(kIOCalloutDeviceKey), kCFAllocatorDefault, 0);
+    if(devicePathAsCFString)
+    {
+      if(CFStringGetCString(devicePathAsCFString, devicePath, 1024, kCFStringEncodingASCII))
+        found = true;
+
+      CFRelease(devicePathAsCFString);
+    }
+
+    IOObjectRelease(portService);
+  }
+
+  return std::string(devicePath);
 #else
   // TODO: macOS
   return "";
