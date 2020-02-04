@@ -205,20 +205,22 @@ std::string Surface::wrap_text(std::string message, int32_t width, const uint8_t
       continue;
     }
 
-    current_x += get_char_width(font, message[i], variable);
+    int char_width = get_char_width(font, message[i], variable);
+    current_x += char_width;
 
     if (current_x > width) {
       if(!words || last_space == std::string::npos) {
         // no space to break at or we're not breaking on words
         ret += message.substr(copied_off, i - copied_off - 1) + "\n";
         copied_off = i - 1;
+        current_x = char_width;
       } else {
         // break at last space
         ret += message.substr(copied_off, last_space - copied_off) + "\n";
         copied_off = last_space + 1; // don't copy the space
         last_space = std::string::npos;
+        current_x = measure_text(message.substr(copied_off, i - copied_off + 1), font, variable).w;
       }
-      current_x = 0;
     }
   }
 
