@@ -80,11 +80,8 @@ namespace blit {
             char_width = char_width < x ? x : char_width;
           }
 
-          //p.x++;
           po++;
         }
-
-        //p.y++;
       }
 
       if (!variable)
@@ -119,8 +116,6 @@ namespace blit {
 
       char_off++;
     }
-
-    //return c.y + 8;
   }
 
   uint8_t get_char_width(const uint8_t *font, char c, bool variable) {
