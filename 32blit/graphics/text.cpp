@@ -95,7 +95,7 @@ namespace blit {
 
       // increment the cursor
       c.x += char_width;
-      if ((r.w && c.x > r.x + r.w) || (chr == 10)) {
+      if (chr == 10) {
         c.x = r.x;
         c.y += 9;
 
