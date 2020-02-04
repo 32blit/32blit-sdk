@@ -173,7 +173,7 @@ void tunnel_test(uint32_t time_ms) {
 
 			Vec2 uv(
 				(float(scanline) / wall_height) + x,
-				0.1
+				0.1f
 			);
 
 			uv.x = uv.x * weight;

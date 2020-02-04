@@ -288,11 +288,11 @@ void update(uint32_t time) {
 
 	if (pressed(Button::DPAD_LEFT)) {
 		flip_doom_guy = false;
-		player1.direction = rotate_vector(player1.direction, -0.02);
+		player1.direction = rotate_vector(player1.direction, -0.02f);
 	}
 	else if (pressed(Button::DPAD_RIGHT)) {
 		flip_doom_guy = true;
-		player1.direction = rotate_vector(player1.direction, 0.02);
+		player1.direction = rotate_vector(player1.direction, 0.02f);
 	}
 	else if (joystick.x < -0.1f || joystick.x > 0.1f) {
 		player1.direction = rotate_vector(player1.direction, joystick.x * 0.02f);
