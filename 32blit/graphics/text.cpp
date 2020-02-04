@@ -182,7 +182,7 @@ namespace blit {
   }
 }
 
-std::string Surface::wrap_text(std::string message, int32_t width, const uint8_t *font, bool variable) {
+std::string Surface::wrap_text(std::string message, int32_t width, const uint8_t *font, bool variable, bool words) {
   std::string ret;
 
   int current_x = 0;
@@ -196,8 +196,8 @@ std::string Surface::wrap_text(std::string message, int32_t width, const uint8_t
     current_x += get_char_width(font, message[i], variable);
 
     if (current_x > width) {
-      if(last_space == std::string::npos) {
-        // no space to break at
+      if(!words || last_space == std::string::npos) {
+        // no space to break at or we're not breaking on words
         ret += message.substr(copied_off, i - copied_off - 1) + "\n";
         copied_off = i - 1;
       } else {
