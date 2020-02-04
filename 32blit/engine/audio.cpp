@@ -91,7 +91,7 @@ namespace blit {
           // the sine_waveform sample contains 256 samples in
           // total so we'll just use the most significant bits
           // of the current waveform position to index into it
-          channel_sample &= sine_waveform[channel.waveform_offset >> 8];
+          channel_sample += sine_waveform[channel.waveform_offset >> 8];
         }
 
         channel_sample = (channel_sample * int32_t(channel.adsr >> 8)) >> 16;
@@ -101,7 +101,7 @@ namespace blit {
 
         // apply channel filter
         if (channel.filter_enable) {
-          float filter_epow = 1 - exp(-(1.0f / 22050.0f) * 2.0f * pi * int32_t(channel.filter_cutoff_frequency));
+          float filter_epow = 1 - exp(-(1.0f / 22050.0f) * 2.0f * math_pi * int32_t(channel.filter_cutoff_frequency));
           channel_sample += (channel_sample - channel.filter_last_sample) * filter_epow;
         }
 
