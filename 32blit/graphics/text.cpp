@@ -197,6 +197,14 @@ std::string Surface::wrap_text(std::string message, int32_t width, const uint8_t
     if (message[i] == ' ')
       last_space = i;
 
+    if(message[i] == '\n') {
+      ret += message.substr(copied_off, i - copied_off);
+      copied_off = i;
+      current_x = 0;
+      last_space = std::string::npos;
+      continue;
+    }
+
     current_x += get_char_width(font, message[i], variable);
 
     if (current_x > width) {
