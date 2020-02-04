@@ -19,8 +19,8 @@ namespace blit {
    * \param p
    * \param variable
    */
-  void Surface::text(std::string message, const uint8_t *font, const Point &p, bool variable, TextAlign align) {
-    text(message, font, Rect(p.x, p.y, 0, 0), variable, align);
+  void Surface::text(std::string message, const uint8_t *font, const Point &p, bool variable, TextAlign align, Rect clip) {
+    text(message, font, Rect(p.x, p.y, 0, 0), variable, align, clip);
   }
 
   /**
@@ -31,8 +31,12 @@ namespace blit {
    * \param r
    * \param variable
    */
-  void Surface::text(std::string message, const uint8_t *font, const Rect &r, bool variable, TextAlign align) {
+  void Surface::text(std::string message, const uint8_t *font, const Rect &r, bool variable, TextAlign align, Rect clip) {
     Point c(r.x, r.y); // caret position
+
+    // clamp clip rect to screen
+    clip.w = std::min(clip.w, bounds.w - clip.x);
+    clip.h = std::min(clip.h, bounds.h - clip.y);
 
     // check vertical alignment
     if ((align & 0b11) != TextAlign::top) {
@@ -69,13 +73,12 @@ namespace blit {
         uint32_t po = offset(Point(c.x, c.y + y));
 
         for (uint8_t x = 0; x < 6; x++) {
-
-          //if(clip.contains(p)) {
-            if (font_chr[x] & (1 << y)) {
+          if (font_chr[x] & (1 << y)) {
+            if(clip.contains(Point(c.x + x, c.y + y)))
               bf((uint8_t *)&_pen, this, po, 1);
-              char_width = char_width < x ? x : char_width;
-            }
-          //}
+
+            char_width = char_width < x ? x : char_width;
+          }
 
           //p.x++;
           po++;

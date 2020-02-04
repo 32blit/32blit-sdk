@@ -114,8 +114,8 @@ namespace blit {
     void triangle(Point p1, Point p2, Point p3);
     void polygon(std::vector<Point> p);
 
-    void text(std::string message, const uint8_t *font, const Rect &r, bool variable = true, TextAlign align = TextAlign::top_left);
-    void text(std::string message, const uint8_t *font, const Point &p, bool variable = true, TextAlign align = TextAlign::top_left);
+    void text(std::string message, const uint8_t *font, const Rect &r, bool variable = true, TextAlign align = TextAlign::top_left, Rect clip = Rect(0, 0, 1000, 1000));
+    void text(std::string message, const uint8_t *font, const Point &p, bool variable = true, TextAlign align = TextAlign::top_left, Rect clip = Rect(0, 0, 1000, 1000));
     Size measure_text(std::string message, const uint8_t *font, bool variable = true);
     std::string wrap_text(std::string message, int32_t width, const uint8_t *font, bool variable = true);
 
