@@ -31,28 +31,28 @@ void init() {
   // configure voices
 
   // melody track
-  channels[0].voices      = AudioVoice::TRIANGLE | AudioVoice::SQUARE;
+  channels[0].waveforms   = Waveform::TRIANGLE | Waveform::SQUARE;
   channels[0].attack_ms   = 16;
   channels[0].decay_ms    = 168;
   channels[0].sustain     = 0xafff;
   channels[0].release_ms  = 168;
 
   // rhythm track
-  channels[1].voices      = AudioVoice::SQUARE;
+  channels[1].waveforms   = Waveform::SQUARE;
   channels[1].attack_ms   = 38;
   channels[1].decay_ms    = 300;
   channels[1].sustain     = 0;
   channels[1].release_ms  = 0;
 
   // drum track
-  channels[2].voices       = AudioVoice::NOISE;
+  channels[2].waveforms   = Waveform::NOISE;
   channels[2].attack_ms   = 10;
   channels[2].decay_ms    = 750;
   channels[2].sustain     = 0;
   channels[2].release_ms  = 100;
 
   // set global volume
-  volume = 0x3fff;
+  // volume = 2048;
   
   screen.pen(RGBA(0, 0, 0, 255));
   screen.clear();  
