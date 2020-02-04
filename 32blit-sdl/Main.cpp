@@ -63,16 +63,16 @@ void handle_event(SDL_Event &event) {
 		case SDL_KEYDOWN: // fall-though
 		case SDL_KEYUP:
 			if (!blit_input->handle_keyboard(event.key.keysym.sym, event.type == SDL_KEYDOWN)) {
-				switch (event.key.keysym.sym) {
 #ifdef VIDEO_CAPTURE
+				switch (event.key.keysym.sym) {
 				case SDLK_r:
 					if (event.type == SDL_KEYDOWN && SDL_GetTicks() - last_record_startstop > 1000) {
 						if (blit_capture->recording()) blit_capture->stop();
 						else blit_capture->start();
 						last_record_startstop = SDL_GetTicks();
 					}
-#endif
 				}
+#endif
 			}
 			break;
 
