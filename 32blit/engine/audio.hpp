@@ -46,11 +46,11 @@ namespace blit {
 
   enum Waveform {
     NOISE     = 128, 
-    SQUARE    = 64, 
-    SAW       = 32, 
-    TRIANGLE  = 16, 
+    SQUARE    = 64,
+    SAW       = 32,
+    TRIANGLE  = 16,
     SINE      = 8,
-    WAVE      = 4    // to be implemented...
+    WAVE      = 1    // to be implemented...
   };
 
   enum class ADSRPhase {
@@ -70,10 +70,14 @@ namespace blit {
       uint16_t  decay_ms      = 6;      // decay period
       uint16_t  sustain       = 0xffff; // sustain volume
       uint16_t  release_ms    = 1;      // release period
-      uint16_t  pulse_width   = 0x80;   // duty cycle of square voice (default 50%)
+      uint16_t  pulse_width   = 0x7fff; // duty cycle of square wave (default 50%)
       int16_t   noise         = 0;      // current noise value
   
       uint32_t  waveform_offset  = 0;   // voice offset (Q8)
+
+      bool      filter_enable = false;
+      uint16_t  filter_cutoff_frequency = 0;
+      int64_t   filter_last_sample = 0;
 
       uint32_t  adsr_frame    = 0;      // number of frames into the current ADSR phase
       uint32_t  adsr_end_frame = 0;     // frame target at which the ADSR changes to the next phase
