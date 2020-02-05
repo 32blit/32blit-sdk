@@ -78,7 +78,7 @@ make flash-loader
 Install `dfu-util` from your package manager then enter:
 
 ```
-sudo dfu-util -a 0 -s 0x08000000 -D flash-loader.bin
+sudo dfu-util -a 0 -s 0x08000000 -D flash-loader/flash-loader.bin
 ```
 
 Followed by the name of the .bin file that you just built.
