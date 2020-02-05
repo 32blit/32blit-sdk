@@ -1,4 +1,4 @@
-# Building & Running on Linux or WSL + XMing
+# Building & Running on Linux
 
 First install the required tools:
 
