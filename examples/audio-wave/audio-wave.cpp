@@ -38,9 +38,9 @@ void buffCallBack();    //Declare our callback here instead of putting the whole
 void init() {
 
   // Setup channel
-  channels[0].waveforms   = Waveform::WAVE;           // Set type to WAVE
-  channels[0].sustain     = 0xffff;                   // Set sustain to max
-  channels[0].bufferRefreshCallback = &buffCallBack;  // Set callback address
+  channels[0].waveforms   = Waveform::WAVE;                // Set type to WAVE
+  channels[0].sustain     = 0xffff;                        // Set sustain to max
+  channels[0].callback_waveBufferRefresh = &buffCallBack;  // Set callback address
 
   screen.pen(RGBA(0, 0, 0, 255));
   screen.clear();
