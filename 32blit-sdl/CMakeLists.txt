@@ -14,7 +14,19 @@ if(EMSCRIPTEN)
 
 	set(SDL2_LIBRARIES "-s USE_SDL=2")
 else()
-	find_package(SDL2 REQUIRED)
+	# attempt to find the framework (find_package won't work as there's no config file)
+	if(APPLE)
+		find_library(SDL2_LIBRARIES NAMES SDL2)
+		if(SDL2_LIBRARIES)
+			find_path(SDL2_INCLUDE_DIRS NAMES SDL.h
+				PATHS ~/Library/Frameworks /Library/Frameworks
+			)
+		endif()
+	endif()
+
+	if(NOT SDL2_LIBRARIES)
+		find_package(SDL2 REQUIRED)
+	endif()
 
 	# If SDL2 was built using CMake, the generated configuration files define SDL2::* targets instead of the SDL2_* variables
 	if(TARGET SDL2::SDL2)

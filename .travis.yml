@@ -43,6 +43,14 @@ jobs:
         - tar -xf SDL2.tar.gz
         - sed -i "s|/opt/local|$PWD/SDL2-2.0.10|g" ./SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/sdl2-config.cmake
 
+    - name: "macOS"
+      os: osx
+      before_script:
+        - curl https://libsdl.org/release/SDL2-2.0.10.dmg -o SDL2.dmg
+        - hdiutil mount SDL2.dmg
+        - mkdir -p ~/Library/Frameworks
+        - cp -r /Volumes/SDL2/SDL2.framework ~/Library/Frameworks/
+
     - name: "Visual Studio (CMake)"
       os: windows
       env: CMAKE_ARGS=-DSDL2_DIR=$TRAVIS_BUILD_DIR/vs/sdl
