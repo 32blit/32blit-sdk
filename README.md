@@ -11,7 +11,7 @@ While the 32blit API is not finalised, this repository represents an overview of
 # You Will Need
 
 1. Some experience writing/compiling C/C++ software
-2. `gcc` for compiling test builds
+2. `gcc` or Visual Studio for compiling test builds
 3. `gcc-arm-none-eabi` for compiling STM32 builds
 4. `cmake` and `make` for building 32blit libraries and examples
 5. A DFU upload tool, on Windows it's easiest to just use "DfuSe Demonstration" (available from [st.com](https://www.st.com/en/development-tools/stsw-stm32080.html))
@@ -57,6 +57,8 @@ The `32blit-stm32` directory contains the STM32 HAL for 32blit, compatible with 
 The `examples` directory contains example projects, these can be built into both SDL or STM32 binaries and cover a range of techniques from simple concepts to complete games.
 
 Refer to the OS/platform specific documentation files in the `docs/` folder for instructions on how to compile and run these examples.
+
+The `template` directory contains a minimal game template you can copy to start your own project.
 
 ## Troubleshooting
 
