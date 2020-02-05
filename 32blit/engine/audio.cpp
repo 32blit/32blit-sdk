@@ -95,13 +95,13 @@ namespace blit {
         }
 
         if(channel.waveforms & Waveform::WAVE) {
-
-          channel.waveform_offset = channel.wave_buf_pos;
+          channel.waveform_offset = channel.wave_buf_pos;   // Unsure if needed?
           channel_sample += channel.wave_buffer[channel.wave_buf_pos] << 8;
-          if (channel.wave_buf_pos++ == 64) { //
+          if (channel.wave_buf_pos++ == 64) { // If the position is at the end, reset and hit up callback for more.
             channel.wave_buf_pos = 0;
             (*channel.callback_waveBufferRefresh)();
           }
+          waveform_count++;
         }
 
         channel_sample = channel_sample / waveform_count;
