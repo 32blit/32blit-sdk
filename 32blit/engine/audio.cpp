@@ -70,7 +70,7 @@ namespace blit {
           waveform_count++;
         }
 
-        // creates a triangle wave of /\ 
+        // creates a triangle wave of ^
         if (channel.waveforms & Waveform::TRIANGLE) {
           if (channel.waveform_offset < 0x7fff) { // initial quarter up slope
             channel_sample += int32_t(channel.waveform_offset * 2) - int32_t(0x7fff);
