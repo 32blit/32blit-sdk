@@ -299,7 +299,7 @@ std::string GuessPortName()
     return "";
 
   io_object_t portService;
-  char devicePath[1024]{};
+  char devicePath[1024];
   bool found = false;
 
   while((portService = IOIteratorNext(matchingServices)) && !found)
