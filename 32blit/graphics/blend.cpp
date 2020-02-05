@@ -38,9 +38,9 @@ namespace blit {
   //
   // single colour blend functions
   //
-  void RGBA_RGB(uint8_t *pen, surface *dest, uint32_t offset, uint16_t count) {
-    rgba      *ps = (rgba *)pen;              // source pointer
-    rgb       *pd = (rgb *)dest->data;        // destination pointer
+  void RGBA_RGB(uint8_t *pen, Surface *dest, uint32_t offset, uint16_t count) {
+    RGBA      *ps = (RGBA *)pen;              // source pointer
+    RGB       *pd = (RGB *)dest->data;        // destination pointer
     uint8_t   *pm = nullptr;                  // mask pointer
     uint16_t   ga = dest->alpha + 1;          // global alpha
 
@@ -65,9 +65,9 @@ namespace blit {
     } while (--count);
   }
 
-  void RGBA_RGBA(uint8_t *pen, surface *dest, uint32_t offset, uint16_t count) {
-    rgba      *ps = (rgba *)pen;              // source pointer
-    rgba      *pd = (rgba *)dest->data;       // destination pointer
+  void RGBA_RGBA(uint8_t *pen, Surface *dest, uint32_t offset, uint16_t count) {
+    RGBA      *ps = (RGBA *)pen;              // source pointer
+    RGBA      *pd = (RGBA *)dest->data;       // destination pointer
     uint8_t   *pm = nullptr;                  // mask pointer
     uint16_t   ga = dest->alpha + 1;          // global alpha
 
@@ -92,8 +92,8 @@ namespace blit {
     } while (--count);
   }
 
-  void RGBA_RGB565(uint8_t *pen, surface *dest, uint32_t offset, uint16_t count) {
-    rgba      *ps = (rgba *)pen;              // source pointer
+  void RGBA_RGB565(uint8_t *pen, Surface *dest, uint32_t offset, uint16_t count) {
+    RGBA      *ps = (RGBA *)pen;              // source pointer
     uint16_t  *pd = (uint16_t *)dest->data;   // destination pointer
     uint8_t   *pm = nullptr;                  // mask pointer
     uint16_t   ga = dest->alpha + 1;          // global alpha
@@ -147,7 +147,7 @@ namespace blit {
     }
   }
 
-  void RGBA_M(uint8_t *pen, surface *dest, uint32_t offset, uint16_t count) {
+  void RGBA_M(uint8_t *pen, Surface *dest, uint32_t offset, uint16_t count) {
     uint8_t v = *pen;
     uint8_t *pm = (uint8_t *)dest->data;
 
@@ -164,7 +164,7 @@ namespace blit {
     } while (--count);
   }
 
-  void P_P(uint8_t *pen, surface *dest, uint32_t offset, uint16_t count) {
+  void P_P(uint8_t *pen, Surface *dest, uint32_t offset, uint16_t count) {
     uint8_t  v = *pen;
     uint8_t *pd = (uint8_t *)dest->data;        // destination pointer
 
@@ -175,9 +175,9 @@ namespace blit {
   //
   // blit blend functions
   //
-  void RGBA_RGB(surface *src, int32_t src_offset, surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step) {
-    rgba      *ps = (rgba *)src->data;        // source pointer
-    rgb       *pd = (rgb *)dest->data;        // destination pointer
+  void RGBA_RGB(Surface *src, int32_t src_offset, Surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step) {
+    RGBA      *ps = (RGBA *)src->data;        // source pointer
+    RGB       *pd = (RGB *)dest->data;        // destination pointer
     uint8_t   *pm = nullptr;                  // mask pointer
     uint16_t   ga = dest->alpha + 1;          // global alpha
 
@@ -218,8 +218,8 @@ namespace blit {
     }
   }  
 
-  void RGBA_RGB565(surface *src, int32_t src_offset, surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step) {
-    rgba      *ps = (rgba *)src->data;        // source pointer
+  void RGBA_RGB565(Surface *src, int32_t src_offset, Surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step) {
+    RGBA      *ps = (RGBA *)src->data;        // source pointer
     uint16_t  *pd = (uint16_t *)dest->data;   // destination pointer
     uint8_t   *pm = nullptr;                  // mask pointer
     uint16_t   ga = dest->alpha + 1;          // global alpha
@@ -254,9 +254,9 @@ namespace blit {
   }
 
  
-  void P_RGBA(surface *src, int32_t src_offset, surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step) {
+  void P_RGBA(Surface *src, int32_t src_offset, Surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step) {
     uint8_t   *ps = (uint8_t *)src->data;     // source pointer
-    rgba      *pd = (rgba *)dest->data;        // destination pointer
+    RGBA      *pd = (RGBA *)dest->data;        // destination pointer
     uint8_t   *pm = nullptr;                  // mask pointer
     uint16_t   ga = dest->alpha + 1;          // global alpha
 
@@ -268,10 +268,10 @@ namespace blit {
     ps += src_offset;
     pd += dest_offset;
 
-    rgba* palette = src->palette.data();
+    RGBA* palette = src->palette.data();
 
     do {
-      rgba *pps = &palette[*ps];
+      RGBA *pps = &palette[*ps];
 
       COMBINE_ALPHA(a, pps->a, ga, pm)
 
@@ -287,9 +287,9 @@ namespace blit {
     } while (--count);
   }
   
-  void P_RGB(surface *src, int32_t src_offset, surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step) {
+  void P_RGB(Surface *src, int32_t src_offset, Surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step) {
     uint8_t   *ps = (uint8_t *)src->data;     // source pointer
-    rgb       *pd = (rgb *)dest->data;        // destination pointer
+    RGB       *pd = (RGB *)dest->data;        // destination pointer
     uint8_t   *pm = nullptr;                  // mask pointer
     uint16_t   ga = dest->alpha + 1;          // global alpha
 
@@ -301,10 +301,10 @@ namespace blit {
     ps += src_offset;
     pd += dest_offset;
 
-    rgba* palette = src->palette.data();
+    RGBA* palette = src->palette.data();
 
     do {
-      rgba *pps = &palette[*ps];
+      RGBA *pps = &palette[*ps];
 
       COMBINE_ALPHA(a, pps->a, ga, pm)
 
@@ -320,7 +320,7 @@ namespace blit {
     } while (--count);
   }
 
-  void P_RGB565(surface *src, int32_t src_offset, surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step) {
+  void P_RGB565(Surface *src, int32_t src_offset, Surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step) {
     uint8_t   *ps = (uint8_t *)src->data;     // source pointer
     uint16_t  *pd = (uint16_t *)dest->data;   // destination pointer
     uint8_t   *pm = nullptr;                  // mask pointer
@@ -334,10 +334,10 @@ namespace blit {
     ps += src_offset;
     pd += dest_offset;
 
-    rgba* palette = src->palette.data();
+    RGBA* palette = src->palette.data();
 
     do {
-      rgba *pps = &palette[*ps];
+      RGBA *pps = &palette[*ps];
 
       COMBINE_ALPHA(a, pps->a, ga, pm)
 
@@ -359,7 +359,7 @@ namespace blit {
     } while (--count);
   }
 
-  void P_P(surface *src, int32_t src_offset, surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step) {
+  void P_P(Surface *src, int32_t src_offset, Surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step) {
     uint8_t *ps = (uint8_t *)src->data;        // destination pointer
     uint8_t *pd = (uint8_t *)dest->data;        // destination pointer
 

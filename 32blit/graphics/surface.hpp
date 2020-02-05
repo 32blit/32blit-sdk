@@ -16,7 +16,7 @@
 
 namespace blit {
 
-  struct spritesheet;
+  struct SpriteSheet;
   struct sprite_p;
 
 #pragma pack(push, 1)
@@ -32,7 +32,7 @@ namespace blit {
   };
 #pragma pack(pop)
 
-  enum text_align {
+  enum TextAlign {
     left          = 0b0000,
     center_h      = 0b0100,
     right         = 0b1000,
@@ -52,82 +52,82 @@ namespace blit {
     bottom_right  = bottom   | right,
   };
 
-  struct surface {
+  struct Surface {
 
     uint8_t                        *data;                     // pointer to pixel data (for `rgba` format has pre-multiplied alpha)
-    size                            bounds;                   // size of surface in pixels
+    Size                            bounds;                   // size of surface in pixels
     
-    rect                            clip;                     // clip rectangle
+    Rect                            clip;                     // clip rectangle
 
-    rgba                            _pen;                     // current pen
+    RGBA                            _pen;                     // current pen
     uint8_t                         alpha = 255;              // global alpha for drawing operations
 
-    pixel_format                    format;                   // surface pixel format
+    PixelFormat                     format;                   // surface pixel format
     uint8_t                         stride;                   // bytes per pixel
     uint16_t                        row_stride;               // bytes per row
 
-    surface                        *mask = nullptr;           // mask pointer
+    Surface                        *mask = nullptr;           // mask pointer
 
-    spritesheet                    *sprites = nullptr;        // active spritesheet
+    SpriteSheet                    *sprites = nullptr;        // active spritesheet
 
-    std::vector<rgba>               palette;                  // palette entries (for paletted images)
+    std::vector<RGBA>               palette;                  // palette entries (for paletted images)
     uint8_t                         transparent_index = 0;    // index of transparent colour (for paletted surfaces)
 
     // blend functions
     blit::blend_span_func           bf;
-    std::array<blend_blit_func, 5>  bbf;
-    std::vector<surface *>          mipmaps;
+    std::array<BlendBlitFunc, 5>    bbf;
+    std::vector<Surface *>          mipmaps;
 
   private:
     void init();
     void load_from_packed(const packed_image *image);
 
   public:    
-    surface(uint8_t *data, const pixel_format &format, const size &bounds);
-    surface(uint8_t *data, const pixel_format &format, const packed_image *image);
+    Surface(uint8_t *data, const PixelFormat &format, const Size &bounds);
+    Surface(uint8_t *data, const PixelFormat&format, const packed_image *image);
 
-    surface *load(const packed_image *image);
+    Surface *load(const packed_image *image);
 
     // helpers to retrieve pointer to pixel
-    __attribute__((always_inline)) uint8_t* ptr(const rect &r)   { return data + r.x * stride + r.y * row_stride; }
-    __attribute__((always_inline)) uint8_t* ptr(const point &p)  { return data + p.x * stride + p.y * row_stride; }
+    __attribute__((always_inline)) uint8_t* ptr(const Rect &r)   { return data + r.x * stride + r.y * row_stride; }
+    __attribute__((always_inline)) uint8_t* ptr(const Point &p)  { return data + p.x * stride + p.y * row_stride; }
     __attribute__((always_inline)) uint8_t* ptr(const int32_t &x, const int32_t &y) { return data + x * stride + y * row_stride; }
 
-    __attribute__((always_inline)) uint32_t offset(const rect &r) { return r.x + r.y * bounds.w; }
-    __attribute__((always_inline)) uint32_t offset(const point &p) { return p.x + p.y * bounds.w; }
+    __attribute__((always_inline)) uint32_t offset(const Rect &r) { return r.x + r.y * bounds.w; }
+    __attribute__((always_inline)) uint32_t offset(const Point &p) { return p.x + p.y * bounds.w; }
     __attribute__((always_inline)) uint32_t offset(const int32_t &x, const int32_t &y) { return x + y * bounds.w; }    
 
     void generate_mipmaps(uint8_t depth);
 
-    void pen(rgba v);
+    void pen(RGBA v);
 
     void clear();
-    void pixel(const point &p);
-    void _pixel(const point &p);
+    void pixel(const Point &p);
+    void _pixel(const Point &p);
     void _pixel(const uint32_t &o);
-    void v_span(point p, int16_t c); 
-    void h_span(point p, int16_t c); 
-    void rectangle(const rect &r);
-    void circle(const point &c, int32_t r);
+    void v_span(Point p, int16_t c);
+    void h_span(Point p, int16_t c);
+    void rectangle(const Rect &r);
+    void circle(const Point &c, int32_t r);
 
-    void line(const point &p1, const point &p2);
-    void triangle(point p1, point p2, point p3);
-    void polygon(std::vector<point> p);
+    void line(const Point&p1, const Point&p2);
+    void triangle(Point p1, Point p2, Point p3);
+    void polygon(std::vector<Point> p);
 
-    void text(std::string message, const uint8_t *font, const rect &r, bool variable = true, text_align align = text_align::top_left);
-    void text(std::string message, const uint8_t *font, const point &p, bool variable = true, text_align align = text_align::top_left);
-    size measure_text(std::string message, const uint8_t *font, bool variable = true);
-    std::string wrap_text(std::string message, int32_t width, const uint8_t *font, bool variable = true);
+    void text(std::string message, const uint8_t *font, const Rect &r, bool variable = true, TextAlign align = TextAlign::top_left, Rect clip = Rect(0, 0, 1000, 1000));
+    void text(std::string message, const uint8_t *font, const Point &p, bool variable = true, TextAlign align = TextAlign::top_left, Rect clip = Rect(0, 0, 1000, 1000));
+    Size measure_text(std::string message, const uint8_t *font, bool variable = true);
+    std::string wrap_text(std::string message, int32_t width, const uint8_t *font, bool variable = true, bool words = true);
 
     /*void outline_circle(const point &c, int32_t r);
     
     */ 
-    void blit(surface *src, rect r, point p, bool hflip = false);
-    void stretch_blit(surface *src, rect sr, rect dr);
-    void stretch_blit_vspan(surface *src, point uv, uint16_t sc, point p, int16_t dc);
+    void blit(Surface *src, Rect r, Point p, bool hflip = false);
+    void stretch_blit(Surface *src, Rect sr, Rect dr);
+    void stretch_blit_vspan(Surface *src, Point uv, uint16_t sc, Point p, int16_t dc);
 
-    void custom_blend(surface *src, rect r, point p, std::function<void(uint8_t *psrc, uint8_t *pdest, int16_t c)> f);
-    void custom_modify(rect r, std::function<void(uint8_t *p, int16_t c)> f);
+    void custom_blend(Surface *src, Rect r, Point p, std::function<void(uint8_t *psrc, uint8_t *pdest, int16_t c)> f);
+    void custom_modify(Rect r, std::function<void(uint8_t *p, int16_t c)> f);
     void watermark();
 
 
@@ -139,24 +139,24 @@ namespace blit {
     //void sprite(spritesheet &ss, point sprite, point position, sprite_p &properties);
 
     
-    void blit_sprite(const rect &src, const point &p, const uint8_t &t = 0);
-    void stretch_blit_sprite(const rect &src, const rect &r, const uint8_t &t = 0);
+    void blit_sprite(const Rect &src, const Point &p, const uint8_t &t = 0);
+    void stretch_blit_sprite(const Rect&src, const Rect &r, const uint8_t &t = 0);
 
-    void sprite(const rect &sprite, const point &position, const uint8_t &transform = 0);
-    void sprite(const point &sprite, const point &position, const uint8_t &transform = 0);
-    void sprite(const uint16_t &sprite, const point &position, const uint8_t &transform = 0);
+    void sprite(const Rect &sprite, const Point &position, const uint8_t &transform = 0);
+    void sprite(const Point &sprite, const Point &position, const uint8_t &transform = 0);
+    void sprite(const uint16_t &sprite, const Point &position, const uint8_t &transform = 0);
 
-    void sprite(const rect &sprite, const point &position, const point &origin, const uint8_t &transform = 0);
-    void sprite(const point &sprite, const point &position, const point &origin, const uint8_t &transform = 0);
-    void sprite(const uint16_t &sprite, const point &position, const point &origin, const uint8_t &transform = 0);
+    void sprite(const Rect &sprite, const Point &position, const Point &origin, const uint8_t &transform = 0);
+    void sprite(const Point &sprite, const Point &position, const Point &origin, const uint8_t &transform = 0);
+    void sprite(const uint16_t &sprite, const Point &position, const Point &origin, const uint8_t &transform = 0);
 
-    void sprite(const rect &sprite, const point &position, const point &origin, const vec2 &scale, const uint8_t &transform = 0);
-    void sprite(const point &sprite, const point &position, const point &origin, const vec2 &scale, const uint8_t &transform = 0);
-    void sprite(const uint16_t &sprite, const point &position, const point &origin, const vec2 &scale, const uint8_t &transform = 0);
+    void sprite(const Rect &sprite, const Point &position, const Point &origin, const Vec2 &scale, const uint8_t &transform = 0);
+    void sprite(const Point &sprite, const Point &position, const Point &origin, const Vec2 &scale, const uint8_t &transform = 0);
+    void sprite(const uint16_t &sprite, const Point &position, const Point &origin, const Vec2 &scale, const uint8_t &transform = 0);
     
-    void sprite(const rect &sprite, const point &position, const point &origin, const float &scale, const uint8_t &transform = 0);
-    void sprite(const point &sprite, const point &position, const point &origin, const float &scale, const uint8_t &transform = 0);
-    void sprite(const uint16_t &sprite, const point &position, const point &origin, const float &scale, const uint8_t &transform = 0);
+    void sprite(const Rect &sprite, const Point &position, const Point &origin, const float &scale, const uint8_t &transform = 0);
+    void sprite(const Point &sprite, const Point &position, const Point &origin, const float &scale, const uint8_t &transform = 0);
+    void sprite(const uint16_t &sprite, const Point &position, const Point &origin, const float &scale, const uint8_t &transform = 0);
 
     //extern void texture_triangle(int32_t x1, int32_t y1, int32_t u1, int32_t v1, int32_t x2, int32_t y2, int32_t u2, int32_t v2, int32_t x3, int32_t y3, int32_t u3, int32_t v3);
     

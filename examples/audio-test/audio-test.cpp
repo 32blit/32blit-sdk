@@ -31,38 +31,38 @@ void init() {
   // configure voices
 
   // melody track
-  audio::channels[0].voices      = audio::audio_voice::TRIANGLE | audio::audio_voice::SQUARE;
-  audio::channels[0].attack_ms   = 16;
-  audio::channels[0].decay_ms    = 168;
-  audio::channels[0].sustain     = 0xafff;
-  audio::channels[0].release_ms  = 168;
+  channels[0].waveforms   = Waveform::TRIANGLE | Waveform::SQUARE;
+  channels[0].attack_ms   = 16;
+  channels[0].decay_ms    = 168;
+  channels[0].sustain     = 0xafff;
+  channels[0].release_ms  = 168;
 
   // rhythm track
-  audio::channels[1].voices      = audio::audio_voice::SQUARE;
-  audio::channels[1].attack_ms   = 38;
-  audio::channels[1].decay_ms    = 300;
-  audio::channels[1].sustain     = 0;
-  audio::channels[1].release_ms  = 0;
+  channels[1].waveforms   = Waveform::SQUARE;
+  channels[1].attack_ms   = 38;
+  channels[1].decay_ms    = 300;
+  channels[1].sustain     = 0;
+  channels[1].release_ms  = 0;
 
   // drum track
-  audio::channels[2].voices       = audio::audio_voice::NOISE;
-  audio::channels[2].attack_ms   = 10;
-  audio::channels[2].decay_ms    = 750;
-  audio::channels[2].sustain     = 0;
-  audio::channels[2].release_ms  = 100;
+  channels[2].waveforms   = Waveform::NOISE;
+  channels[2].attack_ms   = 10;
+  channels[2].decay_ms    = 750;
+  channels[2].sustain     = 0;
+  channels[2].release_ms  = 100;
 
   // set global volume
-  audio::volume = 0x3fff;
+  // volume = 2048;
   
-  fb.pen(rgba(0, 0, 0, 255));
-  fb.clear();  
+  screen.pen(RGBA(0, 0, 0, 255));
+  screen.clear();  
 }
 
 uint16_t beat = 0;
 
 void render(uint32_t time_ms) {
-  fb.pen(rgba(20, 30, 40, 100));
-  fb.clear();
+  screen.pen(RGBA(20, 30, 40, 100));
+  screen.clear();
   
   // yeah, this is ugly... let's find a way to get a real
   // waveform out of the audio functionality
@@ -72,15 +72,15 @@ void render(uint32_t time_ms) {
     uint8_t n2 = notes[1][no] >> 4;
     uint8_t n3 = notes[2][no] >> 4;
 
-    fb.pen(rgba(255, 0, 0, 100));
-    fb.line(point(i, 120), point(i, 120 - n1));
-    fb.pen(rgba(0, 255, 0, 100));
-    fb.line(point(i, 120), point(i, 120 - n2));
-    fb.pen(rgba(0, 0, 255, 100));
-    fb.line(point(i, 120), point(i, 120 - n3));
+    screen.pen(RGBA(255, 0, 0, 100));
+    screen.line(Point(i, 120), Point(i, 120 - n1));
+    screen.pen(RGBA(0, 255, 0, 100));
+    screen.line(Point(i, 120), Point(i, 120 - n2));
+    screen.pen(RGBA(0, 0, 255, 100));
+    screen.line(Point(i, 120), Point(i, 120 - n3));
   }
 
-  fb.watermark();  
+  screen.watermark();  
 } 
 
 void update(uint32_t time_ms) {
@@ -94,10 +94,10 @@ void update(uint32_t time_ms) {
 
   for(uint8_t i = 0; i < 3; i++) {
     if(notes[i][beat] > 0) {
-      audio::channels[i].frequency = notes[i][beat];
-      audio::channels[i].trigger_attack();
+      channels[i].frequency = notes[i][beat];
+      channels[i].trigger_attack();
     } else if (notes[i][beat] == -1) {
-      audio::channels[i].trigger_release();
+      channels[i].trigger_release();
     }
   }
 }

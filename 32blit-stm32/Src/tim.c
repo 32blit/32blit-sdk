@@ -28,7 +28,7 @@
 
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
-TIM_HandleTypeDef htim6;
+
 TIM_HandleTypeDef htim15;
 
 /* TIM3 init function */
@@ -125,23 +125,7 @@ void MX_TIM4_Init(void)
   HAL_TIM_MspPostInit(&htim4);
 
 }
-/* TIM6 init function */
-void MX_TIM6_Init(void)
-{
-  HAL_NVIC_EnableIRQ(TIM6_DAC_IRQn);
-  __TIM6_CLK_ENABLE();
 
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-
-  htim6.Instance = TIM6;
-  htim6.Init.Prescaler = 128;
-  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim6.Init.Period = 85;
-  if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
-  {
-    Error_Handler();
-  }
-}
 
 /* TIM15 init function */
 void MX_TIM15_Init(void)
@@ -222,17 +206,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 
   /* USER CODE END TIM4_MspInit 1 */
   }
-  else if(tim_baseHandle->Instance==TIM6)
-  {
-  /* USER CODE BEGIN TIM6_MspInit 0 */
-
-  /* USER CODE END TIM6_MspInit 0 */
-    /* TIM6 clock enable */
-    __HAL_RCC_TIM6_CLK_ENABLE();
-  /* USER CODE BEGIN TIM6_MspInit 1 */
-
-  /* USER CODE END TIM6_MspInit 1 */
-  }
+  
 }
 
 void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle)

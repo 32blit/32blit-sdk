@@ -13,11 +13,11 @@ void Map::add_layer(std::string name, std::vector<uint8_t> tiles) {
 }
 
 
-Map::Map(rect bounds) : bounds(bounds) {
+Map::Map(Rect bounds) : bounds(bounds) {
   flags.resize(bounds.w * bounds.h);
 }
 
-int32_t Map::tile_index(point p) {
+int32_t Map::tile_index(Point p) {
   return this->bounds.contains(p) ? p.x + p.y * this->bounds.w : -1;
 }
 
@@ -28,7 +28,7 @@ void MapLayer::add_flags(uint8_t t, uint8_t f) {
   }
 }
 
-void MapLayer::mipmap_texture_span(surface *dest, point s, uint16_t c, surface *sprites, vec2 swc, vec2 ewc) {
+void MapLayer::mipmap_texture_span(Surface *dest, Point s, uint16_t c, Surface *sprites, Vec2 swc, Vec2 ewc) {
   // calculate the mipmap index to use for drawing
   float span_length = (ewc - swc).length();
   float mipmap = ((span_length / float(c)) / 2.0f);
@@ -47,27 +47,27 @@ void MapLayer::mipmap_texture_span(surface *dest, point s, uint16_t c, surface *
   }
 }
 
-void MapLayer::texture_span(surface *dest, point s, uint16_t c, surface *sprites, vec2 swc, vec2 ewc, uint8_t mipmap_index = 0) {
-  blend_blit_func bbf = dest->bbf[sprites->format];
+void MapLayer::texture_span(Surface *dest, Point s, uint16_t c, Surface *sprites, Vec2 swc, Vec2 ewc, uint8_t mipmap_index = 0) {
+  BlendBlitFunc bbf = dest->bbf[static_cast<uint8_t>(sprites->format)];
 
   int world_size = map->bounds.w * 8;
   int tile_size = 8 >> mipmap_index;
   
-  vec2 wc = swc;
-  vec2 dwc = (ewc - swc) / float(c);
+  Vec2 wc = swc;
+  Vec2 dwc = (ewc - swc) / float(c);
   for (int x = s.x; x < s.x + c; x++) {   
     if (wc.x >= 0 && wc.x < world_size && wc.y >= 0 && wc.y < world_size) {
-      point pt(wc.x / 8, wc.y / 8); // tile point
+      Point pt(wc.x / 8, wc.y / 8); // tile point
 
       int16_t tile_id = tile_at(pt) - 1;
 
       if (tile_id != -1) {
-        point sp(
+        Point sp(
           (tile_id & 0b1111) * tile_size,
           (tile_id / 16) * tile_size
         ); // sprite sheet coordinates
 
-        point uv(
+        Point uv(
           (uint8_t(wc.x) & 0b111) >> mipmap_index,
           (uint8_t(wc.y) & 0b111) >> mipmap_index
         ); // texture coordinates
@@ -78,7 +78,7 @@ void MapLayer::texture_span(surface *dest, point s, uint16_t c, surface *sprites
         if (transform & 0b100) { uv.x = (tile_size - 1) - uv.x; }
         if (transform & 0b001) { uint8_t tmp = uv.x; uv.x = uv.y; uv.y = tmp; }
 
-        point t = sp + uv;
+        Point t = sp + uv;
         
         bbf(sprites, sprites->offset(t), dest, dest->offset(x, s.y), 1, 1);
       }
@@ -94,26 +94,26 @@ void MapLayer::add_flags(std::vector<uint8_t> ts, uint8_t f) {
   }
 }
 
-uint8_t MapLayer::tile_at(point p) {
+uint8_t MapLayer::tile_at(Point p) {
   int32_t ti = map->tile_index(p);
   return ti == -1 ? 0 : tiles[ti];
 }
 
-uint8_t MapLayer::transform_at(point p) {
+uint8_t MapLayer::transform_at(Point p) {
   int32_t ti = map->tile_index(p);
   return ti == -1 ? 0 : transforms[ti];
 }
 
-uint8_t Map::get_flags(point p) {
+uint8_t Map::get_flags(Point p) {
   int32_t ti = tile_index(p);
   return ti == -1 ? 0 : this->flags[ti];
 }
 
-bool Map::has_flag(point p, uint8_t f) {
+bool Map::has_flag(Point p, uint8_t f) {
   return this->get_flags(p) & f;
 }
 
-void Map::tiles_in_rect(rect vp, std::function<void(point)> f) {
+void Map::tiles_in_rect(Rect vp, std::function<void(Point)> f) {
   int minx = vp.x / 8;
   int maxx = ((vp.x + vp.w) / 8);
   int miny = vp.y / 8;
@@ -125,7 +125,7 @@ void Map::tiles_in_rect(rect vp, std::function<void(point)> f) {
   maxx = maxx > bounds.w - 1 ? bounds.w - 1 : maxx;
   maxy = maxy > bounds.h - 1 ? bounds.h - 1 : maxy;
 
-  point pt;
+  Point pt;
   for (pt.y = miny; pt.y <= maxy; pt.y++) {
     for (pt.x = minx; pt.x <= maxx; pt.x++) {
       f(pt);
