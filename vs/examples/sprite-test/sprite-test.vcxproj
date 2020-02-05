@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{FE6094EE-5371-4D9B-A90A-0C5D12632EBF}</ProjectGuid>
-    <RootNamespace>doomfire</RootNamespace>
+    <RootNamespace>spritetest</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

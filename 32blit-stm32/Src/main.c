@@ -21,7 +21,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
-#include "dac.h"
 #include "dma.h"
 #include "fatfs.h"
 #include "hrtim.h"
@@ -32,7 +31,10 @@
 #include "spi.h"
 #include "tim.h"
 #include "usb_device.h"
-#include "gpio.h"
+
+#include "gpio.hpp"
+#include "display.hpp"
+#include "sound.hpp"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -111,11 +113,15 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
+  gpio::init();
+  sound::init();
+
+  //MX_GPIO_Init();
+
   MX_DMA_Init();
   MX_TIM4_Init();
   MX_TIM3_Init();
-  MX_DAC1_Init();
+  //MX_DAC1_Init();
   MX_HRTIM_Init();
   MX_I2C4_Init();
 #if (INITIALISE_QSPI==1)
@@ -126,7 +132,7 @@ int main(void)
   //MX_USB_OTG_HS_USB_Init();
   MX_SPI1_Init();
   MX_SPI4_Init();
-  MX_TIM6_Init();
+  //MX_TIM6_Init();
   MX_TIM15_Init();
   MX_FATFS_Init();
   //MX_DMA2D_Init();

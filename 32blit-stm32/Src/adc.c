@@ -20,6 +20,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "adc.h"
 
+#include "gpio.hpp"
+
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
@@ -175,14 +177,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     __HAL_RCC_ADC12_CLK_ENABLE();
   
     __HAL_RCC_GPIOC_CLK_ENABLE();
-    /**ADC1 GPIO Configuration    
-    PC0     ------> ADC1_INP10
-    PC4     ------> ADC1_INP4 
-    */
-    GPIO_InitStruct.Pin = JOYSTICK_Y_Pin|JOYSTICK_X_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+ 
 
     /* ADC1 DMA Init */
     /* ADC1 Init */
@@ -224,11 +219,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     PC2_C     ------> ADC3_INP0
     PC3_C     ------> ADC3_INP1 
     */
-    GPIO_InitStruct.Pin = USER_LEFT1_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(USER_LEFT1_GPIO_Port, &GPIO_InitStruct);
-
+ 
     HAL_SYSCFG_AnalogSwitchConfig(SYSCFG_SWITCH_PC2, SYSCFG_SWITCH_PC2_OPEN);
 
     HAL_SYSCFG_AnalogSwitchConfig(SYSCFG_SWITCH_PC3, SYSCFG_SWITCH_PC3_OPEN);

@@ -3,10 +3,13 @@
 
 #include "32blit.h"
 #include "main.h"
-#include "display.h"
+
+#include "sound.hpp"
+#include "display.hpp"
+#include "gpio.hpp"
+
 
 #include "adc.h"
-#include "dac.h"
 #include "tim.h"
 #include "rng.h"
 #include "spi.h"
@@ -44,17 +47,11 @@ uint32_t flip_cycle_count = 0;
 float global_volume = 0.5f;
 float volume_log_base = 2.0f;
 
-static blit::screen_mode mode = blit::screen_mode::lores;
 
-/* configure the screen surface to point at the reserved LTDC framebuffer */
-surface __ltdc((uint8_t *)&__ltdc_start, pixel_format::RGB565, size(320, 240));
-
-surface __fb_hires((uint8_t *)&__fb_start, pixel_format::RGB565, size(320, 240));
-surface __fb_lores((uint8_t *)&__fb_start, pixel_format::RGBA, size(160, 120));
 
 void DFUBoot(void)
 {
-  // Set the special magic word value that's checked by the assembly entry point upon boot
+  // Set the special magic word value that's checked by the assembly entry Point upon boot
   // This will trigger a jump into DFU mode upon reboot
   *((uint32_t *)0x2001FFFC) = 0xCAFEBABE; // Special Key to End-of-RAM
 
@@ -73,18 +70,11 @@ int blit_debugf(const char * psFormatString, ...)
 
 void blit_debug(std::string message) {
 	printf(message.c_str());
-  fb.pen(rgba(255, 255, 255));
-  fb.text(message, &minimal_font[0][0], point(0, 0));
+  screen.pen(RGBA(255, 255, 255));
+  screen.text(message, &minimal_font[0][0], Point(0, 0));
 }
 
-uint32_t audio_tick_cycle_count = 0;
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-  if(htim->Instance == TIM6) {    
-    uint32_t scc = DWT->CYCCNT;
-    hdac1.Instance->DHR12R2 = blit::audio::get_audio_frame() >> 4;
-    audio_tick_cycle_count = DWT->CYCCNT - scc;
-  }
-}
+
 
 void blit_tick() {
   if(display::needs_render) {
@@ -154,11 +144,11 @@ void hook_render(uint32_t time) {
   */
   ::render(time);
 
-  blit::fb.pen(rgba(255, 255, 255));
+  blit::screen.pen(RGBA(255, 255, 255));
   for(auto i = 0; i < ADC_BUFFER_SIZE; i++) {
     int x = i / 8;
     int y = i % 8;
-    blit::fb.text(std::to_string(adc1data[i]), &minimal_font[0][0], point(x * 30, y * 10));
+    blit::screen.text(std::to_string(adc1data[i]), &minimal_font[0][0], Point(x * 30, y * 10));
   }
 }
 
@@ -171,8 +161,6 @@ void blit_init() {
     HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc1data, ADC_BUFFER_SIZE);
     HAL_ADC_Start_DMA(&hadc3, (uint32_t *)adc3data, ADC_BUFFER_SIZE);
 
-    HAL_TIM_Base_Start_IT(&htim6);
-    HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
     
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     DWT->CYCCNT = 0;
@@ -186,7 +174,7 @@ void blit_init() {
     blit::debugf = blit_debugf;
     blit::now = HAL_GetTick;
     blit::random = HAL_GetRandom;
-    blit::audio::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
+    blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
     blit::set_screen_mode = display::set_screen_mode;
     display::set_screen_mode(blit::lores);
 
@@ -213,17 +201,17 @@ int menu_item = 0;
 void blit_menu_update(uint32_t time) {
   static uint32_t last_buttons = 0;
   uint32_t changed_buttons = blit::buttons ^ last_buttons;
-  if(blit::buttons & changed_buttons & blit::button::DPAD_UP) {
+  if(blit::buttons & changed_buttons & blit::Button::DPAD_UP) {
     menu_item -= 1;
     if(menu_item < 0){
       menu_item = 0;
     }
-  } else if (blit::buttons & changed_buttons & blit::button::DPAD_DOWN) {
+  } else if (blit::buttons & changed_buttons & blit::Button::DPAD_DOWN) {
     menu_item += 1;
     if(menu_item > 4){
       menu_item = 4;
     }
-  } else if (blit::buttons & blit::button::DPAD_RIGHT ) {
+  } else if (blit::buttons & blit::Button::DPAD_RIGHT ) {
     switch(menu_item) {
       case 0: // Backlight
         blit::backlight += 1.0f / 256.0f;
@@ -232,10 +220,10 @@ void blit_menu_update(uint32_t time) {
       case 1: // Volume
         global_volume += 1.0f / 256.0f;
         global_volume = std::fmin(1.0f, std::fmax(0.0f, global_volume));
-        blit::audio::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
+        blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
         break;
     }
-  } else if (blit::buttons & blit::button::DPAD_LEFT ) {
+  } else if (blit::buttons & blit::Button::DPAD_LEFT ) {
     switch(menu_item) {
       case 0: // Brightness
         blit::backlight -= 1.0f / 256.0f;
@@ -244,10 +232,10 @@ void blit_menu_update(uint32_t time) {
       case 1: // Volume
         global_volume -= 1.0f / 256.0f;
         global_volume = std::fmin(1.0f, std::fmax(0.0f, global_volume));
-        blit::audio::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
+        blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
         break;
     }
-  } else if (blit::buttons & changed_buttons & blit::button::A) {
+  } else if (blit::buttons & changed_buttons & blit::Button::A) {
       switch(menu_item) {
         case 2:
           DFUBoot();
@@ -268,112 +256,112 @@ void blit_menu_render(uint32_t time) {
   ::render(time);
   int screen_width = 160;
   int screen_height = 120;
-  if (display::mode == blit::screen_mode::hires) {
+  if (display::mode == blit::ScreenMode::hires) {
     screen_width = 320;
     screen_height = 240;
   }
 
-  const rgba bar_background_color = rgba(40, 40, 60);
+  const RGBA bar_background_color = RGBA(40, 40, 60);
 
-  fb.pen(rgba(30, 30, 50, 200));
-  fb.clear();
+  screen.pen(RGBA(30, 30, 50, 200));
+  screen.clear();
 
-  fb.pen(rgba(255, 255, 255));
+  screen.pen(RGBA(255, 255, 255));
 
-  fb.text("System Menu", &minimal_font[0][0], point(5, 5));
+  screen.text("System Menu", &minimal_font[0][0], Point(5, 5));
 
-  fb.text("bat", &minimal_font[0][0], point(screen_width / 2, 5));
+  screen.text("bat", &minimal_font[0][0], Point(screen_width / 2, 5));
   uint16_t battery_meter_width = 55;
   battery_meter_width = float(battery_meter_width) * (blit::battery - 3.0f) / 1.1f;
   battery_meter_width = std::max((uint16_t)0, std::min((uint16_t)55, battery_meter_width));
 
-  fb.pen(bar_background_color);
-  fb.rectangle(rect((screen_width / 2) + 20, 6, 55, 5));
+  screen.pen(bar_background_color);
+  screen.rectangle(Rect((screen_width / 2) + 20, 6, 55, 5));
 
   switch(battery_vbus_status){
     case 0b00: // Unknown
-        fb.pen(rgba(255, 128, 0));
+        screen.pen(RGBA(255, 128, 0));
         break;
     case 0b01: // USB Host
-        fb.pen(rgba(0, 255, 0));
+        screen.pen(RGBA(0, 255, 0));
         break;
     case 0b10: // Adapter Port
-        fb.pen(rgba(0, 255, 0));
+        screen.pen(RGBA(0, 255, 0));
         break;
     case 0b11: // OTG
-        fb.pen(rgba(255, 0, 0));
+        screen.pen(RGBA(255, 0, 0));
         break;
   }
-  fb.rectangle(rect((screen_width / 2) + 20, 6, battery_meter_width, 5));
+  screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_meter_width, 5));
   if(battery_charge_status == 0b01 || battery_charge_status == 0b10){
     uint16_t battery_fill_width = uint32_t(time / 100.0f) % battery_meter_width;
     battery_fill_width = std::max((uint16_t)0, std::min((uint16_t)battery_meter_width, battery_fill_width));
-    fb.pen(rgba(100, 255, 200));
-    fb.rectangle(rect((screen_width / 2) + 20, 6, battery_fill_width, 5));
+    screen.pen(RGBA(100, 255, 200));
+    screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_fill_width, 5));
   }
 
   // Horizontal Line
-  fb.pen(rgba(255, 255, 255));
-  fb.rectangle(rect(0, 15, screen_width, 1));
+  screen.pen(RGBA(255, 255, 255));
+  screen.rectangle(Rect(0, 15, screen_width, 1));
 
   if(menu_item == 0){
-    fb.pen(rgba(50, 50, 70));
-    fb.rectangle(rect(0, 19, screen_width, 9));
-    fb.pen(rgba(255, 255, 255));
+    screen.pen(RGBA(50, 50, 70));
+    screen.rectangle(Rect(0, 19, screen_width, 9));
+    screen.pen(RGBA(255, 255, 255));
   }
 
   // menu bar
 
 
-  fb.text("Backlight", &minimal_font[0][0], point(5, 20));
-  fb.pen(bar_background_color);
-  fb.rectangle(rect(screen_width / 2, 21, 75, 5));
-  fb.pen(rgba(255, 255, 255));
-  fb.rectangle(rect(screen_width / 2, 21, 75 * blit::backlight, 5));
+  screen.text("Backlight", &minimal_font[0][0], Point(5, 20));
+  screen.pen(bar_background_color);
+  screen.rectangle(Rect(screen_width / 2, 21, 75, 5));
+  screen.pen(RGBA(255, 255, 255));
+  screen.rectangle(Rect(screen_width / 2, 21, 75 * blit::backlight, 5));
 
   if(menu_item == 1){
-    fb.pen(rgba(50, 50, 70));
-    fb.rectangle(rect(0, 29, screen_width, 9));
-    fb.pen(rgba(255, 255, 255));
+    screen.pen(RGBA(50, 50, 70));
+    screen.rectangle(Rect(0, 29, screen_width, 9));
+    screen.pen(RGBA(255, 255, 255));
   }
 
-  fb.text("Volume", &minimal_font[0][0], point(5, 30));
-  fb.pen(bar_background_color);
-  fb.rectangle(rect(screen_width / 2, 31, 75, 5));
-  fb.pen(rgba(255, 255, 255));
-  fb.rectangle(rect(screen_width / 2, 31, 75 * global_volume, 5));
+  screen.text("Volume", &minimal_font[0][0], Point(5, 30));
+  screen.pen(bar_background_color);
+  screen.rectangle(Rect(screen_width / 2, 31, 75, 5));
+  screen.pen(RGBA(255, 255, 255));
+  screen.rectangle(Rect(screen_width / 2, 31, 75 * global_volume, 5));
 
   if(menu_item == 2){
-    fb.pen(rgba(50, 50, 70));
-    fb.rectangle(rect(0, 39, screen_width, 9));
-    fb.pen(rgba(255, 255, 255));
+    screen.pen(RGBA(50, 50, 70));
+    screen.rectangle(Rect(0, 39, screen_width, 9));
+    screen.pen(RGBA(255, 255, 255));
   }
 
-  fb.text("DFU", &minimal_font[0][0], point(5, 40));
-  fb.text("Press A", &minimal_font[0][0], point(screen_width / 2, 40));
+  screen.text("DFU", &minimal_font[0][0], Point(5, 40));
+  screen.text("Press A", &minimal_font[0][0], Point(screen_width / 2, 40));
 
   if(menu_item == 3){
-    fb.pen(rgba(50, 50, 70));
-    fb.rectangle(rect(0, 49, screen_width, 9));
-    fb.pen(rgba(255, 255, 255));
+    screen.pen(RGBA(50, 50, 70));
+    screen.rectangle(Rect(0, 49, screen_width, 9));
+    screen.pen(RGBA(255, 255, 255));
   }
 
-  fb.text("Shipping", &minimal_font[0][0], point(5, 50));
-  fb.text("Press A", &minimal_font[0][0], point(screen_width / 2, 50));
+  screen.text("Shipping", &minimal_font[0][0], Point(5, 50));
+  screen.text("Press A", &minimal_font[0][0], Point(screen_width / 2, 50));
 
 
   if(menu_item == 4){
-    fb.pen(rgba(50, 50, 70));
-    fb.rectangle(rect(0, 59, screen_width, 9));
-    fb.pen(rgba(255, 255, 255));
+    screen.pen(RGBA(50, 50, 70));
+    screen.rectangle(Rect(0, 59, screen_width, 9));
+    screen.pen(RGBA(255, 255, 255));
   }
 
-  fb.text("Switch Exe", &minimal_font[0][0], point(5, 60));
-  fb.text("Press A", &minimal_font[0][0], point(screen_width / 2, 60));
+  screen.text("Switch Exe", &minimal_font[0][0], Point(5, 60));
+  screen.text("Press A", &minimal_font[0][0], Point(screen_width / 2, 60));
 
   // Horizontal Line
-  fb.pen(rgba(255, 255, 255));
-  fb.rectangle(rect(0, screen_height - 15, screen_width, 1));
+  screen.pen(RGBA(255, 255, 255));
+  screen.rectangle(Rect(0, screen_height - 15, screen_width, 1));
 
 }
 
@@ -528,7 +516,7 @@ void blit_process_input() {
       tilt_z += acceleration_data_buffer[offset + 2];
     }
 
-    blit::tilt = vec3(
+    blit::tilt = Vec3(
       -(tilt_x / ACCEL_OVER_SAMPLE),
       -(tilt_y / ACCEL_OVER_SAMPLE),
       -(tilt_z / ACCEL_OVER_SAMPLE)

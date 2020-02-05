@@ -22,7 +22,6 @@
 #include "main.h"
 #include "stm32h7xx_it.h"
 #include "fatfs.h"
-#include "dac.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -68,7 +67,7 @@ extern ADC_HandleTypeDef hadc1;
 extern ADC_HandleTypeDef hadc3;
 extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
 extern DMA_HandleTypeDef hdma_dac1_ch2;
-extern TIM_HandleTypeDef htim6;
+
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -223,11 +222,6 @@ void DMA1_Stream0_IRQHandler(void)
   /* USER CODE END DMA1_Stream0_IRQn 1 */
 }
 
-void TIM6_DAC_IRQHandler()
-{    
-    HAL_TIM_IRQHandler(&htim6);
-}
-
 /**
   * @brief This function handles DMA1 stream1 global interrupt.
   */
@@ -245,16 +239,16 @@ void DMA1_Stream1_IRQHandler(void)
 /**
   * @brief This function handles DMA1 stream2 global interrupt.
   */
-void DMA1_Stream2_IRQHandler(void)
-{
+//void DMA1_Stream2_IRQHandler(void)
+//{
   /* USER CODE BEGIN DMA1_Stream2_IRQn 0 */
 
   /* USER CODE END DMA1_Stream2_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_dac1_ch2);
+ // HAL_DMA_IRQHandler(&hdma_dac1_ch2);
   /* USER CODE BEGIN DMA1_Stream2_IRQn 1 */
 
   /* USER CODE END DMA1_Stream2_IRQn 1 */
-}
+//}
 
 /**
   * @brief This function handles ADC1 and ADC2 global interrupts.

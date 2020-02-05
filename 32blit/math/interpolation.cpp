@@ -39,7 +39,7 @@ float lerp(float value, float start, float end) {
  * @param max
  * @return
  */
-vec2 lerp(float value, float start, float end, vec2 min, vec2 max) {
+Vec2 lerp(float value, float start, float end, Vec2 min, Vec2 max) {
   value = value < start ? start : (value > end ? end : value);
   return ((max - min) * (value / (end - start))) + min;
 }
@@ -51,6 +51,6 @@ vec2 lerp(float value, float start, float end, vec2 min, vec2 max) {
  * @param start
  * @param end
  */
-vec2 lerp(float value, vec2 start, vec2 end) {
+Vec2 lerp(float value, Vec2 start, Vec2 end) {
   return ((end - start) * value) + start;
 }

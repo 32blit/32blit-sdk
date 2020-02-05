@@ -7,8 +7,8 @@
 
 namespace blit {
 
-  void mode7(surface *dest, surface *tiles, MapLayer *layer, float fov, float angle, vec2 pos, float near, float far, rect viewport);
-  vec2 world_to_screen(vec2 w, float fov, float angle, vec2 pos, float near, float far, rect viewport);
-  float world_to_scale(vec2 w, float fov, float angle, vec2 pos, float near, float far, rect viewport);
+  void mode7(Surface *dest, Surface *tiles, MapLayer *layer, float fov, float angle, Vec2 pos, float near, float far, Rect viewport);
+  Vec2 world_to_screen(Vec2 w, float fov, float angle, Vec2 pos, float near, float far, Rect viewport);
+  float world_to_scale(Vec2 w, float fov, float angle, Vec2 pos, float near, float far, Rect viewport);
 
 }

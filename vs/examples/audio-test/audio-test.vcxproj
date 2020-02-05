@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{2E5A800D-8DD7-43EA-83C3-2E1ED6F547CB}</ProjectGuid>
-    <RootNamespace>doomfire</RootNamespace>
+    <RootNamespace>audiotest</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

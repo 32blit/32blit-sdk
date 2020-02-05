@@ -1,4 +1,5 @@
 #include "spi.h"
+#include "gpio.hpp"
 #ifndef __ST7272A_H__
 
 #define ST7272A_DISPLAY_MODE_REGISTER 0x19

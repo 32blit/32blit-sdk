@@ -36,7 +36,7 @@ void update(uint32_t time)
 // Init() Register command handlers
 void FlashLoader::Init()
 {
-	set_screen_mode(screen_mode::hires);
+	set_screen_mode(ScreenMode::hires);
 
 	// register PROG
 	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value, this);
@@ -179,25 +179,25 @@ void FlashLoader::Render(uint32_t time)
 // RenderSaveFile() Render file save progress %
 void FlashLoader::RenderSaveFile(uint32_t time)
 {
-	fb.pen(rgba(0,0,0));
-  fb.rectangle(rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
-	fb.pen(rgba(255, 255, 255));
+	screen.pen(RGBA(0,0,0));
+	screen.rectangle(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
+	screen.pen(RGBA(255, 255, 255));
 	char buffer[128];
 	sprintf(buffer, "Saving %.2u%%", (uint16_t)m_fPercent);
-	fb.text(buffer, &minimal_font[0][0], ROW(0));
+	screen.text(buffer, &minimal_font[0][0], ROW(0));
 }
 
 
 // RenderFlashCDC() Render flashing progress %
 void FlashLoader::RenderFlashCDC(uint32_t time)
 {
-	fb.pen(rgba(0,0,0));
-  fb.rectangle(rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
-	fb.pen(rgba(255, 255, 255));
+	screen.pen(RGBA(0,0,0));
+	screen.rectangle(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
+	screen.pen(RGBA(255, 255, 255));
 
 	char buffer[128];
 	sprintf(buffer, "Flashing %.2u%%", (uint16_t)m_fPercent);
-	fb.text(buffer, &minimal_font[0][0], ROW(0));
+	screen.text(buffer, &minimal_font[0][0], ROW(0));
 }
 
 
@@ -210,50 +210,53 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 	if(!m_bFsInit)
 		FSInit();
 
-	uint32_t changedButtons = blit::buttons ^ lastButtons;
+	uint32_t changedButtons = buttons ^ lastButtons;
 
-	bool button_a = blit::buttons & changedButtons & blit::button::A;
-	bool button_up = blit::buttons & changedButtons & blit::button::DPAD_UP;
-	bool button_down = blit::buttons & changedButtons & blit::button::DPAD_DOWN;
+	bool button_a = buttons & changedButtons & Button::A;
+	bool button_up = buttons & changedButtons & Button::DPAD_UP;
+	bool button_down = buttons & changedButtons & Button::DPAD_DOWN;
 
-	lastButtons = blit::buttons;
+	lastButtons = buttons;
 
-	fb.pen(rgba(0,0,0));
-  fb.rectangle(rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
-	fb.pen(rgba(255, 255, 255));
+	screen.pen(RGBA(0,0,0));
+	screen.rectangle(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
+	screen.pen(RGBA(255, 255, 255));
 
 	// just display
 	if(m_uFileCount)
 	{
-    fb.pen(rgba(50, 50, 70));
-    fb.rectangle(rect(0, ROW_SPACE*m_uCurrentFile, SCREEN_WIDTH, ROW_SPACE));
-    fb.pen(rgba(255, 255, 255));
+		screen.pen(RGBA(50, 50, 70));
+		screen.rectangle(Rect(0, ROW_SPACE*m_uCurrentFile, SCREEN_WIDTH, ROW_SPACE));
+		screen.pen(RGBA(255, 255, 255));
 
-		for(uint8_t uF = 0; uF < m_uFileCount; uF++)
-			fb.text(m_filenames[uF], &minimal_font[0][0], ROW(uF));
+		for(uint8_t uF = 0; uF < m_uFileCount; uF++) {
+			screen.text(m_filenames[uF], &minimal_font[0][0], ROW(uF));
+		}
 	}
 	else
 	{
-		fb.text("No Files Found.", &minimal_font[0][0], ROW(0));
-
+		screen.text("No Files Found.", &minimal_font[0][0], ROW(0));
 	}
 
 	if(button_up)
 	{
-		if(m_uCurrentFile)
+		if(m_uCurrentFile) {
 			m_uCurrentFile--;
+		}
 	}
 
 	if(button_down)
 	{
-		if(m_uCurrentFile < m_uFileCount)
+		if(m_uCurrentFile < m_uFileCount) {
 			m_uCurrentFile++;
+		}
 	}
 
 	if(button_a)
 	{
-		if(Flash(m_filenames[m_uCurrentFile]))
+		if(Flash(m_filenames[m_uCurrentFile])) {
 			blit::switch_execution();
+		}
 	}
 }
 

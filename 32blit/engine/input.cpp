@@ -6,8 +6,8 @@
 namespace blit {
   
   uint32_t buttons;
-  vec2 joystick;
-  vec3 tilt;
+  Vec2 joystick;
+  Vec3 tilt;
   float hack_left;
   float hack_right;
   float battery;

@@ -26,9 +26,11 @@ For more information about how to build on the various systems, refer to the pla
 
 Refer to the OS specific docs:
 
-* [Linux users](docs/Linux.md)
-* [Windows users](docs/Windows.md) or if you are [Visual Studio user](docs/VisualStudio.md)
-* [macOS users](docs/macOS.md)
+* [Linux](docs/Linux.md)
+* [Linux - ChromeOS](docs/ChromeOS.md)
+* [Windows - Visual Studio](docs/Windows-VisualStudio.md)
+* [Windows - WSL (Advanced)](docs/Windows-WSL.md)
+* [macOS](docs/macOS.md)
 
 If you want to run the examples in a browser, refer to the [Emscripten docs](docs/Emscripten.md)
 
@@ -42,19 +44,13 @@ The `32blit` directory contains the API/engine for developing your game. This en
 
 ## 32blit-sdl
 
-The `32blit-sdl` directory contains an SDL2 HAL for 32blit compatible with Linux and Linux-on-Windows using Xming. You can use it to run your 32blit projects on your computer and test/debug them a little quicker.
+The `32blit-sdl` directory contains an SDL2 HAL for 32blit compatible with Linux and Linux-on-Windows using XMing. You can use it to run your 32blit projects on your computer and test/debug them a little quicker.
 
 You should be careful relying upon it, however, since `32blit-sdl` is *not an emulator* you may run into memory or performance problems when deploying your game to a 32blit console.
 
-If you're planning to use the SDL HAL you'll need to make sure you:
-
-``` shell
-sudo apt install libsdl2-dev
-```
-
 ## 32blit-stm32
 
-The `32blit-stm32` directory contains the STM32 HAL for 32blit, compatible with the STM32H750. Once you're ready to get your project running on a 32blit console you will need to ensure you have the `gcc-arm-none-eabi` toolchain installed and then follow the instructions below for "Building & Running On 32Blit"
+The `32blit-stm32` directory contains the STM32 HAL for 32blit, compatible with the STM32H750. Once you're ready to get your project running on a 32blit console you will need to ensure you have the `gcc-arm-none-eabi` toolchain installed and then follow the instructions below for [Building & Running On 32Blit](docs/32blit.md)
 
 ## Examples / Projects
 
@@ -66,5 +62,5 @@ Refer to the OS/platform specific documentation files in the `docs/` folder for 
 
 If you see `cannot create target because another target with the same name already exists` you've probably run `cmake ..` in the wrong directory (the project directory rather than the build directory), you should remove all but your project files and `cmake ..` again from the build directory.
 
-If you are getting complaints on WSL / Linux about python modules missing, you may have accidently installed them with sudo. When using pip3 to install modules do not use sudo, this will make sure that modules are installed for the current user.
+If you are getting complaints on WSL / Linux about python modules missing, you may have accidentally installed them with sudo. When using pip3 to install modules do not use sudo, this will make sure that modules are installed for the current user.
 

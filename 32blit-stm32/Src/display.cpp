@@ -2,7 +2,7 @@
 
 #include "spi-st7272a.h"
 
-#include "display.h"
+#include "display.hpp"
 
 extern char __ltdc_start, __ltdc_end;
 extern char __fb_start, __fb_end;
@@ -18,7 +18,7 @@ void LTDC_IRQHandler() {
 
     // flip the framebuffer to the ltdc buffer and request
     // a new frame to be rendered
-    display::flip(blit::fb);
+    display::flip(blit::screen);
     display::needs_render = true; 
   }
 }
@@ -26,13 +26,13 @@ void LTDC_IRQHandler() {
 namespace display {  
 
   // surface mapped directly to the ltdc memory buffer
-  surface __ltdc((uint8_t *)&__ltdc_start, pixel_format::RGB565, size(320, 240));
+  Surface __ltdc((uint8_t *)&__ltdc_start, PixelFormat::RGB565, Size(320, 240));
 
   // lo and hi res screen back buffers
-  surface __fb_hires((uint8_t *)&__fb_start, pixel_format::RGB565, size(320, 240));
-  surface __fb_lores((uint8_t *)&__fb_start, pixel_format::RGBA, size(160, 120));
+  Surface __fb_hires((uint8_t *)&__fb_start, PixelFormat::RGB565, Size(320, 240));
+  Surface __fb_lores((uint8_t *)&__fb_start, PixelFormat::RGBA, Size(160, 120));
 
-  screen_mode mode = screen_mode::lores;
+  ScreenMode mode = ScreenMode::lores;
   bool needs_render = false;
 
   void init() {
@@ -56,16 +56,16 @@ namespace display {
     display::needs_render = false;
   }
 
-  void set_screen_mode(screen_mode new_mode) {
+  void set_screen_mode(ScreenMode new_mode) {
     mode = new_mode;
-    fb = mode == screen_mode::hires ? __fb_hires : __fb_lores;
+    screen = mode == ScreenMode::hires ? __fb_hires : __fb_lores;
   }
 
-  void flip(const surface &source) {
+  void flip(const Surface &source) {
     uint32_t *s = (uint32_t *)source.data;
     uint32_t *d = (uint32_t *)(&__ltdc_start);
 
-    if(mode == screen_mode::lores) {
+    if(mode == ScreenMode::lores) {
       // pixel double the framebuffer to the ltdc buffer
       for(uint8_t y = 0; y < 120; y++) {
         // pixel double the current row while converting from RGBA to RGB565
@@ -105,84 +105,34 @@ namespace display {
 
     // enable ltdc clock
     __HAL_RCC_LTDC_CLK_ENABLE();
-  
-    // TODO: move the gpio clock enabling to a common location where they
-    // are all setup ahead of anything else
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-    __HAL_RCC_GPIOE_CLK_ENABLE();
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    __HAL_RCC_GPIOD_CLK_ENABLE();
-
-    // configure the ltdc interface gpio pins
-    //
-    // vsync = PA4    hsync = PC6     de = PE13     clk = PE14
-    //
-    //      |    7 |    6 |    5 |    4 |    3 |    2 |    1 |    0 |
-    // -----+------+------+------+------+------+------+------+------+
-    //  r   | PE15 |  PB1 |  PA9 | PA11 |  PB0 |  PA1 |  -/- |  -/- |
-    //  g   |  PD3 |  PC7 | PB11 | PB10 | PE11 |  PA6 |  -/- |  -/- |
-    //  b   |  PB9 |  PB8 |  PA3 | PE12 |  PA8 |  PD6 |  -/- |  -/- |
-    // -----+------+------+------+------+------+------+------+------+    
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-
-    GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_6|GPIO_PIN_9|USB_DFU_DM___LTDC_R4_Pin;
-    GPIO_InitStruct.Alternate = GPIO_AF14_LTDC;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
-    GPIO_InitStruct.Alternate = GPIO_AF9_LTDC;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
-    GPIO_InitStruct.Alternate = GPIO_AF14_LTDC;
-    HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_8|GPIO_PIN_9;
-    GPIO_InitStruct.Alternate = GPIO_AF14_LTDC;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
-    GPIO_InitStruct.Alternate = GPIO_AF14_LTDC;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_8;
-    GPIO_InitStruct.Alternate = GPIO_AF13_LTDC;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_6;
-    GPIO_InitStruct.Alternate = GPIO_AF14_LTDC;
-    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
     // configure the panel timings and signal polarity
     LTDC->GCR &= ~LTDC_GCR_PCPOL;   // synch signal polarity setting
     LTDC->SSCR = (3 << 16) | 3;     // hsync and vsync
-    LTDC->BPCR = (46 << 16) | 15;   // accumulated horizonal and vertical back porch
+    LTDC->BPCR = (45 << 16) | 14;   // accumulated horizonal and vertical back porch
     LTDC->AWCR = (366 << 16) | 255; // accumulated active width and height
     LTDC->TWCR = (374 << 16) | 257; // accumulated total width and height
 
     // enable ltdc transfer and fifo underrun error interrupts
     LTDC->IER = LTDC_IT_TE | LTDC_IT_FU;
 
-    // configure ltdc layer    
-    rect window(1, 1, 320, 240);
-
+    // configure ltdc layer        
     LTDC_Layer1->WHPCR &= ~(LTDC_LxWHPCR_WHSTPOS | LTDC_LxWHPCR_WHSPPOS);
-    LTDC_Layer1->WHPCR = ((window.x + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> 16U) + 1U) | ((window.w + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> 16U)) << 16U));
+    LTDC_Layer1->WHPCR = ((1 + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> 16U) + 1U) | ((321 + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> 16U)) << 16U));
     LTDC_Layer1->WVPCR &= ~(LTDC_LxWVPCR_WVSTPOS | LTDC_LxWVPCR_WVSPPOS);
-    LTDC_Layer1->WVPCR  = ((window.y + (LTDC->BPCR & LTDC_BPCR_AVBP) + 1U) | ((window.h + (LTDC->BPCR & LTDC_BPCR_AVBP)) << 16U));  
+    LTDC_Layer1->WVPCR  = ((0 + (LTDC->BPCR & LTDC_BPCR_AVBP) + 1U) | ((241 + (LTDC->BPCR & LTDC_BPCR_AVBP)) << 16U));  
     LTDC_Layer1->PFCR   = LTDC_PIXEL_FORMAT_RGB565;  
     LTDC_Layer1->DCCR   = 0xff000000;     // layer default color (back, 100% alpha)
     LTDC_Layer1->CFBAR  = (uint32_t)&__ltdc_start;  // frame buffer start address
-    LTDC_Layer1->CFBLR  = 320 * 2 << LTDC_LxCFBLR_CFBP_Pos | 320 * 2 << LTDC_LxCFBLR_CFBLL_Pos;  // frame buffer line length and pitch
+    LTDC_Layer1->CFBLR  = 320 * 2 << LTDC_LxCFBLR_CFBP_Pos | 320 * 2 + 2 << LTDC_LxCFBLR_CFBLL_Pos;  // frame buffer line length and pitch
     LTDC_Layer1->CFBLNR = 240;            // line count
     LTDC_Layer1->CACR   = 255;            // alpha
     LTDC_Layer1->CR    |= LTDC_LxCR_LEN;  // enable layer
 
-    LTDC->SRCR = LTDC_SRCR_IMR;     // reload shadow registers
-    LTDC->GCR |= LTDC_GCR_LTDCEN;   // enable LTDC      
+    // reload shadow registers
+    LTDC->SRCR = LTDC_SRCR_IMR;     
+
+    // enable LTDC      
+    LTDC->GCR |= LTDC_GCR_LTDCEN;   
   }
 }

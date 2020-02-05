@@ -14,15 +14,15 @@ using namespace blit;
 
 namespace display {
 
-  extern screen_mode mode;
+  extern ScreenMode mode;
   extern bool needs_render;
 
   void init();  
 
   void enable_vblank_interrupt(); 
 
-  void set_screen_mode(screen_mode new_mode);   
-  void flip(const surface &source);
+  void set_screen_mode(ScreenMode new_mode);   
+  void flip(const Surface &source);
 
   void screen_init();
   void ltdc_init();

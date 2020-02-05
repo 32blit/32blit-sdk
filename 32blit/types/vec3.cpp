@@ -12,11 +12,11 @@ extern "C" {
   #include <lua\lauxlib.h>
 }*/
 
-vec3::vec3(const vec3 &v) : x(v.x), y(v.y), z(v.z) {}
-vec3::vec3(const float x, const float y, const float z) : x(x), y(y), z(z) {}
+Vec3::Vec3(const Vec3 &v) : x(v.x), y(v.y), z(v.z) {}
+Vec3::Vec3(const float x, const float y, const float z) : x(x), y(y), z(z) {}
 
 
-void vec3::transform(const mat4 &m) {
+void Vec3::transform(const Mat4 &m) {
   float w = m.v30 * this->x + m.v31 * this->y + m.v32 * -this->z + m.v33;
   float tx = x; float ty = y; float tz = z;
   this->x = (m.v00 * tx + m.v01 * ty + m.v02 * -tz + m.v03) / w;
@@ -24,12 +24,12 @@ void vec3::transform(const mat4 &m) {
   this->z = (m.v20 * tx + m.v21 * ty + m.v22 * -tz + m.v23) / w;
 }
 
-void   vec3::normalize() { float d = this->length(); x /= d; y /= d; z /= d; }
-float  vec3::length() { return sqrtf(x * x + y * y + z * z); }
-vec3   vec3::cross(const vec3 &a) { return vec3(y * a.z - z * a.y, z * a.x - x * a.z, x * a.y - y * a.x); }
-vec3   vec3::cross(const vec3 *a) { return vec3(y * a->z - z * a->y, z * a->x - x * a->z, x * a->y - y * a->x); }
-float  vec3::dot(const vec3 &a) { return (x * a.x) + (y * a.y) + (z * a.z); }
-float  vec3::dot(const vec3 *a) { return (x * a->x) + (y * a->y) + (z * a->z); }
+void   Vec3::normalize() { float d = this->length(); x /= d; y /= d; z /= d; }
+float  Vec3::length() { return sqrtf(x * x + y * y + z * z); }
+Vec3   Vec3::cross(const Vec3 &a) { return Vec3(y * a.z - z * a.y, z * a.x - x * a.z, x * a.y - y * a.x); }
+Vec3   Vec3::cross(const Vec3 *a) { return Vec3(y * a->z - z * a->y, z * a->x - x * a->z, x * a->y - y * a->x); }
+float  Vec3::dot(const Vec3 &a) { return (x * a.x) + (y * a.y) + (z * a.z); }
+float  Vec3::dot(const Vec3 *a) { return (x * a->x) + (y * a->y) + (z * a->z); }
 
 
 

@@ -11,10 +11,10 @@
    * \param lifetime_ms Particle lifetime in milliseconds.
    * \param generate callback function for generating particles.
    */
-  generator::generator(uint32_t count, uint32_t lifetime_ms, std::function<particle*(void)> generate) : count(count), lifetime_ms(lifetime_ms), generate(generate) {    
+  ParticleGenerator::ParticleGenerator(uint32_t count, uint32_t lifetime_ms, std::function<Particle*(void)> generate) : count(count), lifetime_ms(lifetime_ms), generate(generate) {    
   }
 
-  generator::~generator() {
+  ParticleGenerator::~ParticleGenerator() {
     for (auto p : particles) {
       delete p;
     }
@@ -25,7 +25,7 @@
    *
    * \param time_ms Particle system age, in milliseconds.
    */
-  void generator::update(uint32_t time_ms) {
+  void ParticleGenerator::update(uint32_t time_ms) {
     static uint32_t last_time_ms = time_ms;
     uint32_t elapsed_ms = time_ms - last_time_ms;
     
@@ -37,7 +37,7 @@
     
     // update remaining particles
     float td = (time_ms - last_time_ms) / 1000.0f;
-    vec2 f = force * td;
+    Vec2 f = force * td;
     for (auto p : particles) {
       p->vel += f;
       p->pos += p->vel * td;

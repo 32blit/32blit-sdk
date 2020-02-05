@@ -19,7 +19,7 @@ using namespace blit;
 
 
 void init() {
-    set_screen_mode(screen_mode::lores);
+    set_screen_mode(ScreenMode::lores);
 }
 
 
@@ -28,15 +28,15 @@ void render(uint32_t time) {
 
   for(int b = 0; b < SCREEN_WIDTH; b++){
     for(int v = 0; v < SCREEN_HEIGHT; v++){
-        fb.pen(blit::hsv_to_rgba(float(b) / (float)(SCREEN_WIDTH), 1.0f, float(v) / (float)(SCREEN_HEIGHT)));
-        fb.pixel(point(b, v));
+        screen.pen(blit::hsv_to_rgba(float(b) / (float)(SCREEN_WIDTH), 1.0f, float(v) / (float)(SCREEN_HEIGHT)));
+        screen.pixel(Point(b, v));
     }
   }
 
-  fb.text("Time:", &minimal_font[0][0], point(COL1, ROW1));
+  screen.text("Time:", &minimal_font[0][0], Point(COL1, ROW1));
 
   sprintf(text_buf, "%" PRIu32, time);
-  fb.text(text_buf, &minimal_font[0][0], point(COL2, ROW1));
+  screen.text(text_buf, &minimal_font[0][0], Point(COL2, ROW1));
 
   blit::debugf("Hello from 32blit time = %lu\n\r", time);
 

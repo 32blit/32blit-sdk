@@ -8,28 +8,28 @@
 
 using namespace blit;
 
-size screen_size(160, 120);
+Size screen_size(160, 120);
 
 /* define storage for the framebuffer, spritesheet, and mask */
-rgba    __ss[128 * 128];
+RGBA    __ss[128 * 128];
 uint8_t __m[320 * 240]; 
 
 /* create surfaces */
-surface m((uint8_t *)__m, pixel_format::M, screen_size);
+Surface m((uint8_t *)__m, PixelFormat::M, screen_size);
 
 const int max_light_radius = 60;
 uint8_t __mshad[(max_light_radius * 2 + 1) * (max_light_radius * 2 + 1)] __SECTION__(".m");
-surface mshad((uint8_t *)__mshad, pixel_format::M, size(max_light_radius * 2 + 1, max_light_radius * 2 + 1));
+Surface mshad((uint8_t *)__mshad, PixelFormat::M, Size(max_light_radius * 2 + 1, max_light_radius * 2 + 1));
 
-point world_to_screen(const vec2 &p);
-point world_to_screen(const point &p);
-point screen_to_world(const point &p);
-void highlight_tile(point p, rgba c);
-point tile(const point &p);
-point player_origin();
+Point world_to_screen(const Vec2 &p);
+Point world_to_screen(const Point &p);
+Point screen_to_world(const Point &p);
+void highlight_tile(Point p, RGBA c);
+Point tile(const Point &p);
+Point player_origin();
 void draw_layer(MapLayer &layer);
 void draw_flags();
-void render_light(point pt, float radius, bool shadows);
+void render_light(Point pt, float radius, bool shadows);
 void blur(uint8_t passes);
 void bloom(uint8_t passes);
 void load_assets();
@@ -37,7 +37,7 @@ void load_assets();
 
 /* create map */
 enum TileFlags { SOLID = 1, WATER = 2, LADDER = 4 };
-Map map(rect(0, 0, 48, 24));
+Map map(Rect(0, 0, 48, 24));
 
 uint8_t player_animation[5] = { 208, 209, 210, 211, 212 };
 float player_animation_frame = 0;
@@ -47,8 +47,8 @@ float clamp(float v, float min, float max) {
 }
 
 struct Player {
-  vec2 vel;
-  vec2 pos;
+  Vec2 vel;
+  Vec2 pos;
   bool flip = false;
 
   enum {
@@ -64,12 +64,12 @@ struct Player {
     animations[WALKING] = { 208, 209, 210, 211, 212 };
     animations[JUMPING] = { 217 };
 
-    vel = vec2(0, 0);
-    pos = vec2(100, 32);
+    vel = Vec2(0, 0);
+    pos = Vec2(100, 32);
   }
 
-  rect aabb() {
-    return rect(pos.x - 4, pos.y - 12, 7, 11);
+  Rect aabb() {
+    return Rect(pos.x - 4, pos.y - 12, 7, 11);
   }
 
   uint8_t animation_sprite_index(uint8_t animation) {
@@ -77,49 +77,49 @@ struct Player {
     return animations[animation][uint32_t(animation_frame) % animation_length];
   }
 
-  point current_tile() {
-    return point(pos.x / 8, pos.y / 8);
+  Point current_tile() {
+    return Point(pos.x / 8, pos.y / 8);
   }
 
   bool tile_under_solid() {
-    point p = current_tile();
+    Point p = current_tile();
     return map.has_flag(p, TileFlags::SOLID);
   }
 
   bool tile_under_ladder() {
-    point p = current_tile();
+    Point p = current_tile();
     return map.tile_index(p) == 7;
   }
 
   bool on_ground() {
     if (vel.y < 0) return false;
 
-    point p = current_tile();
-    return map.has_flag(point(p.x, p.y + 1), TileFlags::SOLID) && ((int32_t(pos.y) % 8) == 7);
+    Point p = current_tile();
+    return map.has_flag(Point(p.x, p.y + 1), TileFlags::SOLID) && ((int32_t(pos.y) % 8) == 7);
   }
 
   bool in_water() {
     return false;
-    point p = current_tile();
-    return map.has_flag(point(p.x, p.y + 1), TileFlags::WATER);
+    Point p = current_tile();
+    return map.has_flag(Point(p.x, p.y + 1), TileFlags::WATER);
   }
 
   /*
     return a clipped camera point that doesn't allow the viewport to
     leave the world bounds
   */
-  point camera() {      
-    static rect b(screen_size.w / 2, screen_size.h / 2, map.bounds.w * 8 - fb.bounds.w, map.bounds.h * 8 - fb.bounds.h);
-    return b.clamp(point(floor(pos.x), floor(pos.y)));
+  Point camera() {      
+    static Rect b(screen_size.w / 2, screen_size.h / 2, map.bounds.w * 8 - screen.bounds.w, map.bounds.h * 8 - screen.bounds.h);
+    return b.clamp(Point(floor(pos.x), floor(pos.y)));
   }
 
-  rect viewport() {
-    point c = camera();
-    return rect(
-      c.x - fb.bounds.w / 2,
-      c.y - fb.bounds.h / 2,
-      fb.bounds.w,
-      fb.bounds.h
+  Rect viewport() {
+    Point c = camera();
+    return Rect(
+      c.x - screen.bounds.w / 2,
+      c.y - screen.bounds.h / 2,
+      screen.bounds.w,
+      screen.bounds.h
     );
   }
 
@@ -128,24 +128,24 @@ struct Player {
     static float ground_acceleration_x = 0.5f;
     static float air_acceleration_x = 0.2f;
     static float duration = 0.01f;
-    static vec2 gravity(0, 9.8f * 5.0f);   // normal gravity is boring!
+    static Vec2 gravity(0, 9.8f * 5.0f);   // normal gravity is boring!
 
-    if (pressed(button::DPAD_LEFT)) {
+    if (pressed(Button::DPAD_LEFT)) {
       vel.x = vel.x - (on_ground() ? ground_acceleration_x : air_acceleration_x);
     }
 
-    if (pressed(button::DPAD_RIGHT)) {
+    if (pressed(Button::DPAD_RIGHT)) {
       vel.x = vel.x + (on_ground() ? ground_acceleration_x : air_acceleration_x);
     }
 
     vel.x = clamp(vel.x, -max_speed_x, max_speed_x);
     //player.vel = player.vel + (gravity * duration);
 
-    vec2 future_player_pos = pos + vel;
-    rect future_bb = rect(future_player_pos.x - 4, future_player_pos.y - 12, 7, 11);
+    Vec2 future_player_pos = pos + vel;
+    Rect future_bb = Rect(future_player_pos.x - 4, future_player_pos.y - 12, 7, 11);
 
     bool collision = false;
-    map.tiles_in_rect(future_bb, [&collision](point tile_pt) -> void {
+    map.tiles_in_rect(future_bb, [&collision](Point tile_pt) -> void {
       if (map.has_flag(tile_pt, TileFlags::SOLID)) {
         collision = true;
       }
@@ -172,27 +172,27 @@ struct Player {
 
     uint8_t si = animation_sprite_index(animation);
 
-    point sp = world_to_screen(point(pos.x - 4, pos.y - 7));
-    fb.sprite(si, sp, flip);
+    Point sp = world_to_screen(Point(pos.x - 4, pos.y - 7));
+    screen.sprite(si, sp, flip);
     sp.y -= 8;
-    fb.sprite(si - 16, sp, flip);
+    screen.sprite(si - 16, sp, flip);
 
 
-    rect bb = aabb();
-    fb.pen(rgba(0, 255, 0));
-    fb.line(world_to_screen(bb.tl()), world_to_screen(bb.tr()));
-    fb.line(world_to_screen(bb.bl()), world_to_screen(bb.br()));
+    Rect bb = aabb();
+    screen.pen(RGBA(0, 255, 0));
+    screen.line(world_to_screen(bb.tl()), world_to_screen(bb.tr()));
+    screen.line(world_to_screen(bb.bl()), world_to_screen(bb.br()));
 
-    map.tiles_in_rect(bb, [&bb](point tile_pt) -> void {
-      point sp = world_to_screen(tile_pt * 8);
-      rect rb(sp.x, sp.y, 8, 8);
+    map.tiles_in_rect(bb, [&bb](Point tile_pt) -> void {
+      Point sp = world_to_screen(tile_pt * 8);
+      Rect rb(sp.x, sp.y, 8, 8);
 
-      fb.pen(rgba(0, 255, 0, 150));
+      screen.pen(RGBA(0, 255, 0, 150));
       if (map.has_flag(tile_pt, TileFlags::SOLID)) {
-        fb.pen(rgba(255, 0, 0, 150));
+        screen.pen(RGBA(255, 0, 0, 150));
       }
 
-      fb.rectangle(rb);
+      screen.rectangle(rb);
     });
 
     //map.tiles_in_rect(bb)
@@ -201,8 +201,8 @@ struct Player {
 
 
 struct bat {
-  vec2 pos;
-  vec2 vel = vec2(-2, 0);
+  Vec2 pos;
+  Vec2 vel = Vec2(-2, 0);
   uint8_t current_frame = 0;
   std::array<uint8_t, 6> frames = {{ 96, 97, 98, 99, 98, 97 }};
 
@@ -210,9 +210,9 @@ struct bat {
     current_frame++;
     current_frame %= frames.size();
 
-    vec2 test_pos = pos + (vec2::normalize(vel) * 8.0f);
+    Vec2 test_pos = pos + (Vec2::normalize(vel) * 8.0f);
 
-    if (map.has_flag(tile(point(test_pos)), TileFlags::SOLID)) {
+    if (map.has_flag(tile(Point(test_pos)), TileFlags::SOLID)) {
       vel.x *= -1;
     }
 
@@ -223,8 +223,8 @@ struct bat {
 bat bat1;
 
 struct slime {
-  vec2 pos;
-  vec2 vel = vec2(1, 0);
+  Vec2 pos;
+  Vec2 vel = Vec2(1, 0);
   uint8_t current_frame = 0;
   std::array<uint8_t, 4> frames = {{ 112, 113, 114, 113 }};
 
@@ -232,9 +232,9 @@ struct slime {
     current_frame++;
     current_frame %= frames.size();
 
-    vec2 test_pos = pos + (vec2::normalize(vel) * 8.0f);
+    Vec2 test_pos = pos + (Vec2::normalize(vel) * 8.0f);
 
-    if (map.has_flag(tile(point(test_pos)), TileFlags::SOLID)) {
+    if (map.has_flag(tile(Point(test_pos)), TileFlags::SOLID)) {
       vel.x *= -1;
     }
 
@@ -244,12 +244,12 @@ struct slime {
 
 slime slime1;
 
-void animation_timer_callback(timer &timer) {
+void animation_timer_callback(Timer &timer) {
   bat1.update();
   slime1.update();
 }
 
-timer t;
+Timer t;
 
 
 
@@ -260,8 +260,8 @@ timer t;
 void init() {
   load_assets();
 
-  bat1.pos = vec2(200, 22);
-  slime1.pos = vec2(50, 112);
+  bat1.pos = Vec2(200, 22);
+  slime1.pos = Vec2(50, 112);
 
   t.init(animation_timer_callback, 50, -1);
   t.start();
@@ -277,49 +277,49 @@ void render(uint32_t time) {
       
   uint32_t ms_start = now();
 
-  fb.mask = nullptr;
-  fb.alpha = 255;
-  fb.pen(rgba(0, 0, 0));
-  fb.clear();
+  screen.mask = nullptr;
+  screen.alpha = 255;
+  screen.pen(RGBA(0, 0, 0));
+  screen.clear();
 
   // mask out for lighting    
   mshad.alpha = 255;
-  mshad.pen(rgba(0));
+  mshad.pen(RGBA(0));
   mshad.clear();
 
   m.alpha = 255;
-  m.pen(rgba(64));
+  m.pen(RGBA(64));
   m.clear();
 
   // render lights
   
   for (uint8_t y = 0; y < 24; y++) {
     for (uint8_t x = 0; x < 48; x++) {
-      uint32_t ti = map.layers["effects"].tile_at(point(x, y));
-      point lp = point(x * 8 + 4, y * 8 + 3);
+      uint32_t ti = map.layers["effects"].tile_at(Point(x, y));
+      Point lp = Point(x * 8 + 4, y * 8 + 3);
       if (ti == 37 || ti == 38) {
         render_light(lp, 15.0f, false);
       }
     }
   }
 
-  render_light(point(player.pos.x, player.pos.y - 7), 60.0f, true);
+  render_light(Point(player.pos.x, player.pos.y - 7), 60.0f, true);
 
   // light up the "outside" this should be done with map flags
-  rect r; m.pen(rgba(255));
-  r = rect(world_to_screen(point(0, 0)), world_to_screen(point(112, 40))); m.rectangle(r);
-  r = rect(world_to_screen(point(0, 40)), world_to_screen(point(80, 48))); m.rectangle(r);
-  r = rect(world_to_screen(point(0, 48)), world_to_screen(point(72, 56))); m.rectangle(r);
-  r = rect(world_to_screen(point(0, 56)), world_to_screen(point(48, 64))); m.rectangle(r);
-  r = rect(world_to_screen(point(0, 64)), world_to_screen(point(32, 72))); m.rectangle(r);
+  Rect r; m.pen(RGBA(255));
+  r = Rect(world_to_screen(Point(0, 0)), world_to_screen(Point(112, 40))); m.rectangle(r);
+  r = Rect(world_to_screen(Point(0, 40)), world_to_screen(Point(80, 48))); m.rectangle(r);
+  r = Rect(world_to_screen(Point(0, 48)), world_to_screen(Point(72, 56))); m.rectangle(r);
+  r = Rect(world_to_screen(Point(0, 56)), world_to_screen(Point(48, 64))); m.rectangle(r);
+  r = Rect(world_to_screen(Point(0, 64)), world_to_screen(Point(32, 72))); m.rectangle(r);
 
   bloom(3);
   blur(1);
 
 
-  fb.alpha = 255;
-  fb.pen(rgba(39, 39, 54));
-  fb.clear();
+  screen.alpha = 255;
+  screen.pen(RGBA(39, 39, 54));
+  screen.clear();
 
 
 
@@ -336,23 +336,23 @@ void render(uint32_t time) {
 
 
   // bat
-  point sp = world_to_screen(point(bat1.pos.x - 4, bat1.pos.y));
-  fb.sprite(bat1.frames[bat1.current_frame], sp, bat1.vel.x < 0 ? false : true);
+  Point sp = world_to_screen(Point(bat1.pos.x - 4, bat1.pos.y));
+  screen.sprite(bat1.frames[bat1.current_frame], sp, bat1.vel.x < 0 ? false : true);
 
   // slime
-  sp = world_to_screen(point(slime1.pos.x - 4, slime1.pos.y));
-  fb.sprite(slime1.frames[slime1.current_frame], sp, slime1.vel.x < 0 ? false : true);
+  sp = world_to_screen(Point(slime1.pos.x - 4, slime1.pos.y));
+  screen.sprite(slime1.frames[slime1.current_frame], sp, slime1.vel.x < 0 ? false : true);
 
 
   // overlay water
-  fb.pen(rgba(56, 136, 205, 125));
+  screen.pen(RGBA(56, 136, 205, 125));
   for (uint8_t y = 0; y < 24; y++) {
     for (uint8_t x = 0; x < 48; x++) {
-      point pt = world_to_screen(point(x *   8, y * 8));
-      uint32_t ti = map.tile_index(point(x, y));
+      Point pt = world_to_screen(Point(x *   8, y * 8));
+      uint32_t ti = map.tile_index(Point(x, y));
 
-      if (map.has_flag(point(x, y), TileFlags::WATER)) {
-        fb.rectangle(rect(pt.x, pt.y, 8, 8));
+      if (map.has_flag(Point(x, y), TileFlags::WATER)) {
+        screen.rectangle(Rect(pt.x, pt.y, 8, 8));
       }
     }
   }
@@ -366,26 +366,26 @@ void render(uint32_t time) {
   });
   
   // blend over lighting
-  fb.mask = &m;
-  fb.pen(rgba(39 / 2, 39 / 2, 54 / 2));
-  fb.clear();
+  screen.mask = &m;
+  screen.pen(RGBA(39 / 2, 39 / 2, 54 / 2));
+  screen.clear();
 
   static int tick = 0;
   tick++;
-  fb.mask = nullptr;
-  fb.alpha = 255;
-  fb.sprite(139, point(2, 2));
-  fb.sprite(139, point(12, 2));
-  fb.sprite(139, point(22, 2));
+  screen.mask = nullptr;
+  screen.alpha = 255;
+  screen.sprite(139, Point(2, 2));
+  screen.sprite(139, Point(12, 2));
+  screen.sprite(139, Point(22, 2));
 
   
   // draw FPS meter
   uint32_t ms_end = now();
-  fb.mask = nullptr;
-  fb.pen(rgba(255, 0, 0));
+  screen.mask = nullptr;
+  screen.pen(RGBA(255, 0, 0));
   for (uint32_t i = 0; i < (ms_end - ms_start); i++) {
-    fb.pen(rgba(i * 5, 255 - (i * 5), 0));
-    fb.rectangle(rect(i * 3 + 1, 117, 2, 2));
+    screen.pen(RGBA(i * 5, 255 - (i * 5), 0));
+    screen.rectangle(Rect(i * 3 + 1, 117, 2, 2));
   }
   
 
@@ -413,7 +413,7 @@ void update(uint32_t time) {
 
 
   static float jump_velocity = 15.0f;
-  static vec2 gravity(0, 9.8f * 5.0f);   // normal gravity is boring!
+  static Vec2 gravity(0, 9.8f * 5.0f);   // normal gravity is boring!
 
   static bool jumping = false;
 
@@ -522,47 +522,47 @@ void update(uint32_t time) {
 
 
 
-float orient2d(vec2 p1, vec2 p2, vec2 p3) {
+float orient2d(Vec2 p1, Vec2 p2, Vec2 p3) {
   return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
 }
 
-std::vector<std::pair<vec2, vec2>> get_occluders(point pt, float radius) {
-  std::vector<std::pair<vec2, vec2>> occluders;
+std::vector<std::pair<Vec2, Vec2>> get_occluders(Point pt, float radius) {
+  std::vector<std::pair<Vec2, Vec2>> occluders;
 
-  rect light_bounds(pt, pt);
+  Rect light_bounds(pt, pt);
   light_bounds.inflate(max_light_radius);
 
-  map.tiles_in_rect(light_bounds, [&occluders, &pt](point tile_pt) -> void {
+  map.tiles_in_rect(light_bounds, [&occluders, &pt](Point tile_pt) -> void {
     if (map.has_flag(tile_pt, TileFlags::SOLID)) {
-      rect rb(tile_pt.x * 8, tile_pt.y * 8, 8, 8);
+      Rect rb(tile_pt.x * 8, tile_pt.y * 8, 8, 8);
       rb.x -= pt.x;
       rb.y -= pt.y;
 
-      vec2 o(0, 0);
-      vec2 fpt(pt.x, pt.y);
+      Vec2 o(0, 0);
+      Vec2 fpt(pt.x, pt.y);
       /*vec2 tl(rb.x - 0.5f, rb.y + 0.5f);// = rb.tl();
       vec2 tr(rb.x + rb.w - 0.5f, rb.y + 0.5f);// = rb.tr();
       vec2 bl(rb.x - 0.5f, rb.y + rb.h + 0.5f);// = rb.bl();
       vec2 br(rb.x + rb.w - 0.5f, rb.y + rb.h + 0.5f);// = rb.br();
       */
-      vec2 tl = vec2(rb.tl().x - 1, rb.tl().y - 1);
-      vec2 tr = vec2(rb.tr().x - 1, rb.tr().y - 1);
-      vec2 bl = vec2(rb.bl().x - 1, rb.bl().y - 1);
-      vec2 br = vec2(rb.br().x - 1, rb.br().y - 1);
+      Vec2 tl = Vec2(rb.tl().x - 1, rb.tl().y - 1);
+      Vec2 tr = Vec2(rb.tr().x - 1, rb.tr().y - 1);
+      Vec2 bl = Vec2(rb.bl().x - 1, rb.bl().y - 1);
+      Vec2 br = Vec2(rb.br().x - 1, rb.br().y - 1);
 
-      if (!map.has_flag(point(tile_pt.x, tile_pt.y + 1), TileFlags::SOLID) && orient2d(bl, br, o) > 0) {
+      if (!map.has_flag(Point(tile_pt.x, tile_pt.y + 1), TileFlags::SOLID) && orient2d(bl, br, o) > 0) {
         occluders.push_back(std::make_pair(bl, br));
       }
 
-      if (!map.has_flag(point(tile_pt.x - 1, tile_pt.y), TileFlags::SOLID) && orient2d(tl, bl, o) > 0) {
+      if (!map.has_flag(Point(tile_pt.x - 1, tile_pt.y), TileFlags::SOLID) && orient2d(tl, bl, o) > 0) {
         occluders.push_back(std::make_pair(tl, bl));
       }
 
-      if (!map.has_flag(point(tile_pt.x, tile_pt.y - 1), TileFlags::SOLID) && orient2d(tr, tl, o) > 0) {
+      if (!map.has_flag(Point(tile_pt.x, tile_pt.y - 1), TileFlags::SOLID) && orient2d(tr, tl, o) > 0) {
         occluders.push_back(std::make_pair(tr, tl));
       }
 
-      if (!map.has_flag(point(tile_pt.x + 1, tile_pt.y), TileFlags::SOLID) && orient2d(br, tr, o) > 0) {
+      if (!map.has_flag(Point(tile_pt.x + 1, tile_pt.y), TileFlags::SOLID) && orient2d(br, tr, o) > 0) {
         occluders.push_back(std::make_pair(br, tr));
       }
     }
@@ -571,18 +571,18 @@ std::vector<std::pair<vec2, vec2>> get_occluders(point pt, float radius) {
   return occluders;
 }
 
-void render_light(point pt, float radius, bool shadows = false) {
-  point lpt(max_light_radius, max_light_radius);
+void render_light(Point pt, float radius, bool shadows = false) {
+  Point lpt(max_light_radius, max_light_radius);
 
   mshad.alpha = 255;
-  mshad.pen(rgba(0));
+  mshad.pen(RGBA(0));
   mshad.clear();
 
   // draw the light aura
   mshad.alpha = (rand() % 10) + 40;
   int steps = 20;
   for (int j = steps; j > 0; j--) {
-    mshad.pen(rgba(255));
+    mshad.pen(RGBA(255));
     mshad.circle(lpt, (j * radius / steps));
   }
 
@@ -590,17 +590,17 @@ void render_light(point pt, float radius, bool shadows = false) {
   {
     // cut out the shadows
     mshad.alpha = 255;
-    mshad.pen(rgba(0));
+    mshad.pen(RGBA(0));
 
     float rs = radius * radius;
-    std::vector<std::pair<vec2, vec2>> occluders = get_occluders(pt, radius);
+    std::vector<std::pair<Vec2, Vec2>> occluders = get_occluders(pt, radius);
     for (auto occluder : occluders) {
-      vec2 p1 = occluder.first;
-      vec2 p2 = occluder.second;
-      vec2 fpt(pt.x, pt.y);
+      Vec2 p1 = occluder.first;
+      Vec2 p2 = occluder.second;
+      Vec2 fpt(pt.x, pt.y);
 
-      vec2 rv1 = p1;
-      vec2 rv2 = p2;
+      Vec2 rv1 = p1;
+      Vec2 rv2 = p2;
 
       if ((abs(rv1.x) * abs(rv1.y)) < rs && (abs(rv2.x) * abs(rv2.y)) < rs) {
         // (max_light_radius * 2) = cludge to ensure shadows are projected far enough
@@ -611,15 +611,15 @@ void render_light(point pt, float radius, bool shadows = false) {
         float c1 = (max_light_radius * 2) / float(std::max(abs(rv1.x), abs(rv1.y)));
         float c2 = (max_light_radius * 2) / float(std::max(abs(rv2.x), abs(rv2.y)));
 
-        vec2 p3 = rv1 * c1;
-        vec2 p4 = rv2 * c2;
+        Vec2 p3 = rv1 * c1;
+        Vec2 p4 = rv2 * c2;
 
-        point wp1 = p1 + lpt;
-        point wp2 = p2 + lpt;
-        point wp3 = p3 + lpt;
-        point wp4 = p4 + lpt;
+        Point wp1 = p1 + lpt;
+        Point wp2 = p2 + lpt;
+        Point wp3 = p3 + lpt;
+        Point wp4 = p4 + lpt;
 
-        std::vector<point> poly = {
+        std::vector<Point> poly = {
           wp1, wp3, wp4, wp2
         };
 
@@ -630,7 +630,7 @@ void render_light(point pt, float radius, bool shadows = false) {
     }
   }
 
-  point light_corner = world_to_screen(pt - point(max_light_radius, max_light_radius));
+  Point light_corner = world_to_screen(pt - Point(max_light_radius, max_light_radius));
   m.custom_blend(&mshad, mshad.clip, light_corner, [](uint8_t *psrc, uint8_t *pdest, int16_t c) -> void {
     while (c--) {
       *pdest = *pdest ^ ((*pdest ^ *psrc) & -(*pdest < *psrc)); // integer `max` without branching
@@ -729,87 +729,87 @@ void load_assets() {
   std::vector<uint8_t> layer_objects = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,51,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,68,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,11,0,0,0,0,0,0,0,0,0,0,0,0,0,0,84,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12,0,39,0,0,0,0,0,0,0,0,68,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,39,0,0,0,0,0,0,0,0,0,0,85,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,84,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
   map.add_layer("objects", layer_objects);
 
-  fb.sprites = spritesheet::load(packed_data);
+  screen.sprites = SpriteSheet::load(packed_data);
 }
 
 
-point world_to_screen(const vec2 &p) {
-  return point(
+Point world_to_screen(const Vec2 &p) {
+  return Point(
     p.x - player.camera().x + m.bounds.w / 2,
     p.y - player.camera().y + m.bounds.h / 2
   );
 }
 
-point world_to_screen(const point &p) {
-  return point(
+Point world_to_screen(const Point &p) {
+  return Point(
     p.x - player.camera().x + m.bounds.w / 2,
     p.y - player.camera().y + m.bounds.h / 2
   );
 }
 
-point screen_to_world(const point &p) {
-  return point(
+Point screen_to_world(const Point &p) {
+  return Point(
     p.x + player.camera().x - m.bounds.w / 2,
     p.y + player.camera().y - m.bounds.h / 2
   );
 }
 
 
-void highlight_tile(point p, rgba c) {
-  fb.pen(c);
+void highlight_tile(Point p, RGBA c) {
+  screen.pen(c);
   p.x *= 8;
   p.y *= 8;
   p = world_to_screen(p);
-  fb.rectangle(rect(p.x, p.y, 8, 8));
+  screen.rectangle(Rect(p.x, p.y, 8, 8));
 }
 
-point player_origin() {
-  return point(player.pos.x, player.pos.y);
+Point player_origin() {
+  return Point(player.pos.x, player.pos.y);
 }
 
-point tile(const point &p) {
-  return point(p.x / 8, p.y / 8);
+Point tile(const Point &p) {
+  return Point(p.x / 8, p.y / 8);
 }
 
 
 void draw_layer(MapLayer &layer) {
-  point tl = screen_to_world(point(0, 0));
-  point br = screen_to_world(point(fb.bounds.w, fb.bounds.h));
+  Point tl = screen_to_world(Point(0, 0));
+  Point br = screen_to_world(Point(screen.bounds.w, screen.bounds.h));
 
-  point tlt = tile(tl);
-  point brt = tile(br);
+  Point tlt = tile(tl);
+  Point brt = tile(br);
 
   for (uint8_t y = tlt.y; y <= brt.y; y++) {
     for (uint8_t x = tlt.x; x <= brt.x; x++) {
-      point pt = world_to_screen(point(x * 8, y * 8));
-      int32_t ti = layer.map->tile_index(point(x, y));
+      Point pt = world_to_screen(Point(x * 8, y * 8));
+      int32_t ti = layer.map->tile_index(Point(x, y));
       if (ti != -1) {
         uint8_t si = layer.tiles[ti];
         if (si != 0) {
-          fb.sprite(si, pt);
+          screen.sprite(si, pt);
         }
       }
     }
   }
 }
 
-rgba flag_colours[] = {
-  rgba(255, 0, 0, 100),
-  rgba(0, 255, 0, 100),
-  rgba(0, 0, 255, 100)
+RGBA flag_colours[] = {
+  RGBA(255, 0, 0, 100),
+  RGBA(0, 255, 0, 100),
+  RGBA(0, 0, 255, 100)
 };
 
 void draw_flags() {
   for (uint8_t y = 0; y < 24; y++) {
     for (uint8_t x = 0; x < 48; x++) {
-      point pt = world_to_screen(point(x * 8, y * 8));
-      uint32_t ti = map.tile_index(point(x, y));
-      uint8_t f = map.get_flags(point(x, y));
+      Point pt = world_to_screen(Point(x * 8, y * 8));
+      uint32_t ti = map.tile_index(Point(x, y));
+      uint8_t f = map.get_flags(Point(x, y));
 
       for (uint8_t i = 0; i < 3; i++) {
         if (f & (1 << i)) {
-          fb.pen(flag_colours[i]);
-          fb.rectangle(rect(pt.x, pt.y, 8, 8));
+          screen.pen(flag_colours[i]);
+          screen.rectangle(Rect(pt.x, pt.y, 8, 8));
         }
       }
     }

@@ -8,35 +8,35 @@
 
 namespace blit {
 
-  struct rect {
+  struct Rect {
 
     int32_t x, y, w, h;
 
-    rect() : x(0), y(0), w(0), h(0) {}
-    rect(point tl, point br) : x(tl.x), y(tl.y), w(br.x - tl.x), h(br.y - tl.y) {}
-    rect(point tl, size s) : x(tl.x), y(tl.y), w(s.w), h(s.h) {}
-    rect(int32_t x, int32_t y, int32_t w, int32_t h) : x(x), y(y), w(w), h(h) {}
+    Rect() : x(0), y(0), w(0), h(0) {}
+    Rect(Point tl, Point br) : x(tl.x), y(tl.y), w(br.x - tl.x), h(br.y - tl.y) {}
+    Rect(Point tl, Size s) : x(tl.x), y(tl.y), w(s.w), h(s.h) {}
+    Rect(int32_t x, int32_t y, int32_t w, int32_t h) : x(x), y(y), w(w), h(h) {}
 
-    inline rect& operator*= (const float a) { x *= a; y *= a; w *= a; h *= a; return *this; }
+    inline Rect& operator*= (const float a) { x *= a; y *= a; w *= a; h *= a; return *this; }
 
     bool empty() const {
       return w <= 0 || h <= 0; 
     }
 
-    bool contains(const point &p) const {
+    bool contains(const Point &p) const {
       return p.x >= x && p.y >= y && p.x < x + w && p.y < y + h; 
     }
 
-    bool contains(const rect &p) const {
+    bool contains(const Rect &p) const {
       return p.x >= x && p.y >= y && p.x + p.w < x + w && p.y + p.h < y + h;
     }
 
-    bool intersects(const rect &r) const {
+    bool intersects(const Rect &r) const {
       return !(x > r.x + r.w || x + w < r.x || y > r.y + r.h || y + h < r.y); 
     }
 
-    rect intersection(const rect &r) const {
-      return rect(
+    Rect intersection(const Rect &r) const {
+      return Rect(
         std::max(x, r.x), 
         std::max(y, r.y), 
         std::min(x + w, r.x + r.w) - std::max(x, r.x), 
@@ -92,30 +92,30 @@ namespace blit {
       h += 2 * v;
     }
 
-    point clamp(point p) const {
-      return point(
+    Point clamp(Point p) const {
+      return Point(
         p.x < x ? x : (p.x > x + w ? x + w : p.x), 
         p.y < y ? y : (p.y > y + h ? y + h : p.y)); 
     }
 
-    point tl() const {
-      return point(x, y);
+    Point tl() const {
+      return Point(x, y);
     }
 
-    point tr() const {
-      return point(x + w, y);
+    Point tr() const {
+      return Point(x + w, y);
     }
 
-    point bl() const {
-      return point(x, y + h);
+    Point bl() const {
+      return Point(x, y + h);
     }
 
-    point br() const {
-      return point(x + w, y + h);
+    Point br() const {
+      return Point(x + w, y + h);
     }
 
   };
 
-  inline rect operator*  (rect lhs, const float a) { lhs *= a; return lhs; }
+  inline Rect operator*  (Rect lhs, const float a) { lhs *= a; return lhs; }
 
 }

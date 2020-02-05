@@ -9,9 +9,9 @@
 
 
 // blit framebuffer memory
-blit::rgb565 __ltdc_buffer[320 * 240 * 2];
-blit::surface __ltdc((uint8_t *)__ltdc_buffer, blit::pixel_format::RGB565, blit::size(320, 240));
-blit::surface __fb((uint8_t *)__ltdc_buffer + (320 * 240 * 2), blit::pixel_format::RGB, blit::size(160, 120));
+blit::RGB565 __ltdc_buffer[320 * 240 * 2];
+blit::Surface __ltdc((uint8_t *)__ltdc_buffer, blit::PixelFormat::RGB565, blit::Size(320, 240));
+blit::Surface __fb((uint8_t *)__ltdc_buffer + (320 * 240 * 2), blit::PixelFormat::RGB, blit::Size(160, 120));
 
 // blit debug callback
 void debug(std::string message) {
@@ -28,14 +28,14 @@ int blit_debugf(const char * psFormatString, ...)
 }
 
 // blit screenmode callback
-blit::screen_mode _mode = blit::screen_mode::lores;
-void set_screen_mode(blit::screen_mode new_mode) {
+blit::ScreenMode _mode = blit::ScreenMode::lores;
+void set_screen_mode(blit::ScreenMode new_mode) {
 	_mode = new_mode;
-	if (_mode == blit::screen_mode::hires) {
-		blit::fb = __ltdc;
+	if (_mode == blit::ScreenMode::hires) {
+		blit::screen = __ltdc;
 	}
 	else {
-		blit::fb = __fb;
+		blit::screen = __fb;
 	}
 }
 
@@ -177,7 +177,7 @@ void System::loop()
 }
 
 Uint32 System::mode() {
-	if (_mode == blit::screen_mode::lores) {
+	if (_mode == blit::ScreenMode::lores) {
 		return SDL_PIXELFORMAT_RGB24;
 	}
 	else
@@ -188,7 +188,7 @@ Uint32 System::mode() {
 
 void System::update_texture(SDL_Texture *texture) {
 	blit::render(::now());
-	if (_mode == blit::screen_mode::lores) {
+	if (_mode == blit::ScreenMode::lores) {
 		SDL_UpdateTexture(texture, NULL, (uint8_t *)__fb.data, 160 * 3);
 	}
 	else

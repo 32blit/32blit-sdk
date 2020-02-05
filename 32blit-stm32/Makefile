@@ -60,9 +60,9 @@ Middlewares/Third_Party/FatFs/src/diskio.c \
 Middlewares/Third_Party/FatFs/src/ff.c \
 Middlewares/Third_Party/FatFs/src/ff_gen_drv.c \
 Middlewares/Third_Party/FatFs/src/option/syscall.c \
-Src/gpio.c \
+Src/gpio.cpp \
+Src/display.cpp \
 Src/adc.c \
-Src/dac.c \
 Src/debug.c \
 Src/dma.c \
 Src/hrtim.c \
