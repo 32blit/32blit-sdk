@@ -10,16 +10,6 @@ using namespace blit;
 
 const Size screen_size(160, 120);
 
-/* define storage for the framebuffer, spritesheet, and mask */
-//rgb     __fb[160 * 120] __SECTION__(".fb")));
-RGBA    __ss[128 * 128] __SECTION__(".ss");
-uint8_t __m[160 * 120] __SECTION__(".m");
-
-/* create surfaces */
-//surface fb((uint8_t *)__fb, screen_size, pixel_format::RGB);
-Surface ss((uint8_t *)__ss, PixelFormat::RGBA, Size(128, 128));
-Surface m((uint8_t *)__m, PixelFormat::M, screen_size);
-
 uint8_t logo[] = {
   1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 2,
   0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2,
