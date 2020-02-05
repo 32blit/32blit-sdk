@@ -50,7 +50,7 @@ namespace blit {
     SAW       = 32,
     TRIANGLE  = 16,
     SINE      = 8,
-    WAVE      = 1    // to be implemented...
+    WAVE      = 1
   };
 
   enum class ADSRPhase {
@@ -84,6 +84,11 @@ namespace blit {
       uint32_t  adsr          = 0;
       ADSRPhase adsr_phase    = ADSRPhase::OFF;
 	    int32_t   adsr_step	    = 0;
+
+      uint8_t   wave_buf_pos  = 0;      // 
+      int16_t   wave_buffer[64];        // buffer for arbitrary waveforms. small as it's filled by user callback
+
+      void  (*callback_waveBufferRefresh)();
 
       void trigger_attack()  {
         adsr_frame = 0;
