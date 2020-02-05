@@ -64,10 +64,11 @@ void buffCallBack() {
     channels[0].wave_buffer[x] = (wavPos < wavSize) ? wavSample[wavPos] - 0x7f : 0;
 
     // As the engine is 22050Hz, we can timestretch to match by incrementing our sample every other step (every even 'x')
-    if (wavSampleRate == 11025)
+    if (wavSampleRate == 11025) {
       if (x % 2) wavPos++;
-    else
+    } else {
       wavPos++;
+    }
   }
   
   // For this example, clear the values
