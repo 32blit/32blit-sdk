@@ -69,7 +69,7 @@ To enter DFU mode either hold the X & Y buttons and press the reset button or se
 ```
 mkdir build.stm32
 cd build.stm32
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../32blit.toolchain
+cmake .. -DCMAKE_TOOLCHAIN_FILE=../../32blit.toolchain
 make flash-loader
 ```
 
