@@ -16,8 +16,14 @@ if (NOT DEFINED BLIT_ONCE)
 		# attempt to find the upload tool
 		find_program(32BLIT_TOOL 32Blit PATHS
 			${CMAKE_CURRENT_BINARY_DIR}/../build/tools/src/
-			${CMAKE_CURRENT_BINARY_DIR}/../build.mingw/tools/src/
 		)
+
+		if(NOT 32BLIT_TOOL)
+			message(WARNING "32Blit tool not found. Looking for 32Blit.exe instead")
+			find_program(32BLIT_TOOL 32Blit.exe PATHS
+				${CMAKE_CURRENT_BINARY_DIR}/../build.mingw/tools/src/
+			)
+		endif()
 
 		if(NOT 32BLIT_TOOL)
 			message(WARNING "32Blit tool not found")
