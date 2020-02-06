@@ -17,14 +17,13 @@ else()
 	# attempt to find the framework (find_package won't work as there's no config file)
 	if(APPLE)
 		find_library(SDL2_LIBRARIES NAMES SDL2)
-		if(SDL2_LIBRARIES)
-			find_path(SDL2_INCLUDE_DIRS NAMES SDL.h
-				PATHS ~/Library/Frameworks /Library/Frameworks
-			)
-		endif()
+		
+		find_path(SDL2_INCLUDE_DIRS NAMES SDL.h
+			PATHS ~/Library/Frameworks /Library/Frameworks
+		)
 	endif()
 
-	if(NOT SDL2_LIBRARIES)
+	if(NOT SDL2_LIBRARIES OR NOT SDL2_INCLUDE_DIRS)
 		find_package(SDL2 REQUIRED)
 	endif()
 
