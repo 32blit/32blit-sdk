@@ -1,6 +1,8 @@
-# Building & Running on Win32 (WSL or MinGW)
+# Building & Running on Win32 (WSL and MinGW)
 
-These instructions assume a basic knowledge of the Linux command-line, installing tools and compiling code from source.
+These instructions cover setting up Windows Subsystem for Linux so that you can cross-compile Windows-compatible binaries with MinGW.
+
+They assume a basic knowledge of the Linux command-line, installing tools and compiling code from source.
 
 If you're more familiar with Visual Studio then you should [follow the instructions in Windows-VisualStudio.md](Windows-VisualStudio.md)
 
@@ -17,73 +19,15 @@ After that, proceed to the Microsoft Store to download Ubuntu for WSL.
 Install all the requirements using _apt_ and _pip3_ inside Ubuntu WSL:
 
 ```shell
-sudo apt install gcc gcc-arm-none-eabi cmake make python3 python3-pip
+sudo apt install gcc gcc-arm-none-eabi gcc-mingw-w64 g++-mingw-w64 unzip cmake make python3 python3-pip
 pip3 install construct bitstring
 ```
 
-If you want to deploy to the device, you will also need to download a DFU tool. On Windows it's easiest to just use "DfuSe Demonstration" (available from [st.com](https://www.st.com/en/development-tools/stsw-stm32080.html))
+If you want to run code on 32Blit, you should refer to [Building & Running On 32Blit](32blit.md).
 
-### XMing
-
-To run the examples from WSL on Windows you will need to have XMing (or another XWindow Server) running on Windows. Click on the following link which will help you install and setup WSL and XMing together.
-
-- [Information how to run XMing with WSL](https://virtualizationreview.com/articles/2017/02/08/graphical-programs-on-windows-subsystem-on-linux.aspx)
-- [XMing homepage](http://www.straightrunning.com/XmingNotes/)
-- Direct link to [download XMing setup](https://sourceforge.net/projects/xming/files/Xming/6.9.0.31/Xming-6-9-0-31-setup.exe/download)
-
-You can then run code by either:
-- prefixing the command with `DISPLAY=:0.0`, or 
-- execute the command `export DISPLAY=:0.0` - which after you will not need to prefix the commands in the current session, just run them
-
-## Build
-
-The following sections contain information on how to build and run example projects.
-
-### Building & Running on Linux or WSL + XMing
-
-To build your project for testing, go into the relevant example directory. We'll use `palette-cycle` to demonstrate:
-
-```shell
-cd examples/palette-cycle
-```
-
-Prepare the Makefile with CMake:
-
-```shell
-mkdir build
-cd build
-cmake ..
-```
-
-And compile the example:
-
-```shell
-make
-```
-
-To run the application on your computer, use the following command (from within the same directory):
-
-```shell
-./palette-cycle
-```
-
-If you're using WSL and XMing you will need to add a `DISPLAY` variable like so:
-
-```shell
-DISPLAY=:0.0 ./palette-cycle
-```
-
-Note: Sound does not work with WSL/XMing (this is a WSL problem, not a 32Blit problem).
-
-### Building & Running on Win32 (WSL + MinGW)
+## Building & Running and Win32 using MinGW
 
 You can use WSL on Windows to cross-compile your project (or any 32Blit example) into a Windows .exe.
-
-To build your project for Win32 you'll need `g++-mingw-w64`, `g++-mingw-w64` and `unzip` for extracting the SDL source code.
-
-```shell
-sudo apt-get install gcc-mingw-w64 g++-mingw-w64 unzip
-```
 
 You'll also need to cross-compile SDL2 and install it.
 
@@ -107,16 +51,35 @@ sudo make install
 
 This will install the SDL2 development headers and libraries into `/usr/local/cross-tools/x86_64-w64-mingw32/` if you use a different directory then you will have to supply the SDL2 dir to the `cmake` command below using `-DSDL2_DIR=/usr/local/cross-tools/x86_64-w64-mingw32/lib/cmake/SDL2`
 
-Finally, from the root directory of your project with the following commands:
+Finally, set up the 32Blit Makefile from the root of the repository with the following commands:
 
 ```shell
 mkdir build.mingw
 cd build.mingw
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../../../mingw.toolchain
-make
+cmake .. -DCMAKE_TOOLCHAIN_FILE=../mingw.toolchain
 ```
 
-This will give you a `project-name.exe` in your build directory and will additionally copy the required `SDL2.dll`. Don't forget to include this if you want to share your game.
+Now to make any example, type:
+
+```
+make example-name
+```
+
+For example:
+
+```
+make raycaster
+```
+
+This will produce `examples/raycaster/raycaster.exe` which you should run with:
+
+```
+./examples/raycaster/raycaster.exe
+```
+
+WSL will launch the example in Windows, using the required `SDL2.dll` that will have been copied into the build root.
+
+Don't forget to include `SDL2.dll` this if you want to redistribute a game/example.
 
 ### Troubleshooting
 
