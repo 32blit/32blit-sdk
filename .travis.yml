@@ -35,13 +35,18 @@ jobs:
       env:
         - TOOLCHAIN=../mingw.toolchain
         - CMAKE_ARGS=-DSDL2_DIR=$TRAVIS_BUILD_DIR/SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/
+      cache:
+        directories: SDL2-2.0.10/
       addons:
         apt:
           g++-mingw-w64
       before_script:
-        - curl https://libsdl.org/release/SDL2-devel-2.0.10-mingw.tar.gz -o SDL2.tar.gz
-        - tar -xf SDL2.tar.gz
-        - sed -i "s|/opt/local|$PWD/SDL2-2.0.10|g" ./SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/sdl2-config.cmake
+        - |
+          if [ ! -f SDL2-2.0.10/README.txt ]; then
+            curl https://libsdl.org/release/SDL2-devel-2.0.10-mingw.tar.gz -o SDL2.tar.gz
+            tar -xf SDL2.tar.gz
+            sed -i "s|/opt/local|$PWD/SDL2-2.0.10|g" ./SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/sdl2-config.cmake
+          fi
 
     - name: "macOS"
       os: osx
