@@ -117,10 +117,16 @@ public:
 	void					StartAllProbes(void);
 	void					LogProbes(void);
 	uint32_t			GetProbeCount(void);
-	void					SetDisplayLines(uint8_t uDisplayLines);
-	void					DisplayProbeOverlay(uint8_t uPageSize);
+	uint32_t			GetPageCount(void);
+	void 					SetDisplaySize(uint16_t uWidth, uint32_t uHeight);
+	void					DisplayProbeOverlay(uint8_t uPage);
+	void					SetGraphTime(uint32_t uTimeUs);
 
 private:
 	ProfilerProbes	m_probes;
+	uint16_t				m_uWidth;
+	uint16_t				m_uHeight;
+	uint16_t				m_uTextLines;
+	uint32_t				m_uGraphTimeUs;
 };
 

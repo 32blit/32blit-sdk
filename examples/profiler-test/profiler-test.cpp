@@ -20,12 +20,13 @@ Profiler	g_profiler;
 void init()
 {
 	set_screen_mode(ScreenMode::hires);
+	g_profiler.SetDisplaySize(SCREEN_WIDTH, SCREEN_HEIGHT);
 }
 
 
 void render(uint32_t time)
 {
-	static ProfilerProbe *pAwayRenderProbe = g_profiler.AddProbe("AwayFromRender");
+	//static ProfilerProbe *pAwayRenderProbe = g_profiler.AddProbe("AwayFromRender");
 	static ProfilerProbe *pRenderProbe = g_profiler.AddProbe("Render");
 	static ProfilerProbe *pClearProbe = g_profiler.AddProbe("Clear");
 	static ProfilerProbe *pRectProbe = g_profiler.AddProbe("Rectangle");
@@ -37,7 +38,7 @@ void render(uint32_t time)
 	static uint32_t uSizeMin 		= 2;
 	static Point    ptMiddle(SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
 
-	pAwayRenderProbe->StoreElapsedUs(true);
+	//pAwayRenderProbe->StoreElapsedUs(true);
 
 	pRenderProbe->Start();
 
@@ -80,7 +81,8 @@ void render(uint32_t time)
     }
   }
 
-
+  g_profiler.SetGraphTime(pRenderProbe->ElapsedMetrics().uMaxElapsedUs);
+  g_profiler.DisplayProbeOverlay(1);
 	g_profiler.LogProbes();
 
 }
