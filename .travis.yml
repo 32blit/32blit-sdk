@@ -6,6 +6,11 @@ language: cpp
 os: linux
 dist: bionic
 
+cache:
+  ccache: true
+  directories:
+   - $HOME/.ccache
+
 jobs:
   include:
     - name: "Emscripten"
@@ -38,9 +43,11 @@ jobs:
     - name: "MinGW"
       env:
         - TOOLCHAIN=../mingw.toolchain
-        - CMAKE_ARGS=-DSDL2_DIR=$TRAVIS_BUILD_DIR/SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/
+        - CMAKE_ARGS="-DSDL2_DIR=$TRAVIS_BUILD_DIR/SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/ -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
       cache:
-        directories: SDL2-2.0.10/
+        directories:
+         - SDL2-2.0.10/
+         - $HOME/.ccache
       addons:
         apt:
           g++-mingw-w64
