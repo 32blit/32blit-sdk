@@ -5,6 +5,13 @@ Make sure you've prepared your 32Blit by following the instructions in:
 * [Building & Flashing The 32Blit Firmware](32Blit-Firmware.md#building--flashing-the-32blit-firmware)
 * [Building The 32Blit Loader Tool](32Blit-Loader.md#building-the-32blit-loader-tool)
 
+You should also make sure you have a cross-compile environment set up on your computer, refer to the relevant documentation below:
+
+* [Windows][Windows-WSL.md]
+* [Linux][Linux.md]
+* [macOS][macOS.md]
+* [ChromeOS][ChromeOS.md]
+
 ## Examples
 
 ### Building An Example

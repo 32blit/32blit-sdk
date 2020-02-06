@@ -16,20 +16,22 @@ After that, proceed to the Microsoft Store to download Ubuntu for WSL.
 
 ### Installing requirements inside WSL
 
-Install all the requirements using _apt_ and _pip3_ inside Ubuntu WSL:
+The following requirements enable cross-compile to 32Blit via ARM GCC and to Windows via MinGW:
 
 ```shell
 sudo apt install gcc gcc-arm-none-eabi gcc-mingw-w64 g++-mingw-w64 unzip cmake make python3 python3-pip
 pip3 install construct bitstring
 ```
 
-If you want to run code on 32Blit, you should refer to [Building & Running On 32Blit](32blit.md).
+## Building & Running on 32Blit
 
-## Building & Running and Win32 using MinGW
+If you want to run code on 32Blit, you should now refer to [Building & Running On 32Blit](32blit.md).
 
-You can use WSL on Windows to cross-compile your project (or any 32Blit example) into a Windows .exe.
+## Building & Running Locally
 
-You'll also need to cross-compile SDL2 and install it.
+You can use WSL on Windows to cross-compile your project (or any 32Blit example) into a Windows .exe for testing locally.
+
+First you'll need to cross-compile SDL2 for MinGW and install it.
 
 Grab the SDL2 source code and unzip it with the following commands:
 
@@ -61,25 +63,35 @@ cmake .. -DCMAKE_TOOLCHAIN_FILE=../mingw.toolchain
 
 Now to make any example, type:
 
-```
+```shell
 make example-name
 ```
 
 For example:
 
-```
+```shell
 make raycaster
 ```
 
 This will produce `examples/raycaster/raycaster.exe` which you should run with:
 
-```
+```shell
 ./examples/raycaster/raycaster.exe
 ```
 
 WSL will launch the example in Windows, using the required `SDL2.dll` that will have been copied into the build root.
 
 Don't forget to include `SDL2.dll` this if you want to redistribute a game/example.
+
+### Build Everything
+
+Alternatively you can build everything by just typing:
+
+```shell
+make
+```
+
+When the build completes you should be able to run any example.
 
 ### Troubleshooting
 
