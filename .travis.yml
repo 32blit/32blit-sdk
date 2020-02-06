@@ -50,11 +50,17 @@ jobs:
 
     - name: "macOS"
       os: osx
+      cache:
+        directories:
+         - $HOME/Library/Frameworks/SDL2.framework
       before_script:
-        - curl https://libsdl.org/release/SDL2-2.0.10.dmg -o SDL2.dmg
-        - hdiutil mount SDL2.dmg
-        - mkdir -p ~/Library/Frameworks
-        - cp -r /Volumes/SDL2/SDL2.framework ~/Library/Frameworks/
+        - |
+          if [ ! -f ~/Library/Frameworks/SDL2.framework/SDL2 ]; then
+            curl https://libsdl.org/release/SDL2-2.0.10.dmg -o SDL2.dmg
+            hdiutil mount SDL2.dmg
+            mkdir -p ~/Library/Frameworks
+            cp -r /Volumes/SDL2/SDL2.framework ~/Library/Frameworks/
+          fi
 
     - name: "Visual Studio (CMake)"
       os: windows
