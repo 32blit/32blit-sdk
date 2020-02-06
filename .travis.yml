@@ -59,23 +59,36 @@ jobs:
     - name: "Visual Studio (CMake)"
       os: windows
       env: CMAKE_ARGS=-DSDL2_DIR=$TRAVIS_BUILD_DIR/vs/sdl
+      cache:
+        directories:
+         - vs/sdl/
       before_script:
-        - curl https://libsdl.org/release/SDL2-devel-2.0.10-VC.zip -o SDL2.zip
-        - unzip SDL2.zip -d vs/sdl
-        # move dirs up
-        - mv vs/sdl/SDL2-2.0.10/* vs/sdl
-        - mv vs/sdl/lib/x86 vs/sdl/lib/Win32 #small hack
+        - |
+          if [ ! -d vs/sdl/lib ]; then
+            curl https://libsdl.org/release/SDL2-devel-2.0.10-VC.zip -o SDL2.zip
+            unzip SDL2.zip -d vs/sdl
+            # move dirs up
+            mv vs/sdl/SDL2-2.0.10/* vs/sdl
+            mv vs/sdl/lib/x86 vs/sdl/lib/Win32 #small hack
+          fi
+
 
     - name: "Visual Studio (.sln)"
       os: windows
+      cache:
+        directories:
+         - vs/sdl/
       before_install:
         - choco install -y visualstudio2019buildtools visualstudio2019-workload-vctools
       script:
         - export PATH=$PATH:"c:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin"
-        - curl https://libsdl.org/release/SDL2-devel-2.0.10-VC.zip -o SDL2.zip
-        - unzip SDL2.zip -d vs/sdl
-        # move dirs up
-        - mv vs/sdl/SDL2-2.0.10/* vs/sdl
+        - |
+          if [ ! -d vs/sdl/lib ]; then
+            curl https://libsdl.org/release/SDL2-devel-2.0.10-VC.zip -o SDL2.zip
+            unzip SDL2.zip -d vs/sdl
+            # move dirs up
+            mv vs/sdl/SDL2-2.0.10/* vs/sdl
+          fi
         - msbuild.exe vs/32blit.sln
 
 script:
