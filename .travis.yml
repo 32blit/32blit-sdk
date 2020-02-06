@@ -29,16 +29,16 @@ jobs:
     
     - name: "Linux"
       env:
-        - RELEASE_FILE=${TRAVIS_BUILD_DIR}${REPO}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}-LIN64.tar.gz
+        - RELEASE_FILE=${TRAVIS_BUILD_DIR}${REPO}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}-LIN64
       addons:
         apt:
           libsdl2-dev
       before_deploy:
         - make install
-        - tar -zcf ${RELEASE_FILE} bin/
+        - tar -zcf ${RELEASE_FILE}.tar.gz bin/
       deploy:
         provider: releases
-        file: ${RELEASE_FILE}
+        file: ${RELEASE_FILE}.tar.gz
         on:
           tags: true
         edge: true
@@ -46,7 +46,7 @@ jobs:
     - name: "STM32"
       env:
         - TOOLCHAIN=../32blit.toolchain
-        - RELEASE_FILE=${TRAVIS_BUILD_DIR}${REPO}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}-STM32.tar.gz
+        - RELEASE_FILE=${TRAVIS_BUILD_DIR}${REPO}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}-STM32
       addons:
         apt:
           gcc-arm-none-eabi
@@ -54,14 +54,18 @@ jobs:
           libstdc++-arm-none-eabi-newlib
           python3-pip
           python3-setuptools
+          zip
       install:
         - python3 -m pip install bitstring construct
       before_deploy:
         - make install
-        - tar -zcf ${RELEASE_FILE} bin/
+        - tar -zcf ${RELEASE_FILE}.tar.gz bin/
+        - zip -9 ${RELEASE_FILE}.zip bin/*
       deploy:
         provider: releases
-        file: ${RELEASE_FILE}
+        file:
+          - ${RELEASE_FILE}.tar.gz
+          - ${RELEASE_FILE}.zip
         on:
           tags: true
         edge: true
@@ -70,7 +74,7 @@ jobs:
       env:
         - TOOLCHAIN=../mingw.toolchain
         - CMAKE_ARGS="-DSDL2_DIR=$TRAVIS_BUILD_DIR/SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/ -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
-        - RELEASE_FILE=${TRAVIS_BUILD_DIR}${REPO}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}-WIN64.zip
+        - RELEASE_FILE=${TRAVIS_BUILD_DIR}${REPO}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}-WIN64
       cache:
         directories:
          - SDL2-2.0.10/
@@ -88,10 +92,10 @@ jobs:
           fi
       before_deploy:
         - make install
-        - zip -9 ${RELEASE_FILE} bin/*
+        - zip -9 ${RELEASE_FILE}.zip bin/*
       deploy:
         provider: releases
-        file: ${RELEASE_FILE}
+        file: ${RELEASE_FILE}.zip
         on:
           tags: true
         edge: true
