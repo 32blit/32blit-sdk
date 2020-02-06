@@ -30,10 +30,9 @@ void render(uint32_t time)
 	static ProfilerProbe *pClearProbe = g_profiler.AddProbe("Clear");
 	static ProfilerProbe *pRectProbe = g_profiler.AddProbe("Rectangle");
 	static ProfilerProbe *pCircleProbe = g_profiler.AddProbe("Circle");
-	static ProfilerProbe *pUpdateProbe = g_profiler.AddProbe("Update");
 
-	static uint32_t uSize       = 120;//2;
-	static uint32_t uSizeChange = 0;//1;
+	static uint32_t uSize       = 2;
+	static uint32_t uSizeChange = 1;
 	static uint32_t uSizeMax 		= SCREEN_HEIGHT-1;
 	static uint32_t uSizeMin 		= 2;
 	static Point    ptMiddle(SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
@@ -66,7 +65,6 @@ void render(uint32_t time)
 	pRenderProbe->StoreElapsedUs();
 
   // update size
-	pUpdateProbe->Start();
   uSize+=uSizeChange;
   if(uSize >= uSizeMax)
   {
@@ -81,7 +79,6 @@ void render(uint32_t time)
     	uSizeChange = - uSizeChange;
     }
   }
-	pUpdateProbe->StoreElapsedUs();
 
 
 	g_profiler.LogProbes();
@@ -90,6 +87,9 @@ void render(uint32_t time)
 
 void update(uint32_t time)
 {
+	static ProfilerProbe *pUpdateProbe = g_profiler.AddProbe("Update");
+
 	// code here
+	ScopedProfilerProbe scopedProbe(pUpdateProbe);
 
 }
