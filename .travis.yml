@@ -9,6 +9,7 @@ dist: bionic
 jobs:
   include:
     - name: "Emscripten"
+      env: CACHE_NAME=emscripten
       cache:
         directories:
           - $HOME/.emscripten_ports
