@@ -114,3 +114,12 @@ script:
   - cmake -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN $CMAKE_ARGS ..
   - cmake --build .
   - ccache --show-stats || true
+
+before_deploy:
+  - make install
+  - tar -zcf ${TRAVIS_BUILD_DIR}${REPO}-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz bin
+deploy:
+  provider: releases
+  file: ${TRAVIS_BUILD_DIR}${REPO}-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
+  on:
+    tags: true
