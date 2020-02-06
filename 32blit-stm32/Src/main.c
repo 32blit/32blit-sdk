@@ -163,12 +163,19 @@ int main(void)
   {
     uint32_t t_start = blit::now();
 
-    blit_tick();
+//    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+//    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+//    uint32_t uTicksPerUs = SystemCoreClock / 1000000;
+//    uint32_t uTimeStart = DWT->CYCCNT;
 
+    blit_tick();
+    //HAL_Delay(1000);
     // handle CDC input
     g_commandStream.Stream();
 
     uint32_t t_elapsed = blit::now() - t_start;
+//    uint32_t uTimeElapsed = (DWT->CYCCNT - uTimeStart)/uTicksPerUs;
+//    printf("%lu, %lu\n\r", t_elapsed, uTimeElapsed);
     /* USER CODE END WHILE */
   
     /* USER CODE BEGIN 3 */
