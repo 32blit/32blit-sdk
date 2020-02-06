@@ -1,5 +1,7 @@
 # Building & Running On 32Blit
 
+These instructions assume a basic familiarity with the Linux command-line and with compiling software from source.
+
 Make sure you've prepared your 32Blit by following the instructions in:
 
 * [Building & Flashing The 32Blit Firmware](32Blit-Firmware.md#building--flashing-the-32blit-firmware)
