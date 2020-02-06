@@ -10,7 +10,7 @@ brew install cmake
 You'll also need to build and install SDL2:
 
 ``` shell
-wget https://www.libsdl.org/release/SDL2-2.0.10.zip
+curl https://www.libsdl.org/release/SDL2-2.0.10.zip -o SDL2-2.0.10.zip
 unzip SDL2-2.0.10.zip
 cd SDL2-2.0.10
 mkdir build
