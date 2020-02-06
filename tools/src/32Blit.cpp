@@ -455,7 +455,7 @@ bool ResetIfNeeded(const char *pszComPort)
 
   if (bResetNeeded)
   {
-    printf("Reseting 32Blit and waiting for USB connection, please wait...\n");
+    printf("Resetting 32Blit and waiting for USB connection, please wait...\n");
     // need to reset 32blit
     char rstCommand[] = "32BL_RST";
     WriteCom(rstCommand, (uint32_t)strlen(rstCommand));
