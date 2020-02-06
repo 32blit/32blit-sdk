@@ -6,14 +6,23 @@ language: cpp
 os: linux
 dist: bionic
 
+cache:
+  ccache: true
+  directories:
+   - $HOME/.ccache
+
 jobs:
   include:
     - name: "Emscripten"
-      env: TOOLCHAIN=emscripten #not used, but provides a nice label
+      env: CACHE_NAME=emscripten
+      cache:
+        directories:
+          - $HOME/.emscripten_ports
+          - $HOME/.emscripten_cache
       services:
         - docker
       before_install:
-        - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
+        - docker run -dit --name emscripten -v $(pwd):/src -v $HOME/.emscripten_ports:/emsdk_portable/.data/ports -v $HOME/.emscripten_cache:/emsdk_portable/.data/cache trzeci/emscripten:sdk-incoming-64bit bash
       script:
         - docker exec -it emscripten emcmake cmake -B build.em -G "Unix Makefiles"
         - docker exec -it emscripten make -C build.em
@@ -34,46 +43,74 @@ jobs:
     - name: "MinGW"
       env:
         - TOOLCHAIN=../mingw.toolchain
-        - CMAKE_ARGS=-DSDL2_DIR=$TRAVIS_BUILD_DIR/SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/
+        - CMAKE_ARGS="-DSDL2_DIR=$TRAVIS_BUILD_DIR/SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/ -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
+      cache:
+        directories:
+         - SDL2-2.0.10/
+         - $HOME/.ccache
       addons:
         apt:
           g++-mingw-w64
       before_script:
-        - curl https://libsdl.org/release/SDL2-devel-2.0.10-mingw.tar.gz -o SDL2.tar.gz
-        - tar -xf SDL2.tar.gz
-        - sed -i "s|/opt/local|$PWD/SDL2-2.0.10|g" ./SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/sdl2-config.cmake
+        - |
+          if [ ! -f SDL2-2.0.10/README.txt ]; then
+            curl https://libsdl.org/release/SDL2-devel-2.0.10-mingw.tar.gz -o SDL2.tar.gz
+            tar -xf SDL2.tar.gz
+            sed -i "s|/opt/local|$PWD/SDL2-2.0.10|g" ./SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/sdl2-config.cmake
+          fi
 
     - name: "macOS"
       os: osx
+      cache:
+        directories:
+         - $HOME/Library/Frameworks/SDL2.framework
       before_script:
-        - curl https://libsdl.org/release/SDL2-2.0.10.dmg -o SDL2.dmg
-        - hdiutil mount SDL2.dmg
-        - mkdir -p ~/Library/Frameworks
-        - cp -r /Volumes/SDL2/SDL2.framework ~/Library/Frameworks/
+        - |
+          if [ ! -f ~/Library/Frameworks/SDL2.framework/SDL2 ]; then
+            curl https://libsdl.org/release/SDL2-2.0.10.dmg -o SDL2.dmg
+            hdiutil mount SDL2.dmg
+            mkdir -p ~/Library/Frameworks
+            cp -r /Volumes/SDL2/SDL2.framework ~/Library/Frameworks/
+          fi
 
     - name: "Visual Studio (CMake)"
       os: windows
       env: CMAKE_ARGS=-DSDL2_DIR=$TRAVIS_BUILD_DIR/vs/sdl
+      cache:
+        directories:
+         - vs/sdl/
       before_script:
-        - curl https://libsdl.org/release/SDL2-devel-2.0.10-VC.zip -o SDL2.zip
-        - unzip SDL2.zip -d vs/sdl
-        # move dirs up
-        - mv vs/sdl/SDL2-2.0.10/* vs/sdl
-        - mv vs/sdl/lib/x86 vs/sdl/lib/Win32 #small hack
+        - |
+          if [ ! -d vs/sdl/lib ]; then
+            curl https://libsdl.org/release/SDL2-devel-2.0.10-VC.zip -o SDL2.zip
+            unzip SDL2.zip -d vs/sdl
+            # move dirs up
+            mv vs/sdl/SDL2-2.0.10/* vs/sdl
+            mv vs/sdl/lib/x86 vs/sdl/lib/Win32 #small hack
+          fi
+
 
     - name: "Visual Studio (.sln)"
       os: windows
+      cache:
+        directories:
+         - vs/sdl/
       before_install:
         - choco install -y visualstudio2019buildtools visualstudio2019-workload-vctools
       script:
         - export PATH=$PATH:"c:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin"
-        - curl https://libsdl.org/release/SDL2-devel-2.0.10-VC.zip -o SDL2.zip
-        - unzip SDL2.zip -d vs/sdl
-        # move dirs up
-        - mv vs/sdl/SDL2-2.0.10/* vs/sdl
+        - |
+          if [ ! -d vs/sdl/lib ]; then
+            curl https://libsdl.org/release/SDL2-devel-2.0.10-VC.zip -o SDL2.zip
+            unzip SDL2.zip -d vs/sdl
+            # move dirs up
+            mv vs/sdl/SDL2-2.0.10/* vs/sdl
+          fi
         - msbuild.exe vs/32blit.sln
 
 script:
+  - ccache --zero-stats || true
   - mkdir build && cd build
   - cmake -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN $CMAKE_ARGS ..
   - cmake --build .
+  - ccache --show-stats || true
