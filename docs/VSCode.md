@@ -26,3 +26,16 @@ Add this to the list:
 (Replacing `/path/to/32blit-beta`, with the actual path.)
 
 You should now be able to select "32Blit" as a kit. ("CMake: Change Kit" from the command palette or the button displaying the current kit at the bottom of the window). If you select a target ending with .flash from the list next to the "⚙ Build:" button, that example will be flashed to your device when you build.
+
+## CMake Arguments
+
+To set CMake arguments (like `-D32BLIT_PATH` for out-of-tree builds), you need to add them to `.vscode/settings.json`:
+
+```json
+{
+  // other options...
+  "cmake.configureArgs": [
+    "-D32BLIT_PATH=/path/to/32blit-beta"
+  ],
+}
+```
