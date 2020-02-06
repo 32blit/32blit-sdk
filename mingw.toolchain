@@ -11,3 +11,5 @@ set(CMAKE_CXX_FLAGS_INIT "-static-libstdc++ -static-libgcc -Wl,-Bstatic -lstdc++
 set(SDL2_BINDIR ${SDL2_PREFIX}/bin)
 
 configure_file(${SDL2_BINDIR}/SDL2.dll ${CMAKE_CURRENT_BINARY_DIR}/SDL2.dll COPYONLY)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/SDL2.dll DESTINATION bin)

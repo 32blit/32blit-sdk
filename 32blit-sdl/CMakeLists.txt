@@ -78,6 +78,10 @@ endif()
 function(blit_executable NAME SOURCES)
 	add_executable(${NAME} ${SOURCES} ${ARGN})
 
+	install(TARGETS ${NAME}
+		RUNTIME DESTINATION bin
+	)
+
 	if (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
 		target_link_libraries(${NAME} BlitHalSDL)
 	elseif(${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
