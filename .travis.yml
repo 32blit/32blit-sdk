@@ -70,7 +70,7 @@ jobs:
       env:
         - TOOLCHAIN=../mingw.toolchain
         - CMAKE_ARGS="-DSDL2_DIR=$TRAVIS_BUILD_DIR/SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/ -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
-        - RELEASE_FILE=${TRAVIS_BUILD_DIR}${REPO}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}-WIN64.tar.gz
+        - RELEASE_FILE=${TRAVIS_BUILD_DIR}${REPO}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}-WIN64.zip
       cache:
         directories:
          - SDL2-2.0.10/
@@ -78,6 +78,7 @@ jobs:
       addons:
         apt:
           g++-mingw-w64
+          zip
       before_script:
         - |
           if [ ! -f SDL2-2.0.10/README.txt ]; then
@@ -87,7 +88,7 @@ jobs:
           fi
       before_deploy:
         - make install
-        - tar -zcf ${RELEASE_FILE} bin/
+        - zip -9 ${RELEASE_FILE} bin/*
       deploy:
         provider: releases
         file: ${RELEASE_FILE}
