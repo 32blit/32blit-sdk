@@ -9,10 +9,10 @@ Make sure you've prepared your 32Blit by following the instructions in:
 
 You should also make sure you have a cross-compile environment set up on your computer, refer to the relevant documentation below:
 
-* [Windows][Windows-WSL.md]
-* [Linux][Linux.md]
-* [macOS][macOS.md]
-* [ChromeOS][ChromeOS.md]
+* [Windows](Windows-WSL.md)
+* [Linux](Linux.md)
+* [macOS](macOS.md)
+* [ChromeOS](ChromeOS.md)
 
 ## Examples
 
