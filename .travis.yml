@@ -109,6 +109,8 @@ jobs:
         - msbuild.exe vs/32blit.sln
 
 script:
+  - ccache --zero-stats || true
   - mkdir build && cd build
   - cmake -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN $CMAKE_ARGS ..
   - cmake --build .
+  - ccache --show-stats || true
