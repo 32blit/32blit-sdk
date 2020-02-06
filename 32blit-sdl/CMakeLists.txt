@@ -19,7 +19,7 @@ else()
 		find_library(SDL2_LIBRARIES NAMES SDL2)
 		if(SDL2_LIBRARIES)
 			find_path(SDL2_INCLUDE_DIRS NAMES SDL.h
-				PATHS ~/Library/Frameworks /Library/Frameworks
+				PATHS ~/Library/Frameworks /Library/Frameworks /usr/local/include/SDL2
 			)
 		endif()
 	endif()
