@@ -51,6 +51,7 @@ jobs:
         file: ${TRAVIS_BUILD_DIR}${REPO}-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
         on:
           tags: true
+        edge: true
 
     - name: "MinGW"
       env:
