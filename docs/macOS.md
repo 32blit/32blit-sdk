@@ -7,6 +7,8 @@ xcode-select --install
 brew install cmake
 ```
 
+TODO: Add instructions for installing python3 and dependencies for tooling
+
 TODO: Add instructions for installing gcc-arm-none-eabi for cross compile
 
 ## Building & Running on 32Blit
