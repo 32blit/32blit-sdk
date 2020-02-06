@@ -39,6 +39,8 @@ jobs:
           gcc-arm-none-eabi
           libnewlib-arm-none-eabi
           libstdc++-arm-none-eabi-newlib
+      install:
+        - python3 -m pip install bitstring construct
       before_deploy:
         - make install
         - tar -zcf ${TRAVIS_BUILD_DIR}${REPO}-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz bin
