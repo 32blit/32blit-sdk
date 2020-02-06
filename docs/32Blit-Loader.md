@@ -34,6 +34,16 @@ Since WSL can run this program directly you should ideally add this directory to
 
 ## Usage
 
+Usage: `32blit <process> <comport> <binfile>`
+
+* `process` - Either `_RST`, `SAVE` or `PROG`
+* `comport` - `AUTO` for automatic selection, otherwise `COMX` for Windows or the relevant device in `/dev/serial/by-id/` for Linux
+* `binfile` - path to the binary file you want to flash or program
+
+Options:
+
+* `--reconnect` - Reconnect after `PROG` to show debug output
+
 You can run `32Blit.exe` (Windows) or `32Blit` (Linux) manually to copy a bin file to either QSPI Flash or the SD Card on your device.
 
 For example to program to QSPI Flash from Windows:
