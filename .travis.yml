@@ -39,6 +39,7 @@ jobs:
           gcc-arm-none-eabi
           libnewlib-arm-none-eabi
           libstdc++-arm-none-eabi-newlib
+          python3-pip
       install:
         - python3 -m pip install bitstring construct
       before_deploy:
