@@ -80,6 +80,29 @@ private:
 	Metrics		m_metrics;
 };
 
+
+class ScopedProfilerProbe
+{
+public:
+	explicit ScopedProfilerProbe (ProfilerProbe  *pProbe)
+	: m_pProbe(pProbe)
+	{
+		m_pProbe->Start();
+	}
+
+	~ScopedProfilerProbe ()
+	{
+		m_pProbe->StoreElapsedUs();
+	}
+
+private:
+	ProfilerProbe				*m_pProbe;
+
+//	ScopedProfilerProbe ( ScopedProfilerProbe & );
+//	void operator = ( ScopedProfilerProbe & );
+};
+
+
 class Profiler
 {
 public:
