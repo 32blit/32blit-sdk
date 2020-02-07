@@ -34,7 +34,7 @@ void render(uint32_t time_ms) {
   screen.circle(Point(160, 20+tween_bounce.value), 20);
 
   screen.pen(RGBA(255, 255, 255));
-  sprintf(text_buffer, "Value: %f", tween_bounce.value);
+  snprintf(text_buffer, 60, "Value: %f", tween_bounce.value);
   screen.text(text_buffer, &minimal_font[0][0], Point(175, 35+tween_bounce.value));
 }
 

@@ -686,7 +686,7 @@ void render_summary() {
 
     if(current_random_source == RANDOM_TYPE_PRNG) {
         char buf[9];
-        sprintf(buf, "%08" PRIX32, current_random_seed);
+        snprintf(buf, 9, "%08" PRIX32, current_random_seed);
         text = "Level seed: ";
         text.append(buf);
         screen.text(text, &minimal_font[0][0], Point(10, (SCREEN_H / 2) + 30));

@@ -90,10 +90,10 @@ void render(uint32_t time) {
 
     screen.text("Joystick:", &minimal_font[0][0], Point(COL1, ROW1));
 
-    sprintf(text_buf, "X: %d", (int)(blit::joystick.x * 1024));
+    snprintf(text_buf, 100, "X: %d", (int)(blit::joystick.x * 1024));
     screen.text(text_buf, &minimal_font[0][0], Point(COL1, ROW1+7));
 
-    sprintf(text_buf, "Y: %d", (int)(blit::joystick.y * 1024));
+    snprintf(text_buf, 100, "Y: %d", (int)(blit::joystick.y * 1024));
     screen.text(text_buf, &minimal_font[0][0], Point(COL1, ROW1+14));
 
     screen.text("B:", &minimal_font[0][0], Point(COL1, ROW1+21));
@@ -106,13 +106,13 @@ void render(uint32_t time) {
 
     screen.text("Tilt:", &minimal_font[0][0], Point(COL2, ROW1));
 
-    sprintf(text_buf, "X: %d", (int)(blit::tilt.x * 1024));
+    snprintf(text_buf, 100, "X: %d", (int)(blit::tilt.x * 1024));
     screen.text(text_buf, &minimal_font[0][0], Point(COL2, ROW1+7));
 
-    sprintf(text_buf, "Y: %d", (int)(blit::tilt.y * 1024));
+    snprintf(text_buf, 100, "Y: %d", (int)(blit::tilt.y * 1024));
     screen.text(text_buf, &minimal_font[0][0], Point(COL2, ROW1+14));
 
-    sprintf(text_buf, "Z: %d", (int)(blit::tilt.z * 1024));
+    snprintf(text_buf, 100, "Z: %d", (int)(blit::tilt.z * 1024));
     screen.text(text_buf, &minimal_font[0][0], Point(COL2, ROW1+21));
 
     blit::LED = RGB(
@@ -153,11 +153,11 @@ void render(uint32_t time) {
             break;
     }
 
-    sprintf(text_buf, "%d", (int)(blit::battery * 1000.f));
+    snprintf(text_buf, 100, "%d", (int)(blit::battery * 1000.f));
     screen.text("Battery:", &minimal_font[0][0], Point(COL3, ROW3));
     screen.text(text_buf, &minimal_font[0][0], Point(COL3, ROW3+7));
 
-    sprintf(text_buf, "%d", blit::battery_fault);
+    snprintf(text_buf, 100, "%d", blit::battery_fault);
     screen.text("Fault:", &minimal_font[0][0], Point(COL3, ROW1));
     screen.text(text_buf, &minimal_font[0][0], Point(COL3, ROW1+7));
 }

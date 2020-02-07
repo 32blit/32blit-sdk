@@ -57,7 +57,7 @@ void render(uint32_t time_ms) {
   // Since our timer callback is updating our `count` variable
   // we can just display it on the screen and watch it tick up!
   screen.pen(RGBA(255, 255, 255));
-  sprintf(text_buffer, "Count: %d", count);
+  snprintf(text_buffer, 60, "Count: %d", count);
   screen.text(text_buffer, &minimal_font[0][0], Point(120, 100));
 
   // `is_running()` is a handy shorthand for checking the timer state
