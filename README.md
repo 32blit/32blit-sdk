@@ -44,7 +44,7 @@ The `32blit` directory contains the API/engine for developing your game. This en
 
 ## 32blit-sdl
 
-The `32blit-sdl` directory contains an SDL2 HAL for 32blit compatible with Linux and Linux-on-Windows using XMing. You can use it to run your 32blit projects on your computer and test/debug them a little quicker.
+The `32blit-sdl` directory contains an SDL2 HAL for 32blit compatible with Linux, macOS, Windows and Emscripten. You can use it to run your 32blit projects on your computer and test/debug them a little quicker.
 
 You should be careful relying upon it, however, since `32blit-sdl` is *not an emulator* you may run into memory or performance problems when deploying your game to a 32blit console.
 
