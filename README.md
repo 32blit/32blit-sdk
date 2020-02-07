@@ -34,6 +34,10 @@ If you want to run in a browser, refer to the [Emscripten docs](docs/Emscripten.
 
 If you want to run on device, refer to the [32blit docs](docs/32blit.md)
 
+How to set up your editor:
+
+* [Visual Studio Code](docs/VSCode.md)
+
 # Overview of what is inside?
 
 ## 32blit
