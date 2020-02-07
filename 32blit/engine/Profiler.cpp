@@ -1,13 +1,17 @@
 #include <engine/Profiler.hpp>
 #include "graphics/color.hpp"
-#include "32blit.hpp"
-using namespace blit;
+
+namespace blit
+{
 
 
-Profiler::Profiler() : m_uGraphTimeUs(20000)
+const char *Profiler::g_pszMetricNames[4]= {"Min", "Cur", "Avg", "Max"};
+
+Profiler::Profiler(uint32_t uRunningAverageSize) : m_uGraphTimeUs(20000), m_uRunningAverageSize(uRunningAverageSize), m_uTextHeight(10), m_uBorder(5), m_uHeaderSize(20), m_uAlpha(160)
 {
 	// default to lowres
 	SetDisplaySize(160, 120);
+
 }
 
 Profiler::~Profiler()
@@ -18,7 +22,7 @@ Profiler::~Profiler()
 
 ProfilerProbe *Profiler::AddProbe(const char *pszName)
 {
-	ProfilerProbe *pProbe = new ProfilerProbe(pszName);
+	ProfilerProbe *pProbe = new ProfilerProbe(pszName, m_uRunningAverageSize);
 	m_probes.push_back(pProbe);
 
 	return pProbe;
@@ -50,95 +54,158 @@ uint32_t Profiler::GetProbeCount(void)
 	return m_probes.size();
 }
 
-uint32_t Profiler::GetPageCount(void)
+uint32_t Profiler::GetPageCount(DisplayType displayType)
 {
-	return (m_probes.size()/GetProbeCount())+1;
+	uint32_t uPages = 0;
+	switch(displayType)
+	{
+		case dtText :
+			uPages = (GetProbeCount()/m_uTextRows)+1;
+		break;
+
+		case dtGraph :
+			uPages = (GetProbeCount()/m_uGraphRows)+1;
+		break;
+
+	}
+
+	return uPages;
 }
 
 void Profiler::SetDisplaySize(uint16_t uWidth, uint32_t uHeight)
 {
-	m_uWidth = uWidth;
-	m_uHeight = uHeight;
-	m_uTextLines = (uHeight-20)/10;
+	m_uWidth  = uWidth;
+	m_uHeight = uHeight-20;
+	m_uTextRows  = uHeight/m_uTextHeight;
+	m_uGraphRows = m_uTextRows / 5;
 }
+
+
+void Profiler::SetRows(DisplayType displayType, uint8_t uRows)
+{
+	switch(displayType)
+	{
+		case dtText :
+			m_uTextRows = uRows;
+			m_uTextHeight = m_uHeight / m_uTextRows;
+		break;
+
+		case dtGraph :
+			m_uGraphRows = uRows;
+			m_uGraphHeight = m_uHeight / m_uGraphRows;
+		break;
+
+	}
+}
+
 
 void Profiler::SetGraphTime(uint32_t uTimeUs)
 {
 	m_uGraphTimeUs = uTimeUs;
 }
 
-void Profiler::DisplayProbeOverlay(uint8_t uPage)
+void Profiler::DisplayProbeOverlay(DisplayType displayType, uint8_t uPage)
 {
 	if(uPage > 0)
 	{
 		char buffer[64];
 
-		uint16_t uUseWidth = m_uWidth-10;
+		uint8_t uLabelCount = 0;
+		for(uint8_t uM = dmMin; uM <= dmMax; uM++)
+		{
+			if(m_graphElements[uM].bDisplayLabel)
+				uLabelCount++;
+		}
+
+
+		uint16_t uUseWidth = m_uWidth-(m_uBorder*2);
 		uint16_t uNameWidth = uUseWidth / 3;
-		uint16_t uMetricWidth = (uNameWidth *2)/3;
-		uint16_t uNameX = 5;
-		uint16_t uMinX  = uNameX + uNameWidth;
-		uint16_t uCurX  = uMinX + uMetricWidth;;
-		uint16_t uMaxX  = uCurX + uMetricWidth;;
+		uint16_t uMetricWidth = (uNameWidth *2)/uLabelCount;
+		uint16_t uNameX = m_uBorder;
+		uint16_t uMetricX  = uNameX + uNameWidth;
+
+
+		//screen.pen(RGBA(30, 30, 50, m_uAlpha));
+		//screen.clear();
+
+
 
 
 		// display header
-		const RGBA graphColor = RGBA(0,255,0,200);
-
-		screen.pen(RGBA(30, 30, 50, 200));
-		screen.clear();
-
-		screen.pen(RGBA(255, 255, 255));
-
-		sprintf(buffer, "Profiler(%luus)", m_uGraphTimeUs);
+		screen.pen(RGBA(255, 255, 255, m_uAlpha));
+		sprintf(buffer, "%luus", m_uGraphTimeUs);
 		screen.text(buffer, &minimal_font[0][0], Point(5, 5));
 
-		screen.text("Min", &minimal_font[0][0], Point(uMinX, 5));
-		screen.text("Cur", &minimal_font[0][0], Point(uCurX, 5));
-		screen.text("Max", &minimal_font[0][0], Point(uMaxX, 5));
+		// labels
+		for(uint8_t uM = dmMin; uM <= dmMax; uM++)
+		{
+			if(m_graphElements[uM].bDisplayLabel)
+			{
+				screen.text(g_pszMetricNames[uM], &minimal_font[0][0], Point(uMetricX, 5));
+				uMetricX+=uMetricWidth;
+			}
+		}
 
 		// Horizontal Line
-		screen.pen(RGBA(255, 255, 255));
-		screen.rectangle(Rect(0, 15, m_uWidth, 1));
+		screen.pen(RGBA(255, 255, 255, m_uAlpha));
+		screen.rectangle(Rect(0, m_uHeaderSize - 5, m_uWidth, 1));
 
 
-		uint16_t uMaxPage = GetPageCount();
+
+		uint16_t uMaxPage = GetPageCount(displayType);
 		if(uPage > uMaxPage)
 			uPage = uMaxPage;
 
-		uint16_t uStartProbe = (uPage-1) * m_uTextLines;
+		uint16_t uStartProbe = (uPage-1) * m_uTextRows;
 
-		uint16_t uY = 20;
+
+		uint16_t uY = m_uHeaderSize;
 		if(uStartProbe < GetProbeCount())
 		{
+			uint8_t uBarCount = 0;
+			for(uint8_t uM = dmMin; uM <= dmMax; uM++)
+			{
+				if(m_graphElements[uM].bDisplayGraph)
+					uBarCount++;
+			}
 
-			for(ProfilerProbesIter iP = m_probes.begin() + uStartProbe; iP != m_probes.end(); iP++)
+			uint16_t uBarHeight = (m_uTextHeight/uBarCount) -1;
+
+
+			for(ProfilerProbesIter iP = m_probes.begin() + uStartProbe; iP != m_probes.begin()+m_uTextRows && iP != m_probes.end(); iP++)
 			{
 				ProfilerProbe *pProbe = (*iP);
 				ProfilerProbe::Metrics metrics = pProbe->ElapsedMetrics();
 
+				screen.pen(RGBA(255, 255, 255, m_uAlpha));
+				screen.text(pProbe->Name(), &minimal_font[0][0], Rect(5, uY, uNameWidth, m_uTextHeight), true, TextAlign::center_v);
 
-				screen.pen(RGBA(255, 255, 255));
-				screen.text(pProbe->Name(), &minimal_font[0][0], Rect(5, uY, uNameWidth, 10));
 
+				uMetricX  = uNameX + uNameWidth;
+				for(uint8_t uM = dmMin; uM <= dmMax; uM++)
+				{
+					screen.pen(RGBA(255, 255, 255, m_uAlpha));
+					if(m_graphElements[uM].bDisplayLabel)
+					{
+						sprintf(buffer, "%lu", metrics[uM]);
+						screen.text(buffer, &minimal_font[0][0], Rect(uMetricX, uY, uMetricWidth, m_uTextHeight), true, TextAlign::center_v);
+						uMetricX+=uMetricWidth;
+					}
 
-				sprintf(buffer, "%lu", metrics.uMinElapsedUs);
-				screen.text(buffer, &minimal_font[0][0], Rect(uMinX, uY, uMetricWidth, 10));
-
-				sprintf(buffer, "%lu", metrics.uElapsedUs);
-				screen.text(buffer, &minimal_font[0][0], Rect(uCurX, uY, uMetricWidth, 10));
-
-				sprintf(buffer, "%lu", metrics.uMaxElapsedUs);
-				screen.text(buffer, &minimal_font[0][0], Rect(uMaxX, uY, uMetricWidth, 10));
-
-				screen.pen( RGBA(0,255,0,100));
-				uint16_t uBarWidth = (float)uUseWidth * ((float)metrics.uElapsedUs / (float)m_uGraphTimeUs);
-				screen.rectangle(Rect(5, uY-2, uBarWidth, 10));
-
-				uY+=10;
+					if(m_graphElements[uM].bDisplayGraph)
+					{
+						m_graphElements[uM].color.a = m_uAlpha/2;
+						screen.pen(m_graphElements[uM].color);
+						uint16_t uBarWidth = (float)uUseWidth * ((float)metrics[uM] / (float)m_uGraphTimeUs);
+						if(uBarWidth < 1)
+							uBarWidth = 1;
+						screen.rectangle(Rect(5, uY + (uM * uBarHeight), uBarWidth, uBarHeight));
+					}
+				}
+				uY+=m_uTextHeight;
 			}
 		}
 	}
 }
-
+} // namespace
 
