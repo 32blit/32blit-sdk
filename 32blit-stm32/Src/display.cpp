@@ -122,7 +122,7 @@ namespace display {
     LTDC_Layer1->PFCR   = LTDC_PIXEL_FORMAT_RGB565;  
     LTDC_Layer1->DCCR   = 0xff000000;     // layer default color (back, 100% alpha)
     LTDC_Layer1->CFBAR  = (uint32_t)&__ltdc_start;  // frame buffer start address
-    LTDC_Layer1->CFBLR  = 320 * 2 << LTDC_LxCFBLR_CFBP_Pos | 320 * 2 + 2 << LTDC_LxCFBLR_CFBLL_Pos;  // frame buffer line length and pitch
+    LTDC_Layer1->CFBLR  = ((320 * 2) << LTDC_LxCFBLR_CFBP_Pos) | (((320 * 2) + 2) << LTDC_LxCFBLR_CFBLL_Pos);  // frame buffer line length and pitch
     LTDC_Layer1->CFBLNR = 240;            // line count
     LTDC_Layer1->CACR   = 255;            // alpha
     LTDC_Layer1->CR    |= LTDC_LxCR_LEN;  // enable layer
