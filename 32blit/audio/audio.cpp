@@ -40,6 +40,8 @@ namespace blit {
           case ADSRPhase::RELEASE:
             channel.off();
             break;
+          default:
+            break;
         }
       }
  

@@ -1,3 +1,5 @@
+#undef UNUSED
+#define UNUSED(x) ((void)(__typeof__(x))(x)) // suppress "UNUSED" warnings
 
 #include "32blit.hpp"
 #include "fatfs.h"
