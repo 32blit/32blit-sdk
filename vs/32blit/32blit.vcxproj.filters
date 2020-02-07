@@ -25,6 +25,9 @@
     <Filter Include="types">
       <UniqueIdentifier>{24bcc5a5-909a-4655-b1b9-5398ecd8f48a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="audio">
+      <UniqueIdentifier>{9248dddd-5382-4608-8c3f-7e9c40ec9eff}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\32blit\32blit.hpp">
@@ -34,9 +37,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\32blit\engine\engine.hpp">
-      <Filter>engine</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\32blit\engine\geometry.hpp">
       <Filter>engine</Filter>
     </ClInclude>
     <ClInclude Include="..\..\32blit\engine\input.hpp">
@@ -52,9 +52,6 @@
       <Filter>engine</Filter>
     </ClInclude>
     <ClInclude Include="..\..\32blit\engine\tweening.hpp">
-      <Filter>engine</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\32blit\engine\utility.hpp">
       <Filter>engine</Filter>
     </ClInclude>
     <ClInclude Include="..\..\32blit\graphics\blend.hpp">
@@ -90,9 +87,6 @@
     <ClInclude Include="..\..\32blit\types\mat4.hpp">
       <Filter>types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\32blit\types\pixel_format.hpp">
-      <Filter>types</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\32blit\types\point.hpp">
       <Filter>types</Filter>
     </ClInclude>
@@ -108,15 +102,15 @@
     <ClInclude Include="..\..\32blit\types\vec3.hpp">
       <Filter>types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\32blit\engine\audio.hpp">
-      <Filter>engine</Filter>
+    <ClInclude Include="..\..\32blit\audio\audio.hpp">
+      <Filter>audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\32blit\math\geometry.hpp">
+      <Filter>math</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\32blit\engine\engine.cpp">
-      <Filter>engine</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\32blit\engine\geometry.cpp">
       <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="..\..\32blit\engine\input.cpp">
@@ -132,9 +126,6 @@
       <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="..\..\32blit\engine\tweening.cpp">
-      <Filter>engine</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\32blit\engine\utility.cpp">
       <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="..\..\32blit\graphics\blend.cpp">
@@ -188,8 +179,11 @@
     <ClCompile Include="..\..\32blit\types\vec3.cpp">
       <Filter>types</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\32blit\engine\audio.cpp">
-      <Filter>engine</Filter>
+    <ClCompile Include="..\..\32blit\audio\audio.cpp">
+      <Filter>audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\32blit\math\geometry.cpp">
+      <Filter>math</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
