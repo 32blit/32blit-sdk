@@ -5,23 +5,23 @@
 namespace blit {
   struct Surface;
 
-  // blend a span of pixels from either a source colour or mask value
-  typedef void(*blend_span_func)(uint8_t *pen, Surface *dest, uint32_t offset, uint16_t count);
+  // blends the supplied pen onto a span of pixels in the destination surface
+  // supports pen alpha, global alpha, and mask alpha where needed
+  typedef void(*PenBlendFunc)(const Pen* pen, const Surface* dest, uint32_t off, uint32_t cnt);
 
-  // blend a span of pixels from a source surface
-  typedef void(*BlendBlitFunc)(Surface *src, int32_t src_offset, Surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step);
+  // blends the pixel data in the source surface onto a span of pixels in the 
+  // destination surface
+  // supports source alpha, global alpha, and mask alpha where needed
+  typedef void(*BlitBlendFunc)(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt);
 
-  extern void RGBA_RGB(uint8_t *pen, Surface *dest, uint32_t offset, uint16_t count);
-  extern void RGBA_RGBA(uint8_t *pen, Surface *dest, uint32_t offset, uint16_t count);
-  extern void RGBA_RGB(Surface *src, int32_t src_offset, Surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step);
-  extern void RGBA_RGB565(uint8_t *pen, Surface *dest, uint32_t offset, uint16_t count);
-  extern void RGBA_RGB565(Surface *src, int32_t src_offset, Surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step);
-  extern void RGBA_M(uint8_t *pen, Surface *dest, uint32_t offset, uint16_t count);
-  extern void RGBA_P(uint8_t *pen, Surface *dest, uint32_t offset, uint16_t count);
-  extern void P_P(uint8_t *pen, Surface *dest, uint32_t offset, uint16_t count);
-  extern void P_P(Surface *src, int32_t src_offset, Surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step);
-  extern void P_RGB(Surface *src, int32_t src_offset, Surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step);
-  extern void P_RGBA(Surface *src, int32_t src_offset, Surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step);
-  extern void P_RGB565(Surface *src, int32_t src_offset, Surface *dest, int32_t dest_offset, uint16_t count, int16_t src_step);
+  extern void RGBA_RGBA(const Pen* pen, const Surface* dest, uint32_t off, uint32_t cnt);
+  extern void RGBA_RGB(const Pen* pen, const Surface* dest, uint32_t off, uint32_t cnt);
+  extern void P_P(const Pen* pen, const Surface* dest, uint32_t off, uint32_t cnt);
+  extern void M_M(const Pen* pen, const Surface* dest, uint32_t off, uint32_t cnt);
+
+  extern void RGBA_RGBA(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt);
+  extern void RGBA_RGB(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt);
+  extern void P_P(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt);
+  extern void M_M(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt);
 
 }

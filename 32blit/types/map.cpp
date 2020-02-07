@@ -48,7 +48,7 @@ void MapLayer::mipmap_texture_span(Surface *dest, Point s, uint16_t c, Surface *
 }
 
 void MapLayer::texture_span(Surface *dest, Point s, uint16_t c, Surface *sprites, Vec2 swc, Vec2 ewc, uint8_t mipmap_index = 0) {
-  BlendBlitFunc bbf = dest->bbf[static_cast<uint8_t>(sprites->format)];
+  /*BlendBlitFunc bbf = dest->bbf[static_cast<uint8_t>(sprites->format)];
 
   int world_size = map->bounds.w * 8;
   int tile_size = 8 >> mipmap_index;
@@ -85,7 +85,7 @@ void MapLayer::texture_span(Surface *dest, Point s, uint16_t c, Surface *sprites
     }
 
     wc += dwc;
-  }  
+  }  */
 }
 
 void MapLayer::add_flags(std::vector<uint8_t> ts, uint8_t f) {

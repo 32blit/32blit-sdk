@@ -70,7 +70,7 @@ int blit_debugf(const char * psFormatString, ...)
 
 void blit_debug(std::string message) {
 	printf(message.c_str());
-  screen.pen(RGBA(255, 255, 255));
+  screen.pen = Pen(255, 255, 255);
   screen.text(message, &minimal_font[0][0], Point(0, 0));
 }
 
@@ -144,7 +144,7 @@ void hook_render(uint32_t time) {
   */
   ::render(time);
 
-  blit::screen.pen(RGBA(255, 255, 255));
+  blit::screen.pen = Pen(255, 255, 255);
   for(auto i = 0; i < ADC_BUFFER_SIZE; i++) {
     int x = i / 8;
     int y = i % 8;
@@ -261,12 +261,12 @@ void blit_menu_render(uint32_t time) {
     screen_height = 240;
   }
 
-  const RGBA bar_background_color = RGBA(40, 40, 60);
+  const Pen bar_background_color = Pen(40, 40, 60);
 
-  screen.pen(RGBA(30, 30, 50, 200));
+  screen.pen = Pen(30, 30, 50, 200);
   screen.clear();
 
-  screen.pen(RGBA(255, 255, 255));
+  screen.pen = Pen(255, 255, 255);
 
   screen.text("System Menu", &minimal_font[0][0], Point(5, 5));
 
@@ -275,75 +275,75 @@ void blit_menu_render(uint32_t time) {
   battery_meter_width = float(battery_meter_width) * (blit::battery - 3.0f) / 1.1f;
   battery_meter_width = std::max((uint16_t)0, std::min((uint16_t)55, battery_meter_width));
 
-  screen.pen(bar_background_color);
+  screen.pen = bar_background_color;
   screen.rectangle(Rect((screen_width / 2) + 20, 6, 55, 5));
 
   switch(battery_vbus_status){
     case 0b00: // Unknown
-        screen.pen(RGBA(255, 128, 0));
+        screen.pen = Pen(255, 128, 0);
         break;
     case 0b01: // USB Host
-        screen.pen(RGBA(0, 255, 0));
+        screen.pen = Pen(0, 255, 0);
         break;
     case 0b10: // Adapter Port
-        screen.pen(RGBA(0, 255, 0));
+        screen.pen = Pen(0, 255, 0);
         break;
     case 0b11: // OTG
-        screen.pen(RGBA(255, 0, 0));
+        screen.pen = Pen(255, 0, 0);
         break;
   }
   screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_meter_width, 5));
   if(battery_charge_status == 0b01 || battery_charge_status == 0b10){
     uint16_t battery_fill_width = uint32_t(time / 100.0f) % battery_meter_width;
     battery_fill_width = std::max((uint16_t)0, std::min((uint16_t)battery_meter_width, battery_fill_width));
-    screen.pen(RGBA(100, 255, 200));
+    screen.pen = Pen(100, 255, 200);
     screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_fill_width, 5));
   }
 
   // Horizontal Line
-  screen.pen(RGBA(255, 255, 255));
+  screen.pen = Pen(255, 255, 255);
   screen.rectangle(Rect(0, 15, screen_width, 1));
 
   if(menu_item == 0){
-    screen.pen(RGBA(50, 50, 70));
+    screen.pen = Pen(50, 50, 70);
     screen.rectangle(Rect(0, 19, screen_width, 9));
-    screen.pen(RGBA(255, 255, 255));
+    screen.pen = Pen(255, 255, 255);
   }
 
   // menu bar
 
 
   screen.text("Backlight", &minimal_font[0][0], Point(5, 20));
-  screen.pen(bar_background_color);
+  screen.pen = bar_background_color;
   screen.rectangle(Rect(screen_width / 2, 21, 75, 5));
-  screen.pen(RGBA(255, 255, 255));
+  screen.pen = Pen(255, 255, 255);
   screen.rectangle(Rect(screen_width / 2, 21, 75 * blit::backlight, 5));
 
   if(menu_item == 1){
-    screen.pen(RGBA(50, 50, 70));
+    screen.pen = Pen(50, 50, 70);
     screen.rectangle(Rect(0, 29, screen_width, 9));
-    screen.pen(RGBA(255, 255, 255));
+    screen.pen = Pen(255, 255, 255);
   }
 
   screen.text("Volume", &minimal_font[0][0], Point(5, 30));
-  screen.pen(bar_background_color);
+  screen.pen = bar_background_color;
   screen.rectangle(Rect(screen_width / 2, 31, 75, 5));
-  screen.pen(RGBA(255, 255, 255));
+  screen.pen = Pen(255, 255, 255);
   screen.rectangle(Rect(screen_width / 2, 31, 75 * global_volume, 5));
 
   if(menu_item == 2){
-    screen.pen(RGBA(50, 50, 70));
+    screen.pen = Pen(50, 50, 70);
     screen.rectangle(Rect(0, 39, screen_width, 9));
-    screen.pen(RGBA(255, 255, 255));
+    screen.pen = Pen(255, 255, 255);
   }
 
   screen.text("DFU", &minimal_font[0][0], Point(5, 40));
   screen.text("Press A", &minimal_font[0][0], Point(screen_width / 2, 40));
 
   if(menu_item == 3){
-    screen.pen(RGBA(50, 50, 70));
+    screen.pen = Pen(50, 50, 70);
     screen.rectangle(Rect(0, 49, screen_width, 9));
-    screen.pen(RGBA(255, 255, 255));
+    screen.pen = Pen(255, 255, 255);
   }
 
   screen.text("Shipping", &minimal_font[0][0], Point(5, 50));
@@ -351,16 +351,16 @@ void blit_menu_render(uint32_t time) {
 
 
   if(menu_item == 4){
-    screen.pen(RGBA(50, 50, 70));
+    screen.pen = Pen(50, 50, 70);
     screen.rectangle(Rect(0, 59, screen_width, 9));
-    screen.pen(RGBA(255, 255, 255));
+    screen.pen = Pen(255, 255, 255);
   }
 
   screen.text("Switch Exe", &minimal_font[0][0], Point(5, 60));
   screen.text("Press A", &minimal_font[0][0], Point(screen_width / 2, 60));
 
   // Horizontal Line
-  screen.pen(RGBA(255, 255, 255));
+  screen.pen = Pen(255, 255, 255);
   screen.rectangle(Rect(0, screen_height - 15, screen_width, 1));
 
 }
