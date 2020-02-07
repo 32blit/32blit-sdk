@@ -79,7 +79,7 @@ namespace blit {
   }
 
 
-  void RGBA_RGBA(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt) {
+  void RGBA_RGBA(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt, int32_t src_step) {
     uint8_t* s = src->data + soff + soff + soff + soff;
     uint8_t* d = dest->data + doff + doff + doff;
     uint8_t* m = dest->mask ? dest->mask->data + doff : nullptr;
@@ -95,15 +95,16 @@ namespace blit {
         d += 4;
       } else {
         uint8_t ia = 255 - a;
-        *d = ((*s * a) + (*d * ia)) >> 8; d++; s++;
-        *d = ((*s * a) + (*d * ia)) >> 8; d++; s++;
-        *d = ((*s * a) + (*d * ia)) >> 8; d++; s++;
-        *d = 255 - (((255 - *(s)) * (255 - *d)) >> 8); d++; s++;
+        *d = ((*(s + 0) * a) + (*d * ia)) >> 8; d++;
+        *d = ((*(s + 1) * a) + (*d * ia)) >> 8; d++;
+        *d = ((*(s + 2) * a) + (*d * ia)) >> 8; d++;
+        *d = 255 - (((255 - *(s + 3)) * (255 - *d)) >> 8); d++;
+        s += (src_step * 4);
       }
     } while (--cnt);
   }
 
-  void RGBA_RGB(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt) {
+  void RGBA_RGB(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt, int32_t src_step) {
     uint8_t* s = src->data + soff + soff + soff + soff;
     uint8_t* d = dest->data + doff + doff + doff;
     uint8_t* m = dest->mask ? dest->mask->data + doff : nullptr;
@@ -119,15 +120,15 @@ namespace blit {
         d += 3;
       } else {
         uint8_t ia = 255 - a;
-        *d = ((*s * a) + (*d * ia)) >> 8; d++; s++;
-        *d = ((*s * a) + (*d * ia)) >> 8; d++; s++;
-        *d = ((*s * a) + (*d * ia)) >> 8; d++; s++;
-        s++;
+        *d = ((*(s + 0) * a) + (*d * ia)) >> 8; d++;
+        *d = ((*(s + 1) * a) + (*d * ia)) >> 8; d++;
+        *d = ((*(s + 2) * a) + (*d * ia)) >> 8; d++;
+        s += (src_step * 4);
       }
     } while (--cnt);
   }
 
-  void P_P(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt) {
+  void P_P(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt, int32_t src_step) {
     uint8_t *s = src->data + soff;
     uint8_t *d = dest->data + doff;
 
@@ -135,17 +136,17 @@ namespace blit {
       if (*s != 0) {
         *d = *s;
       }
-      d++; s++;
+      d++; s += src_step;
     } while (--cnt);
   }
 
-  void M_M(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt) {
+  void M_M(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt, int32_t src_step) {
     uint8_t *s = src->data + soff;
     uint8_t *d = dest->data + doff;
 
     do {
       *d = *s;
-      d++; s++;
+      d++; s += src_step;
     } while (--cnt);
   }
 }
