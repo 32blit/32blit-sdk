@@ -143,15 +143,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\32blit\32blit.hpp" />
-    <ClInclude Include="..\..\32blit\engine\audio.hpp" />
+    <ClInclude Include="..\..\32blit\audio\audio.hpp" />
     <ClInclude Include="..\..\32blit\engine\engine.hpp" />
-    <ClInclude Include="..\..\32blit\engine\geometry.hpp" />
     <ClInclude Include="..\..\32blit\engine\input.hpp" />
     <ClInclude Include="..\..\32blit\engine\output.hpp" />
     <ClInclude Include="..\..\32blit\engine\particle.hpp" />
     <ClInclude Include="..\..\32blit\engine\timer.hpp" />
     <ClInclude Include="..\..\32blit\engine\tweening.hpp" />
-    <ClInclude Include="..\..\32blit\engine\utility.hpp" />
     <ClInclude Include="..\..\32blit\graphics\blend.hpp" />
     <ClInclude Include="..\..\32blit\graphics\color.hpp" />
     <ClInclude Include="..\..\32blit\graphics\font.hpp" />
@@ -160,11 +158,11 @@
     <ClInclude Include="..\..\32blit\graphics\surface.hpp" />
     <ClInclude Include="..\..\32blit\graphics\tilemap.hpp" />
     <ClInclude Include="..\..\32blit\helpers.hpp" />
+    <ClInclude Include="..\..\32blit\math\geometry.hpp" />
     <ClInclude Include="..\..\32blit\math\interpolation.hpp" />
     <ClInclude Include="..\..\32blit\types\map.hpp" />
     <ClInclude Include="..\..\32blit\types\mat3.hpp" />
     <ClInclude Include="..\..\32blit\types\mat4.hpp" />
-    <ClInclude Include="..\..\32blit\types\pixel_format.hpp" />
     <ClInclude Include="..\..\32blit\types\point.hpp" />
     <ClInclude Include="..\..\32blit\types\rect.hpp" />
     <ClInclude Include="..\..\32blit\types\size.hpp" />
@@ -172,15 +170,13 @@
     <ClInclude Include="..\..\32blit\types\vec3.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\32blit\engine\audio.cpp" />
+    <ClCompile Include="..\..\32blit\audio\audio.cpp" />
     <ClCompile Include="..\..\32blit\engine\engine.cpp" />
-    <ClCompile Include="..\..\32blit\engine\geometry.cpp" />
     <ClCompile Include="..\..\32blit\engine\input.cpp" />
     <ClCompile Include="..\..\32blit\engine\output.cpp" />
     <ClCompile Include="..\..\32blit\engine\particle.cpp" />
     <ClCompile Include="..\..\32blit\engine\timer.cpp" />
     <ClCompile Include="..\..\32blit\engine\tweening.cpp" />
-    <ClCompile Include="..\..\32blit\engine\utility.cpp" />
     <ClCompile Include="..\..\32blit\graphics\blend.cpp" />
     <ClCompile Include="..\..\32blit\graphics\color.cpp" />
     <ClCompile Include="..\..\32blit\graphics\filter.cpp" />
@@ -192,6 +188,7 @@
     <ClCompile Include="..\..\32blit\graphics\surface.cpp" />
     <ClCompile Include="..\..\32blit\graphics\text.cpp" />
     <ClCompile Include="..\..\32blit\graphics\tilemap.cpp" />
+    <ClCompile Include="..\..\32blit\math\geometry.cpp" />
     <ClCompile Include="..\..\32blit\math\interpolation.cpp" />
     <ClCompile Include="..\..\32blit\types\map.cpp" />
     <ClCompile Include="..\..\32blit\types\mat3.cpp" />
