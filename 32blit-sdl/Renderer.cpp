@@ -12,7 +12,7 @@ Renderer::Renderer(SDL_Window *window, int width, int height) : sys_width(width)
 		fprintf(stderr, "could not create renderer: %s\n", SDL_GetError());
 	}
 
-	current = ltdc_texture_RGB565;
+	current = fb_hires_texture;
 
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
@@ -25,8 +25,8 @@ Renderer::Renderer(SDL_Window *window, int width, int height) : sys_width(width)
 }
 
 Renderer::~Renderer() {
-	SDL_DestroyTexture(fb_texture_RGB24);
-	SDL_DestroyTexture(ltdc_texture_RGB565);
+	SDL_DestroyTexture(fb_lores_texture);
+	SDL_DestroyTexture(fb_hires_texture);
 	SDL_DestroyRenderer(renderer);
 }
 
@@ -51,20 +51,24 @@ void Renderer::resize(int width, int height) {
 	win_height = height;
 	set_mode(mode);
 
-	if (fb_texture_RGB24) {
-		SDL_DestroyTexture(fb_texture_RGB24);
+	if (fb_lores_texture) {
+		SDL_DestroyTexture(fb_lores_texture);
 	}
-	if (ltdc_texture_RGB565) {
-		SDL_DestroyTexture(ltdc_texture_RGB565);
+	if (fb_hires_texture) {
+		SDL_DestroyTexture(fb_hires_texture);
 	}
 
-	fb_texture_RGB24 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, sys_width/2, sys_height/2);
-	ltdc_texture_RGB565 = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, sys_width, sys_height);
+	fb_lores_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, sys_width/2, sys_height/2);
+	fb_hires_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, sys_width, sys_height);
 }
 
 void Renderer::update(System *sys) {
-	if (sys->mode() == SDL_PIXELFORMAT_RGB24) current = fb_texture_RGB24;
-	else current = ltdc_texture_RGB565;
+	if (sys->mode() == 0) {
+		current = fb_lores_texture;
+	} else {
+		current = fb_hires_texture;
+	}
+
 	sys->update_texture(current);
 }
 

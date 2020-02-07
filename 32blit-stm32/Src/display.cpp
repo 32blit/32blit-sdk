@@ -25,12 +25,9 @@ void LTDC_IRQHandler() {
 
 namespace display {  
 
-  // surface mapped directly to the ltdc memory buffer
-  Surface __ltdc((uint8_t *)&__ltdc_start, PixelFormat::RGB565, Size(320, 240));
-
   // lo and hi res screen back buffers
-  Surface __fb_hires((uint8_t *)&__fb_start, PixelFormat::RGB565, Size(320, 240));
-  Surface __fb_lores((uint8_t *)&__fb_start, PixelFormat::RGBA, Size(160, 120));
+  Surface __fb_hires((uint8_t *)&__fb_start, PixelFormat::RGB, Size(320, 240));
+  Surface __fb_lores((uint8_t *)&__fb_start, PixelFormat::RGB, Size(160, 120));
 
   ScreenMode mode = ScreenMode::lores;
   bool needs_render = false;
@@ -62,17 +59,17 @@ namespace display {
   }
 
   void flip(const Surface &source) {
-    uint32_t *s = (uint32_t *)source.data;
+    uint8_t *s = (uint8_t *)source.data;
     uint32_t *d = (uint32_t *)(&__ltdc_start);
 
     if(mode == ScreenMode::lores) {
       // pixel double the framebuffer to the ltdc buffer
       for(uint8_t y = 0; y < 120; y++) {
-        // pixel double the current row while converting from RGBA to RGB565
+        // pixel double the current row while converting from RGB to RGB565
         for(uint8_t x = 0; x < 160; x++) {
-          uint16_t c = (((*s) & 0xf8000000) >> 27) | (((*s) & 0x00fc0000) >> 13) | (((*s) & 0x0000f800));        
+          uint16_t c = ((*s++ & 0b11111000) << 8) | ((*s++ & 0b11111100) << 3) | ((*s++ & 0b11111000) >> 3);        
           *(d) = c | (c << 16); *(d + 160) = c | (c << 16);
-          d++; s++;
+          d++;
         }
         d += 160; // skip the doubled row
       }
@@ -81,10 +78,11 @@ namespace display {
       // was done via memcpy but implementing it as a 32-bit copy loop
       // was much faster. additionall unrolling this loop gained us about 10%
       // extra performance
-      uint32_t c = (320 * 240) >> 4;
+      uint32_t c = (320 * 240) >> 1;
       while(c--) {
-          *d++ = *s++; *d++ = *s++; *d++ = *s++; *d++ = *s++;
-          *d++ = *s++; *d++ = *s++; *d++ = *s++; *d++ = *s++;      
+        uint16_t c1 = ((*s++ & 0b11111000) << 8) | ((*s++ & 0b11111100) << 3) | ((*s++ & 0b11111000) >> 3);        
+        uint16_t c2 = ((*s++ & 0b11111000) << 8) | ((*s++ & 0b11111100) << 3) | ((*s++ & 0b11111000) >> 3);        
+        *d++ = c1 << 16 | c2;
       }
     }
 

@@ -23,7 +23,7 @@ class Renderer {
 		SDL_Renderer *renderer = NULL;
 		SDL_Rect dest = {0, 0, 0, 0};
 
-		SDL_Texture *fb_texture_RGB24 = NULL;
-		SDL_Texture *ltdc_texture_RGB565 = NULL;
+		SDL_Texture *fb_lores_texture = NULL;
+		SDL_Texture *fb_hires_texture = NULL;
 		SDL_Texture *current = NULL;
 };

@@ -79,7 +79,7 @@ namespace blit {
         for (uint8_t x = 0; x < 6; x++) {
           if (font_chr[x] & (1 << y)) {
             if(clip.contains(Point(c.x + x, c.y + y)))
-              bf((uint8_t *)&_pen, this, po, 1);
+              pbf(&pen, this, po, 1);
 
             char_width = char_width < x ? x : char_width;
           }

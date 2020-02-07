@@ -4,6 +4,6 @@
 
 namespace blit {
 
-  RGBA hsv_to_rgba(float h, float s, float v);
+  Pen hsv_to_rgba(float h, float s, float v);
 
 }  
