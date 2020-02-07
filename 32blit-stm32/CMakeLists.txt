@@ -106,6 +106,8 @@ set(DEFINITIONS
 )
 set(HAL_DEFINITIONS ${DEFINITIONS} PARENT_SCOPE)
 
+set_source_files_properties(Middlewares/Third_Party/FatFs/src/ff.c PROPERTIES COMPILE_FLAGS "-Wno-misleading-indentation")
+
 target_include_directories(BlitHalSTM32
 	PRIVATE
 		${INCLUDE_DIRS}
