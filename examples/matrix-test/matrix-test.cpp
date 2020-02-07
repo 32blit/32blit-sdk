@@ -16,7 +16,7 @@ void init() {
   /*
       screen.alpha = 255;
       screen.mask = nullptr;
-      screen.pen(rgba(39, 39, 54));
+      screen.pen = rgba(39, 39, 54);
       screen.clear();*/
 }
 
@@ -29,11 +29,11 @@ float deg2rad(float a) {
 
 void draw(std::array<Vec2, 4> vecs, std::vector<Mat3> trs) {
   int s = (150) / trs.size();
-  RGBA p(255, 255, 255, 32);
+  Pen p(255, 255, 255, 32);
 
   auto o = Vec2(80, 60);
 
-  screen.pen(p);
+  screen.pen = p;
   screen.line(vecs[0] + o, vecs[1] + o);
   screen.line(vecs[1] + o, vecs[2] + o);
   screen.line(vecs[2] + o, vecs[3] + o);
@@ -49,7 +49,7 @@ void draw(std::array<Vec2, 4> vecs, std::vector<Mat3> trs) {
 
     auto o = Vec2(80, 60);
 
-    screen.pen(p);
+    screen.pen = p;
     screen.line(vecs[0] + o, vecs[1] + o);
     screen.line(vecs[1] + o, vecs[2] + o);
     screen.line(vecs[2] + o, vecs[3] + o);
@@ -65,7 +65,7 @@ void draw(std::array<Vec2, 4> vecs, std::vector<Mat3> trs) {
       v *= tr;
     }
 
-    screen.pen(RGBA(255, 0, 0));
+    screen.pen = Pen(255, 0, 0);
     screen.line(vecs[0] + o, vecs[1] + o);
     screen.line(vecs[1] + o, vecs[2] + o);
     screen.line(vecs[2] + o, vecs[3] + o);
@@ -75,7 +75,7 @@ void draw(std::array<Vec2, 4> vecs, std::vector<Mat3> trs) {
 
 void render(uint32_t time_ms) {
   
-  screen.pen(RGBA(20, 30, 40));
+  screen.pen = Pen(20, 30, 40);
   screen.clear();
 
   std::array<Vec2, 4> vecs = {

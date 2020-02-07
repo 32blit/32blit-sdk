@@ -27,7 +27,7 @@ uint8_t logo[] = {
 struct Particle {
   Vec3 direction;
   Vec3 position;
-  RGBA color;
+  Pen color;
 };
 
 // convert the logo points into vec3
@@ -40,7 +40,7 @@ void init() {
     for (int x = 0; x < 11; x++) {
       int col = logo[x + y * 11];
       if (col != 0) {
-        particles[i].color = col == 1 ? RGBA(255, 255, 255) : RGBA(0, 255, 0);
+        particles[i].color = col == 1 ? Pen(255, 255, 255) : Pen(0, 255, 0);
         particles[i].position = Vec3(x - 5.0f, y - 5.0f, 0.0f);
 
         float x = static_cast <float> (rand()) / static_cast <float> (RAND_MAX) - 0.5f;
@@ -68,8 +68,8 @@ void render(uint32_t time) {
   static float ts = 0.0f;
   static float dir = 0.02f;
 
-  //screen.pen(rgba(39, 39, 54, 100));
-  screen.pen(RGBA(0, 0, 0, 50));
+  //screen.pen = rgba(39, 39, 54, 100);
+  screen.pen = Pen(0, 0, 0, 50);
   screen.clear();
 
   uint32_t ms_start = now();
@@ -143,7 +143,7 @@ void render(uint32_t time) {
 
 
     //float fade = (pc.position.z / 10.0f) + 1.0f;
-    screen.pen(pc.color);// rgba(pc.color.r * fade, pc.color.g * fade, pc.color.b * fade);
+    screen.pen = pc.color;// rgba(pc.color.r * fade, pc.color.g * fade, pc.color.b * fade;
     //g.pen.a = brp * 127.0f;
 
 
