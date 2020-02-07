@@ -10,7 +10,7 @@ uint8_t fire_data[] = {
     0x02, 0x00, // cols (2)
     0x02, 0x00, // rows (2)
 
-    0x01, // format
+    0x02, // format
 
     0xff, // number of palette colours
 //  r     g     b     a

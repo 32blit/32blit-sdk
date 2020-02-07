@@ -330,7 +330,6 @@ void render(uint32_t time) {
 	// TODO ???		
 	//printf("Render: WORLD\n");
 	render_world(time);
-	return;
 	/*
 	screen.mask = &m;
 	blur(5);
@@ -668,7 +667,7 @@ void render_world(uint32_t time) {
 
 			//if ((time >> 2) % 160 == column) {
 
-			//-----------screen.stretch_blit_vspan(screen.sprites, uv, 32, Point(column, start_y), end_y - start_y); // TODO Blit from Spritesheet
+			screen.stretch_blit_vspan(screen.sprites, uv, 32, Point(column, start_y), end_y - start_y); // TODO Blit from Spritesheet
 
 
 			//}
@@ -685,7 +684,7 @@ void render_world(uint32_t time) {
 			float wall_distance = perpendicular_wall_distance / MAX_RAY_STEPS;
 			float alpha = wall_distance * 255.0f;
 			screen.pen = Pen(0, 0, 0, int(alpha));
-			//---------screen.line(Point(column, start_y), Point(column, end_y));
+			screen.line(Point(column, start_y), Point(column, end_y));
 
 
 			/*mask.pen = Pen(255);
@@ -796,13 +795,17 @@ void render_sprites(uint32_t time) {
 		screen.sprites->palette[12] = cols_b[psprite->color];
 
 
-		if (visibility_map[int(psprite->position.x) + int(psprite->position.y) * MAP_WIDTH] == 0) continue;
+		if (visibility_map[int(psprite->position.x) + int(psprite->position.y) * MAP_WIDTH] == 0) {
+			continue;
+		}
 
 		// Give the larger sprites a better view distance
 		float max_distance = (psprite->texture == 0 || psprite->texture == 1) ? 64.0 : 16.0;
 
 		float distance = std::min(max_distance, psprite->distance) / max_distance;
-		if (distance == 1.0f) continue;
+		if (distance == 1.0f) {
+			continue;
+		}
 
 		// Get the player-relative position of the sprite
 		Vec2 relative_position = psprite->position - player1.position;
@@ -812,8 +815,9 @@ void render_sprites(uint32_t time) {
 			inverse_det * (-player1.camera.y * relative_position.x + player1.camera.x * relative_position.y)
 		);
 
-		if (screen_transform.y < 0)
+		if (screen_transform.y < 0) {
 			continue;
+		}
 
 
 		// TODO:: palette change

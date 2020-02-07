@@ -10,7 +10,7 @@ uint8_t boar_ship[] = {
     0x01, 0x00, // cols (1)
     0x01, 0x00, // rows (1)
 
-    0x01, // format
+    0x02, // format
 
     0x09, // number of palette colours
 //  r     g     b     a
