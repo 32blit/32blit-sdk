@@ -9,7 +9,17 @@ brew install cmake
 
 TODO: Add instructions for installing python3 and dependencies for tooling
 
-TODO: Add instructions for installing gcc-arm-none-eabi for cross compile
+## Installing `gcc-arm-none-eabi`
+Once this is done, you'll need to install `gcc-arm-none-eabi`. The easiest way to install this tool is via homebrew with the following source:
+
+``` shell
+brew tap ArmMbed/homebrew-formulae
+brew install arm-none-eabi-gcc
+```
+
+Note:
+If you do not want to/ are unable to use homebrew to do this, you should be able to find the install instruction in the `arm-none-eabi-gcc.rb` file in [this repository](https://github.com/ARMmbed/homebrew-formulae).
+
 
 ## Building & Running on 32Blit
 
