@@ -13,7 +13,7 @@ namespace blit {
    * \param[in] h Hue from 0.0 to 1.0.
    * \param[in] s Saturation from 0.0 to 1.0.
    * \param[in] v Value from 0.0 to 1.0.
-   * \return RGBA colour.
+   * \return Pen colour.
    */
   Pen hsv_to_rgba(float h, float s, float v) {
     Pen res(0, 0, 0, 255);
