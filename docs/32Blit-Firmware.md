@@ -5,15 +5,15 @@ This repository includes firmware for the 32Blit that lets you manage games on S
 In order to use it, you will need to:
 
 1. Build and install the 32Blit firmware (if you don't have it already)
-2. Build the flash loader tool in `tools/src`
+2. [Build the flash loader](32Blit-Loader.md) tool in `tools/src`
 3. Flash the firmware to your 32Blit
 
 You must make sure you have an ARM GCC cross-compile environment set up on your computer, refer to the relevant documentation below:
 
-* [Windows][Windows-WSL.md]
-* [Linux][Linux.md]
-* [macOS][macOS.md]
-* [ChromeOS][ChromeOS.md]
+* [Windows](Windows-WSL.md)
+* [Linux](Linux.md)
+* [macOS](macOS.md)
+* [ChromeOS](ChromeOS.md)
 
 These instructions assume that you will create build directories in the *root* of this repository.
 
