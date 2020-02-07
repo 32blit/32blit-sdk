@@ -35,26 +35,26 @@ void init() {
 }
 
 void render(uint32_t time) {
-	screen.pen(RGBA(0, 0, 0));
+	screen.pen = Pen(0, 0, 0);
 	screen.clear();
 
 	screen.alpha = 255;
-	screen.pen(RGBA(255, 255, 255));
+	screen.pen = Pen(255, 255, 255);
 	screen.rectangle(Rect(0, 0, 320, 14));
-	screen.pen(RGBA(0, 0, 0));
+	screen.pen = Pen(0, 0, 0);
 	screen.text("Text Rendering", &minimal_font[0][0], Point(5, 4));
 
     // alignment
     Rect text_rect(20, 20, 120, 80);
 
-    screen.pen(RGBA(64, 64, 64));
+    screen.pen = Pen(64, 64, 64);
     screen.rectangle(text_rect);
 
-	screen.pen(RGBA(255, 255, 255));
+	screen.pen = Pen(255, 255, 255);
     std::string text = "This is some aligned text!\nUse the dpad to change the alignment\nand A to toggle variable-width.";
     text = screen.wrap_text(text, text_rect.w, &minimal_font[0][0], variable_width);
 
-    screen.pen(RGBA(0xFF, 0xFF, 0xFF));
+    screen.pen = Pen(0xFF, 0xFF, 0xFF);
     screen.text(text, &minimal_font[0][0], text_rect, variable_width, alignment);
 
 	screen.text(alignment_to_string(alignment), &minimal_font[0][0], Point(80, 102), true, TextAlign::center_h);
@@ -66,13 +66,13 @@ void render(uint32_t time) {
 
     // clipping
     Rect clip(text_rect.x + 30 + 30 * cos(time / 1000.0f), text_rect.y, 60, 80);
-    screen.pen(RGBA(64, 64, 64));
+    screen.pen = Pen(64, 64, 64);
     screen.rectangle(text_rect);
 
     text = "This text is clipped!\nIt's slightly hard to read since half of it is missing.";
     text = screen.wrap_text(text, text_rect.w, &minimal_font[0][0], variable_width);
 
-    screen.pen(RGBA(0xFF, 0xFF, 0xFF));
+    screen.pen = Pen(0xFF, 0xFF, 0xFF);
     screen.text(text, &minimal_font[0][0], text_rect, variable_width, TextAlign::center_center, clip);
 }
 

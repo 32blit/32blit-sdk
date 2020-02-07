@@ -28,7 +28,7 @@ void render(uint32_t time) {
 
   for(int b = 0; b < SCREEN_WIDTH; b++){
     for(int v = 0; v < SCREEN_HEIGHT; v++){
-        screen.pen(blit::hsv_to_rgba(float(b) / (float)(SCREEN_WIDTH), 1.0f, float(v) / (float)(SCREEN_HEIGHT)));
+        screen.pen = blit::hsv_to_rgba(float(b) / (float)(SCREEN_WIDTH), 1.0f, float(v) / (float)(SCREEN_HEIGHT));
         screen.pixel(Point(b, v));
     }
   }

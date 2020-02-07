@@ -54,14 +54,14 @@ void init() {
   // set global volume
   // volume = 2048;
   
-  screen.pen(RGBA(0, 0, 0, 255));
+  screen.pen = Pen(0, 0, 0, 255);
   screen.clear();  
 }
 
 uint16_t beat = 0;
 
 void render(uint32_t time_ms) {
-  screen.pen(RGBA(20, 30, 40, 100));
+  screen.pen = Pen(20, 30, 40, 100);
   screen.clear();
   
   // yeah, this is ugly... let's find a way to get a real
@@ -72,11 +72,11 @@ void render(uint32_t time_ms) {
     uint8_t n2 = notes[1][no] >> 4;
     uint8_t n3 = notes[2][no] >> 4;
 
-    screen.pen(RGBA(255, 0, 0, 100));
+    screen.pen = Pen(255, 0, 0, 100);
     screen.line(Point(i, 120), Point(i, 120 - n1));
-    screen.pen(RGBA(0, 255, 0, 100));
+    screen.pen = Pen(0, 255, 0, 100);
     screen.line(Point(i, 120), Point(i, 120 - n2));
-    screen.pen(RGBA(0, 0, 255, 100));
+    screen.pen = Pen(0, 0, 255, 100);
     screen.line(Point(i, 120), Point(i, 120 - n3));
   }
 

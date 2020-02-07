@@ -30,13 +30,13 @@ float deg2rad(float a) {
 
 Vec2 gravity(0, 1000.0f);
 
-RGBA colours[] = {
-  RGBA(7, 254, 9),
-  RGBA(230, 194, 41),
-  RGBA(239, 45, 86),
-  RGBA(241, 113, 5),
-  RGBA(26, 143, 227),
-  RGBA(201, 26, 227),
+Pen colours[] = {
+  Pen(7, 254, 9),
+  Pen(230, 194, 41),
+  Pen(239, 45, 86),
+  Pen(241, 113, 5),
+  Pen(26, 143, 227),
+  Pen(201, 26, 227),
 };
 
 struct grain {
@@ -127,15 +127,15 @@ uint32_t update_time_ms = 0;
 
 void render(uint32_t time_ms) {
 
-  screen.pen(RGBA(0, 0, 0, 255));
+  screen.pen = Pen(0, 0, 0, 255);
   screen.clear();
 
   for (auto &g : grains) {
-    screen.pen(colours[g.c]);
+    screen.pen = colours[g.c];
     screen.pixel(g.p);
   }
 
-  screen.pen(RGBA(255, 255, 255));
+  screen.pen = Pen(255, 255, 255);
   Point centre = Point(80, 60);
   screen.line(centre, centre + (gravity * 20.0f));  
 
@@ -144,15 +144,15 @@ void render(uint32_t time_ms) {
 
   // draw FPS meter
   screen.alpha = 255;
-  screen.pen(RGBA(0, 0, 0));
+  screen.pen = Pen(0, 0, 0);
   screen.rectangle(Rect(1, 120 - 10, 12, 9));
-  screen.pen(RGBA(255, 255, 255, 200));
+  screen.pen = Pen(255, 255, 255, 200);
   std::string fms = std::to_string(update_time_ms);
   screen.text(fms, &minimal_font[0][0], Rect(3, 120 - 9, 10, 16));
 
   int block_size = 4;
   for (uint32_t i = 0; i < update_time_ms; i++) {
-    screen.pen(RGBA(i * 5, 255 - (i * 5), 0));
+    screen.pen = Pen(i * 5, 255 - (i * 5), 0);
     screen.rectangle(Rect(i * (block_size + 1) + 1 + 13, screen.bounds.h - block_size - 1, block_size, block_size));
   }
 }
