@@ -483,7 +483,7 @@ int main(int argc, char *argv[])
   }
 
   const char *pszProcess = argv[1];
-  const char *pszComPort = argv[2];
+  std::string sComPort = argv[2];
   const char *pszBinPath = NULL;
   const char *pszBinFile = NULL;
   bool bShouldReconnect = false;
@@ -520,7 +520,7 @@ int main(int argc, char *argv[])
 
   bool bComPortOpen = false;
 
-  if(std::string(pszComPort) == "AUTO")
+  if(sComPort == "AUTO")
   {
     auto sDetectedPort = GuessPortName();
     if(sDetectedPort.empty())
@@ -528,16 +528,16 @@ int main(int argc, char *argv[])
     else
     {
       printf("Detected port as: %s\n", sDetectedPort.c_str());
-      bComPortOpen = OpenComPort(sDetectedPort.c_str());
+      sComPort = sDetectedPort;
     }
   }
-  else
-    bComPortOpen = OpenComPort(pszComPort);
+
+  bComPortOpen = OpenComPort(sComPort.c_str());
 
   if (!bComPortOpen)
   {
     usage();
-    printf("ERROR <comport> Cannot open %s\n", pszComPort);
+    printf("ERROR <comport> Cannot open %s\n", sComPort.c_str());
     exit(6);
   }
 
@@ -581,7 +581,7 @@ int main(int argc, char *argv[])
     exit(3);
   }
 
-  if (!ResetIfNeeded(pszComPort))
+  if (!ResetIfNeeded(sComPort.c_str()))
     exit(0);
 
   // check we can still talk to 32blit
@@ -595,7 +595,7 @@ int main(int argc, char *argv[])
     {
       printf("Cannot talk to 32Blit, trying reconnect\n");
       // try to reconnect
-      bComPortOpen = OpenComPort(pszComPort);
+      bComPortOpen = OpenComPort(sComPort.c_str());
     }
   }
 
@@ -665,7 +665,7 @@ int main(int argc, char *argv[])
     while (!bReconnected)
     {
       usleep(250000);
-      bReconnected = OpenComPort(pszComPort);
+      bReconnected = OpenComPort(sComPort.c_str());
       if (bReconnected)
       {
         uint32_t uAck;
@@ -685,7 +685,7 @@ int main(int argc, char *argv[])
         while (!bReconnected)
         {
           usleep(250000);
-          bReconnected = OpenComPort(pszComPort);
+          bReconnected = OpenComPort(sComPort.c_str());
         }
         printf("Reconnected to 32Blit.\n");
       }
