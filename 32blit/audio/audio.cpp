@@ -1,8 +1,8 @@
 /*! \file audio.cpp
     \brief Audio engine
 */
-#include "engine.hpp"
-#include "input.hpp"
+#include "../engine/engine.hpp"
+#include "../engine/input.hpp"
 #include "../32blit.hpp"
 
 #include "audio.hpp"

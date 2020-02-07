@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../types/pixel_format.hpp"
 #include "surface.hpp"
 
 namespace blit {

@@ -2,7 +2,6 @@
 #include <cstring>
 
 #include "surface.hpp"
-#include "../types/pixel_format.hpp"
 
 #ifdef WIN32 
 #define __attribute__(A)
