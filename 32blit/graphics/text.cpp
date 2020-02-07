@@ -1,7 +1,6 @@
 
 #include <string>
 
-#include "../types/pixel_format.hpp"
 #include "../types/point.hpp"
 #include "../types/rect.hpp"
 #include "font.hpp"
