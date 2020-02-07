@@ -17,7 +17,7 @@ Installing `python3` can be done with homebrew with a simple `brew install pytho
 
 ###  Installing pip3 dependecies
 
-<><> < skipping this as i'm not 100% on what dependencies you have in mind >
+TODO: Document install of `construct` and `bitstring` for Python 3 (probably need a requirements.txt for the tools directory)
 
 ###  Verifying install
 ``` shell
@@ -45,7 +45,6 @@ Note:
 If you do not want to/ are unable to use homebrew to do this, you should be able to find the manual install instruction in the `arm-none-eabi-gcc.rb` file in [this repository](https://github.com/ARMmbed/homebrew-formulae).
 
 ______
-
 
 ## Building & Running on 32Blit
 
