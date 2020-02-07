@@ -190,7 +190,7 @@ namespace blit {
         else
           src_offset = sprites->offset(sprite.x + x, sprite.y + y);
 
-        bbf(sprites, src_offset, this, dest_offset, 1);
+        bbf(sprites, src_offset, this, dest_offset, 1, 1);
         dest_offset++;
 
         x += x_step;
@@ -249,7 +249,7 @@ namespace blit {
         else
           src_offset = sprites->offset(sprite.x + x, sprite.y + y);
 
-        bbf(sprites, src_offset, this, dest_offset, 1);
+        bbf(sprites, src_offset, this, dest_offset, 1, 1);
         dest_offset++;
 
         x += x_step;
@@ -290,15 +290,15 @@ namespace blit {
       src_direction = -1;
     }
 
-    /*BlendBlitFunc sbbf = bbf[static_cast<uint8_t>(src->format)];
+    
     
     int32_t dest_offset = offset(dr);
     for (int32_t y = p.y; y < p.y + r.h; y++) {
-      sbbf(src, src_offset + src_offset_flip, this, dest_offset, r.w, src_direction);
+      bbf(src, src_offset + src_offset_flip, this, dest_offset, r.w, src_direction);
 
       src_offset += src->bounds.w;
       dest_offset += bounds.w;      
-    }*/
+    }
   }
 
   /**
