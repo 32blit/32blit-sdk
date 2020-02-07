@@ -179,9 +179,9 @@ void FlashLoader::Render(uint32_t time)
 // RenderSaveFile() Render file save progress %
 void FlashLoader::RenderSaveFile(uint32_t time)
 {
-	screen.pen(RGBA(0,0,0));
+	screen.pen = Pen(0,0,0);
 	screen.rectangle(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
-	screen.pen(RGBA(255, 255, 255));
+	screen.pen = Pen(255, 255, 255);
 	char buffer[128];
 	sprintf(buffer, "Saving %.2u%%", (uint16_t)m_fPercent);
 	screen.text(buffer, &minimal_font[0][0], ROW(0));
@@ -191,9 +191,9 @@ void FlashLoader::RenderSaveFile(uint32_t time)
 // RenderFlashCDC() Render flashing progress %
 void FlashLoader::RenderFlashCDC(uint32_t time)
 {
-	screen.pen(RGBA(0,0,0));
+	screen.pen = Pen(0,0,0);
 	screen.rectangle(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
-	screen.pen(RGBA(255, 255, 255));
+	screen.pen = Pen(255, 255, 255);
 
 	char buffer[128];
 	sprintf(buffer, "Flashing %.2u%%", (uint16_t)m_fPercent);
@@ -225,16 +225,16 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 
 	lastButtons = buttons;
 
-	screen.pen(RGBA(0,0,0));
+	screen.pen = Pen(0,0,0);
 	screen.rectangle(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
-	screen.pen(RGBA(255, 255, 255));
+	screen.pen = Pen(255, 255, 255);
 
 	// just display
 	if(m_uFileCount)
 	{
-		screen.pen(RGBA(50, 50, 70));
-		screen.rectangle(Rect(0, ROW_HEIGHT*m_uCurrentFile, SCREEN_WIDTH, ROW_HEIGHT));
-		screen.pen(RGBA(255, 255, 255));
+		screen.pen = Pen(50, 50, 70);
+		screen.rectangle(Rect(0, ROW_SPACE*m_uCurrentFile, SCREEN_WIDTH, ROW_SPACE));
+		screen.pen = Pen(255, 255, 255);
 
 		for(uint8_t uF = 0; uF < m_uFileCount; uF++) {
 			// TODO: A single line of text should probably vertically center in a 10px bounding box
