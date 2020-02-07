@@ -200,7 +200,7 @@ void render(uint32_t time_ms) {
   current_time = time_ms;
 
   screen.alpha = 255;
-  screen.pen(RGBA(0, 0, 0));
+  screen.pen = Pen(0, 0, 0);
   screen.clear();
 
   screen.alpha = 255;
@@ -226,7 +226,7 @@ void render(uint32_t time_ms) {
   /*
 
   screen.alpha = fade;
-  screen.pen(rgba(0, 0, 0));
+  screen.pen = rgba(0, 0, 0);
   screen.clear();*/
 
   screen.alpha = 255;
@@ -236,7 +236,7 @@ void render(uint32_t time_ms) {
     if (iter->second == highlight)
       highlight_sprite = iter->first;
   }
-  screen.pen(RGBA(0, 255, 0, 100));
+  screen.pen = Pen(0, 255, 0, 100);
   for (int y = 0; y < world.bounds.h; y++) {
     for (int x = 0; x < world.bounds.w; x++) {
       if (highlight_sprite == world.tile_at(Point(x, y))) {
@@ -247,7 +247,7 @@ void render(uint32_t time_ms) {
 
 
   screen.alpha = 255;
-  screen.pen(RGBA(255, 255, 255));
+  screen.pen = Pen(255, 255, 255);
   for (int y = 0; y < world.bounds.h; y++) {
     for (int x = 0; x < world.bounds.w; x++) {
       std::string t = std::to_string(indexes[layer_world[world.offset(x, y)]]);
@@ -258,35 +258,35 @@ void render(uint32_t time_ms) {
 
   // draw grid
   screen.alpha = 255;
-  screen.pen(RGBA(255, 255, 255));
+  screen.pen = Pen(255, 255, 255);
   screen.rectangle(Rect(0, 0, 320, 14));
-  screen.pen(RGBA(0, 0, 0));
+  screen.pen = Pen(0, 0, 0);
   screen.text("Tilemap sprite indexes", &minimal_font[0][0], Point(5, 4));
 
-  screen.pen(RGBA(255, 255, 255));
+  screen.pen = Pen(255, 255, 255);
   screen.text("Tilemap:", &minimal_font[0][0], Point(5, 25));
   /*
-  screen.pen(rgba(255, 255, 255));
+  screen.pen = rgba(255, 255, 255);
   for (int y = 0; y < world.bounds.h; y++) {    
     screen.text(std::to_string(y), &minimal_font[0][0], tl + point(-8, y * 8 * 2 + 5));
   }*/
 
-  screen.pen(RGBA(255, 255, 255, 100));
+  screen.pen = Pen(255, 255, 255, 100);
   for (int y = 0; y <= world.bounds.h; y++) {    
     screen.line(tl + Point(0, y * 8 * 2), tl + Point(128 * 2, y * 8 * 2));
   }
   /*
-  screen.pen(rgba(255, 255, 255));
+  screen.pen = rgba(255, 255, 255);
   for (int x = 0; x < world.bounds.w; x++) {    
     screen.text(std::to_string(x), &minimal_font[0][0], tl + point(x * 8 * 2 + 9 - std::to_string(x).length() * 2, -8));
   }*/
 
-  screen.pen(RGBA(255, 255, 255, 100));
+  screen.pen = Pen(255, 255, 255, 100);
   for (int x = 0; x <= world.bounds.w; x++) {    
     screen.line(tl + Point(x * 8 * 2, 0), tl + Point(x * 8 * 2, 64 * 2));
   }  
 
-  screen.pen(RGBA(255, 255, 255));
+  screen.pen = Pen(255, 255, 255);
   screen.text("Spritesheet:", &minimal_font[0][0], Point(5, 180));
 
   for (int i = 0; i < 9; i++) {
@@ -300,17 +300,17 @@ void render(uint32_t time_ms) {
     Rect sb = screen.sprites->sprite_bounds(found);
 
 
-    screen.pen(RGBA(255, 255, 255));
+    screen.pen = Pen(255, 255, 255);
     screen.text(std::to_string(i), &minimal_font[0][0], Point(32 + 56 + i * 16 + 6, 195));
 
     screen.stretch_blit(screen.sprites, sb, Rect(32 + 56 + i * 16, 205, 16, 16));
     //sprites.draw(&fb, point(10 + i * 8, 200), found, false);
   }
 
-  screen.pen(RGBA(0, 255, 0, 100));
+  screen.pen = Pen(0, 255, 0, 100);
   screen.rectangle(Rect(32 + 56 + highlight * 16, 205, 16, 16));
 
-  screen.pen(RGBA(255, 255, 255, 100));
+  screen.pen = Pen(255, 255, 255, 100);
   screen.line(Point(32 + 56, 205), Point(32 + 56 + 9 * 16, 205));
   screen.line(Point(32 + 56, 205 + 16), Point(32 + 56 + 9 * 16, 205 + 16));
   for (int i = 0; i <= 9; i++) {
@@ -325,9 +325,9 @@ void render(uint32_t time_ms) {
   screen.alpha = 255;
   for (auto i = 0; i < effect_names.size(); i++) {
     if(effect == i)
-      screen.pen(rgba(255, 255, 255));
+      screen.pen = rgba(255, 255, 255);
     else
-      screen.pen(rgba(255, 255, 255, 100));
+      screen.pen = rgba(255, 255, 255, 100);
 
     screen.text(effect_names[i], &minimal_font[0][0], rect(2, 2 + (i * 10), 100, 10));      
   }
@@ -336,15 +336,15 @@ void render(uint32_t time_ms) {
     
   // draw FPS meter
   screen.alpha = 255;
-  screen.pen(rgba(0, 0, 0));
+  screen.pen = rgba(0, 0, 0);
   screen.rectangle(rect(1, 120 - 10, 12, 9));
-  screen.pen(rgba(255, 255, 255, 200));
+  screen.pen = rgba(255, 255, 255, 200);
   std::string fms = std::to_string(ms_end - ms_start);
   screen.text(fms, &minimal_font[0][0], rect(3, 120 - 9, 10, 16));
 
   int block_size = 4;
   for (int i = 0; i < (ms_end - ms_start); i++) {
-    screen.pen(rgba(i * 5, 255 - (i * 5), 0));
+    screen.pen = rgba(i * 5, 255 - (i * 5), 0);
     screen.rectangle(rect(i * (block_size + 1) + 1 + 13, screen.bounds.h - block_size - 1, block_size, block_size));
   }*/
 }

@@ -42,7 +42,7 @@ void init() {
   channels[0].sustain     = 0xffff;                        // Set sustain to max
   channels[0].callback_waveBufferRefresh = &buffCallBack;  // Set callback address
 
-  screen.pen(RGBA(0, 0, 0, 255));
+  screen.pen = Pen(0, 0, 0, 255);
   screen.clear();
 }
 
@@ -83,16 +83,16 @@ void buffCallBack() {
 }
 
 void render(uint32_t time_ms) {
-  screen.pen(RGBA(0, 0, 0));
+  screen.pen = Pen(0, 0, 0);
 	screen.clear();
 
 	screen.alpha = 255;
-	screen.pen(RGBA(255, 255, 255));
+	screen.pen = Pen(255, 255, 255);
 	screen.rectangle(Rect(0, 0, 320, 14));
-	screen.pen(RGBA(0, 0, 0));
+	screen.pen = Pen(0, 0, 0);
 	screen.text("Wave Example", &minimal_font[0][0], Point(5, 4));
 
-  screen.pen(RGBA(64, 64, 64));
+  screen.pen = Pen(64, 64, 64);
 	screen.text("Press A to break screen.", &minimal_font[0][0], Point(20, 60));
 
 

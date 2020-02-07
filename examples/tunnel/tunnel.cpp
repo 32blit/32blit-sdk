@@ -17,7 +17,7 @@ SpriteSheet *ss_ship = SpriteSheet::load(packed_data_ship);
 void init() {
 	screen.alpha = 255;
 	screen.mask = nullptr;
-	screen.pen(RGBA(0, 0, 0, 0));
+	screen.pen = Pen(0, 0, 0, 0);
 	screen.clear();
 
 	screen.sprites = SpriteSheet::load(packed_data);
@@ -89,7 +89,7 @@ void tunnel_test(uint32_t time_ms) {
 				texture_origin.y + (uv.y * texture_size)
 			));
 
-			screen.pen(screen.sprites->palette[*fragment_c]);
+			screen.pen = screen.sprites->palette[*fragment_c];
 			screen.alpha = 255;
 			screen.pixel(Point(
 				scanline,
@@ -141,7 +141,7 @@ void tunnel_test(uint32_t time_ms) {
 				texture_origin.y + (uv.y * texture_size)
 			));
 
-			screen.pen(screen.sprites->palette[*fragment_c]);
+			screen.pen = screen.sprites->palette[*fragment_c];
 			screen.alpha = 200;
 			screen.pixel(Point(scanline, ceil_y));
 		}
@@ -190,7 +190,7 @@ void tunnel_test(uint32_t time_ms) {
 				texture_origin.y + (uv.y * texture_size)
 			));
 
-			screen.pen(screen.sprites->palette[*fragment_c]);
+			screen.pen = screen.sprites->palette[*fragment_c];
 			screen.alpha = 200;
 			screen.pixel(Point(scanline, floor_y));
 
@@ -216,7 +216,7 @@ void tunnel_test1(uint8_t time_ms) {
 
 		float t_scale = float(min_stripe_height + max_stripe_height) / stripe_height;
 
-		/*screen.pen(rgba(255, 200, 200));
+		/*screen.pen = rgba(255, 200, 200);
 		screen.line(
 			point(scanline, stripe_offset_top),
 			point(scanline, stripe_offset_top + stripe_height)
@@ -249,7 +249,7 @@ void tunnel_test1(uint8_t time_ms) {
 
 			uint8_t *fragment_c = screen.sprites->ptr(int(c.x) % 128, int(c.y) % 128);
 
-			screen.pen(screen.sprites->palette[*fragment_c]);
+			screen.pen = screen.sprites->palette[*fragment_c];
 			screen.alpha = 200;
 			screen.pixel(Point(scanline, (stripe_offset_top + stripe_height) + f - 1));
 		}
@@ -260,7 +260,7 @@ void tunnel_test1(uint8_t time_ms) {
 void render(uint32_t time_ms) {
 	uint32_t ms_start = now();
 
-	screen.pen(RGBA(0, 0, 0, 255));
+	screen.pen = Pen(0, 0, 0, 255);
 	screen.clear();
 
 	tunnel_test(time_ms);
@@ -274,9 +274,9 @@ void render(uint32_t time_ms) {
 
 	uint32_t ms_end = now();
 	screen.mask = nullptr;
-	screen.pen(RGBA(255, 0, 0));
+	screen.pen = Pen(255, 0, 0);
 	for (uint32_t i = 0; i < (ms_end - ms_start); i++) {
-		screen.pen(RGBA(i * 5, 255 - (i * 5), 0));
+		screen.pen = Pen(i * 5, 255 - (i * 5), 0);
 		screen.rectangle(Rect(i * 3 + 1, screen.bounds.h - 3, 2, 2));
 	}
 }
