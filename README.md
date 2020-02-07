@@ -18,8 +18,6 @@ While the 32blit API is not finalised, this repository represents an overview of
 6. Ubuntu on Windows 10 WSL (_Windows Subsystem for Linux_), or a Linux VM if you prefer.
 7. If you intend on building DFU files (for the device itself), on Ubuntu (or in WSL) you will also need _Python3_ installed, along with _pip3_ (`sudo apt install python3 python3-pip`) and install the following Python modules: `pip3 install construct bitstring` 
 
-On Windows 10 you can either build for win32 or use XMing and run your builds in WSL by prefixing with `DISPLAY=:0.0`.
-
 For more information about how to build on the various systems, refer to the platform specific docs in the `docs` folder!
 
 # More docs!
