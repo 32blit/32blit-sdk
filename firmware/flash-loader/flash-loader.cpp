@@ -204,7 +204,7 @@ void FlashLoader::RenderFlashCDC(uint32_t time)
 // RenderFlashFile() Render main ui for selecting files to flash
 void FlashLoader::RenderFlashFile(uint32_t time)
 {
-
+	static uint32_t lastRepeat = 0;
 	static uint32_t lastButtons = 0;
 
 	if(!m_bFsInit)
@@ -213,8 +213,15 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 	uint32_t changedButtons = buttons ^ lastButtons;
 
 	bool button_a = buttons & changedButtons & Button::A;
+
 	bool button_up = buttons & changedButtons & Button::DPAD_UP;
 	bool button_down = buttons & changedButtons & Button::DPAD_DOWN;
+
+	if(time - lastRepeat > 150 || button_up || button_down) {
+		button_up = buttons & Button::DPAD_UP;
+		button_down = buttons & Button::DPAD_DOWN;
+		lastRepeat = time;
+	}
 
 	lastButtons = buttons;
 
@@ -226,11 +233,13 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 	if(m_uFileCount)
 	{
 		screen.pen(RGBA(50, 50, 70));
-		screen.rectangle(Rect(0, ROW_SPACE*m_uCurrentFile, SCREEN_WIDTH, ROW_SPACE));
+		screen.rectangle(Rect(0, ROW_HEIGHT*m_uCurrentFile, SCREEN_WIDTH, ROW_HEIGHT));
 		screen.pen(RGBA(255, 255, 255));
 
 		for(uint8_t uF = 0; uF < m_uFileCount; uF++) {
-			screen.text(m_filenames[uF], &minimal_font[0][0], ROW(uF));
+			// TODO: A single line of text should probably vertically center in a 10px bounding box
+			// but in this case it needs to be fudged to 14 pixels
+			screen.text(m_filenames[uF], &minimal_font[0][0], Rect(ROW(uF).x + 5, ROW(uF).y, 310, 14), true, TextAlign::center_v);
 		}
 	}
 	else
@@ -242,6 +251,8 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 	{
 		if(m_uCurrentFile) {
 			m_uCurrentFile--;
+		} else {
+			m_uCurrentFile = MAX_FILENAMES - 1;
 		}
 	}
 
@@ -249,6 +260,7 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 	{
 		if(m_uCurrentFile < m_uFileCount) {
 			m_uCurrentFile++;
+			m_uCurrentFile %= MAX_FILENAMES;
 		}
 	}
 
