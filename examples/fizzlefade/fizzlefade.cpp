@@ -23,10 +23,10 @@ const uint16_t screen_height = 120;
 
 #define FADE_STEPS 3
 
-RGBA fade_to[FADE_STEPS]{
-	RGBA(128, 64, 15, 64),
-	RGBA(15, 128, 15, 64),
-	RGBA(15, 64, 128, 64)
+Pen fade_to[FADE_STEPS]{
+	Pen(128, 64, 15, 64),
+	Pen(15, 128, 15, 64),
+	Pen(15, 64, 128, 64)
 };
 
 uint16_t taps[FADE_STEPS]{
@@ -39,12 +39,14 @@ int8_t fade_current = 0;
 
 /* setup */
 void init() {
+	set_screen_mode(ScreenMode::lores);
+
 	screen.alpha = 255;
 	screen.mask = nullptr;
-	screen.pen(fade_to[FADE_STEPS - 1]);
+	screen.pen = fade_to[FADE_STEPS - 1];
 	screen.clear();
 
-	screen.pen(fade_to[0]);
+	screen.pen = fade_to[0];
 }
 
 uint32_t lfsr = 1;
@@ -70,7 +72,7 @@ Point fizzlefade() {
 void render(uint32_t time_ms) {
 	uint32_t ms_start = now();
 
-	screen.pen(fade_to[fade_current]);
+	screen.pen = fade_to[fade_current];
 
 	for (int c = 0; c < 500; c++) {
 		Point ff = fizzlefade();
@@ -87,9 +89,9 @@ void render(uint32_t time_ms) {
 
 	uint32_t ms_end = now();
 	screen.mask = nullptr;
-	screen.pen(RGBA(255, 0, 0));
+	screen.pen = Pen(255, 0, 0);
 	for (uint32_t i = 0; i < (ms_end - ms_start); i++) {
-		screen.pen(RGBA(i * 5, 255 - (i * 5), 0));
+		screen.pen = Pen(i * 5, 255 - (i * 5), 0);
 		screen.rectangle(Rect(i * 3 + 1, 117, 2, 2));
 	}
 }

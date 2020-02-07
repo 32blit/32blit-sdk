@@ -223,25 +223,25 @@ void render(uint32_t time) {
     uint32_t ms_start = now();
     float h = time / (M_PI * 2) / 100.0f;
 
-    screen.pen(RGBA(0, 0, 0));
+    screen.pen = Pen(0, 0, 0);
     screen.clear();
 
-    screen.pen(RGBA(255, 255, 255));
+    screen.pen = Pen(255, 255, 255);
     std::vector<Vec2> player1_shape(player1.shape);
     rotate_polygon(player1_shape, player1.rotation);
     translate_polygon(player1_shape, player1.position);
     draw_polygon(player1_shape);
 
     for(auto &p: polygons){
-        RGBA c = hsv_to_rgba(h / (M_PI * 2) + p.colour_offset, 1.0, 1.0);
-        screen.pen(c);
+        Pen c = hsv_to_rgba(h / (M_PI * 2) + p.colour_offset, 1.0, 1.0);
+        screen.pen = c;
         draw_polygon(p.points);
         //screen.pixel(p.origin);
     }
 
     if(time - player1.t_shot_fired > 0 && time - player1.t_shot_fired < 500){
         int c = 255 - ((time - player1.t_shot_fired ) / 2);
-        screen.pen(RGBA(c, c, c));
+        screen.pen = Pen(c, c, c);
         screen.line(player1.shot_origin, player1.shot_target);
     }
 
@@ -249,15 +249,15 @@ void render(uint32_t time) {
 
     // draw FPS meter
     screen.alpha = 255;
-    screen.pen(RGBA(255, 255, 255, 100));
+    screen.pen = Pen(255, 255, 255, 100);
     screen.rectangle(Rect(1, screen.bounds.h - 10, 12, 9));
-    screen.pen(RGBA(255, 255, 255, 200));
+    screen.pen = Pen(255, 255, 255, 200);
     std::string fms = std::to_string(ms_end - ms_start);
     screen.text(fms, &minimal_font[0][0], Rect(3, screen.bounds.h - 9, 10, 16));
 
     int block_size = 4;
     for (uint32_t i = 0; i < (ms_end - ms_start); i++) {
-      screen.pen(RGBA(i * 5, 255 - (i * 5), 0));
+      screen.pen = Pen(i * 5, 255 - (i * 5), 0);
       screen.rectangle(Rect(i * (block_size + 1) + 1 + 13, screen.bounds.h - block_size - 1, block_size, block_size));
     }
 }

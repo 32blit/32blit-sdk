@@ -11,34 +11,34 @@ Size boar_ship_size(boar_ship[10], boar_ship[12]);
 surface ss((uint8_t *)__ss, boar_ship_size, pixel_format::P);
 spritesheet ss_boar_ship(ss, 8, 8);*/
 
-RGBA alternate_palettes[NUM_PALETTES][5] = {
+Pen alternate_palettes[NUM_PALETTES][5] = {
     {
-        RGBA(87, 37, 59),
-        RGBA(148, 54, 61),
-        RGBA(213, 112, 51),
-        RGBA(242, 182, 61),
-        RGBA(247, 206, 123)
+        Pen(87, 37, 59),
+        Pen(148, 54, 61),
+        Pen(213, 112, 51),
+        Pen(242, 182, 61),
+        Pen(247, 206, 123)
     },
     {
-        RGBA(37, 38, 87),
-        RGBA(85, 53, 148),
-        RGBA(179, 51, 213),
-        RGBA(242, 61, 226),
-        RGBA(247, 123, 236)
+        Pen(37, 38, 87),
+        Pen(85, 53, 148),
+        Pen(179, 51, 213),
+        Pen(242, 61, 226),
+        Pen(247, 123, 236)
     },
     {
-        RGBA(87, 87, 87),
-        RGBA(148, 148, 148),
-        RGBA(195, 198, 212),
-        RGBA(225, 223, 240),
-        RGBA(245, 245, 245)
+        Pen(87, 87, 87),
+        Pen(148, 148, 148),
+        Pen(195, 198, 212),
+        Pen(225, 223, 240),
+        Pen(245, 245, 245)
     },
     {
-        RGBA(91, 21, 21),
-        RGBA(134, 31, 31),
-        RGBA(181, 21, 21),
-        RGBA(233, 39, 39),
-        RGBA(253, 76, 76)
+        Pen(91, 21, 21),
+        Pen(134, 31, 31),
+        Pen(181, 21, 21),
+        Pen(233, 39, 39),
+        Pen(253, 76, 76)
     }
 };
 
@@ -57,13 +57,13 @@ void init() {
 }
 
 void all_ships_at_once_demo(uint32_t time) {
-  screen.pen(RGBA(0x4e, 0xb3, 0xf7));
+  screen.pen = Pen(0x4e, 0xb3, 0xf7);
   screen.clear();
 
   screen.alpha = 255;
-  screen.pen(RGBA(255, 255, 255));
+  screen.pen = Pen(255, 255, 255);
   screen.rectangle(Rect(0, 0, 320, 14));
-  screen.pen(RGBA(0, 0, 0));
+  screen.pen = Pen(0, 0, 0);
   screen.text("Palette swap demo", &minimal_font[0][0], Point(5, 4));
 
   for (int p = 0; p < NUM_PALETTES; p++){
@@ -86,13 +86,13 @@ void all_ships_at_once_demo(uint32_t time) {
 }
 
 void single_ship_cycling_demo(uint32_t time) {
-  screen.pen(RGBA(0x4e, 0xb3, 0xf7));
+  screen.pen = Pen(0x4e, 0xb3, 0xf7);
   screen.clear();
 
   screen.alpha = 255;
-  screen.pen(RGBA(255, 255, 255));
+  screen.pen = Pen(255, 255, 255);
   screen.rectangle(Rect(0, 0, 320, 14));
-  screen.pen(RGBA(0, 0, 0));
+  screen.pen = Pen(0, 0, 0);
   screen.text("Palette swap demo", &minimal_font[0][0], Point(5, 4));
 
   int palette_index = int(time / 1000.0) % NUM_PALETTES;
@@ -118,7 +118,7 @@ void single_ship_cycling_demo(uint32_t time) {
     uint8_t palette_left = ((p % 2) * 5 * SWATCH_SIZE) + (10 * (p % 2)) + 10;
 
     if (palette_index == p) {
-        screen.pen(RGBA(0, 0, 0));
+        screen.pen = Pen(0, 0, 0);
         screen.rectangle(Rect(
           palette_left - 4,
           palette_top - 4,
@@ -127,8 +127,8 @@ void single_ship_cycling_demo(uint32_t time) {
         ));
     }
     for (int c = 0; c < 5; c++) {
-      RGBA colour = alternate_palettes[p][c];
-      screen.pen(colour);
+      Pen colour = alternate_palettes[p][c];
+      screen.pen = colour;
       screen.rectangle(Rect(
           palette_left + (c * SWATCH_SIZE),
           palette_top,
