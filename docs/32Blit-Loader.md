@@ -18,6 +18,12 @@ This will build the loader tool at `tools/src/32Blit`.
 
 You should ideally add this directory to your `PATH` or alternatively copy this utility somewhere your system can find it.
 
+### Windows - Visual Studio
+
+You can build the tool with the Visual Studio solution (`vs/32blit.sln`). It will be built to `vs/x64/Debug/32Blit.exe` (or similar, depending on build configuration).
+
+You should ideally add this directory to your `PATH` or alternatively copy this utility somewhere your system can find it.
+
 ### Windows - WSL
 
 From the root of the repository you must:
