@@ -116,6 +116,8 @@ void draw_tilebased_sprite(SpriteSheet* ss, Point origin, const std::vector<uint
 }
 
 void init() {
+  set_screen_mode(ScreenMode::hires);
+
   ships = SpriteSheet::load(sprites_ships);
   background = SpriteSheet::load(sprites_background);
   tween_bob.init(tween_sine, 0.0f, 1.0f, 2500, -1);
@@ -126,8 +128,6 @@ void init() {
 
   tween_parallax.init(tween_linear, 0.0f, 1.0f, 10000, -1);
   tween_parallax.start();
-
-  set_screen_mode(ScreenMode::hires);
   screen.sprites = background;
 
   for (int x = 0; x < 5; x++) {
@@ -241,7 +241,7 @@ void update(uint32_t time) {
 
     Pen d = desert[x];
 
-    float s = 1.0 - tween_dusk_dawn.value;
+    float s = 1.0f - tween_dusk_dawn.value;
     float c = tween_dusk_dawn.value;
 
     background->palette[x] = Pen(
