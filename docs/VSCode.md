@@ -6,11 +6,13 @@ You'll need to install:
  - The [C/C++ extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools)
  - The [CMake Tools extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools)
 
-Then open the cloned repository with "Open folder...".
+Then open the cloned repository with "Open folder...". You should get a notification asking if you want to configure the project. Click "Yes" and select "[Unspecified]" from the "Select a Kit" dropdown for a local build with the default compiler.
 
-## Intellisense
+You should now be able to build by pressing the "⚙ Build:" button, or `F7`. You can also run an example by pressing `Shift` + `F5` and debug by pressing the "Debug" button or `Ctrl` + `F5`.
 
-Open the command palette (`Ctrl`/`Cmd` + `Shift` + `P`) run "C/C++: Change Configuration Provider..." and select "CMake Tools".
+## IntelliSense
+
+After configuring the project a "CMake Tools would like to configure IntelliSense for this folder." notification should appear, click "Allow" to configure IntelliSense. If the notification does not appear, open the command palette (`Ctrl`/`Cmd` + `Shift` + `P`) run "C/C++: Change Configuration Provider..." and select "CMake Tools".
 
 ## Building for 32Blit
 
@@ -34,8 +36,8 @@ To set CMake arguments (like `-D32BLIT_PATH` for out-of-tree builds), you need t
 ```json
 {
   // other options...
-  "cmake.configureArgs": [
-    "-D32BLIT_PATH=/path/to/32blit-beta"
-  ],
+  "cmake.configureSettings": {
+    "32BLIT_PATH": "/path/to/32blit-beta"
+  },
 }
 ```
