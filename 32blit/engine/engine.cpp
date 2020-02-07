@@ -21,7 +21,7 @@ namespace blit {
   int32_t (*close_file)(uint32_t fh)              = nullptr;
 
 
-  Surface null_surface(nullptr, PixelFormat::RGB565, Size(0, 0));
+  Surface null_surface(nullptr, PixelFormat::M, Size(0, 0));
   Surface &screen = null_surface;
 
   uint32_t update_rate_ms = 10;
@@ -49,18 +49,6 @@ namespace blit {
       update(time - pending_update_time); // create fake timestamp that would have been accurate for the update event
       pending_update_time -= update_rate_ms;
     }
-
-/*
-    // render if new frame due
-    pending_render_time += (time - last_tick_time);
-    if (pending_render_time >= render_rate_ms) {
-      render(time);
-      pending_render_time -= render_rate_ms;
-      has_rendered = true;
-    }
-
-    
-    return has_rendered;*/
 
     last_tick_time = time;
 

@@ -15,8 +15,8 @@ namespace blit {
    * \param[in] v Value from 0.0 to 1.0.
    * \return RGBA colour.
    */
-  RGBA hsv_to_rgba(float h, float s, float v) {
-    RGBA res(0, 0, 0, 255);
+  Pen hsv_to_rgba(float h, float s, float v) {
+    Pen res(0, 0, 0, 255);
 
     uint8_t i = uint8_t(h * 6);
     float f = h * 6 - i;
@@ -25,12 +25,12 @@ namespace blit {
     float t = v * (1 - (1 - f) * s);
 
     switch (i % 6) {
-    case 0: res = RGBA(v, t, p); break;
-    case 1: res = RGBA(q, v, p); break;
-    case 2: res = RGBA(p, v, t); break;
-    case 3: res = RGBA(p, q, v); break;
-    case 4: res = RGBA(t, p, v); break;
-    case 5: res = RGBA(v, p, q); break;
+    case 0: res = Pen(v, t, p); break;
+    case 1: res = Pen(q, v, p); break;
+    case 2: res = Pen(p, v, t); break;
+    case 3: res = Pen(p, q, v); break;
+    case 4: res = Pen(t, p, v); break;
+    case 5: res = Pen(v, p, q); break;
     }
 
     return res;

@@ -57,26 +57,26 @@ namespace blit {
     uint8_t                        *data;                     // pointer to pixel data (for `rgba` format has pre-multiplied alpha)
     Size                            bounds;                   // size of surface in pixels
     
-    Rect                            clip;                     // clip rectangle
-
-    RGBA                            _pen;                     // current pen
+    Rect                            clip;                     // clipping rectangle for drawing operations
     uint8_t                         alpha = 255;              // global alpha for drawing operations
+    Pen                             pen;                      // current pen for drawing operations
 
     PixelFormat                     format;                   // surface pixel format
-    uint8_t                         stride;                   // bytes per pixel
+    uint8_t                         pixel_stride;             // bytes per pixel
     uint16_t                        row_stride;               // bytes per row
 
-    Surface                        *mask = nullptr;           // mask pointer
+    Surface                        *mask = nullptr;           // optional mask
+    Pen                            *palette;                  // palette entries (for paletted images)
 
     SpriteSheet                    *sprites = nullptr;        // active spritesheet
 
-    std::vector<RGBA>               palette;                  // palette entries (for paletted images)
     uint8_t                         transparent_index = 0;    // index of transparent colour (for paletted surfaces)
 
     // blend functions
-    blit::blend_span_func           bf;
-    std::array<BlendBlitFunc, 5>    bbf;
-    std::vector<Surface *>          mipmaps;
+    blit::PenBlendFunc              pbf;
+    blit::BlitBlendFunc             bbf;
+    
+    std::vector<Surface *>          mipmaps;                  // TODO: probably too niche/specific to attach directly to surface
 
   private:
     void init();
@@ -84,14 +84,14 @@ namespace blit {
 
   public:    
     Surface(uint8_t *data, const PixelFormat &format, const Size &bounds);
-    Surface(uint8_t *data, const PixelFormat&format, const packed_image *image);
+    Surface(uint8_t *data, const PixelFormat &format, const packed_image *image);
 
     Surface *load(const packed_image *image);
 
     // helpers to retrieve pointer to pixel
-    __attribute__((always_inline)) uint8_t* ptr(const Rect &r)   { return data + r.x * stride + r.y * row_stride; }
-    __attribute__((always_inline)) uint8_t* ptr(const Point &p)  { return data + p.x * stride + p.y * row_stride; }
-    __attribute__((always_inline)) uint8_t* ptr(const int32_t &x, const int32_t &y) { return data + x * stride + y * row_stride; }
+    __attribute__((always_inline)) uint8_t* ptr(const Rect &r)   { return data + r.x * pixel_stride + r.y * row_stride; }
+    __attribute__((always_inline)) uint8_t* ptr(const Point &p)  { return data + p.x * pixel_stride + p.y * row_stride; }
+    __attribute__((always_inline)) uint8_t* ptr(const int32_t &x, const int32_t &y) { return data + x * pixel_stride + y * row_stride; }
 
     __attribute__((always_inline)) uint32_t offset(const Rect &r) { return r.x + r.y * bounds.w; }
     __attribute__((always_inline)) uint32_t offset(const Point &p) { return p.x + p.y * bounds.w; }
@@ -99,12 +99,8 @@ namespace blit {
 
     void generate_mipmaps(uint8_t depth);
 
-    void pen(RGBA v);
-
     void clear();
     void pixel(const Point &p);
-    void _pixel(const Point &p);
-    void _pixel(const uint32_t &o);
     void v_span(Point p, int16_t c);
     void h_span(Point p, int16_t c);
     void rectangle(const Rect &r);

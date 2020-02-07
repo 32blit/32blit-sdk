@@ -54,7 +54,7 @@ namespace utility {
       uint16_t row = tga.height - 1;
 
       while (bytes > 0 && !feof(fp)) {
-        RGBA *p = ((RGBA *)data) + (row * tga.width);
+        Pen *p = ((Pen *)data) + (row * tga.width);
         uint32_t bytes_read = fread((void *)utility_buffer, sizeof(utility_buffer[0]), tga.width * 4, fp);
         for (uint32_t i = 0; i < bytes_read; i += 4) {
           p->r = utility_buffer[i + 2];
@@ -80,7 +80,7 @@ namespace utility {
       uint16_t row = tga.height - 1;
 
       while (bytes > 0 && !feof(fp)) {
-        RGBA *p = ((RGBA *)data) + (row * tga.width);
+        Pen *p = ((Pen *)data) + (row * tga.width);
         uint32_t bytes_read = fread((void *)utility_buffer, sizeof(utility_buffer[0]), tga.width * 3, fp);
         for (uint32_t i = 0; i < bytes_read; i += 3) {
           p->r = utility_buffer[i + 2];

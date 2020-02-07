@@ -5,7 +5,7 @@
 
 namespace blit {
 
-  RGB LED;
+  Pen LED;
   float vibration;
   float backlight;
 
