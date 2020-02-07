@@ -84,7 +84,7 @@ bool OpenComPort(const char *pszComPort, bool bTestConnection = false)
   osTX.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
   char pszFullPortName[32];
-  sprintf(pszFullPortName, "\\\\.\\%s", pszComPort);
+  snprintf(pszFullPortName, 32, "\\\\.\\%s", pszComPort);
   hComm = CreateFile(pszFullPortName, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
   return hComm != INVALID_HANDLE_VALUE;
 }
@@ -553,7 +553,7 @@ int main(int argc, char *argv[])
   if (!pszBinPath)
   {
     char header[1024];
-    sprintf(header, "32BL%s%c", pszProcess, 0);
+    snprintf(header, 1024, "32BL%s%c", pszProcess, 0);
     size_t uLen = strlen(header) + 1;
     WriteCom(header, (uint32_t)uLen);
     CloseCom();
@@ -601,9 +601,9 @@ int main(int argc, char *argv[])
 
   printf("Sending binary file ");
   char header[1024];
-  sprintf(header, "32BL%s%s%c%ld%c", pszProcess, pszBinFile, '*', nSize, '*');
+  snprintf(header, 1024, "32BL%s%s%c%ld%c", pszProcess, pszBinFile, '*', nSize, '*');
   size_t uLen = strlen(header);
-  sprintf(header, "32BL%s%s%c%ld%c", pszProcess, pszBinFile, 0, nSize, 0);
+  snprintf(header, 1024, "32BL%s%s%c%ld%c", pszProcess, pszBinFile, 0, nSize, 0);
   if (WriteCom(header, (uint32_t)uLen) != (ssize_t)uLen)
   {
     printf("Error: Failed to write header to 32Blit.\n");
