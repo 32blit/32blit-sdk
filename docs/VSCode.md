@@ -10,11 +10,11 @@ Then open the cloned repository with "Open folder...".
 
 ## Intellisense
 
-Open the command palette (`Ctrl` + `Shift` + `P`) run "C/C++: Change Configuration Provider..." and select "CMake Tools".
+Open the command palette (`Ctrl`/`Cmd` + `Shift` + `P`) run "C/C++: Change Configuration Provider..." and select "CMake Tools".
 
 ## Building for 32Blit
 
-Open the command palette (`Ctrl` + `Shift` + `P`) and run "CMake: Edit User-Local CMake Kits".
+Open the command palette (`Ctrl`/`Cmd` + `Shift` + `P`) and run "CMake: Edit User-Local CMake Kits".
 
 Add this to the list:
 ```json
