@@ -32,7 +32,7 @@ Refer to the OS specific docs:
 * [Windows - WSL (Advanced)](docs/Windows-WSL.md)
 * [macOS](docs/macOS.md)
 
-If you want to run the examples in a browser, refer to the [Emscripten docs](docs/Emscripten.md)
+If you want to run in a browser, refer to the [Emscripten docs](docs/Emscripten.md)
 
 If you want to run on device, refer to the [32blit docs](docs/32blit.md)
 
