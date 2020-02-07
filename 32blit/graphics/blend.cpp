@@ -19,19 +19,19 @@ namespace blit {
 
     do {
       uint8_t a = (pen->a * (*(d + 3))) >> 8;
-      if (m) { a = (a * *m++) >> 8; }
+      if (m) { a = (a * *m) >> 8; m++; }
       if (dest->alpha != 255) { a = (a * dest->alpha) >> 8; }
 
       if (a == 255) {
-        *d++ = pen->r; *d++ = pen->g; *d++ = pen->b; d++;
+        *d = pen->r; d++; *d = pen->g; d++; *d = pen->b; d++; d++;
       } else if (a == 0) {
         d += 4;
       } else {
         uint8_t ia = 255 - a;
-        *d++ = ((pen->r * a) + (*d * ia)) >> 8;
-        *d++ = ((pen->g * a) + (*d * ia)) >> 8;
-        *d++ = ((pen->b * a) + (*d * ia)) >> 8;
-        *d++ = 255 - (((255 - pen->a) * (255 - *d)) >> 8);
+        *d = ((pen->r * a) + (*d * ia)) >> 8; d++;
+        *d = ((pen->g * a) + (*d * ia)) >> 8; d++;
+        *d = ((pen->b * a) + (*d * ia)) >> 8; d++;
+        *d = 255 - (((255 - pen->a) * (255 - *d)) >> 8); d++;
       }      
     } while (--cnt);
   }
@@ -42,18 +42,18 @@ namespace blit {
 
     do {
       uint8_t a = pen->a;
-      if (m) { a = (a * *m++) >> 8; }
+      if (m) { a = (a * *m) >> 8; m++; }
       if (dest->alpha != 255) { a = (a * dest->alpha) >> 8; }
 
       if (a == 255) {
-        *d++ = pen->r; *d++ = pen->g; *d++ = pen->b;
+        *d = pen->r; d++; *d = pen->g; d++; *d = pen->b; d++;
       } else if (a == 0) {
         d += 3;        
       } else {
         uint8_t ia = 255 - a;
-        *d++ = ((pen->r * a) + (*d * ia)) >> 8;
-        *d++ = ((pen->g * a) + (*d * ia)) >> 8;
-        *d++ = ((pen->b * a) + (*d * ia)) >> 8;
+        *d = ((pen->r * a) + (*d * ia)) >> 8; d++;
+        *d = ((pen->g * a) + (*d * ia)) >> 8; d++;
+        *d = ((pen->b * a) + (*d * ia)) >> 8; d++;
       }
     } while (--cnt);
   }
@@ -63,9 +63,9 @@ namespace blit {
 
     do {
       if (pen->a != 0) {
-        *d++ = pen->a;
+        *d = pen->a;
       }
-      
+      d++;
     } while (--cnt);
   }
 
@@ -73,7 +73,8 @@ namespace blit {
     uint8_t* d = dest->data + off;
 
     do {
-      *d++ = pen->a;
+      *d = pen->a;
+      d++;
     } while (--cnt);
   }
 
@@ -85,19 +86,19 @@ namespace blit {
 
     do {
       uint8_t a = ((*(s + 3)) * (*(d + 3))) >> 8;
-      if (m) { a = (a * *m++) >> 8; }
+      if (m) { a = (a * *m) >> 8; m++; }
       if (dest->alpha != 255) { a = (a * dest->alpha) >> 8; }
 
       if (a == 255) {
-        *d++ = *s++; *d++ = *s++; *d++ = *s++; s++; d++;
+        *d = *s; d++; s++; *d = *s; d++; s++; *d = *s; d++; s++; s++; d++;
       } else if (a == 0) {
         d += 4;
       } else {
         uint8_t ia = 255 - a;
-        *d++ = ((*s++ * a) + (*d * ia)) >> 8;
-        *d++ = ((*s++ * a) + (*d * ia)) >> 8;
-        *d++ = ((*s++ * a) + (*d * ia)) >> 8;
-        *d++ = 255 - (((255 - *s++) * (255 - *d)) >> 8);
+        *d = ((*s * a) + (*d * ia)) >> 8; d++; s++;
+        *d = ((*s * a) + (*d * ia)) >> 8; d++; s++;
+        *d = ((*s * a) + (*d * ia)) >> 8; d++; s++;
+        *d = 255 - (((255 - *(s)) * (255 - *d)) >> 8); d++; s++;
       }
     } while (--cnt);
   }
@@ -109,18 +110,18 @@ namespace blit {
 
     do {
       uint8_t a = (*(s + 3));
-      if (m) { a = (a * *m++) >> 8; }
+      if (m) { a = (a * *m) >> 8; m++; }
       if (dest->alpha != 255) { a = (a * dest->alpha) >> 8; }
 
       if (a == 255) {
-        *d++ = *s++; *d++ = *s++; *d++ = *s++; s++;
+        *d = *s; d++; s++; *d = *s; d++; s++; *d = *s; d++; s++; s++;
       } else if (a == 0) {
         d += 3;
       } else {
         uint8_t ia = 255 - a;
-        *d++ = ((*s++ * a) + (*d * ia)) >> 8;
-        *d++ = ((*s++ * a) + (*d * ia)) >> 8;
-        *d++ = ((*s++ * a) + (*d * ia)) >> 8;
+        *d = ((*s * a) + (*d * ia)) >> 8; d++; s++;
+        *d = ((*s * a) + (*d * ia)) >> 8; d++; s++;
+        *d = ((*s * a) + (*d * ia)) >> 8; d++; s++;
         s++;
       }
     } while (--cnt);
@@ -132,9 +133,9 @@ namespace blit {
 
     do {
       if (*s != 0) {
-        *d++ = *s++;
+        *d = *s;
       }
-
+      d++; s++;
     } while (--cnt);
   }
 
@@ -143,7 +144,8 @@ namespace blit {
     uint8_t *d = dest->data + doff;
 
     do {
-      *d++ = *s++;
+      *d = *s;
+      d++; s++;
     } while (--cnt);
   }
 }

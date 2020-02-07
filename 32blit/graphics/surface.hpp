@@ -72,11 +72,11 @@ namespace blit {
     uint8_t b;
     uint8_t a;
 
-    Pen() : a(0), r(0), g(0), b(0) {}
-    Pen(int a) : a(a), r(0), g(0), b(0) {}
-    Pen(float a) : a((uint8_t)(a * 255.0f)), r(0), g(0), b(0) {}
-    Pen(int r, int g, int b, int a = 255) : a(a), r(r), g(g), b(b) {}
-    Pen(float r, float g, float b, float a = 1.0f) : a((uint8_t)(a * 255.0f)), r((uint8_t)(r * 255.0f)), g((uint8_t)(g * 255.0f)), b((uint8_t)(b * 255.0f)) {}
+    Pen() : r(0), g(0), b(0), a(0) {}
+    Pen(int a) : r(0), g(0), b(0), a(a) {}
+    Pen(float a) : r(0), g(0), b(0), a((uint8_t)(a * 255.0f)) {}
+    Pen(int r, int g, int b, int a = 255) : r(r), g(g), b(b), a(a) {}
+    Pen(float r, float g, float b, float a = 1.0f) : r((uint8_t)(r * 255.0f)), g((uint8_t)(g * 255.0f)), b((uint8_t)(b * 255.0f)), a((uint8_t)(a * 255.0f)) {}
   };
 #pragma pack(pop)
 
