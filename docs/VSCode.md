@@ -34,8 +34,8 @@ To set CMake arguments (like `-D32BLIT_PATH` for out-of-tree builds), you need t
 ```json
 {
   // other options...
-  "cmake.configureArgs": [
-    "-D32BLIT_PATH=/path/to/32blit-beta"
-  ],
+  "cmake.configureSettings": {
+    "32BLIT_PATH": "/path/to/32blit-beta"
+  },
 }
 ```
