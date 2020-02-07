@@ -4,6 +4,7 @@
 
 namespace blit {
   struct Surface;
+  struct Pen;
 
   // blends the supplied pen onto a span of pixels in the destination surface
   // supports pen alpha, global alpha, and mask alpha where needed
