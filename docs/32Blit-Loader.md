@@ -25,6 +25,11 @@ You should ideally add this directory to your `PATH` or alternatively copy this 
 > - To just move the file to a directory that is already in PATH, run (from the build directory you created above):  
 >`sudo cp tools/src/32Blit /usr/local/bin` (for example)
 
+### Windows - Visual Studio
+
+You can build the tool with the Visual Studio solution (`vs/32blit.sln`). It will be built to `vs/x64/Debug/32Blit.exe` (or similar, depending on build configuration).
+
+You should ideally add this directory to your `PATH` or alternatively copy this utility somewhere your system can find it.
 
 ### Windows - WSL
 

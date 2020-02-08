@@ -54,7 +54,14 @@ To build, flash and run the `logo` example.
 
 ## Your Own Projects
 
-TODO: Add best practice instructions for managing out-of-tree projects here.
+You can build a project based on the template by running:
+
+```
+mkdir build.stm32
+cd build.stm32
+cmake .. -D32BLIT_PATH="/path/to/32blit/repo" -DCMAKE_TOOLCHAIN_FILE=/path/to/32blit/repo/32blit.toolchain
+make
+```
 
 # Troubleshooting
 
