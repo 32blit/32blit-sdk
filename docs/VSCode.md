@@ -14,6 +14,10 @@ You should now be able to build by pressing the "⚙ Build:" button, or `F7`. Yo
 
 After configuring the project a "CMake Tools would like to configure IntelliSense for this folder." notification should appear, click "Allow" to configure IntelliSense. If the notification does not appear, open the command palette (`Ctrl`/`Cmd` + `Shift` + `P`) run "C/C++: Change Configuration Provider..." and select "CMake Tools".
 
+## Debugger configuration
+
+It should be possible to debug without setting up a `launch.json` file but if you need to use one, you should set `program` to `${command:cmake.launchTargetPath}`. See the [CMake Tools documentation](https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html#debugging-with-cmake-tools-and-launch-json) for more details.
+
 ## Building for 32Blit
 
 Open the command palette (`Ctrl`/`Cmd` + `Shift` + `P`) and run "CMake: Edit User-Local CMake Kits".
