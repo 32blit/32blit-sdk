@@ -657,6 +657,8 @@ int main(int argc, char *argv[])
   }
 
   printf("Sending complete.\n");
+  // Add a short delay to avoid PROG and SAVE hanging at 99% complete
+  // See https://github.com/pimoroni/32blit-beta/pull/154
 #ifdef WIN32
   Sleep(1000);
 #else
