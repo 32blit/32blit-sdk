@@ -22,6 +22,19 @@ You should now be able to build by pressing the "⚙ Build:" button, or `F7`. Yo
 
 After configuring the project a "CMake Tools would like to configure IntelliSense for this folder." notification should appear, click "Allow" to configure IntelliSense. If the notification does not appear, open the command palette (`Ctrl`/`Cmd` + `Shift` + `P`) run "C/C++: Change Configuration Provider..." and select "CMake Tools".
 
+## CMake Arguments
+
+To set CMake arguments (like `-D32BLIT_PATH` for out-of-tree builds), you need to add them to `.vscode/settings.json`:
+
+```json
+{
+  // other options...
+  "cmake.configureSettings": {
+    "32BLIT_PATH": "/path/to/32blit-beta"
+  },
+}
+```
+
 ## Debugger configuration
 
 It should be possible to debug without setting up a `launch.json` file but if you need to use one, you should set `program` to `${command:cmake.launchTargetPath}`. See the [CMake Tools documentation](https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html#debugging-with-cmake-tools-and-launch-json) for more details.
@@ -40,16 +53,3 @@ Add this to the list:
 (Replacing `/path/to/32blit-beta`, with the actual path.)
 
 You should now be able to select "32Blit" as a kit. ("CMake: Change Kit" from the command palette or the button displaying the current kit at the bottom of the window). If you select a target ending with .flash from the list next to the "⚙ Build:" button, that example will be flashed to your device when you build.
-
-## CMake Arguments
-
-To set CMake arguments (like `-D32BLIT_PATH` for out-of-tree builds), you need to add them to `.vscode/settings.json`:
-
-```json
-{
-  // other options...
-  "cmake.configureSettings": {
-    "32BLIT_PATH": "/path/to/32blit-beta"
-  },
-}
-```
