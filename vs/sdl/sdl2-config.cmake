@@ -1,7 +1,7 @@
 set(SDL2_INCLUDE_DIRS "${SDL2_DIR}/include")
 
-if(${CMAKE_GENERATOR} MATCHES "Visual Studio")
-    set(SDL2_LIBDIR "${SDL2_DIR}/lib/$(PlatformTarget)")
+if(CMAKE_GENERATOR_PLATFORM)
+    set(SDL2_LIBDIR "${SDL2_DIR}/lib/${CMAKE_GENERATOR_PLATFORM}")
 else()
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
         set(SDL2_LIBDIR "${SDL2_DIR}/lib/x64/")
