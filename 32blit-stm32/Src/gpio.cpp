@@ -101,7 +101,7 @@ namespace gpio {
     // rgb led pwm
     init_pin(GPIOC, LED_RED_Pin, GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, GPIO_AF2_TIM3); // red
     init_pin(GPIOC, LED_GREEN_Pin, GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, GPIO_AF2_TIM3); // green
-    init_pin(GPIOC, LED_BLUE_Pin, GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, GPIO_AF2_TIM3); // blue
+    init_pin(GPIOB, LED_BLUE_Pin, GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, GPIO_AF2_TIM3); // blue
 
     // lcd
     init_pin(GPIOA, LCD_CS_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL); // chip select

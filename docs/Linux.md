@@ -1,50 +1,50 @@
-# Building & Running on Linux or WSL + XMing
+# Building & Running on Linux
 
-First install some required tools:
-
-```
-apt-get install git cmake gcc g++ libsdl2-dev
-```
-
-To build your project for testing, go into the relevant example directory. We'll use `palette-cycle` to demonstrate:
+First install the required tools:
 
 ```
-cd examples/palette-cycle
+sudo apt install git gcc g++ gcc-arm-none-eabi cmake make python3 python3-pip libsdl2-dev
+pip3 install construct bitstring
 ```
 
-prepare the Makefile with CMake:
+## Building & Running on 32Blit
 
-```
+If you want to run code on 32Blit, you should now refer to [Building & Running On 32Blit](32blit.md).
+
+## Building & Running Locally
+
+Set up the 32Blit Makefile from the root of the repository with the following commands:
+
+```shell
 mkdir build
 cd build
 cmake ..
 ```
 
-and compile the example:
+Now to make any example, type:
 
+```shell
+make example-name
 ```
+
+For example:
+
+```shell
+make raycaster
+```
+
+This will produce `examples/raycaster/raycaster` which you should run with:
+
+```shell
+./examples/raycaster/raycaster
+```
+
+### Build Everything
+
+Alternatively you can build everything by just typing:
+
+```shell
 make
 ```
 
-To run the application on your computer, use the following command (from within the same directory):
-
-```
-./palette-cycle
-```
-
-## XMing
-
-To run the examples from WSL on Windows you will need to have XMing (or another XWindow Server) running on Windows. Click on the following link which will help you install and setup WSL and XMing together.
-
-- [Information how to run XMing with WSL](https://virtualizationreview.com/articles/2017/02/08/graphical-programs-on-windows-subsystem-on-linux.aspx)
-- [Download XMing setup](https://sourceforge.net/projects/xming/files/Xming/6.9.0.31/Xming-6-9-0-31-setup.exe/download)
-
-You can then run code by either:
-- prefixing the command with `DISPLAY=:0.0`, or 
-- execute the command `export DISPLAY=:0.0` - which after you will not need to prefix the commands in the current session, just run them.
-
-eg:
-
-```
-DISPLAY=:0.0 ./palette-cycle
-```
+When the build completes you should be able to run any example.

@@ -14,7 +14,18 @@ if(EMSCRIPTEN)
 
 	set(SDL2_LIBRARIES "-s USE_SDL=2")
 else()
-	find_package(SDL2 REQUIRED)
+	# attempt to find the framework (find_package won't work as there's no config file)
+	if(APPLE)
+		find_library(SDL2_LIBRARIES NAMES SDL2)
+		
+		find_path(SDL2_INCLUDE_DIRS NAMES SDL.h
+			PATHS ~/Library/Frameworks /Library/Frameworks
+		)
+	endif()
+
+	if(NOT SDL2_LIBRARIES OR NOT SDL2_INCLUDE_DIRS)
+		find_package(SDL2 REQUIRED)
+	endif()
 
 	# If SDL2 was built using CMake, the generated configuration files define SDL2::* targets instead of the SDL2_* variables
 	if(TARGET SDL2::SDL2)
@@ -65,6 +76,10 @@ endif()
 
 function(blit_executable NAME SOURCES)
 	add_executable(${NAME} ${SOURCES} ${ARGN})
+
+	install(TARGETS ${NAME}
+		RUNTIME DESTINATION bin
+	)
 
 	if (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
 		target_link_libraries(${NAME} BlitHalSDL)

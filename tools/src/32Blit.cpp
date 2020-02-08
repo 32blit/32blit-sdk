@@ -1,20 +1,24 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string>
+#include <string.h>
+#include <time.h>
+
 #if defined(WIN32) || defined(__MINGW32__)
 #include <windows.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-#include <time.h>
 #else
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <termios.h>
-#include <time.h>
 #include <errno.h>
+#include <dirent.h>
+
+#ifdef __APPLE__
+#include <IOKit/IOKitLib.h>
+#include <IOKit/serial/IOSerialKeys.h>
+#include <IOKit/usb/USBSpec.h>
+#endif
 #endif
 
 template <int a, int b, int c, int d>
@@ -27,10 +31,12 @@ bool Get32BlitInfo(uint32_t &uAck);
 
 void usage(void)
 {
-  printf("Usage: 32blit <process> <comport> <binfile>\n");
+  printf("Usage: 32blit <process> <comport> <binfile> <options>\n");
   printf("  <process> : Either _RST, SAVE or PROG\n");
   printf("  <comport> : Com port, eg COM1 or /dev/cu.usbmodem\n");
   printf("  <binfile> : Bin file path (optional, needed for SAVE and PROG)\n");
+  printf("\nOptions:\n");
+  printf("\t--reconnect: Re-open port after PROG to show debug output\n");
 }
 
 const char *getFileName(const char *pszPath)
@@ -78,7 +84,7 @@ bool OpenComPort(const char *pszComPort, bool bTestConnection = false)
   osTX.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
   char pszFullPortName[32];
-  sprintf(pszFullPortName, "\\\\.\\%s", pszComPort);
+  snprintf(pszFullPortName, 32, "\\\\.\\%s", pszComPort);
   hComm = CreateFile(pszFullPortName, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
   return hComm != INVALID_HANDLE_VALUE;
 }
@@ -154,6 +160,22 @@ bool HandleRX(void)
   }
 
   return bResult;
+}
+
+std::string GuessPortName()
+{
+  TCHAR targetPath[1024];
+
+  for (int i = 1; i < 256; i++)
+  {
+    auto portName = "COM" + std::to_string(i);
+
+    // just return the first USB serial
+    if (QueryDosDevice(portName.c_str(), targetPath, 1024) && std::string(targetPath).find("USB") != std::string::npos)
+      return portName;
+  }
+
+  return "";
 }
 
 void usleep(uint32_t uSecs)
@@ -237,6 +259,88 @@ bool OpenComPort(const char *pszComPort, bool bTestConnection = false)
       bComPortOpen = true;
   }
   return bComPortOpen;
+}
+
+std::string GuessPortName()
+{
+#ifdef __linux__
+  // look for a serial device with "32Blit" in its name
+  std::string sSearchDir = "/dev/serial/by-id";
+
+  DIR *pDir = opendir(sSearchDir.c_str());
+
+  if(!pDir)
+    return "";
+
+  struct dirent *pEntry;
+
+  while((pEntry = readdir(pDir)))
+  {
+    std::string sName(pEntry->d_name);
+    if(sName.find("32Blit") != std::string::npos)
+      return sSearchDir + "/" + sName;
+  }
+
+  return "";
+
+#elif __APPLE__
+  auto classesToMatch = IOServiceMatching(kIOSerialBSDServiceValue);
+  if(!classesToMatch)
+    return "";
+
+  mach_port_t masterPort;
+  auto kernResult = IOMasterPort(MACH_PORT_NULL, &masterPort);
+  if(kernResult != KERN_SUCCESS)
+    return "";
+
+  io_iterator_t matchingServices;
+  kernResult = IOServiceGetMatchingServices(masterPort, classesToMatch, &matchingServices);
+  if(kernResult != KERN_SUCCESS)
+    return "";
+
+  io_object_t portService;
+  char devicePath[1024] = {};
+  bool found = false;
+
+  while((portService = IOIteratorNext(matchingServices)) && !found)
+  {
+    // check product string
+    auto productString = (CFStringRef)IORegistryEntrySearchCFProperty(portService, kIOServicePlane, CFSTR(kUSBProductString), kCFAllocatorDefault, kIORegistryIterateRecursively | kIORegistryIterateParents);
+
+    if(!productString)
+    {
+      IOObjectRelease(portService);
+      continue;
+    }
+
+    if(CFStringCompare(productString, CFSTR("32Blit CDC"), 0) != 0)
+    {
+      // not a blit
+      CFRelease(productString);
+      IOObjectRelease(portService);
+      continue;
+    }
+
+    CFRelease(productString);
+
+    // get device path
+    auto devicePathAsCFString = (CFStringRef)IORegistryEntryCreateCFProperty(portService, CFSTR(kIOCalloutDeviceKey), kCFAllocatorDefault, 0);
+    if(devicePathAsCFString)
+    {
+      if(CFStringGetCString(devicePathAsCFString, devicePath, 1024, kCFStringEncodingASCII))
+        found = true;
+
+      CFRelease(devicePathAsCFString);
+    }
+
+    IOObjectRelease(portService);
+  }
+
+  return std::string(devicePath);
+#else
+  // TODO: macOS
+  return "";
+#endif
 }
 
 #endif
@@ -351,7 +455,7 @@ bool ResetIfNeeded(const char *pszComPort)
 
   if (bResetNeeded)
   {
-    printf("Reseting 32Blit and waiting for USB connection, please wait...\n");
+    printf("Resetting 32Blit and waiting for USB connection, please wait...\n");
     // need to reset 32blit
     char rstCommand[] = "32BL_RST";
     WriteCom(rstCommand, (uint32_t)strlen(rstCommand));
@@ -379,10 +483,12 @@ int main(int argc, char *argv[])
   }
 
   const char *pszProcess = argv[1];
-  const char *pszComPort = argv[2];
+  std::string sComPort = argv[2];
   const char *pszBinPath = NULL;
   const char *pszBinFile = NULL;
-  if (argc == 4)
+  bool bShouldReconnect = false;
+
+  if (argc >= 4)
   {
     pszBinPath = argv[3];
     pszBinFile = getFileName(pszBinPath);
@@ -397,173 +503,195 @@ int main(int argc, char *argv[])
   }
   else
   {
-    if (*puProcess != FourCCMake<'_', 'R', 'S', 'T'>::value && argc != 4)
+    if (*puProcess != FourCCMake<'_', 'R', 'S', 'T'>::value && argc < 4)
     {
       usage();
       exit(1);
     }
   }
 
-  bool bComPortOpen = OpenComPort(pszComPort);
-
-  if (bComPortOpen)
+  for(int i = 4; i < argc; i++)
   {
-    //while (1)
-    //{
-    //  char ch;
-    //  if (GetRXByte(ch))
-    //    putchar(ch);
-    //  //HandleRX();
-    //}
-    if (pszBinPath)
+    std::string sArg(argv[i]);
+
+    if(sArg == "--reconnect")
+      bShouldReconnect = true;
+  }
+
+  bool bComPortOpen = false;
+
+  if(sComPort == "AUTO")
+  {
+    auto sDetectedPort = GuessPortName();
+    if(sDetectedPort.empty())
+      printf("Failed to autodetect port\n");
+    else
     {
-      FILE *pfBin = fopen(pszBinPath, "rb");
-      if (pfBin)
-      {
-        fseek(pfBin, 0L, SEEK_END);
-        long nSize = ftell(pfBin);
-        fseek(pfBin, 0L, SEEK_SET);
+      printf("Detected port as: %s\n", sDetectedPort.c_str());
+      sComPort = sDetectedPort;
+    }
+  }
 
-        if (nSize < 1)
-        {
-          usage();
-          printf("ERROR <binfile> contains no data.");
-          CloseCom();
-          exit(3);
-        }
+  bComPortOpen = OpenComPort(sComPort.c_str());
 
-        if (ResetIfNeeded(pszComPort))
-        {
-          // check we can still talk to 32blit
-          bool bAlive = false;
-          while (!bAlive)
-          {
-            uint32_t uAck;
-            if (Get32BlitInfo(uAck))
-              bAlive = true;
-            else
-            {
-              printf("Cannot talk to 32Blit, trying reconnect\n");
-              // try to reconnect
-              bComPortOpen = OpenComPort(pszComPort);
-            }
-          }
+  if (!bComPortOpen)
+  {
+    usage();
+    printf("ERROR <comport> Cannot open %s\n", sComPort.c_str());
+    exit(6);
+  }
 
-          printf("Sending binary file ");
-          char header[1024];
-          sprintf(header, "32BL%s%s%c%ld%c", pszProcess, pszBinFile, '*', nSize, '*');
-          size_t uLen = strlen(header);
-          sprintf(header, "32BL%s%s%c%ld%c", pszProcess, pszBinFile, 0, nSize, 0);
-          if (WriteCom(header, (uint32_t)uLen) != (ssize_t)uLen)
-          {
-            printf("Error: Failed to write header to 32Blit.\n");
-          }
-          else
-          {
-            char buffer[64];
-            bool bFinishedTX = false;
+  //while (1)
+  //{
+  //  char ch;
+  //  if (GetRXByte(ch))
+  //    putchar(ch);
+  //  //HandleRX();
+  //}
 
-            long nTotalWritten = 0;
-            long nTotalRead = 0;
-            uint32_t uProgressCount = 20;
-            while (!bFinishedTX)
-            {
-              // TX
-              size_t uRead = fread(buffer, 1, 64, pfBin);
-              nTotalRead += uRead;
-              if (uRead)
-              {
-                ssize_t nWritten = WriteCom(buffer, (uint32_t)uRead);
-                if (nWritten == (ssize_t)uRead)
-                  nTotalWritten += nWritten;
-                else
-                {
-                  printf("Error: failed to write data.\n");
-                  bFinishedTX = true;
-                }
-              }
-              else
-              {
-                printf("\n");
-                fclose(pfBin);
-                bFinishedTX = true;
-              }
+  // _RST
+  if (!pszBinPath)
+  {
+    char header[1024];
+    snprintf(header, 1024, "32BL%s%c", pszProcess, 0);
+    size_t uLen = strlen(header) + 1;
+    WriteCom(header, (uint32_t)uLen);
+    CloseCom();
+    exit(0);
+  }
 
-              if (uProgressCount-- == 0)
-              {
-                uProgressCount = 20;
-                putchar('*');
-                fflush(stdout);
-              }
-            }
+  FILE *pfBin = fopen(pszBinPath, "rb");
+  if (!pfBin)
+  {
+    usage();
+    printf("ERROR <binfile> Cannot open %s\n", pszBinPath);
+    CloseCom();
+    exit(5);
+  }
 
-            // RX
-            if (nTotalWritten != nSize)
-              printf("ERROR Incorrect number of bytes written, wrote %ld expected %ld\n", nTotalWritten, nSize);
-            else
-            {
-              printf("Sending complete.\n");
-              if (*puProcess == FourCCMake<'P', 'R', 'O', 'G'>::value)
-              {
-                printf("Waiting for USB connection for debug logging, please wait...\n");
-                // wait for reconnect
-                bool bReconnected = false;
-                while (!bReconnected)
-                {
-                  usleep(250000);
-                  bReconnected = OpenComPort(pszComPort);
-                  if (bReconnected)
-                  {
-                    uint32_t uAck;
-                    bReconnected = Get32BlitInfo(uAck);
-                  }
-                }
-                printf("Connected to 32Blit.\n");
+  fseek(pfBin, 0L, SEEK_END);
+  long nSize = ftell(pfBin);
+  fseek(pfBin, 0L, SEEK_SET);
 
-                while (true)
-                {
-                  if (!HandleRX())
-                  {
-                    CloseCom();
-                    printf("USB Connection lost, attempting to reconnect, please wait...\n");
-                    // wait for reconnect
-                    bool bReconnected = false;
-                    while (!bReconnected)
-                    {
-                      usleep(250000);
-                      bReconnected = OpenComPort(pszComPort);
-                    }
-                    printf("Reconnected to 32Blit.\n");
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+  if (nSize < 1)
+  {
+    usage();
+    printf("ERROR <binfile> contains no data.");
+    CloseCom();
+    exit(3);
+  }
+
+  if (!ResetIfNeeded(sComPort.c_str()))
+    exit(0);
+
+  // check we can still talk to 32blit
+  bool bAlive = false;
+  while (!bAlive)
+  {
+    uint32_t uAck;
+    if (Get32BlitInfo(uAck))
+      bAlive = true;
+    else
+    {
+      printf("Cannot talk to 32Blit, trying reconnect\n");
+      // try to reconnect
+      bComPortOpen = OpenComPort(sComPort.c_str());
+    }
+  }
+
+  printf("Sending binary file ");
+  char header[1024];
+  snprintf(header, 1024, "32BL%s%s%c%ld%c", pszProcess, pszBinFile, '*', nSize, '*');
+  size_t uLen = strlen(header);
+  snprintf(header, 1024, "32BL%s%s%c%ld%c", pszProcess, pszBinFile, 0, nSize, 0);
+  if (WriteCom(header, (uint32_t)uLen) != (ssize_t)uLen)
+  {
+    printf("Error: Failed to write header to 32Blit.\n");
+    CloseCom();
+    exit(0);
+  }
+
+  char buffer[64];
+  bool bFinishedTX = false;
+
+  long nTotalWritten = 0;
+  long nTotalRead = 0;
+  uint32_t uProgressCount = 20;
+  while (!bFinishedTX)
+  {
+    // TX
+    size_t uRead = fread(buffer, 1, 64, pfBin);
+    nTotalRead += uRead;
+    if (uRead)
+    {
+      ssize_t nWritten = WriteCom(buffer, (uint32_t)uRead);
+      if (nWritten == (ssize_t)uRead)
+        nTotalWritten += nWritten;
       else
       {
-        usage();
-        printf("ERROR <binfile> Cannot open %s\n", pszBinPath);
-        CloseCom();
-        exit(5);
+        printf("Error: failed to write data.\n");
+        bFinishedTX = true;
       }
     }
     else
     {
-      char header[1024];
-      sprintf(header, "32BL%s%c", pszProcess, 0);
-      size_t uLen = strlen(header) + 1;
-      WriteCom(header, (uint32_t)uLen);
+      printf("\n");
+      fclose(pfBin);
+      bFinishedTX = true;
     }
-    CloseCom();
-  }
-  else
-  {
-    usage();
-    printf("ERROR <comport> Cannot open %s\n", pszComPort);
-    exit(6);
+
+    if (uProgressCount-- == 0)
+    {
+      uProgressCount = 20;
+      putchar('*');
+      fflush(stdout);
+    }
   }
 
+  // RX
+  if (nTotalWritten != nSize)
+  {
+    printf("ERROR Incorrect number of bytes written, wrote %ld expected %ld\n", nTotalWritten, nSize);
+    CloseCom();
+    exit(0);
+  }
+
+  printf("Sending complete.\n");
+  if (*puProcess == FourCCMake<'P', 'R', 'O', 'G'>::value && bShouldReconnect)
+  {
+    printf("Waiting for USB connection for debug logging, please wait...\n");
+    // wait for reconnect
+    bool bReconnected = false;
+    while (!bReconnected)
+    {
+      usleep(250000);
+      bReconnected = OpenComPort(sComPort.c_str());
+      if (bReconnected)
+      {
+        uint32_t uAck;
+        bReconnected = Get32BlitInfo(uAck);
+      }
+    }
+    printf("Connected to 32Blit.\n");
+
+    while (true)
+    {
+      if (!HandleRX())
+      {
+        CloseCom();
+        printf("USB Connection lost, attempting to reconnect, please wait...\n");
+        // wait for reconnect
+        bool bReconnected = false;
+        while (!bReconnected)
+        {
+          usleep(250000);
+          bReconnected = OpenComPort(sComPort.c_str());
+        }
+        printf("Reconnected to 32Blit.\n");
+      }
+    }
+  }
+
+  CloseCom();
   exit(0);
 }

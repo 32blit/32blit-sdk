@@ -19,8 +19,8 @@ namespace blit {
    * \param p
    * \param variable
    */
-  void Surface::text(std::string message, const uint8_t *font, const Point &p, bool variable, TextAlign align) {
-    text(message, font, Rect(p.x, p.y, 0, 0), variable, align);
+  void Surface::text(std::string message, const uint8_t *font, const Point &p, bool variable, TextAlign align, Rect clip) {
+    text(message, font, Rect(p.x, p.y, 0, 0), variable, align, clip);
   }
 
   /**
@@ -31,8 +31,16 @@ namespace blit {
    * \param r
    * \param variable
    */
-  void Surface::text(std::string message, const uint8_t *font, const Rect &r, bool variable, TextAlign align) {
+  void Surface::text(std::string message, const uint8_t *font, const Rect &r, bool variable, TextAlign align, Rect clip) {
     Point c(r.x, r.y); // caret position
+
+    // default clip rect to rect if passed in
+    if(r.w > 0 && clip.w == 1000)
+      clip = r;
+
+    // clamp clip rect to screen
+    clip.w = std::min(clip.w, bounds.w - clip.x);
+    clip.h = std::min(clip.h, bounds.h - clip.y);
 
     // check vertical alignment
     if ((align & 0b11) != TextAlign::top) {
@@ -69,19 +77,15 @@ namespace blit {
         uint32_t po = offset(Point(c.x, c.y + y));
 
         for (uint8_t x = 0; x < 6; x++) {
-
-          //if(clip.contains(p)) {
-            if (font_chr[x] & (1 << y)) {
+          if (font_chr[x] & (1 << y)) {
+            if(clip.contains(Point(c.x + x, c.y + y)))
               bf((uint8_t *)&_pen, this, po, 1);
-              char_width = char_width < x ? x : char_width;
-            }
-          //}
 
-          //p.x++;
+            char_width = char_width < x ? x : char_width;
+          }
+
           po++;
         }
-
-        //p.y++;
       }
 
       if (!variable)
@@ -95,7 +99,7 @@ namespace blit {
 
       // increment the cursor
       c.x += char_width;
-      if ((r.w && c.x > r.x + r.w) || (chr == 10)) {
+      if (chr == 10) {
         c.x = r.x;
         c.y += 9;
 
@@ -116,8 +120,6 @@ namespace blit {
 
       char_off++;
     }
-
-    //return c.y + 8;
   }
 
   uint8_t get_char_width(const uint8_t *font, char c, bool variable) {
@@ -184,7 +186,7 @@ namespace blit {
   }
 }
 
-std::string Surface::wrap_text(std::string message, int32_t width, const uint8_t *font, bool variable) {
+std::string Surface::wrap_text(std::string message, int32_t width, const uint8_t *font, bool variable, bool words) {
   std::string ret;
 
   int current_x = 0;
@@ -195,20 +197,30 @@ std::string Surface::wrap_text(std::string message, int32_t width, const uint8_t
     if (message[i] == ' ')
       last_space = i;
 
-    current_x += get_char_width(font, message[i], variable);
+    if(message[i] == '\n') {
+      ret += message.substr(copied_off, i - copied_off);
+      copied_off = i;
+      current_x = 0;
+      last_space = std::string::npos;
+      continue;
+    }
+
+    int char_width = get_char_width(font, message[i], variable);
+    current_x += char_width;
 
     if (current_x > width) {
-      if(last_space == std::string::npos) {
-        // no space to break at
+      if(!words || last_space == std::string::npos) {
+        // no space to break at or we're not breaking on words
         ret += message.substr(copied_off, i - copied_off - 1) + "\n";
         copied_off = i - 1;
+        current_x = char_width;
       } else {
         // break at last space
         ret += message.substr(copied_off, last_space - copied_off) + "\n";
         copied_off = last_space + 1; // don't copy the space
         last_space = std::string::npos;
+        current_x = measure_text(message.substr(copied_off, i - copied_off + 1), font, variable).w;
       }
-      current_x = 0;
     }
   }
 

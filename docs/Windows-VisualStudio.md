@@ -1,6 +1,8 @@
 # Visual Studio 2019
 
-You can use Visual Studio 2019 to examine the samples (compile them and run them in an SDL window) or to build your own apps for the 32blit API. Remember to also test on device!
+You can use Visual Studio 2019 to examine the samples (compile them and run them in an SDL window) or to build your own apps for the 32blit API.
+
+See [Building & Running On 32Blit](32blit.md) if you want to compile examples/projects to run on 32Blit.
 
 ## Requirements
 

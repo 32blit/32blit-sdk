@@ -1,99 +1,67 @@
-# Building & Running On 32blit
+# Building & Running On 32Blit
 
-To build your project for 32blit using `arm-none-eabi-gcc` you should prepare the Makefile with CMake using the provided toolchain file.
+These instructions assume a basic familiarity with the Linux command-line and with compiling software from source.
 
-From the root of your project:
+Make sure you've prepared your 32Blit by following the instructions in:
+
+* [Building & Flashing The 32Blit Firmware](32Blit-Firmware.md#building--flashing-the-32blit-firmware)
+* [Building The 32Blit Loader Tool](32Blit-Loader.md#building-the-32blit-loader-tool)
+
+You should also make sure you have a cross-compile environment set up on your computer, refer to the relevant documentation below:
+
+* [Windows](Windows-WSL.md)
+* [Linux](Linux.md)
+* [macOS](macOS.md)
+* [ChromeOS](ChromeOS.md)
+
+## Examples
+
+### Building An Example
+
+To build an example for 32blit using `arm-none-eabi-gcc` you must prepare the Makefile with CMake using the provided toolchain file.
+
+From the root of the repository:
 
 ```
 mkdir build.stm32
 cd build.stm32
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../../../32blit.toolchain
+cmake .. -DCMAKE_TOOLCHAIN_FILE=../32blit.toolchain
 ```
 
-And then `make` as normal.
+And then run `make examplename` to build an example.
 
-The result of your build will be a `.bin`, `.hex`, `.elf` file.
+The result of the build will be a `.bin`, `.hex` and `.elf` file in the relevant example directory.
 
-To run your project on 32Blit you'll need:
+For example you might type `make raycaster` which will give you `examples/raycaster/raycaster.bin`.
 
-1. the firmware installed.
-2. to build the flash loader in `tools/src`.
+### Uploading An Example
 
-See the relevant sections below for instructions.
+This requires the [flash loader tool](32Blit-Loader.md) to be in your PATH or built in an adjacent `build` or `build.mingw` directory from a local build (Run the build for your platform in the top level).
 
-Once set up you can run `32Blit.exe` (Windows) or `32Blit` (Linux) to copy a bin file to either QSPI Flash or the SD Card on your device.
-
-For example to program to QSPI Flash from Windows:
+With the tool available, you can now run:
 
 ```
-32Blit.exe PROG COM8 raycaster.bin
-``` 
-
-Or copy to the inserted SD card:
-
-```
-32Blit.exe SAVE COM8 raycaster.bin
+make [example-name].flash
 ```
 
-## Building The Flash Loader
-
-### Linux and macOS
+For example you can:
 
 ```
-cd tools/src
-mkdir build
-cd build
-cmake ..
-make
+make logo.flash
 ```
 
-You should now have a `32Blit` binary in your build folder.
+To build, flash and run the `logo` example.
 
-### Windows
+## Your Own Projects
 
-```
-cd tools/src
-mkdir build.mingw
-cd build.mingw
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../../../mingw.toolchain
-make
-```
+TODO: Add best practice instructions for managing out-of-tree projects here.
 
-You should now have a `32Blit.exe` in your build folder.
+# Troubleshooting
 
-## Flashing 32Blit Firmware Via DFU
+### Flasher Can't Find 32Blit Port
 
-### Prepare the device
+If `make example.flash` fails to find the correct port, re-run `cmake` with `-DFLASH_PORT=[PORT PATH]`.
 
-To enter DFU mode either hold the X & Y buttons and press the reset button or select `dfu mode` from the on device menu. The screen will go dark, this is normal.
-
-### Build & Flash The Firmware
-
-32Blit requires a firmware loader which manages games on Flash and (optionally) the SD card. You must build `firmware/flash-loader` and flash it to your device.
-
-```
-cd firmware/flash-loader
-mkdir build.stm32
-cd build.stm32
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../../../32blit.toolchain
-```
-
-### Linux and macOS
-
-Install `dfu-util` from your package manager then enter:
-
-```
-sudo dfu-util -a 0 -s 0x08000000 -D flash-loader.bin
-```
-
-Followed by the name of the .bin file that you just built.
-
-### Windows
-
-You will need [DfuSe Demonstration from st.com](https://www.st.com/en/development-tools/stsw-stm32080.html)) to flash `flash-loader.dfu` to your device.
-
-## Troubleshooting
+### Cmake Errors
 
 If you see `cannot create target because another target with the same name already exists` you've probably run `cmake ..` in the wrong directory (the project directory rather than the build directory), you should remove all but your project files and `cmake ..` again from the build directory.
-
-If you have more than one device in DFU mode connected to your computer then find the 32blit using `lsusb` and add `-d vid:pid` to the dfu-util command. Replace `vid:pid` with the 4 character ID strings to target the correct device.

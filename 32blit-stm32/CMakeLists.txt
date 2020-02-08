@@ -164,14 +164,28 @@ endfunction()
 
 function(blit_executable NAME SOURCES)
 	add_executable(${NAME} $<TARGET_OBJECTS:BlitHalSTM32Ext> ${SOURCES} ${ARGN})
+
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.bin
+		DESTINATION bin
+	)
+
 	set_target_properties(${NAME} PROPERTIES LINK_FLAGS "-specs=nano.specs -T ${MCU_LINKER_SCRIPT_EXT}")
 	set_target_properties(${NAME} PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT_EXT} SUFFIX ".elf")
 
 	blit_executable_common(${NAME})
+
+	if(32BLIT_TOOL)
+		add_custom_target(${NAME}.flash DEPENDS ${NAME} COMMAND ${32BLIT_TOOL} PROG ${FLASH_PORT} ${NAME}.bin)
+	endif()
 endfunction()
 
 function(blit_executable_int_flash NAME SOURCES)
 	add_executable(${NAME} $<TARGET_OBJECTS:BlitHalSTM32> ${SOURCES} ${ARGN})
+
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.bin ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.dfu
+		DESTINATION bin
+	)
+
 	set_target_properties(${NAME} PROPERTIES LINK_FLAGS "-specs=nano.specs -T ${MCU_LINKER_SCRIPT}")
 	set_target_properties(${NAME} PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT} SUFFIX ".elf")
 
