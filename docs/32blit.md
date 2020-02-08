@@ -38,7 +38,7 @@ For example you might type `make raycaster` which will give you `examples/raycas
 
 This requires the [flash loader tool](32Blit-Loader.md) to be in your PATH or built in an adjacent `build` or `build.mingw` directory from a local build (Run the build for your platform in the top level).
 
-With the tool available, you can now run:
+With the tool available, and your device out of DFU mode, you can now run:
 
 ```
 make [example-name].flash
@@ -68,6 +68,7 @@ make
 ### Flasher Can't Find 32Blit Port
 
 If `make example.flash` fails to find the correct port, re-run `cmake` with `-DFLASH_PORT=[PORT PATH]`.
+This does not work if your device is in DFU mode. Either reset it to get it out, or it it's stuck in DFU mode (or just boots into a black screen), you may need to reflash the firmware.
 
 ### Cmake Errors
 
