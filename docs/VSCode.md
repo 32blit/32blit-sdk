@@ -6,6 +6,8 @@ You'll need to install:
  - The [C/C++ extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools)
  - The [CMake Tools extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools)
 
+Then open the cloned repository with "Open folder...".
+
 ## Windows specific setup
 
 Windows needs a little help to find the required dependencies for local builds.
@@ -14,7 +16,7 @@ Windows needs a little help to find the required dependencies for local builds.
  - Add `"SDL2_DIR": "${workspaceRoot}/vs/sdl/"` to `configureSettings` (See "CMake Arguments" below)
 
 ## Initial setup for local builds
-Then open the cloned repository with "Open folder...". You should get a notification asking if you want to configure the project. Click "Yes" and select "[Unspecified]" from the "Select a Kit" dropdown for a local build with the default compiler.
+You should get a notification asking if you want to configure the project. Click "Yes" and select "[Unspecified]" from the "Select a Kit" dropdown for a local build with the default compiler.
 
 You should now be able to build by pressing the "⚙ Build:" button, or `F7`. You can also run an example by pressing `Shift` + `F5` and debug by pressing the "Debug" button or `Ctrl` + `F5`.
 
