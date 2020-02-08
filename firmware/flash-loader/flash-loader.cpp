@@ -233,7 +233,7 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 	if(m_uFileCount)
 	{
 		screen.pen = Pen(50, 50, 70);
-		screen.rectangle(Rect(0, ROW_SPACE*m_uCurrentFile, SCREEN_WIDTH, ROW_SPACE));
+		screen.rectangle(Rect(0, ROW_HEIGHT*m_uCurrentFile, SCREEN_WIDTH, ROW_HEIGHT));
 		screen.pen = Pen(255, 255, 255);
 
 		for(uint8_t uF = 0; uF < m_uFileCount; uF++) {
