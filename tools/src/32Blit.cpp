@@ -657,7 +657,11 @@ int main(int argc, char *argv[])
   }
 
   printf("Sending complete.\n");
+#ifdef WIN32
+  Sleep(1000);
+#else
   sleep(1);
+#endif
   if (*puProcess == FourCCMake<'P', 'R', 'O', 'G'>::value && bShouldReconnect)
   {
     printf("Waiting for USB connection for debug logging, please wait...\n");
