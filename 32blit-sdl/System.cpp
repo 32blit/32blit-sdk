@@ -60,6 +60,40 @@ uint32_t blit_random() {
 	return random_distribution(random_generator);
 }
 
+// file IO
+static std::string basePath;
+static std::map<uint32_t, SDL_RWops *> open_files;
+static uint32_t current_file_handle = 0;
+
+int32_t open_file(std::string name) {
+  auto file = SDL_RWFromFile((basePath + name).c_str(), "rb");
+
+  if(file) {
+    current_file_handle++;
+    open_files[current_file_handle] = file;
+    return current_file_handle;
+  }
+
+  return -1;
+}
+
+int32_t read_file(uint32_t fh, uint32_t offset, uint32_t length, char *buffer) {
+  auto file = open_files[fh];
+
+  if(file && SDL_RWseek(file, offset, RW_SEEK_SET)) {
+    size_t bytes_read = SDL_RWread(file, buffer, length, 1);
+
+    if(bytes_read > 0)
+      return bytes_read;
+  }
+
+  return -1;
+}
+
+int32_t close_file(uint32_t fh) {
+  return SDL_RWclose(open_files[fh]) == 0 ? 0 : -1;
+}
+
 // SDL events
 const Uint32 System::timer_event = SDL_RegisterEvents(2);
 const Uint32 System::loop_event = System::timer_event + 1;
@@ -106,6 +140,14 @@ void System::run() {
 	blit::set_screen_mode = ::set_screen_mode;
 	blit::update = ::update;
 	blit::render = ::render;
+
+	auto basePathPtr = SDL_GetBasePath();
+	basePath = std::string(basePathPtr);
+	SDL_free(basePathPtr);
+
+	blit::open_file = ::open_file;
+	blit::read_file = ::read_file;
+	blit::close_file = ::close_file;
 
 	::set_screen_mode(blit::lores);
 
