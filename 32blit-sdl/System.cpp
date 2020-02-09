@@ -296,11 +296,13 @@ void EnableUsTimer(void)
 uint32_t GetUsTimer(void)
 {
 	// get current time in us
-	return 0;
+	auto perfFreq = SDL_GetPerformanceFrequency();
+	uint64_t ticksPerUs = SDL_GetPerformanceFrequency() / 1000000;
+	return SDL_GetPerformanceCounter() / ticksPerUs;
 }
 
 uint32_t GetMaxUsTimer(void)
 {
 	// largest us value timer can produce for wrapping
-	return 0;
+	return UINT32_MAX;
 }
