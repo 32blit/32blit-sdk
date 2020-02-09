@@ -11,17 +11,20 @@ public:
 	typedef std::vector<T> Data;
 	RunningAverage(std::size_t uSize) : m_uSize(uSize), m_uIndex(0), m_average(0), m_bFull(false) {};
 
-	T &operator[] (std::size_t i)
+	const T &operator[] (std::size_t i) const
 	{
-		std::size_t actualIndex = ((m_uIndex + i) % m_uSize);
+		std::size_t actualIndex = 0;
+
+		if(m_bFull)
+			actualIndex = ((m_uIndex + i) % m_uSize);
+		else
+			actualIndex = i;
+
 		return m_data[actualIndex];
 	}
 
 	void Add(T value)
 	{
-		if(!m_bFull)
-			m_bFull = m_data.size() == m_uSize;
-
 		if(m_bFull)
 		{
 			T removed = m_data[m_uIndex];
@@ -37,6 +40,9 @@ public:
 		}
 
 		m_uIndex = (m_uIndex+1)%m_uSize;
+		if(!m_bFull)
+			m_bFull = m_data.size() == m_uSize;
+
 	}
 
 	void AddAll(T value)
@@ -65,10 +71,23 @@ public:
 		return m_data.size();
 	}
 
-	std::size_t Size(void)
+	std::size_t Count(void) const
+	{
+		std::size_t uCount;
+
+		if(m_bFull)
+			uCount = m_uSize;
+		else
+			uCount = m_uIndex;
+
+		return uCount;
+	}
+
+	std::size_t Size(void) const
 	{
 		return m_uSize;
 	}
+
 
 private:
 	Data 				m_data;
