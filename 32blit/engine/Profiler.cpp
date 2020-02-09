@@ -1,3 +1,5 @@
+#include <cinttypes>
+
 #include <engine/Profiler.hpp>
 #include "graphics/color.hpp"
 
@@ -56,7 +58,7 @@ void Profiler::LogProbes(void)
 	{
 		ProfilerProbe *pProbe = *(iP);
 		const ProfilerProbe::Metrics &metrics = pProbe->ElapsedMetrics();
-		printf("%-16s %lu,\t%lu,\t%lu,\t%lu\n\r", pProbe->Name(), metrics.uMinElapsedUs, metrics.uElapsedUs, metrics.uAvgElapsedUs, metrics. uMaxElapsedUs);
+		printf("%-16s %" PRIu32 ",\t%" PRIu32 ",\t%" PRIu32 ",\t%" PRIu32 "\n\r", pProbe->Name(), metrics.uMinElapsedUs, metrics.uElapsedUs, metrics.uAvgElapsedUs, metrics. uMaxElapsedUs);
 	}
 
 }
@@ -141,7 +143,7 @@ void Profiler::DisplayProbeOverlay(uint8_t uPage)
 
 		// display header
 		screen.pen(RGBA(255, 255, 255, m_uAlpha));
-		sprintf(buffer, "%lu (%u/%u)", m_uGraphTimeUs, uPage, uMaxPage);
+		sprintf(buffer, "%" PRIu32 " (%u/%u)", m_uGraphTimeUs, uPage, uMaxPage);
 		screen.text(buffer, &minimal_font[0][0], Point(m_uBorder, m_uBorder));
 
 		// labels
@@ -193,7 +195,7 @@ void Profiler::DisplayProbeOverlay(uint8_t uPage)
 					screen.pen(RGBA(255, 255, 255, m_uAlpha));
 					if(m_graphElements[uM].bDisplayLabel)
 					{
-						sprintf(buffer, "%lu", metrics[uM]);
+						sprintf(buffer, "%" PRIu32, metrics[uM]);
 						screen.text(buffer, &minimal_font[0][0], Rect(uMetricX, uY, uMetricWidth, m_uRowHeight), true, TextAlign::center_v);
 						uMetricX+=uMetricWidth;
 					}
