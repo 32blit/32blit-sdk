@@ -108,43 +108,6 @@ namespace blit {
     } while (--depth);
   }
 
-
-  /*void surface::blit_sprite(const rect &sprite, const point &p, const uint8_t &t) {
-    rect dr = clip.intersection(rect(p.x, p.y, 8, 8));  // clipped destination rect
-
-    if (dr.empty())
-      return; // after clipping there is nothing to draw
-
-    uint8_t left = dr.x - p.x;
-    uint8_t top = dr.y - p.y;
-    uint8_t right = 8 - (8 - dr.w) + left;
-    uint8_t bottom = 8 - (8 - dr.h) + top;
-
-    blend_blit_func sbbf = bbf[sprites->format];
-
-    uint32_t dest_offset = offset(dr);    
-
-    for (uint8_t y = top; y < bottom; y++) {
-      for (uint8_t x = left; x < right; x++) {
-        uint8_t u = x;
-        uint8_t v = y;
-
-        if (t) {
-          v = (t & sprite_transform::VERTICAL) ? (7 - v) : v;                     // vertical mirror
-          u = (t & sprite_transform::HORIZONTAL) ? (7 - u) : u;                   // horizontal mirror
-          if (t & sprite_transform::XYSWAP) { uint8_t tmp = u; u = v; v = tmp; }  // axis swap
-        }
-
-        uint32_t src_offset = sprites->offset(sprite.x + u, sprite.y + v);
-
-        sbbf(sprites, src_offset, this, dest_offset, 1, 1);
-        dest_offset++;
-      }
-
-      dest_offset += bounds.w - 8;
-    }      
-  }*/
-
   /**
    * Blit a sprite to the surface
    *
@@ -327,18 +290,16 @@ namespace blit {
     sr.w = cdr.w * sx;
     sr.h = cdr.h * sy;
 
-    /*BlendBlitFunc sbbf = bbf[static_cast<uint8_t>(src->format)];
-
     float src_y = sr.y;
     for (int32_t y = cdr.y; y < cdr.y + cdr.h; y++) {
       float src_x = sr.x;
       for (int32_t x = cdr.x; x < cdr.x + cdr.w; x++) {
-        sbbf(src, src->offset(src_x, src_y), this, offset(x, y), 1, 1);
+        bbf(src, src->offset(src_x, src_y), this, offset(x, y), 1, 1);
 
         src_x += sx;
       }      
       src_y += sy;
-    }*/
+    }
   }
 
   /**
@@ -364,14 +325,12 @@ namespace blit {
       return;
     }
 
-    /*BlendBlitFunc sbbf = bbf[static_cast<uint8_t>(src->format)];
-
     int16_t max_y = std::min(p.y + dc, bounds.h);
     for (; p.y < max_y; p.y++) {
-      sbbf(src, src->offset(Point(uv.x, v)), this, offset(p), 1, 1);
+      bbf(src, src->offset(Point(uv.x, v)), this, offset(p), 1, 1);
 
       v += vs;
-    }*/
+    }
   }
 
   /**

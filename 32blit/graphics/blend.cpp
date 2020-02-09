@@ -80,50 +80,71 @@ namespace blit {
 
 
   void RGBA_RGBA(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt, int32_t src_step) {
-    uint8_t* s = src->data + soff + soff + soff + soff;
+    uint8_t* s;
+    if (src->palette) {
+      s = src->data + soff;
+    } else {
+      s = src->data + soff + soff + soff + soff;
+    }
     uint8_t* d = dest->data + doff + doff + doff;
     uint8_t* m = dest->mask ? dest->mask->data + doff : nullptr;
 
-    do {
-      uint8_t a = ((*(s + 3)) * (*(d + 3))) >> 8;
+    uint8_t* ps = s;
+    do {      
+      if (src->palette) {
+        ps = (uint8_t *)&src->palette[*s]; s++;
+      }
+      uint8_t a = ((*(ps + 3)) * (*(d + 3))) >> 8;
       if (m) { a = (a * *m) >> 8; m++; }
       if (dest->alpha != 255) { a = (a * dest->alpha) >> 8; }
 
       if (a == 255) {
-        *d = *s; d++; s++; *d = *s; d++; s++; *d = *s; d++; s++; s++; d++;
+        *d = *ps; d++; ps++; *d = *ps; d++; ps++; *d = *ps; d++; ps++; ps++; d++;
       } else if (a == 0) {
         d += 4;
+        ps += (src_step * 4);
       } else {
         uint8_t ia = 255 - a;
-        *d = ((*(s + 0) * a) + (*d * ia)) >> 8; d++;
-        *d = ((*(s + 1) * a) + (*d * ia)) >> 8; d++;
-        *d = ((*(s + 2) * a) + (*d * ia)) >> 8; d++;
-        *d = 255 - (((255 - *(s + 3)) * (255 - *d)) >> 8); d++;
-        s += (src_step * 4);
+        *d = ((*(ps + 0) * a) + (*d * ia)) >> 8; d++;
+        *d = ((*(ps + 1) * a) + (*d * ia)) >> 8; d++;
+        *d = ((*(ps + 2) * a) + (*d * ia)) >> 8; d++;
+        *d = 255 - (((255 - *(ps + 3)) * (255 - *d)) >> 8); d++;
+        ps += (src_step * 4);
       }
     } while (--cnt);
   }
 
   void RGBA_RGB(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt, int32_t src_step) {
-    uint8_t* s = src->data + soff + soff + soff + soff;
+    uint8_t* s;
+    if (src->palette) {
+      s = src->data + soff;
+    }
+    else {
+      s = src->data + soff + soff + soff + soff;
+    }
     uint8_t* d = dest->data + doff + doff + doff;
     uint8_t* m = dest->mask ? dest->mask->data + doff : nullptr;
 
+    uint8_t* ps = s;
     do {
-      uint8_t a = (*(s + 3));
+      if (src->palette) {
+        ps = (uint8_t*)&src->palette[*s]; s++;
+      }
+      uint8_t a = (*(ps + 3));
       if (m) { a = (a * *m) >> 8; m++; }
       if (dest->alpha != 255) { a = (a * dest->alpha) >> 8; }
 
       if (a == 255) {
-        *d = *s; d++; s++; *d = *s; d++; s++; *d = *s; d++; s++; s++;
+        *d = *ps; d++; ps++; *d = *ps; d++; ps++; *d = *ps; d++; ps++; s++;
       } else if (a == 0) {
         d += 3;
+        ps += (src_step * 4);
       } else {
         uint8_t ia = 255 - a;
-        *d = ((*(s + 0) * a) + (*d * ia)) >> 8; d++;
-        *d = ((*(s + 1) * a) + (*d * ia)) >> 8; d++;
-        *d = ((*(s + 2) * a) + (*d * ia)) >> 8; d++;
-        s += (src_step * 4);
+        *d = ((*(ps + 0) * a) + (*d * ia)) >> 8; d++;
+        *d = ((*(ps + 1) * a) + (*d * ia)) >> 8; d++;
+        *d = ((*(ps + 2) * a) + (*d * ia)) >> 8; d++;
+        ps += (src_step * 4);
       }
     } while (--cnt);
   }
