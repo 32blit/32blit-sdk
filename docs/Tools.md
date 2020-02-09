@@ -11,7 +11,7 @@ Have a look into the script for further details regarding the formats.
 ### Prerequisites:
 
 ``` shell
-sudo python3 -m pip install construct bitarray bitstring
+sudo python3 -m pip install construct bitarray bitstring pillow
 ```
 
 ### Usage:
