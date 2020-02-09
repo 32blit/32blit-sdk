@@ -39,6 +39,12 @@ endif()
 
 target_link_libraries(BlitHalSDL PUBLIC BlitEngine ${SDL2_LIBRARIES})
 
+# copy SDL2.dll to build/install dir for windows users
+if(SDL2_DLL)
+	configure_file(${SDL2_DLL} ${32blit_BINARY_DIR}/SDL2.dll COPYONLY)
+	install(FILES ${SDL2_DLL} DESTINATION bin)
+endif()
+
 target_compile_definitions(BlitHalSDL
 	PRIVATE
 		-DWINDOW_TITLE=\"CMake!\"
