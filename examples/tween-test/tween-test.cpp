@@ -33,13 +33,8 @@ void render(uint32_t time_ms) {
   screen.pen = blit::hsv_to_rgba(tween_colour.value, 1.0f, 1.0f);
   screen.circle(Point(160, 20+tween_bounce.value), 20);
 
-<<<<<<< HEAD
-  screen.pen(RGBA(255, 255, 255));
-  snprintf(text_buffer, 60, "Value: %f", tween_bounce.value);
-=======
   screen.pen = Pen(255, 255, 255);
   sprintf(text_buffer, "Value: %f", tween_bounce.value);
->>>>>>> Update remaining examples
   screen.text(text_buffer, &minimal_font[0][0], Point(175, 35+tween_bounce.value));
 }
 
