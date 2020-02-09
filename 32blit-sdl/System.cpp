@@ -80,8 +80,8 @@ int32_t open_file(std::string name) {
 int32_t read_file(uint32_t fh, uint32_t offset, uint32_t length, char *buffer) {
   auto file = open_files[fh];
 
-  if(file && SDL_RWseek(file, offset, RW_SEEK_SET)) {
-    size_t bytes_read = SDL_RWread(file, buffer, length, 1);
+  if(file && SDL_RWseek(file, offset, RW_SEEK_SET) != -1) {
+    size_t bytes_read = SDL_RWread(file, buffer, 1, length);
 
     if(bytes_read > 0)
       return bytes_read;
