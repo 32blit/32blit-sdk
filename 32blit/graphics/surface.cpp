@@ -46,8 +46,8 @@ namespace blit {
       bbf = P_P;
     }break;
     case PixelFormat::M: {
-      pbf = P_P;
-      bbf = P_P;
+      pbf = M_M;
+      bbf = M_M;
     }break;
     }
   }
