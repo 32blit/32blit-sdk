@@ -1,7 +1,9 @@
 #include <cinttypes>
 
-#include <engine/Profiler.hpp>
+#include "profiler.hpp"
+#include "engine/engine.hpp"
 #include "graphics/color.hpp"
+#include "graphics/font.hpp"
 
 namespace blit
 {

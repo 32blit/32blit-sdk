@@ -14,11 +14,12 @@
 //
 // For examples of use and setup please see the profiler-test example.
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
-#include "32blit.hpp"
-#include "RunningAverage.hpp"
+#include "types/pixel_format.hpp"
+#include "running_average.hpp"
 
 extern void EnableUsTimer(void);
 extern uint32_t GetUsTimer(void);

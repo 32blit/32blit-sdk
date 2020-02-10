@@ -15,8 +15,7 @@
 
 #include "profiler-test.hpp"
 #include "graphics/color.hpp"
-#include "engine/Profiler.hpp"
-#include "engine/RunningAverage.hpp"
+#include "engine/profiler.hpp"
 #include <cmath>
 
 using namespace blit;

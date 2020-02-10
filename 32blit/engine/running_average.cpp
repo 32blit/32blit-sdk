@@ -5,4 +5,4 @@
  *      Author: andrewcapon
  */
 
-#include <engine/RunningAverage.hpp>
+#include "running_average.hpp"
