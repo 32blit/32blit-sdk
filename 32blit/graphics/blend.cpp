@@ -7,54 +7,61 @@
 #define __attribute__(A)
 #endif
 
-// note: for performance reasons none of the blending functions make any attempt 
-// to validate input, adhere to clipping, or source/destination bounds. It 
+// note:
+// for performance reasons none of the blending functions make any attempt 
+// to validate input, adhere to clipping, or source/destination bounds. it 
 // is assumed that all validation has been done by the caller. 
 
 namespace blit {
-  
+
+  __attribute__((always_inline)) inline uint32_t alpha(const uint32_t &a1, const uint32_t &a2) {
+    return ((a1 + 1) * (a2 + 1)) >> 8;
+  }
+
+  __attribute__((always_inline)) inline uint32_t alpha(const uint32_t &a1, const uint32_t &a2, const uint32_t &a3) {
+    return ((a1 + 1) * (a2 + 1) * (a3 + 1)) >> 16;
+  }
+
+  __attribute__((always_inline)) inline uint8_t blend(const uint8_t &s, const uint8_t &d, const uint8_t &a) {
+    return d + ((a * (s - d) + 127) >> 8);    
+  }
+
   void RGBA_RGBA(const Pen* pen, const Surface* dest, uint32_t off, uint32_t cnt) {
-    uint8_t* d = dest->data + off + off + off + off;
-    uint8_t* m = dest->mask ? dest->mask->data + off : nullptr;
+    uint8_t* d = dest->data + (off * 4);
+    uint8_t* m = dest->mask ? dest->mask->data + off : nullptr;    
 
     do {
-      uint8_t a = (pen->a * (*(d + 3))) >> 8;
-      if (m) { a = (a * *m) >> 8; m++; }
-      if (dest->alpha != 255) { a = (a * dest->alpha) >> 8; }
+      uint16_t a = m ? alpha(pen->a, *m++, dest->alpha) : alpha(pen->a, dest->alpha);
 
-      if (a == 255) {
-        *d = pen->r; d++; *d = pen->g; d++; *d = pen->b; d++; d++;
-      } else if (a == 0) {
+      if (a >= 255) {
+        *d++ = pen->r; *d++ = pen->g; *d++ = pen->b; d++;
+      } else if (a > 0) {
+        *d = blend(pen->r, *d, a); d++;
+        *d = blend(pen->g, *d, a); d++;
+        *d = blend(pen->b, *d, a); d++;
+        *d = blend(pen->a, *d, a); d++;
+      }else{
         d += 4;
-      } else {
-        uint8_t ia = 255 - a;
-        *d = ((pen->r * a) + (*d * ia)) >> 8; d++;
-        *d = ((pen->g * a) + (*d * ia)) >> 8; d++;
-        *d = ((pen->b * a) + (*d * ia)) >> 8; d++;
-        *d = 255 - (((255 - pen->a) * (255 - *d)) >> 8); d++;
-      }      
+      }
     } while (--cnt);
   }
 
   void RGBA_RGB(const Pen* pen, const Surface* dest, uint32_t off, uint32_t cnt) {
-    uint8_t* d = dest->data + off + off + off;
-    uint8_t* m = dest->mask ? dest->mask->data + off : nullptr;
-
+    uint8_t* d = dest->data + (off * 3);
+    uint8_t* m = dest->mask ? dest->mask->data + off : nullptr;    
+  
     do {
-      uint8_t a = pen->a;
-      if (m) { a = (a * *m) >> 8; m++; }
-      if (dest->alpha != 255) { a = (a * dest->alpha) >> 8; }
+      uint16_t a = m ? alpha(pen->a, *m++, dest->alpha) : alpha(pen->a, dest->alpha);
 
-      if (a == 255) {
-        *d = pen->r; d++; *d = pen->g; d++; *d = pen->b; d++;
-      } else if (a == 0) {
-        d += 3;        
-      } else {
-        uint8_t ia = 255 - a;
-        *d = ((pen->r * a) + (*d * ia)) >> 8; d++;
-        *d = ((pen->g * a) + (*d * ia)) >> 8; d++;
-        *d = ((pen->b * a) + (*d * ia)) >> 8; d++;
-      }
+      if (a >= 255) {
+        *d++ = pen->r; *d++ = pen->g; *d++ = pen->b;
+      } else if (a > 0) {
+        *d = blend(pen->r, *d, a); d++;
+        *d = blend(pen->g, *d, a); d++;
+        *d = blend(pen->b, *d, a); d++;
+      }else{
+        d += 3;
+      }       
     } while (--cnt);
   }
 
@@ -73,79 +80,57 @@ namespace blit {
     uint8_t* d = dest->data + off;
 
     do {
-      *d = pen->a;
-      d++;
+      *d = blend(pen->a, *d, dest->alpha); d++;
     } while (--cnt);
   }
 
 
   void RGBA_RGBA(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt, int32_t src_step) {
-    uint8_t* s;
-    if (src->palette) {
-      s = src->data + soff;
-    } else {
-      s = src->data + soff + soff + soff + soff;
-    }
-    uint8_t* d = dest->data + doff + doff + doff;
-    uint8_t* m = dest->mask ? dest->mask->data + doff : nullptr;
+    uint8_t* s = src->palette ? src->data + soff : src->data + (soff * 4);
+    uint8_t* d = dest->data + (doff * 3);
+    uint8_t* m = dest->mask ? dest->mask->data + doff : nullptr;    
 
-    uint8_t* ps = s;
-    do {      
-      if (src->palette) {
-        ps = (uint8_t *)&src->palette[*s]; s++;
-      }
-      uint8_t a = ((*(ps + 3)) * (*(d + 3))) >> 8;
-      if (m) { a = (a * *m) >> 8; m++; }
-      if (dest->alpha != 255) { a = (a * dest->alpha) >> 8; }
+    do {
+      Pen *pen = src->palette ? &src->palette[*s] : (Pen *)s;
 
-      if (a == 255) {
-        *d = *ps; d++; ps++; *d = *ps; d++; ps++; *d = *ps; d++; ps++; ps++; d++;
-      } else if (a == 0) {
+      uint16_t a = m ? alpha(pen->a, *m++, dest->alpha) : alpha(pen->a, dest->alpha);
+
+      if (a >= 255) {
+        *d++ = pen->r; *d++ = pen->g; *d++ = pen->b; d++;
+      } else if (a > 0) {
+        *d = blend(pen->r, *d, a); d++;
+        *d = blend(pen->g, *d, a); d++;
+        *d = blend(pen->b, *d, a); d++;
+        *d = blend(pen->b, *d, a); d++;
+      }else{
         d += 4;
-        ps += (src_step * 4);
-      } else {
-        uint8_t ia = 255 - a;
-        *d = ((*(ps + 0) * a) + (*d * ia)) >> 8; d++;
-        *d = ((*(ps + 1) * a) + (*d * ia)) >> 8; d++;
-        *d = ((*(ps + 2) * a) + (*d * ia)) >> 8; d++;
-        *d = 255 - (((255 - *(ps + 3)) * (255 - *d)) >> 8); d++;
-        ps += (src_step * 4);
-      }
+      }       
+
+      s += src->palette ? 1 : 4;
     } while (--cnt);
   }
 
   void RGBA_RGB(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt, int32_t src_step) {
-    uint8_t* s;
-    if (src->palette) {
-      s = src->data + soff;
-    }
-    else {
-      s = src->data + soff + soff + soff + soff;
-    }
-    uint8_t* d = dest->data + doff + doff + doff;
-    uint8_t* m = dest->mask ? dest->mask->data + doff : nullptr;
+    uint8_t* s = src->palette ? src->data + soff : src->data + (soff * 4);
+    uint8_t* d = dest->data + (doff * 3);
+    uint8_t* m = dest->mask ? dest->mask->data + doff : nullptr;    
 
-    uint8_t* ps = s;
     do {
-      if (src->palette) {
-        ps = (uint8_t*)&src->palette[*s]; s++;
-      }
-      uint8_t a = (*(ps + 3));
-      if (m) { a = (a * *m) >> 8; m++; }
-      if (dest->alpha != 255) { a = (a * dest->alpha) >> 8; }
+      Pen *pen = src->palette ? &src->palette[*s] : (Pen *)s;
 
-      if (a == 255) {
-        *d = *ps; d++; ps++; *d = *ps; d++; ps++; *d = *ps; d++; ps++; s++;
-      } else if (a == 0) {
+      uint16_t a = m ? alpha(pen->a, *m++, dest->alpha) : alpha(pen->a, dest->alpha);
+
+      if (a >= 255) {
+        *d++ = pen->r; *d++ = pen->g; *d++ = pen->b;
+      } else if (a > 0) {
+        *d = blend(pen->r, *d, a); d++;
+        *d = blend(pen->g, *d, a); d++;
+        *d = blend(pen->b, *d, a); d++;
+      }else{
         d += 3;
-        ps += (src_step * 4);
-      } else {
-        uint8_t ia = 255 - a;
-        *d = ((*(ps + 0) * a) + (*d * ia)) >> 8; d++;
-        *d = ((*(ps + 1) * a) + (*d * ia)) >> 8; d++;
-        *d = ((*(ps + 2) * a) + (*d * ia)) >> 8; d++;
-        ps += (src_step * 4);
-      }
+      }       
+
+      s += src->palette ? 1 : 4;
     } while (--cnt);
   }
 
@@ -166,8 +151,8 @@ namespace blit {
     uint8_t *d = dest->data + doff;
 
     do {
-      *d = *s;
-      d++; s += src_step;
+      *d = blend(*s, *d, dest->alpha); d++;
+      s += src_step;
     } while (--cnt);
   }
 }

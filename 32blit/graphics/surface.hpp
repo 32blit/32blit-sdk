@@ -117,13 +117,13 @@ namespace blit {
     Surface *load(const packed_image *image);
 
     // helpers to retrieve pointer to pixel
-    __attribute__((always_inline)) uint8_t* ptr(const Rect &r)   { return data + r.x * pixel_stride + r.y * row_stride; }
-    __attribute__((always_inline)) uint8_t* ptr(const Point &p)  { return data + p.x * pixel_stride + p.y * row_stride; }
-    __attribute__((always_inline)) uint8_t* ptr(const int32_t &x, const int32_t &y) { return data + x * pixel_stride + y * row_stride; }
+    __attribute__((always_inline)) inline uint8_t* ptr(const Rect &r)   { return data + r.x * pixel_stride + r.y * row_stride; }
+    __attribute__((always_inline)) inline uint8_t* ptr(const Point &p)  { return data + p.x * pixel_stride + p.y * row_stride; }
+    __attribute__((always_inline)) inline uint8_t* ptr(const int32_t &x, const int32_t &y) { return data + x * pixel_stride + y * row_stride; }
 
-    __attribute__((always_inline)) uint32_t offset(const Rect &r) { return r.x + r.y * bounds.w; }
-    __attribute__((always_inline)) uint32_t offset(const Point &p) { return p.x + p.y * bounds.w; }
-    __attribute__((always_inline)) uint32_t offset(const int32_t &x, const int32_t &y) { return x + y * bounds.w; }    
+    __attribute__((always_inline)) inline uint32_t offset(const Rect &r) { return r.x + r.y * bounds.w; }
+    __attribute__((always_inline)) inline uint32_t offset(const Point &p) { return p.x + p.y * bounds.w; }
+    __attribute__((always_inline)) inline uint32_t offset(const int32_t &x, const int32_t &y) { return x + y * bounds.w; }    
 
     void generate_mipmaps(uint8_t depth);
 
