@@ -49,8 +49,8 @@ void rotozoom(uint32_t time_ms) {
 
   static Pen palette[] = { Pen(0, 0, 0), Pen(255, 255, 255), Pen(0, 255, 0) };
 
-  float c = cos(angle * M_PI / 180.0f);
-  float s = sin(angle * M_PI / 180.0f);
+  int32_t c = cos(angle * M_PI / 180.0f) * 1024;
+  int32_t s = sin(angle * M_PI / 180.0f) * 1024;
 
   angle += 0.25f;
   angle = angle >= 360.0f ? 0.0f : angle;
@@ -66,19 +66,20 @@ void rotozoom(uint32_t time_ms) {
   uint32_t o = 0;
   for (p.y = 0; p.y < h; p.y++) {
     for (p.x = 0; p.x < w; p.x++) {
-      uint8_t u = int16_t(float((p.x - hw) * c - (p.y - hh) * s) * s) & 0b1111;
-      uint8_t v = int16_t(float((p.x - hw) * s + (p.y - hh) * c) * s) & 0b1111;
+      uint8_t u = ((((p.x - hw) * c - (p.y - hh) * s) * s) >> 20) & 0b1111;
+      uint8_t v = ((((p.x - hw) * s + (p.y - hh) * c) * s) >> 20) & 0b1111;
 
       uint8_t pi = logo[15 - u][v];
 
-      // ~ 19ms/frame
-      // screen.pen(palette[pi]);
-      // screen.pixel(p);
+      // slower to call the pixel routine due to extra overhead of the function 
+      // call and clipping      
+      // - screen.pen(palette[pi]);
+      // - screen.pixel(p);
 
-      // ~ 13ms/frame
-      //screen.pbf(&palette[pi], &screen, o, 1);
-      screen.pen = palette[pi];
-      screen.pixel(p);
+      // however we know our coordinates are within bounds so we can call the
+      // pen blend function (pbf) directly for a big speed up!
+      screen.pbf(&palette[pi], &screen, o, 1);
+      
       o++;
     }
   }
@@ -90,27 +91,27 @@ void render(uint32_t time_ms) {
   screen.mask = nullptr;
   screen.pen = Pen(0, 0, 0, 255);
   screen.clear();
-
+  
   mask.pen = Pen(50);
   mask.clear();
   mask.pen = Pen(255);
   Point centre = Point(160 + sin(time_ms / 200.0f) * 40, 120 + cos(time_ms / 200.0f) * 40);
   mask.circle(centre, 100);
 
-  screen.mask = &mask;
+  //screen.mask = &mask;
 
   uint32_t ms_start = now();
 
   rotozoom(time_ms);
   
   uint32_t ms_end = now();  
-
+/*
   for (auto y = 0; y < 10; y++) {
     for (auto x = 0; x < 10; x++) {
       float s = (sin(time_ms / 1000.0f) * 2.0f) + 3.0f;
       screen.sprite(Point(x, y), Point(x * 8 * s + 160, y * 8 * s + 120), Point(40, 40), Vec2(s, s));
     }
-  }
+  }*/
 
   screen.mask = nullptr;
   
