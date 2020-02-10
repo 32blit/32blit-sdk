@@ -23,6 +23,7 @@ jobs:
         - docker
       before_install:
         - docker run -dit --name emscripten -v $(pwd):/src -v $HOME/.emscripten_ports:/emsdk_portable/.data/ports -v $HOME/.emscripten_cache:/emsdk_portable/.data/cache trzeci/emscripten:sdk-incoming-64bit bash
+      install:
       script:
         - docker exec -it emscripten emcmake cmake -B build.em -G "Unix Makefiles"
         - docker exec -it emscripten make -C build.em
@@ -57,8 +58,6 @@ jobs:
           python3-pip
           python3-setuptools
           zip
-      install:
-        - python3 -m pip install bitstring construct
       before_deploy:
         - make install
         - tar -zcf ${RELEASE_FILE}.tar.gz bin/
@@ -159,6 +158,9 @@ jobs:
             mv vs/sdl/SDL2-2.0.10/* vs/sdl
           fi
         - msbuild.exe vs/32blit.sln
+
+install:
+  - python3 -m pip install bitstring construct pillow
 
 script:
   - ccache --zero-stats || true
