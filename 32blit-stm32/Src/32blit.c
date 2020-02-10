@@ -107,12 +107,15 @@ int32_t open_file(std::string file) {
 }
 
 int32_t read_file(uint32_t fh, uint32_t offset, uint32_t length, char *buffer) {  
-  FRESULT r;
+  FRESULT r = FR_OK;
+  FIL *f = open_files[fh];
 
-  r = f_lseek(open_files[fh], offset);
+  if(offset != f_tell(f))
+    r = f_lseek(f, offset);
+
   if(r == FR_OK){ 
     unsigned int bytes_read;
-    r = f_read(open_files[fh], buffer, length, &bytes_read);
+    r = f_read(f, buffer, length, &bytes_read);
     if(r == FR_OK){ 
       return bytes_read;
     }
