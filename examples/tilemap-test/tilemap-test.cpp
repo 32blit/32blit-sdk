@@ -3,7 +3,7 @@
 #include <memory>
 #include <cstdlib>
 
-#include "tilemap_test.hpp"
+#include "tilemap-test.hpp"
 
 using namespace blit;
 
