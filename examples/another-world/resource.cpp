@@ -36,7 +36,7 @@ namespace another_world {
   // you must provide a pointer to a buffer than contains the
   // file contents
   void init_resources() {
-
+    
     // TODO: move file access out of here by requiring a basic set 
     // of system calls to be provided
     uint8_t memlist[2940];
