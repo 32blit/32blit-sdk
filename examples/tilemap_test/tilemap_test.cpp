@@ -34,8 +34,6 @@ using namespace blit;
     return a * (M_PI / 180.0f);
   }
 
-  uint32_t time;
-
   uint32_t current_time;
 
 
@@ -140,6 +138,41 @@ using namespace blit;
     return transform;
   };
 
+  std::function<Mat3(uint8_t)> betamax = [](uint8_t y) -> Mat3 {
+    float step = (current_time / 250.0f) + (y / 25.0f);
+
+    int8_t scale = int8_t((sin(step) + 1.0f) * 5);
+    Point shake((blit::random() % scale) - scale / 2, (blit::random() % scale) - scale / 2);
+
+    Mat3 transform = Mat3::identity();
+    transform *= Mat3::translation(Vec2(256 + shake.x, 156 + shake.y)); // offset to middle of world      
+    transform *= Mat3::translation(Vec2(-80, -60)); // transform to centre of framebuffer
+
+    return transform;
+  };
+
+  std::function<Mat3(uint8_t)> shake = [](uint8_t y) -> Mat3 {
+    static uint32_t last_time = 0;
+    static Point shake(0, 0);
+
+    if (current_time != last_time) {
+      last_time = current_time;
+
+      uint8_t clamp = 20;
+      shake = Point(blit::random() % clamp, blit::random() % clamp);
+      float scale = sin(current_time / 300.0f);
+
+      scale = scale < 0.0f ? 0.0f : scale;
+      shake *= scale;
+    }
+   
+    Mat3 transform = Mat3::identity();
+    transform *= Mat3::translation(Vec2(256 + shake.x, 156 + shake.y)); // offset to middle of world      
+    transform *= Mat3::translation(Vec2(-80, -60)); // transform to centre of framebuffer
+
+    return transform;
+  };
+
   std::function<Mat3(uint8_t)> effect_callbacks[]{
     zoom,
     dream,
@@ -147,7 +180,9 @@ using namespace blit;
     rotozoom,
     warp,
     perspective,
-    water
+    water,
+    betamax,
+    shake
   };
 
   std::vector<std::string> effect_names = {
@@ -157,14 +192,15 @@ using namespace blit;
     "rotozoom",
     "warp",
     "perspective",
-    "water"
+    "water",
+    "betamax",
+    "shake"
   };
 
   uint8_t effect = 0;
 
   void render(uint32_t time_ms) {
-    time = time_ms;
-    current_time = time;
+    current_time = time_ms;
 
     screen.alpha = 255;
     screen.pen = Pen(39, 39, 54);
