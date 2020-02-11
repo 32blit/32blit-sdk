@@ -52,10 +52,10 @@ uint8_t g_uPage = 1;
 
 void SetupMetrics(void)
 {
-	g_profiler.SetupGraphElement(Profiler::dmCur, g_bLabelsEnabled, g_bGraphEnabled, RGBA(0,255,0));
-	g_profiler.SetupGraphElement(Profiler::dmAvg, g_bLabelsEnabled, g_bGraphEnabled, RGBA(0,255,255));
-	g_profiler.SetupGraphElement(Profiler::dmMax, g_bLabelsEnabled, g_bGraphEnabled, RGBA(255,0,0));
-	g_profiler.SetupGraphElement(Profiler::dmMin, g_bLabelsEnabled, g_bGraphEnabled, RGBA(255,255,0));
+	g_profiler.SetupGraphElement(Profiler::dmCur, g_bLabelsEnabled, g_bGraphEnabled, Pen(0,255,0));
+	g_profiler.SetupGraphElement(Profiler::dmAvg, g_bLabelsEnabled, g_bGraphEnabled, Pen(0,255,255));
+	g_profiler.SetupGraphElement(Profiler::dmMax, g_bLabelsEnabled, g_bGraphEnabled, Pen(255,0,0));
+	g_profiler.SetupGraphElement(Profiler::dmMin, g_bLabelsEnabled, g_bGraphEnabled, Pen(255,255,0));
 }
 
 void init()
@@ -164,13 +164,13 @@ void render(uint32_t time)
 
 	// clear screen
 	g_pClearProbe->Start();
-  screen.pen(RGBA(0, 0, 0, 255));
+  screen.pen = Pen(0, 0, 0, 255);
   screen.clear();
   g_pClearProbe->StoreElapsedUs();
 
   // draw rect
   g_pRectProbe->Start();
- 	screen.pen(RGBA(0,0,255,255));
+ 	screen.pen = Pen(0,0,255,255);
  	Point ptTl = Point(ptMiddle.x-(g_uSize/2), ptMiddle.y-(g_uSize/2));
  	Point ptBr = Point(ptMiddle.x+(g_uSize/2), ptMiddle.y+(g_uSize/2));
   screen.rectangle(Rect(ptTl, ptBr));
@@ -178,7 +178,7 @@ void render(uint32_t time)
 
   // draw circle
   g_pCircleProbe->Start();
- 	screen.pen(RGBA(255,0,0,128));
+ 	screen.pen = Pen(255,0,0,128);
   screen.circle(ptMiddle, (g_uSizeMax-g_uSize)/2);
   g_pCircleProbe->StoreElapsedUs();
 
