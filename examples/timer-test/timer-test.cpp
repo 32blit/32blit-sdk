@@ -45,19 +45,19 @@ void init() {
 int tick_count = 0;
 void render(uint32_t time_ms) {
   char text_buffer[60];
-  screen.pen(RGBA(20, 30, 40));
+  screen.pen = Pen(20, 30, 40);
   screen.clear();
   
   // Fancy title bar, nothing to see here.
-  screen.pen(RGBA(255, 255, 255));
+  screen.pen = Pen(255, 255, 255);
   screen.rectangle(Rect(0, 0, 320, 14));
-  screen.pen(RGBA(0, 0, 0));
+  screen.pen = Pen(0, 0, 0);
   screen.text("Timer Test", &minimal_font[0][0], Point(5, 4));
 
   // Since our timer callback is updating our `count` variable
   // we can just display it on the screen and watch it tick up!
-  screen.pen(RGBA(255, 255, 255));
-  snprintf(text_buffer, 60, "Count: %d", count);
+  screen.pen = Pen(255, 255, 255);
+  sprintf(text_buffer, "Count: %d", count);
   screen.text(text_buffer, &minimal_font[0][0], Point(120, 100));
 
   // `is_running()` is a handy shorthand for checking the timer state

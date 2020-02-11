@@ -44,7 +44,7 @@ void render_smoke() {
     float age = sp->age + sp->age_boost;
     int alpha = (255 - (age * 75.0f)) / 8.0f;
     int radius = (age * 150.0f) / 16.0f;
-    screen.pen(RGBA(255, 255, 255, alpha));
+    screen.pen = Pen(255, 255, 255, alpha);
     screen.circle(p->pos + Point(50, 240), radius);
   }
 }
@@ -79,7 +79,7 @@ void smoke(uint32_t time_ms) {
 
       int alpha = (255 - (p.age / 2)) / 8.0f;
       int radius = (p.age) / 16.0f;
-      screen.pen(RGBA(255, 255, 255, alpha));
+      screen.pen = Pen(255, 255, 255, alpha);
       screen.circle(p.pos + Point(50, 240), radius);
     }
   }
@@ -128,12 +128,12 @@ void spark(uint32_t time_ms) {
       b = b < 0 ? 0 : b;
 
       int bloom = (255 - a) / 64;
-      screen.pen(RGBA(r, g, b, 16));
+      screen.pen = Pen(r, g, b, 16);
       screen.circle(p.pos + Point(160, 240), bloom);
-      screen.pen(RGBA(r, g, b, 16));
+      screen.pen = Pen(r, g, b, 16);
       screen.circle(p.pos + Point(160, 240), bloom / 2);
 
-      screen.pen(RGBA(r, g, b));
+      screen.pen = Pen(r, g, b);
       screen.pixel(p.pos + Point(160, 240));
 
     }
@@ -191,12 +191,12 @@ void rain(uint32_t time_ms) {
       int b = 255;// -(a * 4);
 
       if(p.vel.length() > 20) {
-        screen.pen(RGBA(r, g, b, 100));
+        screen.pen = Pen(r, g, b, 100);
         screen.pixel(p.pos + Point(270, 239));
-        screen.pen(RGBA(r, g, b, 160));
+        screen.pen = Pen(r, g, b, 160);
         screen.pixel(p.pos + Point(270, 241));
       }
-      screen.pen(RGBA(r, g, b, 180));
+      screen.pen = Pen(r, g, b, 180);
       screen.pixel(p.pos + Point(270, 242));
     }
   }
@@ -221,7 +221,7 @@ void render_basic_rain() {
     if (sp->pos.y >= 239) {
       sp->pos.y = 239;
     }
-    screen.pen(RGBA(128, 128, 255));
+    screen.pen = Pen(128, 128, 255);
     screen.pixel(sp->pos);
   }
 }
@@ -244,7 +244,7 @@ uint16_t height;
     }
     prev_buttons = blit::buttons;
 
-  screen.pen(RGBA(0, 0, 0, 255));
+  screen.pen = Pen(0, 0, 0, 255);
   screen.clear();
 
   //render_smoke();
@@ -258,27 +258,27 @@ uint16_t height;
 
   // draw grid
   screen.alpha = 255;
-  screen.pen(RGBA(255, 255, 255));
+  screen.pen = Pen(255, 255, 255);
   screen.rectangle(Rect(0, 0, 320, 14));
-  screen.pen(RGBA(0, 0, 0));
+  screen.pen = Pen(0, 0, 0);
   screen.text("Rain demo", &minimal_font[0][0], Point(5, 4));
 
- /* screen.pen(rgba(255, 255, 255));  
+ /* screen.pen = Pen(255, 255, 255);  
   screen.text("Smoke:", &minimal_font[0][0], point(10, 20));
   screen.text("Sparks:", &minimal_font[0][0], point(120, 20));
   screen.text("Rain:", &minimal_font[0][0], point(220, 20));  */
 
   // draw FPS meter
   /*screen.alpha = 255;
-  screen.pen(rgba(0, 0, 0));
+  screen.pen = Pen(0, 0, 0);
   screen.rectangle(rect(1, 240 - 10, 12, 9));
-  screen.pen(rgba(255, 255, 255, 200));
+  screen.pen = Pen(255, 255, 255, 200);
   std::string fms = std::to_string(ms_end - ms_start);
   screen.text(fms, &minimal_font[0][0], rect(3, 240 - 9, 10, 16));
 
   int block_size = 4;
   for (int i = 0; i < (ms_end - ms_start); i++) {
-    screen.pen(rgba(i * 5, 255 - (i * 5), 0));
+    screen.pen = Pen(i * 5, 255 - (i * 5), 0);
     screen.rectangle(rect(i * (block_size + 1) + 1 + 13, screen.bounds.h - block_size - 1, block_size, block_size));
   }*/
 

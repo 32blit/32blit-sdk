@@ -29,29 +29,25 @@ namespace blit {
   void Surface::init() {
     clip = Rect(0, 0, bounds.w, bounds.h);
 
-    stride = pixel_format_stride[static_cast<uint8_t>(format)];
-    row_stride = stride * bounds.w;
+    pixel_stride = pixel_format_stride[static_cast<uint8_t>(format)];
+    row_stride = pixel_stride * bounds.w;
     
     switch (format) {
     case PixelFormat::RGBA: {
-      bf = RGBA_RGBA;
-      bbf = { nullptr, nullptr, nullptr, P_RGBA, nullptr };
+      pbf = RGBA_RGBA;
+      bbf = RGBA_RGBA;
     }break;
     case PixelFormat::RGB: {
-      bf = RGBA_RGB;
-      bbf = { RGBA_RGB, nullptr, nullptr, P_RGB, nullptr };
-    }break;
-    case PixelFormat::RGB565: {
-      bf = RGBA_RGB565;
-      bbf = { RGBA_RGB565, nullptr, nullptr, P_RGB565, nullptr };
+      pbf = RGBA_RGB;
+      bbf = RGBA_RGB;
     }break;
     case PixelFormat::P: {
-      bf = P_P;
-      bbf = { nullptr, P_RGB, nullptr, P_P, nullptr };
+      pbf = P_P;
+      bbf = P_P;
     }break;
     case PixelFormat::M: {
-      bf = RGBA_M;
-      bbf = { nullptr, nullptr, nullptr, nullptr, nullptr };
+      pbf = M_M;
+      bbf = M_M;
     }break;
     }
   }
@@ -82,7 +78,7 @@ namespace blit {
       for (int y = 0; y < h; y++) {      
         for (int x = 0; x < w; x++) {
           // sample the average ARGB values
-          RGBA *c1, *c2, *c3, *c4;
+          Pen *c1, *c2, *c3, *c4;
           if (src->format == PixelFormat::P) {
             c1 = &src->palette[*src->ptr(Point(x * 2, y * 2))];
             c2 = &src->palette[*src->ptr(Point(x * 2 + 1, y * 2))];
@@ -90,10 +86,10 @@ namespace blit {
             c4 = &src->palette[*src->ptr(Point(x * 2, y * 2 + 1))];
           }
           else {
-            c1 = (RGBA *)(src->ptr(Point(x * 2, y * 2)));
-            c2 = (RGBA *)(src->ptr(Point(x * 2 + 1, y * 2)));
-            c3 = (RGBA *)(src->ptr(Point(x * 2 + 1, y * 2 + 1)));
-            c4 = (RGBA *)(src->ptr(Point(x * 2, y * 2 + 1)));
+            c1 = (Pen *)(src->ptr(Point(x * 2, y * 2)));
+            c2 = (Pen *)(src->ptr(Point(x * 2 + 1, y * 2)));
+            c3 = (Pen *)(src->ptr(Point(x * 2 + 1, y * 2 + 1)));
+            c4 = (Pen *)(src->ptr(Point(x * 2, y * 2 + 1)));
           }
 
           uint8_t a = (c1->a + c2->a + c3->a + c4->a) / 4;
@@ -102,7 +98,7 @@ namespace blit {
           uint8_t b = (c1->b + c2->b + c3->b + c4->b) / 4;          
           a = 255;
 
-          dest->pen(RGBA(r, g, b, a));
+          dest->pen = Pen(r, g, b, a);
           dest->pixel(Point(x, y));
         }
       }
@@ -111,51 +107,6 @@ namespace blit {
       mipmap_data += (src->row_stride * src->bounds.h);
     } while (--depth);
   }
-
-  /**
-   * TODO: Document this function
-   *
-   * \param v
-   */
-  void Surface::pen(RGBA v) {    
-    _pen = v;    
-  }
-
-  /*void surface::blit_sprite(const rect &sprite, const point &p, const uint8_t &t) {
-    rect dr = clip.intersection(rect(p.x, p.y, 8, 8));  // clipped destination rect
-
-    if (dr.empty())
-      return; // after clipping there is nothing to draw
-
-    uint8_t left = dr.x - p.x;
-    uint8_t top = dr.y - p.y;
-    uint8_t right = 8 - (8 - dr.w) + left;
-    uint8_t bottom = 8 - (8 - dr.h) + top;
-
-    blend_blit_func sbbf = bbf[sprites->format];
-
-    uint32_t dest_offset = offset(dr);    
-
-    for (uint8_t y = top; y < bottom; y++) {
-      for (uint8_t x = left; x < right; x++) {
-        uint8_t u = x;
-        uint8_t v = y;
-
-        if (t) {
-          v = (t & sprite_transform::VERTICAL) ? (7 - v) : v;                     // vertical mirror
-          u = (t & sprite_transform::HORIZONTAL) ? (7 - u) : u;                   // horizontal mirror
-          if (t & sprite_transform::XYSWAP) { uint8_t tmp = u; u = v; v = tmp; }  // axis swap
-        }
-
-        uint32_t src_offset = sprites->offset(sprite.x + u, sprite.y + v);
-
-        sbbf(sprites, src_offset, this, dest_offset, 1, 1);
-        dest_offset++;
-      }
-
-      dest_offset += bounds.w - 8;
-    }      
-  }*/
 
   /**
    * Blit a sprite to the surface
@@ -173,9 +124,7 @@ namespace blit {
     uint8_t left = dr.x - p.x;
     uint8_t top = dr.y - p.y;
     uint8_t right = sprite.w - (sprite.w - dr.w) + left - 1;
-    uint8_t bottom = sprite.h - (sprite.h - dr.h) + top - 1;
-
-    BlendBlitFunc sbbf = bbf[static_cast<uint8_t>(sprites->format)];
+    uint8_t bottom = sprite.h - (sprite.h - dr.h) + top - 1;    
     
     if (t & SpriteTransform::VERTICAL) {
       top    = sprite.h - 1 - top;
@@ -204,7 +153,7 @@ namespace blit {
         else
           src_offset = sprites->offset(sprite.x + x, sprite.y + y);
 
-        sbbf(sprites, src_offset, this, dest_offset, 1, 1);
+        bbf(sprites, src_offset, this, dest_offset, 1, 1);
         dest_offset++;
 
         x += x_step;
@@ -236,8 +185,6 @@ namespace blit {
     float right = sprite.w - (sprite.w - (dr.w * scale_x)) + left - 1;
     float bottom = sprite.h - (sprite.h - (dr.h * scale_y)) + top - 1;
 
-    BlendBlitFunc sbbf = bbf[static_cast<uint8_t>(sprites->format)];
-
     if (t & SpriteTransform::VERTICAL) {
       top = sprite.h - 1 - top;
       bottom = sprite.h - 1 - bottom;
@@ -265,7 +212,7 @@ namespace blit {
         else
           src_offset = sprites->offset(sprite.x + x, sprite.y + y);
 
-        sbbf(sprites, src_offset, this, dest_offset, 1, 1);
+        bbf(sprites, src_offset, this, dest_offset, 1, 1);
         dest_offset++;
 
         x += x_step;
@@ -306,11 +253,11 @@ namespace blit {
       src_direction = -1;
     }
 
-    BlendBlitFunc sbbf = bbf[static_cast<uint8_t>(src->format)];
+    
     
     int32_t dest_offset = offset(dr);
     for (int32_t y = p.y; y < p.y + r.h; y++) {
-      sbbf(src, src_offset + src_offset_flip, this, dest_offset, r.w, src_direction);
+      bbf(src, src_offset + src_offset_flip, this, dest_offset, r.w, src_direction);
 
       src_offset += src->bounds.w;
       dest_offset += bounds.w;      
@@ -343,13 +290,11 @@ namespace blit {
     sr.w = cdr.w * sx;
     sr.h = cdr.h * sy;
 
-    BlendBlitFunc sbbf = bbf[static_cast<uint8_t>(src->format)];
-
     float src_y = sr.y;
     for (int32_t y = cdr.y; y < cdr.y + cdr.h; y++) {
       float src_x = sr.x;
       for (int32_t x = cdr.x; x < cdr.x + cdr.w; x++) {
-        sbbf(src, src->offset(src_x, src_y), this, offset(x, y), 1, 1);
+        bbf(src, src->offset(src_x, src_y), this, offset(x, y), 1, 1);
 
         src_x += sx;
       }      
@@ -380,11 +325,9 @@ namespace blit {
       return;
     }
 
-    BlendBlitFunc sbbf = bbf[static_cast<uint8_t>(src->format)];
-
     int16_t max_y = std::min(p.y + dc, bounds.h);
     for (; p.y < max_y; p.y++) {
-      sbbf(src, src->offset(Point(uv.x, v)), this, offset(p), 1, 1);
+      bbf(src, src->offset(Point(uv.x, v)), this, offset(p), 1, 1);
 
       v += vs;
     }
@@ -463,9 +406,9 @@ namespace blit {
       // load paletted
       uint8_t *pdest = (uint8_t *)data;
       
-      palette.resize(image->palette_entry_count);
+      palette = new Pen[256];
       for (uint8_t pidx = 0; pidx < image->palette_entry_count; pidx++) {
-        palette[pidx] = RGBA(
+        palette[pidx] = Pen(
           palette_entries[pidx * 4 + 0],
           palette_entries[pidx * 4 + 1],
           palette_entries[pidx * 4 + 2],
@@ -485,7 +428,7 @@ namespace blit {
         }
       }
     }else{
-      RGBA *pdest = (RGBA *)data;
+      Pen *pdest = (Pen *)data;
 
       for (uint8_t b = *bytes; bytes < ((uint8_t *)image) + image->byte_count; b = *++bytes) {
         for (auto j = 0; j < 8; j++) {
@@ -494,7 +437,7 @@ namespace blit {
 
           bit++;
           if (bit == bit_depth) {
-            *pdest++ = RGBA(
+            *pdest++ = Pen(
               palette_entries[col * 4 + 0],
               palette_entries[col * 4 + 1],
               palette_entries[col * 4 + 2],
@@ -527,16 +470,16 @@ namespace blit {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
 
-    static RGBA pens[] = { RGBA(39, 39, 56), RGBA(255, 255, 255), RGBA(0, 255, 0) };
+    static Pen pens[] = { Pen(39, 39, 56), Pen(255, 255, 255), Pen(0, 255, 0) };
 
     uint8_t scale = bounds.w / 160;
     for (uint8_t y = 0; y < 13; y++) {
       for (uint8_t x = 0; x < 13; x++) {
-        RGBA &p = pens[logo[x + y * 13]];
+        Pen &p = pens[logo[x + y * 13]];
         int o = offset(bounds.w - (15 * scale) + (x * scale), bounds.h - (15 * scale) + (y * scale));
-        bf((uint8_t *)&p, this, o, scale);
+        pbf(&p, this, o, scale);
         if (scale == 2) {
-          bf((uint8_t *)&p, this, o + bounds.w, scale);
+          pbf(&p, this, o + bounds.w, scale);
         }
       }
     }

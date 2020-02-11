@@ -18,8 +18,8 @@
 #include <string>
 #include <vector>
 
-#include "types/pixel_format.hpp"
 #include "running_average.hpp"
+#include "graphics/surface.hpp"
 
 extern void EnableUsTimer(void);
 extern uint32_t GetUsTimer(void);
@@ -198,11 +198,11 @@ public:
 
 	struct GraphElement
 	{
-		GraphElement(void): bDisplayLabel(false), bDisplayGraph(false), color(RGBA(0,255,0)) {};
+		GraphElement(void): bDisplayLabel(false), bDisplayGraph(false), color(Pen(0,255,0)) {};
 
 		bool			bDisplayLabel;
 		bool			bDisplayGraph;
-		RGBA			color;
+		Pen				color;
 	};
 
 
@@ -225,9 +225,9 @@ public:
 	void					SetRows(uint8_t uRows);
 	void					SetAlpha(uint8_t uAlpha);
 	void					DisplayProbeOverlay(uint8_t uPage);
-	void					DisplayHistory(bool bDisplayHistory, RGBA color = RGBA(0,255,0));
+	void					DisplayHistory(bool bDisplayHistory, Pen color = Pen(0,255,0));
 
-	void 					SetupGraphElement(DisplayMetric metric, bool bDisplayLabel, bool bDisplayGraph, RGBA color);
+	void 					SetupGraphElement(DisplayMetric metric, bool bDisplayLabel, bool bDisplayGraph, Pen color);
 	GraphElement  &GetGraphElement(DisplayMetric metric);
 
 private:
@@ -239,15 +239,15 @@ private:
 	uint16_t				m_uWidth;
 	uint16_t				m_uHeight;
 	uint16_t				m_uRows;
-	int32_t				  m_uGraphTimeUs;
+	int32_t				  	m_uGraphTimeUs;
 	uint32_t				m_uRunningAverageSize;
 	uint32_t				m_uRunningAverageSpan;
 	uint16_t				m_uRowHeight;
 	uint16_t				m_uBorder;
 	uint16_t				m_uHeaderSize;
 	uint8_t					m_uAlpha;
-	bool						m_bDisplayHistory;
-	RGBA						m_historyColor;
+	bool					m_bDisplayHistory;
+	Pen						m_historyColor;
 
 };
 }; // namespace

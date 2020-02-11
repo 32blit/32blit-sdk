@@ -108,14 +108,14 @@ Profiler::GraphElement &Profiler::GetGraphElement(DisplayMetric metric)
 	return m_graphElements[metric];
 }
 
-void Profiler::SetupGraphElement(DisplayMetric metric, bool bDisplayLabel, bool bDisplayGraph, RGBA color)
+void Profiler::SetupGraphElement(DisplayMetric metric, bool bDisplayLabel, bool bDisplayGraph, Pen color)
 {
 	m_graphElements[metric].bDisplayLabel = bDisplayLabel;
 	m_graphElements[metric].bDisplayGraph = bDisplayGraph;
 	m_graphElements[metric].color = color;
 }
 
-void Profiler::DisplayHistory(bool bDisplayHistory, RGBA color)
+void Profiler::DisplayHistory(bool bDisplayHistory, Pen color)
 {
 	m_bDisplayHistory = bDisplayHistory;
 	m_historyColor = color;
@@ -146,7 +146,7 @@ void Profiler::DisplayProbeOverlay(uint8_t uPage)
 			uPage = uMaxPage;
 
 		// display header
-		screen.pen(RGBA(255, 255, 255, m_uAlpha));
+		screen.pen = Pen(255, 255, 255, m_uAlpha);
 		sprintf(buffer, "%" PRIu32 " (%u/%u)", m_uGraphTimeUs, uPage, uMaxPage);
 		screen.text(buffer, &minimal_font[0][0], Point(m_uBorder, m_uBorder));
 
@@ -190,13 +190,13 @@ void Profiler::DisplayProbeOverlay(uint8_t uPage)
 				else
 					uUseGraphTimeUs = pProbe->GetGraphTimeUs();
 
-				screen.pen(RGBA(255, 255, 255, m_uAlpha));
+				screen.pen =Pen(255, 255, 255, m_uAlpha);
 				screen.text(pProbe->Name(), &minimal_font[0][0], Rect(m_uBorder, uY, uNameWidth, m_uRowHeight), true, TextAlign::center_v);
 
 				uMetricX  = uNameX + uNameWidth;
 				for(uint8_t uM = dmMin; uM <= dmMax; uM++)
 				{
-					screen.pen(RGBA(255, 255, 255, m_uAlpha));
+					screen.pen = Pen(255, 255, 255, m_uAlpha);
 					if(m_graphElements[uM].bDisplayLabel)
 					{
 						sprintf(buffer, "%" PRIu32, metrics[uM]);
@@ -207,7 +207,7 @@ void Profiler::DisplayProbeOverlay(uint8_t uPage)
 					if(m_graphElements[uM].bDisplayGraph)
 					{
 						m_graphElements[uM].color.a = m_uAlpha/2;
-						screen.pen(m_graphElements[uM].color);
+						screen.pen = m_graphElements[uM].color;
 
 						uint16_t uBarWidth = (float)uUseWidth * ((float)metrics[uM] / (float)uUseGraphTimeUs);
 						if(uBarWidth < 1)
@@ -216,12 +216,12 @@ void Profiler::DisplayProbeOverlay(uint8_t uPage)
 					}
 				}
 
-				screen.pen(RGBA(255, 255, 255, m_uAlpha/2));
+				screen.pen = Pen(255, 255, 255, m_uAlpha/2);
 				screen.line(Point(m_uBorder, uY), Point(uUseWidth + m_uBorder, uY));
 
 				if(m_bDisplayHistory)
 				{
-					screen.pen(RGBA(0, 255, 0, m_uAlpha));
+					screen.pen = Pen(0, 255, 0, m_uAlpha);
 
 					const RunningAverage<float> *pRunningAverage = pProbe->GetRunningAverage();
 					if(pRunningAverage)
@@ -261,7 +261,7 @@ void Profiler::DisplayProbeOverlay(uint8_t uPage)
 
 				uY+=m_uRowHeight;
 			}
-			screen.pen(RGBA(255, 255, 255, m_uAlpha/2));
+			screen.pen = Pen(255, 255, 255, m_uAlpha/2);
 			screen.line(Point(m_uBorder, uY), Point(m_uWidth + m_uBorder, uY));
 		}
 	}

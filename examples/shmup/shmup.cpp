@@ -73,7 +73,7 @@ Background Scenery
 */
 bool hit = false;
 
-RGBA hit_palette[2][5] = {
+Pen hit_palette[2][5] = {
   {},
   {}
 };
@@ -116,6 +116,8 @@ void draw_tilebased_sprite(SpriteSheet* ss, Point origin, const std::vector<uint
 }
 
 void init() {
+  set_screen_mode(ScreenMode::hires);
+
   ships = SpriteSheet::load(sprites_ships);
   background = SpriteSheet::load(sprites_background);
   tween_bob.init(tween_sine, 0.0f, 1.0f, 2500, -1);
@@ -126,13 +128,11 @@ void init() {
 
   tween_parallax.init(tween_linear, 0.0f, 1.0f, 10000, -1);
   tween_parallax.start();
-
-  set_screen_mode(ScreenMode::hires);
   screen.sprites = background;
 
   for (int x = 0; x < 5; x++) {
-    RGBA s_c = screen.sprites->palette[4 + x];
-    RGBA c = RGBA(
+    Pen s_c = screen.sprites->palette[4 + x];
+    Pen c = Pen(
       std::min(255, int(s_c.r * 1.8)),
       std::min(255, int(s_c.g * 1.8)),
       std::min(255, int(s_c.b * 1.8))
@@ -148,7 +148,7 @@ void init() {
 
 void render(uint32_t time) {
   uint32_t ms_start = blit::now() - time;
-  screen.pen(background->palette[21]);
+  screen.pen = background->palette[21];
   screen.clear();
   screen.sprites = background;
 
@@ -157,7 +157,7 @@ void render(uint32_t time) {
     screen.sprite(Rect(0, 1, 1, 8), Point(x * 8, screen.bounds.h - 64), 0);
   }
 
-  RGBA t = background->palette[29];
+  Pen t = background->palette[29];
   background->palette[29] = background->palette[20];
 
   // Far mountains
@@ -166,7 +166,7 @@ void render(uint32_t time) {
   screen.sprite(Rect(12, 1, 3, 1), Point((tween_parallax.value * 60) + (8 * 11 * 2.0f), screen.bounds.h - 96), Point(0, 0), 2.0f, 0);
 
   // Try and palette swap in a transparent colour and draw in some reflections?
-  background->palette[29] = RGBA(background->palette[19].r, background->palette[19].g, background->palette[19].b, 100);
+  background->palette[29] = Pen(background->palette[19].r, background->palette[19].g, background->palette[19].b, 100);
   screen.sprite(Rect(1, 2, 15, 1), Point((tween_parallax.value * 60), screen.bounds.h - 64), Point(0, 0), 2.0f, 2);
   screen.sprite(Rect(5, 1, 2, 1), Point((tween_parallax.value * 60) + (8 * 4 * 2.0f), screen.bounds.h - 48), Point(0, 0), 2.0f, 2);
   screen.sprite(Rect(12, 1, 3, 1), Point((tween_parallax.value * 60) + (8 * 11 * 2.0f), screen.bounds.h - 48), Point(0, 0), 2.0f, 2);
@@ -195,10 +195,10 @@ void render(uint32_t time) {
   for (int x = 0; x < 128 / 8; x++) {
     for (int y = 0; y < 128 / 8; y++) {
       if ((y + x) & 1) {
-        screen.pen(RGBA(0, 0, 0, 64));
+        screen.pen = Pen(0, 0, 0, 64);
       }
       else {
-        screen.pen(RGBA(255, 255, 255, 64));
+        screen.pen = Pen(255, 255, 255, 64);
       }
       screen.rectangle(Rect(x * 8, y * 8, 8, 8));
     }
@@ -222,7 +222,7 @@ void render(uint32_t time) {
 
   uint32_t ms_end = blit::now() - time;
 
-  screen.pen(RGBA(255, 100, 100));
+  screen.pen = Pen(255, 100, 100);
   screen.text(std::to_string(ms_end - ms_start), &minimal_font[0][0], Point(5, 230));
 }
 
@@ -232,19 +232,19 @@ void update(uint32_t time) {
   }
 
   for (int x = 0; x < 32; x++) {
-    RGBA original = RGBA(
+    Pen original = Pen(
       sprites_background[x * 4 + 20],
       sprites_background[x * 4 + 21],
       sprites_background[x * 4 + 22],
       sprites_background[x * 4 + 23]
     );
 
-    RGBA d = desert[x];
+    Pen d = desert[x];
 
-    float s = 1.0 - tween_dusk_dawn.value;
+    float s = 1.0f - tween_dusk_dawn.value;
     float c = tween_dusk_dawn.value;
 
-    background->palette[x] = RGBA(
+    background->palette[x] = Pen(
       std::min(255, int((d.r * s) + (original.r * c))),
       std::min(255, int((d.g * s) + (original.g * c))),
       std::min(255, int((d.b * s) + (original.b * c))),

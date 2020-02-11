@@ -99,7 +99,7 @@ void get_random_empty_tile_location(Point &pos) {
 
 /* setup */
 void init() {
-	//set_screen_mode(screen_mode::hires);
+	set_screen_mode(ScreenMode::lores);
 	//printf("Init: STARTED\n");
 	//engine::render = ::render;
 	//engine::update = ::update;
@@ -312,13 +312,13 @@ void render(uint32_t time) {
 
 	// clear the mask
 	mask.alpha = 255;
-	mask.pen(RGBA(0));
+	mask.pen = Pen(0);
 	mask.clear();
 
 	// clear the canvas
 	screen.alpha = 255;
 	screen.mask = nullptr;
-	screen.pen(RGBA(22, 21, 31));
+	screen.pen = Pen(22, 21, 31);
 	screen.clear();
 
 	//printf("Render: SKY\n");
@@ -333,7 +333,7 @@ void render(uint32_t time) {
 	/*
 	screen.mask = &m;
 	blur(5);
-	screen.pen(rgba(0, 0, 0, 140));
+	screen.pen = Pen(0, 0, 0, 140);
 	screen.clear();
 
 	screen.mask = nullptr;*/
@@ -342,7 +342,7 @@ void render(uint32_t time) {
 
 		blur(1);
 
-	screen.pen(RGBA(10, 36, 24));
+	screen.pen = Pen(10, 36, 24);
 	screen.mask = nullptr;
 	for (int y = 0; y < mask.bounds.h; y++) {
 		for (int x = 0; x < mask.bounds.w; x++) {
@@ -369,7 +369,7 @@ void render(uint32_t time) {
 	//screen.blit(&ss, ss_spray_rect, point(SCREEN_WIDTH - 48, VIEW_HEIGHT - 30 + offset));
 
 	// draw the HUD
-	screen.pen(RGBA(37, 36, 46));
+	screen.pen = Pen(37, 36, 46);
 	screen.rectangle(Rect(0, 120 - 24, 160, 24));
 	//rect ss_hud_rect(0, 160 - 24, 8, 8);
 	for (int x = 0; x < 160 / 8; x++) {
@@ -390,7 +390,7 @@ void render(uint32_t time) {
 	screen.sprite(Rect(11, 16, 3, 4), Point(0, 120 - 32), flip_doom_guy ? SpriteTransform::HORIZONTAL : 0);
 
 	//screen.mask = &m;
-	//screen.pen(rgba(255, 0, 0, 255));
+	//screen.pen = Pen(255, 0, 0, 255);
 	//screen.rectangle(rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
 	//screen.blit(&m, rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT), point(0, 0));
 
@@ -398,9 +398,9 @@ void render(uint32_t time) {
 
 	// draw FPS meter
 	screen.mask = nullptr;
-	screen.pen(RGBA(255, 0, 0));
+	screen.pen = Pen(255, 0, 0);
 	for (unsigned int i = 0; i < (ms_end - ms_start); i++) {
-		screen.pen(RGBA(i * 5, 255 - (i * 5), 0));
+		screen.pen = Pen(i * 5, 255 - (i * 5), 0);
 		screen.rectangle(Rect(i * 3 + 1, 117, 2, 2));
 	}
 	//printf("Render: FINISHED\n");
@@ -433,7 +433,7 @@ void render_sky() {
 
 		// Apply radial darkness to simulate directional sunset
 		uint8_t fade = std::max(-120, std::min(120, abs(int(r) - 120))) + 120;  // calculate a `fog` based on angle
-		screen.pen(RGBA(12, 33, 52, fade));
+		screen.pen = Pen(12, 33, 52, fade);
 		screen.line(Point(column, 0), Point(column, HORIZON));
 	}
 }
@@ -455,7 +455,7 @@ void render_stars() {
 
 			// Convert the degrees to screen columns
 			x = 80 + (x / 45.0f) * 80;
-			screen.pen(RGBA(255, 255, 255, sp->brightness));
+			screen.pen = Pen(255, 255, 255, sp->brightness);
 			screen.pixel(Point(
 				x,
 				sp->position.y * 2
@@ -465,7 +465,7 @@ void render_stars() {
 
 	/*std::ostringstream message;
 	message << r << ":" << x << "c:" << count;
-	screen.pen(rgba(255, 255, 255));
+	screen.pen = Pen(255, 255, 255);
 	screen.text(message.str().c_str(), rect(0, HORIZON, 160, 20));*/
 
 }
@@ -611,8 +611,8 @@ void render_world(uint32_t time) {
 			//printf("render_world: updating z_buffer\n");
 			z_buffer[column] = perpendicular_wall_distance;
 
-			//mask.pen(int(alpha));
-			mask.pen(200);
+			//mask.pen = int(alpha);
+			mask.pen = 200;
 
 			float line_distance = abs(perpendicular_wall_distance - last_wall_distance);
 
@@ -622,7 +622,7 @@ void render_world(uint32_t time) {
 
 				for (int c = column - width; c < column + width; c++) {
 					int alpha = (abs(column - c) * 160) / width;
-					mask.pen(160 - alpha);
+					mask.pen = 160 - alpha;
 					mask.line(Point(c, start_y), Point(c, end_y));
 				};
 				/*mask.rectangle(rect(
@@ -636,7 +636,7 @@ void render_world(uint32_t time) {
 			else {
 				for (int r = end_y - width; r < end_y + width; r++) {
 					int alpha = (abs(end_y - r) * 160) / width;
-					mask.pen(160 - alpha);
+					mask.pen = 160 - alpha;
 					mask.pixel(Point(column, r));
 					/*mask.rectangle(rect(
 						point(column, end_y - width - width + 2),
@@ -667,7 +667,6 @@ void render_world(uint32_t time) {
 
 			//if ((time >> 2) % 160 == column) {
 
-
 			screen.stretch_blit_vspan(screen.sprites, uv, 32, Point(column, start_y), end_y - start_y); // TODO Blit from Spritesheet
 
 
@@ -684,11 +683,11 @@ void render_world(uint32_t time) {
 			//printf("render_world: distance shading\n");
 			float wall_distance = perpendicular_wall_distance / MAX_RAY_STEPS;
 			float alpha = wall_distance * 255.0f;
-			screen.pen(RGBA(0, 0, 0, int(alpha)));
+			screen.pen = Pen(0, 0, 0, int(alpha));
 			screen.line(Point(column, start_y), Point(column, end_y));
 
 
-			/*mask.pen(rgba(255));
+			/*mask.pen = Pen(255);
 			mask.line(point(column, start_y), point(column, end_y));
 			*/
 
@@ -747,16 +746,14 @@ void render_world(uint32_t time) {
 
 
 				uint8_t fragment_c_idx = *screen.sprites->ptr(fragment_x, fragment_y);
-
-				RGBA fragment_c = screen.sprites->palette[fragment_c_idx];
 				//if (time >> 2 % 360 == column) {
-				screen.pen(fragment_c);
+				screen.pen = screen.sprites->palette[fragment_c_idx];
 				screen.pixel(Point(column, y - 1));
 				//}
 
 				float floor_distance = distance / MAX_RAY_STEPS;
 
-				screen.pen(RGBA(0, 0, 0, int(floor_distance * 255.0f)));
+				screen.pen = Pen(0, 0, 0, int(floor_distance * 255.0f));
 				screen.pixel(Point(column, y - 1));
 			}
 		}
@@ -782,29 +779,33 @@ void render_sprites(uint32_t time) {
 	for (int i = 0; i < num_sprites; i++) {
 		sprite *psprite = &map_sprites[i];
 
-		RGBA cols_a[]{
-			RGBA(0x15, 0x98, 0x5d, 200),
-			RGBA(0x35, 0xA8, 0x3d, 200),
-			RGBA(0x45, 0x88, 0x2d, 200)
+		Pen cols_a[]{
+			Pen(0x15, 0x98, 0x5d, 200),
+			Pen(0x35, 0xA8, 0x3d, 200),
+			Pen(0x45, 0x88, 0x2d, 200)
 		};
 
-		RGBA cols_b[]{
-			RGBA(0x00, 0x7f, 0x43, 200),
-			RGBA(0x20, 0x6f, 0x33, 200),
-			RGBA(0x30, 0x8f, 0x23, 200)
+		Pen cols_b[]{
+			Pen(0x00, 0x7f, 0x43, 200),
+			Pen(0x20, 0x6f, 0x33, 200),
+			Pen(0x30, 0x8f, 0x23, 200)
 		};
 
 		screen.sprites->palette[11] = cols_a[psprite->color];
 		screen.sprites->palette[12] = cols_b[psprite->color];
 
 
-		if (visibility_map[int(psprite->position.x) + int(psprite->position.y) * MAP_WIDTH] == 0) continue;
+		if (visibility_map[int(psprite->position.x) + int(psprite->position.y) * MAP_WIDTH] == 0) {
+			continue;
+		}
 
 		// Give the larger sprites a better view distance
 		float max_distance = (psprite->texture == 0 || psprite->texture == 1) ? 64.0 : 16.0;
 
 		float distance = std::min(max_distance, psprite->distance) / max_distance;
-		if (distance == 1.0f) continue;
+		if (distance == 1.0f) {
+			continue;
+		}
 
 		// Get the player-relative position of the sprite
 		Vec2 relative_position = psprite->position - player1.position;
@@ -814,8 +815,9 @@ void render_sprites(uint32_t time) {
 			inverse_det * (-player1.camera.y * relative_position.x + player1.camera.x * relative_position.y)
 		);
 
-		if (screen_transform.y < 0)
+		if (screen_transform.y < 0) {
 			continue;
+		}
 
 
 		// TODO:: palette change
@@ -846,7 +848,7 @@ void render_sprites(uint32_t time) {
 
 		/* DEBUG: Plot the sprite's base with a red dot
 		screen.alpha = 255 - int(255 * distance);
-		screen.pen(rgba(255, 0, 0));
+		screen.pen = Pen(255, 0, 0);
 		screen.pixel(point(screen_pos.x, screen_pos.y));
 		*/
 
@@ -867,8 +869,8 @@ void render_sprites(uint32_t time) {
 
 			screen.stretch_blit_vspan(screen.sprites, uv, bounds.h, Point(x, screen_pos.y), sprite_height); // TODO: blit from spritesheet?
 		}
-		screen.sprites->palette[11] = RGBA(0x15, 0x98, 0x5d, 200);
-		screen.sprites->palette[12] = RGBA(0x00, 0x7f, 0x43, 200);
+		screen.sprites->palette[11] = Pen(0x15, 0x98, 0x5d, 200);
+		screen.sprites->palette[12] = Pen(0x00, 0x7f, 0x43, 200);
 	}
 }
 

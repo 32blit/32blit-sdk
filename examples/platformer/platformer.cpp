@@ -11,7 +11,7 @@ using namespace blit;
 Size screen_size(160, 120);
 
 /* define storage for the framebuffer, spritesheet, and mask */
-RGBA    __ss[128 * 128];
+Pen    __ss[128 * 128];
 uint8_t __m[320 * 240]; 
 
 /* create surfaces */
@@ -24,7 +24,7 @@ Surface mshad((uint8_t *)__mshad, PixelFormat::M, Size(max_light_radius * 2 + 1,
 Point world_to_screen(const Vec2 &p);
 Point world_to_screen(const Point &p);
 Point screen_to_world(const Point &p);
-void highlight_tile(Point p, RGBA c);
+void highlight_tile(Point p, Pen c);
 Point tile(const Point &p);
 Point player_origin();
 void draw_layer(MapLayer &layer);
@@ -179,7 +179,7 @@ struct Player {
 
 
     Rect bb = aabb();
-    screen.pen(RGBA(0, 255, 0));
+    screen.pen = Pen(0, 255, 0);
     screen.line(world_to_screen(bb.tl()), world_to_screen(bb.tr()));
     screen.line(world_to_screen(bb.bl()), world_to_screen(bb.br()));
 
@@ -187,9 +187,9 @@ struct Player {
       Point sp = world_to_screen(tile_pt * 8);
       Rect rb(sp.x, sp.y, 8, 8);
 
-      screen.pen(RGBA(0, 255, 0, 150));
+      screen.pen = Pen(0, 255, 0, 150);
       if (map.has_flag(tile_pt, TileFlags::SOLID)) {
-        screen.pen(RGBA(255, 0, 0, 150));
+        screen.pen = Pen(255, 0, 0, 150);
       }
 
       screen.rectangle(rb);
@@ -279,16 +279,16 @@ void render(uint32_t time) {
 
   screen.mask = nullptr;
   screen.alpha = 255;
-  screen.pen(RGBA(0, 0, 0));
+  screen.pen = Pen(0, 0, 0);
   screen.clear();
 
   // mask out for lighting    
   mshad.alpha = 255;
-  mshad.pen(RGBA(0));
+  mshad.pen = Pen(0);
   mshad.clear();
 
   m.alpha = 255;
-  m.pen(RGBA(64));
+  m.pen = Pen(64);
   m.clear();
 
   // render lights
@@ -306,7 +306,7 @@ void render(uint32_t time) {
   render_light(Point(player.pos.x, player.pos.y - 7), 60.0f, true);
 
   // light up the "outside" this should be done with map flags
-  Rect r; m.pen(RGBA(255));
+  Rect r; m.pen = Pen(255);
   r = Rect(world_to_screen(Point(0, 0)), world_to_screen(Point(112, 40))); m.rectangle(r);
   r = Rect(world_to_screen(Point(0, 40)), world_to_screen(Point(80, 48))); m.rectangle(r);
   r = Rect(world_to_screen(Point(0, 48)), world_to_screen(Point(72, 56))); m.rectangle(r);
@@ -318,7 +318,7 @@ void render(uint32_t time) {
 
 
   screen.alpha = 255;
-  screen.pen(RGBA(39, 39, 54));
+  screen.pen = Pen(39, 39, 54);
   screen.clear();
 
 
@@ -345,7 +345,7 @@ void render(uint32_t time) {
 
 
   // overlay water
-  screen.pen(RGBA(56, 136, 205, 125));
+  screen.pen = Pen(56, 136, 205, 125);
   for (uint8_t y = 0; y < 24; y++) {
     for (uint8_t x = 0; x < 48; x++) {
       Point pt = world_to_screen(Point(x *   8, y * 8));
@@ -367,7 +367,7 @@ void render(uint32_t time) {
   
   // blend over lighting
   screen.mask = &m;
-  screen.pen(RGBA(39 / 2, 39 / 2, 54 / 2));
+  screen.pen = Pen(39 / 2, 39 / 2, 54 / 2);
   screen.clear();
 
   static int tick = 0;
@@ -382,9 +382,9 @@ void render(uint32_t time) {
   // draw FPS meter
   uint32_t ms_end = now();
   screen.mask = nullptr;
-  screen.pen(RGBA(255, 0, 0));
+  screen.pen = Pen(255, 0, 0);
   for (uint32_t i = 0; i < (ms_end - ms_start); i++) {
-    screen.pen(RGBA(i * 5, 255 - (i * 5), 0));
+    screen.pen = Pen(i * 5, 255 - (i * 5), 0);
     screen.rectangle(Rect(i * 3 + 1, 117, 2, 2));
   }
   
@@ -575,14 +575,14 @@ void render_light(Point pt, float radius, bool shadows = false) {
   Point lpt(max_light_radius, max_light_radius);
 
   mshad.alpha = 255;
-  mshad.pen(RGBA(0));
+  mshad.pen = Pen(0);
   mshad.clear();
 
   // draw the light aura
   mshad.alpha = (rand() % 10) + 40;
   int steps = 20;
   for (int j = steps; j > 0; j--) {
-    mshad.pen(RGBA(255));
+    mshad.pen = Pen(255);
     mshad.circle(lpt, (j * radius / steps));
   }
 
@@ -590,7 +590,7 @@ void render_light(Point pt, float radius, bool shadows = false) {
   {
     // cut out the shadows
     mshad.alpha = 255;
-    mshad.pen(RGBA(0));
+    mshad.pen = Pen(0);
 
     float rs = radius * radius;
     std::vector<std::pair<Vec2, Vec2>> occluders = get_occluders(pt, radius);
@@ -755,8 +755,8 @@ Point screen_to_world(const Point &p) {
 }
 
 
-void highlight_tile(Point p, RGBA c) {
-  screen.pen(c);
+void highlight_tile(Point p, Pen c) {
+  screen.pen = c;
   p.x *= 8;
   p.y *= 8;
   p = world_to_screen(p);
@@ -793,10 +793,10 @@ void draw_layer(MapLayer &layer) {
   }
 }
 
-RGBA flag_colours[] = {
-  RGBA(255, 0, 0, 100),
-  RGBA(0, 255, 0, 100),
-  RGBA(0, 0, 255, 100)
+Pen flag_colours[] = {
+  Pen(255, 0, 0, 100),
+  Pen(0, 255, 0, 100),
+  Pen(0, 0, 255, 100)
 };
 
 void draw_flags() {
@@ -808,7 +808,7 @@ void draw_flags() {
 
       for (uint8_t i = 0; i < 3; i++) {
         if (f & (1 << i)) {
-          screen.pen(flag_colours[i]);
+          screen.pen = flag_colours[i];
           screen.rectangle(Rect(pt.x, pt.y, 8, 8));
         }
       }

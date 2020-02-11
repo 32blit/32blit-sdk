@@ -120,7 +120,7 @@ namespace blit {
     }
 
     Vec2 s = world_to_screen(Vec2(400, 400), fov, angle, pos, near, far, viewport);
-    dest->pen(RGBA(255, 0, 255));
+    dest->pen = Pen(255, 0, 255);
     dest->pixel(s);
   }
   

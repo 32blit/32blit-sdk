@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../types/pixel_format.hpp"
+#include "../graphics/surface.hpp"
 #include <stdint.h>
 
 namespace blit {
 
-  extern RGB LED;
+  extern Pen LED;
   extern float vibration;
   extern float backlight;
  
