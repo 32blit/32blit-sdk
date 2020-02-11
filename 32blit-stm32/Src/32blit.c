@@ -145,6 +145,7 @@ void blit_init() {
     blit::open_file = ::open_file;
     blit::read_file = ::read_file;
     blit::close_file = ::close_file;
+    blit::list_files = ::list_files;
 
     blit::switch_execution = blit_switch_execution;
 

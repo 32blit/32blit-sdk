@@ -3,6 +3,8 @@
 
 #include "fatfs.h"
 
+#include "file.hpp"
+
 std::map<uint32_t, FIL *> open_files;
 uint32_t current_file_handle = 0;
 
@@ -44,4 +46,31 @@ int32_t close_file(uint32_t fh) {
   r = f_close(open_files[fh]);
 
   return r == FR_OK ? 0 : -1;
+}
+
+std::vector<blit::FileInfo> list_files(std::string path) {
+  std::vector<blit::FileInfo> ret;
+
+  auto dir = new DIR();
+
+  if(f_opendir(dir, path.c_str()) != FR_OK)
+    return ret;
+
+  FILINFO ent;
+
+  while(f_readdir(dir, &ent) == FR_OK && ent.fname[0]) {
+    blit::FileInfo info;
+
+    info.name = ent.fname;
+    info.flags = 0;
+
+    if(ent.fattrib & AM_DIR)
+      info.flags |= blit::FileFlags::directory;
+
+    ret.push_back(info);
+  }
+
+  f_closedir(dir);
+
+  return ret;
 }

@@ -1,7 +1,11 @@
 #include <string>
 #include <map>
 
+#include <dirent.h>
+
 #include "SDL.h"
+
+#include "File.hpp"
 
 static std::string basePath;
 static std::map<uint32_t, SDL_RWops *> open_files;
@@ -41,4 +45,31 @@ int32_t read_file(uint32_t fh, uint32_t offset, uint32_t length, char *buffer) {
 
 int32_t close_file(uint32_t fh) {
   return SDL_RWclose(open_files[fh]) == 0 ? 0 : -1;
+}
+
+std::vector<blit::FileInfo> list_files(std::string path) {
+  std::vector<blit::FileInfo> ret;
+
+  auto dir = opendir((basePath + path).c_str());
+
+  if(!dir)
+    return ret;
+
+  struct dirent *ent;
+
+  while((ent = readdir(dir))) {
+    blit::FileInfo info;
+
+    info.name = ent->d_name;
+    info.flags = 0;
+
+    if(ent->d_type == DT_DIR)
+      info.flags |= blit::FileFlags::directory;
+
+    ret.push_back(info);
+  }
+
+  closedir(dir);
+
+  return ret;
 }
