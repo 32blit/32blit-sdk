@@ -7,6 +7,8 @@ include(sdl2-config REQUIRED)
 set(CMAKE_SYSTEM_NAME Windows)
 set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc)
 set(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)
+set(CMAKE_OBJCOPY x86_64-w64-mingw32-objcopy CACHE PATH "Path to objcopy")
+set(CMAKE_LINKER x86_64-w64-mingw32-ld CACHE PATH "Path to linker")
 set(CMAKE_CXX_FLAGS_INIT "-static-libstdc++ -static-libgcc -Wl,-Bstatic -lstdc++ -Wl,-Bdynamic")
 set(SDL2_BINDIR ${SDL2_PREFIX}/bin)
 
