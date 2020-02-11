@@ -73,7 +73,7 @@ void render(uint32_t time) {
     screen.pen = Pen(255, 255, 255);
     screen.rectangle(Rect(0, 0, 320, 14));
     screen.pen = Pen(0, 0, 0);
-    screen.text("Palette cycle demo", &minimal_font[0][0], Point(5, 4));
+    screen.text("Palette cycle demo", minimal_font, Point(5, 4));
 
     int upscaled_size = 64 * 2;
     screen.stretch_blit(screen.sprites, Rect(0, 0, 64, 64), Rect(4 + screen.bounds.w / 2, (screen.bounds.h - upscaled_size) / 2, upscaled_size, upscaled_size));

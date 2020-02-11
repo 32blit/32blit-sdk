@@ -71,7 +71,7 @@ int blit_debugf(const char * psFormatString, ...)
 void blit_debug(std::string message) {
 	printf(message.c_str());
   screen.pen = Pen(255, 255, 255);
-  screen.text(message, &minimal_font[0][0], Point(0, 0));
+  screen.text(message, minimal_font, Point(0, 0));
 }
 
 
@@ -151,7 +151,7 @@ void hook_render(uint32_t time) {
   for(auto i = 0; i < ADC_BUFFER_SIZE; i++) {
     int x = i / 8;
     int y = i % 8;
-    blit::screen.text(std::to_string(adc1data[i]), &minimal_font[0][0], Point(x * 30, y * 10));
+    blit::screen.text(std::to_string(adc1data[i]), minimal_font, Point(x * 30, y * 10));
   }
 }
 
@@ -271,9 +271,9 @@ void blit_menu_render(uint32_t time) {
 
   screen.pen = Pen(255, 255, 255);
 
-  screen.text("System Menu", &minimal_font[0][0], Point(5, 5));
+  screen.text("System Menu", minimal_font, Point(5, 5));
 
-  screen.text("bat", &minimal_font[0][0], Point(screen_width / 2, 5));
+  screen.text("bat", minimal_font, Point(screen_width / 2, 5));
   uint16_t battery_meter_width = 55;
   battery_meter_width = float(battery_meter_width) * (blit::battery - 3.0f) / 1.1f;
   battery_meter_width = std::max((uint16_t)0, std::min((uint16_t)55, battery_meter_width));
@@ -316,7 +316,7 @@ void blit_menu_render(uint32_t time) {
   // menu bar
 
 
-  screen.text("Backlight", &minimal_font[0][0], Point(5, 20));
+  screen.text("Backlight", minimal_font, Point(5, 20));
   screen.pen = bar_background_color;
   screen.rectangle(Rect(screen_width / 2, 21, 75, 5));
   screen.pen = Pen(255, 255, 255);
@@ -328,7 +328,7 @@ void blit_menu_render(uint32_t time) {
     screen.pen = Pen(255, 255, 255);
   }
 
-  screen.text("Volume", &minimal_font[0][0], Point(5, 30));
+  screen.text("Volume", minimal_font, Point(5, 30));
   screen.pen = bar_background_color;
   screen.rectangle(Rect(screen_width / 2, 31, 75, 5));
   screen.pen = Pen(255, 255, 255);
@@ -340,8 +340,8 @@ void blit_menu_render(uint32_t time) {
     screen.pen = Pen(255, 255, 255);
   }
 
-  screen.text("DFU", &minimal_font[0][0], Point(5, 40));
-  screen.text("Press A", &minimal_font[0][0], Point(screen_width / 2, 40));
+  screen.text("DFU", minimal_font, Point(5, 40));
+  screen.text("Press A", minimal_font, Point(screen_width / 2, 40));
 
   if(menu_item == 3){
     screen.pen = Pen(50, 50, 70);
@@ -349,8 +349,8 @@ void blit_menu_render(uint32_t time) {
     screen.pen = Pen(255, 255, 255);
   }
 
-  screen.text("Shipping", &minimal_font[0][0], Point(5, 50));
-  screen.text("Press A", &minimal_font[0][0], Point(screen_width / 2, 50));
+  screen.text("Shipping", minimal_font, Point(5, 50));
+  screen.text("Press A", minimal_font, Point(screen_width / 2, 50));
 
 
   if(menu_item == 4){
@@ -359,8 +359,8 @@ void blit_menu_render(uint32_t time) {
     screen.pen = Pen(255, 255, 255);
   }
 
-  screen.text("Switch Exe", &minimal_font[0][0], Point(5, 60));
-  screen.text("Press A", &minimal_font[0][0], Point(screen_width / 2, 60));
+  screen.text("Switch Exe", minimal_font, Point(5, 60));
+  screen.text("Press A", minimal_font, Point(screen_width / 2, 60));
 
   // Horizontal Line
   screen.pen = Pen(255, 255, 255);

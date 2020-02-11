@@ -52,20 +52,20 @@ void render(uint32_t time_ms) {
   screen.pen = Pen(255, 255, 255);
   screen.rectangle(Rect(0, 0, 320, 14));
   screen.pen = Pen(0, 0, 0);
-  screen.text("Timer Test", &minimal_font[0][0], Point(5, 4));
+  screen.text("Timer Test", minimal_font, Point(5, 4));
 
   // Since our timer callback is updating our `count` variable
   // we can just display it on the screen and watch it tick up!
   screen.pen = Pen(255, 255, 255);
   sprintf(text_buffer, "Count: %d", count);
-  screen.text(text_buffer, &minimal_font[0][0], Point(120, 100));
+  screen.text(text_buffer, minimal_font, Point(120, 100));
 
   // `is_running()` is a handy shorthand for checking the timer state
   if(timer_count.is_running()) {
-    screen.text("Timer running...", &minimal_font[0][0], Point(120, 110));
+    screen.text("Timer running...", minimal_font, Point(120, 110));
   } else {
-    screen.text("Timer stopped!", &minimal_font[0][0], Point(120, 110));
-    screen.text("Press A to restart.", &minimal_font[0][0], Point(120, 120));
+    screen.text("Timer stopped!", minimal_font, Point(120, 110));
+    screen.text("Press A to restart.", minimal_font, Point(120, 120));
   }
 }
 

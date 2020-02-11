@@ -223,7 +223,7 @@ void render(uint32_t time) {
   uint32_t ms_end = blit::now() - time;
 
   screen.pen = Pen(255, 100, 100);
-  screen.text(std::to_string(ms_end - ms_start), &minimal_font[0][0], Point(5, 230));
+  screen.text(std::to_string(ms_end - ms_start), minimal_font, Point(5, 230));
 }
 
 void update(uint32_t time) {

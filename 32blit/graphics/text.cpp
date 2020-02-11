@@ -18,7 +18,7 @@ namespace blit {
    * \param p
    * \param variable
    */
-  void Surface::text(std::string message, const uint8_t *font, const Point &p, bool variable, TextAlign align, Rect clip) {
+  void Surface::text(std::string message, const Font &font, const Point &p, bool variable, TextAlign align, Rect clip) {
     text(message, font, Rect(p.x, p.y, 0, 0), variable, align, clip);
   }
 
@@ -30,7 +30,7 @@ namespace blit {
    * \param r
    * \param variable
    */
-  void Surface::text(std::string message, const uint8_t *font, const Rect &r, bool variable, TextAlign align, Rect clip) {
+  void Surface::text(std::string message, const Font &font, const Rect &r, bool variable, TextAlign align, Rect clip) {
     Point c(r.x, r.y); // caret position
 
     // default clip rect to rect if passed in
@@ -70,7 +70,7 @@ namespace blit {
 
       uint8_t char_width = 0;
 
-      const uint8_t* font_chr = &font[chr_idx * 6];
+      const uint8_t* font_chr = &font.data[chr_idx * 6];
 
       for (uint8_t y = 0; y < 8; y++) {
         uint32_t po = offset(Point(c.x, c.y + y));
@@ -121,7 +121,7 @@ namespace blit {
     }
   }
 
-  uint8_t get_char_width(const uint8_t *font, char c, bool variable) {
+  uint8_t get_char_width(const Font &font, char c, bool variable) {
     const int fixed_char_width = 6;
     if (!variable)
       return fixed_char_width;
@@ -133,7 +133,7 @@ namespace blit {
     uint8_t chr_idx = c & 0x7F;
     chr_idx = chr_idx < ' ' ? 0 : chr_idx - ' ';
 
-    const uint8_t* font_chr = &font[chr_idx * 6];
+    const uint8_t* font_chr = &font.data[chr_idx * 6];
 
     for (uint8_t y = 0; y < 8; y++) {
       for (uint8_t x = 0; x < 6; x++) {
@@ -146,7 +146,7 @@ namespace blit {
     return char_width + 2;
   }
 
-  Size Surface::measure_text(std::string message, const uint8_t *font, bool variable) {
+  Size Surface::measure_text(std::string message, const Font &font, bool variable) {
     const int fixed_char_width = 6;
     const int line_height = 9;
 
@@ -185,7 +185,7 @@ namespace blit {
   }
 }
 
-std::string Surface::wrap_text(std::string message, int32_t width, const uint8_t *font, bool variable, bool words) {
+std::string Surface::wrap_text(std::string message, int32_t width, const Font &font, bool variable, bool words) {
   std::string ret;
 
   int current_x = 0;
