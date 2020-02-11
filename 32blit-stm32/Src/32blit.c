@@ -640,3 +640,22 @@ void blit_switch_execution(void)
 	{
 	}
 }
+
+void EnableUsTimer(void)
+{
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+}
+
+uint32_t GetUsTimer(void)
+{
+	uint32_t uTicksPerUs = SystemCoreClock / 1000000;
+	return DWT->CYCCNT/uTicksPerUs;
+}
+
+uint32_t GetMaxUsTimer(void)
+{
+	uint32_t uTicksPerUs = SystemCoreClock / 1000000;
+	return UINT32_MAX / uTicksPerUs;
+}
+

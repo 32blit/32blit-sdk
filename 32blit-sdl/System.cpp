@@ -283,3 +283,26 @@ void System::stop() {
 	SDL_SemPost(s_timer_stop);
 	SDL_WaitThread(t_system_timer, &returnValue);
 }
+
+
+// us timer used by profiler
+// need code here for non stm32 based builds
+
+void EnableUsTimer(void)
+{
+	// Enable/initialise timer
+}
+
+uint32_t GetUsTimer(void)
+{
+	// get current time in us
+	auto perfFreq = SDL_GetPerformanceFrequency();
+	uint64_t ticksPerUs = SDL_GetPerformanceFrequency() / 1000000;
+	return SDL_GetPerformanceCounter() / ticksPerUs;
+}
+
+uint32_t GetMaxUsTimer(void)
+{
+	// largest us value timer can produce for wrapping
+	return UINT32_MAX;
+}
