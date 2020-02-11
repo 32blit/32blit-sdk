@@ -15,11 +15,13 @@ if (NOT DEFINED BLIT_ONCE)
 	add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/32blit 32blit)
 
 	function(blit_asset NAME ASSET)
+		string(REPLACE ".." "__" ASSET_OUT ${ASSET})
 		set(ASSET_OUT ${CMAKE_CURRENT_BINARY_DIR}/${ASSET_OUT}.o)
 
 		get_filename_component(OUT_DIR ${ASSET_OUT} DIRECTORY)
 
 		add_custom_command(
+			COMMAND mkdir -p ${OUT_DIR}
 			COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${CMAKE_LINKER} -r -b binary -o ${ASSET_OUT} ${ASSET}
 			COMMAND ${CMAKE_OBJCOPY} --rename-section .data=.rodata,alloc,load,readonly,data,contents ${ASSET_OUT} ${ASSET_OUT}
 			OUTPUT ${ASSET_OUT}
