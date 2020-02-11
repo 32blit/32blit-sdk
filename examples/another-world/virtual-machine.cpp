@@ -78,6 +78,7 @@ namespace another_world {
 
     // reset the heap and resource states
     
+
     for(auto resource : resources) {
       resource->state = Resource::State::NOT_NEEDED;
     }
@@ -97,8 +98,8 @@ namespace another_world {
     
     chapter_id = id - 16000;
 
-    registers[0xE4] = 0x14; // TODO: erm?
-  
+    registers[0xE4] = 0x14; // TODO: erm?      
+
     palette = resources[chapter_resources[chapter_id].palette];
     code = resources[chapter_resources[chapter_id].code];
     background = resources[chapter_resources[chapter_id].background];  
@@ -112,7 +113,7 @@ namespace another_world {
       characters = resources[chapter_resources[chapter_id].characters];
       characters->state = Resource::State::NEEDS_LOADING;
     }
-
+    
     load_needed_resources();
 
     // set all thread program counters to 0xffff (inactive)
@@ -941,14 +942,14 @@ namespace another_world {
             uint8_t y = fetch_byte(pc);
             uint8_t colour = fetch_byte(pc);
 
-            if (string_id < string_table.size()) {
+            /*if (string_id < string_table.size()) {
               const std::string& string_entry = string_table.at(string_id);
                 
             }
             else {
               // TODO: why would we ever get an invalid string id?
               //assert(false);
-            }
+            }*/
 
             // TODO: make this work?
             break;

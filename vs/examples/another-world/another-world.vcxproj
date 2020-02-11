@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{0E95737A-05EE-4A68-A016-8C7D7F50FBA8}</ProjectGuid>
-    <RootNamespace>rotozoom</RootNamespace>
+    <RootNamespace>another-world</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

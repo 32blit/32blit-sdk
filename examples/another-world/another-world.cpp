@@ -55,16 +55,19 @@ void render(uint32_t time_ms) {
 
   uint32_t ms_start = now();
 
-  screen.pen = Pen(tick, 0, 0);
+  screen.pen = Pen(0, 0, 0);
   screen.clear();  
 
-  for(uint16_t y = 0; y < 100; y++) {
+  for(uint16_t y = 0; y < 200; y++) {
     for(uint16_t x = 0; x < 160; x++) {
-      uint8_t v = vm.visible_vram[(y * 2) * 160 + x];
+      uint8_t v = vm.visible_vram[y * 160 + x];
       uint8_t v1 = v >> 4;
+      uint8_t v2 = v & 0x0f;
 
       screen.pen = palette_buffer[v1];
-      screen.pixel(blit::Point(x, y + 10));
+      screen.pixel(blit::Point(x * 2, y + 20));
+      screen.pen = palette_buffer[v2];
+      screen.pixel(blit::Point(x * 2 + 1, y + 20));
     }
   }  
 
@@ -73,11 +76,11 @@ void render(uint32_t time_ms) {
   // draw FPS meter & watermark
   screen.watermark();
   screen.pen = Pen(255, 255, 255);
-  screen.text(std::to_string(ms_end - ms_start) + "ms/frame", &minimal_font[0][0], blit::Point(1, 110));
+  screen.text(std::to_string(ms_end - ms_start) + "ms/frame", &minimal_font[0][0], blit::Point(2, 240 - 10));
   screen.pen = Pen(255, 0, 0);
   for (int i = 0; i < uint16_t(ms_end - ms_start); i++) {
     screen.pen = Pen(i * 5, 255 - (i * 5), 0);
-    screen.rectangle(blit::Rect(i * 3 + 1, 117, 2, 2));
+    screen.rectangle(blit::Rect(i * 3 + 2, 227, 2, 2));
   }  
 }
 
