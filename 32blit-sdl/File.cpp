@@ -61,6 +61,10 @@ std::vector<blit::FileInfo> list_files(std::string path) {
     blit::FileInfo info;
 
     info.name = ent->d_name;
+
+    if(info.name == "." || info.name == "..")
+      continue;
+
     info.flags = 0;
 
     if(ent->d_type == DT_DIR)
