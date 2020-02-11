@@ -90,10 +90,10 @@ void render(uint32_t time_ms) {
 	screen.pen = Pen(255, 255, 255);
 	screen.rectangle(Rect(0, 0, 320, 14));
 	screen.pen = Pen(0, 0, 0);
-	screen.text("Wave Example", &minimal_font[0][0], Point(5, 4));
+	screen.text("Wave Example", minimal_font, Point(5, 4));
 
   screen.pen = Pen(64, 64, 64);
-	screen.text("Press A to break screen.", &minimal_font[0][0], Point(20, 60));
+	screen.text("Press A to break screen.", minimal_font, Point(20, 60));
 
 
   bool button_a = blit::buttons & blit::Button::A;

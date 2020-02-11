@@ -148,14 +148,14 @@ void Profiler::DisplayProbeOverlay(uint8_t uPage)
 		// display header
 		screen.pen = Pen(255, 255, 255, m_uAlpha);
 		sprintf(buffer, "%" PRIu32 " (%u/%u)", m_uGraphTimeUs, uPage, uMaxPage);
-		screen.text(buffer, &minimal_font[0][0], Point(m_uBorder, m_uBorder));
+		screen.text(buffer, minimal_font, Point(m_uBorder, m_uBorder));
 
 		// labels
 		for(uint8_t uM = dmMin; uM <= dmMax; uM++)
 		{
 			if(m_graphElements[uM].bDisplayLabel)
 			{
-				screen.text(g_pszMetricNames[uM], &minimal_font[0][0], Point(uMetricX, m_uBorder));
+				screen.text(g_pszMetricNames[uM], minimal_font, Point(uMetricX, m_uBorder));
 				uMetricX+=uMetricWidth;
 			}
 		}
@@ -191,7 +191,7 @@ void Profiler::DisplayProbeOverlay(uint8_t uPage)
 					uUseGraphTimeUs = pProbe->GetGraphTimeUs();
 
 				screen.pen =Pen(255, 255, 255, m_uAlpha);
-				screen.text(pProbe->Name(), &minimal_font[0][0], Rect(m_uBorder, uY, uNameWidth, m_uRowHeight), true, TextAlign::center_v);
+				screen.text(pProbe->Name(), minimal_font, Rect(m_uBorder, uY, uNameWidth, m_uRowHeight), true, TextAlign::center_v);
 
 				uMetricX  = uNameX + uNameWidth;
 				for(uint8_t uM = dmMin; uM <= dmMax; uM++)
@@ -200,7 +200,7 @@ void Profiler::DisplayProbeOverlay(uint8_t uPage)
 					if(m_graphElements[uM].bDisplayLabel)
 					{
 						sprintf(buffer, "%" PRIu32, metrics[uM]);
-						screen.text(buffer, &minimal_font[0][0], Rect(uMetricX, uY, uMetricWidth, m_uRowHeight), true, TextAlign::center_v);
+						screen.text(buffer, minimal_font, Rect(uMetricX, uY, uMetricWidth, m_uRowHeight), true, TextAlign::center_v);
 						uMetricX+=uMetricWidth;
 					}
 

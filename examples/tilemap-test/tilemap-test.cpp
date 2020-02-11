@@ -221,7 +221,7 @@ using namespace blit;
       else
         screen.pen = Pen(255, 255, 255, 100);
 
-      screen.text(effect_names[i], &minimal_font[0][0], Rect(2, 2 + (i * 10), 100, 10));
+      screen.text(effect_names[i], minimal_font, Rect(2, 2 + (i * 10), 100, 10));
     }
 
     uint32_t ms_end = now();
@@ -232,7 +232,7 @@ using namespace blit;
     screen.rectangle(rect(1, 120 - 10, 12, 9));
     screen.pen(Pen(255, 255, 255, 200));
     std::string fms = std::to_string(ms_end - ms_start);
-    screen.text(fms, &minimal_font[0][0], rect(3, 120 - 9, 10, 16));
+    screen.text(fms, minimal_font, rect(3, 120 - 9, 10, 16));
 
     int block_size = 4;
     for (int i = 0; i < (ms_end - ms_start); i++) {

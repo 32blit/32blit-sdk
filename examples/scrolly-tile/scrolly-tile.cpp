@@ -682,18 +682,18 @@ void render_summary() {
     } else {
         text.append("Random Practice");
     }
-    screen.text(text, &minimal_font[0][0], Point(10, (SCREEN_H / 2) + 20));
+    screen.text(text, minimal_font, Point(10, (SCREEN_H / 2) + 20));
 
     if(current_random_source == RANDOM_TYPE_PRNG) {
         char buf[9];
         snprintf(buf, 9, "%08" PRIX32, current_random_seed);
         text = "Level seed: ";
         text.append(buf);
-        screen.text(text, &minimal_font[0][0], Point(10, (SCREEN_H / 2) + 30));
+        screen.text(text, minimal_font, Point(10, (SCREEN_H / 2) + 30));
     }
 
     text = "Press B";
-    screen.text(text, &minimal_font[0][0], Point(10, (SCREEN_H / 2) + 40));
+    screen.text(text, minimal_font, Point(10, (SCREEN_H / 2) + 40));
 }
 
 void render(uint32_t time_ms) {
@@ -721,7 +721,7 @@ void render(uint32_t time_ms) {
             char buf[2];
             buf[0] = c;
             buf[1] = '\0';
-            screen.text(buf, &minimal_font[0][0], Point(x, y));
+            screen.text(buf, minimal_font, Point(x, y));
             x += 10;
         }
 
@@ -765,7 +765,7 @@ void render(uint32_t time_ms) {
     // Show number of active passages
     p = std::to_string(passage_width + 1);
     p.append(" passages");
-    screen.text(p, &minimal_font[0][0], point(2, 10));
+    screen.text(p, minimal_font, point(2, 10));
     */
 
     if(water_level > 0){
@@ -791,7 +791,7 @@ void render(uint32_t time_ms) {
         screen.pen = Pen(128, 0, 0, 200);
         screen.rectangle(Rect(0, 0, SCREEN_W, SCREEN_H));
         screen.pen = Pen(255, 0, 0, 255);
-        screen.text("YOU DIED!", &minimal_font[0][0], Point((SCREEN_W / 2) - 20, (SCREEN_H / 2) - 4));
+        screen.text("YOU DIED!", minimal_font, Point((SCREEN_W / 2) - 20, (SCREEN_H / 2) - 4));
 
         // Round stats
         screen.pen = Pen(255, 255, 255);
@@ -801,7 +801,7 @@ void render(uint32_t time_ms) {
         text = "You climbed: ";
         text.append(std::to_string(player_progress));
         text.append("cm");
-        screen.text(text, &minimal_font[0][0], Point(10, (SCREEN_H / 2) + 10));
+        screen.text(text, minimal_font, Point(10, (SCREEN_H / 2) + 10));
 
         render_summary();
     }
@@ -812,13 +812,13 @@ void render(uint32_t time_ms) {
 
         text = std::to_string(player_progress);
         text.append("cm");
-        screen.text(text, &minimal_font[0][0], Point(2, 2));
+        screen.text(text, minimal_font, Point(2, 2));
 
         /*
         // State debug info
         text = "Jumps: ";
         text.append(std::to_string(player_jump_count));
-        screen.text(text, &minimal_font[0][0], point(2, 12));
+        screen.text(text, minimal_font, point(2, 12));
 
         text = "State: ";
         switch(player_state){
@@ -841,7 +841,7 @@ void render(uint32_t time_ms) {
                 text.append("WALL R");
                 break;
         }
-        screen.text(text, &minimal_font[0][0], point(2, 22));
+        screen.text(text, minimal_font, point(2, 22));
         */
     }
 }

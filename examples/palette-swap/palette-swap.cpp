@@ -64,7 +64,7 @@ void all_ships_at_once_demo(uint32_t time) {
   screen.pen = Pen(255, 255, 255);
   screen.rectangle(Rect(0, 0, 320, 14));
   screen.pen = Pen(0, 0, 0);
-  screen.text("Palette swap demo", &minimal_font[0][0], Point(5, 4));
+  screen.text("Palette swap demo", minimal_font, Point(5, 4));
 
   for (int p = 0; p < NUM_PALETTES; p++){
     for (int x = 0; x < 5; x++){
@@ -93,7 +93,7 @@ void single_ship_cycling_demo(uint32_t time) {
   screen.pen = Pen(255, 255, 255);
   screen.rectangle(Rect(0, 0, 320, 14));
   screen.pen = Pen(0, 0, 0);
-  screen.text("Palette swap demo", &minimal_font[0][0], Point(5, 4));
+  screen.text("Palette swap demo", minimal_font, Point(5, 4));
 
   int palette_index = int(time / 1000.0) % NUM_PALETTES;
 

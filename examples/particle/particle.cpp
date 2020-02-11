@@ -261,12 +261,12 @@ uint16_t height;
   screen.pen = Pen(255, 255, 255);
   screen.rectangle(Rect(0, 0, 320, 14));
   screen.pen = Pen(0, 0, 0);
-  screen.text("Rain demo", &minimal_font[0][0], Point(5, 4));
+  screen.text("Rain demo", minimal_font, Point(5, 4));
 
  /* screen.pen = Pen(255, 255, 255);  
-  screen.text("Smoke:", &minimal_font[0][0], point(10, 20));
-  screen.text("Sparks:", &minimal_font[0][0], point(120, 20));
-  screen.text("Rain:", &minimal_font[0][0], point(220, 20));  */
+  screen.text("Smoke:", minimal_font, point(10, 20));
+  screen.text("Sparks:", minimal_font, point(120, 20));
+  screen.text("Rain:", minimal_font, point(220, 20));  */
 
   // draw FPS meter
   /*screen.alpha = 255;
@@ -274,7 +274,7 @@ uint16_t height;
   screen.rectangle(rect(1, 240 - 10, 12, 9));
   screen.pen = Pen(255, 255, 255, 200);
   std::string fms = std::to_string(ms_end - ms_start);
-  screen.text(fms, &minimal_font[0][0], rect(3, 240 - 9, 10, 16));
+  screen.text(fms, minimal_font, rect(3, 240 - 9, 10, 16));
 
   int block_size = 4;
   for (int i = 0; i < (ms_end - ms_start); i++) {

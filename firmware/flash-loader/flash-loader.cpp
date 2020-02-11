@@ -184,7 +184,7 @@ void FlashLoader::RenderSaveFile(uint32_t time)
 	screen.pen = Pen(255, 255, 255);
 	char buffer[128];
 	sprintf(buffer, "Saving %.2u%%", (uint16_t)m_fPercent);
-	screen.text(buffer, &minimal_font[0][0], ROW(0));
+	screen.text(buffer, minimal_font, ROW(0));
 }
 
 
@@ -197,7 +197,7 @@ void FlashLoader::RenderFlashCDC(uint32_t time)
 
 	char buffer[128];
 	sprintf(buffer, "Flashing %.2u%%", (uint16_t)m_fPercent);
-	screen.text(buffer, &minimal_font[0][0], ROW(0));
+	screen.text(buffer, minimal_font, ROW(0));
 }
 
 
@@ -239,12 +239,12 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 		for(uint8_t uF = 0; uF < m_uFileCount; uF++) {
 			// TODO: A single line of text should probably vertically center in a 10px bounding box
 			// but in this case it needs to be fudged to 14 pixels
-			screen.text(m_filenames[uF], &minimal_font[0][0], Rect(ROW(uF).x + 5, ROW(uF).y, 310, 14), true, TextAlign::center_v);
+			screen.text(m_filenames[uF], minimal_font, Rect(ROW(uF).x + 5, ROW(uF).y, 310, 14), true, TextAlign::center_v);
 		}
 	}
 	else
 	{
-		screen.text("No Files Found.", &minimal_font[0][0], ROW(0));
+		screen.text("No Files Found.", minimal_font, ROW(0));
 	}
 
 	if(button_up)

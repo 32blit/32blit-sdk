@@ -33,7 +33,7 @@ void render(uint32_t time_ms) {
   screen.rectangle(Rect(1, 120 - 10, 12, 9));
   screen.pen = Pen(255, 255, 255, 200);
   std::string fms = std::to_string(ms_end - ms_start);
-  screen.text(fms, &minimal_font[0][0], Rect(3, 120 - 9, 10, 16));
+  screen.text(fms, minimal_font, Rect(3, 120 - 9, 10, 16));
 
   int block_size = 4;
   for (uint32_t i = 0; i < (ms_end - ms_start); i++) {

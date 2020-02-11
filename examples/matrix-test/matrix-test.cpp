@@ -103,7 +103,7 @@ void render(uint32_t time_ms) {
 
   
 
-//    screen.text("angle: " + std::to_string(int(angle)), &minimal_font[0][0], rect(0, 0, 160, 10));
+//    screen.text("angle: " + std::to_string(int(angle)), minimal_font, rect(0, 0, 160, 10));
 
 
 }

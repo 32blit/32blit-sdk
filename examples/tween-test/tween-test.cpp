@@ -35,7 +35,7 @@ void render(uint32_t time_ms) {
 
   screen.pen = Pen(255, 255, 255);
   sprintf(text_buffer, "Value: %f", tween_bounce.value);
-  screen.text(text_buffer, &minimal_font[0][0], Point(175, 35+tween_bounce.value));
+  screen.text(text_buffer, minimal_font, Point(175, 35+tween_bounce.value));
 }
 
 void update(uint32_t time_ms) {

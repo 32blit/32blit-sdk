@@ -42,7 +42,7 @@ void render(uint32_t time) {
 	screen.pen = Pen(255, 255, 255);
 	screen.rectangle(Rect(0, 0, 320, 14));
 	screen.pen = Pen(0, 0, 0);
-	screen.text("Text Rendering", &minimal_font[0][0], Point(5, 4));
+	screen.text("Text Rendering", minimal_font, Point(5, 4));
 
     // alignment
     Rect text_rect(20, 20, 120, 80);
@@ -52,15 +52,15 @@ void render(uint32_t time) {
 
 	screen.pen = Pen(255, 255, 255);
     std::string text = "This is some aligned text!\nUse the dpad to change the alignment\nand A to toggle variable-width.";
-    text = screen.wrap_text(text, text_rect.w, &minimal_font[0][0], variable_width);
+    text = screen.wrap_text(text, text_rect.w, minimal_font, variable_width);
 
     screen.pen = Pen(0xFF, 0xFF, 0xFF);
-    screen.text(text, &minimal_font[0][0], text_rect, variable_width, alignment);
+    screen.text(text, minimal_font, text_rect, variable_width, alignment);
 
-	screen.text(alignment_to_string(alignment), &minimal_font[0][0], Point(80, 102), true, TextAlign::center_h);
+	screen.text(alignment_to_string(alignment), minimal_font, Point(80, 102), true, TextAlign::center_h);
 
-    auto size = screen.measure_text(text, &minimal_font[0][0], variable_width);
-    screen.text("bounds: " + std::to_string(size.w) + "x" + std::to_string(size.h), &minimal_font[0][0], Point(80, 110), true, TextAlign::center_h);
+    auto size = screen.measure_text(text, minimal_font, variable_width);
+    screen.text("bounds: " + std::to_string(size.w) + "x" + std::to_string(size.h), minimal_font, Point(80, 110), true, TextAlign::center_h);
 
     text_rect.x += 160;
 
@@ -70,10 +70,10 @@ void render(uint32_t time) {
     screen.rectangle(text_rect);
 
     text = "This text is clipped!\nIt's slightly hard to read since half of it is missing.";
-    text = screen.wrap_text(text, text_rect.w, &minimal_font[0][0], variable_width);
+    text = screen.wrap_text(text, text_rect.w, minimal_font, variable_width);
 
     screen.pen = Pen(0xFF, 0xFF, 0xFF);
-    screen.text(text, &minimal_font[0][0], text_rect, variable_width, TextAlign::center_center, clip);
+    screen.text(text, minimal_font, text_rect, variable_width, TextAlign::center_center, clip);
 }
 
 void update(uint32_t time) {

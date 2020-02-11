@@ -30,7 +30,7 @@ void render(uint32_t time) {
     screen.pen(RGBA(255, 255, 255));
     screen.rectangle(Rect(0, 0, 320, 14));
     screen.pen(RGBA(0, 0, 0));
-    screen.text("Hello 32blit!", &minimal_font[0][0], Point(5, 4));
+    screen.text("Hello 32blit!", minimal_font, Point(5, 4));
 }
 
 ///////////////////////////////////////////////////////////////////////////

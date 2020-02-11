@@ -137,9 +137,9 @@ void render(uint32_t time_ms) {
   // Orientation debug info
   screen.alpha = 255;
   screen.pen = Pen(255, 255, 255);
-  screen.text("N: " + std::to_string(int(near)) + " - F:" + std::to_string(int(far)), &minimal_font[0][0], Rect(0, 0, 100, 10));
-  screen.text("X: " + std::to_string(int(pos.x)) + " - Y:" + std::to_string(int(pos.y)), &minimal_font[0][0], Rect(0, 10, 100, 10));
-  screen.text("A: " + std::to_string(int(rad2deg(angle))), &minimal_font[0][0], Rect(0, 20, 100, 10));
+  screen.text("N: " + std::to_string(int(near)) + " - F:" + std::to_string(int(far)), minimal_font, Rect(0, 0, 100, 10));
+  screen.text("X: " + std::to_string(int(pos.x)) + " - Y:" + std::to_string(int(pos.y)), minimal_font, Rect(0, 10, 100, 10));
+  screen.text("A: " + std::to_string(int(rad2deg(angle))), minimal_font, Rect(0, 20, 100, 10));
 
   // draw the mini map
   screen.alpha = 200;
@@ -185,7 +185,7 @@ void render(uint32_t time_ms) {
   screen.rectangle(Rect(1, 120 - 10, 12, 9));
   screen.pen = Pen(255, 255, 255, 200);
   std::string fms = std::to_string(ms_end - ms_start);
-  screen.text(fms, &minimal_font[0][0], Rect(3, 120 - 9, 10, 16));
+  screen.text(fms, minimal_font, Rect(3, 120 - 9, 10, 16));
 
   int block_size = 4;
   for (uint32_t i = 0; i < (ms_end - ms_start); i++) {
