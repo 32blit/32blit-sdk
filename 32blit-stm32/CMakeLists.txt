@@ -57,6 +57,7 @@ list(APPEND SOURCES
 	Src/display.cpp
 	Src/gpio.cpp
 	Src/sound.cpp
+	Src/file.cpp
 	Src/adc.c
 	Src/debug.c
 	Src/dma.c
