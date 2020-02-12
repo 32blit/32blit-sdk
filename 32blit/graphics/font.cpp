@@ -300,7 +300,7 @@ static const uint8_t minimal_font_data[96][6] = {
 };
 
 namespace blit {
-  const Font outline_font(&outline_font_data[0][0]);
-  const Font fat_font(&fat_font_data[0][0]);
-  const Font minimal_font(&minimal_font_data[0][0]);
+  const Font outline_font(&outline_font_data[0][0], 6, 8);
+  const Font fat_font(&fat_font_data[0][0], 6, 8);
+  const Font minimal_font(&minimal_font_data[0][0], 6, 8);
 }

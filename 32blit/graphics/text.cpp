@@ -61,6 +61,9 @@ namespace blit {
         c.x += (r.w - bounds.w) / 2;
     }
 
+    const int height_bytes = (font.char_h + 7) / 8;
+    const int char_size = font.char_w * height_bytes;
+
     size_t char_off = 0;
     for (char &chr : message) {
       // draw character
@@ -70,13 +73,14 @@ namespace blit {
 
       uint8_t char_width = 0;
 
-      const uint8_t* font_chr = &font.data[chr_idx * 6];
+      const uint8_t* font_chr = &font.data[chr_idx * char_size];
 
-      for (uint8_t y = 0; y < 8; y++) {
+      for (uint8_t y = 0; y < font.char_h; y++) {
         uint32_t po = offset(Point(c.x, c.y + y));
 
-        for (uint8_t x = 0; x < 6; x++) {
-          if (font_chr[x] & (1 << y)) {
+        for (uint8_t x = 0; x < font.char_w; x++) {
+          int bit = 1 << (y & 7);
+          if (font_chr[x * height_bytes + y / 8] & bit) {
             if(clip.contains(Point(c.x + x, c.y + y)))
               pbf(&pen, this, po, 1);
 
@@ -88,9 +92,9 @@ namespace blit {
       }
 
       if (!variable)
-        char_width = 4;
-
-      char_width += 2;
+        char_width = font.char_w;
+      else
+        char_width += 2;
 
       if (chr == ' ' && variable) {
         char_width = 3;
@@ -100,7 +104,7 @@ namespace blit {
       c.x += char_width;
       if (chr == 10) {
         c.x = r.x;
-        c.y += 9;
+        c.y += font.char_h + 1;
 
         // check horizontal alignment
         if ((align & 0b1100) != TextAlign::left) {
@@ -122,9 +126,8 @@ namespace blit {
   }
 
   uint8_t get_char_width(const Font &font, char c, bool variable) {
-    const int fixed_char_width = 6;
     if (!variable)
-      return fixed_char_width;
+      return font.char_w;
 
     if (c == ' ')
       return 3;
@@ -133,11 +136,15 @@ namespace blit {
     uint8_t chr_idx = c & 0x7F;
     chr_idx = chr_idx < ' ' ? 0 : chr_idx - ' ';
 
-    const uint8_t* font_chr = &font.data[chr_idx * 6];
+    const int height_bytes = (font.char_h + 7) / 8;
+    const int char_size = font.char_w * height_bytes;
 
-    for (uint8_t y = 0; y < 8; y++) {
-      for (uint8_t x = 0; x < 6; x++) {
-        if (font_chr[x] & (1 << y)) {
+    const uint8_t* font_chr = &font.data[chr_idx * char_size];
+
+    for (uint8_t y = 0; y < font.char_h; y++) {
+      for (uint8_t x = 0; x < font.char_w; x++) {
+        int bit = 1 << (y & 7);
+        if (font_chr[x * height_bytes + y / 8] & bit) {
           char_width = char_width < x ? x : char_width;
         }
       }
@@ -147,8 +154,7 @@ namespace blit {
   }
 
   Size Surface::measure_text(std::string message, const Font &font, bool variable) {
-    const int fixed_char_width = 6;
-    const int line_height = 9;
+    const int line_height = font.char_h + 1;
 
     Size bounds(0, 0);
 
@@ -165,7 +171,7 @@ namespace blit {
         if (end == std::string::npos)
           end = message.length();
 
-        line_len = (end - char_off) * fixed_char_width;
+        line_len = (end - char_off) * font.char_w;
         char_off = end;
       }
 
