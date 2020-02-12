@@ -7,6 +7,10 @@ if (NOT DEFINED BLIT_ONCE)
 	if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 		set(CMAKE_BUILD_TYPE "Release")
 	endif()
+	
+	if(WIN32)
+		add_definitions("-DWIN32")
+	endif()
 
 	add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/32blit 32blit)
 

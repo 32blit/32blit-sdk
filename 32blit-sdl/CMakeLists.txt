@@ -1,4 +1,5 @@
 add_library(BlitHalSDL STATIC
+	File.cpp
 	Input.cpp
 	Main.cpp
 	Renderer.cpp
