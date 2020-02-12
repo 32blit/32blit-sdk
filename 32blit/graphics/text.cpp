@@ -94,7 +94,7 @@ namespace blit {
       if (!variable)
         char_width = font.char_w;
       else
-        char_width += 2;
+        char_width += font.spacing_x;
 
       if (chr == ' ' && variable) {
         char_width = 3;
@@ -104,7 +104,7 @@ namespace blit {
       c.x += char_width;
       if (chr == 10) {
         c.x = r.x;
-        c.y += font.char_h + 1;
+        c.y += font.char_h + font.spacing_y;
 
         // check horizontal alignment
         if ((align & 0b1100) != TextAlign::left) {
@@ -150,11 +150,11 @@ namespace blit {
       }
     }
 
-    return char_width + 2;
+    return char_width + font.spacing_x;
   }
 
   Size Surface::measure_text(std::string message, const Font &font, bool variable) {
-    const int line_height = font.char_h + 1;
+    const int line_height = font.char_h + font.spacing_y;
 
     Size bounds(0, 0);
 
