@@ -79,32 +79,6 @@ if(DEFINED VIDEO_CAPTURE AND VIDEO_CAPTURE)
 	)
 endif()
 
-function(blit_asset NAME ASSET)
-	add_custom_command(OUTPUT ${ASSET}.o
-		COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${CMAKE_LINKER} -r -b binary -o ${CMAKE_CURRENT_BINARY_DIR}/${ASSET}.o ${ASSET}
-		COMMAND ${CMAKE_OBJCOPY} --rename-section .data=.rodata,alloc,load,readonly,data,contents ${CMAKE_CURRENT_BINARY_DIR}/${ASSET}.o ${CMAKE_CURRENT_BINARY_DIR}/${ASSET}.o
-	)
-	# Add object as a library
-	add_library(${ASSET}
-		STATIC
-		${ASSET}.o)
-	# Tell CMake this object file has already been built by custom command
-	SET_SOURCE_FILES_PROPERTIES(
-		${ASSET}.o
-		PROPERTIES
-		EXTERNAL_OBJECT true
-		GENERATED true
-	)
-	# Avoid language warning
-	SET_TARGET_PROPERTIES(
-		${ASSET}
-		PROPERTIES
-		LINKER_LANGUAGE C
-	)
-	# Link our asset to our output
-	target_link_libraries(${NAME} ${ASSET})
-endfunction()
-
 function(blit_executable NAME SOURCES)
 	add_executable(${NAME} ${SOURCES} ${ARGN})
 
