@@ -1,7 +1,11 @@
 #include <string>
 #include <map>
 
+#ifdef WIN32
+#include "shlobj.h"
+#else
 #include <dirent.h>
+#endif
 
 #include "SDL.h"
 
@@ -50,6 +54,34 @@ int32_t close_file(uint32_t fh) {
 std::vector<blit::FileInfo> list_files(std::string path) {
   std::vector<blit::FileInfo> ret;
 
+#ifdef WIN32
+  HANDLE file;
+  WIN32_FIND_DATAA findData;
+  file = FindFirstFileA((basePath + path + "\\*").c_str(), &findData);
+
+  if(file == INVALID_HANDLE_VALUE)
+    return ret;
+
+  do
+  {
+    blit::FileInfo info;
+    info.name = findData.cFileName;
+
+    if(info.name == "." || info.name == "..")
+      continue;
+
+    info.flags = 0;
+
+    if(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+      info.flags |= blit::FileFlags::directory;
+
+    ret.push_back(info);
+  }
+  while(FindNextFileA(file, &findData) != 0);
+
+  FindClose(file);
+
+#else
   auto dir = opendir((basePath + path).c_str());
 
   if(!dir)
@@ -74,6 +106,7 @@ std::vector<blit::FileInfo> list_files(std::string path) {
   }
 
   closedir(dir);
+#endif
 
   return ret;
 }
