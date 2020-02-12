@@ -290,7 +290,6 @@ void EnableUsTimer(void)
 uint32_t GetUsTimer(void)
 {
 	// get current time in us
-	auto perfFreq = SDL_GetPerformanceFrequency();
 	uint64_t ticksPerUs = SDL_GetPerformanceFrequency() / 1000000;
 	return SDL_GetPerformanceCounter() / ticksPerUs;
 }
