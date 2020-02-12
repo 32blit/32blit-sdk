@@ -193,20 +193,19 @@ void render(uint32_t time_ms) {
   screen.pen = sky_colour;
   screen.clear();
 
-  //uint8_t buf[1024 * 32];
-  //uint8_t *p = (uint8_t *)_binary_demo_map_start;
-  //uint32_t o = 0;
-  //uint32_t v = 0;
+ /* uint8_t buf[1024 * 32];
+  uint8_t *p = (uint8_t *)_binary_demo_map_start;
+  uint32_t o = 0;
+  uint32_t v = 0;
   uint32_t ms_start = now();
-  //for(int i = 0; i < 10000; i++) {
-//    o += 1324;
-    //o %= 1000000;
-    //memcpy(buf, p + o, 1024);
-    //v += buf[45];
-  //}
-  //screen.text(std::to_string(v), &minimal_font[0][0], Point(10, 20));
-  uint32_t ms_end = now();  
-
+  for(int i = 0; i < 10000; i++) {
+    o += 1324;
+    o %= 1000000;
+    memcpy(buf, p + o, 1024);
+    v += buf[45];
+  }
+  screen.text(std::to_string(v), &minimal_font[0][0], Point(10, 20));*/
+  uint32_t ms_start = now();
   draw_world(
     position, // player position
     angle, // player direction
@@ -215,6 +214,7 @@ void render(uint32_t time_ms) {
     3.0f,   // near distance
     300.0f  // far distance
   ); 
+uint32_t ms_end = now();  
 
   
   
