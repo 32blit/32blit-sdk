@@ -12,7 +12,7 @@ Then open the cloned repository with "Open folder...".
 
 Windows needs a little help to find the required dependencies for local builds.
 
- - First download SDL as described in "Option 1" of the [Visual Studio](Windows-VisualStudio.md) docs.
+ - First download SDL as described in the [Visual Studio](Windows-VisualStudio.md) docs.
  - Add `"SDL2_DIR": "${workspaceRoot}/vs/sdl/"` to `configureSettings` (See "CMake Arguments" below)
 
 ## Initial setup for local builds
