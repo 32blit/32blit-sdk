@@ -83,8 +83,6 @@ namespace blit {
           if (font_chr[x * height_bytes + y / 8] & bit) {
             if(clip.contains(Point(c.x + x, c.y + y)))
               pbf(&pen, this, po, 1);
-
-            char_width = char_width < x ? x : char_width;
           }
 
           po++;
@@ -94,11 +92,7 @@ namespace blit {
       if (!variable)
         char_width = font.char_w;
       else
-        char_width += font.spacing_x;
-
-      if (chr == ' ' && variable) {
-        char_width = 3;
-      }
+        char_width = font.char_w_variable[chr_idx];
 
       // increment the cursor
       c.x += char_width;
@@ -129,28 +123,10 @@ namespace blit {
     if (!variable)
       return font.char_w;
 
-    if (c == ' ')
-      return 3;
-
-    uint8_t char_width = 0;
     uint8_t chr_idx = c & 0x7F;
     chr_idx = chr_idx < ' ' ? 0 : chr_idx - ' ';
 
-    const int height_bytes = (font.char_h + 7) / 8;
-    const int char_size = font.char_w * height_bytes;
-
-    const uint8_t* font_chr = &font.data[chr_idx * char_size];
-
-    for (uint8_t y = 0; y < font.char_h; y++) {
-      for (uint8_t x = 0; x < font.char_w; x++) {
-        int bit = 1 << (y & 7);
-        if (font_chr[x * height_bytes + y / 8] & bit) {
-          char_width = char_width < x ? x : char_width;
-        }
-      }
-    }
-
-    return char_width + font.spacing_x;
+    return font.char_w_variable[chr_idx];
   }
 
   Size Surface::measure_text(std::string message, const Font &font, bool variable) {

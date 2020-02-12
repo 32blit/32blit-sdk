@@ -101,6 +101,15 @@ static const uint8_t outline_font_data[96][6] = {
   {0x00,0x00,0x00,0x00,0x00,0x00}
 };
 
+static const uint8_t outline_font_width[96] = {
+  3, 4, 6, 7, 6, 6, 7, 4, 5, 5, 7, 7, 5, 6, 4, 6,
+  6, 4, 6, 6, 6, 6, 6, 6, 6, 6, 4, 5, 6, 7, 6, 6,
+  7, 6, 6, 6, 6, 6, 6, 6, 6, 4, 6, 6, 6, 7, 7, 6,
+  6, 6, 6, 6, 6, 6, 6, 7, 6, 6, 6, 5, 6, 5, 6, 7,
+  5, 6, 6, 6, 6, 6, 6, 6, 6, 4, 6, 6, 6, 7, 7, 6,
+  6, 6, 6, 6, 6, 6, 6, 7, 6, 6, 6, 6, 4, 6, 7, 2
+};
+
 static const uint8_t fat_font_data[96][6] = {
   {0x00,0x00,0x00,0x00,0x00,0x00}, //  
   {0x5e,0x06,0x06,0x00,0x00,0x00}, // !
@@ -198,6 +207,15 @@ static const uint8_t fat_font_data[96][6] = {
   {0x42,0x7e,0x24,0x00,0x00,0x00}, // }
   {0x04,0x06,0x06,0x02,0x04,0x06}, // ~
   {0x00,0x00,0x00,0x00,0x00,0x00}
+};
+
+static const uint8_t fat_font_width[96] = {
+  3, 4, 5, 7, 5, 7, 6, 2, 5, 5, 7, 6, 4, 4, 4, 6,
+  7, 5, 6, 5, 6, 6, 6, 7, 6, 6, 4, 3, 6, 4, 6, 6,
+  7, 6, 6, 6, 6, 5, 5, 6, 6, 4, 5, 6, 5, 7, 6, 7,
+  6, 7, 6, 6, 6, 6, 6, 7, 7, 6, 6, 5, 6, 5, 4, 6,
+  5, 6, 6, 6, 6, 6, 5, 6, 6, 4, 5, 6, 5, 7, 6, 7,
+  6, 7, 5, 5, 6, 6, 6, 7, 6, 6, 6, 5, 2, 4, 7, 2
 };
 
 static const uint8_t minimal_font_data[96][6] = {
@@ -299,8 +317,17 @@ static const uint8_t minimal_font_data[96][6] = {
   {0x00,0x00,0x00,0x00,0x00,0x00}
 };
 
+static const uint8_t minimal_font_width[96] = {
+  3, 2, 4, 6, 6, 6, 7, 2, 3, 3, 4, 4, 2, 4, 2, 4,
+  6, 3, 5, 5, 6, 5, 6, 6, 6, 6, 2, 2, 4, 4, 4, 5,
+  7, 6, 6, 5, 6, 5, 5, 6, 5, 4, 5, 5, 5, 6, 6, 6,
+  6, 6, 6, 5, 6, 6, 6, 6, 5, 5, 5, 3, 4, 3, 4, 4,
+  3, 6, 6, 5, 6, 5, 5, 6, 5, 4, 5, 5, 5, 6, 6, 6,
+  6, 6, 6, 5, 6, 6, 6, 6, 5, 5, 5, 4, 2, 4, 4, 2
+};
+
 namespace blit {
-  const Font outline_font(&outline_font_data[0][0], 6, 8);
-  const Font fat_font(&fat_font_data[0][0], 6, 8);
-  const Font minimal_font(&minimal_font_data[0][0], 6, 8);
+  const Font outline_font(&outline_font_data[0][0], outline_font_width, 6, 8);
+  const Font fat_font(&fat_font_data[0][0], fat_font_width, 6, 8);
+  const Font minimal_font(&minimal_font_data[0][0], minimal_font_width, 6, 8);
 }
