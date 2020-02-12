@@ -88,7 +88,8 @@ namespace blit {
       uint8_t   wave_buf_pos  = 0;      // 
       int16_t   wave_buffer[64];        // buffer for arbitrary waveforms. small as it's filled by user callback
 
-      void  (*callback_waveBufferRefresh)();
+      void  *wave_callback_arg = nullptr;
+      void  (*callback_waveBufferRefresh)(void *);
 
       void trigger_attack()  {
         adsr_frame = 0;

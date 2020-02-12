@@ -32,7 +32,7 @@
 
 using namespace blit;
 
-void buffCallBack();    //Declare our callback here instead of putting the whole thing here.
+void buffCallBack(void *);    //Declare our callback here instead of putting the whole thing here.
 
 /* setup */
 void init() {
@@ -55,7 +55,7 @@ static const uint16_t *wavSample;
 
 
 // Called everytime audio buffer ends
-void buffCallBack() {
+void buffCallBack(void *) {
 
   // Copy 64 bytes to the channel audio buffer
   for (int x = 0; x < 64; x++) {

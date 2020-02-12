@@ -101,7 +101,7 @@ namespace blit {
           channel_sample += channel.wave_buffer[channel.wave_buf_pos] << 8;
           if (++channel.wave_buf_pos == 64) { // If the position is at the end, reset and hit up callback for more.
             channel.wave_buf_pos = 0;
-            (*channel.callback_waveBufferRefresh)();
+            (*channel.callback_waveBufferRefresh)(channel.wave_callback_arg);
           }
           waveform_count++;
         }
