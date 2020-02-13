@@ -46,6 +46,8 @@ void FlashLoader::Init()
 
 	// register LS
 	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value, this);
+
+	m_uCurrentFile = persist.selected_menu_item;
 }
 
 
@@ -70,6 +72,10 @@ void FlashLoader::FSInit(void)
 			m_uFileCount++;
 		}
 		fr = f_findnext(&dj, &fno);
+	}
+
+	if(m_uCurrentFile > m_uFileCount) {
+		m_uCurrentFile = m_uFileCount;
 	}
 
 	f_closedir(&dj);
@@ -270,6 +276,8 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 			blit::switch_execution();
 		}
 	}
+
+	persist.selected_menu_item = m_uCurrentFile;
 }
 
 

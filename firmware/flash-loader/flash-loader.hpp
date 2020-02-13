@@ -1,6 +1,7 @@
 #include "32blit.hpp"
 #include "CDCCommandHandler.h"
 #include "fatfs.h"
+#include "persistence.h"
 
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240

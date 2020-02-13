@@ -45,10 +45,9 @@ FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 
 bool needs_render = true;
 uint32_t flip_cycle_count = 0;
-float global_volume = 0.5f;
 float volume_log_base = 2.0f;
 
-
+__attribute__((section(".persist"))) Persist persist;
 
 void DFUBoot(void)
 {
@@ -113,7 +112,21 @@ void hook_render(uint32_t time) {
   }
 }
 
+void blit_update_volume() {
+    blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * persist.volume) / log(volume_log_base));
+}
+
 void blit_init() {
+    if(persist.magic_word != persistence_magic_word) {
+      // Set persistent defaults if the magic word does not match
+      persist.magic_word = persistence_magic_word;
+      persist.volume = 0.5f;
+      persist.backlight = 1.0f;
+      persist.selected_menu_item = 0;
+    }
+
+    blit_update_volume();
+
     // enable cycle counting
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     DWT->CYCCNT = 0;
@@ -130,15 +143,12 @@ void blit_init() {
     f_mount(&filesystem, "", 1);  // this shouldn't be necessary here right?
     msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
     bq24295_init(&hi2c4);
-    blit::backlight = 1.0f;
     blit::debug = blit_debug;
     blit::debugf = blit_debugf;
     blit::now = HAL_GetTick;
     blit::random = HAL_GetRandom;
-    blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
     blit::set_screen_mode = display::set_screen_mode;
     display::set_screen_mode(blit::lores);
-
     blit::update = ::update;
     blit::render = ::render;
     blit::init   = ::init;
@@ -194,10 +204,16 @@ std::string menu_name (MenuItem item) {
   switch (item) {
     case BACKLIGHT: return "Backlight";
     case VOLUME: return "Volume";
-    case DFU: return "DFU";
-    case SHIPPING: return "Shipping";
-    case SWITCH_EXE: return "Switch EXE";
+    case DFU: return "DFU Mode";
+    case SHIPPING: return "Power Off";
+#if EXTERNAL_LOAD_ADDRESS == 0x90000000
+    case SWITCH_EXE: return "Launch Game";
+#else
+    case SWITCH_EXE: return "Exit Game";
+#endif
+    case LAST_COUNT: return "";
   };
+  return "";
 }
 
 MenuItem menu_item = BACKLIGHT;
@@ -217,42 +233,44 @@ void blit_menu_update(uint32_t time) {
   } else if (blit::buttons & changed_buttons & blit::Button::DPAD_DOWN) {
     menu_item ++;
     
-  } else if (blit::buttons & blit::Button::DPAD_RIGHT ) {
+  } else {
+    bool button_a = blit::buttons & changed_buttons & blit::Button::A;
     switch(menu_item) {
       case BACKLIGHT:
-        blit::backlight += 1.0f / 256.0f;
-        blit::backlight = std::fmin(1.0f, std::fmax(0.0f, blit::backlight));
+        if (blit::buttons & blit::Button::DPAD_LEFT) {
+          persist.backlight -= 1.0f / 256.0f;
+        } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
+          persist.backlight += 1.0f / 256.0f;
+        }
+        persist.backlight = std::fmin(1.0f, std::fmax(0.0f, persist.backlight));
         break;
       case VOLUME:
-        global_volume += 1.0f / 256.0f;
-        global_volume = std::fmin(1.0f, std::fmax(0.0f, global_volume));
-        blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
+        if (blit::buttons & blit::Button::DPAD_LEFT) {
+          persist.volume -= 1.0f / 256.0f;
+        } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
+          persist.volume += 1.0f / 256.0f;
+        }
+        persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
+        blit_update_volume();
         break;
-    }
-  } else if (blit::buttons & blit::Button::DPAD_LEFT ) {
-    switch(menu_item) {
-      case BACKLIGHT:
-        blit::backlight -= 1.0f / 256.0f;
-        blit::backlight = std::fmin(1.0f, std::fmax(0.0f, blit::backlight));
-        break;
-      case VOLUME:
-        global_volume -= 1.0f / 256.0f;
-        global_volume = std::fmin(1.0f, std::fmax(0.0f, global_volume));
-        blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
-        break;
-    }
-  } else if (blit::buttons & changed_buttons & blit::Button::A) {
-      switch(menu_item) {
-        case DFU:
+      case DFU:
+        if(button_a){
           DFUBoot();
-          break;
-        case SHIPPING:
+        }
+        break;
+      case SHIPPING:
+        if(button_a){
           bq24295_enable_shipping_mode(&hi2c4);
-          break;
-        case SWITCH_EXE:
+        }
+        break;
+      case SWITCH_EXE:
+        if(button_a){
           blit::switch_execution();
-          break;
-      }
+        }
+        break;
+      case LAST_COUNT:
+        break;
+    }
   }
 
   last_buttons = blit::buttons;
@@ -327,14 +345,14 @@ void blit_menu_render(uint32_t time) {
         screen.pen = bar_background_color;
         screen.rectangle(Rect(screen_width / 2, 21, 75, 5));
         screen.pen = Pen(255, 255, 255);
-        screen.rectangle(Rect(screen_width / 2, 21, 75 * blit::backlight, 5));
+        screen.rectangle(Rect(screen_width / 2, 21, 75 * persist.backlight, 5));
 
         break;
       case VOLUME:
         screen.pen = bar_background_color;
         screen.rectangle(Rect(screen_width / 2, 31, 75, 5));
         screen.pen = Pen(255, 255, 255);
-        screen.rectangle(Rect(screen_width / 2, 31, 75 * global_volume, 5));
+        screen.rectangle(Rect(screen_width / 2, 31, 75 * persist.volume, 5));
 
         break;
       default:
@@ -382,7 +400,7 @@ void blit_update_led() {
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2, compare_b);
 
     // Backlight
-    __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 962 - (962 * blit::backlight));
+    __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 962 - (962 * persist.backlight));
 }
 
 void HAL_ADC_ErrorCallback(ADC_HandleTypeDef* hadc){
