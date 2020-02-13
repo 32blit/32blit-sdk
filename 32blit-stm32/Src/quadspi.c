@@ -314,35 +314,49 @@ HAL_StatusTypeDef qspi_sector_erase(uint32_t BlockAddress)
 }
 
 HAL_StatusTypeDef qspi_write_buffer(size_t offset, const uint8_t* buffer, size_t length)
-{
-    QSPI_WriteEnable(&hqspi);
+{	
+	QSPI_CommandTypeDef s_command = {0};
+	HAL_StatusTypeDef status = QSPI_OK;
 
-    QSPI_CommandTypeDef s_command = {0};
-    HAL_StatusTypeDef status = QSPI_OK;
+	// qspi can only be written a page (256 bytes) at a time so we need to break it into chunks
+	
+	while(length > 0) {    	
+		QSPI_WriteEnable(&hqspi);		
 
-    s_command.Instruction = QUAD_IN_FAST_PROG_CMD;
-    s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-    s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-    s_command.DummyCycles = 0;
-    s_command.DdrMode = QSPI_DDR_MODE_DISABLE;
-    s_command.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
-    s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
-    s_command.AddressMode = QSPI_ADDRESS_1_LINE;
-    s_command.DataMode    = QSPI_DATA_4_LINES;
-    s_command.AddressSize = QSPI_ADDRESS_24_BITS;
+		s_command.Instruction = QUAD_IN_FAST_PROG_CMD;
+		s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+		s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+		s_command.DummyCycles = 0;
+		s_command.DdrMode = QSPI_DDR_MODE_DISABLE;
+		s_command.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+		s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+		s_command.AddressMode = QSPI_ADDRESS_1_LINE;
+		s_command.DataMode    = QSPI_DATA_4_LINES;
+		s_command.AddressSize = QSPI_ADDRESS_24_BITS;
 
-    s_command.Address     = offset;
-    s_command.NbData      = length;
+		uint32_t bytes_to_write = length < 256 ? length : 256;
 
-    if ((status = HAL_QSPI_Command(&hqspi, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)) == HAL_OK)
-    {
-    	if ((status = HAL_QSPI_Transmit(&hqspi, (uint8_t *)buffer, HAL_QPSI_TIMEOUT_DEFAULT_VALUE )) == HAL_OK)
-    	{
-        status = QSPI_AutoPollingMemReady(&hqspi, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
-    	}
-    }
+		s_command.Address     = offset;
+		s_command.NbData      = bytes_to_write;
 
-    return status;
+		if ((status = HAL_QSPI_Command(&hqspi, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)) == HAL_OK)
+		{
+			if ((status = HAL_QSPI_Transmit(&hqspi, (uint8_t *)buffer, HAL_QPSI_TIMEOUT_DEFAULT_VALUE )) == HAL_OK)
+			{
+				status = QSPI_AutoPollingMemReady(&hqspi, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
+
+				if(status != HAL_OK) {
+					return status;
+				}
+			}
+		}
+
+		offset += bytes_to_write;
+		buffer += bytes_to_write;
+		length -= bytes_to_write;
+	}
+	
+	return status;
 }
 
 HAL_StatusTypeDef qspi_read_buffer(size_t address, const uint8_t* buffer, size_t length) {

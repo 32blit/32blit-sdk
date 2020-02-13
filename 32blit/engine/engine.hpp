@@ -22,7 +22,6 @@ namespace blit {
   extern int      (*debugf)           (const char * psFormatString, ...);
   extern void     (*reset)            ();
   extern void     (*reset)            ();
-  extern void			(*switch_execution) ();
 
   bool tick(uint32_t time);
   void fast_tick(uint32_t time);

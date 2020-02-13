@@ -7,148 +7,170 @@
 #include <stdio.h>
 #include <stdlib.h>
 using namespace blit;
-
+ 
 extern QSPI_HandleTypeDef hqspi;
 extern CDCCommandStream g_commandStream;
 
+std::vector<FileInfo> files;
+int32_t selected_file_index = 0;
+
+std::string progress_message;
+int32_t progress = 0;
+int32_t progress_total = 0;
+
 FlashLoader flashLoader;
 
+inline bool ends_with(std::string const &value, std::string const &ending)
+{
+    if(ending.size() > value.size()) return false;
+    return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+}
 
-// c calls to c++ object
+void load_file_list() {
+  files.clear();
+  for(auto file : list_files("")) {
+    if(ends_with(file.name, ".bin")) {
+      files.push_back(file);
+    }
+  }
+}
+
+float y_scroll = 0.0f;
+
 void init()
 {
-	flashLoader.Init();
+  set_screen_mode(ScreenMode::hires);
+  load_file_list();
+
+	// register PROG
+	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value, &flashLoader);
+	// register SAVE
+	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'S', 'A', 'V', 'E'>::value, &flashLoader);
+	// register LS
+	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value, &flashLoader);
 }
 
 void render(uint32_t time)
 {
-	flashLoader.Render(time);
+  
+
+  screen.pen = Pen(20, 30, 40);
+  screen.clear();
+
+  for(uint32_t i = 0; i < files.size(); i++) {
+    FileInfo *file = &files[i];
+
+    screen.pen = Pen(100, 100, 100);
+    if(i == selected_file_index) {
+      screen.pen = Pen(255, 255, 255);
+    }
+    screen.text(file->name, minimal_font, Point(5, 115 + i * 10 - y_scroll));
+  }
+
+
+  screen.text(progress_message, minimal_font, Point(5, 220));
+  uint32_t progress_width = ((progress * 310) / progress_total);
+  screen.pen = Pen(255, 255, 255);
+  screen.rectangle(Rect(5, 230, progress_width, 5));
+
+  
+//	flashLoader.Render(time);
 }
 
 void update(uint32_t time)
 {
-	flashLoader.Update(time);
+  static uint32_t last_buttons;
+
+  if((buttons & DPAD_UP) && !(last_buttons & DPAD_UP)) {
+    selected_file_index--;
+    if(selected_file_index < 0) {
+      selected_file_index = files.size() - 1;
+    }
+  }
+
+  if((buttons & DPAD_DOWN) && !(last_buttons & DPAD_DOWN)) {
+    selected_file_index++;
+    selected_file_index %= files.size();
+  }
+
+  y_scroll = y_scroll < selected_file_index * 10 ? y_scroll + 1 : y_scroll;
+  y_scroll = y_scroll > selected_file_index * 10 ? y_scroll - 1 : y_scroll;
+
+  if((buttons & A) && !(last_buttons & A)) {
+    flash_from_sd_to_qspi_flash(files[selected_file_index].name);
+    blit_switch_execution();
+  }
+
+
+  last_buttons = buttons;
+
+	//flashLoader.Update(time);
+
+
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Init() Register command handlers
-void FlashLoader::Init()
-{
-	set_screen_mode(ScreenMode::hires);
 
-	// register PROG
-	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value, this);
-
-	// register SAVE
-	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'S', 'A', 'V', 'E'>::value, this);
-
-	// register LS
-	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value, this);
-}
-
-
-// FSInit() Read a page worth of *.BIN filenames from the SDCard
-void FlashLoader::FSInit(void)
-{
-	// needed as init is called before sdcard is mounted currently.
-	m_uFileCount = 0;
-
-	volatile FRESULT fr;     /* Return value */
-	DIR dj;         /* Directory search object */
-	FILINFO fno;    /* File information */
-
-	fr = f_findfirst(&dj, &fno, "", "*.BIN");
-
-	while (fr == FR_OK && fno.fname[0] && m_uFileCount < MAX_FILENAMES)
-	{
-		if(fno.fname[0]!='.')
-		{
-			//printf("%s %lu\n\r", fno.fname, fno.fsize);
-			strncpy(m_filenames[m_uFileCount], fno.fname, MAX_FILENAME_LENGTH);
-			m_uFileCount++;
-		}
-		fr = f_findnext(&dj, &fno);
-	}
-
-	f_closedir(&dj);
-
-	m_bFsInit = true;
-}
-
-
-// Flash(): Flash a file from the SDCard to external flash
-bool FlashLoader::Flash(const char *pszFilename)
-{
-	bool bResult = false;
+bool flash_from_sd_to_qspi_flash(const std::string &filename)
+{  
+  static uint8_t file_buffer[4 * 1024];
 
 	FIL file;
-	FRESULT res = f_open(&file, pszFilename, FA_READ);
-	if(!res)
-	{
-		// get file length
-		FSIZE_t uSize = f_size(&file);
-		FSIZE_t uTotalBytesRead = 0;
-		size_t uOffset = 0;
-
-		if(uSize)
-		{
-			// quick and dirty erase
-			QSPI_WriteEnable(&hqspi);
-			qspi_chip_erase();
-
-			bool bFinished = false;
-
-			while(!bFinished)
-			{
-				// limited ram so a bit at a time
-				UINT uBytesRead = 0;
-				res = f_read(&file, (void *)m_buffer, BUFFER_SIZE, &uBytesRead);
-
-				if(!res)
-				{
-					if(uBytesRead)
-					{
-						if(QSPI_OK == qspi_write_buffer(uOffset, m_buffer, uBytesRead))
-						{
-							if(QSPI_OK == qspi_read_buffer(uOffset, m_verifyBuffer, uBytesRead))
-							{
-								// compare buffers
-								bool bVerified = true;
-								for(uint32_t uB = 0; bVerified && uB < uBytesRead; uB++)
-									bVerified = m_buffer[uB] == m_verifyBuffer[uB];
-
-								if(bVerified)
-								{
-									uOffset += uBytesRead;
-									uTotalBytesRead += uBytesRead;
-								}
-								else
-									bFinished = true;
-							}
-							else
-								bFinished = true;
-						}
-						else
-							bFinished = true;
-					}
-
-					if(uBytesRead < BUFFER_SIZE)
-					{
-						bFinished = true;
-						bResult = uTotalBytesRead == uSize;
-					}
-				}
-				else
-					bFinished = true;
-			}
-		}
-
-		f_close(&file);
+	if(f_open(&file, filename.c_str(), FA_READ) != FR_OK) {
+		return false;
 	}
 
-	return bResult;
+  UINT bytes_total = f_size(&file);
+  UINT bytes_flashed  = 0;
+
+  progress_message = "Erasing sectors...";
+  progress = 0;
+  progress_total = bytes_total / (64 * 1024);
+  
+  // TODO: don't erase entire flash chip...  
+  for(UINT sector_start = 0; sector_start < bytes_total; sector_start += 64 * 1024) {
+    qspi_sector_erase(sector_start);
+    progress++;
+    render_yield();
+  }
+  
+  
+
+  progress_message = "Copying to external flash...";
+  progress = 0;
+  progress_total = bytes_total;
+
+  //render_yield(true);
+  
+  while(bytes_flashed < bytes_total) {
+    UINT bytes_read = 0;
+    
+    // read up to 4KB from the file on sd card
+    if(f_read(&file, (void *)file_buffer, sizeof(file_buffer), &bytes_read) != FR_OK) {
+      return false;
+    }
+
+    // write the read data to the external qspi flash
+    if(qspi_write_buffer(bytes_flashed, file_buffer, bytes_read) != QSPI_OK) {
+      return false;
+    }
+
+    // TODO: is it worth reading the data back and performing a verify here? not sure...
+
+    bytes_flashed += bytes_read;
+
+    progress = bytes_flashed;
+
+    render_yield();
+  }
+
+  f_close(&file);
+
+  progress_message = "";
+
+	return true;
 }
 
 
@@ -171,7 +193,7 @@ void FlashLoader::Render(uint32_t time)
 			break;
 
 		case stSwitch:
-			blit::switch_execution();
+			blit_switch_execution();
 		break;
 	}
 }
@@ -207,8 +229,6 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 	static uint32_t lastRepeat = 0;
 	static uint32_t lastButtons = 0;
 
-	if(!m_bFsInit)
-		FSInit();
 
 	uint32_t changedButtons = buttons ^ lastButtons;
 
@@ -230,16 +250,16 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 	screen.pen = Pen(255, 255, 255);
 
 	// just display
-	if(m_uFileCount)
+	if(files.size() > 0)
 	{
 		screen.pen = Pen(50, 50, 70);
 		screen.rectangle(Rect(0, ROW_HEIGHT*m_uCurrentFile, SCREEN_WIDTH, ROW_HEIGHT));
 		screen.pen = Pen(255, 255, 255);
 
-		for(uint8_t uF = 0; uF < m_uFileCount; uF++) {
+		for(uint8_t uF = 0; uF < files.size(); uF++) {
 			// TODO: A single line of text should probably vertically center in a 10px bounding box
 			// but in this case it needs to be fudged to 14 pixels
-			screen.text(m_filenames[uF], minimal_font, Rect(ROW(uF).x + 5, ROW(uF).y, 310, 14), true, TextAlign::center_v);
+			screen.text(files[uF].name, minimal_font, Rect(ROW(uF).x + 5, ROW(uF).y, 310, 14), true, TextAlign::center_v);
 		}
 	}
 	else
@@ -266,8 +286,9 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 
 	if(button_a)
 	{
-		if(Flash(m_filenames[m_uCurrentFile])) {
-			blit::switch_execution();
+    std::string filename = files[m_uCurrentFile].name;
+		if(flash_from_sd_to_qspi_flash(filename)) {
+			blit_switch_execution();
 		}
 	}
 }
@@ -277,7 +298,7 @@ void FlashLoader::Update(uint32_t time)
 {
 	if(m_state == stLS)
 	{
-		FSInit();
+		load_file_list();
 		m_state = stFlashFile;
 	}
 }

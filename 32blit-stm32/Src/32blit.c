@@ -75,7 +75,12 @@ void blit_debug(std::string message) {
   screen.text(message, minimal_font, Point(0, 0));
 }
 
-
+void render_yield() {
+  if(display::needs_render) {
+    blit::render(blit::now());
+    display::enable_vblank_interrupt();
+  }
+}
 
 void blit_tick() {
   if(display::needs_render) {
@@ -147,8 +152,6 @@ void blit_init() {
     blit::close_file = ::close_file;
     blit::list_files = ::list_files;
 
-    blit::switch_execution = blit_switch_execution;
-
     blit_enable_amp();
 
   display::init();
@@ -206,7 +209,7 @@ void blit_menu_update(uint32_t time) {
           bq24295_enable_shipping_mode(&hi2c4);
           break;
         case 4:
-          blit::switch_execution();
+          blit_switch_execution();
           break;
       }
   }

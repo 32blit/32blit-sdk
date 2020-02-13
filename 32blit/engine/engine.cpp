@@ -14,7 +14,6 @@ namespace blit {
   uint32_t (*random)()                              = nullptr;
   void (*debug)(std::string message)                = nullptr;
   int  (*debugf)(const char * psFormatString, ...) 	= nullptr;
-  void (*switch_execution)()												= nullptr;
 
   Surface null_surface(nullptr, PixelFormat::M, Size(0, 0));
   Surface &screen = null_surface;
