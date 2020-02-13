@@ -157,29 +157,73 @@ void blit_init() {
 
 }
 
+/*
 
-int menu_item = 0;
+    Menu Items
+
+*/
+
+enum MenuItem {
+    BACKLIGHT,
+    VOLUME,
+    DFU,
+    SHIPPING,
+    SWITCH_EXE,
+    LAST_COUNT // leave me last pls
+};
+
+//pinched from http://www.cplusplus.com/forum/beginner/41790/
+inline MenuItem& operator++(MenuItem& eDOW, int) {
+  const int i = static_cast<int>(eDOW) + 1;
+	eDOW = static_cast<MenuItem>((i) % (LAST_COUNT));
+    return eDOW;
+}
+
+inline MenuItem& operator--(MenuItem& type, int) {
+	const int i = static_cast<int>(type)-1;
+	
+	if (i < 0) { // Check whether to cycle to last item if number goes below 0
+		type = static_cast<MenuItem>(LAST_COUNT - 1);
+	} else { // Else set it to current number -1
+		type = static_cast<MenuItem>((i) % LAST_COUNT);
+	}
+	return type;
+}
+
+std::string menu_name (MenuItem item) {
+  switch (item) {
+    case BACKLIGHT: return "Backlight";
+    case VOLUME: return "Volume";
+    case DFU: return "DFU";
+    case SHIPPING: return "Shipping";
+    case SWITCH_EXE: return "Switch EXE";
+  };
+}
+
+MenuItem menu_item = BACKLIGHT;
+
+float menu_y (MenuItem item) { return item * 10 + 20; }
+float menu_selection_y (MenuItem item) { return menu_y(item) - 1; }
+Point menu_title_origin (MenuItem item) { return Point(5, item * 10 + 20); }
+Point press_a_origin (MenuItem item, float screen_width) { return Point(screen_width/2, item * 10 + 20); }
+Rect menu_item_frame (MenuItem item, float screen_width) { return Rect (0, item * 10 + 19, screen_width, 9); }
 
 void blit_menu_update(uint32_t time) {
   static uint32_t last_buttons = 0;
   uint32_t changed_buttons = blit::buttons ^ last_buttons;
   if(blit::buttons & changed_buttons & blit::Button::DPAD_UP) {
-    menu_item -= 1;
-    if(menu_item < 0){
-      menu_item = 0;
-    }
+    menu_item --;
+    
   } else if (blit::buttons & changed_buttons & blit::Button::DPAD_DOWN) {
-    menu_item += 1;
-    if(menu_item > 4){
-      menu_item = 4;
-    }
+    menu_item ++;
+    
   } else if (blit::buttons & blit::Button::DPAD_RIGHT ) {
     switch(menu_item) {
-      case 0: // Backlight
+      case BACKLIGHT:
         blit::backlight += 1.0f / 256.0f;
         blit::backlight = std::fmin(1.0f, std::fmax(0.0f, blit::backlight));
         break;
-      case 1: // Volume
+      case VOLUME:
         global_volume += 1.0f / 256.0f;
         global_volume = std::fmin(1.0f, std::fmax(0.0f, global_volume));
         blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
@@ -187,11 +231,11 @@ void blit_menu_update(uint32_t time) {
     }
   } else if (blit::buttons & blit::Button::DPAD_LEFT ) {
     switch(menu_item) {
-      case 0: // Brightness
+      case BACKLIGHT:
         blit::backlight -= 1.0f / 256.0f;
         blit::backlight = std::fmin(1.0f, std::fmax(0.0f, blit::backlight));
         break;
-      case 1: // Volume
+      case VOLUME:
         global_volume -= 1.0f / 256.0f;
         global_volume = std::fmin(1.0f, std::fmax(0.0f, global_volume));
         blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
@@ -199,13 +243,13 @@ void blit_menu_update(uint32_t time) {
     }
   } else if (blit::buttons & changed_buttons & blit::Button::A) {
       switch(menu_item) {
-        case 2:
+        case DFU:
           DFUBoot();
           break;
-        case 3:
+        case SHIPPING:
           bq24295_enable_shipping_mode(&hi2c4);
           break;
-        case 4:
+        case SWITCH_EXE:
           blit::switch_execution();
           break;
       }
@@ -266,62 +310,45 @@ void blit_menu_render(uint32_t time) {
   screen.pen = Pen(255, 255, 255);
   screen.rectangle(Rect(0, 15, screen_width, 1));
 
-  if(menu_item == 0){
-    screen.pen = Pen(50, 50, 70);
-    screen.rectangle(Rect(0, 19, screen_width, 9));
+  // Selected item
+  screen.pen = Pen(50, 50, 70);
+  screen.rectangle(menu_item_frame(menu_item, screen_width));
+
+  // Menu rows
+
+  for (int i = BACKLIGHT; i < LAST_COUNT; i++) {
+    const MenuItem item = (MenuItem)i;
+
     screen.pen = Pen(255, 255, 255);
+    screen.text(menu_name(item), minimal_font, menu_title_origin(item));
+
+    switch (i) {
+      case BACKLIGHT:
+        screen.pen = bar_background_color;
+        screen.rectangle(Rect(screen_width / 2, 21, 75, 5));
+        screen.pen = Pen(255, 255, 255);
+        screen.rectangle(Rect(screen_width / 2, 21, 75 * blit::backlight, 5));
+
+        break;
+      case VOLUME:
+        screen.pen = bar_background_color;
+        screen.rectangle(Rect(screen_width / 2, 31, 75, 5));
+        screen.pen = Pen(255, 255, 255);
+        screen.rectangle(Rect(screen_width / 2, 31, 75 * global_volume, 5));
+
+        break;
+      case DFU:
+      case SHIPPING:
+      case SWITCH_EXE:
+        screen.pen = Pen(255, 255, 255);
+        screen.text("Press A", minimal_font, press_a_origin(item, screen_width));
+        break;  
+    }
+
   }
 
-  // menu bar
 
-
-  screen.text("Backlight", minimal_font, Point(5, 20));
-  screen.pen = bar_background_color;
-  screen.rectangle(Rect(screen_width / 2, 21, 75, 5));
-  screen.pen = Pen(255, 255, 255);
-  screen.rectangle(Rect(screen_width / 2, 21, 75 * blit::backlight, 5));
-
-  if(menu_item == 1){
-    screen.pen = Pen(50, 50, 70);
-    screen.rectangle(Rect(0, 29, screen_width, 9));
-    screen.pen = Pen(255, 255, 255);
-  }
-
-  screen.text("Volume", minimal_font, Point(5, 30));
-  screen.pen = bar_background_color;
-  screen.rectangle(Rect(screen_width / 2, 31, 75, 5));
-  screen.pen = Pen(255, 255, 255);
-  screen.rectangle(Rect(screen_width / 2, 31, 75 * global_volume, 5));
-
-  if(menu_item == 2){
-    screen.pen = Pen(50, 50, 70);
-    screen.rectangle(Rect(0, 39, screen_width, 9));
-    screen.pen = Pen(255, 255, 255);
-  }
-
-  screen.text("DFU", minimal_font, Point(5, 40));
-  screen.text("Press A", minimal_font, Point(screen_width / 2, 40));
-
-  if(menu_item == 3){
-    screen.pen = Pen(50, 50, 70);
-    screen.rectangle(Rect(0, 49, screen_width, 9));
-    screen.pen = Pen(255, 255, 255);
-  }
-
-  screen.text("Shipping", minimal_font, Point(5, 50));
-  screen.text("Press A", minimal_font, Point(screen_width / 2, 50));
-
-
-  if(menu_item == 4){
-    screen.pen = Pen(50, 50, 70);
-    screen.rectangle(Rect(0, 59, screen_width, 9));
-    screen.pen = Pen(255, 255, 255);
-  }
-
-  screen.text("Switch Exe", minimal_font, Point(5, 60));
-  screen.text("Press A", minimal_font, Point(screen_width / 2, 60));
-
-  // Horizontal Line
+  // Bottom horizontal Line
   screen.pen = Pen(255, 255, 255);
   screen.rectangle(Rect(0, screen_height - 15, screen_width, 1));
 
