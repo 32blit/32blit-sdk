@@ -30,13 +30,15 @@
 #include "usbd_msc.h"
 #include "usbd_storage_if.h"
 
+#include "USBManager.h"
+
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-extern bool g_bMountMassMedia;
+USBManager g_usbManager;
 /* USER CODE END PV */
 
 /* USER CODE BEGIN PFP */
@@ -78,7 +80,7 @@ void MX_USB_DEVICE_Init(void)
   }
 
 
-  if(g_bMountMassMedia)
+  if(g_usbManager.GetType() == USBManager::usbtMSC)
   {
 		if (USBD_RegisterClass(&hUsbDeviceHS, &USBD_MSC) != USBD_OK)
 		{
