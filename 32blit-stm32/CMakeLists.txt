@@ -46,6 +46,10 @@ list(APPEND SOURCES
 	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c
 	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c
 	Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c
+	Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc.c
+  Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_bot.c
+  Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_data.c 
+  Src/usbd_msc_scsi.c
 	Src/system_stm32h7xx.c
 	Src/user_diskio.c
 	Src/fatfs.c
@@ -55,6 +59,7 @@ list(APPEND SOURCES
 	Src/usbd_conf.c
 	Src/usbd_desc.c
 	Src/usbd_cdc_if.c
+	Src/usbd_storage_if.c	
 	Src/display.cpp
 	Src/gpio.cpp
 	Src/jpeg.c
@@ -99,6 +104,7 @@ set(INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/FatFs/src
 	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/ST/STM32_USB_Device_Library/Core/Inc
 	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
+	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Inc
 	${CMAKE_CURRENT_SOURCE_DIR}/Utilities
 	${CMAKE_CURRENT_SOURCE_DIR}/../32blit
 )

@@ -27,13 +27,16 @@
 #include "usbd_cdc.h"
 #include "usbd_cdc_if.h"
 
+#include "usbd_msc.h"
+#include "usbd_storage_if.h"
+
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
+extern bool g_bMountMassMedia;
 /* USER CODE END PV */
 
 /* USER CODE BEGIN PFP */
@@ -73,14 +76,31 @@ void MX_USB_DEVICE_Init(void)
   {
     Error_Handler();
   }
-  if (USBD_RegisterClass(&hUsbDeviceHS, &USBD_CDC) != USBD_OK)
+
+
+  if(g_bMountMassMedia)
   {
-    Error_Handler();
+		if (USBD_RegisterClass(&hUsbDeviceHS, &USBD_MSC) != USBD_OK)
+		{
+			Error_Handler();
+		}
+		if (USBD_MSC_RegisterStorage(&hUsbDeviceHS, &USBD_Storage_Interface_fops_HS) != USBD_OK)
+		{
+			Error_Handler();
+		}
   }
-  if (USBD_CDC_RegisterInterface(&hUsbDeviceHS, &USBD_Interface_fops_HS) != USBD_OK)
+  else
   {
-    Error_Handler();
+		if (USBD_RegisterClass(&hUsbDeviceHS, &USBD_CDC) != USBD_OK)
+		{
+			Error_Handler();
+		}
+		if (USBD_CDC_RegisterInterface(&hUsbDeviceHS, &USBD_Interface_fops_HS) != USBD_OK)
+		{
+			Error_Handler();
+		}
   }
+
   if (USBD_Start(&hUsbDeviceHS) != USBD_OK)
   {
     Error_Handler();
