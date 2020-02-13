@@ -29,17 +29,9 @@ namespace blit {
     uint32_t o = offset(cr);
 
     for (uint8_t y = cr.y; y < cr.y + cr.h; y++) {
-      bf((uint8_t *)&_pen, this, o, cr.w);
+      pbf(&pen, this, o, cr.w);
       o += bounds.w;
     }
-  }
-
-  void Surface::_pixel(const uint32_t &o) {
-    bf((uint8_t *)&_pen, this, o, 1);
-  }
-
-  void Surface::_pixel(const Point &p) {
-    bf((uint8_t *)&_pen, this, offset(p), 1);
   }
 
   /**
@@ -51,7 +43,7 @@ namespace blit {
     if (!clip.contains(p))
       return;
 
-    bf((uint8_t *)&_pen, this, offset(p), 1);
+    pbf(&pen, this, offset(p), 1);
   }
 
   /**
@@ -74,7 +66,7 @@ namespace blit {
     }
 
     while (c > 0) {
-      bf((uint8_t *)&_pen, this, offset(p), 1);
+      pbf(&pen, this, offset(p), 1);
       p.y++;
       c--;
     }
@@ -100,7 +92,7 @@ namespace blit {
     }
 
     if (c > 0) {
-      bf((uint8_t *)&_pen, this, offset(p), c);
+      pbf(&pen, this, offset(p), c);
     }
   }
 
@@ -160,7 +152,7 @@ namespace blit {
 
     while (true) {
       if (clip.contains(p)) {
-        bf((uint8_t *)&_pen, this, offset(p), 1);
+        pbf(&pen, this, offset(p), 1);
       }
 
       if ((p.x == p2.x) && (p.y == p2.y)) break;
@@ -246,7 +238,7 @@ namespace blit {
 
       for (p.x = bounds.x; p.x <= bounds.x + bounds.w; p.x++) {
         if ((w0 | w1 | w2) >= 0) {
-          bf((uint8_t *)&_pen, this, offset(p), 1);
+          pbf(&pen, this, offset(p), 1);
         }
 
         w0 += a12;

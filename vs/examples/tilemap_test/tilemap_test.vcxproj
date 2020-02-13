@@ -154,10 +154,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\examples\tilemap_test\tilemap_test.hpp" />
+    <ClInclude Include="..\..\..\examples\tilemap-test\tilemap-test.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\tilemap_test\tilemap_test.cpp" />
+    <ClCompile Include="..\..\..\examples\tilemap-test\tilemap-test.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

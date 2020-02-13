@@ -1,6 +1,10 @@
+#undef UNUSED
+#define UNUSED(x) ((void)(__typeof__(x))(x)) // suppress "UNUSED" warnings
 
 #include "32blit.hpp"
 #include "fatfs.h"
+#include "persistence.h"
+
 
 // Functions defined by user code files
 extern void init();

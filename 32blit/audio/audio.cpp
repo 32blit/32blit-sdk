@@ -1,8 +1,8 @@
 /*! \file audio.cpp
     \brief Audio engine
 */
-#include "engine.hpp"
-#include "input.hpp"
+#include "../engine/engine.hpp"
+#include "../engine/input.hpp"
 #include "../32blit.hpp"
 
 #include "audio.hpp"
@@ -39,6 +39,8 @@ namespace blit {
             break;
           case ADSRPhase::RELEASE:
             channel.off();
+            break;
+          default:
             break;
         }
       }
@@ -97,9 +99,9 @@ namespace blit {
         if(channel.waveforms & Waveform::WAVE) {
           channel.waveform_offset = channel.wave_buf_pos;   // Unsure if needed?
           channel_sample += channel.wave_buffer[channel.wave_buf_pos] << 8;
-          if (channel.wave_buf_pos++ == 64) { // If the position is at the end, reset and hit up callback for more.
+          if (++channel.wave_buf_pos == 64) { // If the position is at the end, reset and hit up callback for more.
             channel.wave_buf_pos = 0;
-            (*channel.callback_waveBufferRefresh)();
+            (*channel.callback_waveBufferRefresh)(channel.wave_callback_arg);
           }
           waveform_count++;
         }

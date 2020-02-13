@@ -9,9 +9,9 @@
 #define __attribute__(A)
 #endif
 
+#include "font.hpp"
 #include "../types/rect.hpp"
 #include "../types/size.hpp"
-#include "../types/pixel_format.hpp"
 #include "../graphics/blend.hpp"
 
 namespace blit {
@@ -52,31 +52,60 @@ namespace blit {
     bottom_right  = bottom   | right,
   };
 
+  enum class PixelFormat {
+    RGB = 0,   // red, green, blue (8-bits per channel)
+    RGBA = 1,   // red, green, blue, alpha (8-bits per channel)
+    P = 2,   // palette entry (8-bits) into attached palette
+    M = 3    // mask (8-bits, single channel)
+  };
+
+  static const uint8_t pixel_format_stride[] = {
+    3,             // RGB
+    4,             // RGBA
+    1,             // P
+    1,             // M
+  };
+
+#pragma pack(push, 1)
+  struct Pen {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t a;
+
+    Pen() : r(0), g(0), b(0), a(0) {}
+    Pen(int a) : r(0), g(0), b(0), a(a) {}
+    Pen(float a) : r(0), g(0), b(0), a((uint8_t)(a * 255.0f)) {}
+    Pen(int r, int g, int b, int a = 255) : r(r), g(g), b(b), a(a) {}
+    Pen(float r, float g, float b, float a = 1.0f) : r((uint8_t)(r * 255.0f)), g((uint8_t)(g * 255.0f)), b((uint8_t)(b * 255.0f)), a((uint8_t)(a * 255.0f)) {}
+  };
+#pragma pack(pop)
+
   struct Surface {
 
     uint8_t                        *data;                     // pointer to pixel data (for `rgba` format has pre-multiplied alpha)
     Size                            bounds;                   // size of surface in pixels
     
-    Rect                            clip;                     // clip rectangle
-
-    RGBA                            _pen;                     // current pen
+    Rect                            clip;                     // clipping rectangle for drawing operations
     uint8_t                         alpha = 255;              // global alpha for drawing operations
+    Pen                             pen;                      // current pen for drawing operations
 
     PixelFormat                     format;                   // surface pixel format
-    uint8_t                         stride;                   // bytes per pixel
+    uint8_t                         pixel_stride;             // bytes per pixel
     uint16_t                        row_stride;               // bytes per row
 
-    Surface                        *mask = nullptr;           // mask pointer
+    Surface                        *mask = nullptr;           // optional mask
+    Pen                            *palette;                  // palette entries (for paletted images)
 
     SpriteSheet                    *sprites = nullptr;        // active spritesheet
 
-    std::vector<RGBA>               palette;                  // palette entries (for paletted images)
     uint8_t                         transparent_index = 0;    // index of transparent colour (for paletted surfaces)
 
     // blend functions
-    blit::blend_span_func           bf;
-    std::array<BlendBlitFunc, 5>    bbf;
-    std::vector<Surface *>          mipmaps;
+    blit::PenBlendFunc              pbf;
+    blit::BlitBlendFunc             bbf;
+    
+    std::vector<Surface *>          mipmaps;                  // TODO: probably too niche/specific to attach directly to surface
 
   private:
     void init();
@@ -84,27 +113,23 @@ namespace blit {
 
   public:    
     Surface(uint8_t *data, const PixelFormat &format, const Size &bounds);
-    Surface(uint8_t *data, const PixelFormat&format, const packed_image *image);
+    Surface(uint8_t *data, const PixelFormat &format, const packed_image *image);
 
     Surface *load(const packed_image *image);
 
     // helpers to retrieve pointer to pixel
-    __attribute__((always_inline)) uint8_t* ptr(const Rect &r)   { return data + r.x * stride + r.y * row_stride; }
-    __attribute__((always_inline)) uint8_t* ptr(const Point &p)  { return data + p.x * stride + p.y * row_stride; }
-    __attribute__((always_inline)) uint8_t* ptr(const int32_t &x, const int32_t &y) { return data + x * stride + y * row_stride; }
+    __attribute__((always_inline)) inline uint8_t* ptr(const Rect &r)   { return data + r.x * pixel_stride + r.y * row_stride; }
+    __attribute__((always_inline)) inline uint8_t* ptr(const Point &p)  { return data + p.x * pixel_stride + p.y * row_stride; }
+    __attribute__((always_inline)) inline uint8_t* ptr(const int32_t &x, const int32_t &y) { return data + x * pixel_stride + y * row_stride; }
 
-    __attribute__((always_inline)) uint32_t offset(const Rect &r) { return r.x + r.y * bounds.w; }
-    __attribute__((always_inline)) uint32_t offset(const Point &p) { return p.x + p.y * bounds.w; }
-    __attribute__((always_inline)) uint32_t offset(const int32_t &x, const int32_t &y) { return x + y * bounds.w; }    
+    __attribute__((always_inline)) inline uint32_t offset(const Rect &r) { return r.x + r.y * bounds.w; }
+    __attribute__((always_inline)) inline uint32_t offset(const Point &p) { return p.x + p.y * bounds.w; }
+    __attribute__((always_inline)) inline uint32_t offset(const int32_t &x, const int32_t &y) { return x + y * bounds.w; }    
 
     void generate_mipmaps(uint8_t depth);
 
-    void pen(RGBA v);
-
     void clear();
     void pixel(const Point &p);
-    void _pixel(const Point &p);
-    void _pixel(const uint32_t &o);
     void v_span(Point p, int16_t c);
     void h_span(Point p, int16_t c);
     void rectangle(const Rect &r);
@@ -114,10 +139,10 @@ namespace blit {
     void triangle(Point p1, Point p2, Point p3);
     void polygon(std::vector<Point> p);
 
-    void text(std::string message, const uint8_t *font, const Rect &r, bool variable = true, TextAlign align = TextAlign::top_left, Rect clip = Rect(0, 0, 1000, 1000));
-    void text(std::string message, const uint8_t *font, const Point &p, bool variable = true, TextAlign align = TextAlign::top_left, Rect clip = Rect(0, 0, 1000, 1000));
-    Size measure_text(std::string message, const uint8_t *font, bool variable = true);
-    std::string wrap_text(std::string message, int32_t width, const uint8_t *font, bool variable = true, bool words = true);
+    void text(std::string message, const Font &font, const Rect &r, bool variable = true, TextAlign align = TextAlign::top_left, Rect clip = Rect(0, 0, 1000, 1000));
+    void text(std::string message, const Font &font, const Point &p, bool variable = true, TextAlign align = TextAlign::top_left, Rect clip = Rect(0, 0, 1000, 1000));
+    Size measure_text(std::string message, const Font &font, bool variable = true);
+    std::string wrap_text(std::string message, int32_t width, const Font &font, bool variable = true, bool words = true);
 
     /*void outline_circle(const point &c, int32_t r);
     

@@ -1,6 +1,7 @@
 #include "32blit.hpp"
 #include "CDCCommandHandler.h"
 #include "fatfs.h"
+#include "persistence.h"
 
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240
@@ -10,7 +11,7 @@
 #define ROW_HEIGHT 10
 #define ROW(x) Point(0,x * ROW_HEIGHT)
 #define MAX_FILENAME 256+1
-#define MAX_FILELEN 5+1
+#define MAX_FILELEN 16+1
 #define PAGE_SIZE 256
 
 class FlashLoader : public CDCCommandHandler

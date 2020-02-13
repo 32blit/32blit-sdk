@@ -152,8 +152,6 @@ namespace blit {
    * \param[in] ewc
    */
   void TileMap::texture_span(Surface *dest, Point s, uint16_t c, Vec2 swc, Vec2 ewc) {
-    BlendBlitFunc bbf = dest->bbf[static_cast<uint8_t>(sprites->format)];
-
     Surface *src = sprites;
 
     Vec2 wc = swc;
@@ -184,7 +182,7 @@ namespace blit {
         u += (tile_id & 0b1111) * 8;
         v += (tile_id >> 4) * 8;
 
-        bbf(src, src->offset(u, v), dest, doff, 1, 1);
+        dest->bbf(src, src->offset(u, v), dest, doff, 1, 1);
       }
 
       wc += dwc;

@@ -3,15 +3,16 @@
 #include <random>
 #include "SDL.h"
 
+#include "File.hpp"
 #include "System.hpp"
 #include "32blit.hpp"
 #include "UserCode.hpp"
 
 
 // blit framebuffer memory
-blit::RGB565 __ltdc_buffer[320 * 240 * 2];
-blit::Surface __ltdc((uint8_t *)__ltdc_buffer, blit::PixelFormat::RGB565, blit::Size(320, 240));
-blit::Surface __fb((uint8_t *)__ltdc_buffer + (320 * 240 * 2), blit::PixelFormat::RGB, blit::Size(160, 120));
+uint8_t framebuffer[320 * 240 * 3];
+blit::Surface __fb_hires((uint8_t *)framebuffer, blit::PixelFormat::RGB, blit::Size(320, 240));
+blit::Surface __fb_lores((uint8_t *)framebuffer, blit::PixelFormat::RGB, blit::Size(160, 120));
 
 // blit debug callback
 void debug(std::string message) {
@@ -32,10 +33,10 @@ blit::ScreenMode _mode = blit::ScreenMode::lores;
 void set_screen_mode(blit::ScreenMode new_mode) {
 	_mode = new_mode;
 	if (_mode == blit::ScreenMode::hires) {
-		blit::screen = __ltdc;
+		blit::screen = __fb_hires;
 	}
 	else {
-		blit::screen = __fb;
+		blit::screen = __fb_lores;
 	}
 }
 
@@ -107,6 +108,13 @@ void System::run() {
 	blit::update = ::update;
 	blit::render = ::render;
 
+	setup_base_path();
+
+	blit::open_file = ::open_file;
+	blit::read_file = ::read_file;
+	blit::close_file = ::close_file;
+	blit::list_files = ::list_files;
+
 	::set_screen_mode(blit::lores);
 
 #ifdef __EMSCRIPTEN__
@@ -177,23 +185,17 @@ void System::loop()
 }
 
 Uint32 System::mode() {
-	if (_mode == blit::ScreenMode::lores) {
-		return SDL_PIXELFORMAT_RGB24;
-	}
-	else
-	{
-		return SDL_PIXELFORMAT_RGB565;
-	}
+	return _mode;
 }
 
 void System::update_texture(SDL_Texture *texture) {
 	blit::render(::now());
 	if (_mode == blit::ScreenMode::lores) {
-		SDL_UpdateTexture(texture, NULL, (uint8_t *)__fb.data, 160 * 3);
+		SDL_UpdateTexture(texture, NULL, __fb_lores.data, 160 * 3);
 	}
 	else
 	{
-		SDL_UpdateTexture(texture, NULL, (uint8_t *)__ltdc.data, 320 * sizeof(uint16_t));
+		SDL_UpdateTexture(texture, NULL, __fb_hires.data, 320 * 3);
 	}
 }
 
@@ -240,4 +242,26 @@ void System::stop() {
 
 	SDL_SemPost(s_timer_stop);
 	SDL_WaitThread(t_system_timer, &returnValue);
+}
+
+
+// us timer used by profiler
+// need code here for non stm32 based builds
+
+void EnableUsTimer(void)
+{
+	// Enable/initialise timer
+}
+
+uint32_t GetUsTimer(void)
+{
+	// get current time in us
+	uint64_t ticksPerUs = SDL_GetPerformanceFrequency() / 1000000;
+	return SDL_GetPerformanceCounter() / ticksPerUs;
+}
+
+uint32_t GetMaxUsTimer(void)
+{
+	// largest us value timer can produce for wrapping
+	return UINT32_MAX;
 }

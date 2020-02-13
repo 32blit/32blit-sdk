@@ -28,15 +28,15 @@ void render(uint32_t time) {
 
   for(int b = 0; b < SCREEN_WIDTH; b++){
     for(int v = 0; v < SCREEN_HEIGHT; v++){
-        screen.pen(blit::hsv_to_rgba(float(b) / (float)(SCREEN_WIDTH), 1.0f, float(v) / (float)(SCREEN_HEIGHT)));
+        screen.pen = blit::hsv_to_rgba(float(b) / (float)(SCREEN_WIDTH), 1.0f, float(v) / (float)(SCREEN_HEIGHT));
         screen.pixel(Point(b, v));
     }
   }
 
-  screen.text("Time:", &minimal_font[0][0], Point(COL1, ROW1));
+  screen.text("Time:", minimal_font, Point(COL1, ROW1));
 
   sprintf(text_buf, "%" PRIu32, time);
-  screen.text(text_buf, &minimal_font[0][0], Point(COL2, ROW1));
+  screen.text(text_buf, minimal_font, Point(COL2, ROW1));
 
   blit::debugf("Hello from 32blit time = %lu\n\r", time);
 

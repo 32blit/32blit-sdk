@@ -34,7 +34,7 @@ void render(uint32_t time) {
 
     for(int b = 0; b < SCREEN_WIDTH; b++){
         for(int v = 0; v < SCREEN_HEIGHT; v++){
-            screen.pen(blit::hsv_to_rgba(float(b) / (float)(SCREEN_WIDTH), 1.0f, float(v) / (float)(SCREEN_HEIGHT)));
+            screen.pen = blit::hsv_to_rgba(float(b) / (float)(SCREEN_WIDTH), 1.0f, float(v) / (float)(SCREEN_HEIGHT));
             screen.pixel(Point(b, v));
         }
     }
@@ -45,40 +45,40 @@ void render(uint32_t time) {
     if(button_x){vibration += 0.3f;}
     if(button_y){vibration += 0.4f;}
 
-    screen.pen(button_a ? RGBA(255, 0, 0) : RGBA(128, 128, 128));
-    screen.text("A", &minimal_font[0][0], Point(150, 15));
+    screen.pen = button_a ? Pen(255, 0, 0) : Pen(128, 128, 128);
+    screen.text("A", minimal_font, Point(150, 15));
 
-    screen.pen(button_b ? RGBA(255, 0, 0) : RGBA(128, 128, 128));
-    screen.text("B", &minimal_font[0][0], Point(140, 25));
+    screen.pen = button_b ? Pen(255, 0, 0) : Pen(128, 128, 128);
+    screen.text("B", minimal_font, Point(140, 25));
 
-    screen.pen(button_x ? RGBA(255, 0, 0) : RGBA(128, 128, 128));
-    screen.text("X", &minimal_font[0][0], Point(140, 5));
+    screen.pen = button_x ? Pen(255, 0, 0) : Pen(128, 128, 128);
+    screen.text("X", minimal_font, Point(140, 5));
 
-    screen.pen(button_y ? RGBA(255, 0, 0) : RGBA(128, 128, 128));
-    screen.text("Y", &minimal_font[0][0], Point(130, 15));
-
-
-    screen.pen(dpad_r ? RGBA(255, 0, 0) : RGBA(128, 128, 128));
-    screen.text("R", &minimal_font[0][0], Point(25, 15));
-
-    screen.pen(dpad_d ? RGBA(255, 0, 0) : RGBA(128, 128, 128));
-    screen.text("D", &minimal_font[0][0], Point(15, 25));
-
-    screen.pen(dpad_u ? RGBA(255, 0, 0) : RGBA(128, 128, 128));
-    screen.text("U", &minimal_font[0][0], Point(15, 5));
-
-    screen.pen(dpad_l ? RGBA(255, 0, 0) : RGBA(128, 128, 128));
-    screen.text("L", &minimal_font[0][0], Point(5, 15));
+    screen.pen = button_y ? Pen(255, 0, 0) : Pen(128, 128, 128);
+    screen.text("Y", minimal_font, Point(130, 15));
 
 
-    screen.pen(button_m ? RGBA(255, 0, 0) : RGBA(128, 128, 128));
-    screen.text("MENU", &minimal_font[0][0], Point(55, 15));
+    screen.pen = dpad_r ? Pen(255, 0, 0) : Pen(128, 128, 128);
+    screen.text("R", minimal_font, Point(25, 15));
 
-    screen.pen(button_h ? RGBA(255, 0, 0) : RGBA(128, 128, 128));
-    screen.text("HOME", &minimal_font[0][0], Point(85, 15));
+    screen.pen = dpad_d ? Pen(255, 0, 0) : Pen(128, 128, 128);
+    screen.text("D", minimal_font, Point(15, 25));
+
+    screen.pen = dpad_u ? Pen(255, 0, 0) : Pen(128, 128, 128);
+    screen.text("U", minimal_font, Point(15, 5));
+
+    screen.pen = dpad_l ? Pen(255, 0, 0) : Pen(128, 128, 128);
+    screen.text("L", minimal_font, Point(5, 15));
 
 
-    screen.pen(RGBA(255, 0, 0));
+    screen.pen = button_m ? Pen(255, 0, 0) : Pen(128, 128, 128);
+    screen.text("MENU", minimal_font, Point(55, 15));
+
+    screen.pen = button_h ? Pen(255, 0, 0) : Pen(128, 128, 128);
+    screen.text("HOME", minimal_font, Point(85, 15));
+
+
+    screen.pen = Pen(255, 0, 0);
 
     screen.pixel(Point(
         (SCREEN_WIDTH / 2) + blit::joystick.x * 30,
@@ -86,17 +86,17 @@ void render(uint32_t time) {
     ));
 
 
-    screen.pen(RGBA(255, 255, 255));
+    screen.pen = Pen(255, 255, 255);
 
-    screen.text("Joystick:", &minimal_font[0][0], Point(COL1, ROW1));
+    screen.text("Joystick:", minimal_font, Point(COL1, ROW1));
 
-    sprintf(text_buf, "X: %d", (int)(blit::joystick.x * 1024));
-    screen.text(text_buf, &minimal_font[0][0], Point(COL1, ROW1+7));
+    snprintf(text_buf, 100, "X: %d", (int)(blit::joystick.x * 1024));
+    screen.text(text_buf, minimal_font, Point(COL1, ROW1+7));
 
-    sprintf(text_buf, "Y: %d", (int)(blit::joystick.y * 1024));
-    screen.text(text_buf, &minimal_font[0][0], Point(COL1, ROW1+14));
+    snprintf(text_buf, 100, "Y: %d", (int)(blit::joystick.y * 1024));
+    screen.text(text_buf, minimal_font, Point(COL1, ROW1+14));
 
-    screen.text("B:", &minimal_font[0][0], Point(COL1, ROW1+21));
+    screen.text("B:", minimal_font, Point(COL1, ROW1+21));
     if(blit::buttons & blit::Button::JOYSTICK) {
         screen.rectangle(Rect(
             COL1+10, ROW1+22,
@@ -104,62 +104,62 @@ void render(uint32_t time) {
         ));
     }
 
-    screen.text("Tilt:", &minimal_font[0][0], Point(COL2, ROW1));
+    screen.text("Tilt:", minimal_font, Point(COL2, ROW1));
 
-    sprintf(text_buf, "X: %d", (int)(blit::tilt.x * 1024));
-    screen.text(text_buf, &minimal_font[0][0], Point(COL2, ROW1+7));
+    snprintf(text_buf, 100, "X: %d", (int)(blit::tilt.x * 1024));
+    screen.text(text_buf, minimal_font, Point(COL2, ROW1+7));
 
-    sprintf(text_buf, "Y: %d", (int)(blit::tilt.y * 1024));
-    screen.text(text_buf, &minimal_font[0][0], Point(COL2, ROW1+14));
+    snprintf(text_buf, 100, "Y: %d", (int)(blit::tilt.y * 1024));
+    screen.text(text_buf, minimal_font, Point(COL2, ROW1+14));
 
-    sprintf(text_buf, "Z: %d", (int)(blit::tilt.z * 1024));
-    screen.text(text_buf, &minimal_font[0][0], Point(COL2, ROW1+21));
+    snprintf(text_buf, 100, "Z: %d", (int)(blit::tilt.z * 1024));
+    screen.text(text_buf, minimal_font, Point(COL2, ROW1+21));
 
-    blit::LED = RGB(
+    blit::LED = Pen(
         (float)((sin(blit::now() / 100.0f) + 1) / 2.0f),
         (float)((cos(blit::now() / 100.0f) + 1) / 2.0f),
         (float)((sin(blit::now() / 100.0f) + 1) / 2.0f)
     );
 
-    screen.text("Bat VBUS:", &minimal_font[0][0], Point(COL1, ROW3));
+    screen.text("Bat VBUS:", minimal_font, Point(COL1, ROW3));
     switch(battery_vbus_status){
         case 0b00: // Unknown
-            screen.text("Unknown", &minimal_font[0][0], Point(COL1, ROW3+7));
+            screen.text("Unknown", minimal_font, Point(COL1, ROW3+7));
             break;
         case 0b01: // USB Host
-            screen.text("USB Host", &minimal_font[0][0], Point(COL1, ROW3+7));
+            screen.text("USB Host", minimal_font, Point(COL1, ROW3+7));
             break;
         case 0b10: // Adapter Port
-            screen.text("Adapter", &minimal_font[0][0], Point(COL1, ROW3+7));
+            screen.text("Adapter", minimal_font, Point(COL1, ROW3+7));
             break;
         case 0b11: // OTG
-            screen.text("OTG", &minimal_font[0][0], Point(COL1, ROW3+7));
+            screen.text("OTG", minimal_font, Point(COL1, ROW3+7));
             break;
     }
 
-    screen.text("Bat Chrg:", &minimal_font[0][0], Point(COL2, ROW3));
+    screen.text("Bat Chrg:", minimal_font, Point(COL2, ROW3));
     switch(battery_charge_status){
         case 0b00: // Not Charging
-            screen.text("Nope", &minimal_font[0][0], Point(COL2, ROW3+7));
+            screen.text("Nope", minimal_font, Point(COL2, ROW3+7));
             break;
         case 0b01: // Pre-charge
-            screen.text("Pre", &minimal_font[0][0], Point(COL2, ROW3+7));
+            screen.text("Pre", minimal_font, Point(COL2, ROW3+7));
             break;
         case 0b10: // Fast Charging
-            screen.text("Fast", &minimal_font[0][0], Point(COL2, ROW3+7));
+            screen.text("Fast", minimal_font, Point(COL2, ROW3+7));
             break;
         case 0b11: // Charge Done
-            screen.text("Done", &minimal_font[0][0], Point(COL2, ROW3+7));
+            screen.text("Done", minimal_font, Point(COL2, ROW3+7));
             break;
     }
 
-    sprintf(text_buf, "%d", (int)(blit::battery * 1000.f));
-    screen.text("Battery:", &minimal_font[0][0], Point(COL3, ROW3));
-    screen.text(text_buf, &minimal_font[0][0], Point(COL3, ROW3+7));
+    snprintf(text_buf, 100, "%d", (int)(blit::battery * 1000.f));
+    screen.text("Battery:", minimal_font, Point(COL3, ROW3));
+    screen.text(text_buf, minimal_font, Point(COL3, ROW3+7));
 
-    sprintf(text_buf, "%d", blit::battery_fault);
-    screen.text("Fault:", &minimal_font[0][0], Point(COL3, ROW1));
-    screen.text(text_buf, &minimal_font[0][0], Point(COL3, ROW1+7));
+    snprintf(text_buf, 100, "%d", blit::battery_fault);
+    screen.text("Fault:", minimal_font, Point(COL3, ROW1));
+    screen.text(text_buf, minimal_font, Point(COL3, ROW1+7));
 }
 
 void update(uint32_t time) {

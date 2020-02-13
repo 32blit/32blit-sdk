@@ -54,7 +54,7 @@ extern const uint8_t LL_RCC_PrescTable[16];
 /* Private constants ---------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
 #if !defined(UNUSED)
-#define UNUSED(x) ((void)(x))
+#define UNUSED(x) ((void)(__typeof__(x))(x)) // suppress "UNUSED" warnings
 #endif
 
 /* 32            24           16            8             0

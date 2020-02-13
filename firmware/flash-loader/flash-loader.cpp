@@ -46,6 +46,8 @@ void FlashLoader::Init()
 
 	// register LS
 	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value, this);
+
+	m_uCurrentFile = persist.selected_menu_item;
 }
 
 
@@ -70,6 +72,10 @@ void FlashLoader::FSInit(void)
 			m_uFileCount++;
 		}
 		fr = f_findnext(&dj, &fno);
+	}
+
+	if(m_uCurrentFile > m_uFileCount) {
+		m_uCurrentFile = m_uFileCount;
 	}
 
 	f_closedir(&dj);
@@ -179,25 +185,25 @@ void FlashLoader::Render(uint32_t time)
 // RenderSaveFile() Render file save progress %
 void FlashLoader::RenderSaveFile(uint32_t time)
 {
-	screen.pen(RGBA(0,0,0));
+	screen.pen = Pen(0,0,0);
 	screen.rectangle(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
-	screen.pen(RGBA(255, 255, 255));
+	screen.pen = Pen(255, 255, 255);
 	char buffer[128];
 	sprintf(buffer, "Saving %.2u%%", (uint16_t)m_fPercent);
-	screen.text(buffer, &minimal_font[0][0], ROW(0));
+	screen.text(buffer, minimal_font, ROW(0));
 }
 
 
 // RenderFlashCDC() Render flashing progress %
 void FlashLoader::RenderFlashCDC(uint32_t time)
 {
-	screen.pen(RGBA(0,0,0));
+	screen.pen = Pen(0,0,0);
 	screen.rectangle(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
-	screen.pen(RGBA(255, 255, 255));
+	screen.pen = Pen(255, 255, 255);
 
 	char buffer[128];
 	sprintf(buffer, "Flashing %.2u%%", (uint16_t)m_fPercent);
-	screen.text(buffer, &minimal_font[0][0], ROW(0));
+	screen.text(buffer, minimal_font, ROW(0));
 }
 
 
@@ -225,26 +231,26 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 
 	lastButtons = buttons;
 
-	screen.pen(RGBA(0,0,0));
+	screen.pen = Pen(0,0,0);
 	screen.rectangle(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
-	screen.pen(RGBA(255, 255, 255));
+	screen.pen = Pen(255, 255, 255);
 
 	// just display
 	if(m_uFileCount)
 	{
-		screen.pen(RGBA(50, 50, 70));
+		screen.pen = Pen(50, 50, 70);
 		screen.rectangle(Rect(0, ROW_HEIGHT*m_uCurrentFile, SCREEN_WIDTH, ROW_HEIGHT));
-		screen.pen(RGBA(255, 255, 255));
+		screen.pen = Pen(255, 255, 255);
 
 		for(uint8_t uF = 0; uF < m_uFileCount; uF++) {
 			// TODO: A single line of text should probably vertically center in a 10px bounding box
 			// but in this case it needs to be fudged to 14 pixels
-			screen.text(m_filenames[uF], &minimal_font[0][0], Rect(ROW(uF).x + 5, ROW(uF).y, 310, 14), true, TextAlign::center_v);
+			screen.text(m_filenames[uF], minimal_font, Rect(ROW(uF).x + 5, ROW(uF).y, 310, 14), true, TextAlign::center_v);
 		}
 	}
 	else
 	{
-		screen.text("No Files Found.", &minimal_font[0][0], ROW(0));
+		screen.text("No Files Found.", minimal_font, ROW(0));
 	}
 
 	if(button_up)
@@ -270,6 +276,8 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 			blit::switch_execution();
 		}
 	}
+
+	persist.selected_menu_item = m_uCurrentFile;
 }
 
 

@@ -179,7 +179,7 @@ uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
     bool round_bl = (feature_map & (TILE_BELOW_LEFT | TILE_BELOW | TILE_LEFT)) == 0;
     bool round_br = (feature_map & (TILE_BELOW_RIGHT | TILE_BELOW | TILE_RIGHT)) == 0;
 
-    RGBA color_base = hsv_to_rgba(((120 - tile_y) + 110.0f) / 120.0f, 0.5f, 0.8f);
+    Pen color_base = hsv_to_rgba(((120 - tile_y) + 110.0f) / 120.0f, 0.5f, 0.8f);
 
     if(tile & TILE_SOLID) {
         // Draw tiles without anti-aliasing to save code bloat
@@ -192,7 +192,7 @@ uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
                 if(round_tr && px == TILE_W - 1 && py == 0) continue;
                 if(round_bl && px == 0 && py == TILE_H - 1) continue;
                 if(round_br && px == TILE_H - 1 && py == TILE_H - 1) continue;
-                screen.pen(color_base);
+                screen.pen = color_base;
                 screen.pixel(Point(tile_x + px, tile_y + py));
             }
         }
@@ -201,11 +201,11 @@ uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
             // Draw the top left/right rounded inside corners
             // for an empty tile.
             if (feature_map & TILE_LEFT) {
-                screen.pen(color_base);
+                screen.pen = color_base;
                 screen.pixel(Point(tile_x, tile_y));
             }
             if (feature_map & TILE_RIGHT) {
-                screen.pen(color_base);
+                screen.pen = color_base;
                 screen.pixel(Point(tile_x + TILE_W - 1, tile_y));
             }
         }
@@ -214,17 +214,17 @@ uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
             // of this one then it's a little pocket we can fill with water!
             // TODO: Make this not look rubbish
             if(feature_map & TILE_LEFT && feature_map & TILE_RIGHT) {
-                screen.pen(RGBA(200, 200, 255, 128));
+                screen.pen = Pen(200, 200, 255, 128);
                 screen.rectangle(Rect(tile_x, tile_y + (TILE_H / 2), TILE_W, TILE_H / 2));
             }
             // Draw the bottom left/right rounded inside corners
             // for an empty tile.
             if(feature_map & TILE_LEFT) {
-                screen.pen(color_base);
+                screen.pen = color_base;
                 screen.pixel(Point(tile_x, tile_y + TILE_H - 1));
             }
             if(feature_map & TILE_RIGHT) {
-                screen.pen(color_base);
+                screen.pen = color_base;
                 screen.pixel(Point(tile_x + TILE_W - 1, tile_y + TILE_H - 1));
             }
         }
@@ -436,7 +436,7 @@ uint8_t collide_player_lr(uint8_t tile, uint8_t x, uint8_t y, void *args) {
         || ((PLAYER_TOP > tile_top) && PLAYER_TOP < tile_bottom)){
             // Collide the left-hand side of the tile right of player
             if(PLAYER_RIGHT > tile_left && (PLAYER_LEFT < tile_left)){
-                // screen.pen(rgba(255, 255, 255, 100));
+                // screen.pen = Pen(255, 255, 255, 100);
                 // screen.rectangle(rect(tile_x, tile_y, TILE_W, TILE_H));
                 player_position.x = float(tile_left - PLAYER_W);
                 player_velocity.x = 0.0f;
@@ -447,7 +447,7 @@ uint8_t collide_player_lr(uint8_t tile, uint8_t x, uint8_t y, void *args) {
             }
             // Collide the right-hand side of the tile left of player
             if((PLAYER_LEFT < tile_right) && (PLAYER_RIGHT > tile_right)) {
-                // screen.pen(rgba(255, 255, 255, 100));
+                // screen.pen = Pen(255, 255, 255, 100);
                 // screen.rectangle(rect(tile_x, tile_y, TILE_W, TILE_H));
                 player_position.x = float(tile_right);
                 player_velocity.x = 0.0f;
@@ -682,22 +682,22 @@ void render_summary() {
     } else {
         text.append("Random Practice");
     }
-    screen.text(text, &minimal_font[0][0], Point(10, (SCREEN_H / 2) + 20));
+    screen.text(text, minimal_font, Point(10, (SCREEN_H / 2) + 20));
 
     if(current_random_source == RANDOM_TYPE_PRNG) {
         char buf[9];
-        sprintf(buf, "%08" PRIX32, current_random_seed);
+        snprintf(buf, 9, "%08" PRIX32, current_random_seed);
         text = "Level seed: ";
         text.append(buf);
-        screen.text(text, &minimal_font[0][0], Point(10, (SCREEN_H / 2) + 30));
+        screen.text(text, minimal_font, Point(10, (SCREEN_H / 2) + 30));
     }
 
     text = "Press B";
-    screen.text(text, &minimal_font[0][0], Point(10, (SCREEN_H / 2) + 40));
+    screen.text(text, minimal_font, Point(10, (SCREEN_H / 2) + 40));
 }
 
 void render(uint32_t time_ms) {
-    screen.pen(RGBA(0, 0, 0));
+    screen.pen = Pen(0, 0, 0);
     screen.clear();
     std::string text = "RAINBOW ASCENT";
 
@@ -705,38 +705,38 @@ void render(uint32_t time_ms) {
         for_each_tile(render_tile, (void *)&tile_offset);
 
         // Draw the player
-        screen.pen(RGBA(255, 255, 255));
+        screen.pen = Pen(255, 255, 255);
         screen.rectangle(Rect(player_position.x, player_position.y, PLAYER_W, PLAYER_H));
-        screen.pen(RGBA(255, 50, 50));
+        screen.pen = Pen(255, 50, 50);
         screen.rectangle(Rect(player_position.x, player_position.y, PLAYER_W, 1));
 
-        screen.pen(RGBA(0, 0, 0, 200));
+        screen.pen = Pen(0, 0, 0, 200);
         screen.clear();
 
         uint8_t x = 10;
         for(auto c : text) {
             uint8_t y = 20 + (5.0f * sin((time_ms / 250.0f) + (float(x) / text.length() * 2.0f * M_PIf)));
-            RGBA color_letter = hsv_to_rgba((x - 10) / 140.0f, 0.5f, 0.8f);
-            screen.pen(color_letter);
+            Pen color_letter = hsv_to_rgba((x - 10) / 140.0f, 0.5f, 0.8f);
+            screen.pen = color_letter;
             char buf[2];
             buf[0] = c;
             buf[1] = '\0';
-            screen.text(buf, &minimal_font[0][0], Point(x, y));
+            screen.text(buf, minimal_font, Point(x, y));
             x += 10;
         }
 
-        screen.pen(RGBA(255, 255, 255, 150));
+        screen.pen = Pen(255, 255, 255, 150);
 
         render_summary();
 
         return;
     }
 
-    RGBA color_water = hsv_to_rgba(((120 - 120) + 110.0f) / 120.0f, 1.0f, 0.5f);
+    Pen color_water = hsv_to_rgba(((120 - 120) + 110.0f) / 120.0f, 1.0f, 0.5f);
     color_water.a = 255;
 
     if(water_level > 0){
-        screen.pen(color_water);
+        screen.pen = color_water;
         screen.rectangle(Rect(0, SCREEN_H - water_level, SCREEN_W, water_level + 1));
 
         for(auto x = 0; x < SCREEN_W; x++){
@@ -756,21 +756,21 @@ void render(uint32_t time_ms) {
     for_each_tile(render_tile, (void *)&tile_offset);
 
     // Draw the player
-    screen.pen(RGBA(255, 255, 255));
+    screen.pen = Pen(255, 255, 255);
     screen.rectangle(Rect(player_position.x, player_position.y, PLAYER_W, PLAYER_H));
-    screen.pen(RGBA(255, 50, 50));
+    screen.pen = Pen(255, 50, 50);
     screen.rectangle(Rect(player_position.x, player_position.y, PLAYER_W, 1));
 
     /*
     // Show number of active passages
     p = std::to_string(passage_width + 1);
     p.append(" passages");
-    screen.text(p, &minimal_font[0][0], point(2, 10));
+    screen.text(p, minimal_font, point(2, 10));
     */
 
     if(water_level > 0){
         color_water.a = 100;
-        screen.pen(color_water);
+        screen.pen = color_water;
         screen.rectangle(Rect(0, SCREEN_H - water_level, SCREEN_W, water_level + 1));
 
         for(auto x = 0; x < SCREEN_W; x++){
@@ -788,37 +788,37 @@ void render(uint32_t time_ms) {
     }
 
     if(game_state == enum_state::dead) {
-        screen.pen(RGBA(128, 0, 0, 200));
+        screen.pen = Pen(128, 0, 0, 200);
         screen.rectangle(Rect(0, 0, SCREEN_W, SCREEN_H));
-        screen.pen(RGBA(255, 0, 0, 255));
-        screen.text("YOU DIED!", &minimal_font[0][0], Point((SCREEN_W / 2) - 20, (SCREEN_H / 2) - 4));
+        screen.pen = Pen(255, 0, 0, 255);
+        screen.text("YOU DIED!", minimal_font, Point((SCREEN_W / 2) - 20, (SCREEN_H / 2) - 4));
 
         // Round stats
-        screen.pen(RGBA(255, 255, 255));
+        screen.pen = Pen(255, 255, 255);
 
         std::string text = "";
 
         text = "You climbed: ";
         text.append(std::to_string(player_progress));
         text.append("cm");
-        screen.text(text, &minimal_font[0][0], Point(10, (SCREEN_H / 2) + 10));
+        screen.text(text, minimal_font, Point(10, (SCREEN_H / 2) + 10));
 
         render_summary();
     }
     else
     {
         // Draw the HUD
-        screen.pen(RGBA(255, 255, 255));
+        screen.pen = Pen(255, 255, 255);
 
         text = std::to_string(player_progress);
         text.append("cm");
-        screen.text(text, &minimal_font[0][0], Point(2, 2));
+        screen.text(text, minimal_font, Point(2, 2));
 
         /*
         // State debug info
         text = "Jumps: ";
         text.append(std::to_string(player_jump_count));
-        screen.text(text, &minimal_font[0][0], point(2, 12));
+        screen.text(text, minimal_font, point(2, 12));
 
         text = "State: ";
         switch(player_state){
@@ -841,7 +841,7 @@ void render(uint32_t time_ms) {
                 text.append("WALL R");
                 break;
         }
-        screen.text(text, &minimal_font[0][0], point(2, 22));
+        screen.text(text, minimal_font, point(2, 22));
         */
     }
 }

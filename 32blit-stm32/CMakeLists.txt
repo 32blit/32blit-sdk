@@ -57,6 +57,7 @@ list(APPEND SOURCES
 	Src/display.cpp
 	Src/gpio.cpp
 	Src/sound.cpp
+	Src/file.cpp
 	Src/adc.c
 	Src/debug.c
 	Src/dma.c
@@ -106,6 +107,8 @@ set(DEFINITIONS
 )
 set(HAL_DEFINITIONS ${DEFINITIONS} PARENT_SCOPE)
 
+set_source_files_properties(Middlewares/Third_Party/FatFs/src/ff.c PROPERTIES COMPILE_FLAGS "-Wno-misleading-indentation")
+
 target_include_directories(BlitHalSTM32
 	PRIVATE
 		${INCLUDE_DIRS}
@@ -149,6 +152,34 @@ target_compile_options(BlitHalSTM32Ext
 set(MCU_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}")
 set(MCU_LINKER_SCRIPT "${MCU_LINKER_SCRIPT}" PARENT_SCOPE)
 set(MCU_LINKER_SCRIPT_EXT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT_EXT}" PARENT_SCOPE)
+
+find_package(PythonInterp 3 REQUIRED)
+
+function(blit_asset NAME ASSET)
+	add_custom_command(OUTPUT ${ASSET}.o
+		COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${CMAKE_LINKER} -r -b binary -o ${CMAKE_CURRENT_BINARY_DIR}/${ASSET}.o ${ASSET}
+		COMMAND ${CMAKE_OBJCOPY} --rename-section .data=.rodata,alloc,load,readonly,data,contents ${CMAKE_CURRENT_BINARY_DIR}/${ASSET}.o ${CMAKE_CURRENT_BINARY_DIR}/${ASSET}.o
+	)
+	# Add object as a library
+	add_library(${ASSET}
+		STATIC
+		${ASSET}.o)
+	# Tell CMake this object file has already been built by custom command
+	SET_SOURCE_FILES_PROPERTIES(
+		${ASSET}.o
+		PROPERTIES
+		EXTERNAL_OBJECT true
+		GENERATED true
+	)
+	# Avoid language warning
+	SET_TARGET_PROPERTIES(
+		${ASSET}
+		PROPERTIES
+		LINKER_LANGUAGE C
+	)
+	# Link our asset to our output
+	target_link_libraries(${NAME} ${ASSET})
+endfunction()
 
 function(blit_executable_common NAME)
 	target_link_libraries(${NAME} BlitEngine)
@@ -196,6 +227,6 @@ function(blit_executable_int_flash NAME SOURCES)
 
 	add_custom_command(TARGET ${NAME} POST_BUILD
 		COMMENT "Building ${NAME}.dfu"
-		COMMAND ${CMAKE_DFU} build --force --out ${NAME}.dfu ${NAME}.bin
+		COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_DFU} build --force --out ${NAME}.dfu ${NAME}.bin
 	)
 endfunction()

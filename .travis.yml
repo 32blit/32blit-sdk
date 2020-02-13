@@ -127,7 +127,6 @@ jobs:
             unzip SDL2.zip -d vs/sdl
             # move dirs up
             mv vs/sdl/SDL2-2.0.10/* vs/sdl
-            mv vs/sdl/lib/x86 vs/sdl/lib/Win32 #small hack
           fi
 
 

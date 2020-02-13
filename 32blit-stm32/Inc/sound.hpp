@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/audio.hpp"
+#include "audio/audio.hpp"
 
 extern TIM_HandleTypeDef htim6;
 extern DAC_HandleTypeDef hdac1;

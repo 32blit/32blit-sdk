@@ -7,6 +7,7 @@
 #include "sound.hpp"
 #include "display.hpp"
 #include "gpio.hpp"
+#include "file.hpp"
 
 
 #include "adc.h"
@@ -44,10 +45,9 @@ FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 
 bool needs_render = true;
 uint32_t flip_cycle_count = 0;
-float global_volume = 0.5f;
 float volume_log_base = 2.0f;
 
-
+__attribute__((section(".persist"))) Persist persist;
 
 void DFUBoot(void)
 {
@@ -70,8 +70,8 @@ int blit_debugf(const char * psFormatString, ...)
 
 void blit_debug(std::string message) {
 	printf(message.c_str());
-  screen.pen(RGBA(255, 255, 255));
-  screen.text(message, &minimal_font[0][0], Point(0, 0));
+  screen.pen = Pen(255, 255, 255);
+  screen.text(message, minimal_font, Point(0, 0));
 }
 
 
@@ -89,46 +89,6 @@ void blit_tick() {
   blit::tick(blit::now());
 }
 
-std::map<uint32_t, FIL *> open_files;
-uint32_t current_file_handle = 0;
-
-int32_t open_file(std::string file) {
-  FIL *f = new FIL();
-
-  FRESULT r = f_open(f, file.c_str(), FA_READ);
-
-  if(r == FR_OK){      
-    current_file_handle++;  
-    open_files[current_file_handle] = f;
-    return current_file_handle;
-  }
-  
-  return -1;
-}
-
-int32_t read_file(uint32_t fh, uint32_t offset, uint32_t length, char *buffer) {  
-  FRESULT r;
-
-  r = f_lseek(open_files[fh], offset);
-  if(r == FR_OK){ 
-    unsigned int bytes_read;
-    r = f_read(open_files[fh], buffer, length, &bytes_read);
-    if(r == FR_OK){ 
-      return bytes_read;
-    }
-  }
-  
-  return -1;
-}
-
-int32_t close_file(uint32_t fh) {
-  FRESULT r;
-
-  r = f_close(open_files[fh]);
-
-  return r == FR_OK ? 0 : -1;
-}
-
 bool blit_sd_detected() {
   return HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_11) == 1;
 }
@@ -144,15 +104,29 @@ void hook_render(uint32_t time) {
   */
   ::render(time);
 
-  blit::screen.pen(RGBA(255, 255, 255));
+  blit::screen.pen = Pen(255, 255, 255);
   for(auto i = 0; i < ADC_BUFFER_SIZE; i++) {
     int x = i / 8;
     int y = i % 8;
-    blit::screen.text(std::to_string(adc1data[i]), &minimal_font[0][0], Point(x * 30, y * 10));
+    blit::screen.text(std::to_string(adc1data[i]), minimal_font, Point(x * 30, y * 10));
   }
 }
 
+void blit_update_volume() {
+    blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * persist.volume) / log(volume_log_base));
+}
+
 void blit_init() {
+    if(persist.magic_word != persistence_magic_word) {
+      // Set persistent defaults if the magic word does not match
+      persist.magic_word = persistence_magic_word;
+      persist.volume = 0.5f;
+      persist.backlight = 1.0f;
+      persist.selected_menu_item = 0;
+    }
+
+    blit_update_volume();
+
     // enable cycle counting
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     DWT->CYCCNT = 0;
@@ -169,21 +143,19 @@ void blit_init() {
     f_mount(&filesystem, "", 1);  // this shouldn't be necessary here right?
     msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
     bq24295_init(&hi2c4);
-    blit::backlight = 1.0f;
     blit::debug = blit_debug;
     blit::debugf = blit_debugf;
     blit::now = HAL_GetTick;
     blit::random = HAL_GetRandom;
-    blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
     blit::set_screen_mode = display::set_screen_mode;
     display::set_screen_mode(blit::lores);
-
     blit::update = ::update;
     blit::render = ::render;
     blit::init   = ::init;
     blit::open_file = ::open_file;
     blit::read_file = ::read_file;
     blit::close_file = ::close_file;
+    blit::list_files = ::list_files;
 
     blit::switch_execution = blit_switch_execution;
 
@@ -195,58 +167,110 @@ void blit_init() {
 
 }
 
+/*
 
-int menu_item = 0;
+    Menu Items
+
+*/
+
+enum MenuItem {
+    BACKLIGHT,
+    VOLUME,
+    DFU,
+    SHIPPING,
+    SWITCH_EXE,
+    LAST_COUNT // leave me last pls
+};
+
+//pinched from http://www.cplusplus.com/forum/beginner/41790/
+inline MenuItem& operator++(MenuItem& eDOW, int) {
+  const int i = static_cast<int>(eDOW) + 1;
+	eDOW = static_cast<MenuItem>((i) % (LAST_COUNT));
+    return eDOW;
+}
+
+inline MenuItem& operator--(MenuItem& type, int) {
+	const int i = static_cast<int>(type)-1;
+	
+	if (i < 0) { // Check whether to cycle to last item if number goes below 0
+		type = static_cast<MenuItem>(LAST_COUNT - 1);
+	} else { // Else set it to current number -1
+		type = static_cast<MenuItem>((i) % LAST_COUNT);
+	}
+	return type;
+}
+
+std::string menu_name (MenuItem item) {
+  switch (item) {
+    case BACKLIGHT: return "Backlight";
+    case VOLUME: return "Volume";
+    case DFU: return "DFU Mode";
+    case SHIPPING: return "Power Off";
+#if EXTERNAL_LOAD_ADDRESS == 0x90000000
+    case SWITCH_EXE: return "Launch Game";
+#else
+    case SWITCH_EXE: return "Exit Game";
+#endif
+    case LAST_COUNT: return "";
+  };
+  return "";
+}
+
+MenuItem menu_item = BACKLIGHT;
+
+float menu_y (MenuItem item) { return item * 10 + 20; }
+float menu_selection_y (MenuItem item) { return menu_y(item) - 1; }
+Point menu_title_origin (MenuItem item) { return Point(5, item * 10 + 20); }
+Point press_a_origin (MenuItem item, float screen_width) { return Point(screen_width/2, item * 10 + 20); }
+Rect menu_item_frame (MenuItem item, float screen_width) { return Rect (0, item * 10 + 19, screen_width, 9); }
 
 void blit_menu_update(uint32_t time) {
   static uint32_t last_buttons = 0;
   uint32_t changed_buttons = blit::buttons ^ last_buttons;
   if(blit::buttons & changed_buttons & blit::Button::DPAD_UP) {
-    menu_item -= 1;
-    if(menu_item < 0){
-      menu_item = 0;
-    }
+    menu_item --;
+    
   } else if (blit::buttons & changed_buttons & blit::Button::DPAD_DOWN) {
-    menu_item += 1;
-    if(menu_item > 4){
-      menu_item = 4;
-    }
-  } else if (blit::buttons & blit::Button::DPAD_RIGHT ) {
+    menu_item ++;
+    
+  } else {
+    bool button_a = blit::buttons & changed_buttons & blit::Button::A;
     switch(menu_item) {
-      case 0: // Backlight
-        blit::backlight += 1.0f / 256.0f;
-        blit::backlight = std::fmin(1.0f, std::fmax(0.0f, blit::backlight));
+      case BACKLIGHT:
+        if (blit::buttons & blit::Button::DPAD_LEFT) {
+          persist.backlight -= 1.0f / 256.0f;
+        } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
+          persist.backlight += 1.0f / 256.0f;
+        }
+        persist.backlight = std::fmin(1.0f, std::fmax(0.0f, persist.backlight));
         break;
-      case 1: // Volume
-        global_volume += 1.0f / 256.0f;
-        global_volume = std::fmin(1.0f, std::fmax(0.0f, global_volume));
-        blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
+      case VOLUME:
+        if (blit::buttons & blit::Button::DPAD_LEFT) {
+          persist.volume -= 1.0f / 256.0f;
+        } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
+          persist.volume += 1.0f / 256.0f;
+        }
+        persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
+        blit_update_volume();
         break;
-    }
-  } else if (blit::buttons & blit::Button::DPAD_LEFT ) {
-    switch(menu_item) {
-      case 0: // Brightness
-        blit::backlight -= 1.0f / 256.0f;
-        blit::backlight = std::fmin(1.0f, std::fmax(0.0f, blit::backlight));
-        break;
-      case 1: // Volume
-        global_volume -= 1.0f / 256.0f;
-        global_volume = std::fmin(1.0f, std::fmax(0.0f, global_volume));
-        blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * global_volume) / log(volume_log_base));
-        break;
-    }
-  } else if (blit::buttons & changed_buttons & blit::Button::A) {
-      switch(menu_item) {
-        case 2:
+      case DFU:
+        if(button_a){
           DFUBoot();
-          break;
-        case 3:
+        }
+        break;
+      case SHIPPING:
+        if(button_a){
           bq24295_enable_shipping_mode(&hi2c4);
-          break;
-        case 4:
+        }
+        break;
+      case SWITCH_EXE:
+        if(button_a){
           blit::switch_execution();
-          break;
-      }
+        }
+        break;
+      case LAST_COUNT:
+        break;
+    }
   }
 
   last_buttons = blit::buttons;
@@ -261,106 +285,87 @@ void blit_menu_render(uint32_t time) {
     screen_height = 240;
   }
 
-  const RGBA bar_background_color = RGBA(40, 40, 60);
+  const Pen bar_background_color = Pen(40, 40, 60);
 
-  screen.pen(RGBA(30, 30, 50, 200));
+  screen.pen = Pen(30, 30, 50, 200);
   screen.clear();
 
-  screen.pen(RGBA(255, 255, 255));
+  screen.pen = Pen(255, 255, 255);
 
-  screen.text("System Menu", &minimal_font[0][0], Point(5, 5));
+  screen.text("System Menu", minimal_font, Point(5, 5));
 
-  screen.text("bat", &minimal_font[0][0], Point(screen_width / 2, 5));
+  screen.text("bat", minimal_font, Point(screen_width / 2, 5));
   uint16_t battery_meter_width = 55;
   battery_meter_width = float(battery_meter_width) * (blit::battery - 3.0f) / 1.1f;
   battery_meter_width = std::max((uint16_t)0, std::min((uint16_t)55, battery_meter_width));
 
-  screen.pen(bar_background_color);
+  screen.pen = bar_background_color;
   screen.rectangle(Rect((screen_width / 2) + 20, 6, 55, 5));
 
   switch(battery_vbus_status){
     case 0b00: // Unknown
-        screen.pen(RGBA(255, 128, 0));
+        screen.pen = Pen(255, 128, 0);
         break;
     case 0b01: // USB Host
-        screen.pen(RGBA(0, 255, 0));
+        screen.pen = Pen(0, 255, 0);
         break;
     case 0b10: // Adapter Port
-        screen.pen(RGBA(0, 255, 0));
+        screen.pen = Pen(0, 255, 0);
         break;
     case 0b11: // OTG
-        screen.pen(RGBA(255, 0, 0));
+        screen.pen = Pen(255, 0, 0);
         break;
   }
   screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_meter_width, 5));
   if(battery_charge_status == 0b01 || battery_charge_status == 0b10){
     uint16_t battery_fill_width = uint32_t(time / 100.0f) % battery_meter_width;
     battery_fill_width = std::max((uint16_t)0, std::min((uint16_t)battery_meter_width, battery_fill_width));
-    screen.pen(RGBA(100, 255, 200));
+    screen.pen = Pen(100, 255, 200);
     screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_fill_width, 5));
   }
 
   // Horizontal Line
-  screen.pen(RGBA(255, 255, 255));
+  screen.pen = Pen(255, 255, 255);
   screen.rectangle(Rect(0, 15, screen_width, 1));
 
-  if(menu_item == 0){
-    screen.pen(RGBA(50, 50, 70));
-    screen.rectangle(Rect(0, 19, screen_width, 9));
-    screen.pen(RGBA(255, 255, 255));
+  // Selected item
+  screen.pen = Pen(50, 50, 70);
+  screen.rectangle(menu_item_frame(menu_item, screen_width));
+
+  // Menu rows
+
+  for (int i = BACKLIGHT; i < LAST_COUNT; i++) {
+    const MenuItem item = (MenuItem)i;
+
+    screen.pen = Pen(255, 255, 255);
+    screen.text(menu_name(item), minimal_font, menu_title_origin(item));
+
+    switch (i) {
+      case BACKLIGHT:
+        screen.pen = bar_background_color;
+        screen.rectangle(Rect(screen_width / 2, 21, 75, 5));
+        screen.pen = Pen(255, 255, 255);
+        screen.rectangle(Rect(screen_width / 2, 21, 75 * persist.backlight, 5));
+
+        break;
+      case VOLUME:
+        screen.pen = bar_background_color;
+        screen.rectangle(Rect(screen_width / 2, 31, 75, 5));
+        screen.pen = Pen(255, 255, 255);
+        screen.rectangle(Rect(screen_width / 2, 31, 75 * persist.volume, 5));
+
+        break;
+      default:
+        screen.pen = Pen(255, 255, 255);
+        screen.text("Press A", minimal_font, press_a_origin(item, screen_width));
+        break;  
+    }
+
   }
 
-  // menu bar
 
-
-  screen.text("Backlight", &minimal_font[0][0], Point(5, 20));
-  screen.pen(bar_background_color);
-  screen.rectangle(Rect(screen_width / 2, 21, 75, 5));
-  screen.pen(RGBA(255, 255, 255));
-  screen.rectangle(Rect(screen_width / 2, 21, 75 * blit::backlight, 5));
-
-  if(menu_item == 1){
-    screen.pen(RGBA(50, 50, 70));
-    screen.rectangle(Rect(0, 29, screen_width, 9));
-    screen.pen(RGBA(255, 255, 255));
-  }
-
-  screen.text("Volume", &minimal_font[0][0], Point(5, 30));
-  screen.pen(bar_background_color);
-  screen.rectangle(Rect(screen_width / 2, 31, 75, 5));
-  screen.pen(RGBA(255, 255, 255));
-  screen.rectangle(Rect(screen_width / 2, 31, 75 * global_volume, 5));
-
-  if(menu_item == 2){
-    screen.pen(RGBA(50, 50, 70));
-    screen.rectangle(Rect(0, 39, screen_width, 9));
-    screen.pen(RGBA(255, 255, 255));
-  }
-
-  screen.text("DFU", &minimal_font[0][0], Point(5, 40));
-  screen.text("Press A", &minimal_font[0][0], Point(screen_width / 2, 40));
-
-  if(menu_item == 3){
-    screen.pen(RGBA(50, 50, 70));
-    screen.rectangle(Rect(0, 49, screen_width, 9));
-    screen.pen(RGBA(255, 255, 255));
-  }
-
-  screen.text("Shipping", &minimal_font[0][0], Point(5, 50));
-  screen.text("Press A", &minimal_font[0][0], Point(screen_width / 2, 50));
-
-
-  if(menu_item == 4){
-    screen.pen(RGBA(50, 50, 70));
-    screen.rectangle(Rect(0, 59, screen_width, 9));
-    screen.pen(RGBA(255, 255, 255));
-  }
-
-  screen.text("Switch Exe", &minimal_font[0][0], Point(5, 60));
-  screen.text("Press A", &minimal_font[0][0], Point(screen_width / 2, 60));
-
-  // Horizontal Line
-  screen.pen(RGBA(255, 255, 255));
+  // Bottom horizontal Line
+  screen.pen = Pen(255, 255, 255);
   screen.rectangle(Rect(0, screen_height - 15, screen_width, 1));
 
 }
@@ -395,7 +400,7 @@ void blit_update_led() {
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2, compare_b);
 
     // Backlight
-    __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 962 - (962 * blit::backlight));
+    __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 962 - (962 * persist.backlight));
 }
 
 void HAL_ADC_ErrorCallback(ADC_HandleTypeDef* hadc){
@@ -637,3 +642,22 @@ void blit_switch_execution(void)
 	{
 	}
 }
+
+void EnableUsTimer(void)
+{
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+}
+
+uint32_t GetUsTimer(void)
+{
+	uint32_t uTicksPerUs = SystemCoreClock / 1000000;
+	return DWT->CYCCNT/uTicksPerUs;
+}
+
+uint32_t GetMaxUsTimer(void)
+{
+	uint32_t uTicksPerUs = SystemCoreClock / 1000000;
+	return UINT32_MAX / uTicksPerUs;
+}
+

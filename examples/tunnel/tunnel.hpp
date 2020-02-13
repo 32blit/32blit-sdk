@@ -18,7 +18,7 @@ const uint8_t packed_data_ship[] = {
 0x02, 0x00, // cols (2)
 0x01, 0x00, // rows (1)
 
-0x03, // format
+0x02, // format
 
 0x10, // number of palette colours
 //  r     g     b     a
@@ -114,7 +114,7 @@ const uint8_t packed_data[] = {
 	0x06, 0x00, // cols (6)
 	0x04, 0x00, // rows (4)
 
-	0x03, // format
+	0x02, // format
 
 	0x39, // number of palette colours
 //  r     g     b     a

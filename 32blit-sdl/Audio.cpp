@@ -4,7 +4,7 @@
 #include "SDL.h"
 
 #include "Audio.hpp"
-#include "engine/audio.hpp"
+#include "audio/audio.hpp"
 
 Audio::Audio() {
     SDL_AudioSpec desired = {}, audio_spec = {};
