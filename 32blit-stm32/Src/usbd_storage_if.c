@@ -24,6 +24,8 @@
 
 /* USER CODE BEGIN INCLUDE */
 #include "diskio.h"
+#include "USBManager.h"
+
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -32,7 +34,7 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
+extern USBManager g_usbManager;
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -222,7 +224,11 @@ int8_t STORAGE_GetCapacity_HS(uint8_t lun, uint32_t *block_num, uint16_t *block_
 int8_t STORAGE_IsReady_HS(uint8_t lun)
 {
   /* USER CODE BEGIN 11 */
-  return (USBD_OK);
+	if(g_usbManager.IsMSCReady())
+		return (USBD_OK);
+	else
+		return (USBD_FAIL);
+
   /* USER CODE END 11 */
 }
 

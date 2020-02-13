@@ -87,6 +87,7 @@ list(APPEND SOURCES
 	Src/CDCCommandHandler.cpp 
 	Src/CDCResetHandler.cpp
 	Src/CDCInfoHandler.cpp 
+	Src/USBManager.cpp
 	Utilities/JPEG/jpeg_utils.c
 )
 

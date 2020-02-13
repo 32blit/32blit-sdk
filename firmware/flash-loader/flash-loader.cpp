@@ -3,6 +3,8 @@
 #include <cmath>
 #include "quadspi.h"
 #include "CDCCommandStream.h"
+#include "USBManager.h"
+
 #include <cstring>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +15,7 @@ extern CDCCommandStream g_commandStream;
 
 FlashLoader flashLoader;
 
+extern USBManager g_usbManager;
 
 // c calls to c++ object
 void init()
@@ -36,7 +39,7 @@ void update(uint32_t time)
 // Init() Register command handlers
 void FlashLoader::Init()
 {
-	set_screen_mode(ScreenMode::hires);
+	blit::set_screen_mode(ScreenMode::hires);
 
 	// register PROG
 	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value, this);
@@ -179,7 +182,22 @@ void FlashLoader::Render(uint32_t time)
 		case stSwitch:
 			blit::switch_execution();
 		break;
+
+		case stMassStorage:
+			RenderMassStorage(time);
+		break;
 	}
+}
+
+void FlashLoader::RenderMassStorage(uint32_t time)
+{
+	screen.pen = Pen(0,0,0);
+	screen.rectangle(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
+	screen.pen = Pen(255, 255, 255);
+	screen.text("Mass Storage mode", minimal_font, ROW(0));
+
+	if(g_usbManager.GetState() == USBManager::usbsMSCUnmounted)
+		m_state = stFlashFile;
 }
 
 // RenderSaveFile() Render file save progress %
