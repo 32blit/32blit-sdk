@@ -204,10 +204,16 @@ std::string menu_name (MenuItem item) {
   switch (item) {
     case BACKLIGHT: return "Backlight";
     case VOLUME: return "Volume";
-    case DFU: return "DFU";
-    case SHIPPING: return "Shipping";
-    case SWITCH_EXE: return "Switch EXE";
+    case DFU: return "DFU Mode";
+    case SHIPPING: return "Power Off";
+#if EXTERNAL_LOAD_ADDRESS == 0x90000000
+    case SWITCH_EXE: return "Launch Game";
+#else
+    case SWITCH_EXE: return "Exit Game";
+#endif
+    case LAST_COUNT: return "";
   };
+  return "";
 }
 
 MenuItem menu_item = BACKLIGHT;
@@ -227,42 +233,44 @@ void blit_menu_update(uint32_t time) {
   } else if (blit::buttons & changed_buttons & blit::Button::DPAD_DOWN) {
     menu_item ++;
     
-  } else if (blit::buttons & blit::Button::DPAD_RIGHT ) {
+  } else {
+    bool button_a = blit::buttons & changed_buttons & blit::Button::A;
     switch(menu_item) {
       case BACKLIGHT:
-        persist.backlight += 1.0f / 256.0f;
+        if (blit::buttons & blit::Button::DPAD_LEFT) {
+          persist.backlight -= 1.0f / 256.0f;
+        } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
+          persist.backlight += 1.0f / 256.0f;
+        }
         persist.backlight = std::fmin(1.0f, std::fmax(0.0f, persist.backlight));
         break;
       case VOLUME:
-        persist.volume += 1.0f / 256.0f;
+        if (blit::buttons & blit::Button::DPAD_LEFT) {
+          persist.volume -= 1.0f / 256.0f;
+        } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
+          persist.volume += 1.0f / 256.0f;
+        }
         persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
         blit_update_volume();
         break;
-    }
-  } else if (blit::buttons & blit::Button::DPAD_LEFT ) {
-    switch(menu_item) {
-      case BACKLIGHT:
-        persist.backlight -= 1.0f / 256.0f;
-        persist.backlight = std::fmin(1.0f, std::fmax(0.0f, persist.backlight));
-        break;
-      case VOLUME:
-        persist.volume -= 1.0f / 256.0f;
-        persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
-        blit_update_volume();
-        break;
-    }
-  } else if (blit::buttons & changed_buttons & blit::Button::A) {
-      switch(menu_item) {
-        case DFU:
+      case DFU:
+        if(button_a){
           DFUBoot();
-          break;
-        case SHIPPING:
+        }
+        break;
+      case SHIPPING:
+        if(button_a){
           bq24295_enable_shipping_mode(&hi2c4);
-          break;
-        case SWITCH_EXE:
+        }
+        break;
+      case SWITCH_EXE:
+        if(button_a){
           blit::switch_execution();
-          break;
-      }
+        }
+        break;
+      case LAST_COUNT:
+        break;
+    }
   }
 
   last_buttons = blit::buttons;
