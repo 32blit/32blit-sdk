@@ -1,4 +1,9 @@
+#include <string>
+#include <vector>
+
+#include "32blit.h"
 #include "32blit.hpp"
+
 #include "CDCCommandHandler.h"
 #include "fatfs.h"
 #include "persistence.h"
@@ -13,6 +18,12 @@
 #define MAX_FILENAME 256+1
 #define MAX_FILELEN 16+1
 #define PAGE_SIZE 256
+
+using namespace blit;
+
+extern std::vector<FileInfo> files;
+
+bool flash_from_sd_to_qspi_flash(const std::string &filename);
 
 class FlashLoader : public CDCCommandHandler
 {
@@ -29,7 +40,7 @@ private:
 	typedef enum {stFlashFile, stSaveFile, stFlashCDC, stLS, stSwitch} State;
 	typedef enum {stFilename, stLength, stData} ParseState;
 
-	bool Flash(const char *pszFilename);
+	
 	void FSInit(void);
 
 	void RenderSaveFile(uint32_t time);
@@ -37,12 +48,10 @@ private:
 	void RenderFlashFile(uint32_t time);
 
 	bool FlashData(uint32_t uOffset, uint8_t *pBuffer, uint32_t uLen);
-	bool SaveData(uint8_t *pBuffer, uint32_t uLen);
+	bool SaveData(uint8_t *pBuffer, uint32_t uLen);	
 
-	char 		m_filenames[MAX_FILENAMES][MAX_FILENAME_LENGTH+1] = {0};
-
-	uint8_t m_buffer[PAGE_SIZE];
-	uint8_t m_verifyBuffer[PAGE_SIZE];
+	uint8_t m_buffer[BUFFER_SIZE];
+	uint8_t m_verifyBuffer[BUFFER_SIZE];
 
 	uint8_t m_uFileCount = 0;
 	uint8_t m_uCurrentFile = 0;

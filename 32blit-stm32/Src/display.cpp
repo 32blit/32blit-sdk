@@ -89,7 +89,7 @@ namespace display {
     // since the ltdc hardware pulls frame data directly over the memory bus
     // without passing through the mcu's cache layer we must invalidate the
     // affected area to ensure that all data has been committed into ram
-    SCB_CleanInvalidateDCache_by_Addr(d, 320 * 240 * 2);    
+    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(&__ltdc_start), 320 * 240 * 3);    
   }
 
   void screen_init() {
