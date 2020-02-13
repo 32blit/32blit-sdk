@@ -46,7 +46,8 @@ RAM_D1 (xrw)        : ORIGIN = 0x24000000, LENGTH = 362K
 LTDC (rw)           : ORIGIN = 0x2405A800, LENGTH = 150K
 RAM_D2 (xrw)        : ORIGIN = 0x30000000, LENGTH = 63K
 FRAMEBUFFER (rw)    : ORIGIN = 0x3000FC00, LENGTH = 225K
-RAM_D3 (xrw)        : ORIGIN = 0x38000000, LENGTH = 64K
+RAM_D3 (xrw)        : ORIGIN = 0x38000000, LENGTH = 63K
+PERSIST (rw)        : ORIGIN = 0x3800FC00, LENGTH = 1K
 ITCMISR (xrw)       : ORIGIN = 0x00000000, LENGTH = 4K
 ITCMRAM (xrw)       : ORIGIN = 0x00001000, LENGTH = 60K
 FLASH (rx)          : ORIGIN = 0x90000000, LENGTH = 32768K
@@ -177,6 +178,14 @@ SECTIONS
     KEEP(*(.ltdc))         /* LTDC buffer section */
     __ltdc_end = .;
   } >LTDC
+
+  .persist (NOLOAD):
+  {
+    . = ALIGN(4);
+    __persist_start = .;
+    KEEP(*(.persist))         /* Persistent data section */
+    __persist_end = .;
+  } >PERSIST
 
   .fb (NOLOAD):
   {

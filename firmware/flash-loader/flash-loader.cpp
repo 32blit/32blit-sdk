@@ -47,9 +47,7 @@ void FlashLoader::Init()
 	// register LS
 	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value, this);
 
-	uint32_t* p = (uint32_t *)0x3800fff8;
-
-	m_uCurrentFile = p[0];
+	m_uCurrentFile = persist.selected_menu_item;
 }
 
 
@@ -279,9 +277,7 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 		}
 	}
 
-	*((uint32_t *)0x3800fff8) = m_uCurrentFile;
-
-	SCB_CleanDCache();
+	persist.selected_menu_item = m_uCurrentFile;
 }
 
 
