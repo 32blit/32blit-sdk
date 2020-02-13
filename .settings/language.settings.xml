@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project>
+	<configuration id="de.marw.cmake.cdt.lsp.config.debug.1401709244" name="Debug">
+		<extension point="org.eclipse.cdt.core.LanguageSettingsProvider">
+			<provider-reference id="de.marw.cmake.cdt.language.settings.providers.CompileCommandsJsonParser" ref="shared-provider"/>
+			<provider-reference id="de.marw.cmake.cdt.language.settings.providers.BuiltinsCompileCommandsJsonParser" ref="shared-provider"/>
+		</extension>
+	</configuration>
+	<configuration id="de.marw.cmake.cdt.lsp.config.cmake.1505268506" name="Default">
+		<extension point="org.eclipse.cdt.core.LanguageSettingsProvider">
+			<provider-reference id="de.marw.cmake.cdt.language.settings.providers.CompileCommandsJsonParser" ref="shared-provider"/>
+			<provider-reference id="de.marw.cmake.cdt.language.settings.providers.BuiltinsCompileCommandsJsonParser" ref="shared-provider"/>
+		</extension>
+	</configuration>
+	<configuration id="de.marw.cmake.cdt.lsp.config.release.1063984191" name="Release">
+		<extension point="org.eclipse.cdt.core.LanguageSettingsProvider">
+			<provider-reference id="de.marw.cmake.cdt.language.settings.providers.CompileCommandsJsonParser" ref="shared-provider"/>
+			<provider-reference id="de.marw.cmake.cdt.language.settings.providers.BuiltinsCompileCommandsJsonParser" ref="shared-provider"/>
+		</extension>
+	</configuration>
+	<configuration id="de.marw.cmake.cdt.lsp.config.debug.1401709244.503208226" name="MinSizeRel">
+		<extension point="org.eclipse.cdt.core.LanguageSettingsProvider">
+			<provider-reference id="de.marw.cmake.cdt.language.settings.providers.CompileCommandsJsonParser" ref="shared-provider"/>
+			<provider-reference id="de.marw.cmake.cdt.language.settings.providers.BuiltinsCompileCommandsJsonParser" ref="shared-provider"/>
+			<provider class="org.eclipse.cdt.managedbuilder.language.settings.providers.GCCBuildCommandParser" id="org.eclipse.cdt.managedbuilder.core.GCCBuildCommandParser" keep-relative-paths="false" name="CDT GCC Build Output Parser" parameter="arm-none-eabi-g++" prefer-non-shared="true" resource-scope="per-project" store-entries-with-project="true">
+				<language id="org.eclipse.cdt.core.gcc">
+					<resource project-relative-path="">
+						<entry kind="includePath" name="/${ProjName}/32blit-stm32/Inc">
+							<flag value="VALUE_WORKSPACE_PATH"/>
+						</entry>
+						<entry kind="includePath" name="/${ProjName}/32blit-stm32/Drivers/STM32H7xx_HAL_Driver/Inc">
+							<flag value="VALUE_WORKSPACE_PATH"/>
+						</entry>
+						<entry kind="includePath" name="/${ProjName}/32blit-stm32/Drivers/STM32H7xx_HAL_Driver/Inc/Legacy">
+							<flag value="VALUE_WORKSPACE_PATH"/>
+						</entry>
+						<entry kind="includePath" name="/${ProjName}/32blit-stm32/Drivers/CMSIS/Device/ST/STM32H7xx/Include">
+							<flag value="VALUE_WORKSPACE_PATH"/>
+						</entry>
+						<entry kind="includePath" name="/${ProjName}/32blit-stm32/Drivers/CMSIS/Include">
+							<flag value="VALUE_WORKSPACE_PATH"/>
+						</entry>
+						<entry kind="includePath" name="/${ProjName}/32blit-stm32/Middlewares/Third_Party/FatFs/src">
+							<flag value="VALUE_WORKSPACE_PATH"/>
+						</entry>
+						<entry kind="includePath" name="/${ProjName}/32blit-stm32/Middlewares/ST/STM32_USB_Device_Library/Core/Inc">
+							<flag value="VALUE_WORKSPACE_PATH"/>
+						</entry>
+						<entry kind="includePath" name="/${ProjName}/32blit-stm32/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc">
+							<flag value="VALUE_WORKSPACE_PATH"/>
+						</entry>
+						<entry kind="includePath" name="/${ProjName}/32blit">
+							<flag value="VALUE_WORKSPACE_PATH"/>
+						</entry>
+						<entry kind="macro" name="APPLICATION_VTOR" value="0x08000000"/>
+						<entry kind="macro" name="CDC_FIFO_BUFFERS" value="2"/>
+						<entry kind="macro" name="EXTERNAL_LOAD_ADDRESS" value="0x90000000"/>
+						<entry kind="macro" name="INITIALISE_QSPI" value="1"/>
+						<entry kind="macro" name="NDEBUG" value="1"/>
+						<entry kind="macro" name="STM32H750xx" value="1"/>
+						<entry kind="macro" name="TARGET_32BLIT_HW" value="1"/>
+						<entry kind="macro" name="USE_HAL_DRIVER" value="1"/>
+						<entry kind="macro" name="USE_USB_HS" value="1"/>
+					</resource>
+				</language>
+			</provider>
+		</extension>
+	</configuration>
+</project>
