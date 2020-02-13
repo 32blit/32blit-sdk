@@ -76,7 +76,7 @@ void render(uint32_t time_ms) {
   // draw FPS meter & watermark
   screen.watermark();
   screen.pen = Pen(255, 255, 255);
-  screen.text(std::to_string(ms_end - ms_start) + "ms/frame", &minimal_font[0][0], blit::Point(2, 240 - 10));
+  screen.text(std::to_string(ms_end - ms_start) + "ms/frame", minimal_font, blit::Point(2, 240 - 10));
   screen.pen = Pen(255, 0, 0);
   for (int i = 0; i < uint16_t(ms_end - ms_start); i++) {
     screen.pen = Pen(i * 5, 255 - (i * 5), 0);
