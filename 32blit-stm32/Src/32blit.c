@@ -337,9 +337,7 @@ void blit_menu_render(uint32_t time) {
         screen.rectangle(Rect(screen_width / 2, 31, 75 * global_volume, 5));
 
         break;
-      case DFU:
-      case SHIPPING:
-      case SWITCH_EXE:
+      default:
         screen.pen = Pen(255, 255, 255);
         screen.text("Press A", minimal_font, press_a_origin(item, screen_width));
         break;  
