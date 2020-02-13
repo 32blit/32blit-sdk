@@ -68,6 +68,8 @@ extern CDCCommandStream g_commandStream;
 CDCResetHandler g_resetHandler;
 CDCInfoHandler g_infoHandler;
 
+bool g_bMountMassMedia = true;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
