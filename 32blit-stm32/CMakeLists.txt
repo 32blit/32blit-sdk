@@ -84,6 +84,7 @@ list(APPEND SOURCES
 	Src/CDCCommandHandler.cpp 
 	Src/CDCResetHandler.cpp
 	Src/CDCInfoHandler.cpp 
+	Src/USBManager.cpp
 )
 
 set_source_files_properties( ${SOURCES} PROPERTIES LANGUAGE CXX )

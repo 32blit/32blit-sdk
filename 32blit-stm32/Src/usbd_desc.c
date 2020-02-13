@@ -25,7 +25,9 @@
 #include "usbd_conf.h"
 
 /* USER CODE BEGIN INCLUDE */
-extern bool g_bMountMassMedia;
+#include "USBManager.h"
+
+extern USBManager g_usbManager;
 
 /* USER CODE END INCLUDE */
 
@@ -253,7 +255,7 @@ __ALIGN_BEGIN uint8_t USBD_StringSerial[USB_SIZ_STRING_SERIAL] __ALIGN_END = {
 uint8_t * USBD_HS_DeviceDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 {
   UNUSED(speed);
-  if(g_bMountMassMedia)
+  if(g_usbManager.GetType() == USBManager::usbtMSC)
   {
   	*length = sizeof(USBD_MSC_HS_DeviceDesc);
   	return USBD_MSC_HS_DeviceDesc;
@@ -287,7 +289,7 @@ uint8_t * USBD_HS_LangIDStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
   */
 uint8_t * USBD_HS_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 {
-  if(g_bMountMassMedia)
+  if(g_usbManager.GetType() == USBManager::usbtMSC)
   {
     USBD_GetString((uint8_t *)USBD_MSC_PRODUCT_STRING_HS, USBD_StrDesc, length);
   }
@@ -340,7 +342,7 @@ uint8_t * USBD_HS_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
   */
 uint8_t * USBD_HS_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 {
-  if(g_bMountMassMedia)
+  if(g_usbManager.GetType() == USBManager::usbtMSC)
   {
     USBD_GetString((uint8_t *)USBD_MSC_CONFIGURATION_STRING_HS, USBD_StrDesc, length);
   }
@@ -359,7 +361,7 @@ uint8_t * USBD_HS_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
   */
 uint8_t * USBD_HS_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 {
-  if(g_bMountMassMedia)
+  if(g_usbManager.GetType() == USBManager::usbtMSC)
   {
     USBD_GetString((uint8_t *)USBD_MSC_INTERFACE_STRING_HS, USBD_StrDesc, length);
   }
