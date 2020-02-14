@@ -14,27 +14,32 @@ if (NOT DEFINED BLIT_ONCE)
 
 	add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/32blit 32blit)
 
-	function(blit_asset NAME ASSET)
-		string(REPLACE ".." "__" ASSET_OUT ${ASSET})
-		set(ASSET_OUT ${CMAKE_CURRENT_BINARY_DIR}/${ASSET_OUT}.o)
+	find_package(PythonInterp 3 REQUIRED)
 
-		get_filename_component(OUT_DIR ${ASSET_OUT} DIRECTORY)
-
-		add_custom_command(
-			COMMAND mkdir -p ${OUT_DIR}
-			COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${CMAKE_LINKER} -r -b binary -o ${ASSET_OUT} ${ASSET}
-			COMMAND ${CMAKE_OBJCOPY} --rename-section .data=.rodata,alloc,load,readonly,data,contents ${ASSET_OUT} ${ASSET_OUT}
-			OUTPUT ${ASSET_OUT}
-			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${ASSET}
-		)
-
-		target_sources(${NAME} PRIVATE ${ASSET_OUT})
-	endfunction()
+	# tool paths
+	set(ASSET_PACKER ${CMAKE_CURRENT_LIST_DIR}/tools/asset-packer)
 
 	function (blit_assets TARGET)
+		set(ASSET_FILES)
+
 		foreach(ARG IN LISTS ARGN)
-			blit_asset(${TARGET} ${ARG})
+			list(APPEND ASSET_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${ARG})
 		endforeach()
+
+		add_custom_command(
+			OUTPUT assets.bin assets.cpp assets.hpp
+			COMMAND ${PYTHON_EXECUTABLE} ${ASSET_PACKER} --base-path ${CMAKE_CURRENT_SOURCE_DIR} ${ASSET_FILES}
+			DEPENDS ${ASSET_FILES} ${ASSET_PACKER}
+		)
+
+		add_custom_command(
+			COMMAND ${CMAKE_LINKER} -r -b binary -o assets.bin.o assets.bin
+			COMMAND ${CMAKE_OBJCOPY} --rename-section .data=.rodata,alloc,load,readonly,data,contents assets.bin.o assets.bin.o
+			OUTPUT assets.bin.o
+			DEPENDS assets.bin
+		)
+
+		target_sources(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/assets.bin.o ${CMAKE_CURRENT_BINARY_DIR}/assets.cpp)
 	endfunction()
 
 	if (${CMAKE_SYSTEM_NAME} STREQUAL Generic)
