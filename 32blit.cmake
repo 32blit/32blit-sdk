@@ -18,12 +18,42 @@ if (NOT DEFINED BLIT_ONCE)
 
 	# tool paths
 	set(ASSET_PACKER ${CMAKE_CURRENT_LIST_DIR}/tools/asset-packer)
+	set(SPRITE_BUILDER ${CMAKE_CURRENT_LIST_DIR}/tools/sprite-builder)
+
+	function(pack_sprites FILENAME TYPE OUT_PATH)
+		# TODO: this will break if someone passes the same name in different subdirs
+		get_filename_component(BASE_NAME ${FILENAME} NAME)
+		add_custom_command(
+			OUTPUT ${BASE_NAME}.blit
+			COMMAND ${PYTHON_EXECUTABLE} ${SPRITE_BUILDER} --out ${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}.blit ${TYPE} ${FILENAME}
+			DEPENDS ${FILENAME} ${SPRITE_BUILDER}
+		)
+
+		set(${OUT_PATH} ${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}.blit PARENT_SCOPE)
+	endfunction()
 
 	function (blit_assets TARGET)
+		set(ASSET_TYPE "")
 		set(ASSET_FILES)
 
 		foreach(ARG IN LISTS ARGN)
-			list(APPEND ASSET_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${ARG})
+			# set asset type
+			if(ARG STREQUAL "RAW" OR ARG STREQUAL "SPRITE_PACKED" OR ARG STREQUAL "SPRITE_RAW")
+				set(ASSET_TYPE ${ARG})
+				continue()
+			elseif(ASSET_TYPE STREQUAL "")
+				message(FATAL_ERROR "No asset type specified")
+			endif()
+
+			set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/${ARG})
+
+			if(ASSET_TYPE STREQUAL "SPRITE_PACKED")
+				pack_sprites(${ASSET_PATH} packed ASSET_PATH)
+			elseif(ASSET_TYPE STREQUAL "SPRITE_RAW")
+				pack_sprites(${ASSET_PATH} raw ASSET_PATH)
+			endif()
+
+			list(APPEND ASSET_FILES ${ASSET_PATH})
 		endforeach()
 
 		set(PACKER_ARGS)
