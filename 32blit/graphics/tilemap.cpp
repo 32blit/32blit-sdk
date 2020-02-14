@@ -13,7 +13,7 @@ namespace blit {
    * \param[in] bounds
    * \param[in] sprites
    */
-  tilemap::tilemap(uint8_t *tiles, uint8_t *transforms, size bounds, spritesheet *sprites) : bounds(bounds), tiles(tiles), transforms(transforms), sprites(sprites) {
+  TileMap::TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, SpriteSheet *sprites) : bounds(bounds), tiles(tiles), transforms(transforms), sprites(sprites) {
     if (!transforms) {
       this->transforms = new uint8_t[bounds.w * bounds.h];
       std::memset(this->transforms, 0, bounds.w * bounds.h);
@@ -23,7 +23,7 @@ namespace blit {
   /**
    * TODO: Document
    */
-  int32_t tilemap::offset(const point &p) {
+  int32_t TileMap::offset(const Point &p) {
     int32_t cx = ((uint16_t)p.x) & (bounds.w - 1);
     int32_t cy = ((uint16_t)p.y) & (bounds.h - 1);
     
@@ -46,7 +46,7 @@ namespace blit {
    * \param[in] x
    * \param[in] y
    */
-  int32_t tilemap::offset(const int16_t &x, const int16_t &y) {
+  int32_t TileMap::offset(const int16_t &x, const int16_t &y) {
     int32_t cx = ((uint16_t)x) & (bounds.w - 1);
     int32_t cy = ((uint16_t)y) & (bounds.h - 1);
 
@@ -69,7 +69,7 @@ namespace blit {
    * \param[in] p Point denoting the tile x/y position in the map.
    * \return Bitmask of flags for specified tile.
    */
-  uint8_t tilemap::tile_at(const point &p) {
+  uint8_t TileMap::tile_at(const Point &p) {
     int32_t o = offset(p);
 
     if(o != -1)
@@ -84,7 +84,7 @@ namespace blit {
    * \param[in] p Point denoting the tile x/y position in the map.
    * \return Bitmask of transforms for specified tile.
    */
-  uint8_t tilemap::transform_at(const point &p) {
+  uint8_t TileMap::transform_at(const Point &p) {
     int32_t o = offset(p);
 
     if (o != -1 && transforms)
@@ -100,17 +100,17 @@ namespace blit {
    * \param[in] viewport Clipping rectangle.
    * \param[in] scanline_callback Functon called on every scanline, accepts the scanline y position, should return a transformation matrix.
    */
-  void tilemap::draw(surface *dest, rect viewport, std::function<mat3(uint8_t)> scanline_callback) {
+  void TileMap::draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback) {
     //bool not_scaled = (from.w - to.w) | (from.h - to.h);
 
     viewport = dest->clip.intersection(viewport);    
     
     for (uint16_t y = viewport.y; y < viewport.y + viewport.h; y++) {
-      vec2 swc(viewport.x, y);
-      vec2 ewc(viewport.x + viewport.w, y);
+      Vec2 swc(viewport.x, y);
+      Vec2 ewc(viewport.x + viewport.w, y);
 
       if (scanline_callback) {
-        mat3 custom_transform = scanline_callback(y);
+        Mat3 custom_transform = scanline_callback(y);
         swc *= custom_transform;
         ewc *= custom_transform;
       } else {
@@ -118,7 +118,7 @@ namespace blit {
         ewc *= transform;
       }
 
-      texture_span(dest, point(viewport.x, y), viewport.w, swc, ewc);
+      texture_span(dest, Point(viewport.x, y), viewport.w, swc, ewc);
     }
   }
 
@@ -151,13 +151,11 @@ namespace blit {
    * \param[in] swc
    * \param[in] ewc
    */
-  void tilemap::texture_span(surface *dest, point s, uint16_t c, vec2 swc, vec2 ewc) {
-    blend_blit_func bbf = dest->bbf[sprites->format];
+  void TileMap::texture_span(Surface *dest, Point s, uint16_t c, Vec2 swc, Vec2 ewc) {
+    Surface *src = sprites;
 
-    surface *src = sprites;
-
-    vec2 wc = swc;
-    vec2 dwc = (ewc - swc) / float(c);
+    Vec2 wc = swc;
+    Vec2 dwc = (ewc - swc) / float(c);
     int32_t doff = dest->offset(s.x, s.y);
     do {
       int16_t wcx = floor(wc.x);
@@ -184,7 +182,7 @@ namespace blit {
         u += (tile_id & 0b1111) * 8;
         v += (tile_id >> 4) * 8;
 
-        bbf(src, src->offset(u, v), dest, doff, 1, 1);
+        dest->bbf(src, src->offset(u, v), dest, doff, 1, 1);
       }
 
       wc += dwc;

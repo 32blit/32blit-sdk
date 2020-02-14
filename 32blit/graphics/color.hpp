@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../types/pixel_format.hpp"
+#include "surface.hpp"
 
 namespace blit {
 
-  rgba hsv_to_rgba(float h, float s, float v);
+  Pen hsv_to_rgba(float h, float s, float v);
 
 }  

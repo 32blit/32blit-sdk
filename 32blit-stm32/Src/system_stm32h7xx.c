@@ -157,6 +157,7 @@ void SystemInit (void)
   /* Reset HSEON, CSSON , CSION,RC48ON, CSIKERON PLL1ON, PLL2ON and PLL3ON bits */
   RCC->CR &= 0xEAF6ED7FU;
 
+#if defined(D3_SRAM_BASE)
   /* Reset D1CFGR register */
   RCC->D1CFGR = 0x00000000;
 
@@ -165,7 +166,16 @@ void SystemInit (void)
 
   /* Reset D3CFGR register */
   RCC->D3CFGR = 0x00000000;
+#else
+  /* Reset CDCFGR1 register */
+  RCC->CDCFGR1 = 0x00000000;
 
+  /* Reset CDCFGR2 register */
+  RCC->CDCFGR2 = 0x00000000;
+
+  /* Reset SRDCFGR register */
+  RCC->SRDCFGR = 0x00000000;
+#endif
   /* Reset PLLCKSELR register */
   RCC->PLLCKSELR = 0x00000000;
 
@@ -227,7 +237,7 @@ void SystemInit (void)
 #ifdef VECT_TAB_SRAM
   SCB->VTOR = D1_AXISRAM_BASE  | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal D1 AXI-RAM */
 #else
-  SCB->VTOR = FLASH_BANK1_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal FLASH */
+  SCB->VTOR = APPLICATION_VTOR | VECT_TAB_OFFSET; /* Vector Table Relocation set by APPLICATION_VTOR */
 #endif
 
 #endif /*DUAL_CORE && CORE_CM4*/
@@ -340,6 +350,7 @@ void SystemCoreClockUpdate (void)
   }
 
   /* Compute SystemClock frequency --------------------------------------------------*/
+#if defined (RCC_D1CFGR_D1CPRE)
   tmp = D1CorePrescTable[(RCC->D1CFGR & RCC_D1CFGR_D1CPRE)>> RCC_D1CFGR_D1CPRE_Pos];
 
   /* SystemCoreClock frequency : CM7 CPU frequency  */
@@ -348,6 +359,16 @@ void SystemCoreClockUpdate (void)
   /* SystemD2Clock frequency : CM4 CPU, AXI and AHBs Clock frequency  */
   SystemD2Clock = (SystemCoreClock >> ((D1CorePrescTable[(RCC->D1CFGR & RCC_D1CFGR_HPRE)>> RCC_D1CFGR_HPRE_Pos]) & 0x1FU));
 
+#else
+  tmp = D1CorePrescTable[(RCC->CDCFGR1 & RCC_CDCFGR1_CDCPRE)>> RCC_CDCFGR1_CDCPRE_Pos];
+
+  /* SystemCoreClock frequency : CM7 CPU frequency  */
+  SystemCoreClock >>= tmp;
+
+  /* SystemD2Clock frequency : AXI and AHBs Clock frequency  */
+  SystemD2Clock = (SystemCoreClock >> ((D1CorePrescTable[(RCC->CDCFGR1 & RCC_CDCFGR1_HPRE)>> RCC_CDCFGR1_HPRE_Pos]) & 0x1FU));
+
+#endif
 }
 
 

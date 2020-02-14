@@ -1,4 +1,4 @@
-#include <SDL.h>
+#include "SDL.h"
 
 #include "Input.hpp"
 #include "engine/input.hpp"
@@ -6,46 +6,46 @@
 
 std::map<int, int> Input::keys = {
 	// arrow keys
-	{SDLK_DOWN,   blit::button::DPAD_DOWN},
-	{SDLK_UP,     blit::button::DPAD_UP},
-	{SDLK_LEFT,   blit::button::DPAD_LEFT},
-	{SDLK_RIGHT,  blit::button::DPAD_RIGHT},
+	{SDLK_DOWN,   blit::Button::DPAD_DOWN},
+	{SDLK_UP,     blit::Button::DPAD_UP},
+	{SDLK_LEFT,   blit::Button::DPAD_LEFT},
+	{SDLK_RIGHT,  blit::Button::DPAD_RIGHT},
 
 	// wasd
-	{SDLK_w,       blit::button::DPAD_UP},
-	{SDLK_a,       blit::button::DPAD_LEFT},
-	{SDLK_s,       blit::button::DPAD_DOWN},
-	{SDLK_d,       blit::button::DPAD_RIGHT},
+	{SDLK_w,       blit::Button::DPAD_UP},
+	{SDLK_a,       blit::Button::DPAD_LEFT},
+	{SDLK_s,       blit::Button::DPAD_DOWN},
+	{SDLK_d,       blit::Button::DPAD_RIGHT},
 
 	// action buttons
-	{SDLK_z,       blit::button::A},
-	{SDLK_x,       blit::button::B},
-	{SDLK_c,       blit::button::X},
-	{SDLK_y,       blit::button::Y},
+	{SDLK_z,       blit::Button::A},
+	{SDLK_x,       blit::Button::B},
+	{SDLK_c,       blit::Button::X},
+	{SDLK_y,       blit::Button::Y},
 
 	// system buttons
-	{SDLK_1,       blit::button::HOME},
-	{SDLK_2,       blit::button::MENU},
-	{SDLK_3,       blit::button::JOYSTICK},
+	{SDLK_1,       blit::Button::HOME},
+	{SDLK_2,       blit::Button::MENU},
+	{SDLK_3,       blit::Button::JOYSTICK},
 };
 
 std::map<int, int> Input::buttons = {
 	// dpad
-	{SDL_CONTROLLER_BUTTON_DPAD_DOWN,   blit::button::DPAD_DOWN},
-	{SDL_CONTROLLER_BUTTON_DPAD_UP,     blit::button::DPAD_UP},
-	{SDL_CONTROLLER_BUTTON_DPAD_LEFT,   blit::button::DPAD_LEFT},
-	{SDL_CONTROLLER_BUTTON_DPAD_RIGHT,  blit::button::DPAD_RIGHT},
+	{SDL_CONTROLLER_BUTTON_DPAD_DOWN,   blit::Button::DPAD_DOWN},
+	{SDL_CONTROLLER_BUTTON_DPAD_UP,     blit::Button::DPAD_UP},
+	{SDL_CONTROLLER_BUTTON_DPAD_LEFT,   blit::Button::DPAD_LEFT},
+	{SDL_CONTROLLER_BUTTON_DPAD_RIGHT,  blit::Button::DPAD_RIGHT},
 
 	// action buttons
-	{SDL_CONTROLLER_BUTTON_A,           blit::button::A},
-	{SDL_CONTROLLER_BUTTON_B,           blit::button::B},
-	{SDL_CONTROLLER_BUTTON_X,           blit::button::X},
-	{SDL_CONTROLLER_BUTTON_Y,           blit::button::Y},
+	{SDL_CONTROLLER_BUTTON_A,           blit::Button::A},
+	{SDL_CONTROLLER_BUTTON_B,           blit::Button::B},
+	{SDL_CONTROLLER_BUTTON_X,           blit::Button::X},
+	{SDL_CONTROLLER_BUTTON_Y,           blit::Button::Y},
 
 	// system buttons
-	{SDL_CONTROLLER_BUTTON_BACK,        blit::button::HOME},
-	{SDL_CONTROLLER_BUTTON_START,       blit::button::MENU},
-	{SDL_CONTROLLER_BUTTON_LEFTSTICK,   blit::button::JOYSTICK},
+	{SDL_CONTROLLER_BUTTON_BACK,        blit::Button::HOME},
+	{SDL_CONTROLLER_BUTTON_START,       blit::Button::MENU},
+	{SDL_CONTROLLER_BUTTON_LEFTSTICK,   blit::Button::JOYSTICK},
 };
 
 int Input::find_key(int key) {
@@ -133,7 +133,7 @@ void Input::_virtual_tilt(int x, int y) {
 	int z = 80;
 	x = x - (win_width / 2);
 	y = y - (win_height / 2);
-	vec3 shadow_tilt = vec3(x, y, z);
+	Vec3 shadow_tilt = Vec3(x, y, z);
 	shadow_tilt.normalize();
 	target->set_tilt(0, shadow_tilt.x);
 	target->set_tilt(1, shadow_tilt.y);

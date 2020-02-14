@@ -2,30 +2,148 @@
 #define WIN32
 #endif
 
-#include <SDL.h>
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
+
+#include "SDL.h"
 #include <iostream>
 
 #include "Input.hpp"
 #include "System.hpp"
 #include "Renderer.hpp"
+#include "Audio.hpp"
 
-#ifndef NO_FFMPEG_CAPTURE
+#ifdef VIDEO_CAPTURE
 #include "VideoCapture.hpp"
 #endif
 
 #ifndef WINDOW_TITLE
-#define WINDOW_TITLE "TinyDebug SDL"
+#define WINDOW_TITLE "32blit development (SDL)"
 #endif
 
+static bool running = true;
+
+SDL_Window* window = NULL;
+
+System *blit_system;
+Input *blit_input;
+Renderer *blit_renderer;
+Audio *blit_audio;
+
+#ifdef VIDEO_CAPTURE
+VideoCapture *blit_capture;
+unsigned int last_record_startstop = 0;
+#endif
+
+void handle_event(SDL_Event &event) {
+	switch (event.type) {
+		case SDL_QUIT:
+			running = false;
+			break;
+
+		case SDL_WINDOWEVENT:
+			if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+				blit_input->resize(event.window.data1, event.window.data2);
+				blit_renderer->resize(event.window.data1, event.window.data2);
+			}
+			break;
+
+		case SDL_MOUSEBUTTONUP:
+		case SDL_MOUSEBUTTONDOWN:
+			blit_input->handle_mouse(event.button.button, event.type == SDL_MOUSEBUTTONDOWN, event.button.x, event.button.y);
+			break;
+
+		case SDL_MOUSEMOTION:
+			if (event.motion.state & SDL_BUTTON_LMASK) {
+				blit_input->handle_mouse(SDL_BUTTON_LEFT, event.motion.state & SDL_MOUSEBUTTONDOWN, event.motion.x, event.motion.y);
+			}
+			break;
+
+		case SDL_KEYDOWN: // fall-though
+		case SDL_KEYUP:
+			if (!blit_input->handle_keyboard(event.key.keysym.sym, event.type == SDL_KEYDOWN)) {
+				switch (event.key.keysym.sym) {
+#ifdef VIDEO_CAPTURE
+				case SDLK_r:
+					if (event.type == SDL_KEYDOWN && SDL_GetTicks() - last_record_startstop > 1000) {
+						if (blit_capture->recording()) blit_capture->stop();
+						else blit_capture->start();
+						last_record_startstop = SDL_GetTicks();
+					}
+#endif
+				}
+			}
+			break;
+
+		case SDL_CONTROLLERBUTTONDOWN:
+		case SDL_CONTROLLERBUTTONUP:
+			blit_input->handle_controller_button(event.cbutton.button, event.type == SDL_CONTROLLERBUTTONDOWN);
+			break;
+
+		case SDL_CONTROLLERAXISMOTION:
+			blit_input->handle_controller_motion(event.caxis.axis, event.caxis.value);
+			break;
+
+		case SDL_CONTROLLERDEVICEADDED:
+			SDL_GameControllerOpen(event.cdevice.which);
+			break;
+
+		case SDL_CONTROLLERDEVICEREMOVED:
+			SDL_GameControllerClose(SDL_GameControllerFromInstanceID(event.cdevice.which));
+			break;
+
+		case SDL_RENDER_TARGETS_RESET:
+			std::cout << "Targets reset" << std::endl;
+			break;
+
+		case SDL_RENDER_DEVICE_RESET:
+			std::cout << "Device reset" << std::endl;
+			break;
+
+		default:
+			if(event.type == System::loop_event) {
+				blit_renderer->update(blit_system);
+				blit_system->notify_redraw();
+				blit_renderer->present();
+#ifdef VIDEO_CAPTURE
+				if (blit_capture->recording()) blit_capture->capture(blit_renderer);
+#endif
+			} else if (event.type == System::timer_event) {
+				switch(event.user.code) {
+					case 0:
+						SDL_SetWindowTitle(window, WINDOW_TITLE);
+						break;
+					case 1:
+						SDL_SetWindowTitle(window, WINDOW_TITLE " [SLOW]");
+						break;
+					case 2:
+						SDL_SetWindowTitle(window, WINDOW_TITLE " [FROZEN]");
+						break;
+				}
+			}
+			break;
+	}
+}
+
+#ifdef __EMSCRIPTEN__
+void em_loop() {
+	SDL_Event event;
+	while (SDL_PollEvent(&event)) {
+		handle_event(event);
+	}
+
+	blit_system->loop();
+	blit_renderer->update(blit_system);
+	blit_renderer->present();
+}
+#endif
 
 int main(int argc, char *argv[]) {
-	static bool running = true;
-
-	SDL_Window* window = NULL;
 
 	std::cout << "Hello World" << std::endl;
 
-	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER) < 0) {
+	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER|SDL_INIT_AUDIO) < 0) {
 		fprintf(stderr, "could not initialize SDL2: %s\n", SDL_GetError());
 		return 1;
 	}
@@ -48,113 +166,40 @@ int main(int argc, char *argv[]) {
 		SDL_GameControllerOpen(n);
 	}
 
-	System *sys = new System();
-	Input *inp = new Input(window, sys);
-	Renderer *ren = new Renderer(window, System::width, System::height);
+	blit_system = new System();
+	blit_input = new Input(window, blit_system);
+	blit_renderer = new Renderer(window, System::width, System::height);
+	blit_audio = new Audio();
 
-#ifndef NO_FFMPEG_CAPTURE
-	VideoCapture *cap = new VideoCapture(argv[0]);
-	unsigned int last_record_startstop = 0;
+#ifdef VIDEO_CAPTURE
+	blit_capture = new VideoCapture(argv[0]);
 #endif
 
-	sys->run();
+	blit_system->run();
 
+#ifdef __EMSCRIPTEN__
+	emscripten_set_main_loop(em_loop, 0, 1);
+#else
 	SDL_Event event;
 
 	while (running && SDL_WaitEvent(&event)) {
-		switch (event.type) {
-			case SDL_QUIT:
-				running = false;
-				break;
-
-			case SDL_WINDOWEVENT:
-				if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-					inp->resize(event.window.data1, event.window.data2);
-					ren->resize(event.window.data1, event.window.data2);
-				}
-				break;
-
-			case SDL_MOUSEBUTTONUP:
-			case SDL_MOUSEBUTTONDOWN:
-				inp->handle_mouse(event.button.button, event.type == SDL_MOUSEBUTTONDOWN, event.button.x, event.button.y);
-				break;
-
-			case SDL_MOUSEMOTION:
-				if (event.motion.state & SDL_BUTTON_LMASK) {
-					inp->handle_mouse(SDL_BUTTON_LEFT, event.motion.state & SDL_MOUSEBUTTONDOWN, event.motion.x, event.motion.y);
-				}
-				break;
-
-			case SDL_KEYDOWN: // fall-though
-			case SDL_KEYUP:
-				if (!inp->handle_keyboard(event.key.keysym.sym, event.type == SDL_KEYDOWN)) {
-					switch (event.key.keysym.sym) {
-#ifndef NO_FFMPEG_CAPTURE
-					case SDLK_r:
-						if (event.type == SDL_KEYDOWN && SDL_GetTicks() - last_record_startstop > 1000) {
-							if (cap->recording()) cap->stop();
-							else cap->start();
-							last_record_startstop = SDL_GetTicks();
-						}
-#endif
-					}
-				}
-				break;
-
-			case SDL_CONTROLLERBUTTONDOWN:
-			case SDL_CONTROLLERBUTTONUP:
-				inp->handle_controller_button(event.cbutton.button, event.type == SDL_CONTROLLERBUTTONDOWN);
-				break;
-
-			case SDL_CONTROLLERAXISMOTION:
-				inp->handle_controller_motion(event.caxis.axis, event.caxis.value);
-				break;
-
-			case SDL_RENDER_TARGETS_RESET:
-				std::cout << "Targets reset" << std::endl;
-				break;
-
-			case SDL_RENDER_DEVICE_RESET:
-				std::cout << "Device reset" << std::endl;
-				break;
-
-			default:
-				if(event.type == System::loop_event) {
-					ren->update(sys);
-					sys->notify_redraw();
-					ren->present();
-#ifndef NO_FFMPEG_CAPTURE
-					if (cap->recording()) cap->capture(ren);
-#endif
-				} else if (event.type == System::timer_event) {
-					switch(event.user.code) {
-						case 0:
-							SDL_SetWindowTitle(window, WINDOW_TITLE);
-							break;
-						case 1:
-							SDL_SetWindowTitle(window, WINDOW_TITLE " [SLOW]");
-							break;
-						case 2:
-							SDL_SetWindowTitle(window, WINDOW_TITLE " [FROZEN]");
-							break;
-					}
-				}
-				break;
-		}
+		handle_event(event);
 	}
+#endif
+
 	if (running) {
 		fprintf(stderr, "Main loop exited with error: %s\n", SDL_GetError());
 		running = false; // ensure timer thread quits
 	}
 
-#ifndef NO_FFMPEG_CAPTURE
-	if (cap->recording()) cap->stop();
-	delete cap;
+#ifdef VIDEO_CAPTURE
+	if (blit_capture->recording()) blit_capture->stop();
+	delete blit_capture;
 #endif
 
-	sys->stop();
-	delete sys;
-	delete ren;
+	blit_system->stop();
+	delete blit_system;
+	delete blit_renderer;
 
 	SDL_DestroyWindow(window);
 	SDL_Quit();

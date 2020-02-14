@@ -12,46 +12,42 @@ using namespace blit;
 namespace blit {
 
 
-  surface::surface(uint8_t *data, const pixel_format &format, const size &bounds) : data(data), bounds(bounds), format(format) {
+  Surface::Surface(uint8_t *data, const PixelFormat &format, const Size &bounds) : data(data), bounds(bounds), format(format) {
     init();
   }
 
-  surface::surface(uint8_t *data, const pixel_format &format, const packed_image *image) : data(data), format(format) {
+  Surface::Surface(uint8_t *data, const PixelFormat &format, const packed_image *image) : data(data), format(format) {
     load_from_packed(image);
     init();
   }
 
-  surface *surface::load(const packed_image *image) {
+  Surface *Surface::load(const packed_image *image) {
     uint8_t *buffer = new uint8_t[pixel_format_stride[image->format] * image->width * image->height];
-    return new surface(buffer, (pixel_format)image->format, image);
+    return new Surface(buffer, (PixelFormat)image->format, image);
   }
 
-  void surface::init() {
-    clip = rect(0, 0, bounds.w, bounds.h);
+  void Surface::init() {
+    clip = Rect(0, 0, bounds.w, bounds.h);
 
-    stride = pixel_format_stride[format];
-    row_stride = stride * bounds.w;
+    pixel_stride = pixel_format_stride[static_cast<uint8_t>(format)];
+    row_stride = pixel_stride * bounds.w;
     
     switch (format) {
-    case pixel_format::RGBA: {
-      bf = RGBA_RGBA;
-      bbf = { nullptr, nullptr, nullptr, nullptr, nullptr };
+    case PixelFormat::RGBA: {
+      pbf = RGBA_RGBA;
+      bbf = RGBA_RGBA;
     }break;
-    case pixel_format::RGB: {
-      bf = RGBA_RGB;
-      bbf = { RGBA_RGB, nullptr, nullptr, P_RGB, nullptr };
+    case PixelFormat::RGB: {
+      pbf = RGBA_RGB;
+      bbf = RGBA_RGB;
     }break;
-    case pixel_format::RGB565: {
-      bf = RGBA_RGB565;
-      bbf = { RGBA_RGB565, nullptr, nullptr, P_RGB565, nullptr };
+    case PixelFormat::P: {
+      pbf = P_P;
+      bbf = P_P;
     }break;
-    case pixel_format::P: {
-      bf = P_P;
-      bbf = { nullptr, P_RGB, nullptr, P_P, nullptr };
-    }break;
-    case pixel_format::M: {
-      bf = RGBA_M;
-      bbf = { nullptr, nullptr, nullptr, nullptr, nullptr };
+    case PixelFormat::M: {
+      pbf = M_M;
+      bbf = M_M;
     }break;
     }
   }
@@ -61,13 +57,13 @@ namespace blit {
    *
    * \param depth `uint8_t`
    */
-  void surface::generate_mipmaps(uint8_t depth) {
+  void Surface::generate_mipmaps(uint8_t depth) {
     uint16_t w = bounds.w;
     uint16_t h = bounds.h;
 
     mipmaps.reserve(depth + 1);
     
-    surface *src = this;
+    Surface *src = this;
     mipmaps.push_back(src);
     
     // offset the data pointer to the end
@@ -76,24 +72,24 @@ namespace blit {
     do {
       w /= 2;
       h /= 2;      
-      surface *dest = new surface(mipmap_data, pixel_format::RGBA, size(w, h));
+      Surface *dest = new Surface(mipmap_data, PixelFormat::RGBA, Size(w, h));
       mipmaps.push_back(dest);
       
       for (int y = 0; y < h; y++) {      
         for (int x = 0; x < w; x++) {
           // sample the average ARGB values
-          rgba *c1, *c2, *c3, *c4;
-          if (src->format == pixel_format::P) {
-            c1 = &src->palette[*src->ptr(point(x * 2, y * 2))];
-            c2 = &src->palette[*src->ptr(point(x * 2 + 1, y * 2))];
-            c3 = &src->palette[*src->ptr(point(x * 2 + 1, y * 2 + 1))];
-            c4 = &src->palette[*src->ptr(point(x * 2, y * 2 + 1))];
+          Pen *c1, *c2, *c3, *c4;
+          if (src->format == PixelFormat::P) {
+            c1 = &src->palette[*src->ptr(Point(x * 2, y * 2))];
+            c2 = &src->palette[*src->ptr(Point(x * 2 + 1, y * 2))];
+            c3 = &src->palette[*src->ptr(Point(x * 2 + 1, y * 2 + 1))];
+            c4 = &src->palette[*src->ptr(Point(x * 2, y * 2 + 1))];
           }
           else {
-            c1 = (rgba *)(src->ptr(point(x * 2, y * 2)));
-            c2 = (rgba *)(src->ptr(point(x * 2 + 1, y * 2)));
-            c3 = (rgba *)(src->ptr(point(x * 2 + 1, y * 2 + 1)));
-            c4 = (rgba *)(src->ptr(point(x * 2, y * 2 + 1)));
+            c1 = (Pen *)(src->ptr(Point(x * 2, y * 2)));
+            c2 = (Pen *)(src->ptr(Point(x * 2 + 1, y * 2)));
+            c3 = (Pen *)(src->ptr(Point(x * 2 + 1, y * 2 + 1)));
+            c4 = (Pen *)(src->ptr(Point(x * 2, y * 2 + 1)));
           }
 
           uint8_t a = (c1->a + c2->a + c3->a + c4->a) / 4;
@@ -102,8 +98,8 @@ namespace blit {
           uint8_t b = (c1->b + c2->b + c3->b + c4->b) / 4;          
           a = 255;
 
-          dest->pen(rgba(r, g, b, a));
-          dest->pixel(point(x, y));
+          dest->pen = Pen(r, g, b, a);
+          dest->pixel(Point(x, y));
         }
       }
 
@@ -113,59 +109,14 @@ namespace blit {
   }
 
   /**
-   * TODO: Document this function
-   *
-   * \param v
-   */
-  void surface::pen(rgba v) {    
-    _pen = v;    
-  }
-
-  /*void surface::blit_sprite(const rect &sprite, const point &p, const uint8_t &t) {
-    rect dr = clip.intersection(rect(p.x, p.y, 8, 8));  // clipped destination rect
-
-    if (dr.empty())
-      return; // after clipping there is nothing to draw
-
-    uint8_t left = dr.x - p.x;
-    uint8_t top = dr.y - p.y;
-    uint8_t right = 8 - (8 - dr.w) + left;
-    uint8_t bottom = 8 - (8 - dr.h) + top;
-
-    blend_blit_func sbbf = bbf[sprites->format];
-
-    uint32_t dest_offset = offset(dr);    
-
-    for (uint8_t y = top; y < bottom; y++) {
-      for (uint8_t x = left; x < right; x++) {
-        uint8_t u = x;
-        uint8_t v = y;
-
-        if (t) {
-          v = (t & sprite_transform::VERTICAL) ? (7 - v) : v;                     // vertical mirror
-          u = (t & sprite_transform::HORIZONTAL) ? (7 - u) : u;                   // horizontal mirror
-          if (t & sprite_transform::XYSWAP) { uint8_t tmp = u; u = v; v = tmp; }  // axis swap
-        }
-
-        uint32_t src_offset = sprites->offset(sprite.x + u, sprite.y + v);
-
-        sbbf(sprites, src_offset, this, dest_offset, 1, 1);
-        dest_offset++;
-      }
-
-      dest_offset += bounds.w - 8;
-    }      
-  }*/
-
-  /**
    * Blit a sprite to the surface
    *
    * \param sprite
    * \param p
    * \param t
    */
-  void surface::blit_sprite(const rect &sprite, const point &p, const uint8_t &t) {
-    rect dr = clip.intersection(rect(p.x, p.y, sprite.w, sprite.h));  // clipped destination rect
+  void Surface::blit_sprite(const Rect &sprite, const Point &p, const uint8_t &t) {
+    Rect dr = clip.intersection(Rect(p.x, p.y, sprite.w, sprite.h));  // clipped destination rect
 
     if (dr.empty())
       return; // after clipping there is nothing to draw
@@ -173,16 +124,14 @@ namespace blit {
     uint8_t left = dr.x - p.x;
     uint8_t top = dr.y - p.y;
     uint8_t right = sprite.w - (sprite.w - dr.w) + left - 1;
-    uint8_t bottom = sprite.h - (sprite.h - dr.h) + top - 1;
-
-    blend_blit_func sbbf = bbf[sprites->format];
+    uint8_t bottom = sprite.h - (sprite.h - dr.h) + top - 1;    
     
-    if (t & sprite_transform::VERTICAL) {
+    if (t & SpriteTransform::VERTICAL) {
       top    = sprite.h - 1 - top;
       bottom = sprite.h - 1 - bottom;
     }
 
-    if (t & sprite_transform::HORIZONTAL) {
+    if (t & SpriteTransform::HORIZONTAL) {
       left  = sprite.w - 1 - left;
       right = sprite.w - 1 - right;
     }
@@ -199,12 +148,12 @@ namespace blit {
       uint8_t x_count = dr.w;
       uint8_t x = left;
       do {      
-        if (t & sprite_transform::XYSWAP)
+        if (t & SpriteTransform::XYSWAP)
           src_offset = sprites->offset(sprite.x + y, sprite.y + x);
         else
           src_offset = sprites->offset(sprite.x + x, sprite.y + y);
 
-        sbbf(sprites, src_offset, this, dest_offset, 1, 1);
+        bbf(sprites, src_offset, this, dest_offset, 1, 1);
         dest_offset++;
 
         x += x_step;
@@ -222,8 +171,8 @@ namespace blit {
    * \param p
    * \param t
    */
-  void surface::stretch_blit_sprite(const rect &sprite, const rect &r, const uint8_t &t) {
-    rect dr = clip.intersection(r);  // clipped destination rect
+  void Surface::stretch_blit_sprite(const Rect &sprite, const Rect &r, const uint8_t &t) {
+    Rect dr = clip.intersection(r);  // clipped destination rect
 
     if (dr.empty())
       return; // after clipping there is nothing to draw
@@ -236,14 +185,12 @@ namespace blit {
     float right = sprite.w - (sprite.w - (dr.w * scale_x)) + left - 1;
     float bottom = sprite.h - (sprite.h - (dr.h * scale_y)) + top - 1;
 
-    blend_blit_func sbbf = bbf[sprites->format];
-
-    if (t & sprite_transform::VERTICAL) {
+    if (t & SpriteTransform::VERTICAL) {
       top = sprite.h - 1 - top;
       bottom = sprite.h - 1 - bottom;
     }
 
-    if (t & sprite_transform::HORIZONTAL) {
+    if (t & SpriteTransform::HORIZONTAL) {
       left = sprite.w - 1 - left;
       right = sprite.w - 1 - right;
     }
@@ -260,12 +207,12 @@ namespace blit {
       uint8_t x_count = dr.w;
       float x = left;
       do {
-        if (t & sprite_transform::XYSWAP)
+        if (t & SpriteTransform::XYSWAP)
           src_offset = sprites->offset(sprite.x + y, sprite.y + x);
         else
           src_offset = sprites->offset(sprite.x + x, sprite.y + y);
 
-        sbbf(sprites, src_offset, this, dest_offset, 1, 1);
+        bbf(sprites, src_offset, this, dest_offset, 1, 1);
         dest_offset++;
 
         x += x_step;
@@ -284,8 +231,8 @@ namespace blit {
    * \param p
    * \param hflip `true` to flip the source surface horizontally
    */
-  void surface::blit(surface *src, rect r, point p, bool hflip) {    
-    rect dr = clip.intersection(rect(p.x, p.y, r.w, r.h));  // clipped destination rect
+  void Surface::blit(Surface *src, Rect r, Point p, bool hflip) {    
+    Rect dr = clip.intersection(Rect(p.x, p.y, r.w, r.h));  // clipped destination rect
 
     if (dr.empty()) 
       return; // after clipping there is nothing to draw
@@ -306,11 +253,11 @@ namespace blit {
       src_direction = -1;
     }
 
-    blend_blit_func sbbf = bbf[src->format];
+    
     
     int32_t dest_offset = offset(dr);
     for (int32_t y = p.y; y < p.y + r.h; y++) {
-      sbbf(src, src_offset + src_offset_flip, this, dest_offset, r.w, src_direction);
+      bbf(src, src_offset + src_offset_flip, this, dest_offset, r.w, src_direction);
 
       src_offset += src->bounds.w;
       dest_offset += bounds.w;      
@@ -324,8 +271,8 @@ namespace blit {
    * \param sr `rect` soruce
    * \param dr `rect` destination
    */
-  void surface::stretch_blit(surface *src, rect sr, rect dr) {
-    rect cdr = clip.intersection(dr);  // clipped destination rect
+  void Surface::stretch_blit(Surface *src, Rect sr, Rect dr) {
+    Rect cdr = clip.intersection(dr);  // clipped destination rect
 
     if (cdr.empty())
       return; // after clipping there is nothing to draw
@@ -343,13 +290,11 @@ namespace blit {
     sr.w = cdr.w * sx;
     sr.h = cdr.h * sy;
 
-    blend_blit_func sbbf = bbf[src->format];
-
     float src_y = sr.y;
     for (int32_t y = cdr.y; y < cdr.y + cdr.h; y++) {
       float src_x = sr.x;
       for (int32_t x = cdr.x; x < cdr.x + cdr.w; x++) {
-        sbbf(src, src->offset(src_x, src_y), this, offset(x, y), 1, 1);
+        bbf(src, src->offset(src_x, src_y), this, offset(x, y), 1, 1);
 
         src_x += sx;
       }      
@@ -366,7 +311,7 @@ namespace blit {
    * \param p
    * \param dc
    */
-  void surface::stretch_blit_vspan(surface *src, point uv, uint16_t sc, point p, int16_t dc) {
+  void Surface::stretch_blit_vspan(Surface *src, Point uv, uint16_t sc, Point p, int16_t dc) {
     float v = uv.y;
     float vs = float(sc) / float(dc);
 
@@ -380,11 +325,9 @@ namespace blit {
       return;
     }
 
-    blend_blit_func sbbf = bbf[src->format];
-
     int16_t max_y = std::min(p.y + dc, bounds.h);
     for (; p.y < max_y; p.y++) {
-      sbbf(src, src->offset(point(uv.x, v)), this, offset(p), 1, 1);
+      bbf(src, src->offset(Point(uv.x, v)), this, offset(p), 1, 1);
 
       v += vs;
     }
@@ -398,8 +341,8 @@ namespace blit {
    * \param p
    * \param f
    */
-  void surface::custom_blend(surface *src, rect r, point p, std::function<void(uint8_t *psrc, uint8_t *pdest, int16_t c)> f) {
-    rect dr = clip.intersection(rect(p.x, p.y, r.w, r.h));  // clipped destination rect
+  void Surface::custom_blend(Surface *src, Rect r, Point p, std::function<void(uint8_t *psrc, uint8_t *pdest, int16_t c)> f) {
+    Rect dr = clip.intersection(Rect(p.x, p.y, r.w, r.h));  // clipped destination rect
 
     if (dr.empty())
       return; // after clipping there is nothing to draw 
@@ -428,8 +371,8 @@ namespace blit {
    * \param r
    * \param f
    */
-  void surface::custom_modify(rect r, std::function<void(uint8_t *p, int16_t c)> f) {
-    rect dr = clip.intersection(r);  // clipped destination rect
+  void Surface::custom_modify(Rect r, std::function<void(uint8_t *p, int16_t c)> f) {
+    Rect dr = clip.intersection(r);  // clipped destination rect
 
     if (dr.empty())
       return; // after clipping there is nothing to draw
@@ -446,98 +389,26 @@ namespace blit {
   /**
    * TODO: Document this function
    *
-   * \param message
-   * \param font
-   * \param p
-   * \param variable
-   */
-  void surface::text(std::string message, const uint8_t *font, const point &p, bool variable) {
-    text(message, font, rect(p.x, p.y, 10000, 10000), variable);
-  }
-
-  /**
-   * TODO: Document this function
-   *
-   * \param message
-   * \param font
-   * \param r
-   * \param variable
-   */
-  void surface::text(std::string message, const uint8_t *font, const rect &r, bool variable) {
-    point c(r.x, r.y); // caret position
-
-    for (char &chr : message) {
-      // draw character
-      
-      uint8_t chr_idx = chr & 0x7F;
-      chr_idx = chr_idx < ' ' ? 0 : chr_idx - ' ';
-
-      uint8_t char_width = 0;
-      
-      const uint8_t* font_chr = &font[chr_idx * 6];
-      
-      for (uint8_t y = 0; y < 8; y++) {          
-        uint32_t po = offset(point(c.x, c.y + y));
-
-        for (uint8_t x = 0; x < 6; x++) {
-            
-          //if(clip.contains(p)) {
-            if (font_chr[x] & (1 << y)) {
-              bf((uint8_t *)&_pen, this, po, 1);
-              char_width = char_width < x ? x : char_width;
-            }
-          //}
-
-          //p.x++;
-          po++;
-        }
-
-        //p.y++;
-      }
-
-      if (!variable)
-        char_width = 4;
-
-      char_width += 2;
-
-      if (chr == 32) {
-        char_width = 3;
-      }
-
-      // increment the cursor
-      c.x += char_width;
-      if ((c.x > r.x + r.w) | (chr == 10)) {
-        c.x = r.x;
-        c.y += 9;
-      }
-    }
-
-    //return c.y + 8;
-  }
-
-  /**
-   * TODO: Document this function
-   *
    * \param image
    */
-  void surface::load_from_packed(const packed_image *image) {        
+  void Surface::load_from_packed(const packed_image *image) {        
     uint8_t *palette_entries = ((uint8_t *)image) + sizeof(packed_image);
     uint8_t *bytes = ((uint8_t *)image) + sizeof(packed_image) + (image->palette_entry_count * 4);
 
-    bounds = size(image->width, image->height);
+    bounds = Size(image->width, image->height);
 
     uint8_t bit_depth = uint8_t(ceil(log(image->palette_entry_count) / log(2)));
 
     uint8_t col = 0;
     uint8_t bit = 0;
 
-    if (format == pixel_format::P) {
+    if (format == PixelFormat::P) {
       // load paletted
       uint8_t *pdest = (uint8_t *)data;
       
-      palette.resize(image->palette_entry_count);
+      palette = new Pen[256];
       for (uint8_t pidx = 0; pidx < image->palette_entry_count; pidx++) {
-        palette[pidx] = rgba(
+        palette[pidx] = Pen(
           palette_entries[pidx * 4 + 0],
           palette_entries[pidx * 4 + 1],
           palette_entries[pidx * 4 + 2],
@@ -557,7 +428,7 @@ namespace blit {
         }
       }
     }else{
-      rgba *pdest = (rgba *)data;
+      Pen *pdest = (Pen *)data;
 
       for (uint8_t b = *bytes; bytes < ((uint8_t *)image) + image->byte_count; b = *++bytes) {
         for (auto j = 0; j < 8; j++) {
@@ -566,7 +437,7 @@ namespace blit {
 
           bit++;
           if (bit == bit_depth) {
-            *pdest++ = rgba(
+            *pdest++ = Pen(
               palette_entries[col * 4 + 0],
               palette_entries[col * 4 + 1],
               palette_entries[col * 4 + 2],
@@ -582,7 +453,7 @@ namespace blit {
   /**
    * TODO: Document this function
    */
-  void surface::watermark() {
+  void Surface::watermark() {
     static uint8_t logo[] = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 2, 0,
@@ -599,16 +470,16 @@ namespace blit {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
 
-    static rgba pens[] = { rgba(39, 39, 56), rgba(255, 255, 255), rgba(0, 255, 0) };
+    static Pen pens[] = { Pen(39, 39, 56), Pen(255, 255, 255), Pen(0, 255, 0) };
 
     uint8_t scale = bounds.w / 160;
     for (uint8_t y = 0; y < 13; y++) {
       for (uint8_t x = 0; x < 13; x++) {
-        rgba &p = pens[logo[x + y * 13]];
+        Pen &p = pens[logo[x + y * 13]];
         int o = offset(bounds.w - (15 * scale) + (x * scale), bounds.h - (15 * scale) + (y * scale));
-        bf((uint8_t *)&p, this, o, scale);
+        pbf(&p, this, o, scale);
         if (scale == 2) {
-          bf((uint8_t *)&p, this, o + bounds.w, scale);
+          pbf(&p, this, o + bounds.w, scale);
         }
       }
     }

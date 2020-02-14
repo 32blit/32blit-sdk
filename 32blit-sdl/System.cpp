@@ -1,31 +1,42 @@
 #include <chrono>
 #include <iostream>
-#include <SDL.h>
+#include <random>
+#include "SDL.h"
 
+#include "File.hpp"
 #include "System.hpp"
 #include "32blit.hpp"
 #include "UserCode.hpp"
 
 
 // blit framebuffer memory
-rgb565 __ltdc_buffer[320 * 240 * 2];
-surface __ltdc((uint8_t *)__ltdc_buffer, pixel_format::RGB565, size(320, 240));
-surface __fb((uint8_t *)__ltdc_buffer + (320 * 240 * 2), pixel_format::RGB, size(160, 120));
+uint8_t framebuffer[320 * 240 * 3];
+blit::Surface __fb_hires((uint8_t *)framebuffer, blit::PixelFormat::RGB, blit::Size(320, 240));
+blit::Surface __fb_lores((uint8_t *)framebuffer, blit::PixelFormat::RGB, blit::Size(160, 120));
 
 // blit debug callback
 void debug(std::string message) {
 	std::cout << message << std::endl;
 }
 
+int blit_debugf(const char * psFormatString, ...)
+{
+	va_list args;
+	va_start(args, psFormatString);
+	int ret = vprintf(psFormatString, args);
+	va_end(args);
+	return ret;
+}
+
 // blit screenmode callback
-blit::screen_mode _mode = blit::screen_mode::lores;
-void set_screen_mode(blit::screen_mode new_mode) {
+blit::ScreenMode _mode = blit::ScreenMode::lores;
+void set_screen_mode(blit::ScreenMode new_mode) {
 	_mode = new_mode;
-	if (_mode == blit::screen_mode::hires) {
-		blit::fb = __ltdc;
+	if (_mode == blit::ScreenMode::hires) {
+		blit::screen = __fb_hires;
 	}
 	else {
-		blit::fb = __fb;
+		blit::screen = __fb_lores;
 	}
 }
 
@@ -34,6 +45,20 @@ std::chrono::steady_clock::time_point start;
 uint32_t now() {
 	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start);
 	return (uint32_t)elapsed.count();
+}
+
+// blit random callback
+#ifdef __MINGW32__
+// Windows/MinGW doesn't support a non-deterministic source of randomness, so we fall back upon the age-old time seed once more
+// Without this, random_device() will always return the same number and thus our mersenne twister will always produce the same sequence.
+std::mt19937 random_generator(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
+#else
+std::random_device random_device;
+std::mt19937 random_generator(random_device());
+#endif
+std::uniform_int_distribution<uint32_t> random_distribution;
+uint32_t blit_random() {
+	return random_distribution(random_generator);
 }
 
 // SDL events
@@ -76,21 +101,35 @@ void System::run() {
 	start = std::chrono::steady_clock::now();
 
 	blit::now = ::now;
+	blit::random = ::blit_random;
 	blit::debug = ::debug;
+	blit::debugf = ::blit_debugf;
 	blit::set_screen_mode = ::set_screen_mode;
 	blit::update = ::update;
 	blit::render = ::render;
 
+	setup_base_path();
+
+	blit::open_file = ::open_file;
+	blit::read_file = ::read_file;
+	blit::close_file = ::close_file;
+	blit::list_files = ::list_files;
+
 	::set_screen_mode(blit::lores);
 
+#ifdef __EMSCRIPTEN__
+	::init();
+#else
 	t_system_loop = SDL_CreateThread(system_loop_thread, "Loop", (void *)this);
 	t_system_timer = SDL_CreateThread(system_timer_thread, "Timer", (void *)this);
+#endif
 }
 
 int System::timer_thread() {
 	// Signal the system loop every 20 msec.
 	int dropped = 0;
-	SDL_Event event = {.type = timer_event};
+	SDL_Event event = {};
+	event.type = timer_event;
 
 	while (SDL_SemWaitTimeout(s_timer_stop, 20)) {
 		if (SDL_SemValue(s_loop_update)) {
@@ -115,22 +154,15 @@ int System::timer_thread() {
 
 int System::update_thread() {
 	// Run the blit user code once every time we are signalled.
-	SDL_Event event = {.type = loop_event};
+	SDL_Event event = {};
+	event.type = loop_event;
 
 	::init(); // Run init here because the user can make it hang.
 
 	while (true) {
 		SDL_SemWait(s_loop_update);
 		if(!running) break;
-		SDL_LockMutex(m_input);
-		blit::buttons = shadow_buttons;
-		blit::tilt.x = shadow_tilt[0];
-		blit::tilt.y = shadow_tilt[1];
-		blit::tilt.z = shadow_tilt[2];
-		blit::joystick.x = shadow_joystick[0];
-		blit::joystick.y = shadow_joystick[1];
-		SDL_UnlockMutex(m_input);
-		blit::tick(::now());
+		loop();
 		if(!running) break;
 		SDL_PushEvent(&event);
 		SDL_SemWait(s_loop_redraw);
@@ -139,23 +171,31 @@ int System::update_thread() {
 	return 0;
 }
 
+void System::loop()
+{
+	SDL_LockMutex(m_input);
+	blit::buttons = shadow_buttons;
+	blit::tilt.x = shadow_tilt[0];
+	blit::tilt.y = shadow_tilt[1];
+	blit::tilt.z = shadow_tilt[2];
+	blit::joystick.x = shadow_joystick[0];
+	blit::joystick.y = shadow_joystick[1];
+	SDL_UnlockMutex(m_input);
+	blit::tick(::now());
+}
+
 Uint32 System::mode() {
-	if (_mode == blit::screen_mode::lores) {
-		return SDL_PIXELFORMAT_RGB24;
-	}
-	else
-	{
-		return SDL_PIXELFORMAT_RGB565;
-	}
+	return _mode;
 }
 
 void System::update_texture(SDL_Texture *texture) {
-	if (_mode == blit::screen_mode::lores) {
-		SDL_UpdateTexture(texture, NULL, (uint8_t *)__fb.data, 160 * 3);
+	blit::render(::now());
+	if (_mode == blit::ScreenMode::lores) {
+		SDL_UpdateTexture(texture, NULL, __fb_lores.data, 160 * 3);
 	}
 	else
 	{
-		SDL_UpdateTexture(texture, NULL, (uint8_t *)__ltdc.data, 320 * sizeof(uint16_t));
+		SDL_UpdateTexture(texture, NULL, __fb_hires.data, 320 * 3);
 	}
 }
 
@@ -202,4 +242,26 @@ void System::stop() {
 
 	SDL_SemPost(s_timer_stop);
 	SDL_WaitThread(t_system_timer, &returnValue);
+}
+
+
+// us timer used by profiler
+// need code here for non stm32 based builds
+
+void EnableUsTimer(void)
+{
+	// Enable/initialise timer
+}
+
+uint32_t GetUsTimer(void)
+{
+	// get current time in us
+	uint64_t ticksPerUs = SDL_GetPerformanceFrequency() / 1000000;
+	return SDL_GetPerformanceCounter() / ticksPerUs;
+}
+
+uint32_t GetMaxUsTimer(void)
+{
+	// largest us value timer can produce for wrapping
+	return UINT32_MAX;
 }

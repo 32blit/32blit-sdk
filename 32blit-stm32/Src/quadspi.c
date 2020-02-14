@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -21,7 +21,6 @@
 #include "quadspi.h"
 
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 QSPI_HandleTypeDef hqspi;
@@ -31,7 +30,7 @@ void MX_QUADSPI_Init(void)
 {
 
   hqspi.Instance = QUADSPI;
-  hqspi.Init.ClockPrescaler = 128;
+  hqspi.Init.ClockPrescaler = 2;
   hqspi.Init.FifoThreshold = 1;
   hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
   hqspi.Init.FlashSize = QSPI_FLASH_SIZE;
@@ -61,37 +60,6 @@ void HAL_QSPI_MspInit(QSPI_HandleTypeDef* qspiHandle)
     __HAL_RCC_QSPI_FORCE_RESET();
     __HAL_RCC_QSPI_RELEASE_RESET();
   
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-    __HAL_RCC_GPIOE_CLK_ENABLE();
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    /**QUADSPI GPIO Configuration    
-    PB2     ------> QUADSPI_CLK
-    PE7     ------> QUADSPI_BK2_IO0
-    PE8     ------> QUADSPI_BK2_IO1
-    PE9     ------> QUADSPI_BK2_IO2
-    PE10     ------> QUADSPI_BK2_IO3
-    PC11     ------> QUADSPI_BK2_NCS 
-    */
-    GPIO_InitStruct.Pin = GPIO_PIN_2;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF10_QUADSPI;
-    HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_11;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /* USER CODE BEGIN QUADSPI_MspInit 1 */
 
@@ -136,7 +104,7 @@ void HAL_QSPI_MspDeInit(QSPI_HandleTypeDef* qspiHandle)
   * @param  hqspi: QSPI handle
   * @retval None
   */
-static void QSPI_WriteEnable(QSPI_HandleTypeDef *hqspi)
+void QSPI_WriteEnable(QSPI_HandleTypeDef *hqspi)
 {
     QSPI_CommandTypeDef     sCommand;
     QSPI_AutoPollingTypeDef sConfig;
@@ -175,7 +143,7 @@ static void QSPI_WriteEnable(QSPI_HandleTypeDef *hqspi)
     }
 }
 
-static uint8_t QSPI_AutoPollingMemReady(QSPI_HandleTypeDef *hqspi, uint32_t Timeout)
+static HAL_StatusTypeDef QSPI_AutoPollingMemReady(QSPI_HandleTypeDef *hqspi, uint32_t Timeout)
 {
     QSPI_CommandTypeDef     s_command;
     QSPI_AutoPollingTypeDef s_config;
@@ -198,12 +166,9 @@ static uint8_t QSPI_AutoPollingMemReady(QSPI_HandleTypeDef *hqspi, uint32_t Time
     s_config.Mask            = 0x01;
     s_config.StatusBytesSize = 1;
 
-    if (HAL_QSPI_AutoPolling(hqspi, &s_command, &s_config, Timeout) != HAL_OK)
-    {
-        Error_Handler();
-    }
+    HAL_StatusTypeDef status = HAL_QSPI_AutoPolling(hqspi, &s_command, &s_config, Timeout);
 
-    return QSPI_OK;
+    return status;
 }
 
 /**
@@ -369,17 +334,13 @@ HAL_StatusTypeDef qspi_write_buffer(size_t offset, const uint8_t* buffer, size_t
     s_command.Address     = offset;
     s_command.NbData      = length;
 
-    if ((status = HAL_QSPI_Command(&hqspi, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)) != HAL_OK)
+    if ((status = HAL_QSPI_Command(&hqspi, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)) == HAL_OK)
     {
-        Error_Handler();
+    	if ((status = HAL_QSPI_Transmit(&hqspi, (uint8_t *)buffer, HAL_QPSI_TIMEOUT_DEFAULT_VALUE )) == HAL_OK)
+    	{
+        status = QSPI_AutoPollingMemReady(&hqspi, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
+    	}
     }
-
-    if ((status = HAL_QSPI_Transmit(&hqspi, buffer, HAL_QPSI_TIMEOUT_DEFAULT_VALUE )) != HAL_OK)
-    {
-        Error_Handler();
-    }
-
-    status = QSPI_AutoPollingMemReady(&hqspi, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
 
     return status;
 }
@@ -404,15 +365,12 @@ HAL_StatusTypeDef qspi_read_buffer(size_t address, const uint8_t* buffer, size_t
     s_command.Address     = address;
     s_command.NbData      = length;
 
-    if ((status = HAL_QSPI_Command(&hqspi, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)) != HAL_OK) {
-        Error_Handler();
+    if ((status = HAL_QSPI_Command(&hqspi, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)) == HAL_OK)
+    {
+    	status = HAL_QSPI_Receive(&hqspi, (uint8_t *)buffer, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
     }
 
-    if ((status = HAL_QSPI_Receive(&hqspi, buffer, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)) != HAL_OK) {
-        Error_Handler();
-    }
-
-    return QSPI_OK;
+    return status;
 }
 
 static HAL_StatusTypeDef qspi_enable_quad(QSPI_HandleTypeDef *hqspi)
@@ -448,16 +406,17 @@ HAL_StatusTypeDef qspi_enable_memorymapped_mode(void)
     QSPI_CommandTypeDef      s_command = {0};
     QSPI_MemoryMappedTypeDef s_mem_mapped_cfg = {0};
 
-    s_command.Instruction       = QUAD_OUT_FAST_READ_CMD;
     s_command.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
     s_command.AddressMode       = QSPI_ADDRESS_1_LINE;
     s_command.AddressSize       = QSPI_ADDRESS_24_BITS;
     s_command.DataMode          = QSPI_DATA_4_LINES;
     s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-    s_command.DummyCycles       = 8;
-    s_command.DdrMode           = QSPI_DDR_MODE_DISABLE;
-    s_command.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
+    s_command.DummyCycles       = 6;
     s_command.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
+
+    s_command.Instruction       = QUAD_OUT_FAST_READ_DTR_CMD;
+    s_command.DdrMode           = QSPI_DDR_MODE_ENABLE;
+    s_command.DdrHoldHalfCycle  = QSPI_DDR_HHC_HALF_CLK_DELAY;
 
     /* Configure the memory mapped mode */
     s_mem_mapped_cfg.TimeOutActivation = QSPI_TIMEOUT_COUNTER_DISABLE;
@@ -471,10 +430,17 @@ HAL_StatusTypeDef qspi_enable_memorymapped_mode(void)
     return QSPI_OK;
 }
 
+// for some godforsaken reason if this is optimised in any way when returning from the function
+// it jumps off into the normal SPI code!
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
 int qspi_init(void) {
   qspi_reset(&hqspi);
   qspi_enable_quad(&hqspi);
+  return(0);
 }
+#pragma GCC pop_options
+
 /* USER CODE END 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

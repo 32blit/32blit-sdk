@@ -1,10 +1,10 @@
+#undef UNUSED
+#define UNUSED(x) ((void)(__typeof__(x))(x)) // suppress "UNUSED" warnings
 
 #include "32blit.hpp"
 #include "fatfs.h"
+#include "persistence.h"
 
-#define DAC_BUFFER_SIZE 4000
-#define DAC_DMA_COMPLETE 2
-#define DAC_DMA_HALF_COMPLETE 1
 
 // Functions defined by user code files
 extern void init();
@@ -12,8 +12,6 @@ extern void update(uint32_t time);
 extern void render(uint32_t time);
 
 // SD storage
-bool blit_mount_sd(char label[12], uint32_t &totalspace, uint32_t &freespace);
-bool blit_open_file(FIL &file, const char *filename);
 extern char *get_fr_err_text(FRESULT err);
 extern bool blit_sd_detected();
 
@@ -21,7 +19,7 @@ extern bool blit_sd_detected();
 extern char __ltdc_start;
 extern void blit_swap();
 extern void blit_flip();
-extern void set_screen_mode(blit::screen_mode new_mode);
+extern void set_screen_mode(blit::ScreenMode new_mode);
 extern void blit_clear_framebuffer();
 
 // Blit setup and main loop
@@ -33,8 +31,15 @@ extern void blit_update_vibration();
 extern void blit_update_led();
 extern void blit_process_input();
 
-extern uint32_t blit_update_dac(FIL *audio_file);
+// Audio
+extern void blit_enable_amp();
+
+// Switching execution
+extern void blit_switch_execution(void);
 
 void blit_menu_update(uint32_t time);
 void blit_menu_render(uint32_t time);
 void blit_menu();
+
+extern void blit_enable_ADC();
+extern void blit_disable_ADC();

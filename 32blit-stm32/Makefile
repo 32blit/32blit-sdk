@@ -1,11 +1,18 @@
 
 # Single user cpp file containing game code to build into firmware
-PROJECT = Src/32blitgame.cpp
+PROJECT = Src/flash-loader.cpp
 # Set the output filename to match the user code filename
 TARGET = $(basename $(notdir $(PROJECT)))
-DEBUG = 0
-OPT = -Os
+DEBUG = 1
+OPT = -Og -g -DEXTERNAL_LOAD_ADDRESS=0x90000000 -DAPPLICATION_VTOR=0x08000000 -DINITIALISE_QSPI=1 -DCDC_FIFO_BUFFERS=64
 BUILD_DIR = build
+
+CPP_SOURCES = \
+Src/CDCDataStream.cpp \
+Src/CDCCommandStream.cpp \
+Src/CDCCommandHandler.cpp \
+Src/CDCResetHandler.cpp \
+Src/CDCInfoHandler.cpp
 
 # C sources
 C_SOURCES =  \
@@ -43,17 +50,19 @@ Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c_ex.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_dma2d.c \
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rng.c \
 Src/system_stm32h7xx.c \
 Src/user_diskio.c \
 Src/fatfs.c \
 Src/fatfs_sd.c \
+Src/fatfs/option/ccsbcs.c \
 Middlewares/Third_Party/FatFs/src/diskio.c \
 Middlewares/Third_Party/FatFs/src/ff.c \
 Middlewares/Third_Party/FatFs/src/ff_gen_drv.c \
 Middlewares/Third_Party/FatFs/src/option/syscall.c \
-Src/gpio.c \
+Src/gpio.cpp \
+Src/display.cpp \
 Src/adc.c \
-Src/dac.c \
 Src/debug.c \
 Src/dma.c \
 Src/hrtim.c \
@@ -66,8 +75,21 @@ Src/spi.c \
 Src/spi-st7272a.c \
 Src/sys.c \
 Src/tim.c \
+Src/rng.c \
 Src/usb_otg.c \
-Src/32blit.c
+Src/32blit.c \
+Src/usb_device.c \
+Src/usbd_conf.c \
+Src/usbd_desc.c \
+Src/usbd_cdc_if.c \
+Src/CDCLogging.c \
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd.c \
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd_ex.c \
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_usb.c \
+Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c \
+Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c \
+Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c \
+Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c
 
 # ASM sources
 ASM_SOURCES =  \
@@ -119,7 +141,9 @@ C_INCLUDES =  \
 -IDrivers/CMSIS/Include \
 -IMiddlewares/Third_Party/FatFs/src \
 -I../32blit \
--I$(dir $(PROJECT))
+-I$(dir $(PROJECT)) \
+-IMiddlewares/ST/STM32_USB_Device_Library/Core/Inc \
+-IMiddlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections -fshort-wchar
@@ -148,6 +172,9 @@ all: lib32blit-stm32 $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUI
 # list of objects
 OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o)))
 vpath %.c $(sort $(dir $(C_SOURCES)))
+
+OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(CPP_SOURCES:.cpp=.o)))
+vpath %.cpp $(sort $(dir $(C_SOURCES)))
 
 OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(PROJECT:.cpp=.o)))
 vpath %.cpp $(sort $(dir $(PROJECT)))

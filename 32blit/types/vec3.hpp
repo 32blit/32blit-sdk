@@ -6,41 +6,41 @@ extern "C" {
   #include <lua\lauxlib.h>
 }*/
 
-struct mat4;
+struct Mat4;
 
-struct vec3 {
+struct Vec3 {
   float x;
   float y;
   float z;  
 
-  vec3(const vec3 &v);
-  vec3(const float x = 0, const float y = 0, const float z = 0);
+  Vec3(const Vec3 &v);
+  Vec3(const float x = 0, const float y = 0, const float z = 0);
 
-  inline vec3& operator-= (const vec3 &a) { x -= a.x; y -= a.y;  z -= a.z; return *this; }
-  inline vec3& operator+= (const vec3 &a) { x += a.x; y += a.y;  z += a.z; return *this; }
-  inline vec3& operator*= (const float a) { x *= a;   y *= a;    z *= a;   return *this; }
-  inline vec3& operator*= (const mat4 &a) { this->transform(a); return *this; }
-  inline vec3& operator*= (const vec3 &a) { x *= a.x;   y *= a.y;    z *= a.z;   return *this; }
-  inline vec3& operator/= (const float a) { x /= a;   y /= a;    z /= a;   return *this; }
-  inline vec3& operator/= (const vec3 &a) { x /= a.x;   y /= a.y;    z /= a.z;   return *this; }
+  inline Vec3& operator-= (const Vec3 &a) { x -= a.x; y -= a.y;  z -= a.z; return *this; }
+  inline Vec3& operator+= (const Vec3 &a) { x += a.x; y += a.y;  z += a.z; return *this; }
+  inline Vec3& operator*= (const float a) { x *= a;   y *= a;    z *= a;   return *this; }
+  inline Vec3& operator*= (const Mat4 &a) { this->transform(a); return *this; }
+  inline Vec3& operator*= (const Vec3 &a) { x *= a.x;   y *= a.y;    z *= a.z;   return *this; }
+  inline Vec3& operator/= (const float a) { x /= a;   y /= a;    z /= a;   return *this; }
+  inline Vec3& operator/= (const Vec3 &a) { x /= a.x;   y /= a.y;    z /= a.z;   return *this; }
   
-  void   transform(const mat4 &m);
+  void   transform(const Mat4 &m);
   void   normalize();
   float  length();
-  vec3   cross(const vec3 &a);
-  vec3   cross(const vec3 *a);
-  float  dot(const vec3 &a);
-  float  dot(const vec3 *a);
+  Vec3   cross(const Vec3 &a);
+  Vec3   cross(const Vec3 *a);
+  float  dot(const Vec3 &a);
+  float  dot(const Vec3 *a);
 };
 
-inline vec3 operator-  (vec3 lhs, const vec3 &rhs) { lhs -= rhs; return lhs; }
-inline vec3 operator-  (const vec3 &rhs) { return vec3(-rhs.x, -rhs.y, -rhs.z); }
-inline vec3 operator+  (vec3 lhs, const vec3 &rhs) { lhs += rhs; return lhs; }
-inline vec3 operator*  (vec3 lhs, const float a) { lhs *= a; return lhs; }
-inline vec3 operator*  (vec3 lhs, const mat4 &a) { lhs *= a; return lhs; }
-inline vec3 operator*  (vec3 lhs, const vec3 &rhs) { lhs *= rhs; return lhs; }
-inline vec3 operator/  (vec3 lhs, const float a) { lhs /= a; return lhs; }
-inline vec3 operator/  (vec3 lhs, const vec3 &rhs) { lhs /= rhs; return lhs; }
+inline Vec3 operator-  (Vec3 lhs, const Vec3 &rhs) { lhs -= rhs; return lhs; }
+inline Vec3 operator-  (const Vec3 &rhs) { return Vec3(-rhs.x, -rhs.y, -rhs.z); }
+inline Vec3 operator+  (Vec3 lhs, const Vec3 &rhs) { lhs += rhs; return lhs; }
+inline Vec3 operator*  (Vec3 lhs, const float a) { lhs *= a; return lhs; }
+inline Vec3 operator*  (Vec3 lhs, const Mat4 &a) { lhs *= a; return lhs; }
+inline Vec3 operator*  (Vec3 lhs, const Vec3 &rhs) { lhs *= rhs; return lhs; }
+inline Vec3 operator/  (Vec3 lhs, const float a) { lhs /= a; return lhs; }
+inline Vec3 operator/  (Vec3 lhs, const Vec3 &rhs) { lhs /= rhs; return lhs; }
 
 /*
 void register_vec3lib(lua_State *L);

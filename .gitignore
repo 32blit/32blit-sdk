@@ -21,6 +21,8 @@ x64/
 x86/
 bld/
 build/
+build.stm32/
+build.mingw/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
@@ -333,3 +335,30 @@ ASALocalRun/
 # Object files and other build cruft
 *.o
 lib32blit.a
+
+build.*/
+build/
+
+# STM32 CubeMX Project Output (should be manually synced to 32blit-stm32 tree)
+.vscode/
+hardware/.mxproject
+hardware/Drivers/
+hardware/Inc/
+hardware/Makefile
+hardware/Middlewares/
+hardware/STM32H750VBTx_FLASH.ld
+hardware/Src/
+hardware/startup_stm32h750xx.s
+
+#CMAKE from https://github.com/github/gitignore/blob/master/CMake.gitignore
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps

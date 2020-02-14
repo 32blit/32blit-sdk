@@ -2,23 +2,23 @@
 
 #include "math.h"
 
-struct mat3;
+struct Mat3;
 
-struct vec2 {
+struct Vec2 {
   float x;
   float y;
 
-  vec2(const vec2 &v) : x(v.x), y(v.y) {}
-  vec2(const float x = 0, const float y = 0) : x(x), y(y) {}
+  Vec2(const Vec2 &v) : x(v.x), y(v.y) {}
+  Vec2(const float x = 0, const float y = 0) : x(x), y(y) {}
 
-  inline vec2& operator-= (const vec2 &a) { x -= a.x; y -= a.y; return *this; }
-  inline vec2& operator+= (const vec2 &a) { x += a.x; y += a.y; return *this; }
-  inline vec2& operator*= (const float a) { x *= a;   y *= a;   return *this; }
-  inline vec2& operator*= (const mat3 &a) { this->transform(a); return *this; }
-  inline vec2& operator/= (const float a) { x /= a;   y /= a;   return *this; }
-  inline vec2& operator/= (const vec2 &a) { x /= a.x;   y /= a.y;   return *this; }
+  inline Vec2& operator-= (const Vec2 &a) { x -= a.x; y -= a.y; return *this; }
+  inline Vec2& operator+= (const Vec2 &a) { x += a.x; y += a.y; return *this; }
+  inline Vec2& operator*= (const float a) { x *= a;   y *= a;   return *this; }
+  inline Vec2& operator*= (const Mat3 &a) { this->transform(a); return *this; }
+  inline Vec2& operator/= (const float a) { x /= a;   y /= a;   return *this; }
+  inline Vec2& operator/= (const Vec2 &a) { x /= a.x;   y /= a.y;   return *this; }
 
-  void   transform(const mat3 &m);
+  void   transform(const Mat3 &m);
 
   /**
    * Divide vector by its length
@@ -38,7 +38,7 @@ struct vec2 {
    * \param a `vec2` vector
    * \return `float` cross product
    */
-  inline float   cross(const vec2 &a) { return x * a.y - y * a.x; }
+  inline float   cross(const Vec2 &a) { return x * a.y - y * a.x; }
 
   /**
    * Return the cross product of two vectors
@@ -46,7 +46,7 @@ struct vec2 {
    * \param a `vec2` vector
    * \return `float` cross product
    */
-  inline float   cross(const vec2 *a) { return x * a->y - y * a->x; }
+  inline float   cross(const Vec2 *a) { return x * a->y - y * a->x; }
 
   /**
    * Return the dot product of two vectors
@@ -54,7 +54,7 @@ struct vec2 {
    * \param a `vec2` vector
    * \return `float` cross product
    */
-  inline float  dot(const vec2 &a) { return (x * a.x) + (y * a.y); }
+  inline float  dot(const Vec2 &a) { return (x * a.x) + (y * a.y); }
 
   /**
    * Return the dot product of two vectors
@@ -62,7 +62,7 @@ struct vec2 {
    * \param a `vec2` vector
    * \return `float` cross product
    */
-  inline float  dot(const vec2 *a) { return (x * a->x) + (y * a->y); }
+  inline float  dot(const Vec2 *a) { return (x * a->x) + (y * a->y); }
 
   /**
    * Rotate the vector
@@ -78,15 +78,15 @@ struct vec2 {
    * 
    * \param o `vec2`
    */
-  float   angle(vec2 o);
+  float   angle(Vec2 o);
 
-  static vec2   normalize(vec2 &v) { float d = v.length(); return vec2(v.x /= d, v.y /= d); }
+  static Vec2   normalize(Vec2 &v) { float d = v.length(); return Vec2(v.x /= d, v.y /= d); }
 };
 
-inline vec2 operator-  (vec2 lhs, const vec2 &rhs) { lhs -= rhs; return lhs; }
-inline vec2 operator-  (const vec2 &rhs) { return vec2(-rhs.x, -rhs.y); }
-inline vec2 operator+  (vec2 lhs, const vec2 &rhs) { lhs += rhs; return lhs; }
-inline vec2 operator*  (vec2 lhs, const float a) { lhs *= a; return lhs; }
-inline vec2 operator*  (vec2 lhs, const mat3 &a) { lhs *= a; return lhs; }
-inline vec2 operator/  (vec2 lhs, const float a) { lhs /= a; return lhs; }
-inline vec2 operator/  (vec2 lhs, const vec2 &rhs) { lhs.x /= rhs.x; lhs.y /= rhs.y; return lhs; }
+inline Vec2 operator-  (Vec2 lhs, const Vec2 &rhs) { lhs -= rhs; return lhs; }
+inline Vec2 operator-  (const Vec2 &rhs) { return Vec2(-rhs.x, -rhs.y); }
+inline Vec2 operator+  (Vec2 lhs, const Vec2 &rhs) { lhs += rhs; return lhs; }
+inline Vec2 operator*  (Vec2 lhs, const float a) { lhs *= a; return lhs; }
+inline Vec2 operator*  (Vec2 lhs, const Mat3 &a) { lhs *= a; return lhs; }
+inline Vec2 operator/  (Vec2 lhs, const float a) { lhs /= a; return lhs; }
+inline Vec2 operator/  (Vec2 lhs, const Vec2 &rhs) { lhs.x /= rhs.x; lhs.y /= rhs.y; return lhs; }

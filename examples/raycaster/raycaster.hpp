@@ -32,11 +32,11 @@
 #define TEXTURE_CEILING 1
 #define TEXTURE_WALL 2
 
-#define SPRITE_SCALE 1.6
+#define SPRITE_SCALE 1.6f
 
 
-vec2 rotate_point(vec2 p, vec2 v);
-vec2 rotate_vector(vec2 v, float a);
+Vec2 rotate_point(Vec2 p, Vec2 v);
+Vec2 rotate_vector(Vec2 v, float a);
 
 //void cast_floor();
 void render_world(uint32_t time);
@@ -45,14 +45,14 @@ void render_sky();
 void render_stars();
 
 struct player {
-	vec2 direction;
-	vec2 position;
-	vec2 camera;
+	Vec2 direction;
+	Vec2 position;
+	Vec2 camera;
 	float half_fov;
 };
 
 struct sprite {
-	vec2 position;
+	Vec2 position;
 	uint8_t texture;
 	uint8_t color;
 	float distance;
@@ -60,12 +60,12 @@ struct sprite {
 };
 
 struct star {
-	point position;
+	blit::Point position;
 	uint8_t brightness;
 };
 
-extern spritesheet sprites;
-extern timer timer1;
+extern blit::SpriteSheet sprites;
+extern blit::Timer timer1;
 
 void edges();
 void blur(uint8_t passes);
@@ -92,7 +92,7 @@ const uint8_t packed_data[] = {
 	0x14, 0x00, // cols (20)
 	0x14, 0x00, // rows (20)
 
-	0x03, // format
+	0x02, // format
 
 	0x40, // number of palette colours
 //  r     g     b     a

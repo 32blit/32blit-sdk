@@ -5,10 +5,33 @@ import sys
 import pathlib
 import zlib
 
-import construct
+missing_modules = []
 
-from bitstring import BitArray
-from construct import this, len_, Struct, Padded, CString, Rebuild, Computed, RawCopy, Checksum, Hex, Bytes, Int8ul, Int16ul, Int32ul, Const, Flag, Padding, Array, Prefixed, GreedyBytes, GreedyRange, PaddedString
+try:
+    from bitstring import BitArray
+except ImportError:
+    missing_modules.append("bitstring")
+
+try:
+    import construct
+    from construct import this, len_, Struct, Padded, CString, Rebuild, Computed, RawCopy, Checksum, Hex, Bytes, Int8ul, Int16ul, Int32ul, Const, Flag, Padding, Array, Prefixed, GreedyBytes, GreedyRange, PaddedString
+except ImportError:
+    missing_modules.append("construct")
+
+if len(missing_modules) > 0:
+    error_text = ""
+    if 'build' in sys.argv:
+        error_text += """
+Warning: no dfu file has been generated (missing python3 dependencies)
+"""
+    error_text += f"""
+dfu requires the following python module(s): {', '.join(missing_modules)}
+install with: python3 -m pip install {' '.join(missing_modules)}
+"""
+    # Soft fail to avoid cmake error
+    print(error_text)
+    sys.exit(0)
+
 
 DFU_SIGNATURE = b'DfuSe'
 DFU_size = Rebuild(Int32ul, 0)
@@ -131,6 +154,8 @@ if __name__ == '__main__':
     subparsers = parser.add_subparsers(help='Commands', dest='command')
     parser_build = subparsers.add_parser('build', help='Build a DFU image')
     parser_read = subparsers.add_parser('read', help='Read a DFU image')
+    parser_dump = subparsers.add_parser('dump', help='Dump binary from DFU image')
+    parser_dump.add_argument('--force', action='store_true')
     parser_build.add_argument('--out', type=pathlib.Path, help='Output file', default=None)
     parser_build.add_argument('--address', type=int, default=0x08000000)
     parser_build.add_argument('--force', action='store_true')
@@ -172,10 +197,27 @@ if __name__ == '__main__':
 
         open(args.out, 'wb').write(output)
 
-    if args.command == 'read':
+    if args.command == 'read' or args.command == 'dump':
         try:
             parsed = DFU.parse(open(args.file, 'rb').read())
         except construct.core.ConstructError as error:
             parser.error(f'Invalid dfu file {args.file} ({error})')
 
         display_dfu_info(parsed)
+
+        if args.command == 'dump':
+
+            for target in parsed.fields.value.targets:
+                target_id = target.bAlternateSetting
+                for image in target.images:
+                    address = image.dwElementAddress
+                    data = image.data
+                    dest = str(args.file).replace('.dfu', '')
+                    filename = f"{dest}-{target_id}-{address}.bin"
+
+                    if pathlib.Path(dest).is_file() and not args.force:
+                        raise parser.error(f'Existing output file "{filename}", use --force to overwrite!')
+
+                    print(f"Dumping image at {address} to {filename} ({len(data)} bytes)")
+
+                    open(dest, 'wb').write(data)

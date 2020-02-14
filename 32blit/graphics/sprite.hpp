@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../types/pixel_format.hpp"
 #include "surface.hpp"
 
 namespace blit {
@@ -14,7 +13,7 @@ namespace blit {
   // 
   // For example a 90 degree rotation needs a vertical flip
   // followed by an x/y coordinate swap.
-  enum sprite_transform {
+  enum SpriteTransform {
     NONE = 0b000,
     HORIZONTAL = 0b001,
     VERTICAL = 0b010,
@@ -24,17 +23,17 @@ namespace blit {
     R270 = 0b110
   };
 
-  struct spritesheet : surface {
+  struct SpriteSheet : Surface {
     uint16_t  rows, cols;
 
-    spritesheet(uint8_t *data, pixel_format format, const packed_image *image);
+    SpriteSheet(uint8_t *data, PixelFormat format, const packed_image *image);
 
-    static spritesheet *load(const uint8_t *data, uint8_t *buffer = nullptr);
-    static spritesheet *load(const packed_image *image, uint8_t *buffer = nullptr);
+    static SpriteSheet *load(const uint8_t *data, uint8_t *buffer = nullptr);
+    static SpriteSheet *load(const packed_image *image, uint8_t *buffer = nullptr);
 
-    rect sprite_bounds(const uint16_t &index);          
-    rect sprite_bounds(const point &p);
-    rect sprite_bounds(const rect &r);
+    Rect sprite_bounds(const uint16_t &index);          
+    Rect sprite_bounds(const Point &p);
+    Rect sprite_bounds(const Rect &r);
   };
 
 } 

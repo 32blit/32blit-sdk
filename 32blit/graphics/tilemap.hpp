@@ -8,18 +8,16 @@
 #include "../types/mat3.hpp"
 #include "../graphics/sprite.hpp"
 
-using namespace blit;
-
 namespace blit {
 
   // A `tilemap` describes a grid of tiles with optional transforms
-  struct tilemap {
-    size          bounds;
+  struct TileMap {
+    Size          bounds;
 
     uint8_t      *tiles;
     uint8_t      *transforms;
-    spritesheet  *sprites;
-    mat3          transform = mat3::identity();
+    SpriteSheet  *sprites;
+    Mat3          transform = Mat3::identity();
 
     enum {
       NONE = 0,           // draw nothing
@@ -28,17 +26,17 @@ namespace blit {
     } repeat_mode;        // determines what to do when drawing outside of the layer bounds.
     uint8_t       default_tile_id;
 
-    tilemap(uint8_t *tiles, uint8_t *transforms, size bounds, spritesheet *sprites);
+    TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, SpriteSheet *sprites);
 
-    inline int32_t offset(const point &p); // __attribute__((always_inline));
+    inline int32_t offset(const Point &p); // __attribute__((always_inline));
     int32_t offset(const int16_t &x, const int16_t &y); // __attribute__((always_inline));
-    uint8_t tile_at(const point &p); // __attribute__((always_inline));
-    uint8_t transform_at(const point &p); // __attribute__((always_inline));
+    uint8_t tile_at(const Point &p); // __attribute__((always_inline));
+    uint8_t transform_at(const Point &p); // __attribute__((always_inline));
 
-    void draw(surface *dest, rect viewport, std::function<mat3(uint8_t)> scanline_callback);
+    void draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback);
 
   //  void mipmap_texture_span(surface *dest, point s, uint16_t c, vec2 swc, vec2 ewc);
-    void texture_span(surface *dest, point s, uint16_t c, vec2 swc, vec2 ewc);
+    void texture_span(Surface *dest, Point s, uint16_t c, Vec2 swc, Vec2 ewc);
   };
 
 }

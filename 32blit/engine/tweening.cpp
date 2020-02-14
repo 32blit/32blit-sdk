@@ -5,8 +5,11 @@
 #include "engine.hpp"
 #include "tweening.hpp"
 
+#undef M_PI
+#define M_PI           3.14159265358979323846f  /* pi */
+
 namespace blit {
-  std::vector<tween *> tweens;
+  std::vector<Tween *> tweens;
 
   /**
    * Initialize the tween.
@@ -17,7 +20,7 @@ namespace blit {
    * @param duration Duration of the tween in milliseconds.
    * @param loops Number of times the tween should repeat, -1 = forever.
    */
-  void tween::init(tween_function function, float from, float to, uint32_t duration, int32_t loops = -1) {
+  void Tween::init(TweenFunction function, float from, float to, uint32_t duration, int32_t loops = -1) {
     this->loops = loops;
     this->function = function;
     this->from = from;
@@ -30,7 +33,7 @@ namespace blit {
   /**
    * Start the tween.
    */
-  void tween::start() {
+  void Tween::start() {
     this->started = blit::now();
     this->loop_count = 0;
     this->state = RUNNING;
@@ -39,7 +42,7 @@ namespace blit {
   /**
    * Stop the running tween.
    */
-  void tween::stop() {
+  void Tween::stop() {
     this->state = STOPPED;
   }
 
@@ -75,7 +78,7 @@ namespace blit {
    */
   void update_tweens(uint32_t time) {
     for (auto tween : tweens) {
-      if (tween->state == tween::RUNNING){
+      if (tween->state == Tween::RUNNING){
         uint32_t elapsed = blit::now() - tween->started;
         tween->value = tween->function(elapsed, tween->from, tween->to, tween->duration);
 
@@ -88,7 +91,7 @@ namespace blit {
             tween->loop_count++;
             tween->started = blit::now();
             if (tween->loop_count == tween->loops){
-              tween->state = tween::FINISHED;
+              tween->state = Tween::FINISHED;
             }
           }
         }

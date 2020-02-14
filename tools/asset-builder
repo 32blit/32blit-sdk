@@ -278,7 +278,7 @@ if __name__ == '__main__':
                         r, g, b, a = source_image.getpixel((x, y))
                         c = color(r, g, b, a)
                     elif source_mode == 'RGB':
-                        r, g, b, a = source_image.getpixel((x, y))
+                        r, g, b = source_image.getpixel((x, y))
                         c = color(r, g, b)
 
                     try:

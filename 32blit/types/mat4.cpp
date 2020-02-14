@@ -1,27 +1,29 @@
 /*! \file mat4.cpp
 */
 #include <math.h>
+
+#undef M_PI
 #define M_PI           3.14159265358979323846f  /* pi */
 
 #include "mat4.hpp"
 #include "vec3.hpp"
 
-mat4::mat4() {
+Mat4::Mat4() {
   v00 = 0.0f; v10 = 0.0f; v20 = 0.0f; v30 = 0.0f;
   v01 = 0.0f; v11 = 0.0f; v21 = 0.0f; v31 = 0.0f;
   v02 = 0.0f; v12 = 0.0f; v22 = 0.0f; v32 = 0.0f;
   v03 = 0.0f; v13 = 0.0f; v23 = 0.0f; v33 = 0.0f;
 }
 
-mat4::mat4(const mat4 &m) = default;
+Mat4::Mat4(const Mat4 &m) = default;
 
-mat4 mat4::identity() {
-  mat4 m;
+Mat4 Mat4::identity() {
+  Mat4 m;
   m.v00 = 1.0f; m.v11 = 1.0f; m.v22 = 1.0f; m.v33 = 1.0f;
   return m;
 }
 
-mat4 mat4::rotation(float a, vec3 v) {
+Mat4 Mat4::rotation(float a, Vec3 v) {
   v.normalize();
 
   a *= (M_PI / 180.0f);
@@ -30,7 +32,7 @@ mat4 mat4::rotation(float a, vec3 v) {
   float s = sinf(a);
   float t = 1.0f - c;
 
-  mat4 r = mat4::identity();
+  Mat4 r = Mat4::identity();
 
   r.v00 = v.x * v.x * t + c;
   r.v01 = v.x * v.y * t - v.z * s;
@@ -45,20 +47,20 @@ mat4 mat4::rotation(float a, vec3 v) {
   return r;
 }
 
-mat4 mat4::translation(vec3 v) {
-  mat4 r = mat4::identity();
+Mat4 Mat4::translation(Vec3 v) {
+  Mat4 r = Mat4::identity();
   r.v03 = v.x; r.v13 = v.y; r.v23 = v.z;
   return r;
 }
 
-mat4 mat4::scale(vec3 v) {
-  mat4 r = mat4::identity();
+Mat4 Mat4::scale(Vec3 v) {
+  Mat4 r = Mat4::identity();
   r.v00 = v.x; r.v11 = v.y; r.v22 = v.z;
   return r;
 }
 
-void mat4::inverse() {
-  mat4 m(*this);
+void Mat4::inverse() {
+  Mat4 m(*this);
 
   float s0 = m.v00 * m.v11 - m.v10 * m.v01;
   float s1 = m.v00 * m.v12 - m.v10 * m.v02;
