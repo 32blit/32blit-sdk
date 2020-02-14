@@ -21,8 +21,9 @@ if __name__ == '__main__':
     hpp_out.write('#pragma once\n\n')
     hpp_out.write('#include "engine/asset.hpp"\n\n')
 
+    cpp_out.write('#include <cstdint>\n\n')
     cpp_out.write('#include "assets.hpp"\n\n')
-    cpp_out.write('extern const char _binary_assets_bin_start[];\n\n')
+    cpp_out.write('extern const uint8_t _binary_assets_bin_start[];\n\n')
 
     for file in args.files:
         offset = bin_out.tell()
@@ -45,6 +46,6 @@ if __name__ == '__main__':
 
         data = bin_out.read();
 
-        cpp_out.write('\nconst char _binary_assets_bin_start[] = {\n\t');
+        cpp_out.write('\nconst uint8_t _binary_assets_bin_start[] = {\n\t');
         cpp_out.write(format_hex(data))
         cpp_out.write('};\n');
