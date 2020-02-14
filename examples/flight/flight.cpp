@@ -6,7 +6,6 @@
 
 #include "graphics/mode7.hpp"
 
-
 #include "flight.hpp"
 
 using namespace blit;
@@ -32,6 +31,18 @@ struct object {
   uint8_t type;
 
   object(Vec2 pos, uint8_t type) : pos(pos), type(type) {}
+};
+
+struct DrawObject {
+  object o;
+  float dist;
+  Vec2 vs;
+  
+  DrawObject(object obj, float dist, Vec2 vs): o(obj), dist(dist), vs(vs) {}
+
+  bool operator< (const DrawObject &other) const {
+        return other.dist < dist;
+    }
 };
 
 std::vector<object> objects;
@@ -96,6 +107,40 @@ void init() {
   }
 }
 
+/* get normalised value off 255 for the dist of object between the above values. 
+  So if min is 300 and max is 800, if the distance is 400, we would want to get a scale of the alpha
+*/
+float calulateFadeAlpha (const int maxDist, const int minDist, float dist) {
+  int range = maxDist - minDist;
+  int n = dist - minDist;
+  float percentage = n / float(range);
+  return 1.0 - (255.0f * percentage);
+}
+
+Rect vp(0, 50, 160, 120 - 50);
+
+// returns vector of objects that are viewable
+std::vector<DrawObject> drawObjects (std::vector<object> objects) {
+  std::vector<DrawObject> vect;
+
+  for (auto o : objects) {
+    Vec2 vo = (o.pos - pos);
+    vo.normalize();
+    Vec2 forward(0, -1);
+    forward *= Mat3::rotation(angle);
+
+    // TODO: provide a "is_point_in_frustrum" check
+    if(forward.dot(vo) > 0) { // check if object is in front of us
+      Vec2 vs = world_to_screen(o.pos, fov, angle, pos, near, far, vp);
+      float dist = (o.pos - pos).length();
+      
+      vect.push_back(DrawObject(o,dist,vs));
+    }
+  }
+
+  return vect;
+}
+
 void render(uint32_t time_ms) {
   static int tick_count = 0; tick_count++;
 
@@ -108,30 +153,34 @@ void render(uint32_t time_ms) {
   screen.rectangle(Rect(0, 50, 160, 120 - 50));
   uint32_t ms_start = now();
 
-  Rect vp(0, 50, 160, 120 - 50);
-  
   screen.alpha = 55;
 
   screen.blit(water, Rect(0, 0, 64, 64), Point(0, 50));
 
   mode7(&screen, sprites, &map.layers["ground"], fov, angle, pos, near, far, vp);
 
-  for (auto o : objects) {
-    Vec2 vo = (o.pos - pos);
-    vo.normalize();
-    Vec2 forward(0, -1);
-    forward *= Mat3::rotation(angle);
+  std::vector<DrawObject> drawables = drawObjects(objects);
+  std::sort(drawables.begin(), drawables.end()); // sort them so they draw in order
 
-    // TODO: provide a "is_point_in_frustrum" check
-    if(forward.dot(vo) > 0) { // check if object is in front of us
-      Vec2 vs = world_to_screen(o.pos, fov, angle, pos, near, far, vp);
-      float dist = (o.pos - pos).length();
-      int alpha = ((500 - dist) / 500) * 255;
-      screen.alpha = alpha;
+  const int maxViewDistance = 600; // draw distance
+  const int maxClearDistance = 300; // before sprites stop being fully opaque. start to fade out.
+
+  for (DrawObject o : drawables) {
+   
+    if (o.dist < float(maxViewDistance)) { // check if the object is in a reasonable distance
+
+      if (o.dist > maxClearDistance) {
+        screen.alpha = calulateFadeAlpha(maxViewDistance, maxClearDistance, o.dist); 
+      } else {
+        screen.alpha = 255.0f;
+      }
+
       Rect sr(120, 112, 8, 16);
-      screen.blit(sprites, sr, vs - Point(4, 15));
+
+      screen.blit(sprites, sr, o.vs - Point(4, 15));
     }
   }
+
   uint32_t ms_end = now();
 
   // Orientation debug info
