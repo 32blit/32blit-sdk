@@ -55,6 +55,7 @@ float map_size = 128;
 float fov = 95.0f * (M_PI / 180.0f);
 float far = 500.0f;
 float near = 10.0f;
+float is_starting = false;
 
 float deg2rad(float a) {
   return a * (M_PI / 180.0f);
@@ -114,7 +115,7 @@ float calulateFadeAlpha (const int maxDist, const int minDist, float dist) {
   int range = maxDist - minDist;
   int n = dist - minDist;
   float percentage = n / float(range);
-  return 1.0 - (255.0f * percentage);
+  return 1.0f - (255.0f * percentage);
 }
 
 Rect vp(0, 50, 160, 120 - 50);
@@ -243,33 +244,61 @@ void render(uint32_t time_ms) {
   }
 }
 
-void update(uint32_t time) {
-  static float angle_delta = 0.0f;
+bool compare (float v1, float v2) {
+  return fabs(v1-v2) < 0.001f;
+}
 
-  if (pressed(Button::DPAD_LEFT))  { angle_delta += 0.1f; }
-  if (pressed(Button::DPAD_RIGHT)) { angle_delta -= 0.1f; }
-  if (pressed(Button::DPAD_UP))    { vel.y += 0.2f; }
-  if (pressed(Button::DPAD_DOWN))  { vel.y -= 0.2f; }
+bool is_off_ground () {
+  return !compare(500.0f,far);
+}
+
+// float in_range (float value, float min, float max) {
+//   float 
+// }
+
+float lerping(float a, float b, float f) {
+    return a + f * (b - a);
+}
+
+void update(uint32_t time) {
+  
+  static float angle_delta = 0.0f;
+  float target_speed;
+  float lerp_value = 0.002f;
+
+  if (pressed(Button::DPAD_LEFT))  { angle_delta += 0.05f; }
+  if (pressed(Button::DPAD_RIGHT)) { angle_delta -= 0.05f; }
+
+  angle_delta -= joystick.x / 80.0f ;
+  
+  if (pressed(Button::Y)) { 
+      target_speed = is_off_ground() ? 2.0f : 0.5f;
+  } else {
+      target_speed = is_off_ground() ? 0.8f : 0.0f;
+  }
+
+  if (pressed(Button::X))  { 
+    target_speed = is_off_ground() ? 0.5f : 0.0f;
+
+    if (!is_off_ground()) {
+      lerp_value *= 5.0f;
+    }
+  }
 
   angle += deg2rad(angle_delta);   
   Mat3 r = Mat3::rotation(angle);    
   pos = pos - (vel * r);
 
-  if (pressed(Button::A)) {
-    far = far + (far * 0.025f);
+  if (pressed(Button::A) || (joystick.y > 0.0f)) {
+    far = far + (far * 0.01f);
   }
-  if (pressed(Button::B)) {
-    far = far - (far * 0.025f);
-  }
-
-  if (pressed(Button::X)) {
-    fov = fov + (fov * 0.025f);
-  }
-  if (pressed(Button::Y)) {
-    fov = fov - (fov * 0.025f);
+  if (pressed(Button::B) || (joystick.y < 0.0f)) {
+    far = far - (far * 0.01f);
+    far = std::max(far,500.0f);
   }
 
   angle_delta *= 0.95f;
-  vel *= 0.95f;
+
+  vel.y = lerping(vel.y, target_speed, 0.002f);
 
 }
