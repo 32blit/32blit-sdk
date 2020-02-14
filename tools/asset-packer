@@ -9,7 +9,7 @@ def format_hex(data):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--base-path', type=str)
+    parser.add_argument('--base-path', action='append', type=str)
     parser.add_argument('--inline-data', action='store_true', help='embed data as an array in assets.cpp')
     parser.add_argument('files', nargs='+', type=str, help='input files')
     args = parser.parse_args()
@@ -30,7 +30,12 @@ if __name__ == '__main__':
         length = os.stat(file).st_size
 
         # tidy up name
-        name = os.path.splitext(os.path.relpath(file, args.base_path))[0]
+        name = file
+        for base_path in args.base_path:
+            if file.startswith(base_path):
+                name = os.path.relpath(file, base_path)
+
+        name = os.path.splitext(name)[0]
         name = name.replace('../', '')
         name = re.sub('[^0-9A-Za-z_]', '_', name)
 
