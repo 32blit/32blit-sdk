@@ -41,6 +41,7 @@ if (NOT DEFINED BLIT_ONCE)
 		)
 
 		target_sources(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/assets.cpp)
+		target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 		if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 			add_custom_command(
