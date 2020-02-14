@@ -3,9 +3,9 @@
 
 namespace blit {
   struct Asset {
-    Asset(uint8_t *data, uint32_t length) : data(data), length(length) {}
+    Asset(const uint8_t *data, uint32_t length) : data(data), length(length) {}
 
-    uint8_t *data;
+    const uint8_t *data;
     uint32_t length;
   };
 }

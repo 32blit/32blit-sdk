@@ -42,7 +42,7 @@ if __name__ == '__main__':
         bin_out.write(open(file, 'rb').read())
         hpp_out.write('extern const blit::Asset asset_{};\n'.format(name))
 
-        cpp_out.write('const blit::Asset asset_{}((uint8_t *)_binary_assets_bin_start + {}, {});\n'.format(name, offset, length))
+        cpp_out.write('const blit::Asset asset_{}(_binary_assets_bin_start + {}, {});\n'.format(name, offset, length))
 
 
     if args.inline_data:
