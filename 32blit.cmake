@@ -26,20 +26,32 @@ if (NOT DEFINED BLIT_ONCE)
 			list(APPEND ASSET_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${ARG})
 		endforeach()
 
+		set(PACKER_ARGS)
+		set(PACKER_OUTPUTS assets.bin assets.cpp assets.hpp)
+
+		if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+			set(PACKER_ARGS --inline-data)
+			set(PACKER_OUTPUTS assets.cpp assets.hpp)
+		endif()
+
 		add_custom_command(
-			OUTPUT assets.bin assets.cpp assets.hpp
-			COMMAND ${PYTHON_EXECUTABLE} ${ASSET_PACKER} --base-path ${CMAKE_CURRENT_SOURCE_DIR} ${ASSET_FILES}
+			OUTPUT ${PACKER_OUTPUTS}
+			COMMAND ${PYTHON_EXECUTABLE} ${ASSET_PACKER} --base-path ${CMAKE_CURRENT_SOURCE_DIR} ${PACKER_ARGS} ${ASSET_FILES}
 			DEPENDS ${ASSET_FILES} ${ASSET_PACKER}
 		)
 
-		add_custom_command(
-			COMMAND ${CMAKE_LINKER} -r -b binary -o assets.bin.o assets.bin
-			COMMAND ${CMAKE_OBJCOPY} --rename-section .data=.rodata,alloc,load,readonly,data,contents assets.bin.o assets.bin.o
-			OUTPUT assets.bin.o
-			DEPENDS assets.bin
-		)
+		target_sources(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/assets.cpp)
 
-		target_sources(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/assets.bin.o ${CMAKE_CURRENT_BINARY_DIR}/assets.cpp)
+		if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+			add_custom_command(
+				COMMAND ${CMAKE_LINKER} -r -b binary -o assets.bin.o assets.bin
+				COMMAND ${CMAKE_OBJCOPY} --rename-section .data=.rodata,alloc,load,readonly,data,contents assets.bin.o assets.bin.o
+				OUTPUT assets.bin.o
+				DEPENDS assets.bin
+			)
+
+			target_sources(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/assets.bin.o)
+		endif()
 	endfunction()
 
 	if (${CMAKE_SYSTEM_NAME} STREQUAL Generic)

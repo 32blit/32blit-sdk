@@ -4,9 +4,13 @@ import argparse
 import os
 import re
 
+def format_hex(data):
+    return ', '.join(['0x{:02x}'.format(x) for x in data])
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--base-path', type=str)
+    parser.add_argument('--inline-data', action='store_true', help='embed data as an array in assets.cpp')
     parser.add_argument('files', nargs='+', type=str, help='input files')
     args = parser.parse_args()
 
@@ -18,7 +22,7 @@ if __name__ == '__main__':
     hpp_out.write('#include "engine/asset.hpp"\n\n')
 
     cpp_out.write('#include "assets.hpp"\n\n')
-    cpp_out.write('extern char _binary_assets_bin_start[];\n\n')
+    cpp_out.write('extern const char _binary_assets_bin_start[];\n\n')
 
     for file in args.files:
         offset = bin_out.tell()
@@ -33,3 +37,14 @@ if __name__ == '__main__':
         hpp_out.write('extern const blit::Asset asset_{};\n'.format(name))
 
         cpp_out.write('const blit::Asset asset_{}((uint8_t *)_binary_assets_bin_start + {}, {});\n'.format(name, offset, length))
+
+
+    if args.inline_data:
+        bin_out.close()
+        bin_out = open('assets.bin', 'rb')
+
+        data = bin_out.read();
+
+        cpp_out.write('\nconst char _binary_assets_bin_start[] = {\n\t');
+        cpp_out.write(format_hex(data))
+        cpp_out.write('};\n');
