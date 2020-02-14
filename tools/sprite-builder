@@ -110,8 +110,8 @@ SpriteFormat = SmartEnum(
     Int8ul,
     rgba=0,
     rgb888=1,
-    rgb565=2,
-    p=3
+    p=2,
+    rgb565=3
 )
 
 asset_rgba = Struct(
