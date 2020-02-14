@@ -10,8 +10,7 @@ set(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)
 set(CMAKE_OBJCOPY x86_64-w64-mingw32-objcopy CACHE PATH "Path to objcopy")
 set(CMAKE_LINKER x86_64-w64-mingw32-ld CACHE PATH "Path to linker")
 set(CMAKE_CXX_FLAGS_INIT "-static-libstdc++ -static-libgcc -Wl,-Bstatic -lstdc++ -Wl,-Bdynamic")
-set(SDL2_BINDIR ${SDL2_PREFIX}/bin)
 
-configure_file(${SDL2_BINDIR}/SDL2.dll ${CMAKE_CURRENT_BINARY_DIR}/SDL2.dll COPYONLY)
-
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/SDL2.dll DESTINATION bin)
+if(EXISTS "${SDL2_PREFIX}/bin/SDL2.dll")
+	set(SDL2_DLL "${SDL2_PREFIX}/bin/SDL2.dll")
+endif()
