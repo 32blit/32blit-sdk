@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import re
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--base-path', type=str)
+    parser.add_argument('files', nargs='+', type=str, help='input files')
+    args = parser.parse_args()
+
+    bin_out = open('assets.bin', 'wb')
+    cpp_out = open('assets.cpp', 'w')
+    hpp_out = open('assets.hpp', 'w')
+
+    hpp_out.write('#pragma once\n\n')
+    hpp_out.write('#include "engine/asset.hpp"\n\n')
+
+    cpp_out.write('#include "assets.hpp"\n\n')
+    cpp_out.write('extern char _binary_assets_bin_start[];\n\n')
+
+    for file in args.files:
+        offset = bin_out.tell()
+        length = os.stat(file).st_size
+
+        # tidy up name
+        name = os.path.splitext(os.path.relpath(file, args.base_path))[0]
+        name = name.replace('../', '')
+        name = re.sub('[^0-9A-Za-z_]', '_', name)
+
+        bin_out.write(open(file, 'rb').read())
+        hpp_out.write('extern const blit::Asset asset_{};\n'.format(name))
+
+        cpp_out.write('const blit::Asset asset_{}((uint8_t *)_binary_assets_bin_start + {}, {});\n'.format(name, offset, length))
