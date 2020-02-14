@@ -31,6 +31,12 @@ if (NOT DEFINED BLIT_ONCE)
 		target_sources(${NAME} PRIVATE ${ASSET_OUT})
 	endfunction()
 
+	function (blit_assets TARGET)
+		foreach(ARG IN LISTS ARGN)
+			blit_asset(${TARGET} ${ARG})
+		endforeach()
+	endfunction()
+
 	if (${CMAKE_SYSTEM_NAME} STREQUAL Generic)
 		set(FLASH_PORT "AUTO" CACHE STRING "Port to use for flash")
 
