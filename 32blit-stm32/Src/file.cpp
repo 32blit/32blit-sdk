@@ -48,6 +48,13 @@ int32_t close_file(uint32_t fh) {
   return r == FR_OK ? 0 : -1;
 }
 
+uint32_t get_file_length(uint32_t fh)
+{
+  auto file = open_files[fh];
+
+  return f_size(file);
+}
+
 std::vector<blit::FileInfo> list_files(std::string path) {
   std::vector<blit::FileInfo> ret;
 
