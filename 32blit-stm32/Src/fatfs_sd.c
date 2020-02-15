@@ -448,7 +448,7 @@ DRESULT SD_disk_ioctl(BYTE drv, BYTE ctrl, void *buff)
 {
 	DRESULT res;
 	uint8_t n, csd[16], *ptr = (uint8_t*)buff;
-	WORD csize;
+	DWORD csize;
 
 	/* pdrv should be 0 */
 	if (drv) return RES_PARERR;
@@ -490,7 +490,7 @@ DRESULT SD_disk_ioctl(BYTE drv, BYTE ctrl, void *buff)
 				if ((csd[0] >> 6) == 1)
 				{
 					/* SDC V2 */
-					csize = csd[9] + ((WORD) csd[8] << 8) + 1;
+					csize = csd[9] + ((WORD) csd[8] << 8) + ((DWORD) (csd[7] & 0x3F) << 16) + 1;
 					*(DWORD*) buff = (DWORD) csize << 10;
 				}
 				else
