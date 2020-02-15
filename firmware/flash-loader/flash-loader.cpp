@@ -191,13 +191,36 @@ void FlashLoader::Render(uint32_t time)
 
 void FlashLoader::RenderMassStorage(uint32_t time)
 {
+	static uint8_t uActivityAnim = 0;
+
 	screen.pen = Pen(0,0,0);
 	screen.rectangle(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
 	screen.pen = Pen(255, 255, 255);
-	screen.text("Mass Storage mode", minimal_font, ROW(0));
+	char buffer[128];
+	sprintf(buffer, "Mass Storage mode (%s)", g_usbManager.GetStateName());
+	screen.text(buffer, minimal_font, ROW(0));
+
+	if(uActivityAnim)
+	{
+		screen.pen = Pen(0, 255, 0, uActivityAnim);
+		screen.circle(Point(320-6, 6), 6);
+		uActivityAnim = uActivityAnim>>1;
+
+	}
+	else
+	{
+		if(g_usbManager.HasHadActivity())
+			uActivityAnim = 255;
+	}
+
 
 	if(g_usbManager.GetState() == USBManager::usbsMSCUnmounted)
+	{
+		// Swicth back to CDC
+		g_usbManager.SetType(USBManager::usbtCDC);
+		FSInit();
 		m_state = stFlashFile;
+	}
 }
 
 // RenderSaveFile() Render file save progress %
@@ -228,6 +251,7 @@ void FlashLoader::RenderFlashCDC(uint32_t time)
 // RenderFlashFile() Render main ui for selecting files to flash
 void FlashLoader::RenderFlashFile(uint32_t time)
 {
+	printf("CDC Working\n");
 	static uint32_t lastRepeat = 0;
 	static uint32_t lastButtons = 0;
 
@@ -240,6 +264,8 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 
 	bool button_up = buttons & changedButtons & Button::DPAD_UP;
 	bool button_down = buttons & changedButtons & Button::DPAD_DOWN;
+
+	bool button_home = buttons & changedButtons & Button::HOME;
 
 	if(time - lastRepeat > 150 || button_up || button_down) {
 		button_up = buttons & Button::DPAD_UP;
@@ -269,6 +295,14 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 	else
 	{
 		screen.text("No Files Found.", minimal_font, ROW(0));
+	}
+
+	if(button_home)
+	{
+		// switch to mass media
+		g_usbManager.SetType(USBManager::usbtMSC);
+		m_state = stMassStorage;
+
 	}
 
 	if(button_up)
