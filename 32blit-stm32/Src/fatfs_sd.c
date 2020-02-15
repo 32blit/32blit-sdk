@@ -145,21 +145,10 @@ static bool SD_RxDataBlock(BYTE *buff, UINT len)
 	/* invalid response */
 	if(token != 0xFE) return FALSE;
 
-	// Directly use HAL_SPI_TransmitReceive
-
-    // SD card expects 0xff dummy bytes for reads
-	for(int x = 0; x < len; x++){
-		buff[x] = 0xff;
-	}
-
-    HAL_SPI_TransmitReceive(HSPI_SDCARD, buff, buff, len, SPI_TIMEOUT);
-
-	// Weird original loop which calls USER_HAL_SPI_TransmitReceive for EACH BYTE
-	// Why does it do this?
 	/* receive data */
-	/*do {
+	do {
 		SPI_RxBytePtr(buff++);
-	} while(len--);*/
+	} while(len--);
 
 	/* discard CRC */
 	SPI_RxByte();
@@ -215,23 +204,16 @@ static bool SD_TxDataBlock(const uint8_t *buff, BYTE token)
 static BYTE SD_SendCmd(BYTE cmd, uint32_t arg)
 {
 	uint8_t crc, res;
-    uint8_t args[6];
 
 	/* wait SD ready */
 	if (SD_ReadyWait() != 0xFF) return 0xFF;
 
 	/* transmit command */
-	args[0] = cmd;
-	args[1] = arg >> 24;
-	args[2] = arg >> 16;
-	args[3] = arg >> 8;
-	args[4] = arg;
-
-	//SPI_TxByte(cmd); 					/* Command */
-	//SPI_TxByte((uint8_t)(arg >> 24)); 	/* Argument[31..24] */
-	//SPI_TxByte((uint8_t)(arg >> 16)); 	/* Argument[23..16] */
-	//SPI_TxByte((uint8_t)(arg >> 8)); 	/* Argument[15..8] */
-	//SPI_TxByte((uint8_t)arg); 			/* Argument[7..0] */
+	SPI_TxByte(cmd); 					/* Command */
+	SPI_TxByte((uint8_t)(arg >> 24)); 	/* Argument[31..24] */
+	SPI_TxByte((uint8_t)(arg >> 16)); 	/* Argument[23..16] */
+	SPI_TxByte((uint8_t)(arg >> 8)); 	/* Argument[15..8] */
+	SPI_TxByte((uint8_t)arg); 			/* Argument[7..0] */
 
 	/* prepare CRC */
 	if(cmd == CMD0) crc = 0x95;	/* CRC for CMD0(0) */
@@ -239,10 +221,7 @@ static BYTE SD_SendCmd(BYTE cmd, uint32_t arg)
 	else crc = 1;
 
 	/* transmit CRC */
-	//SPI_TxByte(crc);
-    args[5] = crc;
-
-	SPI_TxBuffer(args, sizeof(args));
+	SPI_TxByte(crc);
 
 	/* Skip a stuff byte when STOP_TRANSMISSION */
 	if (cmd == CMD12) SPI_RxByte();
