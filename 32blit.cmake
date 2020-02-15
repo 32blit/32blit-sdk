@@ -45,19 +45,20 @@ if (NOT DEFINED BLIT_ONCE)
 	endfunction()
 
 	function (blit_assets TARGET)
-		set(ASSET_TYPE "")
+		set(ASSETS ${ARGN})
 		set(ASSET_FILES)
+		set(ASSET_NAMES)
 
-		foreach(ARG IN LISTS ARGN)
-			# set asset type
-			if(ARG STREQUAL "RAW" OR ARG STREQUAL "SPRITE_PACKED" OR ARG STREQUAL "SPRITE_RAW" OR ARG STREQUAL "MAP_TILED2BIN")
-				set(ASSET_TYPE ${ARG})
-				continue()
-			elseif(ASSET_TYPE STREQUAL "")
-				message(FATAL_ERROR "No asset type specified")
-			endif()
+		list(LENGTH ASSETS ASSETS_LENGTH)
 
-			set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/${ARG})
+		while(ASSETS_LENGTH GREATER 0)
+			list(GET ASSETS 0 ASSET_TYPE)
+			list(GET ASSETS 1 ASSET_PATH)
+			list(GET ASSETS 2 ASSET_NAME)
+			list(REMOVE_AT ASSETS 0 1 2)
+			list(LENGTH ASSETS ASSETS_LENGTH)
+
+			set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/${ASSET_PATH})
 
 			if(ASSET_TYPE STREQUAL "SPRITE_PACKED")
 				pack_sprites(${ASSET_PATH} packed ASSET_PATH)
@@ -67,11 +68,14 @@ if (NOT DEFINED BLIT_ONCE)
 				pack_map(${ASSET_PATH} tiled2bin ASSET_PATH)
 			endif()
 
-			list(APPEND ASSET_FILES ${ASSET_PATH})
-		endforeach()
+			list(APPEND ASSET_FILES "${ASSET_PATH}")
+			list(APPEND ASSET_NAMES "${ASSET_NAME}")
+		endwhile()
 
 		set(PACKER_ARGS)
 		set(PACKER_OUTPUTS assets.bin assets.cpp assets.hpp)
+
+		list(JOIN ASSET_NAMES , ASSET_NAMES)
 
 		if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 			set(PACKER_ARGS --inline-data)
@@ -80,7 +84,7 @@ if (NOT DEFINED BLIT_ONCE)
 
 		add_custom_command(
 			OUTPUT ${PACKER_OUTPUTS}
-			COMMAND ${PYTHON_EXECUTABLE} ${ASSET_PACKER} --base-path ${CMAKE_CURRENT_SOURCE_DIR} --base-path ${CMAKE_CURRENT_BINARY_DIR} ${PACKER_ARGS} ${ASSET_FILES}
+			COMMAND ${PYTHON_EXECUTABLE} ${ASSET_PACKER} --base-path ${CMAKE_CURRENT_SOURCE_DIR} --base-path ${CMAKE_CURRENT_BINARY_DIR} ${PACKER_ARGS} --names ${ASSET_NAMES} ${ASSET_FILES}
 			DEPENDS ${ASSET_FILES} ${ASSET_PACKER}
 		)
 

@@ -11,8 +11,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--base-path', action='append', type=str)
     parser.add_argument('--inline-data', action='store_true', help='embed data as an array in assets.cpp')
+    parser.add_argument('--names', type=str, help='list of names for asset files (default is to mangle filename)', default='')
     parser.add_argument('files', nargs='+', type=str, help='input files')
     args = parser.parse_args()
+
+    args.names = args.names.split(',')
 
     bin_out = open('assets.bin', 'wb')
     cpp_out = open('assets.cpp', 'w')
@@ -25,32 +28,41 @@ if __name__ == '__main__':
     cpp_out.write('#include "assets.hpp"\n\n')
     cpp_out.write('extern const uint8_t _binary_assets_bin_start[];\n\n')
 
+    file_index = 0
     for file in args.files:
+        name = None
+
+        if file_index < len(args.names):
+            name = args.names[file_index]
+        file_index += 1
+
         offset = bin_out.tell()
         length = os.stat(file).st_size
 
         # tidy up name
-        name = file
-        for base_path in args.base_path:
-            if file.startswith(base_path):
-                name = os.path.relpath(file, base_path)
+        if name is None:
+            name = file
+            for base_path in args.base_path:
+                if file.startswith(base_path):
+                    name = os.path.relpath(file, base_path)
 
-        name = os.path.splitext(name)[0]
-        name = name.replace('../', '')
-        name = re.sub('[^0-9A-Za-z_]', '_', name)
+            name = os.path.splitext(name)[0]
+            name = name.replace('../', '')
+            name = re.sub('[^0-9A-Za-z_]', '_', name)
+            name = 'asset_' + name
 
         bin_out.write(open(file, 'rb').read())
-        hpp_out.write('extern const blit::Asset asset_{};\n'.format(name))
+        hpp_out.write('extern const blit::Asset {};\n'.format(name))
 
-        cpp_out.write('const blit::Asset asset_{}(_binary_assets_bin_start + {}, {});\n'.format(name, offset, length))
+        cpp_out.write('const blit::Asset {}(_binary_assets_bin_start + {}, {});\n'.format(name, offset, length))
 
 
     if args.inline_data:
         bin_out.close()
         bin_out = open('assets.bin', 'rb')
 
-        data = bin_out.read();
+        data = bin_out.read()
 
-        cpp_out.write('\nconst uint8_t _binary_assets_bin_start[] = {\n\t');
+        cpp_out.write('\nconst uint8_t _binary_assets_bin_start[] = {\n\t')
         cpp_out.write(format_hex(data))
-        cpp_out.write('};\n');
+        cpp_out.write('};\n')
