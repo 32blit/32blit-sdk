@@ -114,6 +114,30 @@ void MX_USB_DEVICE_Init(void)
   /* USER CODE END USB_DEVICE_Init_PostTreatment */
 }
 
+void MX_USB_DEVICE_Deinit(void)
+{
+  /* USER CODE BEGIN USB_DEVICE_Init_PreTreatment */
+
+  /* USER CODE END USB_DEVICE_Init_PreTreatment */
+
+  if (USBD_Stop(&hUsbDeviceHS) != USBD_OK)
+  {
+    Error_Handler();
+  }
+
+
+  /* Init Device Library, add supported class and start the library. */
+  if (USBD_DeInit(&hUsbDeviceHS) != USBD_OK)
+  {
+    Error_Handler();
+  }
+
+  /* USER CODE BEGIN USB_DEVICE_Init_PostTreatment */
+//  HAL_PWREx_EnableUSBVoltageDetector();
+
+  /* USER CODE END USB_DEVICE_Init_PostTreatment */
+}
+
 /**
   * @}
   */
