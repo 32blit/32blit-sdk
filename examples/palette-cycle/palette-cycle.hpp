@@ -1,7 +1,7 @@
 #include "32blit.hpp"
 
 
-uint8_t fire_data[] = {
+const uint8_t fire_data[] = {
     0x53, 0x50, 0x52, 0x49, 0x54, 0x45, 0x00, 0x00, // type: sprite
     0x10, 0x14, // payload size (5136)
 

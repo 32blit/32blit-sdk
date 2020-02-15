@@ -51,6 +51,14 @@ int32_t close_file(uint32_t fh) {
   return SDL_RWclose(open_files[fh]) == 0 ? 0 : -1;
 }
 
+uint32_t get_file_length(uint32_t fh)
+{
+  auto file = open_files[fh];
+  SDL_RWseek(file, 0, RW_SEEK_END);
+
+  return SDL_RWtell(file);
+}
+
 std::vector<blit::FileInfo> list_files(std::string path) {
   std::vector<blit::FileInfo> ret;
 

@@ -28,23 +28,23 @@ IE: a two colour image will be packed with 1bpp
 Usage: ./sprite-builder packed input-file.png
 "input-file.png" should contain no more than 255 colours!
 
-# SPRITERW header (Raw sprite - RGBA, RGB888 or RGB565)
+# SPRITERW header (Raw sprite - RGBA, RGB, P or M)
 
 An unpacked sprite is just a block of raw surface data
-in either RGBA (4 bytes), RGB888 (3 bytes) or RGB565 (2 bytes) format.
+in either RGBA (4 bytes), RGB (3 bytes) or P/M (1 bytes) format.
 
 Unpacked sprites are *huge* but useful for streaming into the framebuffer from storage.
 
 The max power of two sprite sizes supported by this file format are-
 
-- 64x64 in RGBA and RGB888 mode
-- 128x128 in RGB565 mode
+- 64x64 in RGBA and RGB mode
+- 128x128 in P mode
 
 - 2: Sprite width
 - 2: Sprite height
 - 2: Sprite columns
 - 2: Sprite rows
-- 1: Format (RGBA, RGB888 or RGB565)
+- 1: Format (RGBA, RGB, P or M)
 - Y: Image data
 
 Usage: ./sprite-builder raw --format RGB565 input-file.png
@@ -71,10 +71,8 @@ def compute_bit_length(ctx):
         return (len(ctx.palette.colours) - 1).bit_length()
     elif ctx.format == SpriteFormat.enum.rgba:
         return 32
-    elif ctx.format == SpriteFormat.enum.rgb888:
+    elif ctx.format == SpriteFormat.enum.rgb:
         return 24
-    elif ctx.format == SpriteFormat.enum.rgb565:
-        return 16
     else:
         return 0
 
@@ -108,10 +106,10 @@ AssetType = Enum(PaddedString(8, "utf8"), packed='SPRITEPK', raw='SPRITERW')
 
 SpriteFormat = SmartEnum(
     Int8ul,
-    rgba=0,
-    rgb888=1,
-    rgb565=2,
-    p=3
+    rgb=0,
+    rgba=1,
+    p=2,
+    m=3
 )
 
 asset_rgba = Struct(
@@ -125,12 +123,6 @@ asset_rgb = Struct(
     'r' / Int8ul,
     'g' / Int8ul,
     'b' / Int8ul
-)
-
-asset_rgb565 = BitStruct(
-    'r' / BitsInteger(5),
-    'g' / BitsInteger(6),
-    'b' / BitsInteger(5)
 )
 
 asset_packed = Struct(
@@ -157,8 +149,9 @@ asset_raw = Struct(
     'data_length' / Computed(compute_data_length),
     'data' / Switch(this.format, {
         'rgba': Array(this.data_length, asset_rgba),
-        'rgb888': Array(this.data_length, asset_rgb),
-        'rgb565': Array(this.data_length, asset_rgb565),
+        'rgb': Array(this.data_length, asset_rgb),
+        'p': Array(this.data_length, Int8ul),
+        'm': Array(this.data_length, Int8ul)
     })
 )
 

@@ -215,9 +215,9 @@ if __name__ == '__main__':
                     dest = str(args.file).replace('.dfu', '')
                     filename = f"{dest}-{target_id}-{address}.bin"
 
-                    if pathlib.Path(dest).is_file() and not args.force:
+                    if pathlib.Path(filename).is_file() and not args.force:
                         raise parser.error(f'Existing output file "{filename}", use --force to overwrite!')
 
                     print(f"Dumping image at {address} to {filename} ({len(data)} bytes)")
 
-                    open(dest, 'wb').write(data)
+                    open(filename, 'wb').write(data)

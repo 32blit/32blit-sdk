@@ -15,7 +15,7 @@
     This example, a runthrough:
 
       Audio data:
-      The audio file has been converted to 11025Hz sample rate, then exported as 16bit PCM, but without its header.
+      The audio file has been converted to 22050Hz sample rate, then exported without its header.
       (If a headered file is used, just read past that first. Try skipping the first 44 bytes).
       You would preferably store files separate because uncompressed audio will use all your flash!
       Here though, the raw wave to a c header using 'xxd -i glass.raw glass.h'
@@ -38,8 +38,7 @@ void buffCallBack(void *);    //Declare our callback here instead of putting the
 void init() {
 
   // Setup channel
-  channels[0].waveforms   = Waveform::WAVE;                // Set type to WAVE
-  channels[0].sustain     = 0xffff;                        // Set sustain to max
+  channels[0].waveforms                  = Waveform::WAVE; // Set type to WAVE
   channels[0].callback_waveBufferRefresh = &buffCallBack;  // Set callback address
 
   screen.pen = Pen(0, 0, 0, 255);
@@ -97,11 +96,10 @@ void render(uint32_t time_ms) {
 
 
   bool button_a = blit::buttons & blit::Button::A;
-  
+
   // If 'A' button pushed
   if(button_a){
     wavSample = glass_wav;        // Set sample to the array in glass.h
-    wavSampleRate = 11025;        // Note the sample rate
     wavSize = glass_wav_len;      // Set the array length to the value in glass.h
     channels[0].trigger_attack(); // Start the playback.
   }

@@ -23,6 +23,7 @@ jobs:
         - docker
       before_install:
         - docker run -dit --name emscripten -v $(pwd):/src -v $HOME/.emscripten_ports:/emsdk_portable/.data/ports -v $HOME/.emscripten_cache:/emsdk_portable/.data/cache trzeci/emscripten:sdk-incoming-64bit bash
+      install:
       script:
         - docker exec -it emscripten emcmake cmake -B build.em -G "Unix Makefiles"
         - docker exec -it emscripten make -C build.em
@@ -33,6 +34,8 @@ jobs:
       addons:
         apt:
           libsdl2-dev
+          python3-pip
+          python3-setuptools
       before_deploy:
         - make install
         - tar -zcf ${RELEASE_FILE}.tar.gz bin/
@@ -55,8 +58,6 @@ jobs:
           python3-pip
           python3-setuptools
           zip
-      install:
-        - python3 -m pip install bitstring construct
       before_deploy:
         - make install
         - tar -zcf ${RELEASE_FILE}.tar.gz bin/
@@ -74,7 +75,6 @@ jobs:
       env:
         - TOOLCHAIN=../mingw.toolchain
         - CMAKE_ARGS="-DSDL2_DIR=$TRAVIS_BUILD_DIR/SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/ -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
-        - RELEASE_FILE=${TRAVIS_BUILD_DIR}${REPO}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}-WIN64
       cache:
         directories:
          - SDL2-2.0.10/
@@ -82,6 +82,8 @@ jobs:
       addons:
         apt:
           g++-mingw-w64
+          python3-pip
+          python3-setuptools
           zip
       before_script:
         - |
@@ -90,15 +92,6 @@ jobs:
             tar -xf SDL2.tar.gz
             sed -i "s|/opt/local|$PWD/SDL2-2.0.10|g" ./SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/sdl2-config.cmake
           fi
-      before_deploy:
-        - make install
-        - zip -9 ${RELEASE_FILE}.zip bin/*
-      deploy:
-        provider: releases
-        file: ${RELEASE_FILE}.zip
-        on:
-          tags: true
-        edge: true
 
     - name: "macOS"
       os: osx
@@ -116,10 +109,17 @@ jobs:
 
     - name: "Visual Studio (CMake)"
       os: windows
-      env: CMAKE_ARGS=-DSDL2_DIR=$TRAVIS_BUILD_DIR/vs/sdl
+      env:
+        - CMAKE_ARGS=-DSDL2_DIR=$TRAVIS_BUILD_DIR/vs/sdl
+        - RELEASE_FILE=${TRAVIS_BUILD_DIR}${REPO}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}-WIN64
       cache:
         directories:
          - vs/sdl/
+      before_install:
+        - choco uninstall -y mingw
+        - choco install -y python3 --version=3.8
+        - export PATH=$PATH:"c:\Python38"
+        - ln -s /c/Python38/python.exe /c/Python38/python3.exe
       before_script:
         - |
           if [ ! -d vs/sdl/lib ]; then
@@ -128,7 +128,15 @@ jobs:
             # move dirs up
             mv vs/sdl/SDL2-2.0.10/* vs/sdl
           fi
-
+      before_deploy:
+        - cmake --build . --target install
+        - 7z a ${RELEASE_FILE}.zip bin/*
+      deploy:
+        provider: releases
+        file: ${RELEASE_FILE}.zip
+        on:
+          tags: true
+        edge: true
 
     - name: "Visual Studio (.sln)"
       os: windows
@@ -136,7 +144,10 @@ jobs:
         directories:
          - vs/sdl/
       before_install:
-        - choco install -y visualstudio2019buildtools visualstudio2019-workload-vctools
+        - choco uninstall -y mingw
+        - choco install -y visualstudio2019buildtools visualstudio2019-workload-vctools python3
+        - export PATH=$PATH:"c:\Python38"
+        - ln -s /c/Python38/python.exe /c/Python38/python3.exe
       script:
         - export PATH=$PATH:"c:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin"
         - |
@@ -147,6 +158,9 @@ jobs:
             mv vs/sdl/SDL2-2.0.10/* vs/sdl
           fi
         - msbuild.exe vs/32blit.sln
+
+install:
+  - python3 -m pip install bitstring construct pillow
 
 script:
   - ccache --zero-stats || true

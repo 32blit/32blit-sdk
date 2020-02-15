@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+
+import argparse
+import sys
+import pathlib
+import subprocess
+
+
+def command_tiled2csv(args):
+    # Try to find tiled in a number of popular binary holiday resorts
+    tool_paths = [
+        pathlib.Path("C:\\Program Files\\Tiled\\tiled.exe"),
+        pathlib.Path("/mnt/c/Program Files/Tiled/tiled.exe"),
+        pathlib.Path("/usr/bin/tiled")
+    ]
+
+    tool_path = None
+
+    for tool in tool_paths:
+        if tool.is_file():
+            print(f"Found tiled at {tool}")
+            tool_path = tool
+            break
+
+    if args.out.is_file() and not args.force:
+        print(f'Refusing to write to {args.out} (File exists!)')
+    elif tool_path is not None:
+        print(f"Writing {args.out}")
+        subprocess.run(f"\"{tool_path}\" --export-map {args.file} {args.out}", shell=True, check=True)
+        return True
+
+    return False
+
+
+def command_csv2bin(args):
+    # csv2bin mode is handy for converting comma-separated file types into binary format for using as assets
+    # In particular this mode was written to take the csv output of Tiled editor and convert it
+    # You can convert a Tiled map in WSL '/mnt/c/Program\ Files/Tiled/tiled.exe --export-map level.tmx level.csv'
+    # Or, in Linux native, 'tiled --export-map level.tmx level.csv'
+    # If you don't use asset embedding you should try: https://github.com/HeadBoffin/32blit-Tiled
+
+    # Open and strip whitespace from the file contents
+    source = open(args.file, 'r').read().strip()
+
+    # Replace '1, 2, 3' to '1,2,3', might as well do it here
+    source = source.replace(' ', '')
+
+    # Split out into rows on linebreak
+    source = source.split('\n')
+
+    # Split every row into columns on the comma
+    source = [row.split(',') for row in source]
+
+    # Count number of rows and cols
+    rows = len(source)
+    cols = len(source[0])
+    print(f'Read {rows} rows and {cols} cols')
+
+    # Flatten our rows/cols 2d array into a 1d array of bytes
+    # Might as well do the int conversion here, to save another loop
+    source = [int(col, args.base) for row in source for col in row]
+
+    # Convert the list of ints to a bytearray
+    source = bytearray(source)
+
+    # And write the result to our output binary file
+    if args.out is not None:
+        if args.out.is_file() and not args.force:
+            print(f'Refusing to write to {args.out} (File exists!)')
+        else:
+            print(f'Writing binary file to {args.out} ({cols}x{rows} - {len(source)} bytes)')
+            with open(args.out, 'wb') as file:
+                file.write(source)
+
+
+def default_args(parser):
+    parser.add_argument('--out', type=pathlib.Path, help='set output filename (default <inputfile>.blit)', default=None)
+    parser.add_argument('--force', action='store_true', help='force output file overwrite', default=False)
+    parser.add_argument('file', type=pathlib.Path, help='input file')
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(help='Commands', dest='command')
+    parser_csv2bin = subparsers.add_parser('csv2bin', help='Process a CSV file of numbers into a bin file')
+    parser_tiled2bin = subparsers.add_parser('tiled2bin', help='Process a tiled .tmx file into a bin file')
+
+    default_args(parser_csv2bin)
+    parser_csv2bin.add_argument('--base', type=int, help='set input number base (default 10, or decimal)', default=10)
+
+    default_args(parser_tiled2bin)
+    parser_tiled2bin.add_argument('--base', type=int, help='set input number base (default 10, or decimal)', default=10)
+
+    args = parser.parse_args()
+
+    if args.command == 'csv2bin':
+        command_csv2bin(args)
+    if args.command == 'tiled2bin':
+        # Save out unmangled output path
+        output_file = args.out
+        # Mangle the output path into a temporary filename with ONLY ONE EXTENSION
+        # Tiled gets confused if you give it more than one, since it uses the
+        # extension to figure out which format to export.
+        args.out = pathlib.Path(str(args.out).replace(".", "-") + ".csv")
+        if command_tiled2csv(args):
+            args.file = args.out
+            args.out = output_file
+            command_csv2bin(args)
+    else:
+        print(f'''Usage: {sys.argv[0]} <command> <args>
+- csv2bin - convert a CSV separated file of numerical values into a raw binary''')
