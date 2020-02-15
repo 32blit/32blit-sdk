@@ -48,7 +48,7 @@ private:
 	uint8_t m_uFileCount = 0;
 	uint8_t m_uCurrentFile = 0;
 	bool		m_bFsInit = false;
-	State		m_state = stMassStorage;
+	State		m_state = stFlashFile;
 
 	ParseState m_parseState = stFilename;
 

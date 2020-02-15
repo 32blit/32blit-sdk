@@ -196,22 +196,22 @@ int8_t STORAGE_GetCapacity_HS(uint8_t lun, uint32_t *block_num, uint16_t *block_
 {
   /* USER CODE BEGIN 10 */
 	// get sector size and count
-//	DWORD sectorCount = 0;
-//	DWORD sectorSize = 0;
-//	if (disk_ioctl(lun, GET_SECTOR_SIZE, &sectorSize) == RES_OK)
-//	{
-//		if (disk_ioctl(lun, GET_SECTOR_COUNT, &sectorCount) == RES_OK)
-//		{
-//			*block_num  = sectorCount;
-//			*block_size = sectorSize;
-//			return (USBD_OK);
-//		}
-//	}
-//	return (USBD_FAIL);
+	DWORD sectorCount = 0;
+	DWORD sectorSize = 0;
+	if (disk_ioctl(lun, GET_SECTOR_SIZE, &sectorSize) == RES_OK)
+	{
+		if (disk_ioctl(lun, GET_SECTOR_COUNT, &sectorCount) == RES_OK)
+		{
+			*block_num  = sectorCount;
+			*block_size = sectorSize;
+			return (USBD_OK);
+		}
+	}
+	return (USBD_FAIL);
 
-	*block_num  = 0x7735940;
-	*block_size = 512;
-	return (USBD_OK);
+//	*block_num  = 0x7735940;
+//	*block_size = 512;
+//	return (USBD_OK);
 
   /* USER CODE END 10 */
 }
@@ -255,6 +255,7 @@ int8_t STORAGE_IsWriteProtected_HS(uint8_t lun)
 int8_t STORAGE_Read_HS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t blk_len)
 {
   /* USER CODE BEGIN 13 */
+	g_usbManager.LogActivity();
   if (disk_read(lun, buf, blk_addr, blk_len) != RES_OK)
 	  return (USBD_OK);
   else
@@ -273,6 +274,7 @@ int8_t STORAGE_Read_HS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t bl
 int8_t STORAGE_Write_HS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t blk_len)
 {
   /* USER CODE BEGIN 14 */
+	g_usbManager.LogActivity();
   if (disk_write(lun, buf, blk_addr, blk_len) != RES_OK)
 	  return (USBD_OK);
   else

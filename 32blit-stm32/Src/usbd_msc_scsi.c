@@ -85,6 +85,7 @@ static int8_t SCSI_ReadFormatCapacity(USBD_HandleTypeDef *pdev, uint8_t lun, uin
 static int8_t SCSI_ReadCapacity10(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t *params);
 static int8_t SCSI_RequestSense(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t *params);
 static int8_t SCSI_StartStopUnit(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t *params);
+static int8_t SCSI_AllowMediumRemoval(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t *params);
 static int8_t SCSI_ModeSense6(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t *params);
 static int8_t SCSI_ModeSense10(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t *params);
 static int8_t SCSI_Write10(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t *params);
@@ -136,7 +137,7 @@ int8_t SCSI_ProcessCmd(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t *cmd)
       break;
 
     case SCSI_ALLOW_MEDIUM_REMOVAL:
-    	nResult = SCSI_StartStopUnit(pdev, lun, cmd);
+    	nResult = SCSI_AllowMediumRemoval(pdev, lun, cmd);
       break;
 
     case SCSI_MODE_SENSE6:
@@ -452,6 +453,14 @@ static int8_t SCSI_StartStopUnit(USBD_HandleTypeDef  *pdev, uint8_t lun, uint8_t
   	g_usbManager.SetState(USBManager::usbsMSCMounting);
 	else
   	g_usbManager.SetState(USBManager::usbsMSCUnmounting);
+
+  return 0;
+}
+
+static int8_t SCSI_AllowMediumRemoval(USBD_HandleTypeDef  *pdev, uint8_t lun, uint8_t *params)
+{
+  USBD_MSC_BOT_HandleTypeDef  *hmsc = (USBD_MSC_BOT_HandleTypeDef *) pdev->pClassData;
+  hmsc->bot_data_length = 0U;
 
   return 0;
 }
