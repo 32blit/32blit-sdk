@@ -75,7 +75,6 @@ jobs:
       env:
         - TOOLCHAIN=../mingw.toolchain
         - CMAKE_ARGS="-DSDL2_DIR=$TRAVIS_BUILD_DIR/SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/ -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
-        - RELEASE_FILE=${TRAVIS_BUILD_DIR}${REPO}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}-WIN64
       cache:
         directories:
          - SDL2-2.0.10/
@@ -93,15 +92,6 @@ jobs:
             tar -xf SDL2.tar.gz
             sed -i "s|/opt/local|$PWD/SDL2-2.0.10|g" ./SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/sdl2-config.cmake
           fi
-      before_deploy:
-        - make install
-        - zip -9 ${RELEASE_FILE}.zip bin/*
-      deploy:
-        provider: releases
-        file: ${RELEASE_FILE}.zip
-        on:
-          tags: true
-        edge: true
 
     - name: "macOS"
       os: osx
@@ -119,7 +109,9 @@ jobs:
 
     - name: "Visual Studio (CMake)"
       os: windows
-      env: CMAKE_ARGS=-DSDL2_DIR=$TRAVIS_BUILD_DIR/vs/sdl
+      env:
+        - CMAKE_ARGS=-DSDL2_DIR=$TRAVIS_BUILD_DIR/vs/sdl
+        - RELEASE_FILE=${TRAVIS_BUILD_DIR}${REPO}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}-WIN64
       cache:
         directories:
          - vs/sdl/
@@ -136,7 +128,15 @@ jobs:
             # move dirs up
             mv vs/sdl/SDL2-2.0.10/* vs/sdl
           fi
-
+      before_deploy:
+        - cmake --build . --target install
+        - 7z a ${RELEASE_FILE}.zip bin/*
+      deploy:
+        provider: releases
+        file: ${RELEASE_FILE}.zip
+        on:
+          tags: true
+        edge: true
 
     - name: "Visual Studio (.sln)"
       os: windows
