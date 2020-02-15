@@ -248,7 +248,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help='Commands', dest='command')
     parser_packed = subparsers.add_parser('packed', help='Process an image file into a paletted 32blit sprite')
-    parser_raw = subparsers.add_parser('raw', help='Process an image file into a raw (rgba, rgb888, rgb565) 32blit sprite')
+    parser_raw = subparsers.add_parser('raw', help='Process an image file into a raw (rgba, rgb) 32blit sprite')
 
     parser.add_argument('--out', type=str, help='set output filename (default <inputfile>.blit)', default=None)
     parser.add_argument('file', type=str, help='input file')
@@ -264,7 +264,7 @@ if __name__ == '__main__':
     # * RGBA (full fidelity)
     # * RGB888 (discard alpha)
     # * RGB565 (discard alpha, convert colours with bitshift: R >> 3, G >> 2 B >> 3)
-    parser_raw.add_argument('--format', type=str, choices=('RGBA', 'RGB888', 'RGB565'), help='raw data output format', default='RGBA')
+    parser_raw.add_argument('--format', type=str, choices=('RGBA', 'RGB'), help='raw data output format', default='RGBA')
 
     # A palette file should be a PNG file containing a series of pixels in the desired colours and order of the output palette.
     # If it's indexed, 8bpp colour then its palette will be used directly, otherwise the pixel data will be converted automatically.
@@ -285,12 +285,7 @@ if __name__ == '__main__':
                 r, g, b, a = source_image.getpixel((x, y))
                 if args.format == 'RGBA':
                     raw_data.append({'r': r, 'g': g, 'b': b, 'a': a})
-                if args.format == 'RGB888':
-                    raw_data.append({'r': r, 'g': g, 'b': b})
-                if args.format == 'RGB565':
-                    r >>= 3
-                    g >>= 2
-                    b >>= 3
+                if args.format == 'RGB':
                     raw_data.append({'r': r, 'g': g, 'b': b})
 
         raw = build_asset(
