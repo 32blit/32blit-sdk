@@ -30,7 +30,7 @@ void MX_QUADSPI_Init(void)
 {
 
   hqspi.Instance = QUADSPI;
-  hqspi.Init.ClockPrescaler = 5;
+  hqspi.Init.ClockPrescaler = 2;
   hqspi.Init.FifoThreshold = 1;
   hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
   hqspi.Init.FlashSize = QSPI_FLASH_SIZE;
@@ -406,16 +406,17 @@ HAL_StatusTypeDef qspi_enable_memorymapped_mode(void)
     QSPI_CommandTypeDef      s_command = {0};
     QSPI_MemoryMappedTypeDef s_mem_mapped_cfg = {0};
 
-    s_command.Instruction       = QUAD_OUT_FAST_READ_CMD;
     s_command.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
     s_command.AddressMode       = QSPI_ADDRESS_1_LINE;
     s_command.AddressSize       = QSPI_ADDRESS_24_BITS;
     s_command.DataMode          = QSPI_DATA_4_LINES;
     s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-    s_command.DummyCycles       = 8;
-    s_command.DdrMode           = QSPI_DDR_MODE_DISABLE;
-    s_command.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
+    s_command.DummyCycles       = 6;
     s_command.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
+
+    s_command.Instruction       = QUAD_OUT_FAST_READ_DTR_CMD;
+    s_command.DdrMode           = QSPI_DDR_MODE_ENABLE;
+    s_command.DdrHoldHalfCycle  = QSPI_DDR_HHC_HALF_CLK_DELAY;
 
     /* Configure the memory mapped mode */
     s_mem_mapped_cfg.TimeOutActivation = QSPI_TIMEOUT_COUNTER_DISABLE;
