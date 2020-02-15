@@ -45,6 +45,7 @@ namespace blit {
     static Mat4 translation(Vec3 v);
     static Mat4 scale(Vec3 v);
     void inverse();
+    Mat4 Mat4::ortho(float l, float r, float b, float t, float n, float f)
   };
 
   inline Mat4 operator*  (Mat4 lhs, const Mat4 &m) { lhs *= m; return lhs; }

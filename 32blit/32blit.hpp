@@ -5,6 +5,7 @@
 #include "engine/file.hpp"
 #include "engine/output.hpp"
 #include "engine/input.hpp"
+#include "engine/asset.hpp"
 #include "audio/audio.hpp"
 #include "engine/save.hpp"
 #include "engine/timer.hpp"
