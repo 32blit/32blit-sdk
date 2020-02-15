@@ -75,7 +75,19 @@ if (NOT DEFINED BLIT_ONCE)
 		set(PACKER_ARGS)
 		set(PACKER_OUTPUTS assets.bin assets.cpp assets.hpp)
 
-		list(JOIN ASSET_NAMES , ASSET_NAMES)
+		if(${CMAKE_VERSION} VERSION_LESS "3.12.0")
+			# Polyfill for CMake < 3.12.0 where list(JOIN ...) is not available
+			# Found here: https://stackoverflow.com/questions/7172670/best-shortest-way-to-join-a-list-in-cmake
+			function(list_join VALUES GLUE OUTPUT)
+				string (REGEX REPLACE "([^\\]|^);" "\\1${GLUE}" _TMP_STR "${VALUES}")
+				string (REGEX REPLACE "[\\](.)" "\\1" _TMP_STR "${_TMP_STR}") #fixes escaping
+				set (${OUTPUT} "${_TMP_STR}" PARENT_SCOPE)
+			endfunction()
+
+			list_join("${ASSET_NAMES}" "," ASSET_NAMES)
+		else()
+			list(JOIN ASSET_NAMES , ASSET_NAMES)
+		endif()
 
 		if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 			set(PACKER_ARGS --inline-data)
