@@ -81,6 +81,7 @@ list(APPEND SOURCES
 	Src/CDCCommandHandler.cpp 
 	Src/CDCResetHandler.cpp
 	Src/CDCInfoHandler.cpp 
+	Utilities/JPEG/jpeg_utils.c
 )
 
 set_source_files_properties( ${SOURCES} PROPERTIES LANGUAGE CXX )
@@ -97,6 +98,7 @@ set(INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/FatFs/src
 	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/ST/STM32_USB_Device_Library/Core/Inc
 	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
+	${CMAKE_CURRENT_SOURCE_DIR}/Utilities
 	${CMAKE_CURRENT_SOURCE_DIR}/../32blit
 )
 set(HAL_INCLUDE_DIRS ${INCLUDE_DIRS} PARENT_SCOPE)
