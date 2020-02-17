@@ -146,10 +146,10 @@ static bool SD_RxDataBlock(BYTE *buff, UINT len)
 	/* invalid response */
 	if(token != 0xFE) return FALSE;
 
+
 	/* receive data */
-	do {
+	while(len--)
 		SPI_RxBytePtr(buff++);
-	} while(len--);
 
 	/* discard CRC */
 	SPI_RxByte();
