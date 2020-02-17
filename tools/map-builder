@@ -4,6 +4,7 @@ import argparse
 import sys
 import pathlib
 import subprocess
+import os
 
 
 def command_tiled2csv(args):
@@ -26,7 +27,25 @@ def command_tiled2csv(args):
         print(f'Refusing to write to {args.out} (File exists!)')
     elif tool_path is not None:
         print(f"Writing {args.out}")
-        subprocess.run(f"\"{tool_path}\" --export-map {args.file} {args.out}", shell=True, check=True)
+
+        tool_path = str(tool_path)
+
+        source = args.file
+        dest = args.out
+
+        if tool_path == str(tool_paths[1]):
+            # Tiled.exe invoked from WSL requires relative paths
+            # This hack rewrites the source/dest path to be relative to the working directory
+            tool_path = tool_path.replace(" ", "\\ ")
+            rel_path = pathlib.Path(os.getcwd())
+            source = os.path.relpath(source, rel_path)
+            dest = os.path.relpath(dest, rel_path)
+
+        if tool_path == str(tool_paths[0]):
+            # Tiled.exe invoked from Windows needs a "" quoted path to handle spaces
+            tool_path = f"\"{tool_path}\""
+
+        subprocess.run(f"{tool_path} --export-map {source} {dest}", shell=True, check=True)
         return True
 
     return False
@@ -101,7 +120,7 @@ if __name__ == '__main__':
         # Mangle the output path into a temporary filename with ONLY ONE EXTENSION
         # Tiled gets confused if you give it more than one, since it uses the
         # extension to figure out which format to export.
-        args.out = pathlib.Path(str(args.out).replace(".", "-") + ".csv")
+        args.out = pathlib.Path(args.out.with_name(args.out.name.replace(".", "-") + ".csv"))
         if command_tiled2csv(args):
             args.file = args.out
             args.out = output_file
