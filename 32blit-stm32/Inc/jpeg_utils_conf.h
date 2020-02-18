@@ -46,9 +46,9 @@
 #define JPEG_RGB_FORMAT JPEG_RGB888 /* JPEG_ARGB8888, JPEG_RGB888, JPEG_RGB565 ********* Value different from default value : 0 ********** */
             	
 /*
- * Define JPEG_SWAP_RG 
+ * Define JPEG_SWAP_RB 
  */
-#define JPEG_SWAP_RG 0 /* 0 or 1 ********* Value different from default value : 0 ********** */
+#define JPEG_SWAP_RB 1 /* 0 or 1 */
 		
 		
 		
