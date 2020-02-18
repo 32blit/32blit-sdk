@@ -9,7 +9,7 @@ using namespace blit;
 
 struct Menu
 {
-    Menu(std::vector<MenuItem> items, Size rowSize, Size screenSize);
+    Menu(std::vector<MenuItem> items);
 
     void incrementSelection ();
     void decrementSelection ();

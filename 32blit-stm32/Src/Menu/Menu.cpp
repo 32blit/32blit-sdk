@@ -1,21 +1,21 @@
 #include "Menu.hpp"
 #include "MenuItem.hpp"
 #include "32blit.hpp"
+#include "display.hpp"
 
 std::vector<MenuItem> _menuItems;
 int _selectedIndex;
-Size _rowSize;
-Size _screenSize;
+Size _rowSize = Size(display::size().w, 10);
+Size _screenSize = display::size();
 
 int offset = 20;
 int menu_y (int index) { return index * _rowSize.h + offset; }
 const Pen bar_background_color = Pen(40, 40, 60);
 
-Menu::Menu(std::vector<MenuItem> items, Size rowSize, Size screenSize) { 
+Menu::Menu(std::vector<MenuItem> items) { 
     _menuItems = items;
-    _screenSize = screenSize;
-    _rowSize = rowSize;
-    _selectedIndex = rowSize.w;
+
+    _selectedIndex = _rowSize.w;
 }
 
 void Menu::incrementSelection () { _selectedIndex++; } //_selectedIndex = _selectedIndex++ % int(_menuItems.size()); }
@@ -75,16 +75,18 @@ void drawBottomLine () {
 
 void Menu::render(uint32_t time) {
 
-    screen.pen = Pen(30, 30, 50, 200);
-    screen.clear();
+    // screen.pen = Pen(30, 30, 50, 200);
+    // screen.clear();
 
-    drawTopBar(time);
-    drawBottomLine();
+    // drawTopBar(time);
+    // drawBottomLine();
 
-    for (int i = 0; i < int(_menuItems.size()); i ++) {
-        MenuItem item = _menuItems[i];
-        item.draw(menu_y(i), _selectedIndex == i, _rowSize);
-    }
+    // for (int i = 0; i < int(_menuItems.size()); i ++) {
+    //     MenuItem item = _menuItems[i];
+    //     item.draw(menu_y(i), _selectedIndex == i, _rowSize);
+    // }
     
-    screen.text(std::to_string(_rowSize.w) + "\n" + std::to_string(_rowSize.h) + "\n" + std::to_string(_selectedIndex),minimal_font,Point(50,50));
+    screen.text(std::to_string(_rowSize.w) + "\n" + std::to_string(_rowSize.h) + "\n" + std::to_string(_selectedIndex),
+    minimal_font,
+    Point(50,50));
 }

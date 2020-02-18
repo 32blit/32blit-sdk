@@ -45,10 +45,9 @@ FATFS filesystem;
 FRESULT SD_Error = FR_INVALID_PARAMETER;
 FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 
-Size getScreenSize ();
 
 MenusDataSource dataSource;
-Menu menu = Menu(dataSource.menuItems(), Size(320, 10), Size(320,240));
+Menu menu = Menu(dataSource.menuItems());
 // Menu menu = Menu(dataSource.menuItems(), Size(getScreenSize().w, 10), getScreenSize());
 
 
@@ -178,16 +177,6 @@ void blit_init() {
 /*
     Menu Items
 */
-
-Size getScreenSize () {
-  int screen_width = 160;
-  int screen_height = 120;
-  if (display::mode == blit::ScreenMode::hires) {
-    screen_width = 320;
-    screen_height = 240;
-  }
-  return Size(screen_width,screen_height);
-}
 
 void blit_menu_update(uint32_t time) {
   static uint32_t last_buttons = 0;
