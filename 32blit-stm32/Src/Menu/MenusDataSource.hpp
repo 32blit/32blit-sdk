@@ -1,4 +1,4 @@
-// #include "MenuItem.hpp"
+#include "MenuItem.hpp"
 // #include "persistence.h"
 
 /*std::string menu_name (MenuItem item) {
@@ -17,18 +17,17 @@
   return "";
 }*/
 
+
+#ifndef MENUDATASOURCE_H
+#define MENUDATASOURCE_H
+
 struct MenusDataSource {
 
     // __attribute__((section(".persist"))) Persist persist;
 
-    std::vector<MenuItem> menuItems;
+    std::vector<MenuItem> menuItems();
 
-    void createMenuItems () {
+    MenusDataSource (); 
+};
 
-
-    }
-
-    MenusDataSource () {
-        createMenuItems();
-    }    
-}
+#endif

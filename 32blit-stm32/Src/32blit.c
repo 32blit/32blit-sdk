@@ -1,4 +1,5 @@
 #include "string.h"
+#include "stdarg.h"
 #include <map>
 
 #include "32blit.h"
@@ -26,7 +27,6 @@
 #include "Menu/Menu.hpp"
 #include "Menu/MenusDataSource.hpp"
 
-#include "stdarg.h"
 using namespace blit;
 
 extern char __ltdc_start;
@@ -48,7 +48,9 @@ FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 Size getScreenSize ();
 
 MenusDataSource dataSource;
-Menu menu = Menu(dataSource.menuItems, Size(getScreenSize().w, 10), getScreenSize());
+Menu menu = Menu(dataSource.menuItems(), Size(320, 10), Size(320,240));
+// Menu menu = Menu(dataSource.menuItems(), Size(getScreenSize().w, 10), getScreenSize());
+
 
 bool needs_render = true;
 uint32_t flip_cycle_count = 0;

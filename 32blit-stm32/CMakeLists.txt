@@ -78,7 +78,11 @@ list(APPEND SOURCES
 	Src/CDCCommandStream.cpp 
 	Src/CDCCommandHandler.cpp 
 	Src/CDCResetHandler.cpp
-	Src/CDCInfoHandler.cpp 
+	Src/CDCInfoHandler.cpp
+	Src/Menu/Menu.cpp
+	Src/Menu/MenuItem.cpp
+	Src/Menu/MenusDataSource.cpp
+
 )
 
 set_source_files_properties( ${SOURCES} PROPERTIES LANGUAGE CXX )
