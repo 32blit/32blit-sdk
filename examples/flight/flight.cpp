@@ -252,10 +252,6 @@ bool is_off_ground () {
   return !compare(500.0f,far);
 }
 
-// float in_range (float value, float min, float max) {
-//   float 
-// }
-
 float lerping(float a, float b, float f) {
     return a + f * (b - a);
 }
@@ -270,14 +266,16 @@ void update(uint32_t time) {
   if (pressed(Button::DPAD_RIGHT)) { angle_delta -= 0.05f; }
 
   angle_delta -= joystick.x / 80.0f ;
-  
+
   if (pressed(Button::Y)) { 
+    // boost button
       target_speed = is_off_ground() ? 2.0f : 0.5f;
   } else {
       target_speed = is_off_ground() ? 0.8f : 0.0f;
   }
 
   if (pressed(Button::X))  { 
+    // break button
     target_speed = is_off_ground() ? 0.5f : 0.0f;
 
     if (!is_off_ground()) {
