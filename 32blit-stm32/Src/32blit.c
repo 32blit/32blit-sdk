@@ -53,7 +53,6 @@ Menu menu = Menu(dataSource.menuItems());
 
 bool needs_render = true;
 uint32_t flip_cycle_count = 0;
-float volume_log_base = 2.0f;
 
 void DFUBoot(void)
 {
@@ -117,6 +116,8 @@ void hook_render(uint32_t time) {
 }
 
 void blit_update_volume() {
+  // this is duplicated in MenusDataSource. Refactor pleaaz
+    float volume_log_base = 2.0f;
     blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * persist.volume) / log(volume_log_base));
 }
 

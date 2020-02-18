@@ -34,10 +34,26 @@ void createMenuItems () {
             persist.backlight = std::fmin(1.0f, std::fmax(0.0f, persist.backlight));
         },
         [](){
-            return 75 * persist.backlight; 
+            return 75 * persist.backlight; // get value
         }, 
         -1.0f / 256.0f,  // left adjustment
         1.0f / 256.0f)   // right adjustment
+    );
+
+    items.push_back(
+        MenuItem("Volume", [] (float value) {
+
+            persist.volume -= value;
+            persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
+
+            float volume_log_base = 2.0f;
+            blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * persist.volume) / log(volume_log_base));
+        },
+        [](){
+            return 75 * persist.volume; // get current value
+        },
+        1.0f / 256.0f,  // left adjustment
+        -1.0f / 256.0f)   // right adjustment
     );
 
     items.push_back(
