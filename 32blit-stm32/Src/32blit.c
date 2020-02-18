@@ -55,8 +55,6 @@ bool needs_render = true;
 uint32_t flip_cycle_count = 0;
 float volume_log_base = 2.0f;
 
-__attribute__((section(".persist"))) Persist persist;
-
 void DFUBoot(void)
 {
   // Set the special magic word value that's checked by the assembly entry Point upon boot
@@ -181,17 +179,19 @@ void blit_init() {
 void blit_menu_update(uint32_t time) {
   static uint32_t last_buttons = 0;
   uint32_t changed_buttons = blit::buttons ^ last_buttons;
-  if(blit::buttons & changed_buttons & blit::Button::DPAD_UP) {
+
+  if (blit::buttons & changed_buttons & blit::Button::DPAD_UP) {
     menu.decrementSelection();
-    
   } else if (blit::buttons & changed_buttons & blit::Button::DPAD_DOWN) {
     menu.incrementSelection();
-    
-  } else {
-    bool button_a = blit::buttons & changed_buttons & blit::Button::A;
+  } else if (blit::buttons & blit::Button::DPAD_LEFT) {
+    menu.pressedLeft();
+  } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
+    menu.pressedRight();
+  }
+
     // switch(menu_item) {
     //   case BACKLIGHT:
-    //     if (blit::buttons & blit::Button::DPAD_LEFT) {
     //       persist.backlight -= 1.0f / 256.0f;
     //     } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
     //       persist.backlight += 1.0f / 256.0f;
@@ -225,7 +225,7 @@ void blit_menu_update(uint32_t time) {
     //   case LAST_COUNT:
     //     break;
     // }
-  }
+  // }
 
   last_buttons = blit::buttons;
 }

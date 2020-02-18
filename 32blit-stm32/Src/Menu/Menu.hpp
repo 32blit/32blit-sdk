@@ -7,13 +7,22 @@
 
 using namespace blit;
 
-struct Menu
+class Menu
 {
-    Menu(std::vector<MenuItem> items);
+    private:
+        std::vector<MenuItem> _menuItems;
 
-    void incrementSelection ();
-    void decrementSelection ();
-    void render(uint32_t time);
+
+    public:
+        Menu(std::vector<MenuItem> items);
+
+        void incrementSelection ();
+        void decrementSelection ();
+
+        void pressedRight();
+        void pressedLeft();
+
+        void render(uint32_t time);
 };
 
 #endif

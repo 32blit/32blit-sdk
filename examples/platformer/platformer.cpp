@@ -505,7 +505,7 @@ void update(uint32_t time) {
   else {
     player_animation_frame = 2;
   }
-  /*
+
   if (tick_seed % 3 == 0) {
     for (uint8_t y = 0; y < 16; y++) {
       for (uint8_t x = 0; x < 32; x++) {
