@@ -3,21 +3,19 @@
 #include "persistence.h"
 #include <cmath>
 
-/*std::string menu_name (MenuItem item) {
-  switch (item) {
-    case BACKLIGHT: return "Backlight";
-    case VOLUME: return "Volume";
-    case DFU: return "DFU Mode";
-    case SHIPPING: return "Power Off";
-#if EXTERNAL_LOAD_ADDRESS == 0x90000000
-    case SWITCH_EXE: return "Launch Game";
-#else
-    case SWITCH_EXE: return "Exit Game";
-#endif
-    case LAST_COUNT: return "";
-  };
-  return "";
-}*/
+#include "gpio.hpp"
+#include "file.hpp"
+
+#include "adc.h"
+#include "tim.h"
+#include "rng.h"
+#include "spi.h"
+#include "i2c.h"
+#include "i2c-msa301.h"
+#include "i2c-bq24295.h"
+#include "fatfs.h"
+#include "quadspi.h"
+#include "usbd_core.h"
 
 __attribute__((section(".persist"))) Persist persist;
 void createMenuItems ();
@@ -80,6 +78,14 @@ void createMenuItems () {
         })
     );
 
+
+    items.push_back(
+        MenuItem("Power off",
+        "Press A",
+        [](){
+            bq24295_enable_shipping_mode(&hi2c4);
+        })
+    );
     
     std::string switchExecutionTitle = "Exit Game";
     #if EXTERNAL_LOAD_ADDRESS == 0x90000000

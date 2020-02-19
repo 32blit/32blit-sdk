@@ -21,6 +21,8 @@
 #include "quadspi.h"
 #include "usbd_core.h"
 
+// since menu refactoring, some of these can probably go? ^
+
 #include "32blit.hpp"
 #include "graphics/color.hpp"
 
@@ -161,10 +163,6 @@ void blit_init() {
 
 }
 
-/*
-    Menu Items
-*/
-
 void blit_menu_update(uint32_t time) {
   static uint32_t last_buttons = 0;
   uint32_t changed_buttons = blit::buttons ^ last_buttons;
@@ -183,81 +181,13 @@ void blit_menu_update(uint32_t time) {
     menu.selected();
   }
 
-    // switch(menu_item) {
-    //   case BACKLIGHT:
-    //       persist.backlight -= 1.0f / 256.0f;
-    //     } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
-    //       persist.backlight += 1.0f / 256.0f;
-    //     }
-    //     persist.backlight = std::fmin(1.0f, std::fmax(0.0f, persist.backlight));
-    //     break;
-    //   case VOLUME:
-    //     if (blit::buttons & blit::Button::DPAD_LEFT) {
-    //       persist.volume -= 1.0f / 256.0f;
-    //     } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
-    //       persist.volume += 1.0f / 256.0f;
-    //     }
-    //     persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
-    //     blit_update_volume();
-    //     break;
-    //   case DFU:
-    //     if(button_a){
-    //       DFUBoot();
-    //     }
-    //     break;
-    //   case SHIPPING:
-    //     if(button_a){
-    //       bq24295_enable_shipping_mode(&hi2c4);
-    //     }
-    //     break;
-    //   case SWITCH_EXE:
-    //     if(button_a){
-          // blit::switch_execution();
-    //     }
-    //     break;
-    //   case LAST_COUNT:
-    //     break;
-    // }
-  // }
-
   last_buttons = blit::buttons;
 }
 
 void blit_menu_render(uint32_t time) {
   ::render(time);
 
-
   menu.render(time);
-
-
-  // for (int i = BACKLIGHT; i < LAST_COUNT; i++) {
-  //   const MenuItem item = (MenuItem)i;
-
-  //   screen.pen = Pen(255, 255, 255);
-  //   screen.text(menu_name(item), minimal_font, menu_title_origin(item));
-
-  //   switch (i) {
-  //     case BACKLIGHT:
-  //       screen.pen = bar_background_color;
-  //       screen.rectangle(Rect(screen_width / 2, 21, 75, 5));
-  //       screen.pen = Pen(255, 255, 255);
-  //       screen.rectangle(Rect(screen_width / 2, 21, 75 * persist.backlight, 5));
-
-  //       break;
-  //     case VOLUME:
-  //       screen.pen = bar_background_color;
-  //       screen.rectangle(Rect(screen_width / 2, 31, 75, 5));
-  //       screen.pen = Pen(255, 255, 255);
-  //       screen.rectangle(Rect(screen_width / 2, 31, 75 * persist.volume, 5));
-
-  //       break;
-  //     default:
-  //       screen.pen = Pen(255, 255, 255);
-  //       screen.text("Press A", minimal_font, press_a_origin(item, screen_width));
-  //       break;  
-  //   }
-
-  // }
 
 }
 
