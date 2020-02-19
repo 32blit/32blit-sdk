@@ -48,8 +48,6 @@ FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 
 MenusDataSource dataSource;
 Menu menu = Menu(dataSource.menuItems());
-// Menu menu = Menu(dataSource.menuItems(), Size(getScreenSize().w, 10), getScreenSize());
-
 
 bool needs_render = true;
 uint32_t flip_cycle_count = 0;
@@ -214,7 +212,7 @@ void blit_menu_update(uint32_t time) {
     //     break;
     //   case SWITCH_EXE:
     //     if(button_a){
-    //       blit::switch_execution();
+          // blit::switch_execution();
     //     }
     //     break;
     //   case LAST_COUNT:

@@ -5,11 +5,15 @@
 #ifndef MENUDATASOURCE_H
 #define MENUDATASOURCE_H
 
-struct MenusDataSource {
+class MenusDataSource {
 
-    // __attribute__((section(".persist"))) Persist persist;
+    private:
+
+
+    public:
 
     std::vector<MenuItem> menuItems();
+    void(*switch_execution)();
 
     MenusDataSource (); 
 };

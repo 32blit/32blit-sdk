@@ -20,9 +20,10 @@
 }*/
 
 __attribute__((section(".persist"))) Persist persist;
-
+void createMenuItems ();
 std::vector<MenuItem> items;
 std::vector<MenuItem> MenusDataSource::menuItems() {
+    createMenuItems();
     return items;
 };
 
@@ -31,12 +32,14 @@ void createMenuItems () {
     // BACKLIGHT
 
     items.push_back(
-        MenuItem("Backlight", [](float value) {
+        MenuItem("Backlight", 
+        [](float value) {
+            // slider value has changed
             persist.backlight += value;
             persist.backlight = std::fmin(1.0f, std::fmax(0.0f, persist.backlight));
         },
         [](){
-            return 75 * persist.backlight; // get value
+            return 75 * persist.backlight; // get value to update the UI with
         }, 
         -1.0f / 256.0f,  // left adjustment
         1.0f / 256.0f)   // right adjustment
@@ -45,8 +48,10 @@ void createMenuItems () {
     // VOLUME
 
     items.push_back(
-        MenuItem("Volume", [] (float value) {
+        MenuItem("Volume",
+         [] (float value) {
 
+            // slider value has changed
             persist.volume -= value;
             persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
 
@@ -54,7 +59,7 @@ void createMenuItems () {
             blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * persist.volume) / log(volume_log_base));
         },
         [](){
-            return 75 * persist.volume; // get current value
+            return 75 * persist.volume; // get current value to update the UI with
         },
         1.0f / 256.0f,  // left adjustment
         -1.0f / 256.0f)   // right adjustment
@@ -63,6 +68,9 @@ void createMenuItems () {
     items.push_back(
         MenuItem("DFU Mode", "Press A",
         []() {
+
+            // Select Action
+
             // Set the special magic word value that's checked by the assembly entry Point upon boot
             // This will trigger a jump into DFU mode upon reboot
             *((uint32_t *)0x2001FFFC) = 0xCAFEBABE; // Special Key to End-of-RAM
@@ -72,10 +80,20 @@ void createMenuItems () {
         })
     );
 
+    
+    std::string switchExecutionTitle = "Exit Game";
+    #if EXTERNAL_LOAD_ADDRESS == 0x90000000
+        switchExecutionTitle = "Launch Game";
+    #endif
+
     items.push_back(
-        MenuItem("Blah", "Press A")
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
     );
 
 }
 
-MenusDataSource::MenusDataSource () { createMenuItems (); }
+MenusDataSource::MenusDataSource () { }
