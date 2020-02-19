@@ -9,12 +9,9 @@ class MenusDataSource {
 
     private:
 
-
     public:
 
     std::vector<MenuItem> menuItems();
-    void(*switch_execution)();
-
     MenusDataSource (); 
 };
 
