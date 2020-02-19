@@ -54,16 +54,6 @@ Menu menu = Menu(dataSource.menuItems());
 bool needs_render = true;
 uint32_t flip_cycle_count = 0;
 
-void DFUBoot(void)
-{
-  // Set the special magic word value that's checked by the assembly entry Point upon boot
-  // This will trigger a jump into DFU mode upon reboot
-  *((uint32_t *)0x2001FFFC) = 0xCAFEBABE; // Special Key to End-of-RAM
-
-  SCB_CleanDCache();
-  NVIC_SystemReset();
-}
-
 int blit_debugf(const char * psFormatString, ...)
 {
 	va_list args;
@@ -189,6 +179,10 @@ void blit_menu_update(uint32_t time) {
     menu.pressedLeft();
   } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
     menu.pressedRight();
+  }
+
+  if (pressed(blit::A)) {
+    menu.selected();
   }
 
     // switch(menu_item) {

@@ -54,7 +54,7 @@ void MenuItem::draw (unsigned int yPos, bool selected, Size rowSize) {
         screen.text(_text, font, Point(rowSize.w / 2, nestedItemY));
     }
 
-    if (_selectCallback != nullptr && _text.empty()) {
+    if (_items.size() > 0) {
         screen.pen = Pen(255, 255, 255);
         screen.text(">", font, Point(rowSize.w - 10, nestedItemY));
     }
@@ -70,11 +70,14 @@ void MenuItem::draw (unsigned int yPos, bool selected, Size rowSize) {
     }
 }
 
-
 void MenuItem::pressedRight() {
     if (_slideCallback) { _slideCallback(rightAdjustment); }
 }
 
 void MenuItem::pressedLeft() {
     if (_slideCallback) { _slideCallback(leftAdjustment); }
+}
+
+void MenuItem::selected() {
+    if (_selectCallback) { _selectCallback(); }
 }

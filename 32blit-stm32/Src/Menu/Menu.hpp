@@ -22,6 +22,8 @@ class Menu
         void pressedRight();
         void pressedLeft();
 
+        void selected ();
+
         void render(uint32_t time);
 };
 

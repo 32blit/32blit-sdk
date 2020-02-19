@@ -28,6 +28,8 @@ std::vector<MenuItem> MenusDataSource::menuItems() {
 
 void createMenuItems () {
 
+    // BACKLIGHT
+
     items.push_back(
         MenuItem("Backlight", [](float value) {
             persist.backlight += value;
@@ -39,6 +41,8 @@ void createMenuItems () {
         -1.0f / 256.0f,  // left adjustment
         1.0f / 256.0f)   // right adjustment
     );
+
+    // VOLUME
 
     items.push_back(
         MenuItem("Volume", [] (float value) {
@@ -57,7 +61,15 @@ void createMenuItems () {
     );
 
     items.push_back(
-        MenuItem("Vibrate", "Press A")
+        MenuItem("DFU Mode", "Press A",
+        []() {
+            // Set the special magic word value that's checked by the assembly entry Point upon boot
+            // This will trigger a jump into DFU mode upon reboot
+            *((uint32_t *)0x2001FFFC) = 0xCAFEBABE; // Special Key to End-of-RAM
+
+            SCB_CleanDCache();
+            NVIC_SystemReset();
+        })
     );
 
     items.push_back(
@@ -66,4 +78,4 @@ void createMenuItems () {
 
 }
 
-MenusDataSource::MenusDataSource () { createMenuItems (); }  
+MenusDataSource::MenusDataSource () { createMenuItems (); }

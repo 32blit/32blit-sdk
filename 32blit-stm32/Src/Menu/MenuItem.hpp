@@ -52,6 +52,7 @@ class MenuItem {
 
         void pressedRight();
         void pressedLeft();
+        void selected();
 };
 
 #endif

@@ -25,6 +25,7 @@ void Menu::decrementSelection () {
 
 void Menu::pressedRight() { _menuItems[_selectedIndex].pressedRight(); }
 void Menu::pressedLeft() { _menuItems[_selectedIndex].pressedLeft(); }
+void Menu::selected() { _menuItems[_selectedIndex].selected(); }
 
 Size screenSize () {
     int screen_width = 160;
