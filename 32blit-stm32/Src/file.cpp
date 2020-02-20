@@ -13,6 +13,7 @@ void *open_file(std::string file) {
   if(r == FR_OK)
     return f;
   
+  delete f;
   return nullptr;
 }
 
@@ -39,6 +40,7 @@ int32_t close_file(void *fh) {
 
   r = f_close((FIL *)fh);
 
+  delete (FIL *)fh;
   return r == FR_OK ? 0 : -1;
 }
 
