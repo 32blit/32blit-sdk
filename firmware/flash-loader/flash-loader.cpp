@@ -32,7 +32,7 @@ void load_file_list() {
   }
 }
 
-
+Vec2 list_offset(5.0f, 0.0f);
 
 
 void init()
