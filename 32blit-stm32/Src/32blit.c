@@ -181,6 +181,10 @@ void blit_menu_update(uint32_t time) {
     menu.selected();
   }
 
+  if (pressed(blit::B)) {
+    menu.backPressed();
+  }
+
   last_buttons = blit::buttons;
 }
 

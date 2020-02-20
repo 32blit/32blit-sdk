@@ -17,13 +17,25 @@
 #include "quadspi.h"
 #include "usbd_core.h"
 
+using namespace std;
+
 __attribute__((section(".persist"))) Persist persist;
 void createMenuItems ();
-std::vector<MenuItem> items;
-std::vector<MenuItem> MenusDataSource::menuItems() {
+vector<MenuItem> items;
+vector<MenuItem> MenusDataSource::menuItems() {
     createMenuItems();
     return items;
 };
+
+vector<MenuItem>aboutMenuItems () {
+    vector<MenuItem> about;
+
+    about.push_back(MenuItem("Version", "number"));
+    about.push_back(MenuItem("Build number", "number"));
+    about.push_back(MenuItem("Build time", "date"));
+
+    return about;
+}
 
 void createMenuItems () {
 
@@ -34,7 +46,7 @@ void createMenuItems () {
         [](float value) {
             // slider value has changed
             persist.backlight += value;
-            persist.backlight = std::fmin(1.0f, std::fmax(0.0f, persist.backlight));
+            persist.backlight = fmin(1.0f, fmax(0.0f, persist.backlight));
         },
         [](){
             return 75 * persist.backlight; // get value to update the UI with
@@ -51,7 +63,7 @@ void createMenuItems () {
 
             // slider value has changed
             persist.volume -= value;
-            persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
+            persist.volume = fmin(1.0f, fmax(0.0f, persist.volume));
 
             float volume_log_base = 2.0f;
             blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * persist.volume) / log(volume_log_base));
@@ -87,7 +99,7 @@ void createMenuItems () {
         })
     );
     
-    std::string switchExecutionTitle = "Exit Game";
+    string switchExecutionTitle = "Exit Game";
     #if EXTERNAL_LOAD_ADDRESS == 0x90000000
         switchExecutionTitle = "Launch Game";
     #endif
@@ -100,6 +112,9 @@ void createMenuItems () {
         })
     );
 
+    items.push_back(MenuItem("About",aboutMenuItems()));
 }
+
+
 
 MenusDataSource::MenusDataSource () { }

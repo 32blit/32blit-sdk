@@ -5,6 +5,8 @@
 
 using namespace blit;
 
+std::string SYSTEM_TITLE = "System Menu";
+
 int _selectedIndex;
 int _rowHeight = 12;
 
@@ -25,7 +27,40 @@ void Menu::decrementSelection () {
 
 void Menu::pressedRight() { _menuItems[_selectedIndex].pressedRight(); }
 void Menu::pressedLeft() { _menuItems[_selectedIndex].pressedLeft(); }
-void Menu::selected() { _menuItems[_selectedIndex].selected(); }
+
+void Menu::selected() { 
+    auto childItems = _menuItems[_selectedIndex].selected(); 
+
+    if (!childItems.empty()){
+
+        // stash away the current menu
+        NavigationLevel level = NavigationLevel(
+            _displayTitle.empty() ? _displayTitle : SYSTEM_TITLE,
+            _menuItems,
+            _selectedIndex
+            );
+
+        _displayTitle = _menuItems[_selectedIndex].title;
+
+        _selectedIndex = 0;
+        _menuItems = childItems;
+        _navigationStack.push_back(level);
+        
+    }
+}
+
+void Menu::backPressed() {
+
+    if(!_navigationStack.empty()) {
+        auto back = _navigationStack.back();
+
+        _menuItems = back.items;
+        _selectedIndex = back.selection;
+        _displayTitle = back.title.size() > 0 ? back.title : SYSTEM_TITLE;
+
+        _navigationStack.pop_back();
+    }
+}
 
 Size screenSize () {
     int screen_width = 160;
@@ -39,10 +74,10 @@ Size screenSize () {
     return Size(screen_width,screen_height);
 }
 
-void drawTopBar (uint32_t time) {
+void Menu::drawTopBar (uint32_t time) {
     screen.pen = Pen(255, 255, 255);
 
-    screen.text("System Menu", minimal_font, Point(5, 5));
+    screen.text(_displayTitle.empty() ? SYSTEM_TITLE : _displayTitle , minimal_font, Point(5, 5));
     screen.text("bat", minimal_font, Point(screenSize().w / 2, 5));
     uint16_t battery_meter_width = 55;
     battery_meter_width = float(battery_meter_width) * (blit::battery - 3.0f) / 1.1f;
@@ -67,7 +102,7 @@ void drawTopBar (uint32_t time) {
     }
 
     screen.rectangle(Rect((screenSize().w / 2) + 20, 6, battery_meter_width, 5));
-    if(battery_charge_status == 0b01 || battery_charge_status == 0b10){
+    if (battery_charge_status == 0b01 || battery_charge_status == 0b10){
         uint16_t battery_fill_width = uint32_t(time / 100.0f) % battery_meter_width;
         battery_fill_width = std::max((uint16_t)0, std::min((uint16_t)battery_meter_width, battery_fill_width));
         screen.pen = Pen(100, 255, 200);

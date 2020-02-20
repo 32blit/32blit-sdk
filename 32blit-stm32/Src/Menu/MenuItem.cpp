@@ -5,14 +5,14 @@
 using namespace blit;
 
 // This is used when creating an item that has children items to drill down to
-MenuItem::MenuItem (std::string title, std::vector<MenuItem> children)  {
-    _title = title;
+MenuItem::MenuItem (std::string itemTitle, std::vector<MenuItem> children)  {
+    title = itemTitle;
     _items = children;
 }
 
 // This is for rows that have a slider. 'brightness' etc
-MenuItem::MenuItem (std::string title, void (*slider)(float), float (*sliderGetter)(void), float lAdjustment, float rAdjustment) {
-    _title = title;
+MenuItem::MenuItem (std::string itemTitle, void (*slider)(float), float (*sliderGetter)(void), float lAdjustment, float rAdjustment) {
+    title = itemTitle;
     _slideCallback = slider;
     _selectCallback = nullptr;
     _sliderGetter = sliderGetter;
@@ -22,16 +22,16 @@ MenuItem::MenuItem (std::string title, void (*slider)(float), float (*sliderGett
 }
 
 // This is for rows that have an action. 'Shut down' etc
-MenuItem::MenuItem (std::string title, std::string text, void (*action)()) {
-    _title = title;
+MenuItem::MenuItem (std::string itemTitle, std::string text, void (*action)()) {
+    title = itemTitle;
     _text = text;
     _selectCallback = action;
     _slideCallback = nullptr;
 }
 
 // This is used when the item is just an info row. Version number etc.
-MenuItem::MenuItem (std::string title, std::string text) {
-    _title = title;
+MenuItem::MenuItem (std::string itemTitle, std::string text) {
+    title = itemTitle;
     _text = text;
 }
 
@@ -47,7 +47,7 @@ void MenuItem::draw (unsigned int yPos, bool selected, Size rowSize) {
     float nestedItemY = yPos + yTextOffset;
 
     screen.pen = Pen(255, 255, 255);
-    screen.text(_title, font, Point(5.0, nestedItemY));
+    screen.text(title, font, Point(5.0, nestedItemY));
 
     if (!_text.empty() || _selectCallback != nullptr) {
         screen.pen = Pen(255, 255, 255);
@@ -78,6 +78,8 @@ void MenuItem::pressedLeft() {
     if (_slideCallback) { _slideCallback(leftAdjustment); }
 }
 
-void MenuItem::selected() {
+std::vector<MenuItem> MenuItem::selected() {
     if (_selectCallback) { _selectCallback(); }
+
+    return _items;
 }
