@@ -15,7 +15,7 @@ static const int jpeg_max_block_len = 768; // can fit a whole number of all bloc
 static uint8_t jpeg_dec_block[jpeg_max_block_len];
 static uint8_t *jpeg_in_buf = nullptr, *jpeg_out_buf = nullptr;
 static uint32_t jpeg_in_len = 0, jpeg_in_off = 0;
-static int32_t jpeg_in_file = -1;
+static blit::File *jpeg_in_file = nullptr;
 static uint32_t jpeg_out_block = 0;
 static JPEG_YCbCrToRGB_Convert_Function jpeg_conv_func = nullptr;
 
@@ -35,8 +35,8 @@ void HAL_JPEG_InfoReadyCallback(JPEG_HandleTypeDef *hjpeg, JPEG_ConfTypeDef *pIn
 void HAL_JPEG_GetDataCallback(JPEG_HandleTypeDef *hjpeg, uint32_t NbDecodedData) {
   jpeg_in_off += NbDecodedData;
 
-  if(jpeg_in_file != -1) {
-    jpeg_in_len = blit::read_file(jpeg_in_file, jpeg_in_off, 1024, (char *)jpeg_in_buf);
+  if(jpeg_in_file) {
+    jpeg_in_len = jpeg_in_file->read(jpeg_in_off, 1024, (char *)jpeg_in_buf);
     HAL_JPEG_ConfigInputBuffer(&jpeg_handle, jpeg_in_buf, jpeg_in_len);
   } else if(jpeg_in_off < jpeg_in_len)
     HAL_JPEG_ConfigInputBuffer(&jpeg_handle, jpeg_in_buf + jpeg_in_off, jpeg_in_len - jpeg_in_off);
@@ -58,7 +58,7 @@ namespace blit {
     jpeg_in_buf = ptr;
     jpeg_in_len = len;
     jpeg_in_off = 0;
-    jpeg_in_file = -1;
+    jpeg_in_file = nullptr;
     
     jpeg_out_block = 0;
 
@@ -76,10 +76,12 @@ namespace blit {
   }
 
   JPEGImage decode_jpeg_file(std::string filename) {
-    jpeg_in_file = blit::open_file(filename);
+    blit::File file(filename);
 
-    if(jpeg_in_file == -1)
+    if(!file.is_open())
       return {};
+
+    jpeg_in_file = &file;
 
     if(!jpeg_tables_initialised) {
       JPEG_InitColorTables();
@@ -87,7 +89,7 @@ namespace blit {
     }
 
     jpeg_in_buf = new uint8_t[1024];
-    jpeg_in_len = blit::read_file(jpeg_in_file, 0, 1024, (char *)jpeg_in_buf);
+    jpeg_in_len = file.read(0, 1024, (char *)jpeg_in_buf);
     jpeg_in_off = 0;
     
     jpeg_out_block = 0;
