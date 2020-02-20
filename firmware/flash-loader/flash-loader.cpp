@@ -8,7 +8,6 @@
 #include <stdlib.h>
 using namespace blit;
  
-extern QSPI_HandleTypeDef hqspi;
 extern CDCCommandStream g_commandStream;
 
 std::vector<FileInfo> files;
@@ -35,7 +34,8 @@ void load_file_list() {
   }
 }
 
-float y_scroll = 0.0f;
+Vec2 list_offset(5.0f, 0.0f);
+
 
 void init()
 {
@@ -50,21 +50,45 @@ void init()
 	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value, &flashLoader);
 }
 
-void render(uint32_t time)
+
+void background(uint32_t time_ms) {  
+  constexpr float pi = 3.1415927;
+
+  float s = sin(time_ms / 1000.0f) * 5.0f + 20.0f;
+  uint32_t o = 0;
+  Point p;  
+  for (p.y = 0; p.y < 240; p.y++) {
+    for (p.x = 0; p.x < 320; p.x++) {
+      // TODO: background animation
+      /*
+      screen.pen.b = 15;
+      screen.pen.b += (int((p.x - 160) / s) & 0b111) * 5;
+      screen.pen.b += (int((p.y + (list_offset.y * s) - 120) / s) & 0b111) * 5;
+      screen.pen.r = 10;
+      screen.pen.g = 15;
+      screen.pixel(p);      */
+      o++;
+    }
+  }
+}
+
+void render(uint32_t time_ms)
 {
   
 
   screen.pen = Pen(20, 30, 40);
   screen.clear();
 
+  background(time_ms);
+
   for(uint32_t i = 0; i < files.size(); i++) {
     FileInfo *file = &files[i];
 
-    screen.pen = Pen(100, 100, 100);
+    screen.pen = Pen(80, 100, 120);
     if(i == selected_file_index) {
-      screen.pen = Pen(255, 255, 255);
+      screen.pen = Pen(235, 245, 255);
     }
-    screen.text(file->name, minimal_font, Point(5, 115 + i * 10 - y_scroll));
+    screen.text(file->name, minimal_font, Point(list_offset.x, 115 + i * 10 - list_offset.y));
   }
 
 
@@ -80,33 +104,36 @@ void render(uint32_t time)
 void update(uint32_t time)
 {
   static uint32_t last_buttons;
+  static uint32_t up_repeat = 0;
+  static uint32_t down_repeat = 0;
 
-  if((buttons & DPAD_UP) && !(last_buttons & DPAD_UP)) {
-    selected_file_index--;
-    if(selected_file_index < 0) {
-      selected_file_index = files.size() - 1;
-    }
-  }
+  up_repeat = (buttons & DPAD_UP) ? up_repeat + 1 : 0;
+  down_repeat = (buttons & DPAD_UP) ? down_repeat + 1 : 0;
 
-  if((buttons & DPAD_DOWN) && !(last_buttons & DPAD_DOWN)) {
-    selected_file_index++;
-    selected_file_index %= files.size();
-  }
+  bool up_pressed = (buttons & DPAD_UP) && !(last_buttons & DPAD_UP);
+  bool down_pressed = (buttons & DPAD_DOWN) && !(last_buttons & DPAD_DOWN);
+  bool a_pressed = (buttons & A) && !(last_buttons & A);
 
-  y_scroll = y_scroll < selected_file_index * 10 ? y_scroll + 1 : y_scroll;
-  y_scroll = y_scroll > selected_file_index * 10 ? y_scroll - 1 : y_scroll;
+  // handle up/down clicks to select files in the list
+  if(up_pressed)    { selected_file_index--; }
+  if(down_pressed)  { selected_file_index++; }
+  int32_t file_count = files.size();
+  selected_file_index = ((selected_file_index % file_count) + file_count) % file_count;
 
-  if((buttons & A) && !(last_buttons & A)) {
+  // scroll list towards selected item  
+  list_offset.y += ((selected_file_index * 10) - list_offset.y) / 5.0f;
+
+  // select current item in list to launch
+  if(a_pressed) {
     flash_from_sd_to_qspi_flash(files[selected_file_index].name);
     blit_switch_execution();
   }
 
-
-  last_buttons = buttons;
+  
 
 	//flashLoader.Update(time);
 
-
+  last_buttons = buttons;
 }
 
 
@@ -437,7 +464,6 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
 									break;
 
 									case stFlashCDC:
-										QSPI_WriteEnable(&hqspi);
 										qspi_chip_erase();
 									break;
 
