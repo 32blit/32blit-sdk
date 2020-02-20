@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+
+import argparse
+import serial
+import serial.tools.list_ports
+import sys
+import os
+import os.path
+import time
+from tqdm import tqdm
+
+
+parser = argparse.ArgumentParser(description='32blit binary flasher.')
+parser.add_argument("file", help="Path to the binary file (e.g. 'build.stm32/voxel.bin')")
+parser.add_argument("port", help="Name of the serial port (e.g. 'COM4', '/dev/ttyS4', etc.)")
+parser.add_argument("--target", help="Target either 'sd' or 'flash'", default="sd", choices=["sd", "flash"])
+args = parser.parse_args()
+
+print("32blit binary flasher.")
+
+port = args.port
+target = args.target
+path = args.file
+
+valid_ports = [port[0] for port in serial.tools.list_ports.comports()]
+
+if port not in valid_ports:
+  print("Specified port '{0}' not valid".format(port))
+  sys.exit(os.EX_OSFILE)
+
+if not os.path.isfile(path):
+  print("Specified binary file '{0}' does not exist".format(path))
+  sys.exit(os.EX_NOINPUT)
+
+serial_port = None
+
+try:
+  serial_port = serial.Serial(port, 115200, timeout=1)
+except OSError:
+  print("Could not open port '{0}'".format(port))
+  print("The port may not exist or you may not have permission to access it.")
+  sys.exit(os.EX_OSFILE)
+
+# then transmit the image across with 
+#
+# SAVE
+# (null)
+# length as string
+# (null)
+# binary data
+
+file_size = os.stat(path).st_size 
+file_name = os.path.basename(path)
+sent_byte_count = 0
+chunk_size = 64
+
+# such reset, very boot
+#serial_port.write(b"32BL_RST\x00")
+#sys.exit()
+
+serial_port.reset_output_buffer()
+
+command = "32BLSAVE{0}\x00{1}\x00".format(file_name, file_size)
+serial_port.write(bytes(command, "ascii"))
+
+#serial_port.write(b"32BL")
+#serial_port.write(b"SAVE\x00")
+#serial_port.write(bytes("{0}\x00".format(file_name), "ascii"))
+#serial_port.write(bytes("{0}\x00".format(file_size), "ascii"))
+#serial_port.flush()
+
+with open(path, "rb") as f:
+  progress = tqdm(total=file_size, desc="Flashing...", unit_scale=True, unit_divisor=1024, unit="B", ncols=70, dynamic_ncols=True)
+
+  while sent_byte_count < file_size:
+    data = f.read(chunk_size)
+    serial_port.write(data)
+    #serial_port.flush()
+
+    
+    sent_byte_count += chunk_size
+    progress.update(chunk_size)
+    

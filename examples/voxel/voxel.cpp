@@ -7,11 +7,9 @@
 #include <string.h>
 
 #include "32blit.hpp"
+#include "map.hpp"
 
 using namespace blit;
-
-extern const char _binary_demo_map_start[];
-
 
 Pen sky_colour = Pen(127, 182, 212, 255);
 Pen colour_map_palette[256];
@@ -33,16 +31,10 @@ uint8_t terrain_index = 1;
 
 
 void load_map() {
-  //close_file(terrain_file);
-  //terrain_file = open_file(std::to_string(terrain_index) + ".map");
-
-  // load palette data  
-  uint8_t *buffer = (uint8_t *)&_binary_demo_map_start;
-  //if(read_file(terrain_file, 0, 768, (char *)buffer) == 768) {
+  // load palette data    
   for(uint16_t i = 0; i < 256; i++) {
-    colour_map_palette[i] = Pen(buffer[i * 3 + 0], buffer[i * 3 + 1], buffer[i * 3 + 2]);
+    colour_map_palette[i] = Pen(demo_map[i * 3 + 0], demo_map[i * 3 + 1], demo_map[i * 3 + 2]);
   }
-  //}
 
   for(uint8_t y = 0; y < 32; y++) {
     for(uint8_t x = 0; x < 32; x++) {
@@ -57,6 +49,7 @@ void load_map() {
 }
 
 void init() {
+  set_screen_mode(hires);
   load_map();
 }
 
@@ -68,19 +61,11 @@ void load_tile(int16_t x, int16_t y) {
     tiles[x][y] = free_tiles.back();
     free_tiles.pop_back();
 
-    uint8_t *p = (uint8_t *)&_binary_demo_map_start;  
-    memcpy((char *)tiles[x][y], p + offset, tile_size);
-
-    //read_file(terrain_file, offset, tile_size, (char *)tiles[x][y]);
+    memcpy((char *)tiles[x][y], demo_map + offset, tile_size);
   }
 }
 
 uint16_t get_sample(int16_t x, int16_t y) {
- /* if(x < 0 || y < 0 || x >= 1024 || y >= 1024) {
-    return 1;
-  }*/
-  
-
   // work out the tile coordinates for this sample  
   uint8_t tx = (x >> 5) & 0x1f;
   uint8_t ty = (y >> 5) & 0x1f;
@@ -121,7 +106,6 @@ void draw_world(Vec3 position, float angle, float lean, float horizon, float nea
   float z = near;
   
   while(z < far) { 
-
     // calculate the left and right Points for the current sample span
     Vec2 frustrum_left  = Vec2(-cosa * z - sina * z,  sina * z - cosa * z);
     Vec2 frustrum_right = Vec2( cosa * z - sina * z, -sina * z - cosa * z);
@@ -144,15 +128,11 @@ void draw_world(Vec3 position, float angle, float lean, float horizon, float nea
 
     // for each column on the screen...
     for(uint8_t i = 0; i < screen.bounds.w; i++) {
-
+      // fetch a sample from the map
       uint16_t sample = get_sample(sample_point.x, sample_point.y);
       uint8_t colour_index = sample >> 8;
-     
-      // determine offset of sample from heightmap and colour map
-      //uint16_t sample_offset = (int8_t(sample_point.x) & 0x7f) + (int8_t(sample_point.y) & 0x7f) * 128;
-      
-      // convert the height map sample into a y coordinate on screen
-      
+           
+      // convert the height map sample into a y coordinate on screen 
       int height = (position.z - (sample & 0xff)) * invz + float(horizon) + sample_lean;
 
       // if the height is smaller (further up the screen) than our current height buffer
@@ -193,18 +173,7 @@ void render(uint32_t time_ms) {
   screen.pen = sky_colour;
   screen.clear();
 
- /* uint8_t buf[1024 * 32];
-  uint8_t *p = (uint8_t *)_binary_demo_map_start;
-  uint32_t o = 0;
-  uint32_t v = 0;
-  uint32_t ms_start = now();
-  for(int i = 0; i < 10000; i++) {
-    o += 1324;
-    o %= 1000000;
-    memcpy(buf, p + o, 1024);
-    v += buf[45];
-  }
-  screen.text(std::to_string(v), &minimal_font[0][0], Point(10, 20));*/
+  // draw the world
   uint32_t ms_start = now();
   draw_world(
     position, // player position
@@ -213,51 +182,20 @@ void render(uint32_t time_ms) {
     10.0f + pitch, // horizon position
     3.0f,   // near distance
     300.0f  // far distance
-  ); 
-uint32_t ms_end = now();  
-
+  );
+  uint32_t ms_end = now();  
   
-  
-
-    /*
-  
-
-  sd_message = (char*)buffer;*/
-  
-  uint8_t buffer[16 * 1024];
-  //uint32_t ms_start = now();
-  /*for(int i = 0; i < 10; i++) {
-    read_file(terrain_file, rand() & 0xffff, 16 * 1024, buffer);
-  }*/
-  //uint32_t ms_end = now();  
-
+  // draw the map overlay
+  screen.pen = Pen(0, 0, 0, 100);
+  screen.rectangle(Rect(0, 0, 32, 32));
   for(uint8_t y = 0; y < 32; y++) {
     for(uint8_t x = 0; x < 32; x++) {
-
-      if(tiles[x][y] != nullptr) {
-        screen.pen = Pen(255, 0, 0, 100);
-      }else{
-        screen.pen = Pen(0, 0, 0, 100);
-      }
-      screen.pixel(Point(x, y));
-
       if(visited[x][y]) {
         screen.pen = Pen(255, 255, 0, 100);
         screen.pixel(Point(x, y));
       }
     }
   }
-/*
-  for(uint8_t y = 0; y < 120; y++) {
-    for(uint8_t x = 0; x < 160; x++) {
-      uint16_t sample = get_sample(x * 2 + position.x, y * 2 + position.y);
-      uint8_t height = sample >> 8;
-      uint8_t colour_index = sample & 0xff;       
-      screen.pen(colour_map_palette[height]);
-      //screen.pen(Pen(height, height, height));
-      screen.pixel(Point(x, y));
-    }
-  }*/
 
   // work out the tile coordinates for the player position
   uint8_t tx = (int32_t(position.x) >> 5) & 0x1f;
@@ -266,16 +204,8 @@ uint32_t ms_end = now();
   screen.pixel(Point(tx, ty));
 
   // draw FPS meter & watermark
-  screen.watermark();
-  screen.mask = nullptr;
+  screen.watermark();  
   screen.pen = Pen(255, 255, 255);
-
-  screen.text(std::to_string(free_tiles.size()), &minimal_font[0][0], Point(10, 20));
-
-/*
-  
-  screen.text(std::to_string(int(position.x)) + "," + std::to_string(int(position.y)), &minimal_font[0][0], Point(10, 10));
-*/
   screen.text(std::to_string(ms_end - ms_start), &minimal_font[0][0], Point(1, 110));
   screen.pen = Pen(255, 0, 0);
   for (int i = 0; i < uint16_t(ms_end - ms_start); i++) {
