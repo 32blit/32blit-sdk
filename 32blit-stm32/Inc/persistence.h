@@ -1,3 +1,5 @@
+#pragma once
+
 /*
 In combination with a reserved section in volatile memory this struct provies 1k
 of "persistent" storage in volatile RAM.

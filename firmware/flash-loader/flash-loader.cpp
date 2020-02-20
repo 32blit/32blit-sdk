@@ -10,19 +10,17 @@ using namespace blit;
  
 extern CDCCommandStream g_commandStream;
 
-std::vector<FileInfo> files;
-int32_t selected_file_index = 0;
+constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 
-std::string progress_message;
-int32_t progress = 0;
-int32_t progress_total = 0;
+std::vector<FileInfo> files;
+Vec2 file_list_scroll_offset(5.0f, 0.0f);
 
 FlashLoader flashLoader;
 
 inline bool ends_with(std::string const &value, std::string const &ending)
 {
-    if(ending.size() > value.size()) return false;
-    return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+  if(ending.size() > value.size()) return false;
+  return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 }
 
 void load_file_list() {
@@ -34,7 +32,7 @@ void load_file_list() {
   }
 }
 
-Vec2 list_offset(5.0f, 0.0f);
+
 
 
 void init()
@@ -85,17 +83,14 @@ void render(uint32_t time_ms)
     FileInfo *file = &files[i];
 
     screen.pen = Pen(80, 100, 120);
-    if(i == selected_file_index) {
+    if(i == persist.selected_menu_item) {
       screen.pen = Pen(235, 245, 255);
     }
-    screen.text(file->name, minimal_font, Point(list_offset.x, 115 + i * 10 - list_offset.y));
+    screen.text(file->name, minimal_font, Point(file_list_scroll_offset.x, 115 + i * 10 - file_list_scroll_offset.y));
   }
 
 
-  screen.text(progress_message, minimal_font, Point(5, 220));
-  uint32_t progress_width = ((progress * 310) / progress_total);
-  screen.pen = Pen(255, 255, 255);
-  screen.rectangle(Rect(5, 230, progress_width, 5));
+  progress.draw();
 
   
 //	flashLoader.Render(time);
@@ -115,34 +110,26 @@ void update(uint32_t time)
   bool a_pressed = (buttons & A) && !(last_buttons & A);
 
   // handle up/down clicks to select files in the list
-  if(up_pressed)    { selected_file_index--; }
-  if(down_pressed)  { selected_file_index++; }
+  if(up_pressed)    { persist.selected_menu_item--; }
+  if(down_pressed)  { persist.selected_menu_item++; }
   int32_t file_count = files.size();
-  selected_file_index = ((selected_file_index % file_count) + file_count) % file_count;
+  persist.selected_menu_item = ((persist.selected_menu_item % file_count) + file_count) % file_count;
 
   // scroll list towards selected item  
-  list_offset.y += ((selected_file_index * 10) - list_offset.y) / 5.0f;
+  file_list_scroll_offset.y += ((persist.selected_menu_item * 10) - file_list_scroll_offset.y) / 5.0f;
 
   // select current item in list to launch
   if(a_pressed) {
-    flash_from_sd_to_qspi_flash(files[selected_file_index].name);
+    flash_from_sd_to_qspi_flash(files[persist.selected_menu_item].name);
     blit_switch_execution();
   }
 
-  
-
-	//flashLoader.Update(time);
-
-
-	// register LS
-//	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value, this);
-
-//	m_uCurrentFile = persist.selected_menu_item;
   last_buttons = buttons;
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 
 bool flash_from_sd_to_qspi_flash(const std::string &filename)
@@ -154,27 +141,23 @@ bool flash_from_sd_to_qspi_flash(const std::string &filename)
 		return false;
 	}
 
-  UINT bytes_total = f_size(&file);
-  UINT bytes_flashed  = 0;
+  UINT bytes_total = f_size(&file);  
 
-  progress_message = "Erasing sectors...";
-  progress = 0;
-  progress_total = bytes_total / (64 * 1024);
-  
-  // TODO: don't erase entire flash chip...  
-  for(UINT sector_start = 0; sector_start < bytes_total; sector_start += 64 * 1024) {
-    qspi_sector_erase(sector_start);
-    progress++;
-    render_yield();
+  // erase the sectors needed to write the image  
+  uint32_t sector_count = (bytes_total / qspi_flash_sector_size) + 1;
+
+  progress.show("Erasing sectors...", sector_count);
+
+  for(uint32_t sector = 0; sector < sector_count; sector++) {
+    qspi_sector_erase(sector * qspi_flash_sector_size);
+
+    progress.update(sector);    
   }
-  
-  
 
-  progress_message = "Copying to external flash...";
-  progress = 0;
-  progress_total = bytes_total;
+  // read the image from as card and write it to the qspi flash  
+  progress.show("Copying to external flash...", bytes_total);
 
-  //render_yield(true);
+  UINT bytes_flashed  = 0;
   
   while(bytes_flashed < bytes_total) {
     UINT bytes_read = 0;
@@ -189,47 +172,22 @@ bool flash_from_sd_to_qspi_flash(const std::string &filename)
       return false;
     }
 
-    // TODO: is it worth reading the data back and performing a verify here? not sure...
-
     bytes_flashed += bytes_read;
 
-    progress = bytes_flashed;
+    // TODO: is it worth reading the data back and performing a verify here? not sure...
 
-    render_yield();
+    progress.update(bytes_flashed);
   }
 
   f_close(&file);
 
-  progress_message = "";
+  progress.hide();
 
 	return true;
 }
 
 
-// Render() Call relevant render based on state
-void FlashLoader::Render(uint32_t time)
-{
-	switch(m_state)
-	{
-		case stFlashFile:
-		case stLS:
-			RenderFlashFile(time);
-			break;
-
-		case stSaveFile:
-			RenderSaveFile(time);
-			break;
-
-		case stFlashCDC:
-			RenderFlashCDC(time);
-			break;
-
-		case stSwitch:
-			blit_switch_execution();
-		break;
-	}
-}
-
+/*
 // RenderSaveFile() Render file save progress %
 void FlashLoader::RenderSaveFile(uint32_t time)
 {
@@ -253,81 +211,9 @@ void FlashLoader::RenderFlashCDC(uint32_t time)
 	sprintf(buffer, "Flashing %.2u%%", (uint16_t)m_fPercent);
 	screen.text(buffer, minimal_font, ROW(0));
 }
+*/
 
-
-// RenderFlashFile() Render main ui for selecting files to flash
-void FlashLoader::RenderFlashFile(uint32_t time)
-{
-	static uint32_t lastRepeat = 0;
-	static uint32_t lastButtons = 0;
-
-
-	uint32_t changedButtons = buttons ^ lastButtons;
-
-	bool button_a = buttons & changedButtons & Button::A;
-
-	bool button_up = buttons & changedButtons & Button::DPAD_UP;
-	bool button_down = buttons & changedButtons & Button::DPAD_DOWN;
-
-	if(time - lastRepeat > 150 || button_up || button_down) {
-		button_up = buttons & Button::DPAD_UP;
-		button_down = buttons & Button::DPAD_DOWN;
-		lastRepeat = time;
-	}
-
-	lastButtons = buttons;
-
-	screen.pen = Pen(0,0,0);
-	screen.rectangle(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
-	screen.pen = Pen(255, 255, 255);
-
-	// just display
-	if(files.size() > 0)
-	{
-		screen.pen = Pen(50, 50, 70);
-		screen.rectangle(Rect(0, ROW_HEIGHT*m_uCurrentFile, SCREEN_WIDTH, ROW_HEIGHT));
-		screen.pen = Pen(255, 255, 255);
-
-		for(uint8_t uF = 0; uF < files.size(); uF++) {
-			// TODO: A single line of text should probably vertically center in a 10px bounding box
-			// but in this case it needs to be fudged to 14 pixels
-			screen.text(files[uF].name, minimal_font, Rect(ROW(uF).x + 5, ROW(uF).y, 310, 14), true, TextAlign::center_v);
-		}
-	}
-	else
-	{
-		screen.text("No Files Found.", minimal_font, ROW(0));
-	}
-
-	if(button_up)
-	{
-		if(m_uCurrentFile) {
-			m_uCurrentFile--;
-		} else {
-			m_uCurrentFile = MAX_FILENAMES - 1;
-		}
-	}
-
-	if(button_down)
-	{
-		if(m_uCurrentFile < m_uFileCount) {
-			m_uCurrentFile++;
-			m_uCurrentFile %= MAX_FILENAMES;
-		}
-	}
-
-	if(button_a)
-	{
-    std::string filename = files[m_uCurrentFile].name;
-		if(flash_from_sd_to_qspi_flash(filename)) {
-			blit_switch_execution();
-		}
-	}
-
-	persist.selected_menu_item = m_uCurrentFile;
-}
-
-
+/*
 void FlashLoader::Update(uint32_t time)
 {
 	if(m_state == stLS)
@@ -336,7 +222,7 @@ void FlashLoader::Update(uint32_t time)
 		m_state = stFlashFile;
 	}
 }
-
+*/
 
 
 
@@ -379,6 +265,7 @@ bool FlashLoader::StreamInit(CDCFourCC uCommand)
 
 // FlashData() Flash data to the QSPI flash
 // Note: currently qspi_write_buffer only works for sizes of 256 max
+/*
 bool FlashLoader::FlashData(uint32_t uOffset, uint8_t *pBuffer, uint32_t uLen)
 {
 	bool bResult = false;
@@ -395,7 +282,7 @@ bool FlashLoader::FlashData(uint32_t uOffset, uint8_t *pBuffer, uint32_t uLen)
 	}
 	return bResult;
 }
-
+*/
 
 // SaveData() Saves date to file on SDCard
 bool FlashLoader::SaveData(uint8_t *pBuffer, uint32_t uLen)
@@ -407,14 +294,105 @@ bool FlashLoader::SaveData(uint8_t *pBuffer, uint32_t uLen)
 
 }
 
+void copy_from_usb_to_sd_card() {
+
+}
 
 // StreamData() Handle streamed data
 // State machine has three states:
 // stFilename : Parse filename
 // stLength   : Parse length, this is sent as an ascii string
 // stData     : The binary data (.bin file)
-CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStream)
+
+
+// when a command is issued (e.g. "PROG" or "SAVE") then this function is called
+// whenever new data is received to allow the firmware to process it.
+CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &stream)
 {
+  enum class StreamState { NONE, NAME, LENGTH, DATA };
+  static StreamState state = StreamState::NONE;
+
+  static char   name_buffer[256];
+  static char length_buffer[ 16];
+  static char   data_buffer[2048];
+
+  static FIL  file;
+  static UINT bytes_total;
+  static UINT bytes_read = 0;
+
+  static char *p = nullptr;  
+
+  if(state == StreamState::NONE) {
+    p = name_buffer;
+    state = StreamState::NAME;         
+  }
+
+  // loop through all bytes in the input stream
+  uint8_t byte;
+  while(stream.Get(byte)) {        
+    *p++ = byte;
+
+    switch(state) {
+      // sending filename
+      case StreamState::NAME:
+        if(byte == '\0') {        
+          p = length_buffer;
+          state = StreamState::LENGTH;
+        }
+      
+        break;
+
+      // sending file length
+      case StreamState::LENGTH:
+        if(byte == '\0') {        
+          bytes_read = 0;
+          bytes_total = atol(length_buffer);
+          p = data_buffer;          
+
+          blit::LED.r = 255;  
+          blit_update_led();
+
+          if(f_open(&file, name_buffer, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) {
+            progress.show(std::to_string(srError), 1);
+            return srError;
+          }
+
+          state = StreamState::DATA;
+
+          progress.show("Copying to SD card...", bytes_total);
+        }
+      
+        break;
+
+      // sending file data
+      case StreamState::DATA:
+        bytes_read++;
+        // completed the read or filled the buffer? write to the file
+        if(bytes_read == bytes_total || p == (data_buffer + sizeof(data_buffer))) {
+          UINT bytes_written;
+          if(f_write(&file, data_buffer, p - data_buffer, &bytes_written) != FR_OK) {
+            return srError;
+          }
+          p = data_buffer;
+          progress.update(bytes_read);
+        }        
+
+        // completed the write? close the file
+        if(bytes_read == bytes_total) {
+          f_close(&file);
+          state = StreamState::NONE;
+          progress.hide();
+          
+          return srFinish;
+        }
+        
+        break;
+    }
+  }
+
+  return srContinue;
+
+  /*
 	CDCCommandHandler::StreamResult result = srContinue;
 	uint8_t byte;
 	while(dataStream.GetStreamLength() && result == srContinue)
@@ -572,8 +550,8 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
 	}
 
 	if(result==srError)
-		m_state = stFlashFile;
+		m_state = stFlashFile;*/
 
-	return result;
+	//return result;
 }
 

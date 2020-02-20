@@ -7,10 +7,9 @@
 #include <string.h>
 
 #include "32blit.hpp"
+#include "map.hpp"
 
 using namespace blit;
-
-extern const char _binary_demo_map_start[];
 
 
 Pen sky_colour = Pen(127, 182, 212, 255);
@@ -36,11 +35,10 @@ void load_map() {
   //close_file(terrain_file);
   //terrain_file = open_file(std::to_string(terrain_index) + ".map");
 
-  // load palette data  
-  uint8_t *buffer = (uint8_t *)&_binary_demo_map_start;
+  // load palette data 
   //if(read_file(terrain_file, 0, 768, (char *)buffer) == 768) {
   for(uint16_t i = 0; i < 256; i++) {
-    colour_map_palette[i] = Pen(buffer[i * 3 + 0], buffer[i * 3 + 1], buffer[i * 3 + 2]);
+    colour_map_palette[i] = Pen(demo_map[i * 3 + 0], demo_map[i * 3 + 1], demo_map[i * 3 + 2]);
   }
   //}
 
@@ -67,9 +65,8 @@ void load_tile(int16_t x, int16_t y) {
   if(free_tiles.size() > 0) {
     tiles[x][y] = free_tiles.back();
     free_tiles.pop_back();
-
-    uint8_t *p = (uint8_t *)&_binary_demo_map_start;  
-    memcpy((char *)tiles[x][y], p + offset, tile_size);
+    
+    memcpy((char *)tiles[x][y], demo_map + offset, tile_size);
 
     //read_file(terrain_file, offset, tile_size, (char *)tiles[x][y]);
   }
@@ -85,15 +82,11 @@ uint16_t get_sample(int16_t x, int16_t y) {
   uint8_t tx = (x >> 5) & 0x1f;
   uint8_t ty = (y >> 5) & 0x1f;
 
+  visited[tx][ty] = 1;
+
   if(tiles[tx][ty] == nullptr) {
-    load_tile(tx, ty);
+    return 0;
   }
-
-//  visited[tx][ty] = 1;
-
-//  if(tiles[tx][ty] == nullptr) {
-  //  return 0;
-  //}
 
   // work out the coordinates (within the tile) for the sample
   uint16_t sx = x & 0x1f;
@@ -273,6 +266,8 @@ uint32_t ms_end = now();
   screen.watermark();
   screen.mask = nullptr;
   screen.pen = Pen(255, 255, 255);
+
+  screen.text(std::to_string(free_tiles.size()), minimal_font, Point(10, 20));
 
 /*
   
