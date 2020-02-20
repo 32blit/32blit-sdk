@@ -13,8 +13,6 @@
 #include "File.hpp"
 
 static std::string basePath;
-static std::map<uint32_t, SDL_RWops *> open_files;
-static uint32_t current_file_handle = 0;
 
 void setup_base_path()
 {
@@ -23,20 +21,13 @@ void setup_base_path()
   SDL_free(basePathPtr);
 }
 
-int32_t open_file(std::string name) {
+void *open_file(std::string name) {
   auto file = SDL_RWFromFile((basePath + name).c_str(), "rb");
-
-  if(file) {
-    current_file_handle++;
-    open_files[current_file_handle] = file;
-    return current_file_handle;
-  }
-
-  return -1;
+  return file;
 }
 
-int32_t read_file(uint32_t fh, uint32_t offset, uint32_t length, char *buffer) {
-  auto file = open_files[fh];
+int32_t read_file(void *fh, uint32_t offset, uint32_t length, char *buffer) {
+  auto file = (SDL_RWops *)fh;
 
   if(file && SDL_RWseek(file, offset, RW_SEEK_SET) != -1) {
     size_t bytes_read = SDL_RWread(file, buffer, 1, length);
@@ -48,13 +39,13 @@ int32_t read_file(uint32_t fh, uint32_t offset, uint32_t length, char *buffer) {
   return -1;
 }
 
-int32_t close_file(uint32_t fh) {
-  return SDL_RWclose(open_files[fh]) == 0 ? 0 : -1;
+int32_t close_file(void *fh) {
+  return SDL_RWclose((SDL_RWops *)fh) == 0 ? 0 : -1;
 }
 
-uint32_t get_file_length(uint32_t fh)
+uint32_t get_file_length(void *fh)
 {
-  auto file = open_files[fh];
+  auto file = (SDL_RWops *)fh;
   SDL_RWseek(file, 0, RW_SEEK_END);
 
   return SDL_RWtell(file);

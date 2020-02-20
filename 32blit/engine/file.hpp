@@ -46,10 +46,10 @@ namespace blit {
     uint32_t get_length();
 
     bool is_open() const {
-      return fh != -1;
+      return fh != nullptr;
     }
 
   private:
-    int32_t fh = -1;
+     void *fh = nullptr;
   };
 }
