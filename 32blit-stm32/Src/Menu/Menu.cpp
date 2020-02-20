@@ -5,24 +5,67 @@
 
 using namespace blit;
 
+Size screenSize ();
+
 std::string SYSTEM_TITLE = "System Menu";
+int TOP_BAR_Y = 15;
+int MAX_SCROLL_OFFSET = TOP_BAR_Y + 5;
 
 int _selectedIndex;
 int _rowHeight = 12;
+int offset = MAX_SCROLL_OFFSET;
 
-int offset = 20;
 int menu_y (int index) { return index * _rowHeight + offset; }
 
 Menu::Menu(std::vector<MenuItem> items): _menuItems(items) {}
 
-void Menu::incrementSelection () { _selectedIndex = ++_selectedIndex % int(_menuItems.size()); }
+int Menu::minOffset () {
+
+    int rowsAvailableOnscreen = (screenSize().h - TOP_BAR_Y) / _rowHeight;
+    int itemsOnScreen = std::min(int(_menuItems.size()), rowsAvailableOnscreen);
+
+    if (itemsOnScreen < rowsAvailableOnscreen) { return MAX_SCROLL_OFFSET; }
+
+    return -(_menuItems.size() * _rowHeight) + (itemsOnScreen * _rowHeight);
+}
+
+int Menu::bottomBarYPosition () {
+    return screenSize().h - TOP_BAR_Y;
+}
+
+void Menu::checkVerticalOffset () {
+
+    int screenHeight = screenSize().h;
+    int selectYPos = menu_y(_selectedIndex);
+
+    if (selectYPos >= screenHeight - (_rowHeight * 3)){
+        offset = std::max(offset -_rowHeight, minOffset());
+    } else if (selectYPos <= _rowHeight * 2) {
+        offset = std::min(MAX_SCROLL_OFFSET, offset + _rowHeight);
+    }
+}
+
+void Menu::incrementSelection () { 
+    if (_selectedIndex == _menuItems.size() - 1) {
+        // send me back to the top, thanks
+        _selectedIndex = 0;
+        offset = MAX_SCROLL_OFFSET;
+    } else {
+        _selectedIndex++;
+        checkVerticalOffset();
+    }
+}
 
 void Menu::decrementSelection () {
     if (_selectedIndex == 0) {
+        // go all the way to the end
         _selectedIndex = _menuItems.size() - 1;
+        offset = minOffset();
     } else {
         _selectedIndex--;
+        checkVerticalOffset();
     }
+
 }
 
 void Menu::pressedRight() { _menuItems[_selectedIndex].pressedRight(); }
@@ -37,7 +80,8 @@ void Menu::selected() {
         NavigationLevel level = NavigationLevel(
             _displayTitle.empty() ? _displayTitle : SYSTEM_TITLE,
             _menuItems,
-            _selectedIndex
+            _selectedIndex,
+            offset
             );
 
         _displayTitle = _menuItems[_selectedIndex].title;
@@ -45,6 +89,7 @@ void Menu::selected() {
         _selectedIndex = 0;
         _menuItems = childItems;
         _navigationStack.push_back(level);
+        offset = MAX_SCROLL_OFFSET;
         
     }
 }
@@ -54,10 +99,11 @@ void Menu::backPressed() {
     if(!_navigationStack.empty()) {
         auto back = _navigationStack.back();
 
+        // unravel previous menu
         _menuItems = back.items;
         _selectedIndex = back.selection;
         _displayTitle = back.title.size() > 0 ? back.title : SYSTEM_TITLE;
-
+        offset = back.offset;
         _navigationStack.pop_back();
     }
 }
@@ -111,13 +157,13 @@ void Menu::drawTopBar (uint32_t time) {
 
     // Horizontal Line
     screen.pen = Pen(255, 255, 255);
-    screen.rectangle(Rect(0, 15, screenSize().w, 1));
+    screen.rectangle(Rect(0, TOP_BAR_Y, screenSize().w, 1));
 }
 
-void drawBottomLine () {
+void Menu::drawBottomLine () {
     // Bottom horizontal Line
     screen.pen = Pen(255, 255, 255);
-    screen.rectangle(Rect(0, screenSize().h - 15, screenSize().w, 1));
+    screen.rectangle(Rect(0, bottomBarYPosition(), screenSize().w, 1));
 }
 
 void Menu::render(uint32_t time) {
@@ -125,11 +171,18 @@ void Menu::render(uint32_t time) {
     screen.pen = Pen(30, 30, 50, 200);
     screen.clear();
 
-    drawTopBar(time);
-    drawBottomLine();
-
     for (int i = 0; i < int(_menuItems.size()); i ++) {
         MenuItem item = _menuItems[i];
-        item.draw(menu_y(i), _selectedIndex == i, Size(screenSize().w, _rowHeight));
+        int yPosition = menu_y(i);
+
+        if (Rect(0,0,screenSize().w,screenSize().h).contains(Point(0,yPosition))) {
+            // no point drawing those offscreen.
+            item.draw(yPosition, _selectedIndex == i, Size(screenSize().w, _rowHeight));
+        }
     }
+    
+    debug(std::to_string(offset));
+
+    drawTopBar(time);
+    drawBottomLine();
 }

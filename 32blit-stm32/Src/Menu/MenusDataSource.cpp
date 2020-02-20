@@ -30,6 +30,7 @@ vector<MenuItem> MenusDataSource::menuItems() {
 vector<MenuItem>aboutMenuItems () {
     vector<MenuItem> about;
 
+    // would be nice to have environment variables here from travis builds, no?
     about.push_back(MenuItem("Version", "number"));
     about.push_back(MenuItem("Build number", "number"));
     about.push_back(MenuItem("Build time", "date"));
@@ -103,6 +104,190 @@ void createMenuItems () {
     #if EXTERNAL_LOAD_ADDRESS == 0x90000000
         switchExecutionTitle = "Launch Game";
     #endif
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem(switchExecutionTitle,
+        "Press A",
+        [](){
+            blit::switch_execution();
+        })
+    );
 
     items.push_back(
         MenuItem(switchExecutionTitle,

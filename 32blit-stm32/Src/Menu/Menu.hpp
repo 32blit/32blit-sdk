@@ -12,8 +12,9 @@ struct NavigationLevel {
     std::string title;
     std::vector<MenuItem> items;
     int selection;
+    int offset;
     
-    NavigationLevel(std::string title, std::vector<MenuItem>items, int selection): title(title), items(items), selection(selection) {}
+    NavigationLevel(std::string title, std::vector<MenuItem>items, int selection, int offset): title(title), items(items), selection(selection), offset(offset) {}
 };
 
 class Menu
@@ -24,6 +25,10 @@ class Menu
         std::string _displayTitle;
 
         void drawTopBar (uint32_t time);
+        void drawBottomLine ();
+        int minOffset ();
+        int bottomBarYPosition ();
+        void checkVerticalOffset ();
 
     public:
         Menu(std::vector<MenuItem> items);
