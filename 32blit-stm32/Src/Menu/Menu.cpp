@@ -8,8 +8,10 @@ using namespace blit;
 Size screenSize ();
 
 std::string SYSTEM_TITLE = "System Menu";
-int TOP_BAR_Y = 15;
-int MAX_SCROLL_OFFSET = TOP_BAR_Y + 5;
+int BANNER_HEIGHT = 15;
+int MAX_SCROLL_OFFSET = BANNER_HEIGHT + 5;
+
+Pen bannerColour = Pen(50,50,50,150);
 
 int _selectedIndex;
 int _rowHeight = 12;
@@ -21,7 +23,7 @@ Menu::Menu(std::vector<MenuItem> items): _menuItems(items) {}
 
 int Menu::minOffset () {
 
-    int rowsAvailableOnscreen = (screenSize().h - TOP_BAR_Y) / _rowHeight;
+    int rowsAvailableOnscreen = (screenSize().h - BANNER_HEIGHT) / _rowHeight;
     int itemsOnScreen = std::min(int(_menuItems.size()), rowsAvailableOnscreen);
 
     if (itemsOnScreen < rowsAvailableOnscreen) { return MAX_SCROLL_OFFSET; }
@@ -30,7 +32,7 @@ int Menu::minOffset () {
 }
 
 int Menu::bottomBarYPosition () {
-    return screenSize().h - TOP_BAR_Y;
+    return screenSize().h - BANNER_HEIGHT;
 }
 
 void Menu::checkVerticalOffset () {
@@ -90,7 +92,6 @@ void Menu::selected() {
         _menuItems = childItems;
         _navigationStack.push_back(level);
         offset = MAX_SCROLL_OFFSET;
-        
     }
 }
 
@@ -121,6 +122,10 @@ Size screenSize () {
 }
 
 void Menu::drawTopBar (uint32_t time) {
+
+    screen.pen = bannerColour;
+    screen.rectangle(Rect(0,0,screenSize().w,BANNER_HEIGHT));
+
     screen.pen = Pen(255, 255, 255);
 
     screen.text(_displayTitle.empty() ? SYSTEM_TITLE : _displayTitle , minimal_font, Point(5, 5));
@@ -157,10 +162,14 @@ void Menu::drawTopBar (uint32_t time) {
 
     // Horizontal Line
     screen.pen = Pen(255, 255, 255);
-    screen.rectangle(Rect(0, TOP_BAR_Y, screenSize().w, 1));
+    screen.rectangle(Rect(0, BANNER_HEIGHT, screenSize().w, 1));
 }
 
 void Menu::drawBottomLine () {
+
+    screen.pen = bannerColour;
+    screen.rectangle(Rect(0,bottomBarYPosition(),screenSize().w,BANNER_HEIGHT));
+
     // Bottom horizontal Line
     screen.pen = Pen(255, 255, 255);
     screen.rectangle(Rect(0, bottomBarYPosition(), screenSize().w, 1));
@@ -175,13 +184,9 @@ void Menu::render(uint32_t time) {
         MenuItem item = _menuItems[i];
         int yPosition = menu_y(i);
 
-        if (Rect(0,0,screenSize().w,screenSize().h).contains(Point(0,yPosition))) {
-            // no point drawing those offscreen.
-            item.draw(yPosition, _selectedIndex == i, Size(screenSize().w, _rowHeight));
-        }
+        // might be worth adding in check to see if they're on screen to save on text rendering?
+        item.draw(yPosition, _selectedIndex == i, Size(screenSize().w, _rowHeight));
     }
-    
-    debug(std::to_string(offset));
 
     drawTopBar(time);
     drawBottomLine();
