@@ -5,6 +5,7 @@
 #include "shlobj.h"
 #else
 #include <dirent.h>
+#include <sys/stat.h>
 #endif
 
 #include "SDL.h"
@@ -107,7 +108,13 @@ std::vector<blit::FileInfo> list_files(std::string path) {
 
     info.flags = 0;
 
-    if(ent->d_type == DT_DIR)
+    if(ent->d_type == DT_LNK) {
+      // lookup link target
+      struct stat stat_buf;
+  
+      if(stat(ent->d_name, &stat_buf) >= 0 && S_ISDIR(stat_buf.st_mode))
+        info.flags |= blit::FileFlags::directory;
+    } else if(ent->d_type == DT_DIR)
       info.flags |= blit::FileFlags::directory;
 
     ret.push_back(info);

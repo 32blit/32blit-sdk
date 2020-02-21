@@ -4,7 +4,7 @@
 
 namespace blit {
   struct Font {
-    Font(const uint8_t *data, const uint8_t *char_w_variable, uint8_t char_w, uint8_t char_h, uint8_t spacing_y = 1)
+    constexpr Font(const uint8_t *data, const uint8_t *char_w_variable, uint8_t char_w, uint8_t char_h, uint8_t spacing_y = 1)
       : data(data), char_w(char_w), char_h(char_h), char_w_variable(char_w_variable), spacing_y(spacing_y) {}
 
     const uint8_t *data;
