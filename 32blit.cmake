@@ -56,7 +56,7 @@ if (NOT DEFINED BLIT_ONCE)
 		add_custom_command(
 			OUTPUT ${ASSET_OUTPUTS}
 			COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit --debug  pack --force --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --output ${CMAKE_CURRENT_BINARY_DIR}
-			DEPENDS ${ASSET_DEPENDS}
+			DEPENDS ${ASSET_DEPENDS} ${CMAKE_CURRENT_SOURCE_DIR}/${FILE}
 		)
 
 		# add the outputs as dependencies of the project (also compile any cpp files)
