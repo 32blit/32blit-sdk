@@ -112,7 +112,7 @@ std::vector<blit::FileInfo> list_files(std::string path) {
       // lookup link target
       struct stat stat_buf;
   
-      if(stat(ent->d_name, &stat_buf) >= 0 && S_ISDIR(stat_buf.st_mode))
+      if(stat((basePath + path + "/" + info.name).c_str(), &stat_buf) >= 0 && S_ISDIR(stat_buf.st_mode))
         info.flags |= blit::FileFlags::directory;
     } else if(ent->d_type == DT_DIR)
       info.flags |= blit::FileFlags::directory;
