@@ -60,10 +60,7 @@ struct OptionTextInfo {
     <This is a lon..>
 */
 OptionTextInfo optionItemLocation (string text,int font_width, int minX, int maxX) {
-    int availableChars = (maxX - minX) / (font_width - 1);
-
-    debug("\n\n\n\n\n\n\n\n\n\n\n\n" + to_string(availableChars) + "\n" + to_string(font_width) + "\n" + to_string(minX) + "\n" + to_string(maxX));
-
+    int availableChars = (maxX - minX) / (font_width - 1); // with the font width being right-ish, subtracting 1 seems about right on average
 
     if (text.size() == availableChars) {
         // perfect fit
