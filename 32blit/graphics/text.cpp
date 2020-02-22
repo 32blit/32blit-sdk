@@ -138,7 +138,16 @@ namespace blit {
     int line_len = 0;
 
     while (char_off < message.length()) {
-      if (variable) {
+      // newline
+      if (message[char_off] == '\n') {
+        if (line_len > bounds.w)
+          bounds.w = line_len;
+
+        bounds.h += line_height;
+
+        line_len = 0;
+        char_off++;
+      } else if (variable) {
         line_len += get_char_width(font, message[char_off], true);
         char_off++;
       } else {
@@ -150,18 +159,13 @@ namespace blit {
         line_len = (end - char_off) * font.char_w;
         char_off = end;
       }
-
-      // new line/end
-      if (char_off == message.length() || message[char_off] == '\n') {
-        if (line_len > bounds.w)
-          bounds.w = line_len;
-
-        bounds.h += line_height;
-
-        line_len = 0;
-        char_off++;
-      }
     }
+
+    // update for final line
+    if (line_len > bounds.w)
+      bounds.w = line_len;
+
+    bounds.h += line_height;
 
     return bounds;
   }
