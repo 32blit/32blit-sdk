@@ -251,7 +251,6 @@ void FlashLoader::RenderFlashCDC(uint32_t time)
 // RenderFlashFile() Render main ui for selecting files to flash
 void FlashLoader::RenderFlashFile(uint32_t time)
 {
-	printf("CDC Working\n");
 	static uint32_t lastRepeat = 0;
 	static uint32_t lastButtons = 0;
 
@@ -523,11 +522,11 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
 							{
 								case stSaveFile:
 									// save data
-									if(!SaveData(m_buffer, uWriteLen))
-									{
-										printf("Failed to save to SDCard\n\r");
-										result = srError;
-									}
+									// if(!SaveData(m_buffer, uWriteLen))
+									// {
+									// 	printf("Failed to save to SDCard\n\r");
+									// 	result = srError;
+									// }
 
 									// end of stream close up
 									if(bEOS)

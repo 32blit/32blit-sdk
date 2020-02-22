@@ -2,6 +2,7 @@
 
 #include "32blit.h"
 #include "usb_device.h"
+#include "i2c.h"
 
 class USBManager
 {
@@ -34,6 +35,11 @@ public:
 
 			// recreate usb device
 			MX_USB_DEVICE_Init();
+
+      // re-init i2c
+      MX_I2C4_Init();
+
+
 		}
 	}
 
