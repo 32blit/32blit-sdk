@@ -522,11 +522,11 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
 							{
 								case stSaveFile:
 									// save data
-									// if(!SaveData(m_buffer, uWriteLen))
-									// {
-									// 	printf("Failed to save to SDCard\n\r");
-									// 	result = srError;
-									// }
+									if(!SaveData(m_buffer, uWriteLen))
+									{
+										printf("Failed to save to SDCard\n\r");
+										result = srError;
+									}
 
 									// end of stream close up
 									if(bEOS)
