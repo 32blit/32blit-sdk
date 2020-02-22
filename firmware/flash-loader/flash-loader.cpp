@@ -13,7 +13,7 @@ extern CDCCommandStream g_commandStream;
 constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 
 std::vector<FileInfo> files;
-Vec2 file_list_scroll_offset(5.0f, 0.0f);
+Vec2 file_list_scroll_offset(20.0f, 0.0f);
 
 FlashLoader flashLoader;
 
@@ -28,6 +28,15 @@ void load_file_list() {
   for(auto file : list_files("")) {
     if(ends_with(file.name, ".bin")) {
       files.push_back(file);
+    }
+  }
+  sort(files.begin(), files.end()); 
+}
+
+void select_file(const char *filename) {
+  for(auto i = 0; i < files.size(); i++) {
+    if(files[i].name == filename) {
+      persist.selected_menu_item = i;
     }
   }
 }
@@ -48,36 +57,64 @@ void init()
 	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value, &flashLoader);
 }
 
-
 void background(uint32_t time_ms) {  
-  constexpr float pi = 3.1415927;
+  constexpr uint8_t blob_count = 50;
+  static Vec3 blobs[blob_count];
 
-  float s = sin(time_ms / 1000.0f) * 5.0f + 20.0f;
-  uint32_t o = 0;
-  Point p;  
-  for (p.y = 0; p.y < 240; p.y++) {
-    for (p.x = 0; p.x < 320; p.x++) {
-      // TODO: background animation
-      /*
-      screen.pen.b = 15;
-      screen.pen.b += (int((p.x - 160) / s) & 0b111) * 5;
-      screen.pen.b += (int((p.y + (list_offset.y * s) - 120) / s) & 0b111) * 5;
-      screen.pen.r = 10;
-      screen.pen.g = 15;
-      screen.pixel(p);      */
-      o++;
+  static bool first = true;
+/*
+  for(int y = 0; y < 240; y++) {
+    screen.pen = Pen(y, 0, 0);
+    screen.rectangle(Rect(0, y, 80, 1));
+    screen.pen = Pen(0, y, 0);
+    screen.rectangle(Rect(80, y, 80, 1));
+    screen.pen = Pen(0, 0, y);
+    screen.rectangle(Rect(160, y, 80, 1));
+    screen.pen = Pen(y, y, y);
+    screen.rectangle(Rect(240, y, 80, 1));
+  }
+
+  screen.pen = Pen(0, 0, 0);
+  screen.rectangle(Rect(100, 100, 100, 100));
+  return;
+*/  
+  for(uint16_t y = 0; y < 420; y++) {
+    for(uint16_t x = 0; x < 320; x++) {
+      screen.pen = Pen(x >> 1, y, 255 - (x >> 1));
+      screen.pixel(Point(x,y));
     }
+  }
+//  constexpr float pi = 3.1415927;
+
+  if(first) {
+    for(auto &blob : blobs) {
+      blob.x = (random() % 320);
+      blob.y = (random() % 240);
+      blob.z = (random() % 20) + 20;
+    }
+    first = false;
+  }
+
+  for(uint8_t i = 0; i < blob_count; i++) {
+    float step = (time_ms + i * 200) / 1000.0f;
+    Vec3 &blob = blobs[i];
+    screen.pen = Pen(0, 0, 0, 20);
+    int x = blob.x + sin(step) * i * 2.0f;
+    int y = blob.y + cos(step) * i * 2.0f;
+    int r = blob.z;// * (sin(step) + cos(step) + 1.0f);
+    screen.circle(Point(x, y), r);
   }
 }
 
 void render(uint32_t time_ms)
 {
-  
-
-  screen.pen = Pen(20, 30, 40);
+  screen.pen = Pen(5, 8, 12);
   screen.clear();
 
   background(time_ms);
+
+  screen.pen = Pen(0, 0, 0, 100);
+  screen.rectangle(Rect(10, 0, 100, 240));
 
   for(uint32_t i = 0; i < files.size(); i++) {
     FileInfo *file = &files[i];
@@ -86,14 +123,18 @@ void render(uint32_t time_ms)
     if(i == persist.selected_menu_item) {
       screen.pen = Pen(235, 245, 255);
     }
-    screen.text(file->name, minimal_font, Point(file_list_scroll_offset.x, 115 + i * 10 - file_list_scroll_offset.y));
+    std::string display_name = file->name.substr(0, file->name.size() - 4);
+    screen.text(display_name, minimal_font, Point(file_list_scroll_offset.x, 115 + i * 10 - file_list_scroll_offset.y));
   }
 
-
-  progress.draw();
-
+  screen.watermark();
   
-//	flashLoader.Render(time);
+  progress.draw();
+}
+
+
+int32_t modulo(int32_t x, int32_t n) {
+  return (x % n + n) % n;
 }
 
 void update(uint32_t time)
@@ -102,18 +143,30 @@ void update(uint32_t time)
   static uint32_t up_repeat = 0;
   static uint32_t down_repeat = 0;
 
-  up_repeat = (buttons & DPAD_UP) ? up_repeat + 1 : 0;
-  down_repeat = (buttons & DPAD_UP) ? down_repeat + 1 : 0;
-
   bool up_pressed = (buttons & DPAD_UP) && !(last_buttons & DPAD_UP);
   bool down_pressed = (buttons & DPAD_DOWN) && !(last_buttons & DPAD_DOWN);
+
+  up_repeat = (buttons & DPAD_UP) ? up_repeat + 1 : 0;
+  down_repeat = (buttons & DPAD_DOWN) ? down_repeat + 1 : 0;
+
+  uint8_t repeat_count = 25;
+  if(up_repeat > repeat_count) {
+    up_pressed = true;
+    up_repeat = 0;
+  }
+
+  if(down_repeat > repeat_count) {
+    down_pressed = true;
+    down_repeat = 0;
+  }
+
   bool a_pressed = (buttons & A) && !(last_buttons & A);
 
   // handle up/down clicks to select files in the list
   if(up_pressed)    { persist.selected_menu_item--; }
   if(down_pressed)  { persist.selected_menu_item++; }
   int32_t file_count = files.size();
-  persist.selected_menu_item = ((persist.selected_menu_item % file_count) + file_count) % file_count;
+  persist.selected_menu_item = modulo(persist.selected_menu_item, file_count);
 
   // scroll list towards selected item  
   file_list_scroll_offset.y += ((persist.selected_menu_item * 10) - file_list_scroll_offset.y) / 5.0f;
@@ -146,7 +199,7 @@ bool flash_from_sd_to_qspi_flash(const std::string &filename)
   // erase the sectors needed to write the image  
   uint32_t sector_count = (bytes_total / qspi_flash_sector_size) + 1;
 
-  progress.show("Erasing sectors...", sector_count);
+  progress.show("Erasing flash sectors...", sector_count);
 
   for(uint32_t sector = 0; sector < sector_count; sector++) {
     qspi_sector_erase(sector * qspi_flash_sector_size);
@@ -155,7 +208,7 @@ bool flash_from_sd_to_qspi_flash(const std::string &filename)
   }
 
   // read the image from as card and write it to the qspi flash  
-  progress.show("Copying to external flash...", bytes_total);
+  progress.show("Copying from SD card to flash...", bytes_total);
 
   UINT bytes_flashed  = 0;
   
@@ -314,7 +367,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &stream)
 
   static char   name_buffer[256];
   static char length_buffer[ 16];
-  static char   data_buffer[2048];
+  static char   data_buffer[256];
 
   static FIL  file;
   static UINT bytes_total;
@@ -349,9 +402,6 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &stream)
           bytes_total = atol(length_buffer);
           p = data_buffer;          
 
-          blit::LED.r = 255;  
-          blit_update_led();
-
           if(f_open(&file, name_buffer, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) {
             progress.show(std::to_string(srError), 1);
             return srError;
@@ -382,7 +432,8 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &stream)
           f_close(&file);
           state = StreamState::NONE;
           progress.hide();
-          
+          load_file_list();
+          select_file(name_buffer);
           return srFinish;
         }
         
