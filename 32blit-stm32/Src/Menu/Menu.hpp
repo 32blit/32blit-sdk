@@ -38,8 +38,12 @@ class Menu
 
         void pressedRight();
         void pressedLeft();
-
+        // Directional button held on
+        void heldRight ();
+        void heldLeft ();
+        
         void selected ();
+
         void backPressed ();
 
         void render(uint32_t time);

@@ -38,6 +38,18 @@ vector<MenuItem>aboutMenuItems () {
     return about;
 }
 
+vector<OptionItem> difficultySelectionItems () {
+    vector<OptionItem> options;
+
+    options.push_back(OptionItem("Easy",0));
+    options.push_back(OptionItem("Medium",1));
+    options.push_back(OptionItem("Hard",2));
+    options.push_back(OptionItem("Mega Hard",3));
+    options.push_back(OptionItem("This is a very long title that will hopefully end in the dot dots",4));
+
+    return options;
+}
+
 void createMenuItems () {
 
     // BACKLIGHT
@@ -110,6 +122,16 @@ void createMenuItems () {
         "Press A",
         [](){
             blit::switch_execution();
+        })
+    );
+
+    items.push_back(
+        MenuItem("Difficulty",
+        difficultySelectionItems(),
+        [](OptionItem option) {
+            // option changed
+
+            // Do something about it
         })
     );
 

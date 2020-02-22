@@ -171,12 +171,18 @@ void blit_menu_update(uint32_t time) {
     menu.decrementSelection();
   } else if (blit::buttons & changed_buttons & blit::Button::DPAD_DOWN) {
     menu.incrementSelection();
-  } else if (blit::buttons & blit::Button::DPAD_LEFT) {
+  } 
+  
+  if (blit::buttons & changed_buttons & blit::Button::DPAD_LEFT) {
     menu.pressedLeft();
-  } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
+  } else if (blit::buttons & changed_buttons & blit::Button::DPAD_RIGHT) {
     menu.pressedRight();
+  } else  if (blit::buttons & blit::Button::DPAD_LEFT) {
+    menu.heldLeft();
+  } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
+    menu.heldRight();
   }
-
+ 
   if (pressed(blit::A)) {
     menu.selected();
   }
