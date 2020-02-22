@@ -60,7 +60,7 @@ chunk_size = 64
 
 serial_port.reset_output_buffer()
 
-command = "32BLSAVE{0}\x00{1}\x00".format(file_name, file_size)
+command = "SAVE\x00{0}\x00{1}\x00".format(file_name, file_size)
 serial_port.write(bytes(command, "ascii"))
 
 #serial_port.write(b"32BL")

@@ -74,6 +74,8 @@ list(APPEND SOURCES
 	Src/32blit.c
 	Src/CDCLogging.c
 	startup_stm32h750xx.s
+	Src/usb-cdc.cpp
+	Src/core-debug.cpp
 	Src/CDCDataStream.cpp 
 	Src/CDCCommandStream.cpp 
 	Src/CDCCommandHandler.cpp 

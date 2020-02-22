@@ -41,5 +41,6 @@ void blit_menu_update(uint32_t time);
 void blit_menu_render(uint32_t time);
 void blit_menu();
 
+
 extern void blit_enable_ADC();
 extern void blit_disable_ADC();

@@ -64,8 +64,10 @@ struct {
 class FlashLoader : public CDCCommandHandler
 {
 public:
-	virtual StreamResult StreamData(CDCDataStream &dataStream);
-	virtual bool StreamInit(CDCFourCC uCommand);
+	virtual StreamResult StreamData(CDCDataStream &dataStream)  {
+return srContinue;
+ }
+	virtual bool StreamInit(CDCFourCC uCommand) {}
 
 
 	void Init(void);

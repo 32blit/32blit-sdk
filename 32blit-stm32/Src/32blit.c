@@ -3,7 +3,7 @@
 
 #include "32blit.h"
 #include "main.h"
-
+#include "core-debug.hpp"
 #include "sound.hpp"
 #include "display.hpp"
 #include "gpio.hpp"
@@ -84,6 +84,7 @@ void render_yield() {
 void blit_tick() {
   if(display::needs_render) {
     blit::render(blit::now());
+    debug::render();
     display::enable_vblank_interrupt();
   }
 

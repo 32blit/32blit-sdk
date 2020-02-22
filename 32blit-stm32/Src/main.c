@@ -31,6 +31,7 @@
 #include "spi.h"
 #include "tim.h"
 #include "usb_device.h"
+#include "core-debug.hpp"
 
 #include "gpio.hpp"
 #include "display.hpp"
@@ -41,6 +42,7 @@
 #include "32blit.h"
 #include "32blit.hpp"
 #include "graphics/color.hpp"
+#include "usb-cdc.hpp"
 #include "CDCResetHandler.h"
 #include "CDCInfoHandler.h"
 #include "CDCCommandStream.h"
@@ -171,9 +173,13 @@ int main(void)
     blit_tick();
     //HAL_Delay(1000);
     // handle CDC input
-    g_commandStream.Stream();
+    //g_commandStream.Stream();
+    cdc::parse_command();
 
     uint32_t t_elapsed = blit::now() - t_start;
+
+    
+
 //    uint32_t uTimeElapsed = (DWT->CYCCNT - uTimeStart)/uTicksPerUs;
 //    printf("%lu, %lu\n\r", t_elapsed, uTimeElapsed);
     /* USER CODE END WHILE */

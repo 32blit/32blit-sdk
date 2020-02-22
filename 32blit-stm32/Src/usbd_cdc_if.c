@@ -19,6 +19,7 @@
   */
 /* USER CODE END Header */
 #include "CDCCommandStream.h"
+#include "usb-cdc.hpp"
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc_if.h"
@@ -160,7 +161,10 @@ static int8_t CDC_Init_HS(void)
   /* USER CODE BEGIN 8 */
   /* Set Application Buffers */
   USBD_CDC_SetTxBuffer(&hUsbDeviceHS, UserTxBufferHS, 0);
-  USBD_CDC_SetRxBuffer(&hUsbDeviceHS, g_commandStream.GetFifoWriteBuffer());
+  //USBD_CDC_SetRxBuffer(&hUsbDeviceHS, g_commandStream.GetFifoWriteBuffer());
+  //USBD_CDC_SetRxBuffer(&hUsbDeviceHS, cdc::swap_buffers(0));
+
+  cdc::reset_rx_buffer();
   return (USBD_OK);
   /* USER CODE END 8 */
 }
@@ -271,14 +275,21 @@ static int8_t CDC_Receive_HS(uint8_t* Buf, uint32_t *Len)
   /* USER CODE BEGIN 11 */
 
 	// release the old write buffer for reading and set length
-	g_commandStream.ReleaseFifoWriteBuffer(*Len);
+//	g_commandStream.ReleaseFifoWriteBuffer(*Len);
+
+
+  cdc::data_received(*Len);
+  
+  //g_commandStream.ReleaseFifoWriteBuffer(*Len);^M
+
+  // now supply a new rx buffer for reading into^M
 
 	// If a new writebuffer is available, set RxBuffer and requext next USB packet
-	if(uint8_t *pBuffer = g_commandStream.GetFifoWriteBuffer())
+/*	if(uint8_t *pBuffer = g_commandStream.GetFifoWriteBuffer())
 	{
 	  USBD_CDC_SetRxBuffer(&hUsbDeviceHS, pBuffer);
 		USBD_CDC_ReceivePacket(&hUsbDeviceHS);
-	}
+	}*/
 
 ////  g_commandStream.AddToFifo(Buf, *Len);
 //	if(*Len)
