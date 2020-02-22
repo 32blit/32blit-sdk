@@ -17,6 +17,8 @@ namespace display {
   extern ScreenMode mode;
   extern bool needs_render;
 
+  extern uint32_t flip_cycle_count;
+  
   void init();  
 
   void enable_vblank_interrupt(); 

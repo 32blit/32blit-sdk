@@ -32,6 +32,8 @@ namespace display {
   ScreenMode mode = ScreenMode::lores;
   bool needs_render = false;
 
+  uint32_t flip_cycle_count;
+
   void init() {
     // TODO: replace interrupt setup with non HAL method
     HAL_NVIC_SetPriority(LTDC_IRQn, 4, 4);
@@ -59,6 +61,7 @@ namespace display {
   }
 
   void flip(const Surface &source) {
+    __disable_irq(); // Set PRIMASK
     uint8_t *s = (uint8_t *)source.data;
     uint32_t *d = (uint32_t *)(&__ltdc_start);
 
@@ -74,22 +77,66 @@ namespace display {
         d += 160; // skip the doubled row
       }
     }else{
-      // copy the framebuffer data into the ltdc buffer, originally this
-      // was done via memcpy but implementing it as a 32-bit copy loop
-      // was much faster. additionall unrolling this loop gained us about 10%
-      // extra performance
-      uint32_t c = (320 * 240) >> 1;
-      while(c--) {
-        uint16_t c1 = ((*s++ & 0b11111000) << 8) | ((*s++ & 0b11111100) << 3) | ((*s++ & 0b11111000) >> 3);
-        uint16_t c2 = ((*s++ & 0b11111000) << 8) | ((*s++ & 0b11111100) << 3) | ((*s++ & 0b11111000) >> 3);
-        *d++ = c2 << 16 | c1;
+      static uint8_t t = 0;
+      t++;
+
+      bool dither_spacial = false;
+
+      uint32_t scc = DWT->CYCCNT;
+      if(dither_spacial) {
+        int8_t dither[4][4] = {
+          { 0,  8,  2, 10},
+          {12,  4, 14,  6},
+          { 3, 11,  1,  9},
+          {15,  7, 13,  5}
+        };
+
+        for(uint16_t y = 0; y < 240; y++) {
+          uint8_t *pd = dither[y & 0b11];
+          for(uint16_t x = 0; x < 320; x+=4) {
+            int8_t dt = x;// + t;
+
+            uint32_t dither = 0;// (pd[(dt + 1) & 0b11] << 24) | (pd[(dt + 0) & 0b11] << 16) | (pd[(dt + 3) & 0b11] << 8) | (pd[(dt + 2) & 0b11]);
+            uint32_t red    = ((*(s + 3)) << 24) | ((*(s + 0)) << 16) | ((*(s +  9) << 8)) | (*(s + 6));
+            uint32_t green  = ((*(s + 4)) << 24) | ((*(s + 1)) << 16) | ((*(s + 10) << 8)) | (*(s + 7));
+            uint32_t blue   = ((*(s + 5)) << 24) | ((*(s + 2)) << 16) | ((*(s + 11) << 8)) | (*(s + 8));
+            
+            red   = __UQADD8(  red, dither);
+            green = __UQADD8(green, dither);
+            blue  = __UQADD8( blue, dither);
+
+            uint32_t p12 = 
+              ((red & 0xf8000000) >>  0) | ((green & 0xfc000000) >>  5) | ((blue & 0xf8000000) >> 11) | 
+              ((red & 0x00f80000) >>  8) | ((green & 0x00fc0000) >> 13) | ((blue & 0x00f80000) >> 19);
+
+            uint32_t p34 = 
+              ((red & 0x0000f800) << 16) | ((green & 0x0000fc00) << 11) | ((blue & 0x0000f800) <<  5) | 
+              ((red & 0x000000f8) <<  8) | ((green & 0x000000fc) <<  3) | ((blue & 0x000000f8) >>  3);
+
+            *d = p12;
+            d++;
+            *d = p34;
+            d++;
+
+            s += 12;
+          }
+        }
+      } else {
+        uint32_t c = (320 * 240) >> 1;
+        while(c--) {
+          uint16_t c1 = ((*s++ & 0b11111000) << 8) | ((*s++ & 0b11111100) << 3) | ((*s++ & 0b11111000) >> 3);
+          uint16_t c2 = ((*s++ & 0b11111000) << 8) | ((*s++ & 0b11111100) << 3) | ((*s++ & 0b11111000) >> 3);
+          *d++ = c2 << 16 | c1;
+        }
       }
+      flip_cycle_count = DWT->CYCCNT - scc;
     }
 
+    __enable_irq(); // Clear PRIMASK
     // since the ltdc hardware pulls frame data directly over the memory bus
     // without passing through the mcu's cache layer we must invalidate the
     // affected area to ensure that all data has been committed into ram
-    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(&__ltdc_start), 320 * 240 * 3);    
+    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(&__ltdc_start), 320 * 240 * 2);    
   }
 
   void screen_init() {

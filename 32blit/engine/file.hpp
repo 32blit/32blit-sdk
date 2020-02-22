@@ -13,6 +13,9 @@ namespace blit {
   struct FileInfo {
     std::string name;
     int flags;
+
+    // useful for sorting lists of files by name!
+    bool operator < (const FileInfo& other) const { return (name < other.name);  }
   };
 
   extern int32_t  (*open_file)               (std::string file);
