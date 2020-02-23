@@ -45,6 +45,8 @@ namespace blit {
       if (this != &other) {
         close();
         std::swap(fh, other.fh);
+        std::swap(buf, other.buf);
+        std::swap(buf_len, other.buf_len);
       }
       return *this;
     }
@@ -56,10 +58,21 @@ namespace blit {
     uint32_t get_length();
 
     bool is_open() const {
-      return fh != nullptr;
+      return buf != nullptr || fh != nullptr;
     }
 
+    // for buffers pretending to be files
+    const uint8_t *get_ptr() const {
+      return buf;
+    }
+
+    static void add_buffer_file(std::string path, const uint8_t *ptr, uint32_t len);
+
   private:
-     void *fh = nullptr;
+      void *fh = nullptr;
+
+      // buffer "files"
+      const uint8_t *buf = nullptr;
+      uint32_t buf_len;
   };
 }
