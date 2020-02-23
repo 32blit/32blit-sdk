@@ -1,25 +1,35 @@
+/*
+  32blit firmware. shows main menu and handles file transfers.
+
+  this work is based on heavily on the original concept implemented
+  by andrewcapon. any genius may safely be attributed to him and any
+  faults can be attributed to lowfatcode.
+
+  author: lowfatcode (standing on the shoulders of andrewcapon)
+  created: 23rd feb 2020
+*/
+
+
 #include "flash-loader.hpp"
 #include "graphics/color.hpp"
 #include <cmath>
 #include "quadspi.h"
 #include "usbd_def.h"
 #include "usbd_cdc_if.h"
-#include "CDCCommandStream.h"
-#include "usb-cdc.hpp"
+#include "usb-serial.hpp"
+#include "core-debug.hpp"
 #include <cstring>
 #include <stdio.h>
 #include <stdlib.h>
 
 using namespace blit;
+using namespace cdc;
  
-extern CDCCommandStream g_commandStream;
 
 constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 
 std::vector<FileInfo> files;
 Vec2 file_list_scroll_offset(20.0f, 0.0f);
-
-FlashLoader flashLoader;
 
 inline bool ends_with(std::string const &value, std::string const &ending) {
   if(ending.size() > value.size()) return false;
@@ -46,18 +56,17 @@ void select_file(const char *filename) {
 
 Vec2 list_offset(5.0f, 0.0f);
 
-bool usb_cdc_save_to_sd_card(char *data, uint32_t length);
+CommandState usb_cdc_save_to_sd_card(CommandState state, char *data, uint32_t length);
 
-bool usb_cdc_reset(char *data, uint32_t length) {
+CommandState usb_cdc_reset(CommandState state, char *data, uint32_t length) {
   NVIC_SystemReset();
-  return true;
+  return CommandState::END;
 }
 
-bool usb_cdc_application_location(char *data, uint32_t length) {
+CommandState usb_cdc_application_location(CommandState state, char *data, uint32_t length) {
   while(USBD_BUSY == CDC_Transmit_HS((uint8_t *)"32BL_EXT", 8)) {};
-
 	HAL_Delay(250);
-	return true;
+	return CommandState::END;
 }
 
 
@@ -76,7 +85,7 @@ void background(uint32_t time_ms) {
   static Vec3 blobs[blob_count];
 
   static bool first = true;
-
+/*
   for(uint16_t y = 0; y < 420; y++) {
     for(uint16_t x = 0; x < 320; x++) {
       screen.pen = Pen(x >> 1, y, 255 - (x >> 1));
@@ -103,13 +112,14 @@ void background(uint32_t time_ms) {
     int r = blob.z;// * (sin(step) + cos(step) + 1.0f);
     screen.circle(Point(x, y), r);
   }
+  */
 }
 
 void render(uint32_t time_ms)
 {
   screen.pen = Pen(5, 8, 12);
   screen.clear();
-
+  
   background(time_ms);
 
   screen.pen = Pen(0, 0, 0, 100);
@@ -239,88 +249,77 @@ bool flash_from_sd_to_qspi_flash(const std::string &filename)
 
 // when a command is issued (e.g. "PROG" or "SAVE") then this function is called
 // whenever new data is received to allow the firmware to process it.
-bool usb_cdc_save_to_sd_card(char *data, uint32_t length) {
-  enum class StreamState { NONE, NAME, LENGTH, DATA };
-  static StreamState state = StreamState::NONE;
-
-  static char   name_buffer[256];
-  static char length_buffer[ 16];
-  static char   data_buffer[256];
-
-  static FIL  file;
-  static UINT bytes_total;
-  static UINT bytes_read = 0;
-
-  static char *p = nullptr;  
-
-  if(state == StreamState::NONE) {
-    p = name_buffer;
-    state = StreamState::NAME;         
+CommandState usb_cdc_save_to_sd_card(CommandState state, char *data, uint32_t length) {
+  static char   filename[64] = {'\0'};
+  static FIL    file;
+  
+  if(state == CommandState::TIMEOUT) {    
+    // if the stream times out then clean up ready for another go
+    std::string message = std::string("Writing file '") + filename + std::string("' to SD card timed out.");
+    debug::debug(message);        
+    progress.hide();
+    f_close(&file);
+    memset(filename, 0, sizeof(filename));    
+    return CommandState::ERROR;
   }
 
-  // loop through all bytes in the input stream
-  uint8_t byte;
-  while(length--) {      
-    byte = *data++;
-    *p++ = byte;
+  if(state == CommandState::STREAM) {    
+    static UINT bytes_total = 0;
+    static UINT bytes_processed = 0;
 
-    switch(state) {
-      case StreamState::NONE:
-        break;
-
-      // sending filename
-      case StreamState::NAME:
-        if(byte == '\0') {        
-          p = length_buffer;
-          state = StreamState::LENGTH;
-        }
+    if(strlen(filename) == 0) {
+      // extract filename
+      strcpy(filename, data);
+      length -= strlen(data) + 1;
+      data += strlen(data) + 1;
       
-        break;
+      // extract length in bytes
+      bytes_total = atol(data);
+      length -= strlen(data) + 1;
+      data += strlen(data) + 1;
 
-      // sending file length
-      case StreamState::LENGTH:
-        if(byte == '\0') {        
-          bytes_read = 0;
-          bytes_total = atol(length_buffer);
-          p = data_buffer;          
+      // reset processed bytes counter
+      bytes_processed = 0;
 
-          if(f_open(&file, name_buffer, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) {            
-            return true;
-          }
-
-          state = StreamState::DATA;
-
-          progress.show("Copying to SD card...", bytes_total);
-        }
+      // open the file for writing
+      if(f_open(&file, filename, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) {       
+        std::string message = std::string("Couldn't open file '") + filename + std::string("' for writing on SD card.");
+        debug::debug(message);        
+        f_close(&file);     
+        return CommandState::ERROR;
+      }
       
-        break;
-
-      // sending file data
-      case StreamState::DATA:
-        bytes_read++;
-        // completed the read or filled the buffer? write to the file
-        if(bytes_read == bytes_total || p == (data_buffer + sizeof(data_buffer))) {
-          UINT bytes_written;
-          if(f_write(&file, data_buffer, p - data_buffer, &bytes_written) != FR_OK) {
-            return true;
-          }
-          p = data_buffer;
-          progress.update(bytes_read);
-        }        
-
-        // completed the write? close the file
-        if(bytes_read == bytes_total) {
-          f_close(&file);
-          state = StreamState::NONE;
-          progress.hide();
-          load_file_list();
-          select_file(name_buffer);
-          return true;
-        }
-        
-        break;
+      // setup progress bar
+      progress.show("Copying to SD card...", bytes_total);
     }
-  }
 
-  return false;
+    if(length > 0) {  
+      UINT bytes_written;
+      
+      if(f_write(&file, data, length, &bytes_written) != FR_OK) {
+        std::string message = std::string("Couldn't write to file '") + filename + std::string("' on SD card.");
+        debug::debug(message);        
+        f_close(&file);
+        return CommandState::ERROR;        
+      }
+      
+      bytes_processed += bytes_written;
+
+      // completed the write? close the file
+      if(bytes_processed == bytes_total) {
+        progress.hide();
+        load_file_list();
+        select_file(filename);
+        f_close(&file);
+        memset(filename, 0, sizeof(filename));
+        return CommandState::END;
+      }else{
+        progress.update(bytes_processed);        
+      }
+    }
+
+    return CommandState::STREAM;
+  }  
+
+  return CommandState::ERROR;
 }

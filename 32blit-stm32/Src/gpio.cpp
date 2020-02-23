@@ -111,7 +111,7 @@ namespace gpio {
     init_pin(GPIOA, LCD_RESET_Pin, GPIO_MODE_OUTPUT_PP, GPIO_PULLUP); // reset
 
     // sd card
-    init_pin(GPIOA, SD_SPI1_CS_Pin, GPIO_MODE_OUTPUT_PP, GPIO_PULLUP); // chip select
+    init_pin(GPIOA, SD_SPI1_CS_Pin, GPIO_MODE_OUTPUT_PP, GPIO_PULLUP, GPIO_SPEED_FREQ_VERY_HIGH); // chip select
     init_pin(GPIOD, SD_DETECT_Pin, GPIO_MODE_INPUT, GPIO_PULLUP); // card detect
     
     // ltdc interface

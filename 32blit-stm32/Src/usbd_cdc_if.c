@@ -18,8 +18,7 @@
   ******************************************************************************
   */
 /* USER CODE END Header */
-#include "CDCCommandStream.h"
-#include "usb-cdc.hpp"
+#include "usb-serial.hpp"
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc_if.h"
@@ -34,7 +33,6 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-CDCCommandStream g_commandStream;
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -162,6 +160,8 @@ static int8_t CDC_Init_HS(void)
   /* Set Application Buffers */
   USBD_CDC_SetTxBuffer(&hUsbDeviceHS, UserTxBufferHS, 0);
   //USBD_CDC_SetRxBuffer(&hUsbDeviceHS, g_commandStream.GetFifoWriteBuffer());  
+
+  cdc::init();  
 
   return (USBD_OK);
   /* USER CODE END 8 */

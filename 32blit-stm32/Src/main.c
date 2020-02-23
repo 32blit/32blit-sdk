@@ -36,90 +36,31 @@
 #include "gpio.hpp"
 #include "display.hpp"
 #include "sound.hpp"
+#include "usb-serial.hpp"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
 #include "32blit.h"
 #include "32blit.hpp"
 #include "graphics/color.hpp"
-#include "usb-cdc.hpp"
-#include "CDCResetHandler.h"
-#include "CDCInfoHandler.h"
-#include "CDCCommandStream.h"
 
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
-extern CDCCommandStream g_commandStream;
-CDCResetHandler g_resetHandler;
-CDCInfoHandler g_infoHandler;
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
 
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-/* USER CODE END 0 */
-
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
-
-  /* Enable I-Cache---------------------------------------------------------*/
+  // enable instruction cache - this is critical to getting good
+  // performance when running off QSPI flash via XiP
   SCB_EnableICache();
 
-  /* Enable D-Cache---------------------------------------------------------*/
+  // enable data cache - DMA transfers do not pass through the cache
+  // so it's important to invalidate the area of memory before the 
+  // transfer begins to ensure it is up to date in RAM
   SCB_EnableDCache();
 
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
   SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
+  // initialise peripherals
   gpio::init();
   sound::init();
-  cdc::init();
-
-  //MX_GPIO_Init();
 
   MX_DMA_Init();
   MX_TIM4_Init();
@@ -127,12 +68,10 @@ int main(void)
   //MX_DAC1_Init();
   MX_HRTIM_Init();
   MX_I2C4_Init();
-#if (INITIALISE_QSPI==1)
   MX_QUADSPI_Init();
-#endif
+
   MX_ADC1_Init();
   MX_ADC3_Init();
-  //MX_USB_OTG_HS_USB_Init();
   MX_SPI1_Init();
   MX_SPI4_Init();
   //MX_TIM6_Init();
@@ -143,57 +82,22 @@ int main(void)
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
-
-  //NVIC_SetPriority(SysTick_IRQn, 0x0);
-
-#if (INITIALISE_QSPI==1)
   qspi_init();
-#endif
-
   blit_init();
 
-  // add CDC handler to reset device on receiving "_RST"
-	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', 'R', 'S', 'T'>::value, &g_resetHandler);
 
-  // add CDC handler to log info device on receiving "INFO"
-	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'I', 'N', 'F', 'O'>::value, &g_infoHandler);
-
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
   while (1)
   {
     uint32_t t_start = blit::now();
 
-//    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-//    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-//    uint32_t uTicksPerUs = SystemCoreClock / 1000000;
-//    uint32_t uTimeStart = DWT->CYCCNT;
-
     blit_tick();
-    //HAL_Delay(1000);
-    // handle CDC input
-    //g_commandStream.Stream();
+
     cdc::parse_command();
 
     uint32_t t_elapsed = blit::now() - t_start;
-
-    
-
-//    uint32_t uTimeElapsed = (DWT->CYCCNT - uTimeStart)/uTicksPerUs;
-//    printf("%lu, %lu\n\r", t_elapsed, uTimeElapsed);
-    /* USER CODE END WHILE */
-  
-    /* USER CODE BEGIN 3 */
   }
-  /* USER CODE END 3 */
 }
 
-/**
-  * @brief System Clock Configuration
-  * @retval None
-  */
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
@@ -201,19 +105,15 @@ void SystemClock_Config(void)
   RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
   RCC_CRSInitTypeDef RCC_CRSInitStruct = {0};
 
-  /** Supply configuration update enable 
-  */
   HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
-  /** Configure the main internal regulator output voltage 
-  */
+  // configure the main internal regulator output voltage 
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
 
   while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
-  /** Macro to configure the PLL clock source 
-  */
+  // configure the PLL clock source 
+
   __HAL_RCC_PLL_PLLSOURCE_CONFIG(RCC_PLLSOURCE_HSI);
-  /** Initializes the CPU, AHB and APB busses clocks 
-  */
+  // initialize the CPU, AHB and APB busses clocks 
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_DIV1;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
@@ -232,8 +132,8 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Initializes the CPU, AHB and APB busses clocks 
-  */
+  
+  // initialize the CPU, AHB and APB busses clocks 
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2
                               |RCC_CLOCKTYPE_D3PCLK1|RCC_CLOCKTYPE_D1PCLK1;
@@ -282,38 +182,26 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Enable the SYSCFG APB clock 
-  */
+
+  // enable the SYSCFG APB clock 
   __HAL_RCC_CRS_CLK_ENABLE();
-  /** Configures CRS 
-  */
+  
+  // configures CRS 
   RCC_CRSInitStruct.Prescaler = RCC_CRS_SYNC_DIV1;
   RCC_CRSInitStruct.Source = RCC_CRS_SYNC_SOURCE_USB1;
   RCC_CRSInitStruct.Polarity = RCC_CRS_SYNC_POLARITY_RISING;
   RCC_CRSInitStruct.ReloadValue = __HAL_RCC_CRS_RELOADVALUE_CALCULATE(48000000,1000);
   RCC_CRSInitStruct.ErrorLimitValue = 34;
   RCC_CRSInitStruct.HSI48CalibrationValue = 32;
-
   HAL_RCCEx_CRSConfig(&RCC_CRSInitStruct);
-  /** Enable USB Voltage detector 
-  */
+
+  // enable USB voltage detector 
   HAL_PWREx_EnableUSBVoltageDetector();
 }
 
-/* USER CODE BEGIN 4 */
-
-/* USER CODE END 4 */
-
-/**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
 void Error_Handler(void)
 {
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-
-  /* USER CODE END Error_Handler_Debug */
+  // TODO: something useful here...
 }
 
 #ifdef  USE_FULL_ASSERT
@@ -332,5 +220,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
