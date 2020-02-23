@@ -9,6 +9,8 @@ set(SOURCES
 	engine/running_average.cpp
 	engine/timer.cpp
 	engine/tweening.cpp
+	engine/menu/menu.cpp
+	engine/menu/menuItem.cpp
 	graphics/blend.cpp
 	graphics/color.cpp
 	graphics/filter.cpp

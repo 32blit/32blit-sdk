@@ -5,9 +5,10 @@
 #include <cstdlib>
 
 #include "graphics/mode7.hpp"
-
-
 #include "flight.hpp"
+
+#include "menusDataSource.hpp"
+#include "engine/menu/menu.hpp"
 
 using namespace blit;
 
@@ -25,6 +26,7 @@ uint8_t __water[64 * 64] __SECTION__(".ss");
 SpriteSheet *sprites;
 SpriteSheet *water;
 
+Menu menu = Menu("Flight!",MenusDataSource().menuItems());
 Map map(Rect(0, 0, 128, 128));
 
 struct object {
@@ -94,6 +96,7 @@ void init() {
       }
     }
   }
+
 }
 
 void render(uint32_t time_ms) {
@@ -192,6 +195,8 @@ void render(uint32_t time_ms) {
     screen.pen = Pen(i * 5, 255 - (i * 5), 0);
     screen.rectangle(Rect(i * (block_size + 1) + 1 + 13, screen.bounds.h - block_size - 1, block_size, block_size));
   }
+
+  menu.render(time_ms);
 }
 
 void update(uint32_t time) {
@@ -201,6 +206,8 @@ void update(uint32_t time) {
   if (pressed(Button::DPAD_RIGHT)) { angle_delta -= 0.1f; }
   if (pressed(Button::DPAD_UP))    { vel.y += 0.2f; }
   if (pressed(Button::DPAD_DOWN))  { vel.y -= 0.2f; }
+
+  if (pressed(Button::MENU)) { menu.presented = true; }
 
   angle += deg2rad(angle_delta);   
   Mat3 r = Mat3::rotation(angle);    

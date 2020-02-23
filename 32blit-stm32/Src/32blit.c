@@ -26,8 +26,8 @@
 #include "32blit.hpp"
 #include "graphics/color.hpp"
 
-#include "Menu/Menu.hpp"
-#include "Menu/MenusDataSource.hpp"
+#include "engine/menu/menu.hpp"
+#include "Menu/FirmwareMenusDataSource.hpp"
 
 using namespace blit;
 
@@ -47,9 +47,8 @@ FATFS filesystem;
 FRESULT SD_Error = FR_INVALID_PARAMETER;
 FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 
-
-MenusDataSource dataSource;
-Menu menu = Menu(dataSource.menuItems());
+FirmwareMenusDataSource dataSource;
+Menu menu = Menu("System Menu",dataSource.menuItems());
 
 bool needs_render = true;
 uint32_t flip_cycle_count = 0;

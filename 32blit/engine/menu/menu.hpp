@@ -1,37 +1,43 @@
-#include "MenuItem.hpp"
+#include "menuItem.hpp"
 #include <vector>
 #include <string>
-#include "32blit.hpp"
 
 #ifndef MENU_H
 #define MENU_H
 
-using namespace blit;
+using namespace std;
 
 struct NavigationLevel {
-    std::string title;
-    std::vector<MenuItem> items;
+    string title;
+    vector<MenuItem> items;
     int selection;
     int offset;
     
-    NavigationLevel(std::string title, std::vector<MenuItem>items, int selection, int offset): title(title), items(items), selection(selection), offset(offset) {}
+    NavigationLevel(string title, vector<MenuItem>items, int selection, int offset): title(title), items(items), selection(selection), offset(offset) {}
 };
 
 class Menu
 {
     private:
-        std::vector<MenuItem> _menuItems;
-        std::vector<NavigationLevel> _navigationStack;
-        std::string _displayTitle;
+
+        string _menuTitle;
+
+        vector<MenuItem> _menuItems;
+        vector<NavigationLevel> _navigationStack;
+        string _displayTitle;
+
+        int minOffset ();
+        int bottomBarYPosition ();
 
         void drawTopBar (uint32_t time);
         void drawBottomLine ();
-        int minOffset ();
-        int bottomBarYPosition ();
         void checkVerticalOffset ();
 
     public:
-        Menu(std::vector<MenuItem> items);
+        Menu(string menuTitle,vector<MenuItem> items);
+
+        // Toggle this to show and hide the menu.
+        bool presented = false;
 
         // Vertical selection change
         void incrementSelection ();

@@ -1,14 +1,10 @@
 #include <string>
 #include <vector>
-#include "32blit.hpp"
-#include "display.hpp"
 
 #ifndef MENUITEM_H
 #define MENUITEM_H
 
 using namespace std;
-
-const Pen bar_background_color = Pen(40, 40, 60);
 
 struct OptionItem {
 
@@ -73,7 +69,7 @@ class MenuItem {
         // This is used for selection - difficulty, for example.
         MenuItem (string itemTitle, vector<OptionItem> options, void (*optionChanged)(OptionItem));
         
-        void draw (unsigned int yPos, bool selected, blit::Size rowSize);
+        void draw (unsigned int yPos, bool selected, int rowWidth, int rowHeight);
 
         // We're interested in scrolling through these
         void heldRight();

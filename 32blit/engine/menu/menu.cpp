@@ -1,16 +1,16 @@
-#include "Menu.hpp"
-#include "MenuItem.hpp"
-#include "32blit.hpp"
-#include "display.hpp"
+#include "menu.hpp"
+#include "menuItem.hpp"
+#include "../input.hpp"
+#include "../engine.hpp"
 
 using namespace blit;
 
 Size screenSize ();
 
-std::string SYSTEM_TITLE = "System Menu";
 int BANNER_HEIGHT = 15;
 int MAX_SCROLL_OFFSET = BANNER_HEIGHT + 5;
 
+Pen bar_background_color = Pen(40, 40, 60);
 Pen bannerColour = Pen(50,50,50,150);
 
 int _selectedIndex;
@@ -19,12 +19,12 @@ int offset = MAX_SCROLL_OFFSET;
 
 int menu_y (int index) { return index * _rowHeight + offset; }
 
-Menu::Menu(std::vector<MenuItem> items): _menuItems(items) {}
+Menu::Menu(string menuTitle, vector<MenuItem> items):_menuTitle(menuTitle), _menuItems(items) {}
 
 int Menu::minOffset () {
 
     int rowsAvailableOnscreen = (screenSize().h - BANNER_HEIGHT) / _rowHeight;
-    int itemsOnScreen = std::min(int(_menuItems.size()), rowsAvailableOnscreen);
+    int itemsOnScreen = min(int(_menuItems.size()), rowsAvailableOnscreen);
 
     if (itemsOnScreen < rowsAvailableOnscreen) { return MAX_SCROLL_OFFSET; }
 
@@ -41,9 +41,9 @@ void Menu::checkVerticalOffset () {
     int selectYPos = menu_y(_selectedIndex);
 
     if (selectYPos >= screenHeight - (_rowHeight * 3)){
-        offset = std::max(offset -_rowHeight, minOffset());
+        offset = max(offset -_rowHeight, minOffset());
     } else if (selectYPos <= _rowHeight * 2) {
-        offset = std::min(MAX_SCROLL_OFFSET, offset + _rowHeight);
+        offset = min(MAX_SCROLL_OFFSET, offset + _rowHeight);
     }
 }
 
@@ -82,7 +82,7 @@ void Menu::selected() {
 
         // stash away the current menu
         NavigationLevel level = NavigationLevel(
-            _displayTitle.empty() ? _displayTitle : SYSTEM_TITLE,
+            _displayTitle.empty() ? _displayTitle : _menuTitle,
             _menuItems,
             _selectedIndex,
             offset
@@ -105,22 +105,14 @@ void Menu::backPressed() {
         // unravel previous menu
         _menuItems = back.items;
         _selectedIndex = back.selection;
-        _displayTitle = back.title.size() > 0 ? back.title : SYSTEM_TITLE;
+        _displayTitle = back.title.size() > 0 ? back.title : _menuTitle;
         offset = back.offset;
         _navigationStack.pop_back();
     }
 }
 
 Size screenSize () {
-    int screen_width = 160;
-    int screen_height = 120;
-    
-    if (display::mode == blit::ScreenMode::hires) {
-        screen_width = 320;
-        screen_height = 240;
-    }
-
-    return Size(screen_width,screen_height);
+    return blit::screen.bounds;
 }
 
 void Menu::drawTopBar (uint32_t time) {
@@ -130,11 +122,11 @@ void Menu::drawTopBar (uint32_t time) {
 
     screen.pen = Pen(255, 255, 255);
 
-    screen.text(_displayTitle.empty() ? SYSTEM_TITLE : _displayTitle , minimal_font, Point(5, 5));
+    screen.text(_displayTitle.empty() ? _menuTitle : _displayTitle , minimal_font, Point(5, 5));
     screen.text("bat", minimal_font, Point(screenSize().w / 2, 5));
     uint16_t battery_meter_width = 55;
     battery_meter_width = float(battery_meter_width) * (blit::battery - 3.0f) / 1.1f;
-    battery_meter_width = std::max((uint16_t)0, std::min((uint16_t)55, battery_meter_width));
+    battery_meter_width = max((uint16_t)0, min((uint16_t)55, battery_meter_width));
 
     screen.pen = bar_background_color;
     screen.rectangle(Rect((screenSize().w / 2) + 20, 6, 55, 5));
@@ -157,7 +149,7 @@ void Menu::drawTopBar (uint32_t time) {
     screen.rectangle(Rect((screenSize().w / 2) + 20, 6, battery_meter_width, 5));
     if (battery_charge_status == 0b01 || battery_charge_status == 0b10){
         uint16_t battery_fill_width = uint32_t(time / 100.0f) % battery_meter_width;
-        battery_fill_width = std::max((uint16_t)0, std::min((uint16_t)battery_meter_width, battery_fill_width));
+        battery_fill_width = max((uint16_t)0, min((uint16_t)battery_meter_width, battery_fill_width));
         screen.pen = Pen(100, 255, 200);
         screen.rectangle(Rect((screenSize().w / 2) + 20, 6, battery_fill_width, 5));
     }
@@ -179,6 +171,8 @@ void Menu::drawBottomLine () {
 
 void Menu::render(uint32_t time) {
 
+    if (!presented) { return; }
+
     screen.pen = Pen(30, 30, 50, 200);
     screen.clear();
 
@@ -187,7 +181,7 @@ void Menu::render(uint32_t time) {
         int yPosition = menu_y(i);
 
         // might be worth adding in check to see if they're on screen to save on text rendering?
-        item.draw(yPosition, _selectedIndex == i, Size(screenSize().w, _rowHeight));
+        item.draw(yPosition, _selectedIndex == i, screenSize().w, _rowHeight);
     }
 
     drawTopBar(time);

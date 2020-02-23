@@ -1,4 +1,4 @@
-#include "MenusDataSource.hpp"
+#include "FirmwareMenusDataSource.hpp"
 #include <vector>
 #include "persistence.h"
 #include <cmath>
@@ -20,14 +20,13 @@
 using namespace std;
 
 __attribute__((section(".persist"))) Persist persist;
-void createMenuItems ();
-vector<MenuItem> items;
-vector<MenuItem> MenusDataSource::menuItems() {
-    createMenuItems();
-    return items;
-};
 
-vector<MenuItem>aboutMenuItems () {
+std::vector<MenuItem> FirmwareMenusDataSource::menuItems() {
+    createSystemMenuItems();
+    return _items;
+}
+
+vector<MenuItem>aboutItems () {
     vector<MenuItem> about;
 
     // would be nice to have environment variables here from travis builds, no?
@@ -38,23 +37,11 @@ vector<MenuItem>aboutMenuItems () {
     return about;
 }
 
-vector<OptionItem> difficultySelectionItems () {
-    vector<OptionItem> options;
-
-    options.push_back(OptionItem("Easy",0));
-    options.push_back(OptionItem("Medium",1));
-    options.push_back(OptionItem("Hard",2));
-    options.push_back(OptionItem("Mega Hard",3));
-    options.push_back(OptionItem("This is a very long title that will hopefully end in the dot dots",4));
-
-    return options;
-}
-
-void createMenuItems () {
+void FirmwareMenusDataSource::createSystemMenuItems () {
 
     // BACKLIGHT
 
-    items.push_back(
+    _items.push_back(
         MenuItem("Backlight", 
         [](float value) {
             // slider value has changed
@@ -70,7 +57,7 @@ void createMenuItems () {
 
     // VOLUME
 
-    items.push_back(
+    _items.push_back(
         MenuItem("Volume",
          [] (float value) {
 
@@ -88,7 +75,7 @@ void createMenuItems () {
         -1.0f / 256.0f)   // right adjustment
     );
 
-    items.push_back(
+    _items.push_back(
         MenuItem("DFU Mode", "Press A",
         []() {
 
@@ -104,7 +91,7 @@ void createMenuItems () {
     );
 
 
-    items.push_back(
+    _items.push_back(
         MenuItem("Power off",
         "Press A",
         [](){
@@ -117,7 +104,7 @@ void createMenuItems () {
         switchExecutionTitle = "Launch Game";
     #endif
 
-    items.push_back(
+    _items.push_back(
         MenuItem(switchExecutionTitle,
         "Press A",
         [](){
@@ -125,20 +112,9 @@ void createMenuItems () {
         })
     );
 
-    items.push_back(
-        MenuItem("Difficulty",
-        difficultySelectionItems(),
-        [](OptionItem option) {
-            // option changed
-
-            // Do something about it
-        })
-    );
-
-
-    items.push_back(MenuItem("About",aboutMenuItems()));
+    _items.push_back(MenuItem("About",aboutItems()));
 }
 
 
 
-MenusDataSource::MenusDataSource () { }
+FirmwareMenusDataSource::FirmwareMenusDataSource () {}

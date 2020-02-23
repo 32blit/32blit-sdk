@@ -79,9 +79,7 @@ list(APPEND SOURCES
 	Src/CDCCommandHandler.cpp 
 	Src/CDCResetHandler.cpp
 	Src/CDCInfoHandler.cpp
-	Src/Menu/Menu.cpp
-	Src/Menu/MenuItem.cpp
-	Src/Menu/MenusDataSource.cpp
+	Src/Menu/FirmwareMenusDataSource.cpp
 
 )
 
