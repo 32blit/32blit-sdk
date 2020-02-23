@@ -7,5 +7,6 @@ namespace debug {
 
   extern std::vector<std::string> messages;
   extern void debug(const char *p);
+  extern void debug(const std::string &s);
   extern void render();
 }

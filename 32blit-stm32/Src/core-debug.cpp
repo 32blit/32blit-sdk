@@ -9,6 +9,10 @@ namespace debug {
 
   std::vector<std::string> messages;
 
+  void debug(const std::string &s) {
+    debug(s.c_str());
+  }
+
   void debug(const char *p) {
     std::string message = p;
 

@@ -161,10 +161,8 @@ static int8_t CDC_Init_HS(void)
   /* USER CODE BEGIN 8 */
   /* Set Application Buffers */
   USBD_CDC_SetTxBuffer(&hUsbDeviceHS, UserTxBufferHS, 0);
-  //USBD_CDC_SetRxBuffer(&hUsbDeviceHS, g_commandStream.GetFifoWriteBuffer());
-  //USBD_CDC_SetRxBuffer(&hUsbDeviceHS, cdc::swap_buffers(0));
+  //USBD_CDC_SetRxBuffer(&hUsbDeviceHS, g_commandStream.GetFifoWriteBuffer());  
 
-  cdc::reset_rx_buffer();
   return (USBD_OK);
   /* USER CODE END 8 */
 }
@@ -277,8 +275,11 @@ static int8_t CDC_Receive_HS(uint8_t* Buf, uint32_t *Len)
 	// release the old write buffer for reading and set length
 //	g_commandStream.ReleaseFifoWriteBuffer(*Len);
 
-
   cdc::data_received(*Len);
+	  //USBD_CDC_SetRxBuffer(&hUsbDeviceHS, pBuffer);
+		
+  
+
   
   //g_commandStream.ReleaseFifoWriteBuffer(*Len);^M
 

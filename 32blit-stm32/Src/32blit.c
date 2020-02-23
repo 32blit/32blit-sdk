@@ -8,7 +8,7 @@
 #include "display.hpp"
 #include "gpio.hpp"
 #include "file.hpp"
-
+#include "usb-cdc.hpp"
 
 #include "adc.h"
 #include "tim.h"
@@ -20,6 +20,7 @@
 #include "fatfs.h"
 #include "quadspi.h"
 #include "usbd_core.h"
+
 
 #include "32blit.hpp"
 #include "graphics/color.hpp"
@@ -77,6 +78,7 @@ void blit_debug(std::string message) {
 void render_yield() {
   if(display::needs_render) {
     blit::render(blit::now());
+    debug::render();
     display::enable_vblank_interrupt();
   }
 }
@@ -166,9 +168,8 @@ void blit_init() {
 
     blit_enable_amp();
 
-  display::init();
-  
-  blit::init();
+    display::init();
+    blit::init();
 
 }
 
