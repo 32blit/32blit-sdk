@@ -116,8 +116,8 @@ void MenuItem::draw (unsigned int yPos, bool selected, Size rowSize) {
     if (!_optionItems.empty()) {
         screen.pen = Pen(255, 255, 255);
 
-        int gtLeft = rowSize.w - 10;    // >
-        int ltLeft = rowSize.w / 2.0;   // <
+        int gtLeft = rowSize.w - 10;
+        int ltLeft = rowSize.w / 2.0;
 
         screen.text(">", font, Point(gtLeft, nestedItemY));
         screen.text("<", font, Point(ltLeft, nestedItemY));
@@ -131,7 +131,6 @@ void MenuItem::draw (unsigned int yPos, bool selected, Size rowSize) {
 
 void MenuItem::heldRight() {
     if (_slideCallback) { _slideCallback(_rightAdjustment); }
-
 }
 
 void MenuItem::heldLeft() {
@@ -147,13 +146,12 @@ void MenuItem::pressedLeft () {
 
 void MenuItem::pressedRight () {
     // if the item has options. Difficulty selection etc
-    if (!_optionItems.empty()) {
-        _currentOptionIndex = ++_currentOptionIndex % int(_optionItems.size());
+    if (!_optionItems.empty() && ++_currentOptionIndex == int(_optionItems.size())) {
+        _currentOptionIndex = 0;
     }
 }
 
 vector<MenuItem> MenuItem::selected() {
     if (_selectCallback) { _selectCallback(); }
-
     return _items;
 }

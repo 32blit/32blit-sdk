@@ -67,7 +67,6 @@ void Menu::decrementSelection () {
         _selectedIndex--;
         checkVerticalOffset();
     }
-
 }
 
 void Menu::pressedRight() { _menuItems[_selectedIndex].pressedRight(); }
@@ -75,7 +74,6 @@ void Menu::pressedLeft() { _menuItems[_selectedIndex].pressedLeft(); }
 
 void Menu::heldRight() { _menuItems[_selectedIndex].heldRight(); }
 void Menu::heldLeft() { _menuItems[_selectedIndex].heldLeft(); }
-
 
 void Menu::selected() { 
     auto childItems = _menuItems[_selectedIndex].selected(); 

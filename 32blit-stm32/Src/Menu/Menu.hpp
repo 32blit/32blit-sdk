@@ -33,17 +33,22 @@ class Menu
     public:
         Menu(std::vector<MenuItem> items);
 
+        // Vertical selection change
         void incrementSelection ();
         void decrementSelection ();
 
+        // Single change in horizontal axis
         void pressedRight();
         void pressedLeft();
+
         // Directional button held on
         void heldRight ();
         void heldLeft ();
         
+        // Pressed A
         void selected ();
 
+        // Pressed B
         void backPressed ();
 
         void render(uint32_t time);
