@@ -5,57 +5,55 @@
 #ifndef MENU_H
 #define MENU_H
 
-using namespace std;
-
 struct NavigationLevel {
-    string title;
-    vector<MenuItem> items;
+    std::string title;
+    std::vector<MenuItem> items;
     int selection;
     int offset;
     
-    NavigationLevel(string title, vector<MenuItem>items, int selection, int offset): title(title), items(items), selection(selection), offset(offset) {}
+    NavigationLevel(std::string title, std::vector<MenuItem>items, int selection, int offset): title(title), items(items), selection(selection), offset(offset) {}
 };
 
 class Menu
 {
     private:
 
-        string _menuTitle;
+        std::string _menuTitle;
 
-        vector<MenuItem> _menuItems;
-        vector<NavigationLevel> _navigationStack;
-        string _displayTitle;
+        std::vector<MenuItem> _menuItems;
+        std::vector<NavigationLevel> _navigationStack;
+        std::string _displayTitle;
 
-        int minOffset ();
-        int bottomBarYPosition ();
+        int min_offset ();
+        int bottom_bar_yposition ();
 
-        void drawTopBar (uint32_t time);
-        void drawBottomLine ();
-        void checkVerticalOffset ();
+        void draw_top_bar (uint32_t time);
+        void draw_bottom_line ();
+        void check_vertical_offset ();
 
     public:
-        Menu(string menuTitle,vector<MenuItem> items);
+        Menu(std::string menuTitle,std::vector<MenuItem> items);
 
         // Toggle this to show and hide the menu.
         bool presented = false;
 
         // Vertical selection change
-        void incrementSelection ();
-        void decrementSelection ();
+        void increment_selection ();
+        void decrement_selection ();
 
         // Single change in horizontal axis
-        void pressedRight();
-        void pressedLeft();
+        void pressed_right();
+        void pressed_left();
 
         // Directional button held on
-        void heldRight ();
-        void heldLeft ();
+        void held_right ();
+        void held_left ();
         
         // Pressed A
         void selected ();
 
         // Pressed B
-        void backPressed ();
+        void back_pressed ();
 
         void render(uint32_t time);
 };

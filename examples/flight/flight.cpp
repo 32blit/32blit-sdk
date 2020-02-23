@@ -26,7 +26,6 @@ uint8_t __water[64 * 64] __SECTION__(".ss");
 SpriteSheet *sprites;
 SpriteSheet *water;
 
-Menu menu = Menu("Flight!",MenusDataSource().menuItems());
 Map map(Rect(0, 0, 128, 128));
 
 struct object {
@@ -37,6 +36,7 @@ struct object {
 };
 
 std::vector<object> objects;
+Menu menu = Menu("Flight!",MenusDataSource().menuItems());
 
 static Vec2 vel(0, 0);
 static float angle = -15.0f * (M_PI / 180.0f);
@@ -200,6 +200,12 @@ void render(uint32_t time_ms) {
 }
 
 void update(uint32_t time) {
+
+  if (pressed(Button::MENU)) { menu.presented = true; }
+  
+  // We dont want the game to still be playing in the background
+  if (menu.presented) { return; }
+  
   static float angle_delta = 0.0f;
 
   if (pressed(Button::DPAD_LEFT))  { angle_delta += 0.1f; }
@@ -207,7 +213,6 @@ void update(uint32_t time) {
   if (pressed(Button::DPAD_UP))    { vel.y += 0.2f; }
   if (pressed(Button::DPAD_DOWN))  { vel.y -= 0.2f; }
 
-  if (pressed(Button::MENU)) { menu.presented = true; }
 
   angle += deg2rad(angle_delta);   
   Mat3 r = Mat3::rotation(angle);    

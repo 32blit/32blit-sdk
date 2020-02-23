@@ -48,7 +48,7 @@ FRESULT SD_Error = FR_INVALID_PARAMETER;
 FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 
 FirmwareMenusDataSource dataSource;
-Menu menu = Menu("System Menu",dataSource.menuItems());
+Menu fw_menu = Menu("System Menu",dataSource.menuItems());
 
 bool needs_render = true;
 uint32_t flip_cycle_count = 0;
@@ -167,27 +167,27 @@ void blit_menu_update(uint32_t time) {
   uint32_t changed_buttons = blit::buttons ^ last_buttons;
 
   if (blit::buttons & changed_buttons & blit::Button::DPAD_UP) {
-    menu.decrementSelection();
+    fw_menu.decrement_selection();
   } else if (blit::buttons & changed_buttons & blit::Button::DPAD_DOWN) {
-    menu.incrementSelection();
+    fw_menu.increment_selection();
   } 
   
   if (blit::buttons & changed_buttons & blit::Button::DPAD_LEFT) {
-    menu.pressedLeft();
+    fw_menu.pressed_left();
   } else if (blit::buttons & changed_buttons & blit::Button::DPAD_RIGHT) {
-    menu.pressedRight();
+    fw_menu.pressed_right();
   } else  if (blit::buttons & blit::Button::DPAD_LEFT) {
-    menu.heldLeft();
+    fw_menu.held_left();
   } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
-    menu.heldRight();
+    fw_menu.held_right();
   }
  
   if (pressed(blit::A)) {
-    menu.selected();
+    fw_menu.selected();
   }
 
   if (pressed(blit::B)) {
-    menu.backPressed();
+    fw_menu.back_pressed();
   }
 
   last_buttons = blit::buttons;
@@ -196,7 +196,7 @@ void blit_menu_update(uint32_t time) {
 void blit_menu_render(uint32_t time) {
   ::render(time);
 
-  menu.render(time);
+  fw_menu.render(time);
 
 }
 

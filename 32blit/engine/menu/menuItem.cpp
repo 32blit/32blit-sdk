@@ -4,6 +4,8 @@
 #include "../../graphics/surface.hpp"
 
 using namespace blit;
+using namespace std;
+
 const blit::Pen bar_background_color = blit::Pen(40, 40, 60);
 
 // This is used when creating an item that has children items to drill down to
@@ -61,7 +63,7 @@ struct OptionTextInfo {
     or if it's too long to truncate
     <This is a lon..>
 */
-OptionTextInfo optionItemLocation (string text,int font_width, int minX, int maxX) {
+OptionTextInfo option_item_location (string text,int font_width, int minX, int maxX) {
     int availableChars = (maxX - minX) / (font_width - 1); // with the font width being right-ish, subtracting 1 seems about right on average
 
     if (text.size() == availableChars) {
@@ -126,27 +128,27 @@ void MenuItem::draw (unsigned int yPos, bool selected, int rowWidth, int rowHeig
 
         OptionItem currentItem = _optionItems.at(_currentOptionIndex);
 
-        OptionTextInfo info = optionItemLocation(currentItem.title,font.char_w, ltLeft + font.char_w, gtLeft);
+        OptionTextInfo info = option_item_location(currentItem.title,font.char_w, ltLeft + font.char_w, gtLeft);
         screen.text(info.text, font, Point(info.xPosition, nestedItemY));
     }
 }
 
-void MenuItem::heldRight() {
+void MenuItem::held_right() {
     if (_slideCallback) { _slideCallback(_rightAdjustment); }
 }
 
-void MenuItem::heldLeft() {
+void MenuItem::held_left() {
     if (_slideCallback) { _slideCallback(_leftAdjustment); }
 }
 
-void MenuItem::pressedLeft () {
+void MenuItem::pressed_left () {
     // if the item has options. Difficulty selection etc
     if (!_optionItems.empty() && --_currentOptionIndex < 0) {
         _currentOptionIndex = int(_optionItems.size()) - 1;
     }
 }
 
-void MenuItem::pressedRight () {
+void MenuItem::pressed_right () {
     // if the item has options. Difficulty selection etc
     if (!_optionItems.empty() && ++_currentOptionIndex == int(_optionItems.size())) {
         _currentOptionIndex = 0;
