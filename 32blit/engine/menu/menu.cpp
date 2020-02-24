@@ -8,17 +8,12 @@ using namespace std;
 
 Size screen_size ();
 
-int BANNER_HEIGHT = 15;
-int MAX_SCROLL_OFFSET = BANNER_HEIGHT + 5;
-
 Pen bar_background_color = Pen(40, 40, 60);
 Pen bannerColour = Pen(50,50,50,150);
 
-int _selectedIndex;
 int _rowHeight = 12;
-int offset = MAX_SCROLL_OFFSET;
 
-int menu_y (int index) { return index * _rowHeight + offset; }
+int Menu::menu_y (int index) { return index * _rowHeight + _offset; }
 
 Menu::Menu(string menuTitle, vector<MenuItem> items):_menuTitle(menuTitle), _menuItems(items) {}
 
@@ -42,9 +37,9 @@ void Menu::check_vertical_offset () {
     int selectYPos = menu_y(_selectedIndex);
 
     if (selectYPos >= screenHeight - (_rowHeight * 3)){
-        offset = max(offset -_rowHeight, min_offset());
+        _offset = max(_offset -_rowHeight, min_offset());
     } else if (selectYPos <= _rowHeight * 2) {
-        offset = min(MAX_SCROLL_OFFSET, offset + _rowHeight);
+        _offset = min(MAX_SCROLL_OFFSET, _offset + _rowHeight);
     }
 }
 
@@ -52,7 +47,7 @@ void Menu::increment_selection () {
     if (_selectedIndex == _menuItems.size() - 1) {
         // send me back to the top, thanks
         _selectedIndex = 0;
-        offset = MAX_SCROLL_OFFSET;
+        _offset = MAX_SCROLL_OFFSET;
     } else {
         _selectedIndex++;
         check_vertical_offset();
@@ -63,7 +58,7 @@ void Menu::decrement_selection () {
     if (_selectedIndex == 0) {
         // go all the way to the end
         _selectedIndex = _menuItems.size() - 1;
-        offset = min_offset();
+        _offset = min_offset();
     } else {
         _selectedIndex--;
         check_vertical_offset();
@@ -86,7 +81,7 @@ void Menu::selected() {
             _displayTitle.empty() ? _displayTitle : _menuTitle,
             _menuItems,
             _selectedIndex,
-            offset
+            _offset
             );
 
         _displayTitle = _menuItems[_selectedIndex].title;
@@ -94,7 +89,7 @@ void Menu::selected() {
         _selectedIndex = 0;
         _menuItems = childItems;
         _navigationStack.push_back(level);
-        offset = MAX_SCROLL_OFFSET;
+        _offset = MAX_SCROLL_OFFSET;
     }
 }
 
@@ -107,7 +102,7 @@ void Menu::back_pressed() {
         _menuItems = back.items;
         _selectedIndex = back.selection;
         _displayTitle = back.title.size() > 0 ? back.title : _menuTitle;
-        offset = back.offset;
+        _offset = back.offset;
         _navigationStack.pop_back();
     }
 }
@@ -171,8 +166,6 @@ void Menu::draw_bottom_line () {
 }
 
 void Menu::render(uint32_t time) {
-
-    if (!presented) { return; }
 
     screen.pen = Pen(30, 30, 50, 200);
     screen.clear();

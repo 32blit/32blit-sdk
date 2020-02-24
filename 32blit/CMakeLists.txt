@@ -11,6 +11,7 @@ set(SOURCES
 	engine/tweening.cpp
 	engine/menu/menu.cpp
 	engine/menu/menuItem.cpp
+	engine/menu/menuController.cpp
 	graphics/blend.cpp
 	graphics/color.cpp
 	graphics/filter.cpp

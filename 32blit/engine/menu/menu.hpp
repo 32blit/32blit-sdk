@@ -16,6 +16,10 @@ struct NavigationLevel {
 
 class Menu
 {
+
+    int BANNER_HEIGHT = 15;
+    int MAX_SCROLL_OFFSET = BANNER_HEIGHT + 5;
+
     private:
 
         std::string _menuTitle;
@@ -24,18 +28,23 @@ class Menu
         std::vector<NavigationLevel> _navigationStack;
         std::string _displayTitle;
 
+        int _selectedIndex;
+        int _offset = MAX_SCROLL_OFFSET;
+
+        int menu_y (int index);
+
+    public:
+        Menu(std::string menuTitle,std::vector<MenuItem> items);
+
+        void render(uint32_t time);
+        void update(uint32_t time);
         int min_offset ();
+
         int bottom_bar_yposition ();
 
         void draw_top_bar (uint32_t time);
         void draw_bottom_line ();
         void check_vertical_offset ();
-
-    public:
-        Menu(std::string menuTitle,std::vector<MenuItem> items);
-
-        // Toggle this to show and hide the menu.
-        bool presented = false;
 
         // Vertical selection change
         void increment_selection ();
@@ -54,8 +63,6 @@ class Menu
 
         // Pressed B
         void back_pressed ();
-
-        void render(uint32_t time);
 };
 
 #endif

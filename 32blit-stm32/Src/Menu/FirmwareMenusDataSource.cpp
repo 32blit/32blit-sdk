@@ -61,6 +61,7 @@ void FirmwareMenusDataSource::createSystemMenuItems () {
         MenuItem("Volume",
          [] (float value) {
 
+             blit::debug("\n\n\n\n\n" + std::to_string(value));
             // slider value has changed
             persist.volume -= value;
             persist.volume = fmin(1.0f, fmax(0.0f, persist.volume));

@@ -25,8 +25,6 @@
 
 #include "32blit.hpp"
 #include "graphics/color.hpp"
-
-#include "engine/menu/menu.hpp"
 #include "Menu/FirmwareMenusDataSource.hpp"
 
 using namespace blit;
@@ -102,6 +100,7 @@ void hook_render(uint32_t time) {
     int y = i % 8;
     blit::screen.text(std::to_string(adc1data[i]), minimal_font, Point(x * 30, y * 10));
   }
+
 }
 
 void blit_update_volume() {
@@ -111,6 +110,8 @@ void blit_update_volume() {
 }
 
 void blit_init() {
+    MenuController::shared()->set_system_menu(&fw_menu);
+
     if(persist.magic_word != persistence_magic_word) {
       // Set persistent defaults if the magic word does not match
       persist.magic_word = persistence_magic_word;
@@ -163,40 +164,13 @@ void blit_init() {
 }
 
 void blit_menu_update(uint32_t time) {
-  static uint32_t last_buttons = 0;
-  uint32_t changed_buttons = blit::buttons ^ last_buttons;
 
-  if (blit::buttons & changed_buttons & blit::Button::DPAD_UP) {
-    fw_menu.decrement_selection();
-  } else if (blit::buttons & changed_buttons & blit::Button::DPAD_DOWN) {
-    fw_menu.increment_selection();
-  } 
-  
-  if (blit::buttons & changed_buttons & blit::Button::DPAD_LEFT) {
-    fw_menu.pressed_left();
-  } else if (blit::buttons & changed_buttons & blit::Button::DPAD_RIGHT) {
-    fw_menu.pressed_right();
-  } else  if (blit::buttons & blit::Button::DPAD_LEFT) {
-    fw_menu.held_left();
-  } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
-    fw_menu.held_right();
-  }
- 
-  if (pressed(blit::A)) {
-    fw_menu.selected();
-  }
-
-  if (pressed(blit::B)) {
-    fw_menu.back_pressed();
-  }
-
-  last_buttons = blit::buttons;
 }
 
 void blit_menu_render(uint32_t time) {
   ::render(time);
 
-  fw_menu.render(time);
+  MenuController::shared()->render(time);
 
 }
 
@@ -361,9 +335,12 @@ void blit_process_input() {
     last_tilt_update = blit::now();
   }
 
-  if(blit::buttons & blit::MENU && !(blit_last_buttons & blit::MENU)) {
+  if(blit::buttons & blit::MENU && !(blit_last_buttons & blit::MENU) ||
+    blit::buttons & blit::HOME && !(blit_last_buttons & blit::HOME)) {
     blit_menu();
   }
+
+  MenuController::shared()->update();
 
   blit_last_buttons = blit::buttons;
   //flip_cycle_count = DWT->CYCCNT - scc;

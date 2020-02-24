@@ -20,6 +20,9 @@
 #include "types/point.hpp"
 #include "types/rect.hpp"
 #include "types/size.hpp"
+#include "engine/menu/menuController.hpp"
+#include "engine/menu/menu.hpp"
+#include "engine/menu/menuItem.hpp"
 
 #undef M_PI
 #define M_PI           3.14159265358979323846f  /* pi */

@@ -59,6 +59,8 @@ void init() {
   map.add_layer("ground", layer);
   map.layers["ground"].transforms = layer_transforms;
 
+  MenuController::shared()->set_game_menu(&menu);
+
   // Load our map sprites into the __sprites space we've reserved
   sprites = SpriteSheet::load(packed_data, __sprites);
   sprites->generate_mipmaps(3);
@@ -196,15 +198,14 @@ void render(uint32_t time_ms) {
     screen.rectangle(Rect(i * (block_size + 1) + 1 + 13, screen.bounds.h - block_size - 1, block_size, block_size));
   }
 
-  menu.render(time_ms);
+  // menu.render(time_ms);
 }
 
 void update(uint32_t time) {
-
-  if (pressed(Button::MENU)) { menu.presented = true; }
+  // menu.update(time);
   
   // We dont want the game to still be playing in the background
-  if (menu.presented) { return; }
+  // if (menu.is_presented) { return; }
   
   static float angle_delta = 0.0f;
 
