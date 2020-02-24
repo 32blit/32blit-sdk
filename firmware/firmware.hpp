@@ -47,3 +47,30 @@ struct {
     }
   }
 } progress;
+
+// error message
+struct {
+  std::string message;
+  int32_t updated_ms = 0;
+
+  void show(std::string message) {
+    this->message = message;
+    this->updated_ms = blit::now();
+	  render_yield();
+  }
+
+  void hide() {
+    this->message = "";
+	  render_yield();
+  }
+
+  void draw() {      
+    // show error if less than 5 seconds old
+    if(this->message != "" && (blit::now() - this->updated_ms) < 5000) {
+      screen.pen = Pen(100, 0, 0, 150);
+		  screen.rectangle(Rect(0, 0, 320, 25));
+      screen.pen = Pen(255, 255, 255);
+      screen.text(this->message, minimal_font, Point(5, 5));
+    }
+  }
+} error;

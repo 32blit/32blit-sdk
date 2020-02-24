@@ -25,9 +25,10 @@
 #include "usbd_core.h"
 #include "usbd_desc.h"
 #include "usbd_cdc.h"
-#include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN Includes */
+
+#include "usb-serial.hpp"
 
 /* USER CODE END Includes */
 
@@ -67,7 +68,6 @@ void MX_USB_DEVICE_Init(void)
   /* USER CODE BEGIN USB_DEVICE_Init_PreTreatment */
   
   /* USER CODE END USB_DEVICE_Init_PreTreatment */
-  
   /* Init Device Library, add supported class and start the library. */
   if (USBD_Init(&hUsbDeviceHS, &HS_Desc, DEVICE_HS) != USBD_OK)
   {

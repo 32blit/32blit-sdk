@@ -2,8 +2,8 @@
   32blit firmware. shows main menu and handles file transfers.
 
   this work is based on heavily on the original concept implemented
-  by andrewcapon. any genius may safely be attributed to him and any
-  faults can be attributed to lowfatcode.
+  by andrewcapon. any genius may safely be attributed to him while 
+  any faults can be attributed to lowfatcode.
 
   author: lowfatcode (standing on the shoulders of andrewcapon)
   created: 23rd feb 2020
@@ -15,7 +15,6 @@
 #include <cmath>
 #include "quadspi.h"
 #include "usbd_def.h"
-#include "usbd_cdc_if.h"
 #include "usb-serial.hpp"
 #include "core-debug.hpp"
 #include <cstring>
@@ -23,9 +22,8 @@
 #include <stdlib.h>
 
 using namespace blit;
-using namespace cdc;
+using namespace usb_serial;
  
-
 constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 
 std::vector<FileInfo> files;
@@ -64,7 +62,7 @@ CommandState usb_cdc_reset(CommandState state, char *data, uint32_t length) {
 }
 
 CommandState usb_cdc_application_location(CommandState state, char *data, uint32_t length) {
-  while(USBD_BUSY == CDC_Transmit_HS((uint8_t *)"32BL_EXT", 8)) {};
+  while(USBD_BUSY == transmit("32BL_EXT")) {};
 	HAL_Delay(250);
 	return CommandState::END;
 }
@@ -75,9 +73,9 @@ void init()
   set_screen_mode(ScreenMode::hires);
   load_file_list();
 
-  cdc::register_command_handler("RESET", usb_cdc_reset);
-  cdc::register_command_handler("INFO", usb_cdc_application_location);
-  cdc::register_command_handler("SAVE", usb_cdc_save_to_sd_card);
+  register_command_handler("RESET", usb_cdc_reset);
+  register_command_handler("INFO", usb_cdc_application_location);
+  register_command_handler("SAVE", usb_cdc_save_to_sd_card);
 }
 
 void background(uint32_t time_ms) {  
@@ -139,6 +137,7 @@ void render(uint32_t time_ms)
   screen.watermark();
   
   progress.draw();
+  error.draw();
 }
 
 
@@ -256,7 +255,7 @@ CommandState usb_cdc_save_to_sd_card(CommandState state, char *data, uint32_t le
   if(state == CommandState::TIMEOUT) {    
     // if the stream times out then clean up ready for another go
     std::string message = std::string("Writing file '") + filename + std::string("' to SD card timed out.");
-    debug::debug(message);        
+    error.show(message);        
     progress.hide();
     f_close(&file);
     memset(filename, 0, sizeof(filename));    
@@ -284,7 +283,7 @@ CommandState usb_cdc_save_to_sd_card(CommandState state, char *data, uint32_t le
       // open the file for writing
       if(f_open(&file, filename, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) {       
         std::string message = std::string("Couldn't open file '") + filename + std::string("' for writing on SD card.");
-        debug::debug(message);        
+        error.show(message);        
         f_close(&file);     
         return CommandState::ERROR;
       }
@@ -298,7 +297,7 @@ CommandState usb_cdc_save_to_sd_card(CommandState state, char *data, uint32_t le
       
       if(f_write(&file, data, length, &bytes_written) != FR_OK) {
         std::string message = std::string("Couldn't write to file '") + filename + std::string("' on SD card.");
-        debug::debug(message);        
+        error.show(message);        
         f_close(&file);
         return CommandState::ERROR;        
       }

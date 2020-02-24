@@ -3,8 +3,8 @@
   serial and dispatches it to the appropriate handler.
 
   this work is based on heavily on the original concept implemented
-  by andrewcapon. any genius may safely be attributed to him and any
-  faults can be attributed to lowfatcode.
+  by andrewcapon. any genius may safely be attributed to him while 
+  any faults can be attributed to lowfatcode.
 
   author: lowfatcode (standing on the shoulders of andrewcapon)
   created: 23rd feb 2020
@@ -23,7 +23,67 @@
 
 extern USBD_HandleTypeDef hUsbDeviceHS;
 
-namespace cdc {
+static int8_t CDC_Init_HS(void)
+{
+  usb_serial::init();  
+
+  return USBD_OK;
+}
+
+static int8_t CDC_DeInit_HS()
+{
+  return USBD_OK;
+}
+
+static int8_t CDC_Control_HS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
+{
+  // 115200bps, 1stop, no parity, 8bit
+  static uint8_t lineCoding[7] = { 0x00, 0xC2, 0x01, 0x00, 0x00, 0x00, 0x08 };
+
+  switch(cmd) {
+  case CDC_SEND_ENCAPSULATED_COMMAND: break;
+  case CDC_GET_ENCAPSULATED_RESPONSE: break;
+  case CDC_SET_COMM_FEATURE: break;
+  case CDC_GET_COMM_FEATURE: break;
+  case CDC_CLEAR_COMM_FEATURE: break;
+  case CDC_SET_CONTROL_LINE_STATE: break;
+  case CDC_SEND_BREAK: break;
+  case CDC_SET_LINE_CODING:
+    memcpy(lineCoding, pbuf, sizeof(lineCoding)); 
+    break;
+  case CDC_GET_LINE_CODING: 
+    memcpy(pbuf, lineCoding, sizeof(lineCoding)); 
+    break;
+  default:
+    break;
+  }
+
+  return (USBD_OK);
+}
+
+static int8_t CDC_Receive_HS(uint8_t* Buf, uint32_t *Len)
+{ 
+  usb_serial::data_received(*Len);
+  return USBD_OK;
+}
+
+uint8_t CDC_Transmit_HS(uint8_t* Buf, uint16_t Len)
+{
+  USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceHS.pClassData;
+  
+  if(hcdc->TxState != 0) { return USBD_BUSY; }
+
+  USBD_CDC_SetTxBuffer(&hUsbDeviceHS, Buf, Len);  
+  return USBD_CDC_TransmitPacket(&hUsbDeviceHS);
+}
+
+USBD_CDC_ItfTypeDef USBD_Interface_fops_HS =
+{
+  CDC_Init_HS, CDC_DeInit_HS, CDC_Control_HS, CDC_Receive_HS
+};
+
+
+namespace usb_serial {
 
   std::map<std::string, CommandHandler> handlers;
 
@@ -43,6 +103,10 @@ namespace cdc {
     }
 
     request_new_packet();
+  }
+
+  bool transmit(const char *p) {
+    return CDC_Transmit_HS(p, strlen(p) + 1) == USBD_OK;
   }
   
   void request_new_packet() {    

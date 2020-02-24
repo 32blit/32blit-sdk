@@ -2,8 +2,13 @@
 
 #include <stdint.h>
 #include <map>
+#include "usbd_cdc.h"
 
-namespace cdc {
+extern "C" {
+  extern USBD_CDC_ItfTypeDef USBD_Interface_fops_HS;
+}
+
+namespace usb_serial {
 
   enum class CommandState {STREAM, END, ERROR, TIMEOUT};
 
@@ -17,7 +22,8 @@ namespace cdc {
   extern std::map<std::string, CommandHandler> handlers;
   
   void init();
-  void data_received(uint32_t length);  
+  void data_received(uint32_t length);
+  bool transmit(const char *p);
   void parse_command();
   void register_command_handler(std::string command, CommandHandler handler);    
 

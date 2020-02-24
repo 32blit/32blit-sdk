@@ -92,7 +92,7 @@ int main(void)
 
     blit_tick();
 
-    cdc::parse_command();
+    usb_serial::parse_command();
 
     uint32_t t_elapsed = blit::now() - t_start;
   }
