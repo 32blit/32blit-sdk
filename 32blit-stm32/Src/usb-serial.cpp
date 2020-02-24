@@ -139,7 +139,7 @@ namespace usb_serial {
   // appropriate handler, then streams all incoming data directly to
   // the handler until the command processing is complete
   void parse_command() {
-    constexpr uint32_t PARSE_STREAM_TIMEOUT = 250;
+    constexpr uint32_t PARSE_STREAM_TIMEOUT = 500;
     static    uint32_t last_packet_time_ms = blit::now();
 
     static CommandHandler handler = nullptr;

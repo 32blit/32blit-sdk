@@ -41,14 +41,6 @@ except OSError:
   print("The port may not exist or you may not have permission to access it.")
   sys.exit(os.EX_OSFILE)
 
-# then transmit the image across with 
-#
-# SAVE
-# (null)
-# length as string
-# (null)
-# binary data
-
 file_size = os.stat(path).st_size 
 file_name = os.path.basename(path)
 sent_byte_count = 0
@@ -63,21 +55,13 @@ serial_port.reset_output_buffer()
 command = "SAVE\x00{0}\x00{1}\x00".format(file_name, file_size)
 serial_port.write(bytes(command, "ascii"))
 
-#serial_port.write(b"32BL")
-#serial_port.write(b"SAVE\x00")
-#serial_port.write(bytes("{0}\x00".format(file_name), "ascii"))
-#serial_port.write(bytes("{0}\x00".format(file_size), "ascii"))
-#serial_port.flush()
-
 with open(path, "rb") as f:
   progress = tqdm(total=file_size, desc="Flashing...", unit_scale=True, unit_divisor=1024, unit="B", ncols=70, dynamic_ncols=True)
 
   while sent_byte_count < file_size:
     data = f.read(chunk_size)
-    serial_port.write(data)
-    #serial_port.flush()
-
-    
+    serial_port.write(data)    
     sent_byte_count += chunk_size
     progress.update(chunk_size)
     
+  progress.close()
