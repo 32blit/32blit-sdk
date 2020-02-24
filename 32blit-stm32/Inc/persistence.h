@@ -7,6 +7,8 @@ switches into bootloader mode and jumps between internal/external flash.
 
 This storage will not survive a loss of power.
 */
+#pragma once
+
 struct Persist {
   uint32_t magic_word;
   float volume;
