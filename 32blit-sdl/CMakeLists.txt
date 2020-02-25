@@ -14,7 +14,7 @@ if(EMSCRIPTEN)
 			"-s;USE_SDL=2;-s ;USE_SDL_IMAGE=2"
 	)
 
-	set(SDL2_LIBRARIES "-s USE_SDL=2" "-s USE_SDL_IMAGE=2")
+	set(SDL2_LIBRARIES "-s USE_SDL=2")
 	set(SDL2_IMAGE_LIBRARY "-s USE_SDL_IMAGE=2")
 else()
 	# attempt to find the framework (find_package won't work as there's no config file)
