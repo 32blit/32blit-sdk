@@ -39,7 +39,7 @@ void CDCCommandStream::Stream(void)
 	}
 
 	// restart USB CDC if fifo was full
-	if(m_bNeedsUSBResume)
+	if(m_bNeedsUSBResume && m_uFifoUsedCount == 0)
 	{
 		m_bNeedsUSBResume = false;
 	  USBD_CDC_SetRxBuffer(&hUsbDeviceHS, GetFifoWriteBuffer());
@@ -178,7 +178,7 @@ uint32_t CDCCommandStream::GetTimeTaken(void)
 uint8_t	*CDCCommandStream::GetFifoWriteBuffer(void)
 {
 	uint8_t *pData = NULL;
-	if(m_uFifoUsedCount < CDC_FIFO_BUFFERS)
+	if(m_uFifoUsedCount < CDC_FIFO_BUFFERS - 1)
 	{
 		pData = m_fifoElements[m_uFifoWritePos].m_data;
 	}
