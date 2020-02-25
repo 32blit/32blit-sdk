@@ -49,7 +49,10 @@ FRAMEBUFFER (rw)    : ORIGIN = 0x3000FC00, LENGTH = 225K
 RAM_D3 (xrw)        : ORIGIN = 0x38000000, LENGTH =  64K
 PERSIST (rw)        : ORIGIN = 0x38800000, LENGTH =   4K
 ITCMISR (xrw)       : ORIGIN = 0x00000000, LENGTH =   4K
-ITCMRAM (xrw)       : ORIGIN = 0x00001000, LENGTH =  60K
+ITCMRAM (xrw)       : ORIGIN = 0x00001000, LENGTH =  58K
+
+API (rw)            : ORIGIN = 0x0000f800, LENGTH = 2K
+
 /* Flash location depends on whether we are building for internal or external flash. */
 /* This defaults to external and can be overridden on the linker command line. */
 FLASH (rx)          : ORIGIN = DEFINED(FLASH_TARGET_INT) ? 0x08000000 : 0x90000000,
@@ -188,6 +191,14 @@ SECTIONS
     __persist_start = .;
     KEEP(*(.persist))         /* Persistent data section */
     __persist_end = .;
+  } >API
+
+  .api (NOLOAD):
+  {
+    . = ALIGN(4);
+    __api_start = .;
+    KEEP(*(.api))         /* Persistent data section */
+    __api_end = .;
   } >PERSIST
 
   .fb (NOLOAD):

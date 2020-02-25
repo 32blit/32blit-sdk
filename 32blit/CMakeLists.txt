@@ -2,6 +2,7 @@ set(SOURCES
 	audio/audio.cpp
 	engine/engine.cpp
 	engine/file.cpp
+	engine/api.cpp
 	engine/input.cpp
 	engine/output.cpp
 	engine/particle.cpp

@@ -47,6 +47,11 @@ bool needs_render = true;
 uint32_t flip_cycle_count = 0;
 float volume_log_base = 2.0f;
 
+uint8_t battery_vbus_status;
+uint8_t battery_charge_status;
+uint8_t battery_fault;
+float battery;
+
 const uint32_t long_press_exit_time = 1000;
 
 uint32_t home_button_pressed_time = 0;
@@ -328,7 +333,7 @@ void blit_menu_render(uint32_t time) {
 
   screen.text("bat", minimal_font, Point(screen_width / 2, 5));
   uint16_t battery_meter_width = 55;
-  battery_meter_width = float(battery_meter_width) * (blit::battery - 3.0f) / 1.1f;
+  battery_meter_width = float(battery_meter_width) * (battery - 3.0f) / 1.1f;
   battery_meter_width = std::max((uint16_t)0, std::min((uint16_t)55, battery_meter_width));
 
   screen.pen = bar_background_color;
@@ -415,20 +420,20 @@ void blit_menu() {
 }
 
 void blit_update_vibration() {
-    __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, vibration * 2000.0f);
+    __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, blit::vibration * 2000.0f);
 }
 
 void blit_update_led() {
     // RED Led
-    float compare_r = (LED.r * 10000) / 255;
+    float compare_r = (blit::LED.r * 10000) / 255;
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_3, compare_r);
 
     // GREEN Led
-    float compare_g = (LED.g * 10000) / 255;
+    float compare_g = (blit::LED.g * 10000) / 255;
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_4, compare_g);
   
     // BLUE Led
-    float compare_b = (LED.b * 10000) / 255;
+    float compare_b = (blit::LED.b * 10000) / 255;
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2, compare_b);
 
     // Backlight
@@ -534,14 +539,14 @@ void blit_process_input() {
   blit::hack_left = (adc3data[0] >> 1) / 32768.0f;
   blit::hack_right = (adc3data[1] >> 1)  / 32768.0f;
 
-  blit::battery = 6.6f * adc3data[2] / 65535.0f;
+  battery = 6.6f * adc3data[2] / 65535.0f;
 
   if(blit::now() - last_battery_update > 5000) {
     uint8_t status = bq24295_get_status(&hi2c4);
-    blit::battery_vbus_status = status >> 6; // 00 - Unknown, 01 - USB Host, 10 - Adapter port, 11 - OTG
-    blit::battery_charge_status = (status >> 4) & 0b11; // 00 - Not Charging, 01 - Pre-charge, 10 - Fast Charging, 11 - Charge Termination Done
+    battery_vbus_status = status >> 6; // 00 - Unknown, 01 - USB Host, 10 - Adapter port, 11 - OTG
+    battery_charge_status = (status >> 4) & 0b11; // 00 - Not Charging, 01 - Pre-charge, 10 - Fast Charging, 11 - Charge Termination Done
 
-    blit::battery_fault = bq24295_get_fault(&hi2c4);
+    battery_fault = bq24295_get_fault(&hi2c4);
 
     last_battery_update = blit::now();
   }
