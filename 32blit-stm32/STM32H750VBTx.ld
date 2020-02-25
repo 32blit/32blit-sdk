@@ -185,20 +185,20 @@ SECTIONS
     __ltdc_end = .;
   } >LTDC
 
+  .api (NOLOAD):
+  {
+    . = ALIGN(4);
+    __api_start = .;
+    KEEP(*(.api))         /* api data section */
+    __api_end = .;
+  } >API
+
   .persist (NOLOAD):
   {
     . = ALIGN(4);
     __persist_start = .;
     KEEP(*(.persist))         /* Persistent data section */
     __persist_end = .;
-  } >API
-
-  .api (NOLOAD):
-  {
-    . = ALIGN(4);
-    __api_start = .;
-    KEEP(*(.api))         /* Persistent data section */
-    __api_end = .;
   } >PERSIST
 
   .fb (NOLOAD):
