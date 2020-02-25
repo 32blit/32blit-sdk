@@ -7,20 +7,23 @@ import sys
 import os
 import os.path
 import time
+import threading
 from tqdm import tqdm
 
 
 parser = argparse.ArgumentParser(description='32blit binary flasher.')
-parser.add_argument("file", help="Path to the binary file (e.g. 'build.stm32/voxel.bin')")
+parser.add_argument("command", help="Command to perform (e.g. 'save', 'dfu', 'reset')", default="save")
 parser.add_argument("port", help="Name of the serial port (e.g. 'COM4', '/dev/ttyS4', etc.)")
 parser.add_argument("--target", help="Target either 'sd' or 'flash'", default="sd", choices=["sd", "flash"])
+parser.add_argument("--no-read", help="Do not wait to read responses", action="store_true")
+parser.add_argument("file", help="Path to the binary file (e.g. 'build.stm32/voxel.bin')", nargs='?')
 args = parser.parse_args()
 
 print("32blit binary flasher.")
 
 port = args.port
+command = args.command
 target = args.target
-path = args.file
 
 valid_ports = [port[0] for port in serial.tools.list_ports.comports()]
 
@@ -28,40 +31,83 @@ if port not in valid_ports:
   print("Specified port '{0}' not valid".format(port))
   sys.exit(os.EX_OSFILE)
 
-if not os.path.isfile(path):
-  print("Specified binary file '{0}' does not exist".format(path))
-  sys.exit(os.EX_NOINPUT)
-
 serial_port = None
 
 try:
   serial_port = serial.Serial(port, 115200, timeout=1)
+  serial_port.reset_output_buffer()
 except OSError:
   print("Could not open port '{0}'".format(port))
   print("The port may not exist or you may not have permission to access it.")
   sys.exit(os.EX_OSFILE)
 
-file_size = os.stat(path).st_size 
-file_name = os.path.basename(path)
-sent_byte_count = 0
-chunk_size = 64
+if not args.no_read:
+  # read thread constantly polls for responses from 32blit and
+  # outputs them to the screen
+  def read_serial(serial_port):
+    while True:
+      data = serial_port.read_until(b"\0").decode()
+      if data:
+        print(data)
 
-# such reset, very boot
-#serial_port.write(b"32BL_RST\x00")
-#sys.exit()
+  read_thread = threading.Thread(target=read_serial, args=(serial_port,))
+  read_thread.start()
 
-serial_port.reset_output_buffer()
+print(command)
 
-command = "SAVE\x00{0}\x00{1}\x00".format(file_name, file_size)
-serial_port.write(bytes(command, "ascii"))
+if command == "save":
+  path = args.file
+  if not os.path.isfile(path):
+    print("Specified binary file '{0}' does not exist".format(path))
+    sys.exit(os.EX_NOINPUT)
 
-with open(path, "rb") as f:
-  progress = tqdm(total=file_size, desc="Flashing...", unit_scale=True, unit_divisor=1024, unit="B", ncols=70, dynamic_ncols=True)
+  file_size = os.stat(path).st_size 
+  file_name = os.path.basename(path)
 
-  while sent_byte_count < file_size:
-    data = f.read(chunk_size)
-    serial_port.write(data)    
-    sent_byte_count += chunk_size
-    progress.update(chunk_size)
-    
-  progress.close()
+  # send the save command to 32blit
+  data = "SAVE\x00{0}\x00{1}\x00".format(file_name, file_size)
+  serial_port.write(bytes(data, "ascii"))
+
+  # transmit the file data to 32blit
+  sent_byte_count = 0
+  chunk_size = 64
+  with open(path, "rb") as f:
+    progress = tqdm(total=file_size, desc="Flashing...", unit_scale=True, unit_divisor=1024, unit="B", ncols=70, dynamic_ncols=True)
+
+    while sent_byte_count < file_size:
+      # last chunk may be smaller than 64 bytes
+      if file_size - sent_byte_count < chunk_size:
+        chunk_size = file_size - sent_byte_count
+
+      # read chunk from file
+      data = f.read(chunk_size)
+
+      # transmit it to 32blit
+      serial_port.write(data)    
+      sent_byte_count += chunk_size
+
+      # update progress bar    
+      progress.update(chunk_size)
+      
+    progress.close()
+
+if command == "dfu":
+  # send the dfu command to 32blit
+  data = "DFU\x00"
+  serial_port.write(bytes(data, "ascii"))
+
+if command == "reset":
+  # send the dfu command to 32blit
+  data = "RESET\x00"
+  serial_port.write(bytes(data, "ascii"))
+
+if not args.no_read:
+  # wait for any responses
+  print("Reading responses from 32blit. Press Ctrl+C to quit.")
+  try:
+    while True:
+      pass 
+  except KeyboardInterrupt:
+    read_thread.stop()    
+
+time.sleep(1)

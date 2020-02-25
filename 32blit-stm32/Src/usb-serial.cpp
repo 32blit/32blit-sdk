@@ -87,7 +87,7 @@ namespace usb_serial {
 
   std::map<std::string, CommandHandler> handlers;
 
-  constexpr uint32_t MAX_PACKETS = 16;
+  constexpr uint32_t MAX_PACKETS = 64;
   Packet packets[MAX_PACKETS];
   std::vector<Packet*> free_packets;
 
@@ -174,7 +174,7 @@ namespace usb_serial {
           // the command handle must return true when it has finished processing
           // the entire command (even if this is across multiple packets)
           CommandState result = handler(CommandState::STREAM, packet->data, packet->length);
-
+          
           if(result == CommandState::END) {    
             // command stream is complete, detach handler
             handler = nullptr;

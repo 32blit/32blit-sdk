@@ -54,14 +54,23 @@ void select_file(const char *filename) {
 
 Vec2 list_offset(5.0f, 0.0f);
 
-CommandState usb_cdc_save_to_sd_card(CommandState state, char *data, uint32_t length);
+CommandState usb_serial_save_to_sd_card(CommandState state, char *data, uint32_t length);
 
-CommandState usb_cdc_reset(CommandState state, char *data, uint32_t length) {
+CommandState usb_serial_reset(CommandState state, char *data, uint32_t length) {
   NVIC_SystemReset();
   return CommandState::END;
 }
 
-CommandState usb_cdc_application_location(CommandState state, char *data, uint32_t length) {
+CommandState usb_serial_dfu(CommandState state, char *data, uint32_t length) {
+  *((uint32_t *)0x2001FFFC) = 0xCAFEBABE;
+
+  SCB_CleanDCache();
+  NVIC_SystemReset();
+
+  return CommandState::END;
+}
+
+CommandState usb_serial_application_location(CommandState state, char *data, uint32_t length) {
   while(USBD_BUSY == transmit("32BL_EXT")) {};
 	HAL_Delay(250);
 	return CommandState::END;
@@ -73,9 +82,10 @@ void init()
   set_screen_mode(ScreenMode::hires);
   load_file_list();
 
-  register_command_handler("RESET", usb_cdc_reset);
-  register_command_handler("INFO", usb_cdc_application_location);
-  register_command_handler("SAVE", usb_cdc_save_to_sd_card);
+  register_command_handler("RESET", usb_serial_reset);
+  register_command_handler( "INFO", usb_serial_application_location);
+  register_command_handler( "SAVE", usb_serial_save_to_sd_card);
+  register_command_handler(  "DFU", usb_serial_dfu);
 }
 
 void background(uint32_t time_ms) {  
@@ -193,7 +203,7 @@ void update(uint32_t time)
 
 bool flash_from_sd_to_qspi_flash(const std::string &filename)
 {  
-  static uint8_t file_buffer[4 * 1024];
+  static uint8_t file_buffer[256];
 
 	FIL file;
 	if(f_open(&file, filename.c_str(), FA_READ) != FR_OK) {
@@ -248,7 +258,7 @@ bool flash_from_sd_to_qspi_flash(const std::string &filename)
 
 // when a command is issued (e.g. "PROG" or "SAVE") then this function is called
 // whenever new data is received to allow the firmware to process it.
-CommandState usb_cdc_save_to_sd_card(CommandState state, char *data, uint32_t length) {
+CommandState usb_serial_save_to_sd_card(CommandState state, char *data, uint32_t length) {
   static char   filename[64] = {'\0'};
   static FIL    file;
   
@@ -301,6 +311,8 @@ CommandState usb_cdc_save_to_sd_card(CommandState state, char *data, uint32_t le
         f_close(&file);
         return CommandState::ERROR;        
       }
+
+      //f_sync(&file);
       
       bytes_processed += bytes_written;
 
@@ -310,6 +322,7 @@ CommandState usb_cdc_save_to_sd_card(CommandState state, char *data, uint32_t le
         load_file_list();
         select_file(filename);
         f_close(&file);
+        
         memset(filename, 0, sizeof(filename));
         return CommandState::END;
       }else{

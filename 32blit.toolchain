@@ -37,7 +37,6 @@ set(COMMON_FLAGS "${MCU_FLAGS} -Wall -fdata-sections -ffunction-sections -Wattri
 set(CMAKE_C_FLAGS_INIT "${COMMON_FLAGS}")
 set(CMAKE_CXX_FLAGS_INIT "${COMMON_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g -Og")
-#set(CMAKE_EXE_LINKER_FLAGS_INIT "-specs=nano.specs -T ${MCU_LINKER_SCRIPT} -Wl,--gc-sections")
 
 set(CMAKE_EXE_LINKER_FLAGS_INIT "-specs=nosys.specs -Wl,--gc-sections,--no-wchar-size-warning")
 
