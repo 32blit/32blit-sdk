@@ -55,7 +55,8 @@
   .weak  do_init
   .type  do_init, %function
 do_init:
-
+  push {r4, lr}
+  mov r4, r0
 
 // Copy the data segment initializers from flash to SRAM
   movs  r1, #0
@@ -63,6 +64,7 @@ do_init:
 
 CopyDataInit:
   ldr  r3, =_sidata
+  add r3, r4
   ldr  r3, [r3, r1]
   str  r3, [r0, r1]
   adds  r1, r1, #4
@@ -87,12 +89,11 @@ LoopFillZerobss:
   cmp  r2, r3
   bcc  FillZerobss
 
-  push {lr}
 // Call static constructors
   bl __libc_init_array
 // Call the application's entry point.
   bl cpp_do_init
-  pop {pc}
+  pop {r4, pc}
 
 /*****************************************************************************
 *

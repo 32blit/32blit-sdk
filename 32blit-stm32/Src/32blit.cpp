@@ -916,8 +916,8 @@ void blit_switch_execution(uint32_t address)
 
     if(game_header->magic == blit_game_magic) {
       // load function pointers
-      auto init = (BlitInitFunction)((uint8_t *)game_header->init);
-      if(!init()) {
+      auto init = (BlitInitFunction)((uint8_t *)game_header->init + address);
+      if(!init(address)) {
         // this would just be a return, but qspi is already mapped by this point
         persist.reset_target = prtFirmware;
         SCB_CleanDCache();
@@ -927,8 +927,8 @@ void blit_switch_execution(uint32_t address)
   
       persist.last_game_offset = address;
 
-      blit::render = user_render = (BlitRenderFunction) ((uint8_t *)game_header->render);
-      do_tick = user_tick = (BlitTickFunction) ((uint8_t *)game_header->tick);
+      blit::render = user_render = (BlitRenderFunction) ((uint8_t *)game_header->render + address);
+      do_tick = user_tick = (BlitTickFunction) ((uint8_t *)game_header->tick + address);
       return;
     }
     // anything flashed at a non-zero offset should have a valid header
