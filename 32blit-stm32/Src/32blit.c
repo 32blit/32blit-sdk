@@ -84,6 +84,24 @@ void blit_debug(std::string message) {
   screen.text(message, minimal_font, Point(0, 0));
 }
 
+void EnableUsTimer(void)
+{
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+}
+
+uint32_t GetUsTimer(void)
+{
+	uint32_t uTicksPerUs = SystemCoreClock / 1000000;
+	return DWT->CYCCNT/uTicksPerUs;
+}
+
+uint32_t GetMaxUsTimer(void)
+{
+	uint32_t uTicksPerUs = SystemCoreClock / 1000000;
+	return UINT32_MAX / uTicksPerUs;
+}
+
 void blit_tick() {
   if(display::needs_render) {
     blit::render(blit::now());
@@ -189,6 +207,10 @@ void blit_init() {
     blit::file_exists = ::file_exists;
     blit::directory_exists = ::directory_exists;
     blit::create_directory = ::create_directory;
+
+    blit::api.EnableUsTimer = ::EnableUsTimer;
+    blit::api.GetUsTimer = ::GetUsTimer;
+    blit::api.GetMaxUsTimer = ::GetMaxUsTimer;
 
     blit::switch_execution = blit_switch_execution;
 
@@ -691,23 +713,5 @@ void blit_switch_execution(void)
 	while(1)
 	{
 	}
-}
-
-void EnableUsTimer(void)
-{
-  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-}
-
-uint32_t GetUsTimer(void)
-{
-	uint32_t uTicksPerUs = SystemCoreClock / 1000000;
-	return DWT->CYCCNT/uTicksPerUs;
-}
-
-uint32_t GetMaxUsTimer(void)
-{
-	uint32_t uTicksPerUs = SystemCoreClock / 1000000;
-	return UINT32_MAX / uTicksPerUs;
 }
 

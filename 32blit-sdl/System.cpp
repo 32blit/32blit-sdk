@@ -64,6 +64,27 @@ uint32_t blit_random() {
 	return random_distribution(random_generator);
 }
 
+
+// us timer used by profiler
+
+void EnableUsTimer(void)
+{
+	// Enable/initialise timer
+}
+
+uint32_t GetUsTimer(void)
+{
+	// get current time in us
+	uint64_t ticksPerUs = SDL_GetPerformanceFrequency() / 1000000;
+	return SDL_GetPerformanceCounter() / ticksPerUs;
+}
+
+uint32_t GetMaxUsTimer(void)
+{
+	// largest us value timer can produce for wrapping
+	return UINT32_MAX;
+}
+
 // SDL events
 const Uint32 System::timer_event = SDL_RegisterEvents(2);
 const Uint32 System::loop_event = System::timer_event + 1;
@@ -122,6 +143,10 @@ void System::run() {
 	blit::file_exists = ::file_exists;
 	blit::directory_exists = ::directory_exists;
 	blit::create_directory = ::create_directory;
+
+	blit::api.EnableUsTimer = ::EnableUsTimer;
+	blit::api.GetUsTimer = ::GetUsTimer;
+	blit::api.GetMaxUsTimer = ::GetMaxUsTimer;
 
 	::set_screen_mode(blit::lores);
 
@@ -250,26 +275,4 @@ void System::stop() {
 
 	SDL_SemPost(s_timer_stop);
 	SDL_WaitThread(t_system_timer, &returnValue);
-}
-
-
-// us timer used by profiler
-// need code here for non stm32 based builds
-
-void EnableUsTimer(void)
-{
-	// Enable/initialise timer
-}
-
-uint32_t GetUsTimer(void)
-{
-	// get current time in us
-	uint64_t ticksPerUs = SDL_GetPerformanceFrequency() / 1000000;
-	return SDL_GetPerformanceCounter() / ticksPerUs;
-}
-
-uint32_t GetMaxUsTimer(void)
-{
-	// largest us value timer can produce for wrapping
-	return UINT32_MAX;
 }

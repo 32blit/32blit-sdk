@@ -28,6 +28,11 @@ namespace blit {
     int32_t (*close_file)(void *fh);
     uint32_t (*get_file_length)(void *fh);
     std::vector<FileInfo> (*list_files) (std::string path);
+
+    // profiler
+    void (*EnableUsTimer)(void);
+    uint32_t (*GetUsTimer)(void);
+    uint32_t (*GetMaxUsTimer)(void);
   
   };
   #pragma pack(pop)

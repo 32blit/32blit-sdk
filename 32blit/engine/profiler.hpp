@@ -21,10 +21,6 @@
 #include "running_average.hpp"
 #include "graphics/surface.hpp"
 
-extern void EnableUsTimer(void);
-extern uint32_t GetUsTimer(void);
-uint32_t GetMaxUsTimer(void);
-
 
 namespace blit
 {
@@ -81,10 +77,7 @@ public:
 		}
 	};
 
-	void Start(void)
-	{
-		m_uStartUs = GetUsTimer();
-	}
+	void Start(void);
 
 	void Clear(void)
 	{
@@ -92,38 +85,7 @@ public:
 		m_uStartUs = 0;
 	}
 
-	uint32_t StoreElapsedUs(bool bRestart = false)
-	{
-		if(m_uStartUs)
-		{
-			uint32_t uCurrentUs = GetUsTimer();
-			if(uCurrentUs >= m_uStartUs)
-				m_metrics.uElapsedUs = uCurrentUs - m_uStartUs;
-			else
-				m_metrics.uElapsedUs = (GetMaxUsTimer() - m_uStartUs) + uCurrentUs;
-
-			m_metrics.uMinElapsedUs = std::min(m_metrics.uMinElapsedUs, m_metrics.uElapsedUs);
-			m_metrics.uMaxElapsedUs = std::max(m_metrics.uMaxElapsedUs, m_metrics.uElapsedUs);
-			if(m_pRunningAverage)
-			{
-				if(m_uRunningAverageSpanIndex == 0)
-				{
-					m_pRunningAverage->Add((float)m_metrics.uElapsedUs);
-					m_metrics.uAvgElapsedUs = m_pRunningAverage->Average();
-					m_uRunningAverageSpanIndex = m_uRunningAverageSpan-1;
-				}
-				else
-					m_uRunningAverageSpanIndex--;
-			}
-			else
-				m_metrics.uAvgElapsedUs = m_metrics.uElapsedUs;
-		}
-
-	  if(bRestart)
-	  	m_uStartUs = GetUsTimer();
-
-	  return m_metrics.uElapsedUs;
-	}
+	uint32_t StoreElapsedUs(bool bRestart = false);
 
 	const Metrics &ElapsedMetrics(void)
 	{
