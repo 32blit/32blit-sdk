@@ -2,12 +2,6 @@
 #include "api_private.hpp"
 
 namespace blit {
-  void *(*open_file)(std::string file, int mode)          = nullptr;
-  int32_t (*read_file)(void *fh, uint32_t offset, uint32_t length, char* buffer) = nullptr;
-  int32_t (*write_file)(void *fh, uint32_t offset, uint32_t length, const char* buffer) = nullptr;
-  int32_t (*close_file)(void *fh)              = nullptr;
-  uint32_t (*get_file_length)(void *fh)        = nullptr;
-
   std::vector<FileInfo> list_files(std::string path) {
     return api.list_files(path);
   }
@@ -19,28 +13,27 @@ namespace blit {
 
   bool File::open(std::string file, int mode) {
     close();
-
-    fh = open_file(file, mode);
+    fh = api.open_file(file, mode);
     return fh != nullptr;
   }
 
   int32_t File::read(uint32_t offset, uint32_t length, char *buffer) {
-    return read_file(fh, offset, length, buffer);
+    return api.read_file(fh, offset, length, buffer);
   }
 
   int32_t File::write(uint32_t offset, uint32_t length, const char *buffer) {
-    return write_file(fh, offset, length, buffer);
+    return api.write_file(fh, offset, length, buffer);
   }
 
   void File::close() {
     if(!fh)
       return;
 
-    close_file(fh);
+    api.close_file(fh);
     fh = nullptr;
   }
 
   uint32_t File::get_length() {
-    return get_file_length(fh);
+    return api.get_file_length(fh);
   }
 }

@@ -22,6 +22,11 @@ namespace blit {
     Surface     &(*set_screen_mode)  (ScreenMode new_mode);
 
     // files
+    void *(*open_file)(std::string file, int mode);
+    int32_t (*read_file)(void *fh, uint32_t offset, uint32_t length, char* buffer);
+    int32_t (*write_file)(void *fh, uint32_t offset, uint32_t length, const char* buffer);
+    int32_t (*close_file)(void *fh);
+    uint32_t (*get_file_length)(void *fh);
     std::vector<FileInfo> (*list_files) (std::string path);
   
   };
