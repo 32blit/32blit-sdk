@@ -41,7 +41,8 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-DTCMRAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 128K
+DTCMRAM (xrw)       : ORIGIN = DEFINED(FLASH_TARGET_INT) ? 0x20000000 : 0x20000400,
+                      LENGTH = DEFINED(FLASH_TARGET_INT) ? 1K : 127K
 /*RAM_D1 (xrw)        : ORIGIN = 0x24000000, LENGTH = 287K*/
 LTDC (rw)           : ORIGIN = 0x24047C00, LENGTH = 225K
 RAM_D2 (xrw)        : ORIGIN = 0x30000000, LENGTH =  63K
