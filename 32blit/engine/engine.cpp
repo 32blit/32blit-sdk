@@ -1,6 +1,7 @@
 /*! \file engine.cpp
 */
 #include "engine.hpp"
+#include "api_private.hpp"
 #include "timer.hpp"
 #include "tweening.hpp"
 
@@ -9,7 +10,11 @@ namespace blit {
   void (*init)()                                    = nullptr;
   void (*update)(uint32_t time)                     = nullptr;
   void (*render)(uint32_t time)                     = nullptr;
-  void (*set_screen_mode)(ScreenMode new_mode)      = nullptr;
+
+  void set_screen_mode(ScreenMode new_mode) {
+    screen = api.set_screen_mode(new_mode);
+  }
+
   uint32_t (*now)()                                 = nullptr;
   uint32_t (*random)()                              = nullptr;
   void (*debug)(std::string message)                = nullptr;

@@ -22,6 +22,7 @@
 #include "usbd_core.h"
 
 #include "32blit.hpp"
+#include "engine/api_private.hpp"
 #include "graphics/color.hpp"
 
 #include "stdarg.h"
@@ -174,7 +175,7 @@ void blit_init() {
     blit::debugf = blit_debugf;
     blit::now = HAL_GetTick;
     blit::random = HAL_GetRandom;
-    blit::set_screen_mode = display::set_screen_mode;
+    blit::api.set_screen_mode = display::set_screen_mode;
     display::set_screen_mode(blit::lores);
     blit::update = ::update;
     blit::render = ::render;

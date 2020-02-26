@@ -55,9 +55,10 @@ namespace display {
     display::needs_render = false;
   }
 
-  void set_screen_mode(ScreenMode new_mode) {
+  Surface &set_screen_mode(ScreenMode new_mode) {
     mode = new_mode;
     screen = mode == ScreenMode::hires ? __fb_hires : __fb_lores;
+    return screen;
   }
 
   void dma2d_hires_flip(const Surface &source) {

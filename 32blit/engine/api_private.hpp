@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 
+#include "engine.hpp"
 #include "../graphics/surface.hpp"
 #include "../types/vec2.hpp"
 #include "../types/vec3.hpp"
@@ -15,6 +16,8 @@ namespace blit {
     Vec2 joystick;
     Vec3 tilt;
     Pen LED;
+
+    Surface     &(*set_screen_mode)  (ScreenMode new_mode);
   };
   #pragma pack(pop)
 

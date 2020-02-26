@@ -18,7 +18,7 @@ extern bool blit_sd_detected();
 extern char __ltdc_start;
 extern void blit_swap();
 extern void blit_flip();
-extern void set_screen_mode(blit::ScreenMode new_mode);
+extern blit::Surface &set_screen_mode(blit::ScreenMode new_mode);
 extern void blit_clear_framebuffer();
 
 // Blit setup and main loop

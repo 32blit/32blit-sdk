@@ -8,6 +8,7 @@
 #include "32blit.hpp"
 #include "UserCode.hpp"
 
+#include "engine/api_private.hpp"
 
 // blit framebuffer memory
 uint8_t framebuffer[320 * 240 * 3];
@@ -30,7 +31,7 @@ int blit_debugf(const char * psFormatString, ...)
 
 // blit screenmode callback
 blit::ScreenMode _mode = blit::ScreenMode::lores;
-void set_screen_mode(blit::ScreenMode new_mode) {
+blit::Surface &set_screen_mode(blit::ScreenMode new_mode) {
 	_mode = new_mode;
 	if (_mode == blit::ScreenMode::hires) {
 		blit::screen = __fb_hires;
@@ -38,6 +39,8 @@ void set_screen_mode(blit::ScreenMode new_mode) {
 	else {
 		blit::screen = __fb_lores;
 	}
+
+	return blit::screen;
 }
 
 // blit timer callback
@@ -104,7 +107,7 @@ void System::run() {
 	blit::random = ::blit_random;
 	blit::debug = ::debug;
 	blit::debugf = ::blit_debugf;
-	blit::set_screen_mode = ::set_screen_mode;
+	blit::api.set_screen_mode = ::set_screen_mode;
 	blit::update = ::update;
 	blit::render = ::render;
 
