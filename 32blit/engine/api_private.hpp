@@ -1,7 +1,9 @@
 #pragma once
 #include <cstdint>
+#include <vector>
 
 #include "engine.hpp"
+#include "file.hpp"
 #include "../graphics/surface.hpp"
 #include "../types/vec2.hpp"
 #include "../types/vec3.hpp"
@@ -18,6 +20,10 @@ namespace blit {
     Pen LED;
 
     Surface     &(*set_screen_mode)  (ScreenMode new_mode);
+
+    // files
+    std::vector<FileInfo> (*list_files) (std::string path);
+  
   };
   #pragma pack(pop)
 

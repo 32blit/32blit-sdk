@@ -1,4 +1,5 @@
 #include "file.hpp"
+#include "api_private.hpp"
 
 namespace blit {
   void *(*open_file)(std::string file, int mode)          = nullptr;
@@ -7,7 +8,10 @@ namespace blit {
   int32_t (*close_file)(void *fh)              = nullptr;
   uint32_t (*get_file_length)(void *fh)        = nullptr;
 
-  std::vector<FileInfo> (*list_files) (std::string path) = nullptr;
+  std::vector<FileInfo> list_files(std::string path) {
+    return api.list_files(path);
+  }
+
   bool (*file_exists) (std::string path) = nullptr;
   bool (*directory_exists) (std::string path) = nullptr;
 
