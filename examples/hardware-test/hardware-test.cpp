@@ -120,46 +120,6 @@ void render(uint32_t time) {
         (float)((cos(blit::now() / 100.0f) + 1) / 2.0f),
         (float)((sin(blit::now() / 100.0f) + 1) / 2.0f)
     );
-
-    screen.text("Bat VBUS:", minimal_font, Point(COL1, ROW3));
-    switch(battery_vbus_status){
-        case 0b00: // Unknown
-            screen.text("Unknown", minimal_font, Point(COL1, ROW3+7));
-            break;
-        case 0b01: // USB Host
-            screen.text("USB Host", minimal_font, Point(COL1, ROW3+7));
-            break;
-        case 0b10: // Adapter Port
-            screen.text("Adapter", minimal_font, Point(COL1, ROW3+7));
-            break;
-        case 0b11: // OTG
-            screen.text("OTG", minimal_font, Point(COL1, ROW3+7));
-            break;
-    }
-
-    screen.text("Bat Chrg:", minimal_font, Point(COL2, ROW3));
-    switch(battery_charge_status){
-        case 0b00: // Not Charging
-            screen.text("Nope", minimal_font, Point(COL2, ROW3+7));
-            break;
-        case 0b01: // Pre-charge
-            screen.text("Pre", minimal_font, Point(COL2, ROW3+7));
-            break;
-        case 0b10: // Fast Charging
-            screen.text("Fast", minimal_font, Point(COL2, ROW3+7));
-            break;
-        case 0b11: // Charge Done
-            screen.text("Done", minimal_font, Point(COL2, ROW3+7));
-            break;
-    }
-
-    snprintf(text_buf, 100, "%d", (int)(blit::battery * 1000.f));
-    screen.text("Battery:", minimal_font, Point(COL3, ROW3));
-    screen.text(text_buf, minimal_font, Point(COL3, ROW3+7));
-
-    snprintf(text_buf, 100, "%d", blit::battery_fault);
-    screen.text("Fault:", minimal_font, Point(COL3, ROW1));
-    screen.text(text_buf, minimal_font, Point(COL3, ROW1+7));
 }
 
 void update(uint32_t time) {
