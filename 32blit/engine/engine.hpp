@@ -9,7 +9,6 @@ namespace blit {
 
   enum   ScreenMode  { lores, hires };
   extern Surface      &screen;
-  extern bool         halted;
 
 
   extern void     (*init)             ();
@@ -20,8 +19,6 @@ namespace blit {
   extern uint32_t (*random)           ();
   extern void     (*debug)            (std::string message);
   extern int      (*debugf)           (const char * psFormatString, ...);
-  extern void     (*reset)            ();
-  extern void     (*reset)            ();
   extern void			(*switch_execution) ();
 
   bool tick(uint32_t time);
