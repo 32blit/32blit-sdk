@@ -177,6 +177,7 @@ class color():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--nowarn', action='store_true', help='Suppress deprecation warning')
     subparsers = parser.add_subparsers(help='Commands', dest='command')
     parser_sprite = subparsers.add_parser('sprite', help='Process an image file into a 32blit asset')
     parser_map = subparsers.add_parser('map', help='Process a map file into a 32blit asset')
@@ -201,6 +202,12 @@ if __name__ == '__main__':
     parser_map.add_argument('--sizey', type=int, help='map size y')
 
     args = parser.parse_args()
+
+    if not args.nowarn:
+        print('''
+This tool has been deprecated in favour of https://github.com/pimoroni/32blit-tools
+Run with --nowarn to hide this message.
+''')
 
     def load_palette(image):
         palette_colours = []
