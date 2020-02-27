@@ -53,7 +53,7 @@ ITCMRAM (xrw)       : ORIGIN = 0x00001000, LENGTH = 60K
 /* Flash location depends on whether we are building for internal or external flash. */
 /* This defaults to external and can be overridden on the linker command line. */
 FLASH (rx)          : ORIGIN = DEFINED(FLASH_TARGET_INT) ? 0x08000000 : 0x90000000,
-                      LENGTH = DEFINED(FLASH_TARGET_INT) ? 0x128K : 32768K
+                      LENGTH = DEFINED(FLASH_TARGET_INT) ? 128K : 32768K
 }
 
 /* Define output sections */
