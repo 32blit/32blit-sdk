@@ -607,6 +607,7 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
   progress.show("Copying from SD card to flash...", bytes_total);
 
   uint32_t got_start = 0, got_end = 0;
+  uint32_t initfini_start = 0, initfini_end = 0;
 
   while(bytes_flashed < bytes_total)
   {
@@ -621,6 +622,9 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
     if(offset == 0 && magic == 0x54494C42 /*BLIT*/) {
       got_start = *((uint32_t *)buffer + 6) - 0x90000000;
       got_end = *((uint32_t *)buffer + 7) - 0x90000000;
+
+      initfini_start = *((uint32_t *)buffer + 8) - 0x90000000;
+			initfini_end = *((uint32_t *)buffer + 9) - 0x90000000;
     } else if(offset == 0)
       flash_offset = 0;
   
@@ -634,6 +638,16 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
 
         if(val >= 0x90000000)
           *(uint32_t *)(buffer + i - offset) = val + flash_offset;
+      }
+    }
+
+    // global init patching
+    if(offset < initfini_end && offset + BUFFER_SIZE >= initfini_start) {
+      for(size_t i = initfini_start; i < initfini_end; i += 4) {
+        if(i < offset || i - offset >= BUFFER_SIZE)
+          continue;
+
+        *(uint32_t *)(buffer + i - offset) += flash_offset;
       }
     }
 
