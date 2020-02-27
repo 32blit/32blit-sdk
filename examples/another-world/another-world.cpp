@@ -20,9 +20,8 @@ void init() {
   set_screen_mode(ScreenMode::hires);
 
   another_world::read_file = [](std::string filename, uint32_t offset, uint32_t length, char* buffer) {
-    uint32_t fh = blit::open_file(filename);
-    uint32_t bytes_read = blit::read_file(fh, offset, length, buffer);
-    blit::close_file(fh);
+    blit::File file(filename);
+    uint32_t bytes_read = file.read(offset, length, buffer);
     return bytes_read == length;
   };
   
