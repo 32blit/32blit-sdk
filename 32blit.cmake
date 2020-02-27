@@ -16,34 +16,6 @@ if (NOT DEFINED BLIT_ONCE)
 
 	find_package(PythonInterp 3 REQUIRED)
 
-	# tool paths
-	set(ASSET_PACKER ${CMAKE_CURRENT_LIST_DIR}/tools/asset-packer)
-	set(SPRITE_BUILDER ${CMAKE_CURRENT_LIST_DIR}/tools/sprite-builder)
-	set(MAP_BUILDER ${CMAKE_CURRENT_LIST_DIR}/tools/map-builder)
-
-	function(pack_sprites FILENAME TYPE OUT_PATH)
-		# TODO: this will break if someone passes the same name in different subdirs
-		get_filename_component(BASE_NAME ${FILENAME} NAME)
-		add_custom_command(
-			OUTPUT ${BASE_NAME}.blit
-			COMMAND ${PYTHON_EXECUTABLE} ${SPRITE_BUILDER} --out ${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}.blit ${TYPE} ${FILENAME}
-			DEPENDS ${FILENAME} ${SPRITE_BUILDER}
-		)
-
-		set(${OUT_PATH} ${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}.blit PARENT_SCOPE)
-	endfunction()
-
-	function(pack_map FILENAME TYPE OUT_PATH)
-		get_filename_component(BASE_NAME ${FILENAME} NAME)
-		add_custom_command(
-			OUTPUT ${BASE_NAME}.blit
-			COMMAND ${PYTHON_EXECUTABLE} ${MAP_BUILDER} ${TYPE} --force --out ${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}.blit ${FILENAME}
-			DEPENDS ${FILENAME} ${MAP_BUILDER} ${TOOL_TILED}
-		)
-
-		set(${OUT_PATH} ${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}.blit PARENT_SCOPE)
-	endfunction()
-
 	function (blit_assets_yaml TARGET FILE)
 		# cause cmake to reconfigure whenever the asset list changes
 		set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
@@ -62,61 +34,6 @@ if (NOT DEFINED BLIT_ONCE)
 		# add the outputs as dependencies of the project (also compile any cpp files)
 		target_sources(${TARGET} PRIVATE ${ASSET_OUTPUTS})
 		target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-	endfunction()
-
-	function (blit_assets TARGET)
-		set(ASSET_TYPE "")
-		set(ASSET_FILES)
-
-		foreach(ARG IN LISTS ARGN)
-			# set asset type
-			if(ARG STREQUAL "RAW" OR ARG STREQUAL "SPRITE_PACKED" OR ARG STREQUAL "SPRITE_RAW" OR ARG STREQUAL "MAP_TILED2BIN")
-				set(ASSET_TYPE ${ARG})
-				continue()
-			elseif(ASSET_TYPE STREQUAL "")
-				message(FATAL_ERROR "No asset type specified")
-			endif()
-
-			set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/${ARG})
-
-			if(ASSET_TYPE STREQUAL "SPRITE_PACKED")
-				pack_sprites(${ASSET_PATH} packed ASSET_PATH)
-			elseif(ASSET_TYPE STREQUAL "SPRITE_RAW")
-				pack_sprites(${ASSET_PATH} raw ASSET_PATH)
-			elseif(ASSET_TYPE STREQUAL "MAP_TILED2BIN")
-				pack_map(${ASSET_PATH} tiled2bin ASSET_PATH)
-			endif()
-
-			list(APPEND ASSET_FILES ${ASSET_PATH})
-		endforeach()
-
-		set(PACKER_ARGS)
-		set(PACKER_OUTPUTS assets.bin assets.cpp assets.hpp)
-
-		if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-			set(PACKER_ARGS --inline-data)
-			set(PACKER_OUTPUTS assets.cpp assets.hpp)
-		endif()
-
-		add_custom_command(
-			OUTPUT ${PACKER_OUTPUTS}
-			COMMAND ${PYTHON_EXECUTABLE} ${ASSET_PACKER} --base-path ${CMAKE_CURRENT_SOURCE_DIR} --base-path ${CMAKE_CURRENT_BINARY_DIR} ${PACKER_ARGS} ${ASSET_FILES}
-			DEPENDS ${ASSET_FILES} ${ASSET_PACKER}
-		)
-
-		target_sources(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/assets.cpp)
-		target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-
-		if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-			add_custom_command(
-				COMMAND ${CMAKE_LINKER} -r -b binary -o assets.bin.o assets.bin
-				COMMAND ${CMAKE_OBJCOPY} --rename-section .data=.rodata,alloc,load,readonly,data,contents assets.bin.o assets.bin.o
-				OUTPUT assets.bin.o
-				DEPENDS assets.bin
-			)
-
-			target_sources(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/assets.bin.o)
-		endif()
 	endfunction()
 
 	if (${CMAKE_SYSTEM_NAME} STREQUAL Generic)

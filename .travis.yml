@@ -59,6 +59,8 @@ jobs:
           python3-pip
           python3-setuptools
           zip
+      install:
+        - python3 -m pip install bitstring construct
       before_deploy:
         - make install
         - tar -zcf ${RELEASE_FILE}.tar.gz bin/
@@ -175,7 +177,7 @@ jobs:
         - msbuild.exe vs/32blit.sln
 
 install:
-  - python3 -m pip install bitstring construct pillow
+  - python3 -m pip install 32blit
 
 script:
   - ccache --zero-stats || true
