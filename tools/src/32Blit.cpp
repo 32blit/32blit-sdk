@@ -589,7 +589,7 @@ int main(int argc, char *argv[])
   while (!bAlive)
   {
     uint32_t uAck;
-    if (Get32BlitInfo(uAck))
+    if ((Get32BlitInfo(uAck)) && (uAck == FourCCMake<'_', 'I', 'N', 'T'>::value))
       bAlive = true;
     else
     {
