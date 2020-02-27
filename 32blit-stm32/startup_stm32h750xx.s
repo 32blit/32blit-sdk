@@ -78,6 +78,23 @@ LoopCopyDataInit:
   adds  r2, r0, r1
   cmp  r2, r3
   bcc  CopyDataInit
+
+/* Copy ITCM */
+  movs  r1, #0
+  b  LoopCopyITCMInit
+CopyITCMInit:
+  ldr  r3, =itcm_data
+  ldr  r3, [r3, r1]
+  str  r3, [r0, r1]
+  adds  r1, r1, #4
+
+LoopCopyITCMInit:
+  ldr  r0, =itcm_text_start
+  ldr  r3, =itcm_text_end
+  adds  r2, r0, r1
+  cmp  r2, r3
+  bcc  CopyITCMInit
+
   ldr  r2, =_sbss
   b  LoopFillZerobss
 /* Zero fill the bss segment. */

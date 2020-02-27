@@ -1,6 +1,7 @@
 add_library(BlitHalSDL STATIC
 	File.cpp
 	Input.cpp
+	JPEG.cpp
 	Main.cpp
 	Renderer.cpp
 	Audio.cpp
@@ -10,10 +11,11 @@ add_library(BlitHalSDL STATIC
 if(EMSCRIPTEN)
 	target_compile_options(BlitHalSDL
 		PRIVATE
-			"-s;USE_SDL=2"
+			"-s;USE_SDL=2;-s ;USE_SDL_IMAGE=2"
 	)
 
 	set(SDL2_LIBRARIES "-s USE_SDL=2")
+	set(SDL2_IMAGE_LIBRARY "-s USE_SDL_IMAGE=2")
 else()
 	# attempt to find the framework (find_package won't work as there's no config file)
 	if(APPLE)
@@ -36,14 +38,48 @@ else()
 			PRIVATE	${SDL2_INCLUDE_DIRS}
 		)
 	endif()
+
+	# find SDL2_image
+	# TODO: may need to be more complicated
+	find_path(SDL2_IMAGE_INCLUDE_DIR SDL_image.h
+		HINTS ${SDL2_DIR} ${SDL2_DIR}../../../
+		PATH_SUFFIXES SDL2 include/SDL2 include
+	)
+	target_include_directories(BlitHalSDL
+		PRIVATE	${SDL2_IMAGE_INCLUDE_DIR}
+	)
+
+	# vs
+	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+		set(VC_LIB_PATH_SUFFIX lib/x64)
+	else()
+		set(VC_LIB_PATH_SUFFIX lib/x86)
+	endif()
+
+	find_library(SDL2_IMAGE_LIBRARY
+		NAMES SDL2_image
+		HINTS ${SDL2_DIR} ${SDL2_DIR}../../../
+		PATH_SUFFIXES lib ${VC_LIB_PATH_SUFFIX}
+	)
+
+	# dlls
+	find_file(SDL2_IMAGE_DLL SDL2_image.dll
+		HINTS ${SDL2_DIR} ${SDL2_DIR}../../../
+		PATH_SUFFIXES bin ${VC_LIB_PATH_SUFFIX}
+	)
 endif()
 
-target_link_libraries(BlitHalSDL PUBLIC BlitEngine ${SDL2_LIBRARIES})
+target_link_libraries(BlitHalSDL PUBLIC BlitEngine ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARY})
 
 # copy SDL2.dll to build/install dir for windows users
 if(SDL2_DLL)
 	configure_file(${SDL2_DLL} ${CMAKE_BINARY_DIR}/SDL2.dll COPYONLY)
 	install(FILES ${SDL2_DLL} DESTINATION bin)
+endif()
+
+if(SDL2_IMAGE_DLL)
+	configure_file(${SDL2_IMAGE_DLL} ${CMAKE_BINARY_DIR}/SDL2_image.dll COPYONLY)
+	install(FILES ${SDL2_IMAGE_DLL} DESTINATION bin)
 endif()
 
 target_compile_definitions(BlitHalSDL

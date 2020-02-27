@@ -35,6 +35,7 @@ list(APPEND SOURCES
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rng.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd_ex.c
+	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_jpeg.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_usb.c
 	Middlewares/Third_Party/FatFs/src/diskio.c
 	Middlewares/Third_Party/FatFs/src/ff.c
@@ -56,8 +57,10 @@ list(APPEND SOURCES
 	Src/usbd_cdc_if.c
 	Src/display.cpp
 	Src/gpio.cpp
+	Src/jpeg.c
 	Src/sound.cpp
 	Src/file.cpp
+	Src/jpeg.cpp
 	Src/adc.c
 	Src/debug.c
 	Src/dma.c
@@ -78,9 +81,14 @@ list(APPEND SOURCES
 	Src/CDCCommandStream.cpp 
 	Src/CDCCommandHandler.cpp 
 	Src/CDCResetHandler.cpp
+<<<<<<< HEAD
 	Src/CDCInfoHandler.cpp
 	Src/Menu/FirmwareMenusDataSource.cpp
 
+=======
+	Src/CDCInfoHandler.cpp 
+	Utilities/JPEG/jpeg_utils.c
+>>>>>>> master
 )
 
 set_source_files_properties( ${SOURCES} PROPERTIES LANGUAGE CXX )
@@ -97,6 +105,7 @@ set(INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/FatFs/src
 	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/ST/STM32_USB_Device_Library/Core/Inc
 	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
+	${CMAKE_CURRENT_SOURCE_DIR}/Utilities
 	${CMAKE_CURRENT_SOURCE_DIR}/../32blit
 )
 set(HAL_INCLUDE_DIRS ${INCLUDE_DIRS} PARENT_SCOPE)
@@ -105,7 +114,6 @@ set(DEFINITIONS
 	-DUSE_HAL_DRIVER
 	-DUSE_USB_HS
 	-DSTM32H750xx
-	-DCDC_FIFO_BUFFERS=${CDC_FIFO_BUFFERS}
 )
 set(HAL_DEFINITIONS ${DEFINITIONS} PARENT_SCOPE)
 
@@ -122,6 +130,7 @@ target_compile_definitions(BlitHalSTM32
 		-DAPPLICATION_VTOR=${APPLICATION_VTOR}
 		-DEXTERNAL_LOAD_ADDRESS=${EXTERNAL_LOAD_ADDRESS}
 		-DINITIALISE_QSPI=${INITIALISE_QSPI}
+    -DCDC_FIFO_BUFFERS=${CDC_FIFO_BUFFERS}
 )
 
 target_compile_options(BlitHalSTM32
@@ -144,6 +153,7 @@ target_compile_definitions(BlitHalSTM32Ext
 		-DAPPLICATION_VTOR=${APPLICATION_VTOR_EXT}
 		-DEXTERNAL_LOAD_ADDRESS=${EXTERNAL_LOAD_ADDRESS_EXT}
 		-DINITIALISE_QSPI=${INITIALISE_QSPI_EXT}
+    -DCDC_FIFO_BUFFERS=${CDC_FIFO_BUFFERS_EXT}
 )
 
 target_compile_options(BlitHalSTM32Ext

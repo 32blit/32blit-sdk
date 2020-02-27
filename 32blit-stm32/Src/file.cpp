@@ -5,26 +5,21 @@
 
 #include "file.hpp"
 
-std::map<uint32_t, FIL *> open_files;
-uint32_t current_file_handle = 0;
-
-int32_t open_file(std::string file) {
+void *open_file(std::string file) {
   FIL *f = new FIL();
 
   FRESULT r = f_open(f, file.c_str(), FA_READ);
 
-  if(r == FR_OK){      
-    current_file_handle++;  
-    open_files[current_file_handle] = f;
-    return current_file_handle;
-  }
+  if(r == FR_OK)
+    return f;
   
-  return -1;
+  delete f;
+  return nullptr;
 }
 
-int32_t read_file(uint32_t fh, uint32_t offset, uint32_t length, char *buffer) {  
+int32_t read_file(void *fh, uint32_t offset, uint32_t length, char *buffer) {  
   FRESULT r = FR_OK;
-  FIL *f = open_files[fh];
+  FIL *f = (FIL *)fh;
 
   if(offset != f_tell(f))
     r = f_lseek(f, offset);
@@ -40,19 +35,18 @@ int32_t read_file(uint32_t fh, uint32_t offset, uint32_t length, char *buffer) {
   return -1;
 }
 
-int32_t close_file(uint32_t fh) {
+int32_t close_file(void *fh) {
   FRESULT r;
 
-  r = f_close(open_files[fh]);
+  r = f_close((FIL *)fh);
 
+  delete (FIL *)fh;
   return r == FR_OK ? 0 : -1;
 }
 
-uint32_t get_file_length(uint32_t fh)
+uint32_t get_file_length(void *fh)
 {
-  auto file = open_files[fh];
-
-  return f_size(file);
+  return f_size((FIL *)fh);
 }
 
 std::vector<blit::FileInfo> list_files(std::string path) {
