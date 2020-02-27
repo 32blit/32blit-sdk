@@ -100,6 +100,7 @@ def default_args(parser):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--nowarn', action='store_true', help='Suppress deprecation warning')
     subparsers = parser.add_subparsers(help='Commands', dest='command')
     parser_csv2bin = subparsers.add_parser('csv2bin', help='Process a CSV file of numbers into a bin file')
     parser_tiled2bin = subparsers.add_parser('tiled2bin', help='Process a tiled .tmx file into a bin file')
@@ -111,6 +112,12 @@ if __name__ == '__main__':
     parser_tiled2bin.add_argument('--base', type=int, help='set input number base (default 10, or decimal)', default=10)
 
     args = parser.parse_args()
+
+    if not args.nowarn:
+        print('''
+This tool has been deprecated in favour of https://github.com/pimoroni/32blit-tools
+Run with --nowarn to hide this message.
+''')
 
     if args.command == 'csv2bin':
         command_csv2bin(args)
