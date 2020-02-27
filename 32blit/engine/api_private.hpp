@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdarg>
 #include <cstdint>
 #include <vector>
 
@@ -20,6 +21,10 @@ namespace blit {
     Pen LED;
 
     Surface     &(*set_screen_mode)  (ScreenMode new_mode);
+
+    // serial debug
+    void (*debug)(std::string message);
+    int  (*debugf)(const char * psFormatString, va_list args);
 
     // files
     void *(*open_file)(std::string file, int mode);

@@ -69,13 +69,9 @@ void DFUBoot(void)
   NVIC_SystemReset();
 }
 
-int blit_debugf(const char * psFormatString, ...)
+int blit_debugf(const char * psFormatString, va_list args)
 {
-	va_list args;
-	va_start(args, psFormatString);
-	int ret = vprintf(psFormatString, args);
-	va_end(args);
-	return ret;
+	return vprintf(psFormatString, args);
 }
 
 void blit_debug(std::string message) {
@@ -189,8 +185,8 @@ void blit_init() {
     f_mount(&filesystem, "", 1);  // this shouldn't be necessary here right?
     msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
     bq24295_init(&hi2c4);
-    blit::debug = blit_debug;
-    blit::debugf = blit_debugf;
+    blit::api.debug = blit_debug;
+    blit::api.debugf = blit_debugf;
     blit::now = HAL_GetTick;
     blit::random = HAL_GetRandom;
     blit::api.set_screen_mode = display::set_screen_mode;

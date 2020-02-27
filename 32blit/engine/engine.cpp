@@ -1,5 +1,7 @@
 /*! \file engine.cpp
 */
+#include <cstdarg>
+
 #include "engine.hpp"
 #include "api_private.hpp"
 #include "timer.hpp"
@@ -17,8 +19,18 @@ namespace blit {
 
   uint32_t (*now)()                                 = nullptr;
   uint32_t (*random)()                              = nullptr;
-  void (*debug)(std::string message)                = nullptr;
-  int  (*debugf)(const char * psFormatString, ...) 	= nullptr;
+  void debug(std::string message) {
+    api.debug(message);
+  }
+
+  int debugf(const char * psFormatString, ...) {
+    va_list args;
+    va_start(args, psFormatString);
+    int ret = api.debugf(psFormatString, args);
+    va_end(args);
+    return ret;
+  }
+
   void (*switch_execution)()												= nullptr;
 
   Surface null_surface(nullptr, PixelFormat::M, Size(0, 0));
