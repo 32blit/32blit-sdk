@@ -46,6 +46,24 @@ int32_t read_file(void *fh, uint32_t offset, uint32_t length, char *buffer) {
   return -1;
 }
 
+int32_t write_file(void *fh, uint32_t offset, uint32_t length, const char *buffer) {  
+  FRESULT r = FR_OK;
+  FIL *f = (FIL *)fh;
+
+  if(offset != f_tell(f))
+    r = f_lseek(f, offset);
+
+  if(r == FR_OK) {
+    unsigned int bytes_written;
+    r = f_write(f, buffer, length, &bytes_written);
+    if(r == FR_OK) {
+      return bytes_written;
+    }
+  }
+
+  return -1;
+}
+
 int32_t close_file(void *fh) {
   FRESULT r;
 

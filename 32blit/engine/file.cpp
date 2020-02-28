@@ -3,6 +3,7 @@
 namespace blit {
   void *(*open_file)(std::string file, int mode)          = nullptr;
   int32_t (*read_file)(void *fh, uint32_t offset, uint32_t length, char* buffer) = nullptr;
+  int32_t (*write_file)(void *fh, uint32_t offset, uint32_t length, const char* buffer) = nullptr;
   int32_t (*close_file)(void *fh)              = nullptr;
   uint32_t (*get_file_length)(void *fh)        = nullptr;
 
@@ -21,6 +22,10 @@ namespace blit {
 
   int32_t File::read(uint32_t offset, uint32_t length, char *buffer) {
     return read_file(fh, offset, length, buffer);
+  }
+
+  int32_t File::write(uint32_t offset, uint32_t length, const char *buffer) {
+    return write_file(fh, offset, length, buffer);
   }
 
   void File::close() {

@@ -112,6 +112,7 @@ void System::run() {
 
 	blit::open_file = ::open_file;
 	blit::read_file = ::read_file;
+	blit::write_file = ::write_file;
 	blit::close_file = ::close_file;
 	blit::get_file_length = ::get_file_length;
 	blit::list_files = ::list_files;

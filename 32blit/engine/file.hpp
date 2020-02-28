@@ -51,6 +51,7 @@ namespace blit {
 
     bool open(std::string file, int mode = OpenMode::read);
     int32_t read(uint32_t offset, uint32_t length, char *buffer);
+    int32_t write(uint32_t offset, uint32_t length, const char *buffer);
     void close();
     uint32_t get_length();
 
