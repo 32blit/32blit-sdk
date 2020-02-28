@@ -141,14 +141,16 @@ int main(void)
   MX_JPEG_Init();
   /* USER CODE BEGIN 2 */
 
-
+  blit_init();
   //NVIC_SetPriority(SysTick_IRQn, 0x0);
 
 #if (INITIALISE_QSPI==1)
   qspi_init();
+  if(blit_get_backup_value(BACKUP_START_STATE_INDEX) == BACKUP_START_STATE_GAME)
+    blit_switch_execution();
 #endif
 
-  blit_init();
+
 
   // add CDC handler to reset device on receiving "_RST"
 	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', 'R', 'S', 'T'>::value, &g_resetHandler);
