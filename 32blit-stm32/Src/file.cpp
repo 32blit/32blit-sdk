@@ -5,10 +5,21 @@
 
 #include "file.hpp"
 
-void *open_file(std::string file) {
+void *open_file(std::string file, int mode) {
   FIL *f = new FIL();
 
-  FRESULT r = f_open(f, file.c_str(), FA_READ);
+  BYTE ff_mode = 0;
+
+  if(mode & blit::OpenMode::read)
+    ff_mode |= FA_READ;
+
+  if(mode & blit::OpenMode::write)
+    ff_mode |= FA_WRITE;
+
+  if(mode == blit::OpenMode::write)
+    ff_mode |= FA_CREATE_ALWAYS;
+
+  FRESULT r = f_open(f, file.c_str(), ff_mode);
 
   if(r == FR_OK)
     return f;

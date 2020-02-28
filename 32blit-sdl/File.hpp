@@ -7,7 +7,7 @@
 #include "engine/file.hpp"
 
 void setup_base_path();
-void *open_file(std::string file);
+void *open_file(std::string file, int mode);
 int32_t read_file(void *fh, uint32_t offset, uint32_t length, char *buffer);
 int32_t close_file(void *fh);
 uint32_t get_file_length(void *fh);
@@ -17,7 +17,7 @@ bool directory_exists(std::string path);
 bool create_directory(std::string path);
 
 namespace blit {
-  extern void    *(*open_file)               (std::string file);
+  extern void    *(*open_file)               (std::string file, int mode);
   extern int32_t  (*read_file)               (void *fh, uint32_t offset, uint32_t length, char* buffer);
   extern int32_t  (*close_file)              (void *fh);
   extern uint32_t (*get_file_length)         (void *fh);

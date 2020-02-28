@@ -23,8 +23,19 @@ void setup_base_path()
   SDL_free(basePathPtr);
 }
 
-void *open_file(std::string name) {
-  auto file = SDL_RWFromFile((basePath + name).c_str(), "rb");
+void *open_file(std::string name, int mode) {
+  const char *str_mode;
+
+  if(mode == blit::OpenMode::read)
+    str_mode = "rb";
+  else if(mode == blit::OpenMode::write)
+    str_mode = "wb";
+  else if(mode == blit::OpenMode::read | blit::OpenMode::write)
+    str_mode = "r+";
+  else
+    return nullptr;
+
+  auto file = SDL_RWFromFile((basePath + name).c_str(), str_mode);
   return file;
 }
 

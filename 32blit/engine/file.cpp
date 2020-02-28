@@ -1,7 +1,7 @@
 #include "file.hpp"
 
 namespace blit {
-  void *(*open_file)(std::string file)          = nullptr;
+  void *(*open_file)(std::string file, int mode)          = nullptr;
   int32_t (*read_file)(void *fh, uint32_t offset, uint32_t length, char* buffer) = nullptr;
   int32_t (*close_file)(void *fh)              = nullptr;
   uint32_t (*get_file_length)(void *fh)        = nullptr;
@@ -12,9 +12,10 @@ namespace blit {
 
   bool (*create_directory) (std::string path);
 
-  bool File::open(std::string file) {
+  bool File::open(std::string file, int mode) {
     close();
-    fh = open_file(file);
+
+    fh = open_file(file, mode);
     return fh != nullptr;
   }
 
