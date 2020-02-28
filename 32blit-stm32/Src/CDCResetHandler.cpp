@@ -11,7 +11,10 @@
 bool CDCResetHandler::StreamInit(CDCFourCC uCommand)
 {
 #if EXTERNAL_LOAD_ADDRESS == 0x90000000
-	NVIC_SystemReset();
+  if(uCommand == CDCCommandHandler::CDCFourCCMake<'S', 'W', 'I', 'T'>::value)
+    blit_switch_execution(); 
+  else
+	  NVIC_SystemReset();
 #else
   blit_switch_execution(); 
 #endif  

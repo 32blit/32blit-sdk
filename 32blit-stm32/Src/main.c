@@ -152,8 +152,9 @@ int main(void)
 
 
 
-  // add CDC handler to reset device on receiving "_RST"
+  // add CDC handler to reset device on receiving "_RST" and "SWIT"
 	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', 'R', 'S', 'T'>::value, &g_resetHandler);
+	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'S', 'W', 'I', 'T'>::value, &g_resetHandler);
 
   // add CDC handler to log info device on receiving "INFO"
 	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'I', 'N', 'F', 'O'>::value, &g_infoHandler);
