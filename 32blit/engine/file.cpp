@@ -7,6 +7,8 @@ namespace blit {
   uint32_t (*get_file_length)(void *fh)        = nullptr;
 
   std::vector<FileInfo> (*list_files) (std::string path) = nullptr;
+  bool (*file_exists) (std::string path) = nullptr;
+  bool (*directory_exists) (std::string path) = nullptr;
 
   bool (*create_directory) (std::string path);
 

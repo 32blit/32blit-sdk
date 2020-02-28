@@ -76,6 +76,16 @@ std::vector<blit::FileInfo> list_files(std::string path) {
   return ret;
 }
 
+bool file_exists(std::string path) {
+  FILINFO info;
+  return f_stat(path.c_str(), &info) == FR_OK && !(info.fattrib & AM_DIR);
+}
+
+bool directory_exists(std::string path) {
+  FILINFO info;
+  return f_stat(path.c_str(), &info) == FR_OK && (info.fattrib & AM_DIR);
+}
+
 bool create_directory(std::string path) {
   // strip trailing slash
   if(path.back() == '/')
