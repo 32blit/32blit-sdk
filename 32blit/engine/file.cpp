@@ -8,6 +8,7 @@ namespace blit {
 
   std::vector<FileInfo> (*list_files) (std::string path) = nullptr;
 
+  bool (*create_directory) (std::string path);
 
   bool File::open(std::string file) {
     close();

@@ -1,8 +1,10 @@
+#include <cerrno>
 #include <string>
 #include <map>
 
 #ifdef WIN32
-#include "shlobj.h"
+#include <direct.h>
+#include <shlobj.h>
 #else
 #include <dirent.h>
 #include <sys/stat.h>
@@ -115,4 +117,12 @@ std::vector<blit::FileInfo> list_files(std::string path) {
 #endif
 
   return ret;
+}
+
+bool create_directory(std::string path) {
+#ifdef WIN32
+  return _mkdir((basePath + path).c_str()) == 0 || errno == EEXIST;
+#else
+  return mkdir((basePath + path).c_str(), 0755) == 0 || errno == EEXIST;
+#endif
 }

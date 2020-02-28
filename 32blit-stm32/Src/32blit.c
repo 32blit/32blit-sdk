@@ -157,6 +157,7 @@ void blit_init() {
     blit::close_file = ::close_file;
     blit::get_file_length = ::get_file_length;
     blit::list_files = ::list_files;
+    blit::create_directory = ::create_directory;
 
     blit::switch_execution = blit_switch_execution;
 

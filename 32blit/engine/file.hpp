@@ -16,6 +16,8 @@ namespace blit {
   };
 
   extern std::vector<FileInfo> (*list_files) (std::string path);
+
+  extern bool (*create_directory) (std::string path);
   
   class File final {
   public:

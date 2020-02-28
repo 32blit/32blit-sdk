@@ -75,3 +75,13 @@ std::vector<blit::FileInfo> list_files(std::string path) {
 
   return ret;
 }
+
+bool create_directory(std::string path) {
+  // strip trailing slash
+  if(path.back() == '/')
+    path = path.substr(0, path.length() - 1);
+
+  FRESULT r = f_mkdir(path.c_str());
+
+  return r == FR_OK || r == FR_EXIST;
+}
