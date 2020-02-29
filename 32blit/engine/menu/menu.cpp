@@ -180,4 +180,5 @@ void Menu::render(uint32_t time) {
 
     draw_top_bar(time);
     draw_bottom_line();
+    
 }

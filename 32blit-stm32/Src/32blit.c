@@ -171,7 +171,6 @@ void blit_menu_render(uint32_t time) {
   ::render(time);
 
   MenuController::shared()->render(time);
-
 }
 
 void blit_menu() {

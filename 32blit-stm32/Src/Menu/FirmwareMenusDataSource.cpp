@@ -59,9 +59,8 @@ void FirmwareMenusDataSource::createSystemMenuItems () {
 
     _items.push_back(
         MenuItem("Volume",
-         [] (float value) {
+        [] (float value) {
 
-             blit::debug("\n\n\n\n\n" + std::to_string(value));
             // slider value has changed
             persist.volume -= value;
             persist.volume = fmin(1.0f, fmax(0.0f, persist.volume));
@@ -72,8 +71,8 @@ void FirmwareMenusDataSource::createSystemMenuItems () {
         [](){
             return 75 * persist.volume; // get current value to update the UI with
         },
-        1.0f / 256.0f,  // left adjustment
-        -1.0f / 256.0f)   // right adjustment
+        1.0f / 256.0f,   // left adjustment
+        -1.0f / 256.0f)  // right adjustment
     );
 
     _items.push_back(
@@ -115,7 +114,5 @@ void FirmwareMenusDataSource::createSystemMenuItems () {
 
     _items.push_back(MenuItem("About",aboutItems()));
 }
-
-
 
 FirmwareMenusDataSource::FirmwareMenusDataSource () {}

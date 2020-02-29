@@ -142,15 +142,23 @@ void MenuItem::held_left() {
 }
 
 void MenuItem::pressed_left () {
+
+    if (_slideCallback) { 
+        _slideCallback(_rightAdjustment); 
+    } else if (!_optionItems.empty() && --_currentOptionIndex < 0) {
     // if the item has options. Difficulty selection etc
-    if (!_optionItems.empty() && --_currentOptionIndex < 0) {
         _currentOptionIndex = int(_optionItems.size()) - 1;
     }
 }
 
 void MenuItem::pressed_right () {
+
+    if (_slideCallback) { 
+        vibration += 10;
+        _slideCallback(_rightAdjustment); 
+    } 
+    else if (!_optionItems.empty() && ++_currentOptionIndex == int(_optionItems.size())) {
     // if the item has options. Difficulty selection etc
-    if (!_optionItems.empty() && ++_currentOptionIndex == int(_optionItems.size())) {
         _currentOptionIndex = 0;
     }
 }
