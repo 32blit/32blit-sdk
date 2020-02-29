@@ -146,7 +146,7 @@ int main(void)
 
 #if (INITIALISE_QSPI==1)
   qspi_init();
-  if(blit_get_backup_value(BACKUP_START_STATE_INDEX) == BACKUP_START_STATE_GAME)
+  if((persist.reset_target == prtGame) && !HAL_GPIO_ReadPin(BUTTON_HOME_GPIO_Port,  BUTTON_HOME_Pin))
     blit_switch_execution();
 #endif
 

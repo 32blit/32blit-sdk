@@ -116,25 +116,24 @@ void blit_update_volume() {
     blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * persist.volume) / log(volume_log_base));
 }
 
-void blit_set_backup_value(uint16_t uIndex, uint32_t uValue)
-{
-  if(uIndex < 1024)
-    *(__IO uint32_t *) (D3_BKPSRAM_BASE +(uIndex*4)) = uValue;
-}
-uint32_t blit_get_backup_value(uint16_t uIndex)
-{
-  uint32_t uResult = 0;
-  if(uIndex < 1024)
-    uResult = *(__IO uint32_t *) (D3_BKPSRAM_BASE + (uIndex*4));
-  return uResult;
-}
 void blit_init() {
+    // enable backup sram
+    __HAL_RCC_RTC_ENABLE();
+    __HAL_RCC_BKPRAM_CLK_ENABLE();
+    HAL_PWR_EnableBkUpAccess(); 
+    HAL_PWREx_EnableBkUpReg(); 
+
+    // need to wit for sram, I tried a few things I found on the net to wait
+    // based on PWR flags but none seemed to work, a simple delay does work!
+    HAL_Delay(5);
+      
     if(persist.magic_word != persistence_magic_word) {
       // Set persistent defaults if the magic word does not match
       persist.magic_word = persistence_magic_word;
       persist.volume = 0.5f;
       persist.backlight = 1.0f;
       persist.selected_menu_item = 0;
+      persist.reset_target = prtFirmware;
     }
 
     blit_update_volume();
@@ -151,11 +150,6 @@ void blit_init() {
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     DWT->CYCCNT = 0;
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-    // enable backup sram
-    __HAL_RCC_RTC_ENABLE();
-    __HAL_RCC_BKPRAM_CLK_ENABLE();
-    HAL_PWR_EnableBkUpAccess(); 
-    HAL_PWREx_EnableBkUpReg(); 
 
     f_mount(&filesystem, "", 1);  // this shouldn't be necessary here right?
     msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
@@ -617,9 +611,9 @@ pFunction JumpToApplication;
 void blit_switch_execution(void)
 {
 #if EXTERNAL_LOAD_ADDRESS == 0x90000000
-        blit_set_backup_value(BACKUP_START_STATE_INDEX, BACKUP_START_STATE_GAME);
+  persist.reset_target = prtGame;
 #else
-        blit_set_backup_value(BACKUP_START_STATE_INDEX, BACKUP_START_STATE_FIRMWARE);
+  persist.reset_target = prtFirmware;
 #endif
   // Stop the ADC DMA
   HAL_ADC_Stop_DMA(&hadc1);

@@ -43,8 +43,3 @@ void blit_menu();
 
 extern void blit_enable_ADC();
 extern void blit_disable_ADC();
-#define BACKUP_START_STATE_INDEX    (0)
-#define BACKUP_START_STATE_FIRMWARE (0)
-#define BACKUP_START_STATE_GAME     (1)
-extern void blit_set_backup_value(uint16_t uIndex, uint32_t uValue);
-extern uint32_t blit_get_backup_value(uint16_t uIndex);
