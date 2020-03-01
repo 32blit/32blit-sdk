@@ -52,17 +52,10 @@ If you want to run code on 32Blit, you should now refer to [Building & Running O
 
 ## Building & Running Locally
 
-You'll need to build and install SDL2:
+You'll need to install `SDL2` and `SDL2 Image`
 
 ``` shell
-curl https://www.libsdl.org/release/SDL2-2.0.10.zip -o SDL2-2.0.10.zip
-unzip SDL2-2.0.10.zip
-cd SDL2-2.0.10
-mkdir build
-cd build
-../configure
-make
-sudo make install
+brew install sdl2 sdl2_image
 ```
 
 Then, set up the 32Blit Makefile from the root of the repository with the following commands:
