@@ -42,10 +42,10 @@ void usage(void)
 const char *getFileName(const char *pszPath)
 {
   const char *pszFilename = strrchr(pszPath, '\\');
-  if (pszFilename == NULL)
+  if (pszFilename == nullptr)
     pszFilename = strrchr(pszPath, '/');
 
-  if (pszFilename == NULL)
+  if (pszFilename ==nullptr)
     pszFilename = pszPath;
   else
     pszFilename++;
@@ -484,8 +484,8 @@ int main(int argc, char *argv[])
 
   const char *pszProcess = argv[1];
   std::string sComPort = argv[2];
-  const char *pszBinPath = NULL;
-  const char *pszBinFile = NULL;
+  const char *pszBinPath = nullptr;
+  const char *pszBinFile = nullptr;
   bool bShouldReconnect = false;
 
   if (argc >= 4)

@@ -74,7 +74,7 @@ void buffCallBack(void *) {
   if (wavPos >= wavSize) {
     channels[0].off();        // Stop playback of this channel.
     //Clear buffer
-    wavSample = 0;
+    wavSample = nullptr;
     wavSize = 0;
     wavPos = 0;
     wavSampleRate = 0;

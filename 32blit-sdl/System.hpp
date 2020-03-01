@@ -27,15 +27,15 @@ class System {
 
 	private:
 
-		SDL_Thread *t_system_timer = NULL;
-		SDL_Thread *t_system_loop = NULL;
+		SDL_Thread *t_system_timer = nullptr;
+		SDL_Thread *t_system_loop = nullptr;
 
-		SDL_mutex *m_input = NULL;
+		SDL_mutex *m_input = nullptr;
 
-		SDL_sem *s_timer_stop = NULL;
-		SDL_sem *s_loop_update = NULL;
-		SDL_sem *s_loop_redraw = NULL;
-		SDL_sem *s_loop_ended = NULL;
+		SDL_sem *s_timer_stop = nullptr;
+		SDL_sem *s_loop_update = nullptr;
+		SDL_sem *s_loop_redraw = nullptr;
+		SDL_sem *s_loop_ended = nullptr;
 
 		bool running = false;
 
