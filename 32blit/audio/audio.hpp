@@ -53,7 +53,7 @@ namespace blit {
     WAVE      = 1
   };
 
-  enum class ADSRPhase {
+  enum class ADSRPhase : uint8_t {
     ATTACK,
     DECAY,
     SUSTAIN,
@@ -75,15 +75,15 @@ namespace blit {
   
       uint32_t  waveform_offset  = 0;   // voice offset (Q8)
 
+      int64_t   filter_last_sample = 0;
       bool      filter_enable = false;
       uint16_t  filter_cutoff_frequency = 0;
-      int64_t   filter_last_sample = 0;
 
       uint32_t  adsr_frame    = 0;      // number of frames into the current ADSR phase
       uint32_t  adsr_end_frame = 0;     // frame target at which the ADSR changes to the next phase
       uint32_t  adsr          = 0;
-      ADSRPhase adsr_phase    = ADSRPhase::OFF;
 	    int32_t   adsr_step	    = 0;
+      ADSRPhase adsr_phase    = ADSRPhase::OFF;
 
       uint8_t   wave_buf_pos  = 0;      // 
       int16_t   wave_buffer[64];        // buffer for arbitrary waveforms. small as it's filled by user callback
