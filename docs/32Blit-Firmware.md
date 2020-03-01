@@ -41,7 +41,7 @@ make flash-loader
 
 To enter DFU mode either hold the X & Y buttons and press the reset button or select `dfu mode` from the on device menu. The screen will go dark, this is normal.
 
-### Flash The Firmware - Linux and macOS
+### Linux and macOS
 
 Install `dfu-util` from your package manager then enter:
 
@@ -49,7 +49,7 @@ Install `dfu-util` from your package manager then enter:
 sudo dfu-util -a 0 -s 0x08000000 -D firmware/flash-loader/flash-loader.bin
 ```
 
-### Flash The Firmware - Windows
+### Windows
 
 You will need [DfuSe Demonstration from st.com](https://www.st.com/en/development-tools/stsw-stm32080.html)) to flash `flash-loader.dfu` to your device.
 
