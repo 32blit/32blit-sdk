@@ -42,10 +42,10 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 MEMORY
 {
 DTCMRAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 128K
-RAM_D1 (xrw)        : ORIGIN = 0x24000000, LENGTH =  62K
-FRAMEBUFFER (rw)    : ORIGIN = 0x2400F800, LENGTH = 225K
+RAM_D1 (xrw)        : ORIGIN = 0x24000000, LENGTH = 287K
 LTDC (rw)           : ORIGIN = 0x24047C00, LENGTH = 225K
-RAM_D2 (xrw)        : ORIGIN = 0x30000000, LENGTH = 288K
+RAM_D2 (xrw)        : ORIGIN = 0x30000000, LENGTH =  63K
+FRAMEBUFFER (rw)    : ORIGIN = 0x3000FC00, LENGTH = 225K
 RAM_D3 (xrw)        : ORIGIN = 0x38000000, LENGTH =  63K
 PERSIST (rw)        : ORIGIN = 0x3800FC00, LENGTH =   1K
 ITCMISR (xrw)       : ORIGIN = 0x00000000, LENGTH =   4K
@@ -151,7 +151,7 @@ SECTIONS
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
-  } >RAM_D2
+  } >RAM_D1
 
   /* User_heap_stack section, used to check that there is enough RAM left */
   ._user_heap_stack :
@@ -162,7 +162,7 @@ SECTIONS
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
-  } >RAM_D2
+  } >RAM_D1
 
   itcm_data = LOADADDR(.itcm);
   .itcm :
