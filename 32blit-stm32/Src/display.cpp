@@ -58,43 +58,59 @@ namespace display {
     screen = mode == ScreenMode::hires ? __fb_hires : __fb_lores;
   }
 
-  void flip(const Surface &source) {
-    uint8_t *s = (uint8_t *)source.data;
-    uint32_t *d = (uint32_t *)(&__ltdc_start);
+  void flip(const Surface &source) {        
+    // TODO: both flip implementations can we done via DMA2D which will save
+    // a heap of CPU time.
 
     if(mode == ScreenMode::lores) {
+      uint8_t *s = (uint8_t *)source.data;
+      uint8_t *d = (uint8_t *)(&__ltdc_start);
+
       // pixel double the framebuffer to the ltdc buffer
       for(uint8_t y = 0; y < 120; y++) {
-        // pixel double the current row while converting from RGB to RGB565
+        // pixel double the current row horizontally
         for(uint8_t x = 0; x < 160; x++) {
-          uint16_t c = ((*s++ & 0b11111000) << 8) | ((*s++ & 0b11111100) << 3) | ((*s++ & 0b11111000) >> 3);        
-          *(d) = c | (c << 16); *(d + 160) = c | (c << 16);
-          d++;
+          *d++ = *(s + 0);
+          *d++ = *(s + 1);
+          *d++ = *(s + 2);
+          *d++ = *(s + 0);
+          *d++ = *(s + 1);
+          *d++ = *(s + 2);
+
+          s += 3;
         }
-        d += 160; // skip the doubled row
+
+        // copy the previous row to pixel double vertically
+        uint32_t *dc = (uint32_t *)d;
+        uint32_t c = 240;
+        while(c--) {
+          *dc = *(dc - 240);
+          dc++;
+        }
+        
+        d = (uint8_t *)dc;
       }
     }else{
       // copy the framebuffer data into the ltdc buffer, originally this
       // was done via memcpy but implementing it as a 32-bit copy loop
-      // was much faster. additionall unrolling this loop gained us about 10%
-      // extra performance
-      uint32_t c = (320 * 240) >> 1;
+      // was much faster.
+      uint32_t *s = (uint32_t *)source.data;
+      uint32_t *d = (uint32_t *)(&__ltdc_start);
+      uint32_t c = (320 * 240 * 3) >> 2;
       while(c--) {
-        uint16_t c1 = ((*s++ & 0b11111000) << 8) | ((*s++ & 0b11111100) << 3) | ((*s++ & 0b11111000) >> 3);
-        uint16_t c2 = ((*s++ & 0b11111000) << 8) | ((*s++ & 0b11111100) << 3) | ((*s++ & 0b11111000) >> 3);
-        *d++ = c2 << 16 | c1;
+        *d++ = *s++;
       }
     }
 
     // since the ltdc hardware pulls frame data directly over the memory bus
     // without passing through the mcu's cache layer we must invalidate the
     // affected area to ensure that all data has been committed into ram
-    SCB_CleanInvalidateDCache_by_Addr(d, 320 * 240 * 2);    
+    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)&__ltdc_start, &__ltdc_end - &__ltdc_start);    
   }
 
   void screen_init() {
     ST7272A_RESET();
-    st7272a_set_bgr();
+   // st7272a_set_bgr();
   }
 
   // configure ltdc peripheral setting up the clocks, pin states, panel
@@ -119,10 +135,10 @@ namespace display {
     LTDC_Layer1->WHPCR = ((1 + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> 16U) + 1U) | ((321 + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> 16U)) << 16U));
     LTDC_Layer1->WVPCR &= ~(LTDC_LxWVPCR_WVSTPOS | LTDC_LxWVPCR_WVSPPOS);
     LTDC_Layer1->WVPCR  = ((0 + (LTDC->BPCR & LTDC_BPCR_AVBP) + 1U) | ((241 + (LTDC->BPCR & LTDC_BPCR_AVBP)) << 16U));  
-    LTDC_Layer1->PFCR   = LTDC_PIXEL_FORMAT_RGB565;  
+    LTDC_Layer1->PFCR   = LTDC_PIXEL_FORMAT_RGB888;  
     LTDC_Layer1->DCCR   = 0xff000000;     // layer default color (back, 100% alpha)
     LTDC_Layer1->CFBAR  = (uint32_t)&__ltdc_start;  // frame buffer start address
-    LTDC_Layer1->CFBLR  = ((320 * 2) << LTDC_LxCFBLR_CFBP_Pos) | (((320 * 2) + 2) << LTDC_LxCFBLR_CFBLL_Pos);  // frame buffer line length and pitch
+    LTDC_Layer1->CFBLR  = ((320 * 3) << LTDC_LxCFBLR_CFBP_Pos) | (((320 * 3) + 2) << LTDC_LxCFBLR_CFBLL_Pos);  // frame buffer line length and pitch
     LTDC_Layer1->CFBLNR = 240;            // line count
     LTDC_Layer1->CACR   = 255;            // alpha
     LTDC_Layer1->CR    |= LTDC_LxCR_LEN;  // enable layer
