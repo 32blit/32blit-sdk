@@ -340,12 +340,12 @@ void update(uint32_t time) {
             if(p.x > screen.bounds.w - 1) {
                 offset.x = std::min(offset.x, screen.bounds.w - p.x);
             } else if (p.x < 0) {
-                offset.x = std::max(offset.x, abs(p.x));
+                offset.x = std::max(offset.x, std::abs(p.x));
             }
             if(p.y > screen.bounds.h - 1) {
                 offset.y = std::min(offset.y, screen.bounds.h - p.y);
             } else if (p.y < 0) {
-                offset.y = std::max(offset.y, abs(p.y));
+                offset.y = std::max(offset.y, std::abs(p.y));
             }
         }
 
@@ -371,12 +371,12 @@ void update(uint32_t time) {
         if(p.x > screen.bounds.w - 1) {
             offset.x = std::min(offset.x, screen.bounds.w - p.x);
         } else if (p.x < 0) {
-            offset.x = std::max(offset.x, abs(p.x));
+            offset.x = std::max(offset.x, std::abs(p.x));
         }
         if(p.y > screen.bounds.h - 1) {
             offset.y = std::min(offset.y, screen.bounds.h - p.y);
         } else if (p.y < 0) {
-            offset.y = std::max(offset.y, abs(p.y));
+            offset.y = std::max(offset.y, std::abs(p.y));
         }
     }
 
