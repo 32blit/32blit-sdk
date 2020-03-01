@@ -69,6 +69,17 @@ void FlashLoader::FSInit(void)
 		{
 			//printf("%s %lu\n\r", fno.fname, fno.fsize);
 			strncpy(m_filenames[m_uFileCount], fno.fname, MAX_FILENAME_LENGTH);
+			for (int i = strlen(m_filenames[m_uFileCount]); i < MAX_FILENAME_LENGTH; i++)
+			{
+					m_filenames[m_uFileCount][i] = (char)' ';
+			}
+			char buffer[32];
+			sprintf(buffer, "%lu", fno.fsize);
+			for (unsigned int i = 0; i < strlen(buffer); i++)
+			{
+					int offset = MAX_FILENAME_LENGTH - strlen(buffer) + i;
+					m_filenames[m_uFileCount][offset] = buffer[i];
+			}
 			m_uFileCount++;
 		}
 		fr = f_findnext(&dj, &fno);
