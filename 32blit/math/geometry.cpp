@@ -3,8 +3,8 @@
 
     These are some neat functions for geometry stuff!
 */
-#include <string.h>
-#include <float.h>
+#include <cstring>
+#include <cfloat>
 
 #include "../types/vec3.hpp"
 #include "../types/vec2.hpp"

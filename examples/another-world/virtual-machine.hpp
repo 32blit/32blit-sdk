@@ -4,8 +4,8 @@
 #include <array>
 #include <map>
 #include <string>
-#include <stdint.h>
-#include <stdarg.h>
+#include <cstdint>
+#include <cstdarg>
 
 
 #include "byte-killer.hpp"

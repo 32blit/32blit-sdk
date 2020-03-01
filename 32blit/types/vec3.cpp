@@ -1,7 +1,7 @@
 /*! \file vec3.cpp
 */
-#include <math.h>
-#include <string.h>
+#include <cmath>
+#include <cstring>
 
 #include "vec3.hpp"
 #include "mat4.hpp"

@@ -1,9 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstdint>
 #include <string>
-#include <string.h>
-#include <time.h>
+#include <cstring>
+#include <ctime>
 
 #if defined(WIN32) || defined(__MINGW32__)
 #include <windows.h>
@@ -11,7 +11,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <termios.h>
-#include <errno.h>
+#include <cerrno>
 #include <dirent.h>
 
 #ifdef __APPLE__
