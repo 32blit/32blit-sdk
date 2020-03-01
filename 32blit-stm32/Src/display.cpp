@@ -81,14 +81,12 @@ namespace display {
         }
 
         // copy the previous row to pixel double vertically
-        uint32_t *dc = (uint32_t *)d;
-        uint32_t c = 240;
-        while(c--) {
-          *dc = *(dc - 240);
-          dc++;
-        }
-        
-        d = (uint8_t *)dc;
+        uint32_t *cd = (uint32_t *)d;
+        uint32_t *cs = (uint32_t *)(d - (320 * 3));
+        while(cs < (uint32_t *)d) {
+          *cd++ = *cs++;
+        }        
+        d += 320 * 3;
       }
     }else{
       // copy the framebuffer data into the ltdc buffer, originally this
@@ -96,8 +94,7 @@ namespace display {
       // was much faster.
       uint32_t *s = (uint32_t *)source.data;
       uint32_t *d = (uint32_t *)(&__ltdc_start);
-      uint32_t c = (320 * 240 * 3) >> 2;
-      while(c--) {
+      while(d < (uint32_t *)(&__ltdc_end)) {
         *d++ = *s++;
       }
     }
@@ -105,7 +102,7 @@ namespace display {
     // since the ltdc hardware pulls frame data directly over the memory bus
     // without passing through the mcu's cache layer we must invalidate the
     // affected area to ensure that all data has been committed into ram
-    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)&__ltdc_start, &__ltdc_end - &__ltdc_start);    
+    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)&__ltdc_start, (&__ltdc_end) - (&__ltdc_start));    
   }
 
   void screen_init() {
