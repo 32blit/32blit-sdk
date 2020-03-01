@@ -70,7 +70,7 @@ struct ByteKiller {
   }
 
   public:
-  ByteKiller() {}
+  ByteKiller() = default;
 
   bool unpack(uint8_t *buffer, uint32_t packed_size) {
     // the data is unpacked from end to start using two pointers

@@ -28,10 +28,10 @@ namespace blit {
   
   class File final {
   public:
-    File() {}
+    File() = default;
     File(std::string filename, int mode = OpenMode::read) {open(filename, OpenMode::read);}
     File(const File &) = delete;
-    File(File &&other) {
+    File(File &&other) noexcept {
       *this = std::move(other);
     }
 
@@ -41,7 +41,7 @@ namespace blit {
 
     File &operator=(const File &) = delete;
 
-    File &operator=(File &&other) {
+    File &operator=(File &&other) noexcept {
       if (this != &other) {
         close();
         std::swap(fh, other.fh);
