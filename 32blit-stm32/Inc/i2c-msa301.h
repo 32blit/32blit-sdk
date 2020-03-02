@@ -30,6 +30,10 @@
 
 #define MSA301_Z_ACCEL_RESISTER   0x06
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 void msa301_init(I2C_HandleTypeDef *i2c_port, uint8_t power_mode , uint8_t low_power_bandwidth , uint8_t update_rate);
 
