@@ -160,10 +160,10 @@
     <ClCompile Include="..\..\..\examples\flight\flight.cpp" />
   </ItemGroup>
    <ItemGroup>
-    <ClCompile Include="..\..\..\examples\flight\menuDataSource.hpp" />
+    <ClCompile Include="..\..\..\examples\flight\menusDataSource.hpp" />
   </ItemGroup>
    <ItemGroup>
-    <ClCompile Include="..\..\..\examples\flight\menuDataSource.cpp" />
+    <ClCompile Include="..\..\..\examples\flight\menusDataSource.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
