@@ -438,6 +438,26 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
   }
 }
 
+enum HomeButtonAction {
+  NONE = 0,
+  MENU = 1,
+  EXIT = 2
+};
+
+static HomeButtonAction home_button_action = HomeButtonAction::NONE;
+static uint32_t home_button_pressed_time = 0;
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+  if(!HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port, BUTTON_MENU_Pin)) {
+    home_button_pressed_time = HAL_GetTick();
+  } else {
+    if(home_button_pressed_time > 0) {
+      home_button_action = HomeButtonAction::MENU;
+    }
+    home_button_pressed_time = 0;
+  }
+}
+
 #define ACCEL_OVER_SAMPLE 16
 
 uint8_t tilt_sample_offset = 0;
@@ -460,7 +480,6 @@ void blit_process_input() {
   static uint32_t last_tilt_update = 0;
 
   uint32_t scc = DWT->CYCCNT;
-  static uint32_t blit_last_buttons = 0;
   // read x axis of joystick
   bool joystick_button = false;
 
@@ -547,11 +566,29 @@ void blit_process_input() {
     last_tilt_update = blit::now();
   }
 
-  if(blit::buttons & blit::MENU && !(blit_last_buttons & blit::MENU)) {
-    blit_menu();
+  if(home_button_pressed_time > 0 && HAL_GetTick() - home_button_pressed_time > 500) {
+      home_button_action = EXIT;
+      home_button_pressed_time = 0;
   }
 
-  blit_last_buttons = blit::buttons;
+  switch(home_button_action){
+    case HomeButtonAction::EXIT:
+#if EXTERNAL_LOAD_ADDRESS == 0x90000000
+        // Already in firmware menu
+#else
+        blit_switch_execution();
+#endif
+      home_button_action = HomeButtonAction::NONE;
+      home_button_pressed_time = 0;
+      break;
+    case HomeButtonAction::MENU:
+      blit_menu();
+      home_button_action = HomeButtonAction::NONE;
+      home_button_pressed_time = 0;
+      break;
+    case HomeButtonAction::NONE:
+      break;
+  }
   //flip_cycle_count = DWT->CYCCNT - scc;
 }
 

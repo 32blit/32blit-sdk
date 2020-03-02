@@ -80,8 +80,12 @@ namespace gpio {
     init_pin(GPIOD, BUTTON_B_Pin, GPIO_MODE_INPUT, GPIO_PULLUP);
 
     // system buttons
-    init_pin(GPIOD, BUTTON_MENU_Pin, GPIO_MODE_INPUT, GPIO_PULLUP);
-    init_pin(GPIOD, BUTTON_HOME_Pin, GPIO_MODE_INPUT, GPIO_PULLUP);
+    init_pin(GPIOD, BUTTON_MENU_Pin, GPIO_MODE_IT_RISING_FALLING, GPIO_PULLUP);
+    init_pin(GPIOD, BUTTON_HOME_Pin, GPIO_MODE_INPUT, GPIO_PULLDOWN);
+
+    /* EXTI interrupt init*/
+    HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
     // user hack headers
     init_pin(GPIOC, USER_LEFT1_Pin, GPIO_MODE_ANALOG, GPIO_NOPULL); // left analog
