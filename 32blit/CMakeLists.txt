@@ -9,6 +9,7 @@ set(SOURCES
 	engine/running_average.cpp
 	engine/timer.cpp
 	engine/tweening.cpp
+	engine/version.cpp
 	engine/menu/menu.cpp
 	engine/menu/menuItem.cpp
 	engine/menu/menuController.cpp
@@ -37,3 +38,15 @@ add_library(BlitEngine STATIC ${SOURCES})
 target_include_directories(BlitEngine
 	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+# version variables
+string(TIMESTAMP BUILD_DATE "%Y-%m-%d" UTC)
+if(DEFINED ENV{TRAVIS_TAG})
+	# travis release
+	set(BUILD_VER $ENV{TRAVIS_TAG})
+else()
+	set(BUILD_VER "DEV") # TODO: could parse something from git here
+endif()
+
+configure_file(version_defs.hpp.in version_defs.hpp)
+target_include_directories(BlitEngine PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

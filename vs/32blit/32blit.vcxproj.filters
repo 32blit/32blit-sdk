@@ -108,6 +108,12 @@
     <ClInclude Include="..\..\32blit\math\geometry.hpp">
       <Filter>math</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\32blit\engine\file.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\32blit\engine\version.hpp">
+      <Filter>engine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\32blit\engine\engine.cpp">
@@ -184,6 +190,12 @@
     </ClCompile>
     <ClCompile Include="..\..\32blit\math\geometry.cpp">
       <Filter>math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\32blit\engine\file.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\32blit\engine\version.cpp">
+      <Filter>engine</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

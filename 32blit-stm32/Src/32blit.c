@@ -83,10 +83,6 @@ bool blit_sd_detected() {
   return HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_11) == 1;
 }
 
-void blit_enable_amp() {
-  HAL_GPIO_WritePin(AMP_SHUTDOWN_GPIO_Port, AMP_SHUTDOWN_Pin, GPIO_PIN_SET);
-}
-
 void hook_render(uint32_t time) {
   /*
   Replace blit::render = ::render; with blit::render = hook_render;
@@ -170,8 +166,6 @@ void blit_init() {
     blit::create_directory = ::create_directory;
 
     blit::switch_execution = blit_switch_execution;
-
-    blit_enable_amp();
 
   display::init();
   
