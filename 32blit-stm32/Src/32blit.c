@@ -293,7 +293,13 @@ void blit_menu_update(uint32_t time) {
 }
 
 void blit_menu_render(uint32_t time) {
+#if EXTERNAL_LOAD_ADDRESS == 0x90000000  // TODO We probably need a nicer way of detecting that we're compiling a firmware build (-DFIRMWARE maybe?)
+  // Don't attempt to render firmware game selection menu behind system menu
+  // At the moment `render` handles input in the firmware, so this results
+  // in all kinds of fun an exciting weirdness.
+#else
   ::render(time);
+#endif
   int screen_width = 160;
   int screen_height = 120;
   if (display::mode == blit::ScreenMode::hires) {
