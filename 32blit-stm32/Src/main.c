@@ -44,6 +44,7 @@
 #include "CDCResetHandler.h"
 #include "CDCInfoHandler.h"
 #include "CDCCommandStream.h"
+#include "USBManager.h"
 
 /* USER CODE END Includes */
 
@@ -67,6 +68,8 @@
 extern CDCCommandStream g_commandStream;
 CDCResetHandler g_resetHandler;
 CDCInfoHandler g_infoHandler;
+
+
 
 /* USER CODE END PV */
 
