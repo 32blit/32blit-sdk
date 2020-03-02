@@ -91,7 +91,20 @@ list(APPEND SOURCES
 	Utilities/JPEG/jpeg_utils.c
 )
 
-set_source_files_properties( ${SOURCES} PROPERTIES LANGUAGE CXX )
+set_source_files_properties(
+	startup_stm32h750xx.s
+
+	Src/main.c
+  	Src/usbd_msc_scsi.c
+	Src/usb_device.c
+	Src/usbd_desc.c
+	Src/usbd_cdc_if.c
+	Src/usbd_storage_if.c
+	Src/32blit.c
+	Src/CDCLogging.c
+	
+	PROPERTIES LANGUAGE CXX
+)
 
 add_library(BlitHalSTM32 OBJECT ${SOURCES})
 
@@ -134,10 +147,6 @@ target_compile_definitions(BlitHalSTM32
     -DCDC_FIFO_BUFFERS=${CDC_FIFO_BUFFERS}
 )
 
-target_compile_options(BlitHalSTM32
-	PRIVATE
-		-fpermissive
-)
 target_compile_options(BlitHalSTM32 PUBLIC "$<$<CONFIG:RELEASE>:-Os>")
 
 # 2nd build for external flash
@@ -155,11 +164,6 @@ target_compile_definitions(BlitHalSTM32Ext
 		-DEXTERNAL_LOAD_ADDRESS=${EXTERNAL_LOAD_ADDRESS_EXT}
 		-DINITIALISE_QSPI=${INITIALISE_QSPI_EXT}
     -DCDC_FIFO_BUFFERS=${CDC_FIFO_BUFFERS_EXT}
-)
-
-target_compile_options(BlitHalSTM32Ext
-	PRIVATE
-		-fpermissive
 )
 
 set(MCU_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}")
