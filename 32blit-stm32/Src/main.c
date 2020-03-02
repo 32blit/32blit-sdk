@@ -137,8 +137,7 @@ int main(void)
   MX_SPI4_Init();
   //MX_TIM6_Init();
   MX_TIM15_Init();
-  MX_FATFS_Init();
-  //MX_DMA2D_Init();
+  MX_FATFS_Init();  
   MX_RNG_Init();
   MX_USB_DEVICE_Init();
   MX_JPEG_Init();
@@ -295,6 +294,9 @@ void SystemClock_Config(void)
   RCC_CRSInitStruct.HSI48CalibrationValue = 32;
 
   HAL_RCCEx_CRSConfig(&RCC_CRSInitStruct);
+
+  __HAL_RCC_DMA2D_CLK_ENABLE();
+
   /** Enable USB Voltage detector 
   */
   HAL_PWREx_EnableUSBVoltageDetector();

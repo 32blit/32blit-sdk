@@ -17,7 +17,7 @@ Pen colour_map_palette[256];
 
 uint16_t *tiles[32][32];
 std::vector<uint16_t *> free_tiles;
-uint16_t tile_cache[32 * 32 * 150];
+uint16_t tile_cache[32 * 32 * 130];
 
 Vec3 position(64, 64, 100);
 float angle = 0.0f;
@@ -55,6 +55,7 @@ void load_map() {
 }
 
 void init() {
+  set_screen_mode(ScreenMode::lores);
   load_map();
 }
 

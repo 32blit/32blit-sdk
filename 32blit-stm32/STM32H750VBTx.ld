@@ -42,14 +42,14 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 MEMORY
 {
 DTCMRAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 128K
-RAM_D1 (xrw)        : ORIGIN = 0x24000000, LENGTH = 362K
-LTDC (rw)           : ORIGIN = 0x2405A800, LENGTH = 150K
-RAM_D2 (xrw)        : ORIGIN = 0x30000000, LENGTH = 63K
+RAM_D1 (xrw)        : ORIGIN = 0x24000000, LENGTH = 287K
+LTDC (rw)           : ORIGIN = 0x24047C00, LENGTH = 225K
+RAM_D2 (xrw)        : ORIGIN = 0x30000000, LENGTH =  63K
 FRAMEBUFFER (rw)    : ORIGIN = 0x3000FC00, LENGTH = 225K
-RAM_D3 (xrw)        : ORIGIN = 0x38000000, LENGTH = 64K
-PERSIST (rw)        : ORIGIN = 0x38800000, LENGTH = 4K
-ITCMISR (xrw)       : ORIGIN = 0x00000000, LENGTH = 4K
-ITCMRAM (xrw)       : ORIGIN = 0x00001000, LENGTH = 60K
+RAM_D3 (xrw)        : ORIGIN = 0x38000000, LENGTH =  64K
+PERSIST (rw)        : ORIGIN = 0x38800000, LENGTH =   4K
+ITCMISR (xrw)       : ORIGIN = 0x00000000, LENGTH =   4K
+ITCMRAM (xrw)       : ORIGIN = 0x00001000, LENGTH =  60K
 /* Flash location depends on whether we are building for internal or external flash. */
 /* This defaults to external and can be overridden on the linker command line. */
 FLASH (rx)          : ORIGIN = DEFINED(FLASH_TARGET_INT) ? 0x08000000 : 0x90000000,
