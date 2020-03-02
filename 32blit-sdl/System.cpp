@@ -120,8 +120,8 @@ void System::run() {
 
 	start = std::chrono::steady_clock::now();
 
-	blit::now = ::now;
-	blit::random = ::blit_random;
+	blit::api.now = ::now;
+	blit::api.random = ::blit_random;
 	blit::api.debug = ::debug;
 	blit::api.debugf = ::blit_debugf;
 	blit::api.set_screen_mode = ::set_screen_mode;

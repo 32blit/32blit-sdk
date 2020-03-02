@@ -16,8 +16,9 @@ namespace blit {
   extern void     (*render)           (uint32_t time);
 
   void     set_screen_mode(ScreenMode new_mode);
-  extern uint32_t (*now)              ();
-  extern uint32_t (*random)           ();
+  uint32_t now();
+  uint32_t random();
+
   void debug(std::string message);
   int debugf(const char * psFormatString, ...);
   extern void			(*switch_execution) ();

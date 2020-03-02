@@ -21,6 +21,8 @@ namespace blit {
     Pen LED;
 
     Surface     &(*set_screen_mode)  (ScreenMode new_mode);
+    uint32_t (*now)();
+    uint32_t (*random)();
 
     // serial debug
     void (*debug)(std::string message);

@@ -187,8 +187,8 @@ void blit_init() {
     bq24295_init(&hi2c4);
     blit::api.debug = blit_debug;
     blit::api.debugf = blit_debugf;
-    blit::now = HAL_GetTick;
-    blit::random = HAL_GetRandom;
+    blit::api.now = HAL_GetTick;
+    blit::api.random = HAL_GetRandom;
     blit::api.set_screen_mode = display::set_screen_mode;
     display::set_screen_mode(blit::lores);
     blit::update = ::update;

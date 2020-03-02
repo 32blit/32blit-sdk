@@ -17,8 +17,14 @@ namespace blit {
     screen = api.set_screen_mode(new_mode);
   }
 
-  uint32_t (*now)()                                 = nullptr;
-  uint32_t (*random)()                              = nullptr;
+  uint32_t now() {
+    return api.now();
+  }
+
+  uint32_t random() {
+    return api.random();
+  }
+
   void debug(std::string message) {
     api.debug(message);
   }
