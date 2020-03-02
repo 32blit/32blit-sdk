@@ -47,6 +47,10 @@ bool needs_render = true;
 uint32_t flip_cycle_count = 0;
 float volume_log_base = 2.0f;
 
+const uint32_t long_press_exit_time = 1000;
+
+uint32_t home_button_pressed_time = 0;
+
 __attribute__((section(".persist"))) Persist persist;
 
 void DFUBoot(void)
@@ -74,8 +78,6 @@ void blit_debug(std::string message) {
   screen.text(message, minimal_font, Point(0, 0));
 }
 
-
-
 void blit_tick() {
   if(display::needs_render) {
     blit::render(blit::now());
@@ -87,14 +89,19 @@ void blit_tick() {
   blit_update_vibration();
 
   blit::tick(blit::now());
+
+  if(home_button_pressed_time > 0 && HAL_GetTick() - home_button_pressed_time > long_press_exit_time) {
+      #if EXTERNAL_LOAD_ADDRESS == 0x90000000
+        // Already in firmware menu
+      #else
+        blit_switch_execution();
+      #endif
+      home_button_pressed_time = 0;
+  }
 }
 
 bool blit_sd_detected() {
   return HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_11) == 1;
-}
-
-void blit_enable_amp() {
-  HAL_GPIO_WritePin(AMP_SHUTDOWN_GPIO_Port, AMP_SHUTDOWN_Pin, GPIO_PIN_SET);
 }
 
 void hook_render(uint32_t time) {
@@ -117,12 +124,27 @@ void blit_update_volume() {
 }
 
 void blit_init() {
+    // Ensure releasing a held down button that hasn't been pressed
+    // doesn't launch the menu right away
+    home_button_pressed_time = 0;
+
+    // enable backup sram
+    __HAL_RCC_RTC_ENABLE();
+    __HAL_RCC_BKPRAM_CLK_ENABLE();
+    HAL_PWR_EnableBkUpAccess(); 
+    HAL_PWREx_EnableBkUpReg(); 
+
+    // need to wit for sram, I tried a few things I found on the net to wait
+    // based on PWR flags but none seemed to work, a simple delay does work!
+    HAL_Delay(5);
+      
     if(persist.magic_word != persistence_magic_word) {
       // Set persistent defaults if the magic word does not match
       persist.magic_word = persistence_magic_word;
       persist.volume = 0.5f;
       persist.backlight = 1.0f;
       persist.selected_menu_item = 0;
+      persist.reset_target = prtFirmware;
     }
 
     blit_update_volume();
@@ -154,13 +176,16 @@ void blit_init() {
     blit::init   = ::init;
     blit::open_file = ::open_file;
     blit::read_file = ::read_file;
+    blit::write_file = ::write_file;
     blit::close_file = ::close_file;
     blit::get_file_length = ::get_file_length;
     blit::list_files = ::list_files;
+    blit::file_exists = ::file_exists;
+    blit::directory_exists = ::directory_exists;
+    blit::create_directory = ::create_directory;
 
     blit::switch_execution = blit_switch_execution;
 
-    blit_enable_amp();
 
   display::init();
   
@@ -278,7 +303,13 @@ void blit_menu_update(uint32_t time) {
 }
 
 void blit_menu_render(uint32_t time) {
+#if EXTERNAL_LOAD_ADDRESS == 0x90000000  // TODO We probably need a nicer way of detecting that we're compiling a firmware build (-DFIRMWARE maybe?)
+  // Don't attempt to render firmware game selection menu behind system menu
+  // At the moment `render` handles input in the firmware, so this results
+  // in all kinds of fun an exciting weirdness.
+#else
   ::render(time);
+#endif
   int screen_width = 160;
   int screen_height = 120;
   if (display::mode == blit::ScreenMode::hires) {
@@ -423,6 +454,19 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
   }
 }
 
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+  if(!HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port, BUTTON_MENU_Pin)) {
+    home_button_pressed_time = HAL_GetTick();
+  } else {
+    if(home_button_pressed_time > 0 && HAL_GetTick() - home_button_pressed_time > 20) {
+      // TODO is it a good idea to swap out the render/update functions potentially in the middle of a loop?
+      // We were more or less doing this before by handling the menu update between render/update so perhaps it's mostly fine.
+      blit_menu();
+    }
+    home_button_pressed_time = 0;
+  }
+}
+
 #define ACCEL_OVER_SAMPLE 16
 
 uint8_t tilt_sample_offset = 0;
@@ -445,7 +489,6 @@ void blit_process_input() {
   static uint32_t last_tilt_update = 0;
 
   uint32_t scc = DWT->CYCCNT;
-  static uint32_t blit_last_buttons = 0;
   // read x axis of joystick
   bool joystick_button = false;
 
@@ -531,12 +574,6 @@ void blit_process_input() {
 
     last_tilt_update = blit::now();
   }
-
-  if(blit::buttons & blit::MENU && !(blit_last_buttons & blit::MENU)) {
-    blit_menu();
-  }
-
-  blit_last_buttons = blit::buttons;
   //flip_cycle_count = DWT->CYCCNT - scc;
 }
 
@@ -599,6 +636,11 @@ pFunction JumpToApplication;
 
 void blit_switch_execution(void)
 {
+#if EXTERNAL_LOAD_ADDRESS == 0x90000000
+  persist.reset_target = prtGame;
+#else
+  persist.reset_target = prtFirmware;
+#endif
   // Stop the ADC DMA
   HAL_ADC_Stop_DMA(&hadc1);
   HAL_ADC_Stop_DMA(&hadc3);
@@ -618,6 +660,7 @@ void blit_switch_execution(void)
   HAL_NVIC_DisableIRQ(DMA1_Stream1_IRQn);
   HAL_NVIC_DisableIRQ(TIM6_DAC_IRQn);
   HAL_NVIC_DisableIRQ(OTG_HS_IRQn);
+  HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
 
 	volatile uint32_t uAddr = EXTERNAL_LOAD_ADDRESS;
 	// enable qspi memory mapping if needed

@@ -12,7 +12,7 @@ Then open the cloned repository with "Open folder...".
 
 Windows needs a little help to find the required dependencies for local builds.
 
- - First download SDL as described in "Option 1" of the [Visual Studio](Windows-VisualStudio.md) docs.
+ - First download SDL as described in the [Visual Studio](Windows-VisualStudio.md) docs.
  - Add `"SDL2_DIR": "${workspaceRoot}/vs/sdl/"` to `configureSettings` (See "CMake Arguments" below)
 
 ## Initial setup for local builds
@@ -39,7 +39,7 @@ To set CMake arguments (like `-D32BLIT_PATH` for out-of-tree builds), you need t
 
 ## Debugger configuration
 
-It should be possible to debug without setting up a `launch.json` file but if you need to use one, you should set `program` to `${command:cmake.launchTargetPath}`. See the [CMake Tools documentation](https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html#debugging-with-cmake-tools-and-launch-json) for more details.
+You will need to create a `launch.json` file for debugging on some platforms, you should set `program` to `${command:cmake.launchTargetPath}` and `cwd` to `${workspaceFolder}/build`. See the [CMake Tools documentation](https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html#debugging-with-cmake-tools-and-launch-json) for more details.
 
 ## Building for 32Blit
 

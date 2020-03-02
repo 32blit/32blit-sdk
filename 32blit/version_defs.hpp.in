@@ -1,0 +1,4 @@
+#pragma once
+
+#define	BLIT_BUILD_DATE "${BUILD_DATE}"
+#define BLIT_BUILD_VER "${BUILD_VER}"

@@ -29,6 +29,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32h7xx_hal.h"
+#include "stm32h7xx.h"  // Added to help Eclipse indexer
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
