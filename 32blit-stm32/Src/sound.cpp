@@ -1,5 +1,7 @@
 #include "stm32h7xx_hal.h"
 
+#include "32blit.hpp"
+#include "gpio.hpp"
 #include "sound.hpp"
 
 TIM_HandleTypeDef htim6;
@@ -13,12 +15,18 @@ void TIM6_DAC_IRQHandler(void) {
     {
       __HAL_TIM_CLEAR_IT(&htim6, TIM_IT_UPDATE);
 
+      static bool was_amp_enabled = true;
+      bool enable_amp = is_audio_playing();
+
+      if(enable_amp != was_amp_enabled) {
+        HAL_GPIO_WritePin(AMP_SHUTDOWN_GPIO_Port, AMP_SHUTDOWN_Pin, enable_amp ? GPIO_PIN_SET : GPIO_PIN_RESET);
+        was_amp_enabled = enable_amp;
+      }
+
       // timer period elapsed, update audio sample
       hdac1.Instance->DHR12R2 = blit::get_audio_frame() >> 4;
     }
   }
-
-  //HAL_TIM_IRQHandler(&htim6);
 }
 
 namespace sound {

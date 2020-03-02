@@ -12,7 +12,7 @@
 
 namespace another_world {
 
-  constexpr uint32_t	HEAP_SIZE				= 200000;
+  constexpr uint32_t	HEAP_SIZE				= 100000;
   constexpr uint16_t	REGISTER_COUNT	= 256;
   constexpr uint16_t	THREAD_COUNT		= 64;
 

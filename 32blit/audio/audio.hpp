@@ -125,5 +125,6 @@ namespace blit {
   extern AudioChannel channels[CHANNEL_COUNT];
 
   uint16_t get_audio_frame();
+  bool is_audio_playing();
 
 }
