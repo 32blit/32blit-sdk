@@ -2,7 +2,11 @@
 #include "api_private.hpp"
 
 namespace blit {
+#ifdef TARGET_32BLIT_HW
   __attribute__((section(".api"))) API api;
+#else
+  API api;
+#endif
 
   uint32_t &buttons = api.buttons;
   float &hack_left = api.hack_left;
