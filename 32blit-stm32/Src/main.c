@@ -44,6 +44,7 @@
 #include "CDCResetHandler.h"
 #include "CDCInfoHandler.h"
 #include "CDCCommandStream.h"
+#include "USBManager.h"
 
 /* USER CODE END Includes */
 
@@ -67,6 +68,8 @@
 extern CDCCommandStream g_commandStream;
 CDCResetHandler g_resetHandler;
 CDCInfoHandler g_infoHandler;
+
+
 
 /* USER CODE END PV */
 
@@ -141,17 +144,20 @@ int main(void)
   MX_JPEG_Init();
   /* USER CODE BEGIN 2 */
 
-
+  blit_init();
   //NVIC_SetPriority(SysTick_IRQn, 0x0);
 
 #if (INITIALISE_QSPI==1)
   qspi_init();
+  if((persist.reset_target == prtGame) && !HAL_GPIO_ReadPin(BUTTON_HOME_GPIO_Port,  BUTTON_HOME_Pin))
+    blit_switch_execution();
 #endif
 
-  blit_init();
 
-  // add CDC handler to reset device on receiving "_RST"
+
+  // add CDC handler to reset device on receiving "_RST" and "SWIT"
 	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', 'R', 'S', 'T'>::value, &g_resetHandler);
+	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'S', 'W', 'I', 'T'>::value, &g_resetHandler);
 
   // add CDC handler to log info device on receiving "INFO"
 	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'I', 'N', 'F', 'O'>::value, &g_infoHandler);
