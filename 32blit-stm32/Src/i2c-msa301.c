@@ -21,9 +21,9 @@ void msa301_get_accel(I2C_HandleTypeDef *i2c_port, int16_t *data_buffer) {
   // each axis is stored as a 14-bit two's complement signed
   // integer. bits [5:0] are in the high end of the first byte
   // and bits [13:6] are in the second byte
-  *data_buffer++ = ((int8_t(b[1]) << 8) | (b[0] << 2)) >> 2;
-  *data_buffer++ = ((int8_t(b[3]) << 8) | (b[2] << 2)) >> 2;
-  *data_buffer++ = ((int8_t(b[5]) << 8) | (b[4] << 2)) >> 2;
+  *data_buffer++ = (((int8_t)b[1] << 8) | (b[0] << 2)) >> 2;
+  *data_buffer++ = (((int8_t)b[3] << 8) | (b[2] << 2)) >> 2;
+  *data_buffer++ = (((int8_t)b[5] << 8) | (b[4] << 2)) >> 2;
 }
 
 uint16_t _i2c_receive_16(I2C_HandleTypeDef *i2c_port, uint16_t address, uint8_t reg ){
