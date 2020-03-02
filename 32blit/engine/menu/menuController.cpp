@@ -1,8 +1,6 @@
 #include "32blit.hpp"
 
 MenuController* MenuController::instance = 0;
-const uint32_t long_press_exit_time = 1000;
-uint32_t home_button_pressed_time = 0;
 
 MenuController* MenuController::shared() {
     if (instance == 0){ 
@@ -41,10 +39,6 @@ void MenuController::render(uint32_t time) {
     if (_current_menu != nullptr) {
         _current_menu->render(time);
     }
-}
-
-bool has_pressed_button_long_enough () {
-    return home_button_pressed_time > long_press_exit_time;
 }
 
 void MenuController::update () {

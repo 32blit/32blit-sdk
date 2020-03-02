@@ -159,6 +159,12 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\examples\flight\flight.cpp" />
   </ItemGroup>
+   <ItemGroup>
+    <ClCompile Include="..\..\..\examples\flight\menuDataSource.hpp" />
+  </ItemGroup>
+   <ItemGroup>
+    <ClCompile Include="..\..\..\examples\flight\menuDataSource.cpp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

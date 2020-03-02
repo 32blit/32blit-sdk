@@ -15,8 +15,8 @@ namespace blit {
     B = 32,
     X = 64,
     Y = 128,
-    HOME = 256,
-    MENU = 512,
+    MENU = 256,
+    HOME = 512,
     JOYSTICK = 1024
   };
 
