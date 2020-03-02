@@ -148,7 +148,7 @@ int main(void)
 
 #if (INITIALISE_QSPI==1)
   qspi_init();
-  if((persist.reset_target == prtGame) && !HAL_GPIO_ReadPin(BUTTON_HOME_GPIO_Port,  BUTTON_HOME_Pin))
+  if((persist.reset_target == prtGame) && HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port,  BUTTON_MENU_Pin))
     blit_switch_execution();
 #endif
 

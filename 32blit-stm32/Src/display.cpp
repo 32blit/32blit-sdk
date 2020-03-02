@@ -127,7 +127,7 @@ namespace display {
 
     if(mode == ScreenMode::lores) {
       //dma2d_lores_flip(source);
-      screen.text(std::to_string(flip_time), minimal_font, Point(100,40));
+      //screen.text(std::to_string(flip_time), minimal_font, Point(100,40));
 
       uint32_t flip_start = DWT->CYCCNT;
 
