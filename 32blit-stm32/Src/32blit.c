@@ -208,8 +208,6 @@ void blit_init() {
     blit::api.GetUsTimer = ::GetUsTimer;
     blit::api.GetMaxUsTimer = ::GetMaxUsTimer;
 
-    blit::switch_execution = blit_switch_execution;
-
 
   display::init();
   
@@ -315,7 +313,7 @@ void blit_menu_update(uint32_t time) {
         break;
       case SWITCH_EXE:
         if(button_a){
-          blit::switch_execution();
+          blit_switch_execution();
         }
         break;
       case LAST_COUNT:

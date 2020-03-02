@@ -37,8 +37,6 @@ namespace blit {
     return ret;
   }
 
-  void (*switch_execution)()												= nullptr;
-
   Surface null_surface(nullptr, PixelFormat::M, Size(0, 0));
   Surface &screen = null_surface;
 

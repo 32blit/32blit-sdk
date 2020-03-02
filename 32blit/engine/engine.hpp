@@ -21,7 +21,6 @@ namespace blit {
 
   void debug(std::string message);
   int debugf(const char * psFormatString, ...);
-  extern void			(*switch_execution) ();
 
   bool tick(uint32_t time);
   void fast_tick(uint32_t time);
