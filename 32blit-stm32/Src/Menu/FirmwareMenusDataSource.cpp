@@ -29,7 +29,7 @@ std::vector<MenuItem> FirmwareMenusDataSource::menuItems() {
 vector<MenuItem>aboutItems () {
     vector<MenuItem> about;
 
-    // would be nice to have environment variables here from travis builds, no?
+    // Will be good to actually get these in along with pr 226
     about.push_back(MenuItem("Version", "number"));
     about.push_back(MenuItem("Build number", "number"));
     about.push_back(MenuItem("Build time", "date"));
@@ -56,27 +56,28 @@ void FirmwareMenusDataSource::createSystemMenuItems () {
     );
 
     // VOLUME
-
+    
     _items.push_back(
         MenuItem("Volume",
         [] (float value) {
 
             // slider value has changed
-            persist.volume -= value;
+            persist.volume += value;
             persist.volume = fmin(1.0f, fmax(0.0f, persist.volume));
 
             float volume_log_base = 2.0f;
             blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * persist.volume) / log(volume_log_base));
         },
         [](){
-            return 75 * persist.volume; // get current value to update the UI with
+            return 75.0f * persist.volume; // get current value to update the UI with
         },
-        1.0f / 256.0f,   // left adjustment
-        -1.0f / 256.0f)  // right adjustment
+        -1.0f / 256.0f,   // left adjustment
+        1.0f / 256.0f)  // right adjustment
     );
 
     _items.push_back(
-        MenuItem("DFU Mode", "Press A",
+        MenuItem("DFU Mode", 
+        "Press A",
         []() {
 
             // Select Action

@@ -4,9 +4,9 @@ class MenuController {
 
     private:        
 
-        Menu *_currentMenu;
-        Menu *_systemMenu;
-        Menu *_gameMenu;
+        Menu *_current_menu;
+        Menu *_system_menu;
+        Menu *_game_menu = nullptr;
         
         void set_current_menu (Menu *menu);
 

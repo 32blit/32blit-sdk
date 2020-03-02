@@ -28,7 +28,6 @@ vector<OptionItem> difficultySelectionItems () {
     options.push_back(OptionItem("Medium",1));
     options.push_back(OptionItem("Hard",2));
     options.push_back(OptionItem("Mega Hard",3));
-    options.push_back(OptionItem("This is a very long title that will hopefully end in the dot dots",4));
 
     return options;
 }
@@ -47,15 +46,11 @@ void createMenuItems () {
 
 
     items.push_back(MenuItem("About",aboutMenuItems()));
-  
-    string switchExecutionTitle = "Exit Game";
-    #if EXTERNAL_LOAD_ADDRESS == 0x90000000
-        switchExecutionTitle = "Launch Game";
-    #endif
 
     items.push_back(
-        MenuItem(switchExecutionTitle,
+        MenuItem("Exit Game",
         "Press A",
+        "Are you sure?",
         [](){
             blit::switch_execution();
         })

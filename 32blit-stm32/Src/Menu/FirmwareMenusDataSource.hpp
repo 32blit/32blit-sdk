@@ -12,7 +12,7 @@ class FirmwareMenusDataSource {
         void createSystemMenuItems ();
 
     public:
-
+        
         std::vector<MenuItem> menuItems();
         FirmwareMenusDataSource (); 
 };

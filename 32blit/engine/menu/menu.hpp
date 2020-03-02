@@ -14,8 +14,7 @@ struct NavigationLevel {
     NavigationLevel(std::string title, std::vector<MenuItem>items, int selection, int offset): title(title), items(items), selection(selection), offset(offset) {}
 };
 
-class Menu
-{
+class Menu {
 
     int BANNER_HEIGHT = 15;
     int MAX_SCROLL_OFFSET = BANNER_HEIGHT + 5;
@@ -63,6 +62,8 @@ class Menu
 
         // Pressed B
         void back_pressed ();
+
+        void menu_hiding();
 };
 
 #endif

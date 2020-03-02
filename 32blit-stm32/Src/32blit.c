@@ -164,7 +164,7 @@ void blit_init() {
 }
 
 void blit_menu_update(uint32_t time) {
-
+  MenuController::shared()->update();
 }
 
 void blit_menu_render(uint32_t time) {
@@ -334,12 +334,10 @@ void blit_process_input() {
     last_tilt_update = blit::now();
   }
 
-  if(blit::buttons & blit::MENU && !(blit_last_buttons & blit::MENU) ||
-    blit::buttons & blit::HOME && !(blit_last_buttons & blit::HOME)) {
+  if( ((blit::buttons & blit::MENU) && !(blit_last_buttons & blit::MENU)) ||
+      ((blit::buttons & blit::HOME) && !(blit_last_buttons & blit::HOME)) ) {
     blit_menu();
   }
-
-  MenuController::shared()->update();
 
   blit_last_buttons = blit::buttons;
   //flip_cycle_count = DWT->CYCCNT - scc;

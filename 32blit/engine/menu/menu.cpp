@@ -84,7 +84,7 @@ void Menu::selected() {
             _offset
             );
 
-        _displayTitle = _menuItems[_selectedIndex].title;
+        _displayTitle = _menuItems[_selectedIndex].display_text();
 
         _selectedIndex = 0;
         _menuItems = childItems;
@@ -181,4 +181,11 @@ void Menu::render(uint32_t time) {
     draw_top_bar(time);
     draw_bottom_line();
     
+}
+
+void Menu::menu_hiding () {
+
+    for (auto &item : _menuItems) {
+        item.reset_display_text();
+    }
 }
