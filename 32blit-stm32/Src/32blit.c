@@ -47,6 +47,8 @@ bool needs_render = true;
 uint32_t flip_cycle_count = 0;
 float volume_log_base = 2.0f;
 
+uint32_t home_button_pressed_time = 0;
+
 __attribute__((section(".persist"))) Persist persist;
 
 void DFUBoot(void)
@@ -74,8 +76,6 @@ void blit_debug(std::string message) {
   screen.text(message, minimal_font, Point(0, 0));
 }
 
-
-
 void blit_tick() {
   if(display::needs_render) {
     blit::render(blit::now());
@@ -87,6 +87,15 @@ void blit_tick() {
   blit_update_vibration();
 
   blit::tick(blit::now());
+
+  if(home_button_pressed_time > 0 && HAL_GetTick() - home_button_pressed_time > 500) {
+      #if EXTERNAL_LOAD_ADDRESS == 0x90000000
+        // Already in firmware menu
+      #else
+        blit_switch_execution();
+      #endif
+      home_button_pressed_time = 0;
+  }
 }
 
 bool blit_sd_detected() {
@@ -117,6 +126,10 @@ void blit_update_volume() {
 }
 
 void blit_init() {
+    // Ensure releasing a held down button that hasn't been pressed
+    // doesn't launch the menu right away
+    home_button_pressed_time = 0;
+
     // enable backup sram
     __HAL_RCC_RTC_ENABLE();
     __HAL_RCC_BKPRAM_CLK_ENABLE();
@@ -444,21 +457,14 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
   }
 }
 
-enum HomeButtonAction {
-  NONE = 0,
-  MENU = 1,
-  EXIT = 2
-};
-
-static HomeButtonAction home_button_action = HomeButtonAction::NONE;
-static uint32_t home_button_pressed_time = 0;
-
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   if(!HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port, BUTTON_MENU_Pin)) {
     home_button_pressed_time = HAL_GetTick();
   } else {
     if(home_button_pressed_time > 0) {
-      home_button_action = HomeButtonAction::MENU;
+      // TODO is it a good idea to swap out the render/update functions potentially in the middle of a loop?
+      // We were more or less doing this before by handling the menu update between render/update so perhaps it's mostly fine.
+      blit_menu();
     }
     home_button_pressed_time = 0;
   }
@@ -570,30 +576,6 @@ void blit_process_input() {
     blit::tilt.normalize();
 
     last_tilt_update = blit::now();
-  }
-
-  if(home_button_pressed_time > 0 && HAL_GetTick() - home_button_pressed_time > 500) {
-      home_button_action = EXIT;
-      home_button_pressed_time = 0;
-  }
-
-  switch(home_button_action){
-    case HomeButtonAction::EXIT:
-#if EXTERNAL_LOAD_ADDRESS == 0x90000000
-        // Already in firmware menu
-#else
-        blit_switch_execution();
-#endif
-      home_button_action = HomeButtonAction::NONE;
-      home_button_pressed_time = 0;
-      break;
-    case HomeButtonAction::MENU:
-      blit_menu();
-      home_button_action = HomeButtonAction::NONE;
-      home_button_pressed_time = 0;
-      break;
-    case HomeButtonAction::NONE:
-      break;
   }
   //flip_cycle_count = DWT->CYCCNT - scc;
 }
