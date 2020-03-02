@@ -26,7 +26,7 @@ public:
 	void Update(uint32_t time);
 
 private:
-	typedef enum {stFlashFile, stSaveFile, stFlashCDC, stLS, stSwitch} State;
+	typedef enum {stFlashFile, stSaveFile, stFlashCDC, stLS, stSwitch, stMassStorage} State;
 	typedef enum {stFilename, stLength, stData} ParseState;
 
 	bool Flash(const char *pszFilename);
@@ -35,6 +35,7 @@ private:
 	void RenderSaveFile(uint32_t time);
 	void RenderFlashCDC(uint32_t time);
 	void RenderFlashFile(uint32_t time);
+	void RenderMassStorage(uint32_t time);
 
 	bool FlashData(uint32_t uOffset, uint8_t *pBuffer, uint32_t uLen);
 	bool SaveData(uint8_t *pBuffer, uint32_t uLen);

@@ -6,6 +6,11 @@
 
 namespace blit {
 
+  enum OpenMode {
+    read  = 1 << 0,
+    write = 1 << 1
+  };
+
   enum FileFlags {
     directory = 1
   };
@@ -16,11 +21,15 @@ namespace blit {
   };
 
   extern std::vector<FileInfo> (*list_files) (std::string path);
+  extern bool (*file_exists) (std::string path);
+  extern bool (*directory_exists) (std::string path);
+
+  extern bool (*create_directory) (std::string path);
   
   class File final {
   public:
     File() {}
-    File(std::string filename) {open(filename);}
+    File(std::string filename, int mode = OpenMode::read) {open(filename, OpenMode::read);}
     File(const File &) = delete;
     File(File &&other) {
       *this = std::move(other);
@@ -40,8 +49,9 @@ namespace blit {
       return *this;
     }
 
-    bool open(std::string file);
+    bool open(std::string file, int mode = OpenMode::read);
     int32_t read(uint32_t offset, uint32_t length, char *buffer);
+    int32_t write(uint32_t offset, uint32_t length, const char *buffer);
     void close();
     uint32_t get_length();
 
