@@ -298,9 +298,9 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 		for(uint8_t uF = 0; uF < m_uFileCount; uF++) {
 			// TODO: A single line of text should probably vertically center in a 10px bounding box
 			// but in this case it needs to be fudged to 14 pixels
-			screen.text(m_filemeta[uF].sFilename, minimal_font, Rect(ROW(uF).x + 5, ROW(uF).y, w_max_name, 14), true, TextAlign::center_v);
-			screen.line(Point(w_max_name + 10, ROW(uF).y), Point(w_max_name + 10, ROW(uF).y + 14));
-			screen.text(m_filemeta[uF].sFilesize, minimal_font, Rect(w_max_name + 16, ROW(uF).y, w_max_size, 14), true, TextAlign::center_right);
+			screen.text(m_filemeta[uF].sFilename, minimal_font, Rect(ROW(uF).x + 5, ROW(uF).y, m_max_width_name, 14), true, TextAlign::center_v);
+			screen.line(Point(m_max_width_name + 10, ROW(uF).y), Point(m_max_width_name + 10, ROW(uF).y + 14));
+			screen.text(m_filemeta[uF].sFilesize, minimal_font, Rect(m_max_width_name + 16, ROW(uF).y, m_max_width_size, 14), true, TextAlign::center_right);
 		}
 	}
 	else
