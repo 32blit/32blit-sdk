@@ -117,12 +117,23 @@ void blit_update_volume() {
 }
 
 void blit_init() {
+    // enable backup sram
+    __HAL_RCC_RTC_ENABLE();
+    __HAL_RCC_BKPRAM_CLK_ENABLE();
+    HAL_PWR_EnableBkUpAccess(); 
+    HAL_PWREx_EnableBkUpReg(); 
+
+    // need to wit for sram, I tried a few things I found on the net to wait
+    // based on PWR flags but none seemed to work, a simple delay does work!
+    HAL_Delay(5);
+      
     if(persist.magic_word != persistence_magic_word) {
       // Set persistent defaults if the magic word does not match
       persist.magic_word = persistence_magic_word;
       persist.volume = 0.5f;
       persist.backlight = 1.0f;
       persist.selected_menu_item = 0;
+      persist.reset_target = prtFirmware;
     }
 
     blit_update_volume();
@@ -599,6 +610,11 @@ pFunction JumpToApplication;
 
 void blit_switch_execution(void)
 {
+#if EXTERNAL_LOAD_ADDRESS == 0x90000000
+  persist.reset_target = prtGame;
+#else
+  persist.reset_target = prtFirmware;
+#endif
   // Stop the ADC DMA
   HAL_ADC_Stop_DMA(&hadc1);
   HAL_ADC_Stop_DMA(&hadc3);

@@ -9,12 +9,14 @@ This storage will not survive a loss of power.
 */
 #pragma once
 
+typedef enum {prtFirmware, prtGame} PersistResetTarget;
+
 struct Persist {
   uint32_t magic_word;
   float volume;
   float backlight;
   uint32_t selected_menu_item;
-  uint32_t reset_target;
+  PersistResetTarget reset_target;
 };
 
 extern Persist persist;
