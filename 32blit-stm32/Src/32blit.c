@@ -47,6 +47,8 @@ bool needs_render = true;
 uint32_t flip_cycle_count = 0;
 float volume_log_base = 2.0f;
 
+const uint32_t long_press_exit_time = 1000;
+
 uint32_t home_button_pressed_time = 0;
 
 __attribute__((section(".persist"))) Persist persist;
@@ -88,7 +90,7 @@ void blit_tick() {
 
   blit::tick(blit::now());
 
-  if(home_button_pressed_time > 0 && HAL_GetTick() - home_button_pressed_time > 500) {
+  if(home_button_pressed_time > 0 && HAL_GetTick() - home_button_pressed_time > long_press_exit_time) {
       #if EXTERNAL_LOAD_ADDRESS == 0x90000000
         // Already in firmware menu
       #else
@@ -461,7 +463,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   if(!HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port, BUTTON_MENU_Pin)) {
     home_button_pressed_time = HAL_GetTick();
   } else {
-    if(home_button_pressed_time > 0) {
+    if(home_button_pressed_time > 0 && HAL_GetTick() - home_button_pressed_time > 20) {
       // TODO is it a good idea to swap out the render/update functions potentially in the middle of a loop?
       // We were more or less doing this before by handling the menu update between render/update so perhaps it's mostly fine.
       blit_menu();
