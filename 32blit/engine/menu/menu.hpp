@@ -21,13 +21,13 @@ class Menu {
 
     private:
 
-        std::string _menuTitle;
+        std::string _menu_title;
 
-        std::vector<MenuItem> _menuItems;
-        std::vector<NavigationLevel> _navigationStack;
-        std::string _displayTitle;
+        std::vector<MenuItem> _menu_items;
+        std::vector<NavigationLevel> _navigation_stack;
+        std::string _display_title;
 
-        int _selectedIndex;
+        int _selected_index;
         int _offset = MAX_SCROLL_OFFSET;
 
         int menu_y (int index);

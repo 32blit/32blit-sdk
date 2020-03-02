@@ -11,14 +11,6 @@ MenuController* MenuController::shared() {
 
 MenuController::MenuController() {}
 
-bool is_in_game () {
-    #if EXTERNAL_LOAD_ADDRESS == 0x90000000
-        return false;
-    #else
-        return true;
-    #endif
-}
-
 bool MenuController::is_menu_visible() {
     return _current_menu != nullptr;
 }

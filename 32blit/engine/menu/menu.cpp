@@ -15,16 +15,16 @@ int _rowHeight = 12;
 
 int Menu::menu_y (int index) { return index * _rowHeight + _offset; }
 
-Menu::Menu(string menuTitle, vector<MenuItem> items):_menuTitle(menuTitle), _menuItems(items) {}
+Menu::Menu(string menuTitle, vector<MenuItem> items):_menu_title(menuTitle), _menu_items(items) {}
 
 int Menu::min_offset () {
 
-    int rowsAvailableOnscreen = (screen_size().h - BANNER_HEIGHT) / _rowHeight;
-    int itemsOnScreen = min(int(_menuItems.size()), rowsAvailableOnscreen);
+    int rows_available_on_screen = (screen_size().h - BANNER_HEIGHT) / _rowHeight;
+    int itemsOnScreen = min(int(_menu_items.size()), rows_available_on_screen);
 
-    if (itemsOnScreen < rowsAvailableOnscreen) { return MAX_SCROLL_OFFSET; }
+    if (itemsOnScreen < rows_available_on_screen) { return MAX_SCROLL_OFFSET; }
 
-    return -(_menuItems.size() * _rowHeight) + (itemsOnScreen * _rowHeight);
+    return -(_menu_items.size() * _rowHeight) + (itemsOnScreen * _rowHeight);
 }
 
 int Menu::bottom_bar_yposition () {
@@ -33,77 +33,77 @@ int Menu::bottom_bar_yposition () {
 
 void Menu::check_vertical_offset () {
 
-    int screenHeight = screen_size().h;
-    int selectYPos = menu_y(_selectedIndex);
+    int screen_height = screen_size().h;
+    int select_y_pos = menu_y(_selected_index);
 
-    if (selectYPos >= screenHeight - (_rowHeight * 3)){
+    if (select_y_pos >= screen_height - (_rowHeight * 3)){
         _offset = max(_offset -_rowHeight, min_offset());
-    } else if (selectYPos <= _rowHeight * 2) {
+    } else if (select_y_pos <= _rowHeight * 2) {
         _offset = min(MAX_SCROLL_OFFSET, _offset + _rowHeight);
     }
 }
 
 void Menu::increment_selection () { 
-    if (_selectedIndex == _menuItems.size() - 1) {
+    if (_selected_index == _menu_items.size() - 1) {
         // send me back to the top, thanks
-        _selectedIndex = 0;
+        _selected_index = 0;
         _offset = MAX_SCROLL_OFFSET;
     } else {
-        _selectedIndex++;
+        _selected_index++;
         check_vertical_offset();
     }
 }
 
 void Menu::decrement_selection () {
-    if (_selectedIndex == 0) {
+    if (_selected_index == 0) {
         // go all the way to the end
-        _selectedIndex = _menuItems.size() - 1;
+        _selected_index = _menu_items.size() - 1;
         _offset = min_offset();
     } else {
-        _selectedIndex--;
+        _selected_index--;
         check_vertical_offset();
     }
 }
 
-void Menu::pressed_right() { _menuItems[_selectedIndex].pressed_right(); }
-void Menu::pressed_left() { _menuItems[_selectedIndex].pressed_left(); }
+void Menu::pressed_right() { _menu_items[_selected_index].pressed_right(); }
+void Menu::pressed_left() { _menu_items[_selected_index].pressed_left(); }
 
-void Menu::held_right() { _menuItems[_selectedIndex].held_right(); }
-void Menu::held_left() { _menuItems[_selectedIndex].held_left(); }
+void Menu::held_right() { _menu_items[_selected_index].held_right(); }
+void Menu::held_left() { _menu_items[_selected_index].held_left(); }
 
 void Menu::selected() { 
-    auto childItems = _menuItems[_selectedIndex].selected(); 
+    auto childItems = _menu_items[_selected_index].selected(); 
 
     if (!childItems.empty()){
 
         // stash away the current menu
         NavigationLevel level = NavigationLevel(
-            _displayTitle.empty() ? _displayTitle : _menuTitle,
-            _menuItems,
-            _selectedIndex,
+            _display_title.empty() ? _display_title : _menu_title,
+            _menu_items,
+            _selected_index,
             _offset
             );
 
-        _displayTitle = _menuItems[_selectedIndex].display_text();
+        _display_title = _menu_items[_selected_index].display_text();
 
-        _selectedIndex = 0;
-        _menuItems = childItems;
-        _navigationStack.push_back(level);
+        _selected_index = 0;
+        _menu_items = childItems;
+        _navigation_stack.push_back(level);
         _offset = MAX_SCROLL_OFFSET;
     }
 }
 
 void Menu::back_pressed() {
 
-    if(!_navigationStack.empty()) {
-        auto back = _navigationStack.back();
+    if(!_navigation_stack.empty()) {
+        auto back = _navigation_stack.back();
 
         // unravel previous menu
-        _menuItems = back.items;
-        _selectedIndex = back.selection;
-        _displayTitle = back.title.size() > 0 ? back.title : _menuTitle;
+        _menu_items = back.items;
+        _selected_index = back.selection;
+        _display_title = back.title.size() > 0 ? back.title : _menu_title;
         _offset = back.offset;
-        _navigationStack.pop_back();
+        _navigation_stack.pop_back();
     }
 }
 
@@ -118,7 +118,7 @@ void Menu::draw_top_bar (uint32_t time) {
 
     screen.pen = Pen(255, 255, 255);
 
-    screen.text(_displayTitle.empty() ? _menuTitle : _displayTitle , minimal_font, Point(5, 5));
+    screen.text(_display_title.empty() ? _menu_title : _display_title , minimal_font, Point(5, 5));
     screen.text("bat", minimal_font, Point(screen_size().w / 2, 5));
     uint16_t battery_meter_width = 55;
     battery_meter_width = float(battery_meter_width) * (blit::battery - 3.0f) / 1.1f;
@@ -170,12 +170,12 @@ void Menu::render(uint32_t time) {
     screen.pen = Pen(30, 30, 50, 200);
     screen.clear();
 
-    for (int i = 0; i < int(_menuItems.size()); i ++) {
-        MenuItem item = _menuItems[i];
+    for (int i = 0; i < int(_menu_items.size()); i ++) {
+        MenuItem item = _menu_items[i];
         int yPosition = menu_y(i);
 
         // might be worth adding in check to see if they're on screen to save on text rendering?
-        item.draw(yPosition, _selectedIndex == i, screen_size().w, _rowHeight);
+        item.draw(yPosition, _selected_index == i, screen_size().w, _rowHeight);
     }
 
     draw_top_bar(time);
@@ -185,7 +185,7 @@ void Menu::render(uint32_t time) {
 
 void Menu::menu_hiding () {
 
-    for (auto &item : _menuItems) {
+    for (auto &item : _menu_items) {
         item.reset_display_text();
     }
 }
