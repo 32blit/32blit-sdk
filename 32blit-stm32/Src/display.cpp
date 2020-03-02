@@ -68,11 +68,11 @@ namespace display {
     // set target pixel format (clear bits 3..0 of foreground format register)
     DMA2D->FGPFCCR &= 0xfff0;
     // set source buffer address
-    DMA2D->FGMAR = source.data; 
+    DMA2D->FGMAR = (uintptr_t)source.data; 
     // set target pixel format (clear bits 3..0 of output format register)
     DMA2D->OPFCCR &= 0xfff0;
     // set target buffer address
-    DMA2D->OMAR = &__ltdc_start;
+    DMA2D->OMAR = (uintptr_t)&__ltdc_start;
     // set the number of pixels per line and number of lines    
     DMA2D->NLR = (320 << 16) | (240);
     // set the source offset

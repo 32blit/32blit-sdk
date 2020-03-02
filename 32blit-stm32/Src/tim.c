@@ -20,7 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "tim.h"
 
-#include "gpio.hpp"
+#include "gpio_defs.h"
 
 /* USER CODE BEGIN 0 */
 
