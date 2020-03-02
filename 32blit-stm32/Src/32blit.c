@@ -675,6 +675,7 @@ void blit_switch_execution(void)
   HAL_NVIC_DisableIRQ(DMA1_Stream1_IRQn);
   HAL_NVIC_DisableIRQ(TIM6_DAC_IRQn);
   HAL_NVIC_DisableIRQ(OTG_HS_IRQn);
+  HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
 
 	volatile uint32_t uAddr = EXTERNAL_LOAD_ADDRESS;
 	// enable qspi memory mapping if needed
