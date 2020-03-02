@@ -112,8 +112,8 @@ void draw_world(Vec3 position, float angle, float lean, float horizon, float nea
  
   // convert angle into radians
   angle = deg2rad(angle);
-  float sina = sin(angle);
-  float cosa = cos(angle);
+  float sina = sinf(angle);
+  float cosa = cosf(angle);
 
   // starting z value
   float z = near;
@@ -309,8 +309,8 @@ void update(uint32_t time_ms) {
   }*/
 
   // move player location if joystick y axis is forward/backwards
-  position.x += sin(deg2rad(angle)) * joystick.y;
-  position.y += cos(deg2rad(angle)) * joystick.y;
+  position.x += sinf(deg2rad(angle)) * joystick.y;
+  position.y += cosf(deg2rad(angle)) * joystick.y;
   pitch = joystick.y * 10.0f;
 
   position.x = position.x < 0.0f ? 1023.0f : position.x;
