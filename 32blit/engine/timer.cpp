@@ -6,8 +6,7 @@
 namespace blit {
   std::vector<Timer *> timers;
 
-  Timer::Timer() {
-  }
+  Timer::Timer() = default;
 
   /**
    * Initialize the timer.

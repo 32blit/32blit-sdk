@@ -5,8 +5,8 @@
   big endian
 */
 
-#include <assert.h>
-#include <string.h>
+#include <cassert>
+#include <cstring>
 #include <algorithm>
 #include <ctime>
 

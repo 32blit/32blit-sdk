@@ -8,7 +8,7 @@
 Renderer::Renderer(SDL_Window *window, int width, int height) : sys_width(width), sys_height(height) {
 	//SDL_SetHint(SDL_HINT_RENDER_DRIVER, "openGL");
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-	if (renderer == NULL) {
+	if (renderer == nullptr) {
 		fprintf(stderr, "could not create renderer: %s\n", SDL_GetError());
 	}
 
@@ -76,18 +76,18 @@ void Renderer::_render(SDL_Texture *target, SDL_Rect *destination) {
 	SDL_SetRenderTarget(renderer, target);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	SDL_RenderClear(renderer);
-	SDL_RenderCopy(renderer, current, NULL, destination);
+	SDL_RenderCopy(renderer, current, nullptr, destination);
 }
 
 void Renderer::present() {
-	_render(NULL, &dest);
+	_render(nullptr, &dest);
 	SDL_RenderPresent(renderer);
 }
 
 void Renderer::read_pixels(int width, int height, Uint32 format, Uint8 *buffer) {
 	SDL_Texture *record_target = SDL_CreateTexture(renderer, format, SDL_TEXTUREACCESS_TARGET, width, height);
-	_render(record_target, NULL);
-	SDL_RenderReadPixels(renderer, NULL, format, buffer, width*SDL_BYTESPERPIXEL(format));
+	_render(record_target, nullptr);
+	SDL_RenderReadPixels(renderer, nullptr, format, buffer, width*SDL_BYTESPERPIXEL(format));
 	SDL_DestroyTexture(record_target);
 }
 

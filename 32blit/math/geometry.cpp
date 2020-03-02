@@ -3,8 +3,8 @@
 
     These are some neat functions for geometry stuff!
 */
-#include <string.h>
-#include <float.h>
+#include <cstring>
+#include <cfloat>
 
 #include "../types/vec3.hpp"
 #include "../types/vec2.hpp"
@@ -22,7 +22,7 @@
  *
  * \return `true` if intersection occurs
  */
-bool ray_sphere_intersect(Vec3 ray_origin, Vec3 ray_vector, Vec3 sphere_origin, float sphere_radius, Vec3 *point = NULL, float *distance = NULL, Vec3 *normal = NULL) {
+bool ray_sphere_intersect(Vec3 ray_origin, Vec3 ray_vector, Vec3 sphere_origin, float sphere_radius, Vec3 *point = nullptr, float *distance = nullptr, Vec3 *normal = nullptr) {
   Vec3 l = sphere_origin - ray_origin;
   float tca = l.dot(ray_vector);
   float d2 = l.dot(l) - tca * tca;
@@ -73,7 +73,7 @@ bool ray_sphere_intersect(Vec3 ray_origin, Vec3 ray_vector, Vec3 sphere_origin, 
  *
  * \return `true` if intersection occurs
  */
-bool ray_circle_intersect(Vec2 ray_origin, Vec2 ray_vector, Vec2 circle_origin, float circle_radius, Vec2 *point = NULL, float *distance = NULL, Vec2 *normal = NULL) {  
+bool ray_circle_intersect(Vec2 ray_origin, Vec2 ray_vector, Vec2 circle_origin, float circle_radius, Vec2 *point = nullptr, float *distance = nullptr, Vec2 *normal = nullptr) {  
   Vec2 l = ray_origin - circle_origin;
 
   float a = ray_vector.length() * ray_vector.length();
@@ -123,7 +123,7 @@ bool ray_circle_intersect(Vec2 ray_origin, Vec2 ray_vector, Vec2 circle_origin, 
  *
  * \return `true` if intersection occurs
  */
-bool ray_line_intersect(Vec2 ray_origin, Vec2 ray_vector, Vec2 start, Vec2 end, Vec2 *point = NULL, float *distance = NULL) {
+bool ray_line_intersect(Vec2 ray_origin, Vec2 ray_vector, Vec2 start, Vec2 end, Vec2 *point = nullptr, float *distance = nullptr) {
   Vec2 v1 = ray_origin - start;
   Vec2 v2 = end - start;
   Vec2 v3 = Vec2(-ray_vector.y, ray_vector.x);

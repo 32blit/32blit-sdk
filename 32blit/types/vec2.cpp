@@ -1,6 +1,6 @@
 /*! \file vec2.cpp
 */
-#include <string.h>
+#include <cstring>
 
 #include "vec2.hpp"
 #include "mat3.hpp"

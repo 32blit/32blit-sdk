@@ -3,7 +3,7 @@
 */
 
 #include <cstdlib>
-#include <math.h>
+#include <cmath>
 
 #include "surface.hpp"
 

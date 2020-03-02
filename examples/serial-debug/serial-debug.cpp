@@ -1,5 +1,5 @@
 #include <cinttypes>
-#include <stdint.h>
+#include <cstdint>
 
 #include "serial-debug.hpp"
 #include "graphics/color.hpp"
