@@ -71,15 +71,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -151,6 +155,7 @@
     <ClInclude Include="..\..\32blit\engine\particle.hpp" />
     <ClInclude Include="..\..\32blit\engine\timer.hpp" />
     <ClInclude Include="..\..\32blit\engine\tweening.hpp" />
+    <ClInclude Include="..\..\32blit\engine\version.hpp" />
     <ClInclude Include="..\..\32blit\graphics\blend.hpp" />
     <ClInclude Include="..\..\32blit\graphics\color.hpp" />
     <ClInclude Include="..\..\32blit\graphics\font.hpp" />
@@ -179,6 +184,7 @@
     <ClCompile Include="..\..\32blit\engine\particle.cpp" />
     <ClCompile Include="..\..\32blit\engine\timer.cpp" />
     <ClCompile Include="..\..\32blit\engine\tweening.cpp" />
+    <ClCompile Include="..\..\32blit\engine\version.cpp" />
     <ClCompile Include="..\..\32blit\graphics\blend.cpp" />
     <ClCompile Include="..\..\32blit\graphics\color.cpp" />
     <ClCompile Include="..\..\32blit\graphics\filter.cpp" />
