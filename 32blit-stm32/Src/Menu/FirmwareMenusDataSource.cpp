@@ -26,22 +26,19 @@ std::vector<MenuItem> FirmwareMenusDataSource::menuItems() {
     return _items;
 }
 
-vector<MenuItem>aboutItems () {
-    vector<MenuItem> about;
-
-    // Will be good to actually get these in along with pr 226
-    about.push_back(MenuItem("Version", "number"));
-    about.push_back(MenuItem("Build number", "number"));
-    about.push_back(MenuItem("Build time", "date"));
-
-    return about;
+static vector<MenuItem>aboutItems () {
+    return {
+        {"Version Number", "number"},
+        {"Build Number","number"},
+        {"Build Time","datetime"}
+    };
 }
 
 void FirmwareMenusDataSource::createSystemMenuItems () {
 
     // BACKLIGHT
 
-    _items.push_back(
+    _items.emplace_back(
         MenuItem("Backlight", 
         [](float value) {
             // slider value has changed
@@ -57,7 +54,7 @@ void FirmwareMenusDataSource::createSystemMenuItems () {
 
     // VOLUME
     
-    _items.push_back(
+    _items.emplace_back(
         MenuItem("Volume",
         [] (float value) {
 
@@ -75,7 +72,7 @@ void FirmwareMenusDataSource::createSystemMenuItems () {
         1.0f / 256.0f)  // right adjustment
     );
 
-    _items.push_back(
+    _items.emplace_back(
         MenuItem("DFU Mode", 
         "Press A",
         []() {
@@ -92,28 +89,23 @@ void FirmwareMenusDataSource::createSystemMenuItems () {
     );
 
 
-    _items.push_back(
+    _items.emplace_back(
         MenuItem("Power off",
         "Press A",
         [](){
             bq24295_enable_shipping_mode(&hi2c4);
         })
     );
-    
-    string switchExecutionTitle = "Exit Game";
-    #if EXTERNAL_LOAD_ADDRESS == 0x90000000
-        switchExecutionTitle = "Launch Game";
-    #endif
 
-    _items.push_back(
-        MenuItem(switchExecutionTitle,
+    _items.emplace_back(
+        MenuItem("Launch Game",
         "Press A",
         [](){
             blit::switch_execution();
         })
     );
 
-    _items.push_back(MenuItem("About",aboutItems()));
+    _items.emplace_back(MenuItem("About",aboutItems()));
 }
 
 FirmwareMenusDataSource::FirmwareMenusDataSource () {}
