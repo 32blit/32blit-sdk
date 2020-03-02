@@ -72,6 +72,18 @@ void FlashLoader::FSInit(void)
 		{
 			//printf("%s %lu\n\r", fno.fname, fno.fsize);
 			strncpy(m_filenames[m_uFileCount], fno.fname, MAX_FILENAME_LENGTH);
+			strncpy(m_filelabels[m_uFileCount], fno.fname, MAX_FILENAME_LENGTH);
+			for (int i = strlen(m_filelabels[m_uFileCount]); i < MAX_FILENAME_LENGTH; i++)
+			{
+					m_filelabels[m_uFileCount][i] = (char)' ';
+			}
+			char buffer[32];
+			sprintf(buffer, "%lu", fno.fsize);
+			for (unsigned int i = 0; i < strlen(buffer); i++)
+			{
+					int offset = MAX_FILENAME_LENGTH - strlen(buffer) + i;
+					m_filelabels[m_uFileCount][offset] = buffer[i];
+			}
 			m_uFileCount++;
 		}
 		fr = f_findnext(&dj, &fno);
@@ -288,7 +300,7 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 		for(uint8_t uF = 0; uF < m_uFileCount; uF++) {
 			// TODO: A single line of text should probably vertically center in a 10px bounding box
 			// but in this case it needs to be fudged to 14 pixels
-			screen.text(m_filenames[uF], minimal_font, Rect(ROW(uF).x + 5, ROW(uF).y, 310, 14), true, TextAlign::center_v);
+			screen.text(m_filelabels[uF], minimal_font, Rect(ROW(uF).x + 5, ROW(uF).y, 310, 14), true, TextAlign::center_v);
 		}
 	}
 	else
