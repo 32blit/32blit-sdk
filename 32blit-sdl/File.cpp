@@ -30,7 +30,7 @@ void *open_file(std::string name, int mode) {
     str_mode = "rb";
   else if(mode == blit::OpenMode::write)
     str_mode = "wb";
-  else if(mode == blit::OpenMode::read | blit::OpenMode::write)
+  else if(mode == (blit::OpenMode::read | blit::OpenMode::write))
     str_mode = "r+";
   else
     return nullptr;
