@@ -26,7 +26,7 @@ The solution file is located at `vs\32blit.sln`. It contains two static linked l
 
 ### Get started with your own game
 
-There is also a skeleton game created for you in `vs\game.sln`. This is an empty skeleton with some comments to get you started with your own game (if you do not want to start tweaking one of the examples).
+There is also a skeleton game created for you in `template\game.sln`. This is an empty skeleton with some comments to get you started with your own game (if you do not want to start tweaking one of the examples).
 
 ## Option 2: Use Visual Studio's built-in CMake support
 
