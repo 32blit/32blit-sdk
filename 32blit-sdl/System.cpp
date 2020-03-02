@@ -136,9 +136,9 @@ void System::run() {
 	blit::api.close_file = ::close_file;
 	blit::api.get_file_length = ::get_file_length;
 	blit::api.list_files = ::list_files;
-	blit::file_exists = ::file_exists;
-	blit::directory_exists = ::directory_exists;
-	blit::create_directory = ::create_directory;
+	blit::api.file_exists = ::file_exists;
+	blit::api.directory_exists = ::directory_exists;
+	blit::api.create_directory = ::create_directory;
 
 	blit::api.EnableUsTimer = ::EnableUsTimer;
 	blit::api.GetUsTimer = ::GetUsTimer;

@@ -33,6 +33,9 @@ namespace blit {
     int32_t (*close_file)(void *fh);
     uint32_t (*get_file_length)(void *fh);
     std::vector<FileInfo> (*list_files) (std::string path);
+    bool (*file_exists) (std::string path);
+    bool (*directory_exists) (std::string path);
+    bool (*create_directory) (std::string path);
 
     // profiler
     void (*EnableUsTimer)(void);

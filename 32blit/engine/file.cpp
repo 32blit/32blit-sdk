@@ -6,10 +6,16 @@ namespace blit {
     return api.list_files(path);
   }
 
-  bool (*file_exists) (std::string path) = nullptr;
-  bool (*directory_exists) (std::string path) = nullptr;
+  bool file_exists(std::string path) {
+    return api.file_exists(path);
+  }
+  bool directory_exists(std::string path) {
+    return api.directory_exists(path);
+  }
 
-  bool (*create_directory) (std::string path);
+  bool create_directory(std::string path) {
+    return api.create_directory(path);
+  }
 
   bool File::open(std::string file, int mode) {
     close();
