@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <list>
+#include <set>
 
 using namespace blit;
 
@@ -606,6 +607,27 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
 
   progress.show("Copying from SD card to flash...", bytes_total);
 
+  // check for prepended relocation info
+  char buf[4];
+  f_read(&file, buf, 4, &bytes_read);
+  std::set<uint32_t> relocation_offsets;
+
+  if(memcmp(buf, "RELO", 4) == 0) {
+    uint32_t num_relocs;
+    f_read(&file, (void *)&num_relocs, 4, &bytes_read);
+
+    for(auto i = 0u; i < num_relocs; i++) {
+      uint32_t reloc_offset;
+      f_read(&file, (void *)&reloc_offset, 4, &bytes_read);
+
+      relocation_offsets.insert(reloc_offset - 0x90000000);
+    }
+
+    bytes_total -= num_relocs * 4 + 8; // size of relocation data
+  } else {
+    f_lseek(&file, 0);
+  }
+
   uint32_t got_start = 0, got_end = 0;
   uint32_t initfini_start = 0, initfini_end = 0;
 
@@ -648,6 +670,13 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
           continue;
 
         *(uint32_t *)(buffer + i - offset) += flash_offset;
+      }
+    }
+
+    // relocation patching
+    for(auto off = offset; off < offset + bytes_read; off += 4) {
+      if(relocation_offsets.count(off)) {
+        *(uint32_t *)(buffer + off - offset) += flash_offset;
       }
     }
 
