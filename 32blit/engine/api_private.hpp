@@ -6,6 +6,7 @@
 #include "engine.hpp"
 #include "file.hpp"
 #include "../audio/audio.hpp"
+#include "../graphics/jpeg.hpp"
 #include "../graphics/surface.hpp"
 #include "../types/vec2.hpp"
 #include "../types/vec3.hpp"
@@ -46,6 +47,10 @@ namespace blit {
     void (*EnableUsTimer)(void);
     uint32_t (*GetUsTimer)(void);
     uint32_t (*GetMaxUsTimer)(void);
+
+    // jepg
+    JPEGImage (*decode_jpeg_buffer)(uint8_t *ptr, uint32_t len);
+    JPEGImage (*decode_jpeg_file)(std::string filename);
   
   };
   #pragma pack(pop)

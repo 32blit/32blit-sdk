@@ -15,6 +15,7 @@ set(SOURCES
 	graphics/color.cpp
 	graphics/filter.cpp
 	graphics/font.cpp
+	graphics/jpeg.cpp
 	graphics/mask.cpp
 	graphics/mode7.cpp
 	graphics/primitive.cpp

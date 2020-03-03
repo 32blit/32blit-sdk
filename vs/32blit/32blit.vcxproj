@@ -192,6 +192,7 @@
     <ClCompile Include="..\..\32blit\graphics\color.cpp" />
     <ClCompile Include="..\..\32blit\graphics\filter.cpp" />
     <ClCompile Include="..\..\32blit\graphics\font.cpp" />
+    <ClCompile Include="..\..\32blit\graphics\jpeg.cpp" />
     <ClCompile Include="..\..\32blit\graphics\mask.cpp" />
     <ClCompile Include="..\..\32blit\graphics\mode7.cpp" />
     <ClCompile Include="..\..\32blit\graphics\primitive.cpp" />

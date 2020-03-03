@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string>
 
-#include "types/size.hpp"
+#include "../types/size.hpp"
 
 namespace blit {
   struct JPEGImage {

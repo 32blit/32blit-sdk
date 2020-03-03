@@ -8,6 +8,7 @@
 #include "display.hpp"
 #include "gpio.hpp"
 #include "file.hpp"
+#include "jpeg.hpp"
 
 
 #include "adc.h"
@@ -207,6 +208,9 @@ void blit_init() {
     blit::api.EnableUsTimer = ::EnableUsTimer;
     blit::api.GetUsTimer = ::GetUsTimer;
     blit::api.GetMaxUsTimer = ::GetMaxUsTimer;
+
+    blit::api.decode_jpeg_buffer = blit_decode_jpeg_buffer;
+    blit::api.decode_jpeg_file = blit_decode_jpeg_file;
 
 
   display::init();

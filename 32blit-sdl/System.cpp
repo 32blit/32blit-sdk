@@ -7,6 +7,7 @@
 #include "System.hpp"
 #include "32blit.hpp"
 #include "UserCode.hpp"
+#include "JPEG.hpp"
 
 #include "engine/api_private.hpp"
 
@@ -143,6 +144,9 @@ void System::run() {
 	blit::api.EnableUsTimer = ::EnableUsTimer;
 	blit::api.GetUsTimer = ::GetUsTimer;
 	blit::api.GetMaxUsTimer = ::GetMaxUsTimer;
+
+	blit::api.decode_jpeg_buffer = blit_decode_jpeg_buffer;
+	blit::api.decode_jpeg_file = blit_decode_jpeg_file;
 
 	::set_screen_mode(blit::lores);
 

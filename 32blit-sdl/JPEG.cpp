@@ -5,35 +5,32 @@
 
 #include "graphics/jpeg.hpp"
 
-namespace blit {
+static blit::JPEGImage decode_jpeg_rwops(SDL_RWops *rwops)
+{
+  auto image = IMG_LoadJPG_RW(rwops);
+  SDL_RWclose(rwops);
+  blit::JPEGImage ret = {};
 
-  static JPEGImage decode_jpeg_rwops(SDL_RWops *rwops)
-  {
-    auto image = IMG_LoadJPG_RW(rwops);
-    SDL_RWclose(rwops);
-    JPEGImage ret = {};
-
-    if(!image)
-      return ret;
-
-    ret.size = Size(image->w, image->h);
-
-    // FIXME: assuming surface is RGB
-    ret.data = new uint8_t[image->w * image->h * 3];
-    memcpy(ret.data, image->pixels, image->w * image->h * 3);
-
-    SDL_FreeSurface(image);
-
+  if(!image)
     return ret;
-  }
 
-  JPEGImage decode_jpeg_buffer(uint8_t *ptr, uint32_t len) {
-    auto rwops = SDL_RWFromMem(ptr, len);
-    return decode_jpeg_rwops(rwops);
-  }
+  ret.size = blit::Size(image->w, image->h);
 
-  JPEGImage decode_jpeg_file(std::string filename) {
-    auto rwops = SDL_RWFromFile(filename.c_str(), "rb");
-    return decode_jpeg_rwops(rwops);
-  }
+  // FIXME: assuming surface is RGB
+  ret.data = new uint8_t[image->w * image->h * 3];
+  memcpy(ret.data, image->pixels, image->w * image->h * 3);
+
+  SDL_FreeSurface(image);
+
+  return ret;
+}
+
+blit::JPEGImage blit_decode_jpeg_buffer(uint8_t *ptr, uint32_t len) {
+  auto rwops = SDL_RWFromMem(ptr, len);
+  return decode_jpeg_rwops(rwops);
+}
+
+blit::JPEGImage blit_decode_jpeg_file(std::string filename) {
+  auto rwops = SDL_RWFromFile(filename.c_str(), "rb");
+  return decode_jpeg_rwops(rwops);
 }
