@@ -1,9 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstdint>
 #include <string>
-#include <string.h>
-#include <time.h>
+#include <cstring>
+#include <ctime>
 
 #if defined(WIN32) || defined(__MINGW32__)
 #include <windows.h>
@@ -11,7 +11,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <termios.h>
-#include <errno.h>
+#include <cerrno>
 #include <dirent.h>
 
 #ifdef __APPLE__
@@ -42,10 +42,10 @@ void usage(void)
 const char *getFileName(const char *pszPath)
 {
   const char *pszFilename = strrchr(pszPath, '\\');
-  if (pszFilename == NULL)
+  if (pszFilename == nullptr)
     pszFilename = strrchr(pszPath, '/');
 
-  if (pszFilename == NULL)
+  if (pszFilename ==nullptr)
     pszFilename = pszPath;
   else
     pszFilename++;
@@ -484,8 +484,8 @@ int main(int argc, char *argv[])
 
   const char *pszProcess = argv[1];
   std::string sComPort = argv[2];
-  const char *pszBinPath = NULL;
-  const char *pszBinFile = NULL;
+  const char *pszBinPath = nullptr;
+  const char *pszBinFile = nullptr;
   bool bShouldReconnect = false;
 
   if (argc >= 4)

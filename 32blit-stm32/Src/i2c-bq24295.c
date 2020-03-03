@@ -1,5 +1,8 @@
 #include "i2c-bq24295.h"
 
+static void _i2c_send_8(I2C_HandleTypeDef *i2c_port, uint8_t address, uint8_t reg, uint8_t data);
+static uint8_t _i2c_recv_8(I2C_HandleTypeDef *i2c_port, uint8_t address, uint8_t reg);
+
 bool bq24295_init(I2C_HandleTypeDef *i2c_port) {
     uint8_t chip_id = _i2c_recv_8(i2c_port, BQ24295_DEVICE_ADDRESS, BQ24295_ID_REGISTER);
 
@@ -36,7 +39,7 @@ void bq24295_enable_shipping_mode(I2C_HandleTypeDef *i2c_port){
     _i2c_send_8(i2c_port, BQ24295_DEVICE_ADDRESS, BQ24295_OP_CONTROL_REGISTER, op_control);
 }
 
-uint8_t _i2c_recv_8(I2C_HandleTypeDef *i2c_port,  uint8_t address, uint8_t reg ){
+static uint8_t _i2c_recv_8(I2C_HandleTypeDef *i2c_port,  uint8_t address, uint8_t reg ){
     uint8_t result;
     HAL_I2C_Master_Transmit(i2c_port, address, &reg, 1, HAL_TIMEOUT);  
     HAL_Delay(1); 
@@ -44,7 +47,7 @@ uint8_t _i2c_recv_8(I2C_HandleTypeDef *i2c_port,  uint8_t address, uint8_t reg )
     return result;
 }
 
-void _i2c_send_8(I2C_HandleTypeDef *i2c_port, uint8_t address, uint8_t reg, uint8_t data){
+static void _i2c_send_8(I2C_HandleTypeDef *i2c_port, uint8_t address, uint8_t reg, uint8_t data){
     uint8_t data_buffer[2];
     data_buffer[0] = reg;
     data_buffer[1] = data;

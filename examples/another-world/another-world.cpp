@@ -4,7 +4,7 @@
   by Jonathan Williamson (lowfatcode)
 */
 
-#include <string.h>
+#include <cstring>
 
 #include "32blit.hpp"
 #include "virtual-machine.hpp"

@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 #include <array>
-#include <stdint.h>
+#include <cstdint>
 
 #ifdef WIN32 
 #define __attribute__(A)

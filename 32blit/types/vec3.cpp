@@ -1,7 +1,7 @@
 /*! \file vec3.cpp
 */
-#include <math.h>
-#include <string.h>
+#include <cmath>
+#include <cstring>
 
 #include "vec3.hpp"
 #include "mat4.hpp"
@@ -12,7 +12,6 @@ extern "C" {
   #include <lua\lauxlib.h>
 }*/
 
-Vec3::Vec3(const Vec3 &v) : x(v.x), y(v.y), z(v.z) {}
 Vec3::Vec3(const float x, const float y, const float z) : x(x), y(y), z(z) {}
 
 

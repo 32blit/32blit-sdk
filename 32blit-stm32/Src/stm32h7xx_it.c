@@ -287,7 +287,7 @@ void DMAMUX1_OVR_IRQHandler(void)
 
   /* USER CODE END DMAMUX1_OVR_IRQn 0 */
   // Handle DMA1_Stream0
-  HAL_DMAEx_MUX_IRQHandler(&hdma_dac1_ch2);
+  //HAL_DMAEx_MUX_IRQHandler(&hdma_dac1_ch2);
   /* USER CODE BEGIN DMAMUX1_OVR_IRQn 1 */
 
   /* USER CODE END DMAMUX1_OVR_IRQn 1 */

@@ -24,7 +24,7 @@
 
 static bool running = true;
 
-SDL_Window* window = NULL;
+SDL_Window* window = nullptr;
 
 System *blit_system;
 Input *blit_input;
@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
 		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
 	);
 
-	if (window == NULL) {
+	if (window == nullptr) {
 		fprintf(stderr, "could not create window: %s\n", SDL_GetError());
 		return 1;
 	}
