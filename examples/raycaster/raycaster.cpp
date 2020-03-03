@@ -123,7 +123,7 @@ void init() {
 	tan_half_fov = tan(HALF_FOV);
 
 	for (int x = 0; x < SCREEN_WIDTH; x++) {
-		lut_camera_displacement[x] = (float)(2 * x) / SCREEN_WIDTH - 1;
+		lut_camera_displacement[x] = (float)(2 * x) / (float)(SCREEN_WIDTH) - 1.0f;
 	}
 
 	srand(0x32bl);
@@ -223,25 +223,25 @@ void update(uint32_t time) {
 	rmove.y = move.x * player1.direction.y + move.y * player1.direction.x;
 
 	if (rmove.x < 0) {
-		int bound = floor(player1.position.x + rmove.x - size.x);
+		int bound = (int)std::floor(player1.position.x + rmove.x - size.x);
 
-		check_tile = check_tile | map.get_flags(Point(bound, floor(player1.position.y)));
+		check_tile = check_tile | map.get_flags(Point(bound, (int32_t)std::floor(player1.position.y)));
 		if (rmove.y > 0) {
-			check_tile = check_tile | map.get_flags(Point(bound, floor(player1.position.y - size.y)));
+			check_tile = check_tile | map.get_flags(Point(bound, (int32_t)std::floor(player1.position.y - size.y)));
 		}
 		else if (rmove.y < 0) {
-			check_tile = check_tile | map.get_flags(Point(bound, floor(player1.position.y + size.y)));
+			check_tile = check_tile | map.get_flags(Point(bound, (int32_t)std::floor(player1.position.y + size.y)));
 		}
 	}
 	else if (rmove.x > 0) {
-		int bound = floor(player1.position.x + rmove.x + size.x);
+		int bound = (int)std::floor(player1.position.x + rmove.x + size.x);
 
-		check_tile = check_tile | map.get_flags(Point(bound, floor(player1.position.y)));
+		check_tile = check_tile | map.get_flags(Point(bound, (int32_t)std::floor(player1.position.y)));
 		if (rmove.y > 0) {
-			check_tile = check_tile | map.get_flags(Point(bound, floor(player1.position.y - size.y)));
+			check_tile = check_tile | map.get_flags(Point(bound, (int32_t)std::floor(player1.position.y - size.y)));
 		}
 		else if (rmove.y < 0) {
-			check_tile = check_tile | map.get_flags(Point(bound, floor(player1.position.y + size.y)));
+			check_tile = check_tile | map.get_flags(Point(bound, (int32_t)std::floor(player1.position.y + size.y)));
 		}
 	}
 
@@ -252,25 +252,25 @@ void update(uint32_t time) {
 	check_tile = 0;
 
 	if (rmove.y < 0) {
-		int bound = floor(player1.position.y + rmove.y - size.y);
+		int bound = (int)std::floor(player1.position.y + rmove.y - size.y);
 
-		check_tile = check_tile | map.get_flags(Point(floor(player1.position.x), bound));
+		check_tile = check_tile | map.get_flags(Point((int32_t)std::floor(player1.position.x), bound));
 		if (rmove.x > 0) {
-			check_tile = check_tile | map.get_flags(Point(floor(player1.position.x - size.x), bound));
+			check_tile = check_tile | map.get_flags(Point((int32_t)std::floor(player1.position.x - size.x), bound));
 		}
 		else if (rmove.x < 0) {
-			check_tile = check_tile | map.get_flags(Point(floor(player1.position.x + size.x), bound));
+			check_tile = check_tile | map.get_flags(Point((int32_t)std::floor(player1.position.x + size.x), bound));
 		}
 	}
 	else if (rmove.y > 0) {
-		int bound = floor(player1.position.y + rmove.y + size.y);
+		int bound = (int)std::floor(player1.position.y + rmove.y + size.y);
 
-		check_tile = check_tile | map.get_flags(Point(floor(player1.position.x), bound));
+		check_tile = check_tile | map.get_flags(Point((int32_t)std::floor(player1.position.x), bound));
 		if (rmove.x > 0) {
-			check_tile = check_tile | map.get_flags(Point(floor(player1.position.x - size.x), bound));
+			check_tile = check_tile | map.get_flags(Point((int32_t)std::floor(player1.position.x - size.x), bound));
 		}
 		else if (rmove.x < 0) {
-			check_tile = check_tile | map.get_flags(Point(floor(player1.position.x + size.x), bound));
+			check_tile = check_tile | map.get_flags(Point((int32_t)std::floor(player1.position.x + size.x), bound));
 		}
 	}
 
@@ -423,7 +423,7 @@ void render_sky() {
 		// Convert the facing vector to an angle in degrees
 		//float r = abs(atan2(ray.x, ray.y) * 180.0 / M_PI);
 
-		float r = atan2f(ray.x, ray.y);
+		float r = std::atan2(ray.x, ray.y);
 		r = (r > 0.0f ? r : (2.0f * float(M_PI) + r)) * 360.0f / (2.0f * float(M_PI));
 
 
@@ -432,7 +432,7 @@ void render_sky() {
 		screen.stretch_blit_vspan(screen.sprites, uv, 32, Point(column, 0), HORIZON); // TODO: blit from spritesheet?
 
 		// Apply radial darkness to simulate directional sunset
-		uint8_t fade = std::max(-120, std::min(120, abs(int(r) - 120))) + 120;  // calculate a `fog` based on angle
+		uint8_t fade = std::max(-120, std::min(120, std::abs(int(r) - 120))) + 120;  // calculate a `fog` based on angle
 		screen.pen = Pen(12, 33, 52, fade);
 		screen.line(Point(column, 0), Point(column, HORIZON));
 	}
@@ -440,17 +440,17 @@ void render_sky() {
 
 void render_stars() {
 	// Get the player's facing angle in degrees from 0 to 359
-	float r = atan2f(player1.direction.x, player1.direction.y);
+	float r = std::atan2(player1.direction.x, player1.direction.y);
 	r = (r > 0.0f ? r : (2.0f * float(M_PI) + r)) * 360.0f / (2.0f * float(M_PI));
 
 	for (int s = 0; s < num_stars; s++) {
 		star *sp = &stars[s];
 
 		// If the stars radial X position is within our field of view
-		if ((180 - abs(abs(r - sp->position.x) - 180)) < 45) {
+		if ((180 - std::abs(std::abs(r - sp->position.x) - 180)) < 45) {
 			// Get the difference between the star and player angle as degrees, signed
-			int x = r - sp->position.x + 180;
-			x = x - floor(float(x) / 360.0f) * 360;
+			int x = (int)r - sp->position.x + 180;
+			x = x - std::floor(float(x) / 360.0f) * 360;
 			x -= 180;
 
 			// Convert the degrees to screen columns
@@ -474,7 +474,7 @@ void render_world(uint32_t time) {
 	//TileFacing tfacing = TileFacing::NONE;
 	//TileFacing last_tfacing = TileFacing::NONE;
 	float perpendicular_wall_distance, wall_x;
-	Point map_location_g((int32_t)floor(player1.position.x), (int32_t)floor(player1.position.y));
+	Point map_location_g((int32_t)std::floor(player1.position.x), (int32_t)std::floor(player1.position.y));
 	Point map_location;
 	Point last_map_location(-1, -1);
 		int last_side = -1;
@@ -505,8 +505,8 @@ void render_world(uint32_t time) {
 		);
 
 		Vec2 delta_dist(
-			(float)abs(1.0f / ray.x),
-			(float)abs(1.0f / ray.y)
+			std::abs(1.0f / ray.x),
+			std::abs(1.0f / ray.y)
 		);
 
 		Vec2 side_dist(0, 0);
@@ -597,7 +597,7 @@ void render_world(uint32_t time) {
 				}*/
 			}
 
-			wall_x -= floorf(wall_x);
+			wall_x -= std::floor(wall_x);
 
 			// While the perpendicular wall distance prevents fish-eye effect, generally we want
 			// lighting and distance based overlay effects to use the "real" wall distance
@@ -614,14 +614,14 @@ void render_world(uint32_t time) {
 			//mask.pen = int(alpha);
 			mask.pen = 200;
 
-			float line_distance = abs(perpendicular_wall_distance - last_wall_distance);
+			float line_distance = std::abs(perpendicular_wall_distance - last_wall_distance);
 
 			int width = wall_half_height / 8.0f;
 
 			if (column > 0 && (side != last_side) && line_distance < 0.5f && !(map_location.x == last_map_location.x && map_location.y == last_map_location.y)) {
 
 				for (int c = column - width; c < column + width; c++) {
-					int alpha = (abs(column - c) * 160) / width;
+					int alpha = (std::abs(column - c) * 160) / width;
 					mask.pen = 160 - alpha;
 					mask.line(Point(c, start_y), Point(c, end_y));
 				};
@@ -635,7 +635,7 @@ void render_world(uint32_t time) {
 			}
 			else {
 				for (int r = end_y - width; r < end_y + width; r++) {
-					int alpha = (abs(end_y - r) * 160) / width;
+					int alpha = (std::abs(end_y - r) * 160) / width;
 					mask.pen = 160 - alpha;
 					mask.pixel(Point(column, r));
 					/*mask.rectangle(rect(
@@ -663,7 +663,7 @@ void render_world(uint32_t time) {
 			//  3 = spoopy door
 			//  4 = good brick support
 			uint16_t texture_offset_x = texture_wall * 32;
-			Point uv = Point(uint8_t(wall_x * 32.0f) + texture_offset_x, 0);
+			Point uv = Point(uint16_t(wall_x * 32.0f) + texture_offset_x, 0);
 
 			//if ((time >> 2) % 160 == column) {
 
@@ -725,8 +725,8 @@ void render_world(uint32_t time) {
 
 				// Get the tile-relative x/y texture coordinates
 				Point tile_uv(
-					(current_floor.x - floorf(current_floor.x)) * 32,
-					(current_floor.y - floorf(current_floor.y)) * 32
+					(current_floor.x - std::floor(current_floor.x)) * 32,
+					(current_floor.y - std::floor(current_floor.y)) * 32
 				);
 
 				uint8_t floor_texture = map_layer_floor->tile_at(Point(int(current_floor.x), int(current_floor.y))) - 1;
@@ -835,7 +835,7 @@ void render_sprites(uint32_t time) {
 
 		Rect bounds = sprite_bounds[psprite->texture];
 
-		int sprite_height = abs(int(bounds.h * SPRITE_SCALE / screen_transform.y));
+		int sprite_height = std::abs(int(bounds.h * SPRITE_SCALE / screen_transform.y));
 		int sprite_width = ((float)bounds.w / (float)bounds.h) * sprite_height;
 
 		int sprite_top_y = ((VIEW_HEIGHT - bounds.h) * SPRITE_SCALE) / screen_transform.y;
@@ -857,7 +857,7 @@ void render_sprites(uint32_t time) {
 
 		//screen.stretch_blit(&my_sprites, bounds, rect(screen_pos.x, screen_pos.y, sprite_width, sprite_height));
 
-		for (int x = std::max(0, int(screen_pos.x)); x < std::min(SCREEN_WIDTH, int(screen_pos.x + sprite_width)); x++) {
+		for (int x = std::max((uint16_t)0, uint16_t(screen_pos.x)); x < std::min(SCREEN_WIDTH, uint16_t(screen_pos.x + sprite_width)); x++) {
 			if (screen_transform.y > z_buffer[x]) continue;
 
 			//if ((time >> 2) % 160 != x) { continue; }
@@ -897,8 +897,8 @@ void edges() {
 		p++;
 
 		for (uint16_t x = 1; x < 159; x++) {
-			uint8_t v1 = abs(*(p + 1) - *p);
-			uint8_t v2 = abs(*(p + 160) - *p);
+			uint8_t v1 = std::abs(*(p + 1) - *p);
+			uint8_t v2 = std::abs(*(p + 160) - *p);
 			uint8_t d = v1 > v2 ? v1 : v2;
 			*p++ = d < 3 ? 0 : 255;
 		}
@@ -911,8 +911,8 @@ void edges() {
 		p--;
 
 		for (uint16_t x = 1; x < 159; x++) {
-			uint8_t v1 = abs(*(p - 1) - *p);
-			uint8_t v2 = abs(*(p - 160) - *p);
+			uint8_t v1 = std::abs(*(p - 1) - *p);
+			uint8_t v2 = std::abs(*(p - 160) - *p);
 			uint8_t d = v1 > v2 ? v1 : v2;
 			*p-- = d < 3 ? 0 : 255;
 		}
