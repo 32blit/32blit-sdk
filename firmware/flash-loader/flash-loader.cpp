@@ -320,6 +320,8 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 	{
 		if(m_uCurrentFile > 0) {
 			m_uCurrentFile--;
+		} else {
+			m_uCurrentFile = m_uFileCount - 1;
 		}
 	}
 
@@ -327,6 +329,8 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 	{
 		if(m_uCurrentFile < (m_uFileCount - 1)) {
 			m_uCurrentFile++;
+		} else {
+			m_uCurrentFile = 0;
 		}
 	}
 
