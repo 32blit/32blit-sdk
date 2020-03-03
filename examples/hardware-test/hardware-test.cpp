@@ -4,9 +4,11 @@
 
 using namespace blit;
 
+#ifdef TARGET_32BLIT_HW
 extern uint8_t battery_status;
 extern uint8_t battery_fault;
 extern float battery;
+#endif
 
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 120
@@ -125,6 +127,7 @@ void render(uint32_t time) {
         (float)((sinf(blit::now() / 100.0f) + 1) / 2.0f)
     );
 
+    #ifdef TARGET_32BLIT_HW
     screen.text("Bat VBUS:", minimal_font, Point(COL1, ROW3));
     switch(battery_status >> 6){
         case 0b00: // Unknown
@@ -164,6 +167,7 @@ void render(uint32_t time) {
     snprintf(text_buf, 100, "%d", battery_fault);
     screen.text("Fault:", minimal_font, Point(COL3, ROW1));
     screen.text(text_buf, minimal_font, Point(COL3, ROW1+7));
+    #endif
 }
 
 void update(uint32_t time) {
