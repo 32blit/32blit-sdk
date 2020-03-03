@@ -25,11 +25,6 @@ namespace blit {
   extern Vec3 tilt;
   extern float hack_left;
   extern float hack_right;
-  extern float battery;
-  extern uint8_t battery_vbus_status;
-  extern uint8_t battery_charge_status;
-  extern uint8_t battery_fault;
-  
 
   extern bool pressed(uint32_t button);
  

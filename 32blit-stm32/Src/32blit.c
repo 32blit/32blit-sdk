@@ -1,5 +1,6 @@
 #include "string.h"
 #include <map>
+#include <bitset>
 
 #include "32blit.h"
 #include "main.h"
@@ -46,6 +47,9 @@ FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 bool needs_render = true;
 uint32_t flip_cycle_count = 0;
 float volume_log_base = 2.0f;
+float battery = 0.0f;
+uint8_t battery_status = 0;
+uint8_t battery_fault = 0;
 
 const uint32_t long_press_exit_time = 1000;
 
@@ -326,15 +330,20 @@ void blit_menu_render(uint32_t time) {
 
   screen.text("System Menu", minimal_font, Point(5, 5));
 
+  /*screen.text(
+    "Fault: " + std::bitset<8>(battery_fault).to_string() +
+    " Status: " + std::bitset<8>(battery_status).to_string() +
+    " Voltage: " + std::to_string(int(battery)) + "." + std::to_string(int((battery - int(battery)) * 10.0f)) + "v",
+    minimal_font, Point(0, screen_height - 10));*/
   screen.text("bat", minimal_font, Point(screen_width / 2, 5));
   uint16_t battery_meter_width = 55;
-  battery_meter_width = float(battery_meter_width) * (blit::battery - 3.0f) / 1.1f;
+  battery_meter_width = float(battery_meter_width) * (battery - 3.0f) / 1.1f;
   battery_meter_width = std::max((uint16_t)0, std::min((uint16_t)55, battery_meter_width));
 
   screen.pen = bar_background_color;
   screen.rectangle(Rect((screen_width / 2) + 20, 6, 55, 5));
 
-  switch(battery_vbus_status){
+  switch(battery_status >> 6){
     case 0b00: // Unknown
         screen.pen = Pen(255, 128, 0);
         break;
@@ -349,6 +358,7 @@ void blit_menu_render(uint32_t time) {
         break;
   }
   screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_meter_width, 5));
+  uint8_t battery_charge_status = (battery_status >> 4) & 0b11;
   if(battery_charge_status == 0b01 || battery_charge_status == 0b10){
     uint16_t battery_fill_width = uint32_t(time / 100.0f) % battery_meter_width;
     battery_fill_width = std::max((uint16_t)0, std::min((uint16_t)battery_meter_width, battery_fill_width));
@@ -534,15 +544,12 @@ void blit_process_input() {
   blit::hack_left = (adc3data[0] >> 1) / 32768.0f;
   blit::hack_right = (adc3data[1] >> 1)  / 32768.0f;
 
-  blit::battery = 6.6f * adc3data[2] / 65535.0f;
+  battery = 6.6f * adc3data[2] / 65535.0f;
 
   if(blit::now() - last_battery_update > 5000) {
-    uint8_t status = bq24295_get_status(&hi2c4);
-    blit::battery_vbus_status = status >> 6; // 00 - Unknown, 01 - USB Host, 10 - Adapter port, 11 - OTG
-    blit::battery_charge_status = (status >> 4) & 0b11; // 00 - Not Charging, 01 - Pre-charge, 10 - Fast Charging, 11 - Charge Termination Done
-
-    blit::battery_fault = bq24295_get_fault(&hi2c4);
-
+    uint16_t statusfault = bq24295_get_statusfault(&hi2c4);
+    battery_status = statusfault >> 8;
+    battery_fault = statusfault & 0xff;
     last_battery_update = blit::now();
   }
 

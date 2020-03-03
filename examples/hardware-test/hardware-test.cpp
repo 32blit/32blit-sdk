@@ -4,6 +4,10 @@
 
 using namespace blit;
 
+extern uint8_t battery_status;
+extern uint8_t battery_fault;
+extern float battery;
+
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 120
 
@@ -122,7 +126,7 @@ void render(uint32_t time) {
     );
 
     screen.text("Bat VBUS:", minimal_font, Point(COL1, ROW3));
-    switch(battery_vbus_status){
+    switch(battery_status >> 6){
         case 0b00: // Unknown
             screen.text("Unknown", minimal_font, Point(COL1, ROW3+7));
             break;
@@ -138,7 +142,7 @@ void render(uint32_t time) {
     }
 
     screen.text("Bat Chrg:", minimal_font, Point(COL2, ROW3));
-    switch(battery_charge_status){
+    switch((battery_status >> 4) & 0b11){
         case 0b00: // Not Charging
             screen.text("Nope", minimal_font, Point(COL2, ROW3+7));
             break;
@@ -153,11 +157,11 @@ void render(uint32_t time) {
             break;
     }
 
-    snprintf(text_buf, 100, "%d", (int)(blit::battery * 1000.f));
+    snprintf(text_buf, 100, "%d", (int)(battery * 1000.f));
     screen.text("Battery:", minimal_font, Point(COL3, ROW3));
     screen.text(text_buf, minimal_font, Point(COL3, ROW3+7));
 
-    snprintf(text_buf, 100, "%d", blit::battery_fault);
+    snprintf(text_buf, 100, "%d", battery_fault);
     screen.text("Fault:", minimal_font, Point(COL3, ROW1));
     screen.text(text_buf, minimal_font, Point(COL3, ROW1+7));
 }
