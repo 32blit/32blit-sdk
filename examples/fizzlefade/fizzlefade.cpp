@@ -43,7 +43,10 @@ void init() {
 
 	screen.alpha = 255;
 	screen.mask = nullptr;
-	screen.pen = fade_to[FADE_STEPS - 1];
+  Pen p = fade_to[FADE_STEPS - 1];
+  p.a = 255;
+	screen.pen = p;
+
 	screen.clear();
 
 	screen.pen = fade_to[0];
