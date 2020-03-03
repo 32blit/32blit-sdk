@@ -245,11 +245,11 @@ void render(uint32_t time_ms) {
 }
 
 bool compare (float v1, float v2) {
-  return fabs(v1-v2) < 0.001f;
+  return fabsf(v1 - v2) < 0.001f;
 }
 
 bool is_off_ground () {
-  return !compare(500.0f,far);
+  return !compare(500.0f, far);
 }
 
 float lerping(float a, float b, float f) {
