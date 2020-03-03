@@ -6,10 +6,10 @@
 namespace blit {
 
   struct Point {
-    int32_t x, y;
+    int32_t x = 0, y = 0;
 
-    Point() : x(0), y(0) {}
-    Point(const Point &p) : x(p.x), y(p.y) {}
+    Point() = default;
+    Point(const Point &p) = default;
     Point(int32_t x, int32_t y) : x(x), y(y) {}
     Point(Vec2 v) : x(int32_t(v.x)), y(int32_t(v.y)) {}
 

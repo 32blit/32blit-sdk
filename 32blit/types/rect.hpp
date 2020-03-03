@@ -1,7 +1,7 @@
 #pragma once
 
 #include <algorithm>
-#include <stdint.h>
+#include <cstdint>
 
 #include "point.hpp"
 #include "size.hpp"
@@ -10,9 +10,9 @@ namespace blit {
 
   struct Rect {
 
-    int32_t x, y, w, h;
+    int32_t x = 0, y = 0, w = 0, h = 0;
 
-    Rect() : x(0), y(0), w(0), h(0) {}
+    Rect() = default;
     Rect(Point tl, Point br) : x(tl.x), y(tl.y), w(br.x - tl.x), h(br.y - tl.y) {}
     Rect(Point tl, Size s) : x(tl.x), y(tl.y), w(s.w), h(s.h) {}
     Rect(int32_t x, int32_t y, int32_t w, int32_t h) : x(x), y(y), w(w), h(h) {}

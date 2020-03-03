@@ -2,6 +2,7 @@
 #define FALSE 0
 
 #include "stm32h7xx_hal.h"
+#include <stdbool.h>
 #include "diskio.h"
 #include "fatfs_sd.h"
 

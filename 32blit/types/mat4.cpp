@@ -1,6 +1,6 @@
 /*! \file mat4.cpp
 */
-#include <math.h>
+#include <cmath>
 
 #undef M_PI
 #define M_PI           3.14159265358979323846f  /* pi */

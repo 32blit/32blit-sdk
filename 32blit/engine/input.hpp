@@ -2,7 +2,7 @@
 
 #include "../types/vec2.hpp"
 #include "../types/vec3.hpp"
-#include <stdint.h>
+#include <cstdint>
 
 namespace blit {
 

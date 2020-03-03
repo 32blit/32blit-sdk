@@ -20,10 +20,10 @@ class Renderer {
 		int win_width, win_height;
 
 		Mode mode = KeepPixels;
-		SDL_Renderer *renderer = NULL;
+		SDL_Renderer *renderer = nullptr;
 		SDL_Rect dest = {0, 0, 0, 0};
 
-		SDL_Texture *fb_lores_texture = NULL;
-		SDL_Texture *fb_hires_texture = NULL;
-		SDL_Texture *current = NULL;
+		SDL_Texture *fb_lores_texture = nullptr;
+		SDL_Texture *fb_hires_texture = nullptr;
+		SDL_Texture *current = nullptr;
 };

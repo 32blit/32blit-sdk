@@ -67,7 +67,7 @@ public:
 	};
 
 
-	ProfilerProbe(const char *pszName, uint32_t uRunningAverageSize = 0, uint32_t uRunningAverageSpan = 1) : m_pszName(pszName), m_uStartUs(0), m_metrics(), m_pRunningAverage(NULL), m_uGraphTimeUs(20000)
+	ProfilerProbe(const char *pszName, uint32_t uRunningAverageSize = 0, uint32_t uRunningAverageSpan = 1) : m_pszName(pszName), m_uStartUs(0), m_metrics(), m_pRunningAverage(nullptr), m_uGraphTimeUs(20000)
 	{
 		if(uRunningAverageSize)
 		{

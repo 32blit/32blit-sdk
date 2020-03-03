@@ -2,7 +2,7 @@
 
 #include <queue>
 #include <functional>
-#include <stdint.h>
+#include <cstdint>
 #include "../types/vec2.hpp"
 
 struct Particle {
