@@ -1,4 +1,4 @@
-#include "32blit.hpp"
+#include "../../32blit.hpp"
 #include "string.h"
 #include "menuItem.hpp"
 #include "../../graphics/surface.hpp"

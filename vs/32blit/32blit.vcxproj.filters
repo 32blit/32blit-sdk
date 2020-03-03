@@ -28,6 +28,9 @@
     <Filter Include="audio">
       <UniqueIdentifier>{9248dddd-5382-4608-8c3f-7e9c40ec9eff}</UniqueIdentifier>
     </Filter>
+    <Filter Include="engine\Menu">
+      <UniqueIdentifier>{f84b679c-4603-44f2-be10-c0cde58ca63a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\32blit\32blit.hpp">
@@ -114,6 +117,15 @@
     <ClInclude Include="..\..\32blit\engine\version.hpp">
       <Filter>engine</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\32blit\engine\menu\menu.hpp">
+      <Filter>engine\Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\32blit\engine\menu\menuController.hpp">
+      <Filter>engine\Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\32blit\engine\menu\menuItem.hpp">
+      <Filter>engine\Menu</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\32blit\engine\engine.cpp">
@@ -196,6 +208,15 @@
     </ClCompile>
     <ClCompile Include="..\..\32blit\engine\version.cpp">
       <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\32blit\engine\menu\menu.cpp">
+      <Filter>engine\Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\32blit\engine\menu\menuController.cpp">
+      <Filter>engine\Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\32blit\engine\menu\menuItem.cpp">
+      <Filter>engine\Menu</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

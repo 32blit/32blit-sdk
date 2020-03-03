@@ -11,20 +11,20 @@ Size screen_size ();
 Pen bar_background_color = Pen(40, 40, 60);
 Pen bannerColour = Pen(50,50,50,150);
 
-int _rowHeight = 12;
+int16_t _row_height = 12;
 
-int Menu::menu_y (int index) { return index * _rowHeight + _offset; }
+int Menu::menu_y (int index) { return index * _row_height + _offset; }
 
 Menu::Menu(string menuTitle, vector<MenuItem> items):_menu_title(menuTitle), _menu_items(items) {}
 
-int Menu::min_offset () {
+signed int Menu::min_offset () {
 
-    int rows_available_on_screen = (screen_size().h - BANNER_HEIGHT) / _rowHeight;
-    int itemsOnScreen = min(int(_menu_items.size()), rows_available_on_screen);
+    int16_t rows_available_on_screen = (screen_size().h - BANNER_HEIGHT) / _row_height;
+    int16_t items_on_screen = min(int16_t(_menu_items.size()), rows_available_on_screen);
 
-    if (itemsOnScreen < rows_available_on_screen) { return MAX_SCROLL_OFFSET; }
+    if (items_on_screen < rows_available_on_screen) { return MAX_SCROLL_OFFSET; }
 
-    return -(_menu_items.size() * _rowHeight) + (itemsOnScreen * _rowHeight);
+    return -(int16_t(_menu_items.size()) * _row_height) + (items_on_screen * _row_height);
 }
 
 int Menu::bottom_bar_yposition () {
@@ -36,10 +36,10 @@ void Menu::check_vertical_offset () {
     int screen_height = screen_size().h;
     int select_y_pos = menu_y(_selected_index);
 
-    if (select_y_pos >= screen_height - (_rowHeight * 3)){
-        _offset = max(_offset -_rowHeight, min_offset());
-    } else if (select_y_pos <= _rowHeight * 2) {
-        _offset = min(MAX_SCROLL_OFFSET, _offset + _rowHeight);
+    if (select_y_pos >= screen_height - (_row_height * 3)){
+        _offset = max(_offset -_row_height, min_offset());
+    } else if (select_y_pos <= _row_height * 2) {
+        _offset = min(MAX_SCROLL_OFFSET, _offset + _row_height);
     }
 }
 
@@ -175,7 +175,7 @@ void Menu::render(uint32_t time) {
         int yPosition = menu_y(i);
 
         // might be worth adding in check to see if they're on screen to save on text rendering?
-        item.draw(yPosition, _selected_index == i, screen_size().w, _rowHeight);
+        item.draw(yPosition, _selected_index == i, screen_size().w, _row_height);
     }
 
     draw_top_bar(time);

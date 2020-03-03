@@ -1,4 +1,4 @@
-#include "32blit.hpp"
+#include "../../32blit.hpp"
 
 MenuController* MenuController::instance = 0;
 
