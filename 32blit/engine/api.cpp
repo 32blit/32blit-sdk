@@ -15,4 +15,6 @@ namespace blit {
   Vec2 &joystick = api.joystick;
   Vec3 &tilt = api.tilt;
   Pen &LED = api.LED;
+
+  AudioChannel *&channels = api.channels;
 }

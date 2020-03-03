@@ -5,6 +5,7 @@
 
 #include "engine.hpp"
 #include "file.hpp"
+#include "../audio/audio.hpp"
 #include "../graphics/surface.hpp"
 #include "../types/vec2.hpp"
 #include "../types/vec3.hpp"
@@ -19,6 +20,8 @@ namespace blit {
     Vec2 joystick;
     Vec3 tilt;
     Pen LED;
+
+    AudioChannel *channels;
 
     Surface     &(*set_screen_mode)  (ScreenMode new_mode);
     uint32_t (*now)();
