@@ -597,7 +597,7 @@ void render_world(uint32_t time) {
 				}*/
 			}
 
-			wall_x -= floor(wall_x);
+			wall_x -= floorf(wall_x);
 
 			// While the perpendicular wall distance prevents fish-eye effect, generally we want
 			// lighting and distance based overlay effects to use the "real" wall distance
@@ -725,8 +725,8 @@ void render_world(uint32_t time) {
 
 				// Get the tile-relative x/y texture coordinates
 				Point tile_uv(
-					(current_floor.x - floor(current_floor.x)) * 32,
-					(current_floor.y - floor(current_floor.y)) * 32
+					(current_floor.x - floorf(current_floor.x)) * 32,
+					(current_floor.y - floorf(current_floor.y)) * 32
 				);
 
 				uint8_t floor_texture = map_layer_floor->tile_at(Point(int(current_floor.x), int(current_floor.y))) - 1;

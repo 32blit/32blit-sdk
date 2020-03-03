@@ -235,7 +235,7 @@ uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
 
 uint16_t generate_new_row_mask() {
     uint16_t new_row_mask = 0x0000;
-    uint8_t passage_width = floorf(((sin(current_row / 10.0f) + 1.0f) / 2.0f) * PASSAGE_COUNT);
+    uint8_t passage_width = floorf(((sinf(current_row / 10.0f) + 1.0f) / 2.0f) * PASSAGE_COUNT);
 
     // Cut our consistent winding passage through the level
     // by tracking the x coord of our passage we can ensure
@@ -504,7 +504,7 @@ void update(uint32_t time_ms) {
         water_dist = 0;
     }
 #ifdef __AUDIO__
-    channels[0].volume      = 4000 + (sin(float(time_ms) / 1000.0f) * 3000);
+    channels[0].volume      = 4000 + (sinf(float(time_ms) / 1000.0f) * 3000);
 #endif
 
     if (game_state == enum_state::menu) {
@@ -715,7 +715,7 @@ void render(uint32_t time_ms) {
 
         uint8_t x = 10;
         for(auto c : text) {
-            uint8_t y = 20 + (5.0f * sin((time_ms / 250.0f) + (float(x) / text.length() * 2.0f * M_PIf)));
+            uint8_t y = 20 + (5.0f * sinf((time_ms / 250.0f) + (float(x) / text.length() * 2.0f * M_PIf)));
             Pen color_letter = hsv_to_rgba((x - 10) / 140.0f, 0.5f, 0.8f);
             screen.pen = color_letter;
             char buf[2];
@@ -740,7 +740,7 @@ void render(uint32_t time_ms) {
         screen.rectangle(Rect(0, SCREEN_H - water_level, SCREEN_W, water_level + 1));
 
         for(auto x = 0; x < SCREEN_W; x++){
-            uint16_t offset = x + uint16_t(sin(time_ms / 500.0f) * 5.0f);
+            uint16_t offset = x + uint16_t(sinf(time_ms / 500.0f) * 5.0f);
             if((offset % 5) > 0){
                 screen.pixel(Point(x, SCREEN_H - water_level - 1));
             }
@@ -774,7 +774,7 @@ void render(uint32_t time_ms) {
         screen.rectangle(Rect(0, SCREEN_H - water_level, SCREEN_W, water_level + 1));
 
         for(auto x = 0; x < SCREEN_W; x++){
-            uint16_t offset = x + uint16_t(sin(time_ms / 500.0f) * 5.0f);
+            uint16_t offset = x + uint16_t(sinf(time_ms / 500.0f) * 5.0f);
             if((offset % 5) > 0){
                 screen.pixel(Point(x, SCREEN_H - water_level - 1));
             }

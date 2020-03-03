@@ -44,7 +44,6 @@ void init() {
 
 int tick_count = 0;
 void render(uint32_t time_ms) {
-  char text_buffer[60];
   screen.pen = Pen(20, 30, 40);
   screen.clear();
   
