@@ -61,6 +61,10 @@ const uint32_t long_press_exit_time = 1000;
 
 __attribute__((section(".persist"))) Persist persist;
 
+// pointers to user code
+static void (*user_update)(uint32_t time) = nullptr;
+static void (*user_render)(uint32_t time) = nullptr;
+
 void DFUBoot(void)
 {
   // Set the special magic word value that's checked by the assembly entry Point upon boot
@@ -508,7 +512,10 @@ void blit_menu_update(uint32_t time) {
 
 void blit_menu_render(uint32_t time) {
 
-  ::render(time);
+  if(user_render)
+    user_render(time);
+  else
+    ::render(time);
 
   // save screenshot before we render the menu over it
   if(take_screenshot) {
@@ -633,12 +640,19 @@ void blit_menu_render(uint32_t time) {
 
 void blit_menu() {
   if(blit::update == blit_menu_update) {
-    blit::update = ::update;
-    blit::render = ::render;
+    if (user_update) {
+      // user code was running
+      blit::update = user_update;
+      blit::render = user_render;
+    } else {
+      blit::update = ::update;
+      blit::render = ::render;
+    }
 
     // restore game colours
     if(screen.format == PixelFormat::P)
       set_screen_palette(menu_saved_colours, num_menu_colours);
+
   }
   else
   {
@@ -879,8 +893,8 @@ void blit_switch_execution(uint32_t address)
     pFunction init = (pFunction) (*(__IO uint32_t*) (EXTERNAL_LOAD_ADDRESS + 12));
     init();
 
-    blit::render = (renderFunction) (*(__IO uint32_t*) (EXTERNAL_LOAD_ADDRESS + 4));
-    blit::update = (renderFunction) (*(__IO uint32_t*) (EXTERNAL_LOAD_ADDRESS + 8));
+    blit::render = user_render = (renderFunction) (*(__IO uint32_t*) (EXTERNAL_LOAD_ADDRESS + 4));
+    blit::update = user_update = (renderFunction) (*(__IO uint32_t*) (EXTERNAL_LOAD_ADDRESS + 8));
     return;
   }
 
