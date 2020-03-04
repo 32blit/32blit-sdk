@@ -47,6 +47,7 @@ FRESULT SD_Error = FR_INVALID_PARAMETER;
 FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 
 bool needs_render = true;
+bool exit_game = false;
 uint32_t flip_cycle_count = 0;
 float volume_log_base = 2.0f;
 float battery = 0.0f;
@@ -54,8 +55,6 @@ uint8_t battery_status = 0;
 uint8_t battery_fault = 0;
 
 const uint32_t long_press_exit_time = 1000;
-
-uint32_t home_button_pressed_time = 0;
 
 __attribute__((section(".persist"))) Persist persist;
 
@@ -99,6 +98,15 @@ uint32_t GetMaxUsTimer(void)
 }
 
 void blit_tick() {
+  if(exit_game) {
+    #if EXTERNAL_LOAD_ADDRESS == 0x90000000
+      // Already in firmware menu
+    #else
+    blit::LED.r = 0;
+    blit_switch_execution();
+    #endif
+  }
+
   if(display::needs_render) {
     blit::render(blit::now());
     display::enable_vblank_interrupt();
@@ -109,15 +117,6 @@ void blit_tick() {
   blit_update_vibration();
 
   blit::tick(blit::now());
-
-  if(home_button_pressed_time > 0 && HAL_GetTick() - home_button_pressed_time > long_press_exit_time) {
-      #if EXTERNAL_LOAD_ADDRESS == 0x90000000
-        // Already in firmware menu
-      #else
-        blit_switch_execution();
-      #endif
-      home_button_pressed_time = 0;
-  }
 }
 
 bool blit_sd_detected() {
@@ -144,15 +143,11 @@ void blit_update_volume() {
 }
 
 void blit_init() {
-    // Ensure releasing a held down button that hasn't been pressed
-    // doesn't launch the menu right away
-    home_button_pressed_time = 0;
-
     // enable backup sram
     __HAL_RCC_RTC_ENABLE();
     __HAL_RCC_BKPRAM_CLK_ENABLE();
     HAL_PWR_EnableBkUpAccess(); 
-    HAL_PWREx_EnableBkUpReg(); 
+    HAL_PWREx_EnableBkUpReg();
 
     // need to wit for sram, I tried a few things I found on the net to wait
     // based on PWR flags but none seemed to work, a simple delay does work!
@@ -177,7 +172,6 @@ void blit_init() {
     HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc1data, ADC_BUFFER_SIZE);
     HAL_ADC_Start_DMA(&hadc3, (uint32_t *)adc3data, ADC_BUFFER_SIZE);
 
-    
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     DWT->CYCCNT = 0;
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
@@ -328,13 +322,13 @@ void blit_menu_update(uint32_t time) {
 }
 
 void blit_menu_render(uint32_t time) {
-#if EXTERNAL_LOAD_ADDRESS == 0x90000000  // TODO We probably need a nicer way of detecting that we're compiling a firmware build (-DFIRMWARE maybe?)
+  #if EXTERNAL_LOAD_ADDRESS == 0x90000000  // TODO We probably need a nicer way of detecting that we're compiling a firmware build (-DFIRMWARE maybe?)
   // Don't attempt to render firmware game selection menu behind system menu
   // At the moment `render` handles input in the firmware, so this results
   // in all kinds of fun an exciting weirdness.
-#else
+  #else
   ::render(time);
-#endif
+  #endif
   int screen_width = 160;
   int screen_height = 120;
   if (display::mode == blit::ScreenMode::hires) {
@@ -485,16 +479,42 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
   }
 }
 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+  if(htim == &htim2) {
+    bool pressed = !HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port, BUTTON_MENU_Pin);
+    if(pressed) {
+      exit_game = true;
+    }
+    HAL_TIM_Base_Stop(&htim2);
+    HAL_TIM_Base_Stop_IT(&htim2);
+  }
+}
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-  if(!HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port, BUTTON_MENU_Pin)) {
-    home_button_pressed_time = HAL_GetTick();
+  bool pressed = !HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port, BUTTON_MENU_Pin);
+  if(pressed) {
+    /*
+    The timer will generate a spurious interrupt as soon as it's enabled- apparently to load the compare value.
+    We disable interrupts and clear this early interrupt flag before re-enabling them so that the *real*
+    interrupt can fire. 
+    */
+    HAL_NVIC_DisableIRQ(TIM2_IRQn);
+    __HAL_TIM_SetCounter(&htim2, 0);
+    __HAL_TIM_SetCompare(&htim2, TIM_CHANNEL_1, long_press_exit_time * 10); // press-to-reset-time
+    HAL_TIM_Base_Start(&htim2);
+    HAL_TIM_Base_Start_IT(&htim2);
+    __HAL_TIM_CLEAR_FLAG(&htim2, TIM_SR_UIF);
+    HAL_NVIC_EnableIRQ(TIM2_IRQn);
+
   } else {
-    if(home_button_pressed_time > 0 && HAL_GetTick() - home_button_pressed_time > 20) {
+    if(__HAL_TIM_GetCounter(&htim2) > 200){ // 20ms debounce time
       // TODO is it a good idea to swap out the render/update functions potentially in the middle of a loop?
       // We were more or less doing this before by handling the menu update between render/update so perhaps it's mostly fine.
       blit_menu();
+      HAL_TIM_Base_Stop(&htim2);
+      HAL_TIM_Base_Stop_IT(&htim2);
+      __HAL_TIM_SetCounter(&htim2, 0);
     }
-    home_button_pressed_time = 0;
   }
 }
 
@@ -664,11 +684,11 @@ pFunction JumpToApplication;
 
 void blit_switch_execution(void)
 {
-#if EXTERNAL_LOAD_ADDRESS == 0x90000000
+  #if EXTERNAL_LOAD_ADDRESS == 0x90000000
   persist.reset_target = prtGame;
-#else
+  #else
   persist.reset_target = prtFirmware;
-#endif
+  #endif
   // Stop the ADC DMA
   HAL_ADC_Stop_DMA(&hadc1);
   HAL_ADC_Stop_DMA(&hadc3);
@@ -676,6 +696,9 @@ void blit_switch_execution(void)
   // Stop the audio
   HAL_TIM_Base_Stop_IT(&htim6);
   HAL_DAC_Stop(&hdac1, DAC_CHANNEL_2);
+
+  // Stop system button timer
+  HAL_TIM_Base_Stop_IT(&htim2);
 
   // stop USB
   USBD_Stop(&hUsbDeviceHS);
@@ -689,6 +712,7 @@ void blit_switch_execution(void)
   HAL_NVIC_DisableIRQ(TIM6_DAC_IRQn);
   HAL_NVIC_DisableIRQ(OTG_HS_IRQn);
   HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
+  HAL_NVIC_DisableIRQ(TIM2_IRQn);
 
 	volatile uint32_t uAddr = EXTERNAL_LOAD_ADDRESS;
 	// enable qspi memory mapping if needed
