@@ -4,10 +4,6 @@
 
 using namespace blit;
 
-extern uint8_t battery_status;
-extern uint8_t battery_fault;
-extern float battery;
-
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 120
 
