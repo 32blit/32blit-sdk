@@ -109,7 +109,7 @@ LoopFillZerobss:
 g_pfnVectors:
   .word  0x54494C42
   .word  _Z6renderm
-  .word  _Z6updatem
+  .word  _ZN4blit4tickEm
   .word  do_init
 
 /*
