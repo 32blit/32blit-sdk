@@ -783,6 +783,10 @@ void blit_switch_execution(void)
   #else
   persist.reset_target = prtFirmware;
   #endif
+
+  // Reset button state, this prevents the user app immediately seeing the last button transition used to launch the game
+  buttons = 0;
+
   // Stop the ADC DMA
   HAL_ADC_Stop_DMA(&hadc1);
   HAL_ADC_Stop_DMA(&hadc3);
