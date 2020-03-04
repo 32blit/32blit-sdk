@@ -18,7 +18,7 @@ namespace blit {
     HOME = 512,
     JOYSTICK = 1024
   };
-  
+
   extern bool pressed(uint32_t button);
- 
+
 }
