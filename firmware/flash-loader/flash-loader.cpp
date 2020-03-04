@@ -318,18 +318,19 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 
 	if(button_up)
 	{
-		if(m_uCurrentFile) {
+		if(m_uCurrentFile > 0) {
 			m_uCurrentFile--;
 		} else {
-			m_uCurrentFile = MAX_FILENAMES - 1;
+			m_uCurrentFile = m_uFileCount - 1;
 		}
 	}
 
 	if(button_down)
 	{
-		if(m_uCurrentFile < m_uFileCount) {
+		if(m_uCurrentFile < (m_uFileCount - 1)) {
 			m_uCurrentFile++;
-			m_uCurrentFile %= MAX_FILENAMES;
+		} else {
+			m_uCurrentFile = 0;
 		}
 	}
 
