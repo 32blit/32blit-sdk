@@ -73,8 +73,8 @@ void all_ships_at_once_demo(uint32_t time) {
 
     Point pos = position[p];
 
-    pos.x += sin(time / 5000.0 + p) * 20;
-    pos.y += sin(time / 500.0 + p) * 10;
+    pos.x += sinf(time / 5000.0f + p) * 20.0f;
+    pos.y += sinf(time / 500.0f + p) * 10.0f;
 
     screen.stretch_blit(screen.sprites,
         Rect(0, 0, boar_ship_size.w, boar_ship_size.h),

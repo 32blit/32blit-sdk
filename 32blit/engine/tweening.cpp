@@ -47,7 +47,7 @@ namespace blit {
   }
 
   float tween_sine(uint32_t t, float b, float c, uint32_t d) {
-    return b + (sin((float(t) / float(d) * M_PI * 2.0f) + (M_PI / 2.0f)) + 1.0f) / 2.0f * (c - b);
+    return b + (sinf((float(t) / float(d) * M_PI * 2.0f) + (M_PI / 2.0f)) + 1.0f) / 2.0f * (c - b);
   }
 
   float tween_linear(uint32_t t, float b, float c, uint32_t d) {

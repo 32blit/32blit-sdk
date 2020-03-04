@@ -26,7 +26,6 @@ void init() {
 
 int tick_count = 0;
 void render(uint32_t time_ms) {
-  char text_buffer[60];
   screen.pen = Pen(20, 30, 40);
   screen.clear();
 
@@ -34,8 +33,7 @@ void render(uint32_t time_ms) {
   screen.circle(Point(160, 20+tween_bounce.value), 20);
 
   screen.pen = Pen(255, 255, 255);
-  sprintf(text_buffer, "Value: %f", tween_bounce.value);
-  screen.text(text_buffer, minimal_font, Point(175, 35+tween_bounce.value));
+  screen.text("Value: " + std::to_string(tween_bounce.value), minimal_font, Point(175, 35+tween_bounce.value));
 }
 
 void update(uint32_t time_ms) {
