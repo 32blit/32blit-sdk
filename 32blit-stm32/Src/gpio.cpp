@@ -90,8 +90,12 @@ namespace gpio {
     // user hack headers
     init_pin(GPIOC, USER_LEFT1_Pin, GPIO_MODE_ANALOG, GPIO_NOPULL); // left analog
     init_pin(GPIOC, USER_LEFT2_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL); // left digital
-    // missing a user right 1 here? analog?
+    init_pin(GPIOC, USER_RIGHT1_Pin, GPIO_MODE_ANALOG, GPIO_NOPULL); // right analog
     init_pin(GPIOC, USER_RIGHT2_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL); // right digital
+
+    // battery sense
+    init_pin(GPIOC, BATTERY_SENSE_Pin, GPIO_MODE_ANALOG, GPIO_NOPULL); // battery sense
+
     
     // "gpio" pin on extension header
     init_pin(GPIOC, EXTENSION_GPIO_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL); // left digital
