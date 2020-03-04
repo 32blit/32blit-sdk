@@ -8,6 +8,7 @@
 #include "display.hpp"
 #include "gpio.hpp"
 #include "file.hpp"
+#include "jpeg.hpp"
 
 
 #include "adc.h"
@@ -22,6 +23,7 @@
 #include "usbd_core.h"
 
 #include "32blit.hpp"
+#include "engine/api_private.hpp"
 #include "graphics/color.hpp"
 
 #include "stdarg.h"
@@ -47,6 +49,11 @@ bool needs_render = true;
 uint32_t flip_cycle_count = 0;
 float volume_log_base = 2.0f;
 
+uint8_t battery_vbus_status;
+uint8_t battery_charge_status;
+uint8_t battery_fault;
+float battery;
+
 const uint32_t long_press_exit_time = 1000;
 
 uint32_t home_button_pressed_time = 0;
@@ -63,19 +70,33 @@ void DFUBoot(void)
   NVIC_SystemReset();
 }
 
-int blit_debugf(const char * psFormatString, ...)
+int blit_debugf(const char * psFormatString, va_list args)
 {
-	va_list args;
-	va_start(args, psFormatString);
-	int ret = vprintf(psFormatString, args);
-	va_end(args);
-	return ret;
+	return vprintf(psFormatString, args);
 }
 
 void blit_debug(std::string message) {
 	printf(message.c_str());
   screen.pen = Pen(255, 255, 255);
   screen.text(message, minimal_font, Point(0, 0));
+}
+
+void EnableUsTimer(void)
+{
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+}
+
+uint32_t GetUsTimer(void)
+{
+	uint32_t uTicksPerUs = SystemCoreClock / 1000000;
+	return DWT->CYCCNT/uTicksPerUs;
+}
+
+uint32_t GetMaxUsTimer(void)
+{
+	uint32_t uTicksPerUs = SystemCoreClock / 1000000;
+	return UINT32_MAX / uTicksPerUs;
 }
 
 void blit_tick() {
@@ -165,26 +186,31 @@ void blit_init() {
     f_mount(&filesystem, "", 1);  // this shouldn't be necessary here right?
     msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
     bq24295_init(&hi2c4);
-    blit::debug = blit_debug;
-    blit::debugf = blit_debugf;
-    blit::now = HAL_GetTick;
-    blit::random = HAL_GetRandom;
-    blit::set_screen_mode = display::set_screen_mode;
+    blit::api.debug = blit_debug;
+    blit::api.debugf = blit_debugf;
+    blit::api.now = HAL_GetTick;
+    blit::api.random = HAL_GetRandom;
+    blit::api.set_screen_mode = display::set_screen_mode;
     display::set_screen_mode(blit::lores);
     blit::update = ::update;
     blit::render = ::render;
     blit::init   = ::init;
-    blit::open_file = ::open_file;
-    blit::read_file = ::read_file;
-    blit::write_file = ::write_file;
-    blit::close_file = ::close_file;
-    blit::get_file_length = ::get_file_length;
-    blit::list_files = ::list_files;
-    blit::file_exists = ::file_exists;
-    blit::directory_exists = ::directory_exists;
-    blit::create_directory = ::create_directory;
+    blit::api.open_file = ::open_file;
+    blit::api.read_file = ::read_file;
+    blit::api.write_file = ::write_file;
+    blit::api.close_file = ::close_file;
+    blit::api.get_file_length = ::get_file_length;
+    blit::api.list_files = ::list_files;
+    blit::api.file_exists = ::file_exists;
+    blit::api.directory_exists = ::directory_exists;
+    blit::api.create_directory = ::create_directory;
 
-    blit::switch_execution = blit_switch_execution;
+    blit::api.EnableUsTimer = ::EnableUsTimer;
+    blit::api.GetUsTimer = ::GetUsTimer;
+    blit::api.GetMaxUsTimer = ::GetMaxUsTimer;
+
+    blit::api.decode_jpeg_buffer = blit_decode_jpeg_buffer;
+    blit::api.decode_jpeg_file = blit_decode_jpeg_file;
 
 
   display::init();
@@ -291,7 +317,7 @@ void blit_menu_update(uint32_t time) {
         break;
       case SWITCH_EXE:
         if(button_a){
-          blit::switch_execution();
+          blit_switch_execution();
         }
         break;
       case LAST_COUNT:
@@ -328,7 +354,7 @@ void blit_menu_render(uint32_t time) {
 
   screen.text("bat", minimal_font, Point(screen_width / 2, 5));
   uint16_t battery_meter_width = 55;
-  battery_meter_width = float(battery_meter_width) * (blit::battery - 3.0f) / 1.1f;
+  battery_meter_width = float(battery_meter_width) * (battery - 3.0f) / 1.1f;
   battery_meter_width = std::max((uint16_t)0, std::min((uint16_t)55, battery_meter_width));
 
   screen.pen = bar_background_color;
@@ -415,20 +441,20 @@ void blit_menu() {
 }
 
 void blit_update_vibration() {
-    __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, vibration * 2000.0f);
+    __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, blit::vibration * 2000.0f);
 }
 
 void blit_update_led() {
     // RED Led
-    float compare_r = (LED.r * 10000) / 255;
+    float compare_r = (blit::LED.r * 10000) / 255;
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_3, compare_r);
 
     // GREEN Led
-    float compare_g = (LED.g * 10000) / 255;
+    float compare_g = (blit::LED.g * 10000) / 255;
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_4, compare_g);
   
     // BLUE Led
-    float compare_b = (LED.b * 10000) / 255;
+    float compare_b = (blit::LED.b * 10000) / 255;
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2, compare_b);
 
     // Backlight
@@ -534,14 +560,14 @@ void blit_process_input() {
   blit::hack_left = (adc3data[0] >> 1) / 32768.0f;
   blit::hack_right = (adc3data[1] >> 1)  / 32768.0f;
 
-  blit::battery = 6.6f * adc3data[2] / 65535.0f;
+  battery = 6.6f * adc3data[2] / 65535.0f;
 
   if(blit::now() - last_battery_update > 5000) {
     uint8_t status = bq24295_get_status(&hi2c4);
-    blit::battery_vbus_status = status >> 6; // 00 - Unknown, 01 - USB Host, 10 - Adapter port, 11 - OTG
-    blit::battery_charge_status = (status >> 4) & 0b11; // 00 - Not Charging, 01 - Pre-charge, 10 - Fast Charging, 11 - Charge Termination Done
+    battery_vbus_status = status >> 6; // 00 - Unknown, 01 - USB Host, 10 - Adapter port, 11 - OTG
+    battery_charge_status = (status >> 4) & 0b11; // 00 - Not Charging, 01 - Pre-charge, 10 - Fast Charging, 11 - Charge Termination Done
 
-    blit::battery_fault = bq24295_get_fault(&hi2c4);
+    battery_fault = bq24295_get_fault(&hi2c4);
 
     last_battery_update = blit::now();
   }
@@ -685,23 +711,5 @@ void blit_switch_execution(void)
 	while(1)
 	{
 	}
-}
-
-void EnableUsTimer(void)
-{
-  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-}
-
-uint32_t GetUsTimer(void)
-{
-	uint32_t uTicksPerUs = SystemCoreClock / 1000000;
-	return DWT->CYCCNT/uTicksPerUs;
-}
-
-uint32_t GetMaxUsTimer(void)
-{
-	uint32_t uTicksPerUs = SystemCoreClock / 1000000;
-	return UINT32_MAX / uTicksPerUs;
 }
 

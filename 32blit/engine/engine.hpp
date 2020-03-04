@@ -14,12 +14,13 @@ namespace blit {
   extern void     (*init)             ();
   extern void     (*update)           (uint32_t time);
   extern void     (*render)           (uint32_t time);
-  extern void     (*set_screen_mode)  (ScreenMode new_mode);
-  extern uint32_t (*now)              ();
-  extern uint32_t (*random)           ();
-  extern void     (*debug)            (std::string message);
-  extern int      (*debugf)           (const char * psFormatString, ...);
-  extern void			(*switch_execution) ();
+
+  void     set_screen_mode(ScreenMode new_mode);
+  uint32_t now();
+  uint32_t random();
+
+  void debug(std::string message);
+  int debugf(const char * psFormatString, ...);
 
   bool tick(uint32_t time);
   void fast_tick(uint32_t time);

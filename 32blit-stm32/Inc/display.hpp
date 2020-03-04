@@ -21,7 +21,7 @@ namespace display {
 
   void enable_vblank_interrupt(); 
 
-  void set_screen_mode(ScreenMode new_mode);   
+  Surface &set_screen_mode(ScreenMode new_mode);   
   void flip(const Surface &source);
 
   void screen_init();

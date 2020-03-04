@@ -188,7 +188,7 @@ void FlashLoader::Render(uint32_t time)
 			break;
 
 		case stSwitch:
-			blit::switch_execution();
+			blit_switch_execution();
 		break;
 
 		case stMassStorage:
@@ -336,7 +336,7 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 	if(button_a)
 	{
 		if(Flash(m_filemeta[m_uCurrentFile].sFilename)) {
-			blit::switch_execution();
+			blit_switch_execution();
 		}
 	}
 

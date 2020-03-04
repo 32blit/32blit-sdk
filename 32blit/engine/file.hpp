@@ -20,11 +20,11 @@ namespace blit {
     int flags;
   };
 
-  extern std::vector<FileInfo> (*list_files) (std::string path);
-  extern bool (*file_exists) (std::string path);
-  extern bool (*directory_exists) (std::string path);
+  std::vector<FileInfo> list_files(std::string path);
+  bool file_exists(std::string path);
+  bool directory_exists(std::string path);
 
-  extern bool (*create_directory) (std::string path);
+  bool create_directory(std::string path);
   
   class File final {
   public:

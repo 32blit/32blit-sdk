@@ -2,6 +2,7 @@ set(SOURCES
 	audio/audio.cpp
 	engine/engine.cpp
 	engine/file.cpp
+	engine/api.cpp
 	engine/input.cpp
 	engine/output.cpp
 	engine/particle.cpp
@@ -14,6 +15,7 @@ set(SOURCES
 	graphics/color.cpp
 	graphics/filter.cpp
 	graphics/font.cpp
+	graphics/jpeg.cpp
 	graphics/mask.cpp
 	graphics/mode7.cpp
 	graphics/primitive.cpp

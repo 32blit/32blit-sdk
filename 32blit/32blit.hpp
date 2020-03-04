@@ -1,5 +1,6 @@
 #pragma once
 
+#include "engine/api.hpp"
 #include "engine/engine.hpp"
 #include "engine/file.hpp"
 #include "engine/output.hpp"

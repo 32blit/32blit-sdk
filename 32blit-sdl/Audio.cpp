@@ -5,8 +5,13 @@
 
 #include "Audio.hpp"
 #include "audio/audio.hpp"
+#include "engine/api_private.hpp"
+
+blit::AudioChannel channels[CHANNEL_COUNT];
 
 Audio::Audio() {
+    blit::api.channels = channels;
+
     SDL_AudioSpec desired = {}, audio_spec = {};
 
     desired.freq = _sample_rate;
