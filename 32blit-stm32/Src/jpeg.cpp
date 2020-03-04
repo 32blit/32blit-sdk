@@ -3,7 +3,9 @@
 #include "stm32h7xx_hal.h"
 #include "stm32h7xx_hal_jpeg.h"
 
+extern "C" {
 #include "JPEG/jpeg_utils.h"
+}
 
 #include "engine/file.hpp"
 #include "graphics/jpeg.hpp"
