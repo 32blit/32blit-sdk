@@ -630,13 +630,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     We disable interrupts and clear this early interrupt flag before re-enabling them so that the *real*
     interrupt can fire. 
     */
-    HAL_NVIC_DisableIRQ(TIM2_IRQn);
-    __HAL_TIM_SetCounter(&htim2, 0);
-    __HAL_TIM_SetCompare(&htim2, TIM_CHANNEL_1, long_press_exit_time * 10); // press-to-reset-time
-    HAL_TIM_Base_Start(&htim2);
-    HAL_TIM_Base_Start_IT(&htim2);
-    __HAL_TIM_CLEAR_FLAG(&htim2, TIM_SR_UIF);
-    HAL_NVIC_EnableIRQ(TIM2_IRQn);
+    if(!((&htim2)->Instance->CR1 & TIM_CR1_CEN)){
+      HAL_NVIC_DisableIRQ(TIM2_IRQn);
+      __HAL_TIM_SetCounter(&htim2, 0);
+      __HAL_TIM_SetCompare(&htim2, TIM_CHANNEL_1, long_press_exit_time * 10); // press-to-reset-time
+      HAL_TIM_Base_Start(&htim2);
+      HAL_TIM_Base_Start_IT(&htim2);
+      __HAL_TIM_CLEAR_FLAG(&htim2, TIM_SR_UIF);
+      HAL_NVIC_EnableIRQ(TIM2_IRQn);
+    }
 
   } else {
     if(__HAL_TIM_GetCounter(&htim2) > 200){ // 20ms debounce time
@@ -781,6 +783,10 @@ void blit_switch_execution(void)
   #else
   persist.reset_target = prtFirmware;
   #endif
+
+  // Reset button state, this prevents the user app immediately seeing the last button transition used to launch the game
+  buttons = 0;
+
   // Stop the ADC DMA
   HAL_ADC_Stop_DMA(&hadc1);
   HAL_ADC_Stop_DMA(&hadc3);
