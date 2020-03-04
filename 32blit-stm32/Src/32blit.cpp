@@ -428,11 +428,7 @@ std::string menu_name (MenuItem item) {
     case SCREENSHOT: return "Take Screenshot";
     case DFU: return "DFU Mode";
     case SHIPPING: return "Power Off";
-#if EXTERNAL_LOAD_ADDRESS == 0x90000000
-    case SWITCH_EXE: return "Launch Game";
-#else
-    case SWITCH_EXE: return "Exit Game";
-#endif
+    case SWITCH_EXE: return (EXTERNAL_LOAD_ADDRESS == 0x90000000 && !user_update) ? "Launch Game" : "Exit Game";
     case LAST_COUNT: return "";
   };
   return "";
@@ -875,13 +871,23 @@ typedef void(*renderFunction)(uint32_t);
 
 void blit_switch_execution(uint32_t address)
 {
-  #if EXTERNAL_LOAD_ADDRESS == 0x90000000
-  persist.reset_target = prtGame;
-  #else
-  persist.reset_target = prtFirmware;
-  #endif
+  if(EXTERNAL_LOAD_ADDRESS == 0x90000000 && !user_tick)
+    persist.reset_target = prtGame;
+  else
+    persist.reset_target = prtFirmware;
 
   init_api_shared();
+
+  // returning from game running on top of the firmware
+  if(user_update) {
+    user_update = nullptr;
+    user_render = nullptr;
+    blit::render = ::render;
+    blit::update = ::update;
+    // TODO: may be possible to return to the menu without a hard reset but currently flashing doesn't work
+    SCB_CleanDCache();
+    NVIC_SystemReset();
+  }
 
 	// enable qspi memory mapping if needed
 	if(EXTERNAL_LOAD_ADDRESS >= 0x90000000)
