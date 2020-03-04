@@ -8,6 +8,7 @@ static void _i2c_send_8(I2C_HandleTypeDef *i2c_port, uint16_t address, uint8_t r
 void msa301_init(I2C_HandleTypeDef *i2c_port, uint8_t power_mode, uint8_t low_power_bandwidth, uint8_t update_rate){
   _i2c_send_8(i2c_port, MSA301_DEVICE_ADDRESS, MSA301_CONTROL1_REGISTER, update_rate);
   _i2c_send_8(i2c_port, MSA301_DEVICE_ADDRESS, MSA301_CONTROL2_REGISTER, (power_mode | low_power_bandwidth));
+  _i2c_send_8(i2c_port, MSA301_DEVICE_ADDRESS, MSA301_SWAP_REGISTER, 0b00001111); // Reverse X, Y and Z axis polarity (and X/Y swap also??)
 }
 
 void msa301_get_accel(I2C_HandleTypeDef *i2c_port, int16_t *data_buffer) {
