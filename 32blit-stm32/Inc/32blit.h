@@ -5,7 +5,6 @@
 #include "fatfs.h"
 #include "persistence.h"
 
-
 // Functions defined by user code files
 extern void init();
 extern void update(uint32_t time);
@@ -19,7 +18,7 @@ extern bool blit_sd_detected();
 extern char __ltdc_start;
 extern void blit_swap();
 extern void blit_flip();
-extern void set_screen_mode(blit::ScreenMode new_mode);
+extern blit::Surface &set_screen_mode(blit::ScreenMode new_mode);
 extern void blit_clear_framebuffer();
 
 // Blit setup and main loop
@@ -30,6 +29,7 @@ extern void blit_init();
 extern void blit_update_vibration();
 extern void blit_update_led();
 extern void blit_process_input();
+extern void blit_i2c_tick();
 
 // Audio
 extern void blit_enable_amp();

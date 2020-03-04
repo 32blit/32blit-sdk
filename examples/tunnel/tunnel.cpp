@@ -46,8 +46,8 @@ void tunnel_test(uint32_t time_ms) {
 	for (int scanline = 0; scanline < screen.bounds.w; scanline++) {
 
 		float z = 3.0; // Distance from our imaginary wall plane
-		z += sin((time_ms + scanline) / 1000.0f);
-		y = sin((time_ms + scanline) / 200.0f);
+		z += sinf((time_ms + scanline) / 1000.0f);
+		y = sinf((time_ms + scanline) / 200.0f);
 
 		int offset = scanline;
 
@@ -80,8 +80,8 @@ void tunnel_test(uint32_t time_ms) {
 				(float(wall_y) / wall_height)
 			);
 
-			uv.x -= floor(uv.x);
-			uv.y -= floor(uv.y);
+			uv.x -= floorf(uv.x);
+			uv.y -= floorf(uv.y);
 
 
 			uint8_t *fragment_c = screen.sprites->ptr(Point(
@@ -133,8 +133,8 @@ void tunnel_test(uint32_t time_ms) {
 			uv.y = uv.y * weight;
 			uv.y += z * (1.0f - weight);
 
-			uv.x -= floor(uv.x);
-			uv.y -= floor(uv.y);
+			uv.x -= floorf(uv.x);
+			uv.y -= floorf(uv.y);
 
 			uint8_t *fragment_c = screen.sprites->ptr(Point(
 				texture_origin.x + (uv.x * texture_size),
@@ -182,8 +182,8 @@ void tunnel_test(uint32_t time_ms) {
 			uv.y = uv.y * weight;
 			uv.y += z * (1.0f - weight);
 
-			uv.x -= floor(uv.x);
-			uv.y -= floor(uv.y);
+			uv.x -= floorf(uv.x);
+			uv.y -= floorf(uv.y);
 
 			uint8_t *fragment_c = screen.sprites->ptr(Point(
 				texture_origin.x + (uv.x * texture_size),
@@ -208,8 +208,8 @@ void tunnel_test1(uint8_t time_ms) {
 		screen.alpha = 255;
 		int offset = scanline * 2;
 		//float time_offset = (time_ms + offset) / 100.0f;
-		float x = (sin(float(time_ms + offset) / 1000.0f) + 1.0f) / 2.0f;
-		float y = (sin(float(time_ms + offset + 1000) / 2000.0f) + 1.0f) / 2.0f;
+		float x = (sinf(float(time_ms + offset) / 1000.0f) + 1.0f) / 2.0f;
+		float y = (sinf(float(time_ms + offset + 1000) / 2000.0f) + 1.0f) / 2.0f;
 
 		float stripe_height = min_stripe_height + max_stripe_height * y;
 		float stripe_offset_top = (screen.bounds.h / 4) * x;
@@ -267,8 +267,8 @@ void render(uint32_t time_ms) {
 
 	screen.alpha = 255;
 
-	int x = 20 + (sin(time_ms / 1000.0f) * 10.0f);
-	int y = 40 + (sin(time_ms / 1500.0f) * 30.0f);
+	int x = 20 + (sinf(time_ms / 1000.0f) * 10.0f);
+	int y = 40 + (sinf(time_ms / 1500.0f) * 30.0f);
 
 	screen.blit(ss_ship, Rect(0, 0, 64, 32), Point(x, y));
 

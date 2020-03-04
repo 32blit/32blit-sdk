@@ -1,6 +1,7 @@
 #include <cinttypes>
 
 #include "profiler.hpp"
+#include "engine/api_private.hpp"
 #include "engine/engine.hpp"
 #include "graphics/color.hpp"
 #include "graphics/font.hpp"
@@ -8,12 +9,50 @@
 namespace blit
 {
 
+void ProfilerProbe::Start(void)
+{
+	m_uStartUs = api.GetUsTimer();
+}
+
+uint32_t ProfilerProbe::StoreElapsedUs(bool bRestart)
+{
+	if(m_uStartUs)
+	{
+		uint32_t uCurrentUs = api.GetUsTimer();
+		if(uCurrentUs >= m_uStartUs)
+			m_metrics.uElapsedUs = uCurrentUs - m_uStartUs;
+		else
+			m_metrics.uElapsedUs = (api.GetMaxUsTimer() - m_uStartUs) + uCurrentUs;
+
+		m_metrics.uMinElapsedUs = std::min(m_metrics.uMinElapsedUs, m_metrics.uElapsedUs);
+		m_metrics.uMaxElapsedUs = std::max(m_metrics.uMaxElapsedUs, m_metrics.uElapsedUs);
+		if(m_pRunningAverage)
+		{
+			if(m_uRunningAverageSpanIndex == 0)
+			{
+				m_pRunningAverage->Add((float)m_metrics.uElapsedUs);
+				m_metrics.uAvgElapsedUs = m_pRunningAverage->Average();
+				m_uRunningAverageSpanIndex = m_uRunningAverageSpan-1;
+			}
+			else
+				m_uRunningAverageSpanIndex--;
+		}
+		else
+			m_metrics.uAvgElapsedUs = m_metrics.uElapsedUs;
+	}
+
+	if(bRestart)
+	m_uStartUs = api.GetUsTimer();
+
+	return m_metrics.uElapsedUs;
+}
+
 
 const char *Profiler::g_pszMetricNames[4]= {"Min", "Cur", "Avg", "Max"};
 
 Profiler::Profiler(uint32_t uRunningAverageSize, uint32_t uRunningAverageSpan ) : m_uGraphTimeUs(20000), m_uRunningAverageSize(uRunningAverageSize), m_uRunningAverageSpan(uRunningAverageSpan), m_uRowHeight(10), m_uBorder(5), m_uHeaderSize(15), m_uAlpha(160)
 {
-	EnableUsTimer();
+	api.EnableUsTimer();
 
 	// default to lowres
 	SetDisplaySize(160, 120);

@@ -69,7 +69,7 @@ void smoke(uint32_t time_ms) {
   if (generate_index >= 150)
     generate_index = 0;
 
-  float w = sin(time_ms / 1000.0f) * 0.05f;
+  float w = sinf(time_ms / 1000.0f) * 0.05f;
 
   for (auto &p : s) {
     if (p.generated) {
@@ -108,7 +108,7 @@ void spark(uint32_t time_ms) {
   if (generate_index >= 500)
     generate_index = 0;
 
-  float w = sin(time_ms / 1000.0f) * 0.05f;
+  float w = sinf(time_ms / 1000.0f) * 0.05f;
 
   Vec2 gravity = Vec2(0, 9.8 * 2) * td;
 
@@ -164,7 +164,7 @@ void rain(uint32_t time_ms) {
   if (generate_index >= 200)
     generate_index = 0;
 
-  float w = sin(time_ms / 1000.0f) * 0.05f;
+  float w = sinf(time_ms / 1000.0f) * 0.05f;
 
   Vec2 gravity = g * td;
 
@@ -229,20 +229,13 @@ void render_basic_rain() {
 uint32_t prev_buttons = blit::buttons;
 
 void render(uint32_t time_ms) {
-
-uint16_t width;
-uint16_t height;
-    if ((blit::buttons ^ prev_buttons) & blit::Button::A) {
-        blit::set_screen_mode(blit::lores);
-        width = 160;
-        height = 120;
-    }
-    else if ((blit::buttons ^ prev_buttons) & blit::Button::B) {
-        blit::set_screen_mode(blit::hires);
-        width = 320;
-        height = 240;
-    }
-    prev_buttons = blit::buttons;
+  if ((blit::buttons ^ prev_buttons) & blit::Button::A) {
+      blit::set_screen_mode(blit::lores);
+  }
+  else if ((blit::buttons ^ prev_buttons) & blit::Button::B) {
+      blit::set_screen_mode(blit::hires);
+  }
+  prev_buttons = blit::buttons;
 
   screen.pen = Pen(0, 0, 0, 255);
   screen.clear();

@@ -41,7 +41,7 @@ void cycle(uint32_t time) {
         int offset = cycle_gradients[g].offset;
         float speed = cycle_gradients[g].speed;
         float t = time / speed;
-        float phase = (t - floor(t));
+        float phase = (t - floorf(t));
         for(int i = 0; i < 12; i++){
             int index = i + t;
             index %= 12;

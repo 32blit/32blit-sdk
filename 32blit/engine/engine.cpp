@@ -1,6 +1,9 @@
 /*! \file engine.cpp
 */
+#include <cstdarg>
+
 #include "engine.hpp"
+#include "api_private.hpp"
 #include "timer.hpp"
 #include "tweening.hpp"
 
@@ -9,12 +12,30 @@ namespace blit {
   void (*init)()                                    = nullptr;
   void (*update)(uint32_t time)                     = nullptr;
   void (*render)(uint32_t time)                     = nullptr;
-  void (*set_screen_mode)(ScreenMode new_mode)      = nullptr;
-  uint32_t (*now)()                                 = nullptr;
-  uint32_t (*random)()                              = nullptr;
-  void (*debug)(std::string message)                = nullptr;
-  int  (*debugf)(const char * psFormatString, ...) 	= nullptr;
-  void (*switch_execution)()												= nullptr;
+
+  void set_screen_mode(ScreenMode new_mode) {
+    screen = api.set_screen_mode(new_mode);
+  }
+
+  uint32_t now() {
+    return api.now();
+  }
+
+  uint32_t random() {
+    return api.random();
+  }
+
+  void debug(std::string message) {
+    api.debug(message);
+  }
+
+  int debugf(const char * psFormatString, ...) {
+    va_list args;
+    va_start(args, psFormatString);
+    int ret = api.debugf(psFormatString, args);
+    va_end(args);
+    return ret;
+  }
 
   Surface null_surface(nullptr, PixelFormat::M, Size(0, 0));
   Surface &screen = null_surface;

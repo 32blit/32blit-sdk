@@ -63,11 +63,14 @@ void DMA1_Stream1_IRQHandler(void);
 //void DMA1_Stream2_IRQHandler(void);
 void ADC_IRQHandler(void);
 void ADC3_IRQHandler(void);
+void TIM2_IRQHandler(void);
 void TIM3_IRQHandler(void);
 void TIM4_IRQHandler(void);
 //void TIM6_DAC_IRQHandler(void);
 void OTG_HS_IRQHandler(void);
 void EXTI9_5_IRQHandler(void);
+void I2C4_EV_IRQHandler(void);
+void I2C4_ER_IRQHandler(void);
 
 
 /* USER CODE BEGIN EFP */

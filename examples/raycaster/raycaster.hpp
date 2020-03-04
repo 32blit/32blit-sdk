@@ -4,35 +4,34 @@
 
 #include "32blit.hpp"
 
-#ifndef M_PI
-#define M_PI           3.14159265358979323846  /* pi */
-#endif
+#undef M_PI
+constexpr float  M_PI = 3.14159265358979323846f;  /* pi */
 
-#define M_PI_H		   1.5707963267948966
+constexpr float M_PI_H = 1.5707963267948966f;
 
-#define EPSILON 0.00000001
+constexpr float EPSILON = 0.00000001f;
 
-#define SCREEN_WIDTH 160
-#define SCREEN_HEIGHT 120
-#define VIEW_HEIGHT (SCREEN_HEIGHT - 24)
-#define HORIZON (VIEW_HEIGHT / 2)
-#define TEXTURE_WIDTH 8
-#define TEXTURE_HEIGHT 8
-#define TEXTURE_SCALE 1
-#define PLAYER_FOV 80
-#define HALF_FOV  (float)(0.78539816339f) //(float)(0.78539816339) //(float)(0.61086523819) //((float)PLAYER_FOV / 360.0f * M_PI) //((float)PLAYER_FOV / 360.0f * M_PI)
+constexpr uint16_t SCREEN_WIDTH = 160;
+constexpr uint16_t SCREEN_HEIGHT = 120;
+constexpr uint16_t VIEW_HEIGHT = (SCREEN_HEIGHT - 24);
+constexpr uint16_t HORIZON = (VIEW_HEIGHT / 2);
+constexpr uint8_t TEXTURE_WIDTH = 8;
+constexpr uint8_t TEXTURE_HEIGHT = 8;
+constexpr uint8_t TEXTURE_SCALE = 1;
+constexpr uint8_t PLAYER_FOV = 90;
+constexpr float HALF_FOV = PLAYER_FOV / 360.0f * M_PI;
 
-#define MAP_WIDTH 16
-#define MAP_HEIGHT 16
-#define MAP_TILE_SOLID 0x80
-#define MAP_TILE_GRAFITTI 0x40
-#define MAX_RAY_STEPS 24 //11 //sqrt((MAP_WIDTH ** 2) + (MAP_HEIGHT ** 2))
+constexpr uint8_t MAP_WIDTH = 16;
+constexpr uint8_t MAP_HEIGHT = 16;
+constexpr uint8_t MAP_TILE_SOLID = 0x80;
+constexpr uint8_t MAP_TILE_GRAFITTI = 0x40;
+constexpr uint8_t MAX_RAY_STEPS = 24; //11 //sqrt((MAP_WIDTH ** 2) + (MAP_HEIGHT ** 2))
 
-#define TEXTURE_FLOOR 0
-#define TEXTURE_CEILING 1
-#define TEXTURE_WALL 2
+constexpr uint8_t TEXTURE_FLOOR = 0;
+constexpr uint8_t TEXTURE_CEILING = 1;
+constexpr uint8_t TEXTURE_WALL = 2;
 
-#define SPRITE_SCALE 1.6f
+constexpr float SPRITE_SCALE = 1.6f;
 
 
 Vec2 rotate_point(Vec2 p, Vec2 v);

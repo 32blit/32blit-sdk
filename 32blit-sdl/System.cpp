@@ -7,7 +7,9 @@
 #include "System.hpp"
 #include "32blit.hpp"
 #include "UserCode.hpp"
+#include "JPEG.hpp"
 
+#include "engine/api_private.hpp"
 
 // blit framebuffer memory
 uint8_t framebuffer[320 * 240 * 3];
@@ -19,18 +21,14 @@ void debug(std::string message) {
 	std::cout << message << std::endl;
 }
 
-int blit_debugf(const char * psFormatString, ...)
+int blit_debugf(const char * psFormatString, va_list args)
 {
-	va_list args;
-	va_start(args, psFormatString);
-	int ret = vprintf(psFormatString, args);
-	va_end(args);
-	return ret;
+	return vprintf(psFormatString, args);
 }
 
 // blit screenmode callback
 blit::ScreenMode _mode = blit::ScreenMode::lores;
-void set_screen_mode(blit::ScreenMode new_mode) {
+blit::Surface &set_screen_mode(blit::ScreenMode new_mode) {
 	_mode = new_mode;
 	if (_mode == blit::ScreenMode::hires) {
 		blit::screen = __fb_hires;
@@ -38,6 +36,8 @@ void set_screen_mode(blit::ScreenMode new_mode) {
 	else {
 		blit::screen = __fb_lores;
 	}
+
+	return blit::screen;
 }
 
 // blit timer callback
@@ -59,6 +59,27 @@ std::mt19937 random_generator(random_device());
 std::uniform_int_distribution<uint32_t> random_distribution;
 uint32_t blit_random() {
 	return random_distribution(random_generator);
+}
+
+
+// us timer used by profiler
+
+void EnableUsTimer(void)
+{
+	// Enable/initialise timer
+}
+
+uint32_t GetUsTimer(void)
+{
+	// get current time in us
+	uint64_t ticksPerUs = SDL_GetPerformanceFrequency() / 1000000;
+	return SDL_GetPerformanceCounter() / ticksPerUs;
+}
+
+uint32_t GetMaxUsTimer(void)
+{
+	// largest us value timer can produce for wrapping
+	return UINT32_MAX;
 }
 
 // SDL events
@@ -100,25 +121,32 @@ void System::run() {
 
 	start = std::chrono::steady_clock::now();
 
-	blit::now = ::now;
-	blit::random = ::blit_random;
-	blit::debug = ::debug;
-	blit::debugf = ::blit_debugf;
-	blit::set_screen_mode = ::set_screen_mode;
+	blit::api.now = ::now;
+	blit::api.random = ::blit_random;
+	blit::api.debug = ::debug;
+	blit::api.debugf = ::blit_debugf;
+	blit::api.set_screen_mode = ::set_screen_mode;
 	blit::update = ::update;
 	blit::render = ::render;
 
 	setup_base_path();
 
-	blit::open_file = ::open_file;
-	blit::read_file = ::read_file;
-	blit::write_file = ::write_file;
-	blit::close_file = ::close_file;
-	blit::get_file_length = ::get_file_length;
-	blit::list_files = ::list_files;
-	blit::file_exists = ::file_exists;
-	blit::directory_exists = ::directory_exists;
-	blit::create_directory = ::create_directory;
+	blit::api.open_file = ::open_file;
+	blit::api.read_file = ::read_file;
+	blit::api.write_file = ::write_file;
+	blit::api.close_file = ::close_file;
+	blit::api.get_file_length = ::get_file_length;
+	blit::api.list_files = ::list_files;
+	blit::api.file_exists = ::file_exists;
+	blit::api.directory_exists = ::directory_exists;
+	blit::api.create_directory = ::create_directory;
+
+	blit::api.EnableUsTimer = ::EnableUsTimer;
+	blit::api.GetUsTimer = ::GetUsTimer;
+	blit::api.GetMaxUsTimer = ::GetMaxUsTimer;
+
+	blit::api.decode_jpeg_buffer = blit_decode_jpeg_buffer;
+	blit::api.decode_jpeg_file = blit_decode_jpeg_file;
 
 	::set_screen_mode(blit::lores);
 
@@ -247,26 +275,4 @@ void System::stop() {
 
 	SDL_SemPost(s_timer_stop);
 	SDL_WaitThread(t_system_timer, &returnValue);
-}
-
-
-// us timer used by profiler
-// need code here for non stm32 based builds
-
-void EnableUsTimer(void)
-{
-	// Enable/initialise timer
-}
-
-uint32_t GetUsTimer(void)
-{
-	// get current time in us
-	uint64_t ticksPerUs = SDL_GetPerformanceFrequency() / 1000000;
-	return SDL_GetPerformanceCounter() / ticksPerUs;
-}
-
-uint32_t GetMaxUsTimer(void)
-{
-	// largest us value timer can produce for wrapping
-	return UINT32_MAX;
 }

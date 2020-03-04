@@ -148,6 +148,8 @@
   <ItemGroup>
     <ClInclude Include="..\..\32blit\32blit.hpp" />
     <ClInclude Include="..\..\32blit\audio\audio.hpp" />
+    <ClInclude Include="..\..\32blit\engine\api.hpp" />
+    <ClInclude Include="..\..\32blit\engine\api_private.hpp" />
     <ClInclude Include="..\..\32blit\engine\engine.hpp" />
     <ClInclude Include="..\..\32blit\engine\file.hpp" />
     <ClInclude Include="..\..\32blit\engine\input.hpp" />
@@ -177,6 +179,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\32blit\audio\audio.cpp" />
+    <ClCompile Include="..\..\32blit\engine\api.cpp" />
     <ClCompile Include="..\..\32blit\engine\engine.cpp" />
     <ClCompile Include="..\..\32blit\engine\file.cpp" />
     <ClCompile Include="..\..\32blit\engine\input.cpp" />
@@ -189,6 +192,7 @@
     <ClCompile Include="..\..\32blit\graphics\color.cpp" />
     <ClCompile Include="..\..\32blit\graphics\filter.cpp" />
     <ClCompile Include="..\..\32blit\graphics\font.cpp" />
+    <ClCompile Include="..\..\32blit\graphics\jpeg.cpp" />
     <ClCompile Include="..\..\32blit\graphics\mask.cpp" />
     <ClCompile Include="..\..\32blit\graphics\mode7.cpp" />
     <ClCompile Include="..\..\32blit\graphics\primitive.cpp" />
