@@ -2,6 +2,11 @@
 #include "../engine/api_private.hpp"
 
 namespace blit {
+
+  static uint8_t *alloc_func(size_t len) {
+    return new uint8_t[len];
+  }
+
   /**
    * Decode a JPEG image from memory. The resolution of the image should be kept low to avoid running out of memory.
    * May not support all JPEG files due to limitations of the hardware decoder.
@@ -12,7 +17,7 @@ namespace blit {
    * \return Decoded image.
    */
   JPEGImage decode_jpeg_buffer(const uint8_t *ptr, uint32_t len) {
-    return api.decode_jpeg_buffer(ptr, len);
+    return api.decode_jpeg_buffer(ptr, len, alloc_func);
   }
 
   /**
@@ -23,6 +28,6 @@ namespace blit {
    * \return Decoded image.
    */
   JPEGImage decode_jpeg_file(std::string filename) {
-    return api.decode_jpeg_file(filename);
+    return api.decode_jpeg_file(filename, alloc_func);
   }
 }
