@@ -91,7 +91,7 @@ LoopFillZerobss:
 // Call static constructors
   bl __libc_init_array
 // Call the application's entry point.
-  bl  _Z4initv
+  bl cpp_do_init
   pop {pc}
 
 /*****************************************************************************
