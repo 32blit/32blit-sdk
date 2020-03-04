@@ -34,6 +34,7 @@
 
 #include "gpio.hpp"
 #include "display.hpp"
+#include "i2c-user.hpp"
 #include "sound.hpp"
 
 /* Private includes ----------------------------------------------------------*/

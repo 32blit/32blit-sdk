@@ -10,6 +10,7 @@
 #include "file.hpp"
 
 
+
 #include "adc.h"
 #include "tim.h"
 #include "rng.h"
@@ -17,6 +18,7 @@
 #include "i2c.h"
 #include "i2c-msa301.h"
 #include "i2c-bq24295.h"
+#include "i2c-user.hpp"
 #include "fatfs.h"
 #include "quadspi.h"
 #include "usbd_core.h"
@@ -159,6 +161,10 @@ void blit_init() {
     blit::list_files = ::list_files;
 
     blit::switch_execution = blit_switch_execution;
+
+    i2cUser::set_i2c_port(&hi2c4);
+    blit::i2c_receive = i2cUser::i2c_receive;
+    blit::i2c_send = i2cUser::i2c_send;
 
     blit_enable_amp();
 
