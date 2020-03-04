@@ -116,9 +116,9 @@ void render(uint32_t time) {
     screen.text(text_buf, minimal_font, Point(COL2, ROW1+21));
 
     blit::LED = Pen(
-        (float)((sin(blit::now() / 100.0f) + 1) / 2.0f),
-        (float)((cos(blit::now() / 100.0f) + 1) / 2.0f),
-        (float)((sin(blit::now() / 100.0f) + 1) / 2.0f)
+        (float)((sinf(blit::now() / 100.0f) + 1) / 2.0f),
+        (float)((cosf(blit::now() / 100.0f) + 1) / 2.0f),
+        (float)((sinf(blit::now() / 100.0f) + 1) / 2.0f)
     );
 }
 

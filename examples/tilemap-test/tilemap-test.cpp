@@ -38,44 +38,44 @@ using namespace blit;
 
 
   std::function<Mat3(uint8_t)> dream = [](uint8_t y) -> Mat3 {
-    float progress = (sin(current_time / 2000.0f) + 1.0f) * 0.6f;  // two second animation
+    float progress = (sinf(current_time / 2000.0f) + 1.0f) * 0.6f;  // two second animation
     progress = progress > 1.0f ? 1.0f : progress;
 
     screen.alpha = progress * 255.0f;
     float step = (current_time / 200.0f) + (y / 10.0f);
-    float x_offset = (sin(step) * (cos(step) * 50.0f)) * (1.0f - progress);
+    float x_offset = (sinf(step) * (cosf(step) * 50.0f)) * (1.0f - progress);
 
     Mat3 transform = Mat3::identity();
-    transform *= Mat3::translation(Vec2(256, 156)); // offset to middle of world      
-    transform *= Mat3::translation(Vec2(x_offset, 0)); // apply dream effect wave      
+    transform *= Mat3::translation(Vec2(256, 156)); // offset to middle of world
+    transform *= Mat3::translation(Vec2(x_offset, 0)); // apply dream effect wave
     transform *= Mat3::translation(Vec2(-80, -60)); // transform to centre of framebuffer
 
     return transform;
   };
 
   std::function<Mat3(uint8_t)> rotozoom = [](uint8_t y) -> Mat3 {
-    float progress = (sin(current_time / 2000.0f) + 1.0f) / 2.0f;  // two second animation
+    float progress = (sinf(current_time / 2000.0f) + 1.0f) / 2.0f;  // two second animation
 
     float angle = (1.0f - progress) * 360.0f;
     float scale = progress;
 
     Mat3 transform = Mat3::identity();
-    transform *= Mat3::translation(Vec2(256, 156)); // offset to middle of world      
-    transform *= Mat3::rotation(deg2rad(angle)); // apply dream effect wave      
-    transform *= Mat3::scale(Vec2(scale, scale)); // apply dream effect wave      
+    transform *= Mat3::translation(Vec2(256, 156)); // offset to middle of world
+    transform *= Mat3::rotation(deg2rad(angle)); // apply dream effect wave
+    transform *= Mat3::scale(Vec2(scale, scale)); // apply dream effect wave
     transform *= Mat3::translation(Vec2(-80, -60)); // transform to centre of framebuffer
 
     return transform;
   };
 
   std::function<Mat3(uint8_t)> zoom = [](uint8_t y) -> Mat3 {
-    float progress = (sin(current_time / 1000.0f) + 1.0f) / 2.0f;  // two second animation    
+    float progress = (sinf(current_time / 1000.0f) + 1.0f) / 2.0f;  // two second animation
 
     float scale = progress;
 
     Mat3 transform = Mat3::identity();
-    transform *= Mat3::translation(Vec2(256, 156)); // offset to middle of world      
-    transform *= Mat3::scale(Vec2(scale, scale)); // apply dream effect wave      
+    transform *= Mat3::translation(Vec2(256, 156)); // offset to middle of world
+    transform *= Mat3::scale(Vec2(scale, scale)); // apply dream effect wave
     transform *= Mat3::translation(Vec2(-80, -60)); // transform to centre of framebuffer
 
     return transform;
@@ -83,7 +83,7 @@ using namespace blit;
 
 
   std::function<Mat3(uint8_t)> perspective = [](uint8_t y) -> Mat3 {
-    float progress = (sin(current_time / 2000.0f) + 1.0f) / 2.0f;  // two second animation
+    float progress = (sinf(current_time / 2000.0f) + 1.0f) / 2.0f;  // two second animation
     progress = progress > 1.0f ? 1.0f : progress;
 
     screen.alpha = y + (255 - 120);
@@ -100,7 +100,7 @@ using namespace blit;
 
   std::function<Mat3(uint8_t)> water = [](uint8_t y) -> Mat3 {
     float step = (current_time / 200.0f) + (y / 10.0f);
-    float x_offset = (sin(step) + sin(step / 3.0f) + sin(step * 2.0f)) * 2.0f;
+    float x_offset = (sinf(step) + sinf(step / 3.0f) + sinf(step * 2.0f)) * 2.0f;
 
     Mat3 transform = Mat3::identity();
     transform *= Mat3::translation(Vec2(156, 130)); // offset to middle of world      
@@ -112,9 +112,9 @@ using namespace blit;
 
   std::function<Mat3(uint8_t)> warp = [](uint8_t y) -> Mat3 {
     float step = (current_time / 1000.0f) + (y / 100.0f);
-    float x_offset = (sin(step) * (cos(step) * 50.0f));
+    float x_offset = (sinf(step) * (cosf(step) * 50.0f));
 
-    float angle = sin(current_time / 500.0f) * 50.0f;
+    float angle = sinf(current_time / 500.0f) * 50.0f;
 
     Mat3 transform = Mat3::identity();
     transform *= Mat3::translation(Vec2(140, 140)); // offset to middle of world      
@@ -128,7 +128,7 @@ using namespace blit;
   std::function<Mat3(uint8_t)> ripple = [](uint8_t y) -> Mat3 {
     float step = (current_time / 250.0f) + (y / 25.0f);
 
-    float scale = (sin(step) / 4.0f) + 1.0f;
+    float scale = (sinf(step) / 4.0f) + 1.0f;
 
     Mat3 transform = Mat3::identity();
     transform *= Mat3::translation(Vec2(256, 156)); // offset to middle of world      
@@ -141,7 +141,7 @@ using namespace blit;
   std::function<Mat3(uint8_t)> betamax = [](uint8_t y) -> Mat3 {
     float step = (current_time / 250.0f) + (y / 25.0f);
 
-    int8_t scale = int8_t((sin(step) + 1.0f) * 5);
+    int8_t scale = int8_t((sinf(step) + 1.0f) * 5);
     Point shake((blit::random() % scale) - scale / 2, (blit::random() % scale) - scale / 2);
 
     Mat3 transform = Mat3::identity();
@@ -160,7 +160,7 @@ using namespace blit;
 
       uint8_t clamp = 20;
       shake = Point(blit::random() % clamp, blit::random() % clamp);
-      float scale = sin(current_time / 300.0f);
+      float scale = sinf(current_time / 300.0f);
 
       scale = scale < 0.0f ? 0.0f : scale;
       shake *= scale;
@@ -225,20 +225,24 @@ using namespace blit;
     }
 
     uint32_t ms_end = now();
+
     /*
     // draw FPS meter
     screen.alpha = 255;
-    screen.pen(Pen(0, 0, 0));
-    screen.rectangle(rect(1, 120 - 10, 12, 9));
-    screen.pen(Pen(255, 255, 255, 200));
+    screen.pen = Pen(0, 0, 0);
+    screen.rectangle(Rect(1, 120 - 10, 12, 9));
+    screen.pen = Pen(255, 255, 255, 200);
     std::string fms = std::to_string(ms_end - ms_start);
-    screen.text(fms, minimal_font, rect(3, 120 - 9, 10, 16));
+    screen.text(fms, minimal_font, Rect(3, 120 - 9, 10, 16));
 
     int block_size = 4;
     for (int i = 0; i < (ms_end - ms_start); i++) {
-      screen.pen(Pen(i * 5, 255 - (i * 5), 0));
-      screen.rectangle(rect(i * (block_size + 1) + 1 + 13, screen.bounds.h - block_size - 1, block_size, block_size));
-    }*/
+      screen.pen = Pen(i * 5, 255 - (i * 5), 0);
+      screen.rectangle(Rect(i * (block_size + 1) + 1 + 13, screen.bounds.h - block_size - 1, block_size, block_size));
+    }
+    */
+
+    screen.watermark();
   }
 
 

@@ -32,8 +32,8 @@ void MapLayer::mipmap_texture_span(Surface *dest, Point s, uint16_t c, Surface *
   // calculate the mipmap index to use for drawing
   float span_length = (ewc - swc).length();
   float mipmap = ((span_length / float(c)) / 2.0f);
-  uint16_t mipmap_index = floor(mipmap);
-  uint8_t blend = (mipmap - floor(mipmap)) * 255;
+  uint16_t mipmap_index = floorf(mipmap);
+  uint8_t blend = (mipmap - floorf(mipmap)) * 255;
 
   mipmap_index = mipmap_index >= (int)sprites->mipmaps.size() ? sprites->mipmaps.size() - 1 : mipmap_index;
   mipmap_index = mipmap_index < 0 ? 0 : mipmap_index;
