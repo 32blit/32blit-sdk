@@ -29,6 +29,7 @@ extern void blit_init();
 extern void blit_update_vibration();
 extern void blit_update_led();
 extern void blit_process_input();
+extern void blit_i2c_tick();
 
 // Audio
 extern void blit_enable_amp();

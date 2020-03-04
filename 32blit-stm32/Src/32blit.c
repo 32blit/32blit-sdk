@@ -26,6 +26,7 @@
 #include "32blit.hpp"
 #include "engine/api_private.hpp"
 #include "graphics/color.hpp"
+#include "engine/running_average.hpp"
 
 #include "stdarg.h"
 using namespace blit;
@@ -47,8 +48,10 @@ FRESULT SD_Error = FR_INVALID_PARAMETER;
 FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 
 bool needs_render = true;
+bool exit_game = false;
 uint32_t flip_cycle_count = 0;
 float volume_log_base = 2.0f;
+RunningAverage<float> battery_average(8);
 float battery = 0.0f;
 uint8_t battery_status = 0;
 uint8_t battery_fault = 0;
@@ -98,12 +101,48 @@ uint32_t GetMaxUsTimer(void)
 	return UINT32_MAX / uTicksPerUs;
 }
 
+std::string battery_vbus_status() {
+  switch(battery_status >> 6){
+    case 0b00: // Unknown
+      return "Unknown";
+    case 0b01: // USB Host
+      return "USB Host";
+    case 0b10: // Adapter Port
+      return "Adapter";
+    case 0b11: // OTG
+      return "OTG";
+  }
+}
+
+std::string battery_charge_status() {
+  switch((battery_status >> 4) & 0b11){
+    case 0b00: // Not Charging
+      return "Nope";
+    case 0b01: // Pre-charge
+      return "Pre";
+    case 0b10: // Fast Charging
+      return "Fast";
+    case 0b11: // Charge Done
+      return "Done";
+  }
+}
+
 void blit_tick() {
+  if(exit_game) {
+    #if EXTERNAL_LOAD_ADDRESS == 0x90000000
+      // Already in firmware menu
+    #else
+    blit::LED.r = 0;
+    blit_switch_execution();
+    #endif
+  }
+
   if(display::needs_render) {
     blit::render(blit::now());
     display::enable_vblank_interrupt();
   }
 
+  blit_i2c_tick();
   blit_process_input();
   blit_update_led();
   blit_update_vibration();
@@ -136,6 +175,100 @@ void hook_render(uint32_t time) {
     int x = i / 8;
     int y = i % 8;
     blit::screen.text(std::to_string(adc1data[i]), minimal_font, Point(x * 30, y * 10));
+  }
+}
+
+enum I2CState {
+  DELAY,
+  STOPPED,
+
+  SEND_ACL,
+  RECV_ACL,
+  PROC_ACL,
+
+  SEND_BAT,
+  RECV_BAT,
+  PROC_BAT
+};
+
+RunningAverage<float> accel_x(8);
+RunningAverage<float> accel_y(8);
+RunningAverage<float> accel_z(8);
+
+I2CState i2c_state = SEND_ACL;
+uint8_t i2c_buffer[6] = {0};
+uint8_t i2c_reg = 0;
+HAL_StatusTypeDef i2c_status = HAL_OK;
+uint32_t i2c_delay_until = 0;
+I2CState i2c_next_state = SEND_ACL;
+
+void blit_i2c_delay(uint16_t ms, I2CState state) {
+  i2c_delay_until = HAL_GetTick() + ms;
+  i2c_next_state = state;
+  i2c_state = DELAY;
+}
+
+void blit_i2c_tick() {
+  if(i2c_state == STOPPED) {
+    return;
+  }
+  if(i2c_state == DELAY) {
+    if(HAL_GetTick() >= i2c_delay_until){
+      i2c_state = i2c_next_state;
+    }
+  }
+  if(HAL_I2C_GetState(&hi2c4) != HAL_I2C_STATE_READY){
+    return;
+  }
+  switch(i2c_state) {
+    case STOPPED:
+    case DELAY:
+      break;
+    case SEND_ACL:
+      i2c_reg = MSA301_X_ACCEL_RESISTER;
+      i2c_status = HAL_I2C_Master_Transmit_IT(&hi2c4, MSA301_DEVICE_ADDRESS, &i2c_reg, 1);
+      if(i2c_status == HAL_OK){
+        i2c_state = RECV_ACL;
+      } else {
+        blit_i2c_delay(16, SEND_ACL);
+      }
+      break;
+    case RECV_ACL:
+      i2c_status = HAL_I2C_Master_Receive_IT(&hi2c4, MSA301_DEVICE_ADDRESS, i2c_buffer, 6);
+      if(i2c_status == HAL_OK){
+        i2c_state = PROC_ACL;
+      } else {
+        blit_i2c_delay(16, SEND_ACL);
+      }
+      break;
+    case PROC_ACL:
+      accel_x.Add(((int8_t)i2c_buffer[1] << 6) | (i2c_buffer[0] >> 2));
+      accel_y.Add(((int8_t)i2c_buffer[3] << 6) | (i2c_buffer[2] >> 2));
+      accel_z.Add(((int8_t)i2c_buffer[5] << 6) | (i2c_buffer[4] >> 2));
+
+      blit::tilt = Vec3(
+        accel_x.Average(),
+        accel_y.Average(),
+        accel_z.Average()
+      );
+
+      blit::tilt.normalize();
+      i2c_state = SEND_BAT;
+      break;
+    case SEND_BAT:
+      i2c_reg = BQ24295_SYS_STATUS_REGISTER;
+      HAL_I2C_Master_Transmit_IT(&hi2c4, BQ24295_DEVICE_ADDRESS, &i2c_reg, 1);
+      i2c_state = RECV_BAT;
+      break;
+    case RECV_BAT:
+      HAL_I2C_Master_Receive_IT(&hi2c4, BQ24295_DEVICE_ADDRESS, i2c_buffer, 2);
+      i2c_state = PROC_BAT;
+      break;
+    case PROC_BAT:
+      battery_status = i2c_buffer[0];
+      battery_fault = i2c_buffer[1];
+      blit_i2c_delay(16, SEND_ACL);
+      break;
   }
 }
 
@@ -351,11 +484,20 @@ void blit_menu_render(uint32_t time) {
 
   screen.text("System Menu", minimal_font, Point(5, 5));
 
-  /*screen.text(
+  screen.text(
+    "Charge: " + battery_charge_status() +
+    "   VBus: " + battery_vbus_status() + 
+    "   Voltage: " + std::to_string(int(battery)) + "." + std::to_string(int((battery - int(battery)) * 10.0f)) + "v",
+    minimal_font, Point(0, screen_height - 10));
+
+  /*
+  // Raw register values can be displayed with a fixed-width font using std::bitset<8> for debugging
+  screen.text(
     "Fault: " + std::bitset<8>(battery_fault).to_string() +
-    " Status: " + std::bitset<8>(battery_status).to_string() +
-    " Voltage: " + std::to_string(int(battery)) + "." + std::to_string(int((battery - int(battery)) * 10.0f)) + "v",
-    minimal_font, Point(0, screen_height - 10));*/
+    " Status: " + std::bitset<8>(battery_status).to_string(),
+    minimal_font, Point(0, screen_height - 10), false);
+  */
+
   screen.text("bat", minimal_font, Point(screen_width / 2, 5));
   uint16_t battery_meter_width = 55;
   battery_meter_width = float(battery_meter_width) * (battery - 3.0f) / 1.1f;
@@ -381,9 +523,9 @@ void blit_menu_render(uint32_t time) {
   screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_meter_width, 5));
   uint8_t battery_charge_status = (battery_status >> 4) & 0b11;
   if(battery_charge_status == 0b01 || battery_charge_status == 0b10){
-    uint16_t battery_fill_width = uint32_t(time / 100.0f) % battery_meter_width;
+    uint16_t battery_fill_width = uint32_t(time / 500.0f) % battery_meter_width;
     battery_fill_width = std::max((uint16_t)0, std::min((uint16_t)battery_meter_width, battery_fill_width));
-    screen.pen = Pen(100, 255, 200);
+    screen.pen = Pen(100, 100, 255);
     screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_fill_width, 5));
   }
 
@@ -516,11 +658,6 @@ void blit_enable_ADC()
 }
 
 void blit_process_input() {
-  static uint32_t last_battery_update = 0;
-  static uint32_t last_tilt_update = 0;
-
-  uint32_t scc = DWT->CYCCNT;
-  // read x axis of joystick
   bool joystick_button = false;
 
   // Read buttons
@@ -565,44 +702,9 @@ void blit_process_input() {
   blit::hack_left = (adc3data[0] >> 1) / 32768.0f;
   blit::hack_right = (adc3data[1] >> 1)  / 32768.0f;
 
-  battery = 6.6f * adc3data[2] / 65535.0f;
+  battery_average.Add(6.6f * adc3data[2] / 65535.0f);
 
-  if(blit::now() - last_battery_update > 5000) {
-    uint16_t statusfault = bq24295_get_statusfault(&hi2c4);
-    battery_status = statusfault >> 8;
-    battery_fault = statusfault & 0xff;
-    last_battery_update = blit::now();
-  }
-
-  if(blit::now() - last_tilt_update > 10) {
-    // Do tilt every 8th tick of this function
-    // TODO: Find a better way to handle this
-    // Read accelerometer
-    msa301_get_accel(&hi2c4, &acceleration_data_buffer[tilt_sample_offset * 3]);
-
-    tilt_sample_offset += 1;
-    if(tilt_sample_offset >= ACCEL_OVER_SAMPLE){
-      tilt_sample_offset = 0;
-    }
-
-    float tilt_x = 0, tilt_y = 0, tilt_z = 0;
-    for(int x = 0; x < ACCEL_OVER_SAMPLE; x++) {
-      int offset = x * 3;
-      tilt_x += acceleration_data_buffer[offset + 0];
-      tilt_y += acceleration_data_buffer[offset + 1];
-      tilt_z += acceleration_data_buffer[offset + 2];
-    }
-
-    blit::tilt = Vec3(
-      -(tilt_x / ACCEL_OVER_SAMPLE),
-      -(tilt_y / ACCEL_OVER_SAMPLE),
-      -(tilt_z / ACCEL_OVER_SAMPLE)
-      );
-    blit::tilt.normalize();
-
-    last_tilt_update = blit::now();
-  }
-  //flip_cycle_count = DWT->CYCCNT - scc;
+  battery = battery_average.Average();
 }
 
 char *get_fr_err_text(FRESULT err){
