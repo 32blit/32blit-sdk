@@ -154,7 +154,7 @@ class Profiler
 public:
 	typedef std::vector<ProfilerProbe *>						ProfilerProbes;
 	typedef std::vector<ProfilerProbe *>::iterator	ProfilerProbesIter;
-	typedef enum {dmMin, dmCur, dmAvg, dmMax}				DisplayMetric;
+	enum DisplayMetric {dmMin, dmCur, dmAvg, dmMax};
 
 
 	struct GraphElement
