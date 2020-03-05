@@ -64,19 +64,19 @@ uint32_t blit_random() {
 
 // us timer used by profiler
 
-void EnableUsTimer(void)
+void enable_us_timer()
 {
 	// Enable/initialise timer
 }
 
-uint32_t GetUsTimer(void)
+uint32_t get_us_timer()
 {
 	// get current time in us
 	uint64_t ticksPerUs = SDL_GetPerformanceFrequency() / 1000000;
 	return SDL_GetPerformanceCounter() / ticksPerUs;
 }
 
-uint32_t GetMaxUsTimer(void)
+uint32_t get_max_us_timer()
 {
 	// largest us value timer can produce for wrapping
 	return UINT32_MAX;
@@ -141,9 +141,9 @@ void System::run() {
 	blit::api.directory_exists = ::directory_exists;
 	blit::api.create_directory = ::create_directory;
 
-	blit::api.EnableUsTimer = ::EnableUsTimer;
-	blit::api.GetUsTimer = ::GetUsTimer;
-	blit::api.GetMaxUsTimer = ::GetMaxUsTimer;
+	blit::api.enable_us_timer = ::enable_us_timer;
+	blit::api.get_us_timer = ::get_us_timer;
+	blit::api.get_max_us_timer = ::get_max_us_timer;
 
 	blit::api.decode_jpeg_buffer = blit_decode_jpeg_buffer;
 	blit::api.decode_jpeg_file = blit_decode_jpeg_file;

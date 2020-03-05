@@ -11,18 +11,18 @@ namespace blit
 
 void ProfilerProbe::Start(void)
 {
-	m_uStartUs = api.GetUsTimer();
+	m_uStartUs = api.get_us_timer();
 }
 
 uint32_t ProfilerProbe::StoreElapsedUs(bool bRestart)
 {
 	if(m_uStartUs)
 	{
-		uint32_t uCurrentUs = api.GetUsTimer();
+		uint32_t uCurrentUs = api.get_us_timer();
 		if(uCurrentUs >= m_uStartUs)
 			m_metrics.uElapsedUs = uCurrentUs - m_uStartUs;
 		else
-			m_metrics.uElapsedUs = (api.GetMaxUsTimer() - m_uStartUs) + uCurrentUs;
+			m_metrics.uElapsedUs = (api.get_max_us_timer() - m_uStartUs) + uCurrentUs;
 
 		m_metrics.uMinElapsedUs = std::min(m_metrics.uMinElapsedUs, m_metrics.uElapsedUs);
 		m_metrics.uMaxElapsedUs = std::max(m_metrics.uMaxElapsedUs, m_metrics.uElapsedUs);
@@ -42,7 +42,7 @@ uint32_t ProfilerProbe::StoreElapsedUs(bool bRestart)
 	}
 
 	if(bRestart)
-	m_uStartUs = api.GetUsTimer();
+	m_uStartUs = api.get_us_timer();
 
 	return m_metrics.uElapsedUs;
 }
@@ -52,7 +52,7 @@ const char *Profiler::g_pszMetricNames[4]= {"Min", "Cur", "Avg", "Max"};
 
 Profiler::Profiler(uint32_t uRunningAverageSize, uint32_t uRunningAverageSpan ) : m_uGraphTimeUs(20000), m_uRunningAverageSize(uRunningAverageSize), m_uRunningAverageSpan(uRunningAverageSpan), m_uRowHeight(10), m_uBorder(5), m_uHeaderSize(15), m_uAlpha(160)
 {
-	api.EnableUsTimer();
+	api.enable_us_timer();
 
 	// default to lowres
 	SetDisplaySize(160, 120);

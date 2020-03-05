@@ -44,14 +44,14 @@ namespace blit {
     bool (*create_directory) (std::string path);
 
     // profiler
-    void (*EnableUsTimer)(void);
-    uint32_t (*GetUsTimer)(void);
-    uint32_t (*GetMaxUsTimer)(void);
+    void (*enable_us_timer)();
+    uint32_t (*get_us_timer)();
+    uint32_t (*get_max_us_timer)();
 
     // jepg
     JPEGImage (*decode_jpeg_buffer)(uint8_t *ptr, uint32_t len);
     JPEGImage (*decode_jpeg_file)(std::string filename);
-  
+
   };
   #pragma pack(pop)
 

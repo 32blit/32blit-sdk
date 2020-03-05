@@ -81,19 +81,19 @@ void blit_debug(std::string message) {
   screen.text(message, minimal_font, Point(0, 0));
 }
 
-void EnableUsTimer(void)
+void enable_us_timer()
 {
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
   DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 }
 
-uint32_t GetUsTimer(void)
+uint32_t get_us_timer()
 {
 	uint32_t uTicksPerUs = SystemCoreClock / 1000000;
 	return DWT->CYCCNT/uTicksPerUs;
 }
 
-uint32_t GetMaxUsTimer(void)
+uint32_t get_max_us_timer()
 {
 	uint32_t uTicksPerUs = SystemCoreClock / 1000000;
 	return UINT32_MAX / uTicksPerUs;
@@ -321,9 +321,9 @@ void blit_init() {
     blit::api.directory_exists = ::directory_exists;
     blit::api.create_directory = ::create_directory;
 
-    blit::api.EnableUsTimer = ::EnableUsTimer;
-    blit::api.GetUsTimer = ::GetUsTimer;
-    blit::api.GetMaxUsTimer = ::GetMaxUsTimer;
+    blit::api.enable_us_timer = ::enable_us_timer;
+    blit::api.get_us_timer = ::get_us_timer;
+    blit::api.get_max_us_timer = ::get_max_us_timer;
 
     blit::api.decode_jpeg_buffer = blit_decode_jpeg_buffer;
     blit::api.decode_jpeg_file = blit_decode_jpeg_file;
