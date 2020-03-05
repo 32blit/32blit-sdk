@@ -141,12 +141,11 @@ public:
 	{
 		m_pProbe->store_elapsed_us();
 	}
+	ScopedProfilerProbe ( ScopedProfilerProbe & ) = delete;
+	void operator = ( ScopedProfilerProbe & ) = delete;
 
 private:
 	ProfilerProbe				*m_pProbe;
-
-	ScopedProfilerProbe ( ScopedProfilerProbe & );
-	void operator = ( ScopedProfilerProbe & );
 };
 
 
@@ -160,10 +159,10 @@ public:
 
 	struct GraphElement
 	{
-		GraphElement(): bDisplayLabel(false), bDisplayGraph(false), color(Pen(0,255,0)) {};
+		GraphElement(): color(Pen(0,255,0)) {};
 
-		bool			bDisplayLabel;
-		bool			bDisplayGraph;
+		bool			bDisplayLabel = false;
+		bool			bDisplayGraph = false;
 		Pen				color;
 	};
 
