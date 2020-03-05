@@ -137,7 +137,7 @@ function(blit_executable NAME SOURCES)
 	if(EMSCRIPTEN)
 		set_target_properties(${NAME} PROPERTIES
 			SUFFIX ".html"
-			LINK_FLAGS "-s ENVIRONMENT=web"
+			LINK_FLAGS "-s ENVIRONMENT=web -s SDL2_IMAGE_FORMATS=['jpg']"
 		)
 	endif()
 endfunction()
