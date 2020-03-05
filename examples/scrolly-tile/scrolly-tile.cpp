@@ -394,7 +394,7 @@ void new_game() {
     game_state = enum_state::play;
 }
 
-void init(void) {
+void init() {
     set_screen_mode(lores);
 #ifdef __AUDIO__
     channels[0].waveforms   = Waveform::NOISE;

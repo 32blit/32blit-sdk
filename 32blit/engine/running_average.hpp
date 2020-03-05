@@ -52,7 +52,7 @@ public:
 			m_data[m_uIndex++] = value;
 	}
 
-	void reset(void)
+	void reset()
 	{
 		m_uSize 	= 0;
 		m_uIndex 	= 0;
@@ -61,17 +61,17 @@ public:
 
 	}
 
-	T average(void)
+	T average()
 	{
 		return m_average;
 	}
 
-	std::size_t data_count(void)
+	std::size_t data_count()
 	{
 		return m_data.size();
 	}
 
-	std::size_t count(void) const
+	std::size_t count() const
 	{
 		std::size_t uCount;
 
@@ -83,7 +83,7 @@ public:
 		return uCount;
 	}
 
-	std::size_t size(void) const
+	std::size_t size() const
 	{
 		return m_uSize;
 	}

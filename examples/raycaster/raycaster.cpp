@@ -874,7 +874,7 @@ void render_sprites(uint32_t time) {
 	}
 }
 
-void update_player_camera_plane(void) {
+void update_player_camera_plane() {
 	//vec2 plane(-player1.direction.y, player1.direction.x);
 
 	//plane = rotate_vector(plane, M_PI_H);

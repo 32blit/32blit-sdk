@@ -9,7 +9,7 @@
 namespace blit
 {
 
-void ProfilerProbe::start(void)
+void ProfilerProbe::start()
 {
 	m_uStartUs = api.get_us_timer();
 }
@@ -88,13 +88,13 @@ void Profiler::remove_probe(ProfilerProbe *pProbe)
 
 }
 
-void Profiler::start_all_probes(void)
+void Profiler::start_all_probes()
 {
 	for(ProfilerProbesIter iP = m_probes.begin(); iP != m_probes.end(); iP++)
 		(*iP)->start();
 }
 
-void Profiler::log_probes(void)
+void Profiler::log_probes()
 {
 	printf("\n\r");
 	for(ProfilerProbesIter iP = m_probes.begin(); iP != m_probes.end(); iP++)
@@ -106,7 +106,7 @@ void Profiler::log_probes(void)
 
 }
 
-uint32_t Profiler::get_probe_count(void)
+uint32_t Profiler::get_probe_count()
 {
 	return m_probes.size();
 }

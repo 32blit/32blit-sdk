@@ -43,12 +43,12 @@ public:
 			return 0;
 		}
 
-		Metrics(void)
+		Metrics()
 		{
 			clear();
 		}
 
-		void clear(void)
+		void clear()
 		{
 			uElapsedUs		= 0;
 			uMinElapsedUs = UINT32_MAX;
@@ -77,9 +77,9 @@ public:
 		}
 	};
 
-	void start(void);
+	void start();
 
-	void clear(void)
+	void clear()
 	{
 		m_metrics.clear();
 		m_uStartUs = 0;
@@ -87,17 +87,17 @@ public:
 
 	uint32_t store_elapsed_us(bool bRestart = false);
 
-	const Metrics &elapsed_metrics(void)
+	const Metrics &elapsed_metrics()
 	{
 		return m_metrics;
 	}
 
-	const char *name(void)
+	const char *name()
 	{
 		return m_pszName;
 	}
 
-	const RunningAverage<float> *get_running_average(void)
+	const RunningAverage<float> *get_running_average()
 	{
 		return m_pRunningAverage;
 	}
@@ -107,12 +107,12 @@ public:
 		m_uGraphTimeUs = uGraphTimeUs;
 	}
 
-	void set_graph_time_us_to_max(void)
+	void set_graph_time_us_to_max()
 	{
 		m_uGraphTimeUs = m_metrics.uMaxElapsedUs;
 	}
 
-	uint32_t get_graph_time_us(void)
+	uint32_t get_graph_time_us()
 	{
 		return m_uGraphTimeUs;
 	}
@@ -160,7 +160,7 @@ public:
 
 	struct GraphElement
 	{
-		GraphElement(void): bDisplayLabel(false), bDisplayGraph(false), color(Pen(0,255,0)) {};
+		GraphElement(): bDisplayLabel(false), bDisplayGraph(false), color(Pen(0,255,0)) {};
 
 		bool			bDisplayLabel;
 		bool			bDisplayGraph;
@@ -175,11 +175,11 @@ public:
 	ProfilerProbe *add_probe(const char *pszName);
 	ProfilerProbe *add_probe(const char *pszName,  uint32_t uRunningAverageSize, uint32_t uRunningAverageSpan=1);
 	void					remove_probe(ProfilerProbe *pProbe);
-	void					start_all_probes(void);
+	void					start_all_probes();
 
-	void					log_probes(void);
+	void					log_probes();
 
-	uint32_t			get_probe_count(void);
+	uint32_t			get_probe_count();
 	uint32_t			get_page_count();
 
 	void 					set_display_size(uint16_t uWidth, uint32_t uHeight);

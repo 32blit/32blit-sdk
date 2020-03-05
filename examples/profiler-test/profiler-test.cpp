@@ -50,7 +50,7 @@ uint8_t g_uPage = 1;
 #define RANDY random()%SCREEN_HEIGHT
 #define RANDC (int)(random()%256)
 
-void SetupMetrics(void)
+void SetupMetrics()
 {
 	g_profiler.setup_graph_element(Profiler::dmCur, g_bLabelsEnabled, g_bGraphEnabled, Pen(0,255,0));
 	g_profiler.setup_graph_element(Profiler::dmAvg, g_bLabelsEnabled, g_bGraphEnabled, Pen(0,255,255));

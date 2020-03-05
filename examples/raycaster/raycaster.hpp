@@ -70,7 +70,7 @@ void init();
 void update(uint32_t time);
 void render(uint32_t time);
 
-void update_player_camera_plane(void);
+void update_player_camera_plane();
 
 /*
 		0x15, 0x98, 0x5d, 200,
