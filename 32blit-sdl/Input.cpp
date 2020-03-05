@@ -133,7 +133,7 @@ void Input::_virtual_tilt(int x, int y) {
 	int z = 80;
 	x = x - (win_width / 2);
 	y = y - (win_height / 2);
-	Vec3 shadow_tilt = Vec3(x, y, z);
+	blit::Vec3 shadow_tilt(x, y, z);
 	shadow_tilt.normalize();
 	target->set_tilt(0, shadow_tilt.x);
 	target->set_tilt(1, shadow_tilt.y);

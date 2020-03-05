@@ -9,6 +9,8 @@
 #include "../types/vec3.hpp"
 #include "../types/vec2.hpp"
 
+using namespace blit;
+
 /**
  * Return the first point of intersection (if any) between a ray and a sphere.
  *
@@ -73,7 +75,7 @@ bool ray_sphere_intersect(Vec3 ray_origin, Vec3 ray_vector, Vec3 sphere_origin, 
  *
  * \return `true` if intersection occurs
  */
-bool ray_circle_intersect(Vec2 ray_origin, Vec2 ray_vector, Vec2 circle_origin, float circle_radius, Vec2 *point = nullptr, float *distance = nullptr, Vec2 *normal = nullptr) {  
+bool ray_circle_intersect(Vec2 ray_origin, Vec2 ray_vector, Vec2 circle_origin, float circle_radius, Vec2 *point = nullptr, float *distance = nullptr, Vec2 *normal = nullptr) {
   Vec2 l = ray_origin - circle_origin;
 
   float a = ray_vector.length() * ray_vector.length();

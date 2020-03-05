@@ -16,7 +16,7 @@ namespace blit {
     inline Size& operator*= (const float a) { w *= a;   h *= a;   return *this; }
 
     bool empty() { return w <= 0 || h <= 0; }
-    
+
     int32_t area() { return w * h; }
 
     bool contains(const Point &p) {

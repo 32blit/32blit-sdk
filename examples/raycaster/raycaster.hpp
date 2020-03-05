@@ -31,8 +31,8 @@ constexpr uint8_t TEXTURE_WALL = 2;
 constexpr float SPRITE_SCALE = 1.6f;
 
 
-Vec2 rotate_point(Vec2 p, Vec2 v);
-Vec2 rotate_vector(Vec2 v, float a);
+blit::Vec2 rotate_point(blit::Vec2 p, blit::Vec2 v);
+blit::Vec2 rotate_vector(blit::Vec2 v, float a);
 
 //void cast_floor();
 void render_world(uint32_t time);
@@ -41,14 +41,14 @@ void render_sky();
 void render_stars();
 
 struct player {
-	Vec2 direction;
-	Vec2 position;
-	Vec2 camera;
+	blit::Vec2 direction;
+	blit::Vec2 position;
+	blit::Vec2 camera;
 	float half_fov;
 };
 
 struct sprite {
-	Vec2 position;
+	blit::Vec2 position;
 	uint8_t texture;
 	uint8_t color;
 	float distance;
