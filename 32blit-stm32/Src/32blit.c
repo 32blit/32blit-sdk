@@ -81,19 +81,19 @@ void blit_debug(std::string message) {
   screen.text(message, minimal_font, Point(0, 0));
 }
 
-void EnableUsTimer(void)
+void enable_us_timer()
 {
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
   DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 }
 
-uint32_t GetUsTimer(void)
+uint32_t get_us_timer()
 {
 	uint32_t uTicksPerUs = SystemCoreClock / 1000000;
 	return DWT->CYCCNT/uTicksPerUs;
 }
 
-uint32_t GetMaxUsTimer(void)
+uint32_t get_max_us_timer()
 {
 	uint32_t uTicksPerUs = SystemCoreClock / 1000000;
 	return UINT32_MAX / uTicksPerUs;
@@ -231,14 +231,14 @@ void blit_i2c_tick() {
       }
       break;
     case PROC_ACL:
-      accel_x.Add(((int8_t)i2c_buffer[1] << 6) | (i2c_buffer[0] >> 2));
-      accel_y.Add(((int8_t)i2c_buffer[3] << 6) | (i2c_buffer[2] >> 2));
-      accel_z.Add(((int8_t)i2c_buffer[5] << 6) | (i2c_buffer[4] >> 2));
+      accel_x.add(((int8_t)i2c_buffer[1] << 6) | (i2c_buffer[0] >> 2));
+      accel_y.add(((int8_t)i2c_buffer[3] << 6) | (i2c_buffer[2] >> 2));
+      accel_z.add(((int8_t)i2c_buffer[5] << 6) | (i2c_buffer[4] >> 2));
 
       blit::tilt = Vec3(
-        accel_x.Average(),
-        accel_y.Average(),
-        accel_z.Average()
+        accel_x.average(),
+        accel_y.average(),
+        accel_z.average()
       );
 
       blit::tilt.normalize();
@@ -321,9 +321,9 @@ void blit_init() {
     blit::api.directory_exists = ::directory_exists;
     blit::api.create_directory = ::create_directory;
 
-    blit::api.EnableUsTimer = ::EnableUsTimer;
-    blit::api.GetUsTimer = ::GetUsTimer;
-    blit::api.GetMaxUsTimer = ::GetMaxUsTimer;
+    blit::api.enable_us_timer = ::enable_us_timer;
+    blit::api.get_us_timer = ::get_us_timer;
+    blit::api.get_max_us_timer = ::get_max_us_timer;
 
     blit::api.decode_jpeg_buffer = blit_decode_jpeg_buffer;
     blit::api.decode_jpeg_file = blit_decode_jpeg_file;
@@ -714,9 +714,9 @@ void blit_process_input() {
   blit::hack_left = (adc3data[0] >> 1) / 32768.0f;
   blit::hack_right = (adc3data[1] >> 1)  / 32768.0f;
 
-  battery_average.Add(6.6f * adc3data[2] / 65535.0f);
+  battery_average.add(6.6f * adc3data[2] / 65535.0f);
 
-  battery = battery_average.Average();
+  battery = battery_average.average();
 }
 
 char *get_fr_err_text(FRESULT err){

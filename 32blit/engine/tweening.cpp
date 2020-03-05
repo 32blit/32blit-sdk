@@ -5,8 +5,7 @@
 #include "engine.hpp"
 #include "tweening.hpp"
 
-#undef M_PI
-#define M_PI           3.14159265358979323846f  /* pi */
+#include "../math/constants.hpp"
 
 namespace blit {
   std::vector<Tween *> tweens;
@@ -47,7 +46,7 @@ namespace blit {
   }
 
   float tween_sine(uint32_t t, float b, float c, uint32_t d) {
-    return b + (sinf((float(t) / float(d) * M_PI * 2.0f) + (M_PI / 2.0f)) + 1.0f) / 2.0f * (c - b);
+    return b + (sinf((float(t) / float(d) * pi * 2.0f) + (pi / 2.0f)) + 1.0f) / 2.0f * (c - b);
   }
 
   float tween_linear(uint32_t t, float b, float c, uint32_t d) {

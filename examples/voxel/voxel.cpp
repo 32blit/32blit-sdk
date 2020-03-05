@@ -97,7 +97,7 @@ uint16_t get_sample(int16_t x, int16_t y) {
 }
 
 float deg2rad(float d) {
-  return d * float(M_PI) / 180.0f;
+  return d * pi / 180.0f;
 }
 
 void draw_world(Vec3 position, float angle, float lean, float horizon, float near, float far) {

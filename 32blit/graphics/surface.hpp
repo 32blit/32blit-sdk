@@ -5,7 +5,7 @@
 #include <array>
 #include <cstdint>
 
-#ifdef WIN32 
+#ifdef WIN32
 #define __attribute__(A)
 #endif
 
@@ -68,14 +68,14 @@ namespace blit {
 
 #pragma pack(push, 1)
   struct Pen {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-    uint8_t a;
+    uint8_t r = 0;
+    uint8_t g = 0;
+    uint8_t b = 0;
+    uint8_t a = 0;
 
-    Pen() : r(0), g(0), b(0), a(0) {}
-    Pen(int a) : r(0), g(0), b(0), a(a) {}
-    Pen(float a) : r(0), g(0), b(0), a((uint8_t)(a * 255.0f)) {}
+    Pen() = default;
+    Pen(int a) : a(a) {}
+    Pen(float a) : a((uint8_t)(a * 255.0f)) {}
     Pen(int r, int g, int b, int a = 255) : r(r), g(g), b(b), a(a) {}
     Pen(float r, float g, float b, float a = 1.0f) : r((uint8_t)(r * 255.0f)), g((uint8_t)(g * 255.0f)), b((uint8_t)(b * 255.0f)), a((uint8_t)(a * 255.0f)) {}
   };
@@ -85,7 +85,7 @@ namespace blit {
 
     uint8_t                        *data;                     // pointer to pixel data (for `rgba` format has pre-multiplied alpha)
     Size                            bounds;                   // size of surface in pixels
-    
+
     Rect                            clip;                     // clipping rectangle for drawing operations
     uint8_t                         alpha = 255;              // global alpha for drawing operations
     Pen                             pen;                      // current pen for drawing operations
@@ -104,14 +104,14 @@ namespace blit {
     // blend functions
     blit::PenBlendFunc              pbf;
     blit::BlitBlendFunc             bbf;
-    
+
     std::vector<Surface *>          mipmaps;                  // TODO: probably too niche/specific to attach directly to surface
 
   private:
     void init();
     void load_from_packed(const packed_image *image);
 
-  public:    
+  public:
     Surface(uint8_t *data, const PixelFormat &format, const Size &bounds);
     Surface(uint8_t *data, const PixelFormat &format, const packed_image *image);
 
@@ -124,7 +124,7 @@ namespace blit {
 
     __attribute__((always_inline)) inline uint32_t offset(const Rect &r) { return r.x + r.y * bounds.w; }
     __attribute__((always_inline)) inline uint32_t offset(const Point &p) { return p.x + p.y * bounds.w; }
-    __attribute__((always_inline)) inline uint32_t offset(const int32_t &x, const int32_t &y) { return x + y * bounds.w; }    
+    __attribute__((always_inline)) inline uint32_t offset(const int32_t &x, const int32_t &y) { return x + y * bounds.w; }
 
     void generate_mipmaps(uint8_t depth);
 
@@ -145,8 +145,8 @@ namespace blit {
     std::string wrap_text(std::string message, int32_t width, const Font &font, bool variable = true, bool words = true);
 
     /*void outline_circle(const point &c, int32_t r);
-    
-    */ 
+
+    */
     void blit(Surface *src, Rect r, Point p, bool hflip = false);
     void stretch_blit(Surface *src, Rect sr, Rect dr);
     void stretch_blit_vspan(Surface *src, Point uv, uint16_t sc, Point p, int16_t dc);
@@ -163,7 +163,7 @@ namespace blit {
     //void sprite(spritesheet &ss, uint16_t index, point pos, size span = size(1, 1), point origin = point(0, 0), float scale = 1.0f);
     //void sprite(spritesheet &ss, point sprite, point position, sprite_p &properties);
 
-    
+
     void blit_sprite(const Rect &src, const Point &p, const uint8_t &t = 0);
     void stretch_blit_sprite(const Rect&src, const Rect &r, const uint8_t &t = 0);
 
@@ -178,13 +178,13 @@ namespace blit {
     void sprite(const Rect &sprite, const Point &position, const Point &origin, const Vec2 &scale, const uint8_t &transform = 0);
     void sprite(const Point &sprite, const Point &position, const Point &origin, const Vec2 &scale, const uint8_t &transform = 0);
     void sprite(const uint16_t &sprite, const Point &position, const Point &origin, const Vec2 &scale, const uint8_t &transform = 0);
-    
+
     void sprite(const Rect &sprite, const Point &position, const Point &origin, const float &scale, const uint8_t &transform = 0);
     void sprite(const Point &sprite, const Point &position, const Point &origin, const float &scale, const uint8_t &transform = 0);
     void sprite(const uint16_t &sprite, const Point &position, const Point &origin, const float &scale, const uint8_t &transform = 0);
 
     //extern void texture_triangle(int32_t x1, int32_t y1, int32_t u1, int32_t v1, int32_t x2, int32_t y2, int32_t u2, int32_t v2, int32_t x3, int32_t y3, int32_t u3, int32_t v3);
-    
+
     /*
       blitting methods
     */

@@ -167,10 +167,10 @@ namespace blit {
    */
   void Surface::sprite(const uint16_t &sprite, const Point &position, const Point &origin, const Vec2 &scale, const uint8_t &transform) {
     Rect dest_rect(
-      round(position.x - float(origin.x * scale.x)),
-      round(position.y - float(origin.y * scale.y)),
-      round(8.0f * scale.x),
-      round(8.0f * scale.y)
+      roundf(position.x - float(origin.x * scale.x)),
+      roundf(position.y - float(origin.y * scale.y)),
+      roundf(8.0f * scale.x),
+      roundf(8.0f * scale.y)
     );
 
     stretch_blit_sprite(
@@ -190,10 +190,10 @@ namespace blit {
    */
   void Surface::sprite(const Point &sprite, const Point &position, const Point &origin, const Vec2 &scale, const uint8_t &transform) {
     Rect dest_rect(
-      round(position.x - float(origin.x * scale.x)),
-      round(position.y - float(origin.y * scale.y)),
-      round(8.0f * scale.x),
-      round(8.0f * scale.y)
+      roundf(position.x - float(origin.x * scale.x)),
+      roundf(position.y - float(origin.y * scale.y)),
+      roundf(8.0f * scale.x),
+      roundf(8.0f * scale.y)
     );
 
     stretch_blit_sprite(
@@ -213,10 +213,10 @@ namespace blit {
    */
   void Surface::sprite(const Rect &sprite, const Point &position, const Point &origin, const Vec2 &scale, const uint8_t &transform) {
     Rect dest_rect(
-      round(position.x - float(origin.x * scale.x)),
-      round(position.y - float(origin.y * scale.y)),
-      round(sprite.w * 8.0f * scale.x),
-      round(sprite.h * 8.0f * scale.y)
+      roundf(position.x - float(origin.x * scale.x)),
+      roundf(position.y - float(origin.y * scale.y)),
+      roundf(sprite.w * 8.0f * scale.x),
+      roundf(sprite.h * 8.0f * scale.y)
     );
 
     stretch_blit_sprite(

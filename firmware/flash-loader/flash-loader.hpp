@@ -33,8 +33,8 @@ public:
 	void Update(uint32_t time);
 
 private:
-	typedef enum {stFlashFile, stSaveFile, stFlashCDC, stLS, stSwitch, stMassStorage} State;
-	typedef enum {stFilename, stLength, stData} ParseState;
+	enum State {stFlashFile, stSaveFile, stFlashCDC, stLS, stSwitch, stMassStorage};
+	enum ParseState {stFilename, stLength, stData};
 
 	bool Flash(const char *pszFilename);
 	void FSInit(void);

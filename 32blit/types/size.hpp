@@ -8,15 +8,15 @@ namespace blit {
 
   struct Size {
 
-    int32_t w, h;
+    int32_t w = 0, h = 0;
 
-    Size() : w(0), h(0) {}
+    Size() = default;
     Size(int32_t w, int32_t h) : w(w), h(h) {}
 
     inline Size& operator*= (const float a) { w *= a;   h *= a;   return *this; }
 
     bool empty() { return w <= 0 || h <= 0; }
-    
+
     int32_t area() { return w * h; }
 
     bool contains(const Point &p) {

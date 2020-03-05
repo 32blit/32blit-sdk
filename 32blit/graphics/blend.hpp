@@ -8,12 +8,12 @@ namespace blit {
 
   // blends the supplied pen onto a span of pixels in the destination surface
   // supports pen alpha, global alpha, and mask alpha where needed
-  typedef void(*PenBlendFunc)(const Pen* pen, const Surface* dest, uint32_t off, uint32_t cnt);
+  using PenBlendFunc = void(*)(const Pen* pen, const Surface* dest, uint32_t off, uint32_t cnt);
 
   // blends the pixel data in the source surface onto a span of pixels in the 
   // destination surface
   // supports source alpha, global alpha, and mask alpha where needed
-  typedef void(*BlitBlendFunc)(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt, int32_t src_step);
+  using BlitBlendFunc = void(*)(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt, int32_t src_step);
 
   extern void RGBA_RGBA(const Pen* pen, const Surface* dest, uint32_t off, uint32_t cnt);
   extern void RGBA_RGB(const Pen* pen, const Surface* dest, uint32_t off, uint32_t cnt);

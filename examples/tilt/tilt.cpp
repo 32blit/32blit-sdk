@@ -25,7 +25,7 @@ void clear_occupied(const Point &p) {
 }
 
 float deg2rad(float a) {
-  return a * (M_PI / 180.0f);
+  return a * (pi / 180.0f);
 }
 
 Vec2 gravity(0, 1000.0f);

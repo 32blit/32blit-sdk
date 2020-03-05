@@ -41,8 +41,6 @@ using namespace blit;
 
 #define PASSAGE_COUNT 5
 
-#define M_PIf float(M_PI)
-
 // Number of times a player can jump sequentially
 // including mid-air jumps and the initial ground
 // or wall jump
@@ -104,7 +102,7 @@ enum enum_state {
 };
 enum_state game_state = enum_state::menu;
 
-typedef uint8_t (*tile_callback)(uint8_t tile, uint8_t x, uint8_t y, void *args);
+using tile_callback = uint8_t (*)(uint8_t tile, uint8_t x, uint8_t y, void *args);
 
 uint32_t prng_lfsr = 0;
 const uint16_t prng_tap = 0x74b8;
@@ -396,7 +394,7 @@ void new_game() {
     game_state = enum_state::play;
 }
 
-void init(void) {
+void init() {
     set_screen_mode(lores);
 #ifdef __AUDIO__
     channels[0].waveforms   = Waveform::NOISE;
@@ -715,7 +713,7 @@ void render(uint32_t time_ms) {
 
         uint8_t x = 10;
         for(auto c : text) {
-            uint8_t y = 20 + (5.0f * sinf((time_ms / 250.0f) + (float(x) / text.length() * 2.0f * M_PIf)));
+            uint8_t y = 20 + (5.0f * sinf((time_ms / 250.0f) + (float(x) / text.length() * 2.0f * pi)));
             Pen color_letter = hsv_to_rgba((x - 10) / 140.0f, 0.5f, 0.8f);
             screen.pen = color_letter;
             char buf[2];

@@ -6,13 +6,13 @@
 #include "../types/vec2.hpp"
 
 struct Particle {
-  Vec2 pos;
-  Vec2 vel;  
+  blit::Vec2 pos;
+  blit::Vec2 vel;
   float age;
 
   uint32_t age_ms = 0;
 
-  Particle(Vec2 pos, Vec2 vel) : pos(pos), vel(vel) {};
+  Particle(blit::Vec2 pos, blit::Vec2 vel) : pos(pos), vel(vel) {};
 };
 
 struct ParticleGenerator {
@@ -20,7 +20,7 @@ struct ParticleGenerator {
   uint32_t lifetime_ms;
   uint32_t generate_per_ms;
   uint32_t remaining_ms;
-  Vec2 force;
+  blit::Vec2 force;
 
   std::function<Particle*(void)> generate;
 

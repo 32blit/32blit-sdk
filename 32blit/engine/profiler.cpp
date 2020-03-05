@@ -9,20 +9,20 @@
 namespace blit
 {
 
-void ProfilerProbe::Start(void)
+void ProfilerProbe::start()
 {
-	m_uStartUs = api.GetUsTimer();
+	m_uStartUs = api.get_us_timer();
 }
 
-uint32_t ProfilerProbe::StoreElapsedUs(bool bRestart)
+uint32_t ProfilerProbe::store_elapsed_us(bool bRestart)
 {
 	if(m_uStartUs)
 	{
-		uint32_t uCurrentUs = api.GetUsTimer();
+		uint32_t uCurrentUs = api.get_us_timer();
 		if(uCurrentUs >= m_uStartUs)
 			m_metrics.uElapsedUs = uCurrentUs - m_uStartUs;
 		else
-			m_metrics.uElapsedUs = (api.GetMaxUsTimer() - m_uStartUs) + uCurrentUs;
+			m_metrics.uElapsedUs = (api.get_max_us_timer() - m_uStartUs) + uCurrentUs;
 
 		m_metrics.uMinElapsedUs = std::min(m_metrics.uMinElapsedUs, m_metrics.uElapsedUs);
 		m_metrics.uMaxElapsedUs = std::max(m_metrics.uMaxElapsedUs, m_metrics.uElapsedUs);
@@ -30,8 +30,8 @@ uint32_t ProfilerProbe::StoreElapsedUs(bool bRestart)
 		{
 			if(m_uRunningAverageSpanIndex == 0)
 			{
-				m_pRunningAverage->Add((float)m_metrics.uElapsedUs);
-				m_metrics.uAvgElapsedUs = m_pRunningAverage->Average();
+				m_pRunningAverage->add((float)m_metrics.uElapsedUs);
+				m_metrics.uAvgElapsedUs = m_pRunningAverage->average();
 				m_uRunningAverageSpanIndex = m_uRunningAverageSpan-1;
 			}
 			else
@@ -42,7 +42,7 @@ uint32_t ProfilerProbe::StoreElapsedUs(bool bRestart)
 	}
 
 	if(bRestart)
-	m_uStartUs = api.GetUsTimer();
+	m_uStartUs = api.get_us_timer();
 
 	return m_metrics.uElapsedUs;
 }
@@ -52,10 +52,10 @@ const char *Profiler::g_pszMetricNames[4]= {"Min", "Cur", "Avg", "Max"};
 
 Profiler::Profiler(uint32_t uRunningAverageSize, uint32_t uRunningAverageSpan ) : m_uGraphTimeUs(20000), m_uRunningAverageSize(uRunningAverageSize), m_uRunningAverageSpan(uRunningAverageSpan), m_uRowHeight(10), m_uBorder(5), m_uHeaderSize(15), m_uAlpha(160)
 {
-	api.EnableUsTimer();
+	api.enable_us_timer();
 
 	// default to lowres
-	SetDisplaySize(160, 120);
+	set_display_size(160, 120);
 
 	// default, just display cur, no bars, no history
 	m_graphElements[dmCur].bDisplayLabel = true;
@@ -67,7 +67,7 @@ Profiler::~Profiler()
 
 
 
-ProfilerProbe *Profiler::AddProbe(const char *pszName)
+ProfilerProbe *Profiler::add_probe(const char *pszName)
 {
 	ProfilerProbe *pProbe = new ProfilerProbe(pszName, m_uRunningAverageSize, m_uRunningAverageSpan);
 	m_probes.push_back(pProbe);
@@ -75,7 +75,7 @@ ProfilerProbe *Profiler::AddProbe(const char *pszName)
 	return pProbe;
 }
 
-ProfilerProbe *Profiler::AddProbe(const char *pszName,  uint32_t uRunningAverageSize, uint32_t uRunningAverageSpan)
+ProfilerProbe *Profiler::add_probe(const char *pszName,  uint32_t uRunningAverageSize, uint32_t uRunningAverageSpan)
 {
 	ProfilerProbe *pProbe = new ProfilerProbe(pszName, uRunningAverageSize, uRunningAverageSpan);
 	m_probes.push_back(pProbe);
@@ -83,41 +83,41 @@ ProfilerProbe *Profiler::AddProbe(const char *pszName,  uint32_t uRunningAverage
 	return pProbe;
 }
 
-void Profiler::RemoveProbe(ProfilerProbe *pProbe)
+void Profiler::remove_probe(ProfilerProbe *pProbe)
 {
 
 }
 
-void Profiler::StartAllProbes(void)
+void Profiler::start_all_probes()
 {
 	for(ProfilerProbesIter iP = m_probes.begin(); iP != m_probes.end(); iP++)
-		(*iP)->Start();
+		(*iP)->start();
 }
 
-void Profiler::LogProbes(void)
+void Profiler::log_probes()
 {
 	printf("\n\r");
 	for(ProfilerProbesIter iP = m_probes.begin(); iP != m_probes.end(); iP++)
 	{
 		ProfilerProbe *pProbe = *(iP);
-		const ProfilerProbe::Metrics &metrics = pProbe->ElapsedMetrics();
-		printf("%-16s %" PRIu32 ",\t%" PRIu32 ",\t%" PRIu32 ",\t%" PRIu32 "\n\r", pProbe->Name(), metrics.uMinElapsedUs, metrics.uElapsedUs, metrics.uAvgElapsedUs, metrics. uMaxElapsedUs);
+		const ProfilerProbe::Metrics &metrics = pProbe->elapsed_metrics();
+		printf("%-16s %" PRIu32 ",\t%" PRIu32 ",\t%" PRIu32 ",\t%" PRIu32 "\n\r", pProbe->name(), metrics.uMinElapsedUs, metrics.uElapsedUs, metrics.uAvgElapsedUs, metrics. uMaxElapsedUs);
 	}
 
 }
 
-uint32_t Profiler::GetProbeCount(void)
+uint32_t Profiler::get_probe_count()
 {
 	return m_probes.size();
 }
 
-uint32_t Profiler::GetPageCount()
+uint32_t Profiler::get_page_count()
 {
 	uint32_t uPages = (m_probes.size() + m_uRows - 1) / m_uRows;
 	return uPages;
 }
 
-void Profiler::SetDisplaySize(uint16_t uWidth, uint32_t uHeight)
+void Profiler::set_display_size(uint16_t uWidth, uint32_t uHeight)
 {
 	m_uWidth  = uWidth;
 	m_uHeight = uHeight-20;
@@ -125,42 +125,42 @@ void Profiler::SetDisplaySize(uint16_t uWidth, uint32_t uHeight)
 }
 
 
-void Profiler::SetRows(uint8_t uRows)
+void Profiler::set_rows(uint8_t uRows)
 {
 	m_uRows = uRows;
 	m_uRowHeight = m_uHeight / m_uRows;
 }
 
 
-void Profiler::SetGraphTime(uint32_t uTimeUs)
+void Profiler::set_graph_time(uint32_t uTimeUs)
 {
 	m_uGraphTimeUs = uTimeUs;
 }
 
-void Profiler::SetAlpha(uint8_t uAlpha)
+void Profiler::set_alpha(uint8_t uAlpha)
 {
 	m_uAlpha = uAlpha;
 }
 
-Profiler::GraphElement &Profiler::GetGraphElement(DisplayMetric metric)
+Profiler::GraphElement &Profiler::get_graph_element(DisplayMetric metric)
 {
 	return m_graphElements[metric];
 }
 
-void Profiler::SetupGraphElement(DisplayMetric metric, bool bDisplayLabel, bool bDisplayGraph, Pen color)
+void Profiler::setup_graph_element(DisplayMetric metric, bool bDisplayLabel, bool bDisplayGraph, Pen color)
 {
 	m_graphElements[metric].bDisplayLabel = bDisplayLabel;
 	m_graphElements[metric].bDisplayGraph = bDisplayGraph;
 	m_graphElements[metric].color = color;
 }
 
-void Profiler::DisplayHistory(bool bDisplayHistory, Pen color)
+void Profiler::display_history(bool bDisplayHistory, Pen color)
 {
 	m_bDisplayHistory = bDisplayHistory;
 	m_historyColor = color;
 }
 
-void Profiler::DisplayProbeOverlay(uint8_t uPage)
+void Profiler::display_probe_overlay(uint8_t uPage)
 {
 	if(uPage > 0)
 	{
@@ -180,7 +180,7 @@ void Profiler::DisplayProbeOverlay(uint8_t uPage)
 		uint16_t uNameX = m_uBorder;
 		uint16_t uMetricX  = uNameX + uNameWidth;
 
-		uint16_t uMaxPage = GetPageCount();
+		uint16_t uMaxPage = get_page_count();
 		if(uPage > uMaxPage)
 			uPage = uMaxPage;
 
@@ -206,7 +206,7 @@ void Profiler::DisplayProbeOverlay(uint8_t uPage)
 
 
 		uint16_t uY = m_uHeaderSize;
-		if(uStartProbe < GetProbeCount())
+		if(uStartProbe < get_probe_count())
 		{
 			uint8_t uBarCount = 0;
 			for(uint8_t uM = dmMin; uM <= dmMax; uM++)
@@ -221,16 +221,16 @@ void Profiler::DisplayProbeOverlay(uint8_t uPage)
 			for(ProfilerProbesIter iP = m_probes.begin() + uStartProbe; iP != m_probes.begin() + uStartProbe + m_uRows && iP != m_probes.end(); iP++)
 			{
 				ProfilerProbe *pProbe = (*iP);
-				ProfilerProbe::Metrics metrics = pProbe->ElapsedMetrics();
+				ProfilerProbe::Metrics metrics = pProbe->elapsed_metrics();
 
 				uint32_t uUseGraphTimeUs;
 				if(m_uGraphTimeUs != 0)
 					uUseGraphTimeUs = m_uGraphTimeUs;
 				else
-					uUseGraphTimeUs = pProbe->GetGraphTimeUs();
+					uUseGraphTimeUs = pProbe->get_graph_time_us();
 
 				screen.pen =Pen(255, 255, 255, m_uAlpha);
-				screen.text(pProbe->Name(), minimal_font, Rect(m_uBorder, uY, uNameWidth, m_uRowHeight), true, TextAlign::center_v);
+				screen.text(pProbe->name(), minimal_font, Rect(m_uBorder, uY, uNameWidth, m_uRowHeight), true, TextAlign::center_v);
 
 				uMetricX  = uNameX + uNameWidth;
 				for(uint8_t uM = dmMin; uM <= dmMax; uM++)
@@ -262,11 +262,11 @@ void Profiler::DisplayProbeOverlay(uint8_t uPage)
 				{
 					screen.pen = Pen(0, 255, 0, m_uAlpha);
 
-					const RunningAverage<float> *pRunningAverage = pProbe->GetRunningAverage();
+					const RunningAverage<float> *pRunningAverage = pProbe->get_running_average();
 					if(pRunningAverage)
 					{
-						const std::size_t uDataPoints = pRunningAverage->Count();
-						const std::size_t uSize       = pRunningAverage->Size();
+						const std::size_t uDataPoints = pRunningAverage->count();
+						const std::size_t uSize       = pRunningAverage->size();
 
 						float fXInc = (float)uUseWidth / uSize;
 						float fX = m_uBorder+(uUseWidth) - (fXInc*uDataPoints);

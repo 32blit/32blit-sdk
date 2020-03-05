@@ -48,21 +48,21 @@ struct DrawObject {
 std::vector<object> objects;
 
 static Vec2 vel(0, 0);
-static float angle = -15.0f * (M_PI / 180.0f);
+static float angle = -15.0f * (pi / 180.0f);
 Vec2 pos(512, 512);
 
 float map_size = 128;
-float fov = 95.0f * (M_PI / 180.0f);
+float fov = 95.0f * (pi / 180.0f);
 float far = 500.0f;
 float near = 10.0f;
 float is_starting = false;
 
 float deg2rad(float a) {
-  return a * (M_PI / 180.0f);
+  return a * (pi / 180.0f);
 }
 
 float rad2deg(float r) {
-  return r * (180.0f / M_PI);
+  return r * (180.0f / pi);
 }
 
 void init() {

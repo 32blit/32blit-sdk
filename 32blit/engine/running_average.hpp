@@ -23,7 +23,7 @@ public:
 		return m_data[actualIndex];
 	}
 
-	void Add(T value)
+	void add(T value)
 	{
 		if(m_bFull)
 		{
@@ -45,14 +45,14 @@ public:
 
 	}
 
-	void AddAll(T value)
+	void add_all(T value)
 	{
-		Reset();
+		reset();
 	  while(m_uIndex < m_uSize)
 			m_data[m_uIndex++] = value;
 	}
 
-	void Reset(void)
+	void reset()
 	{
 		m_uSize 	= 0;
 		m_uIndex 	= 0;
@@ -61,17 +61,17 @@ public:
 
 	}
 
-	T Average(void)
+	T average()
 	{
 		return m_average;
 	}
 
-	std::size_t DataCount(void)
+	std::size_t data_count()
 	{
 		return m_data.size();
 	}
 
-	std::size_t Count(void) const
+	std::size_t count() const
 	{
 		std::size_t uCount;
 
@@ -83,7 +83,7 @@ public:
 		return uCount;
 	}
 
-	std::size_t Size(void) const
+	std::size_t size() const
 	{
 		return m_uSize;
 	}

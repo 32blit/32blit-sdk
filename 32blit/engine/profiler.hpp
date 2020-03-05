@@ -43,12 +43,12 @@ public:
 			return 0;
 		}
 
-		Metrics(void)
+		Metrics()
 		{
-			Clear();
+			clear();
 		}
 
-		void Clear(void)
+		void clear()
 		{
 			uElapsedUs		= 0;
 			uMinElapsedUs = UINT32_MAX;
@@ -77,42 +77,42 @@ public:
 		}
 	};
 
-	void Start(void);
+	void start();
 
-	void Clear(void)
+	void clear()
 	{
-		m_metrics.Clear();
+		m_metrics.clear();
 		m_uStartUs = 0;
 	}
 
-	uint32_t StoreElapsedUs(bool bRestart = false);
+	uint32_t store_elapsed_us(bool bRestart = false);
 
-	const Metrics &ElapsedMetrics(void)
+	const Metrics &elapsed_metrics()
 	{
 		return m_metrics;
 	}
 
-	const char *Name(void)
+	const char *name()
 	{
 		return m_pszName;
 	}
 
-	const RunningAverage<float> *GetRunningAverage(void)
+	const RunningAverage<float> *get_running_average()
 	{
 		return m_pRunningAverage;
 	}
 
-	void SetGraphTimeUs(uint32_t uGraphTimeUs)
+	void set_graph_time_us(uint32_t uGraphTimeUs)
 	{
 		m_uGraphTimeUs = uGraphTimeUs;
 	}
 
-	void SetGraphTimeUsToMax(void)
+	void set_graph_time_us_to_max()
 	{
 		m_uGraphTimeUs = m_metrics.uMaxElapsedUs;
 	}
 
-	uint32_t GetGraphTimeUs(void)
+	uint32_t get_graph_time_us()
 	{
 		return m_uGraphTimeUs;
 	}
@@ -134,19 +134,18 @@ public:
 	explicit ScopedProfilerProbe (ProfilerProbe  *pProbe)
 	: m_pProbe(pProbe)
 	{
-		m_pProbe->Start();
+		m_pProbe->start();
 	}
 
 	~ScopedProfilerProbe ()
 	{
-		m_pProbe->StoreElapsedUs();
+		m_pProbe->store_elapsed_us();
 	}
+	ScopedProfilerProbe ( ScopedProfilerProbe & ) = delete;
+	void operator = ( ScopedProfilerProbe & ) = delete;
 
 private:
 	ProfilerProbe				*m_pProbe;
-
-	ScopedProfilerProbe ( ScopedProfilerProbe & );
-	void operator = ( ScopedProfilerProbe & );
 };
 
 
@@ -155,15 +154,15 @@ class Profiler
 public:
 	typedef std::vector<ProfilerProbe *>						ProfilerProbes;
 	typedef std::vector<ProfilerProbe *>::iterator	ProfilerProbesIter;
-	typedef enum {dmMin, dmCur, dmAvg, dmMax}				DisplayMetric;
+	enum DisplayMetric {dmMin, dmCur, dmAvg, dmMax};
 
 
 	struct GraphElement
 	{
-		GraphElement(void): bDisplayLabel(false), bDisplayGraph(false), color(Pen(0,255,0)) {};
+		GraphElement(): color(Pen(0,255,0)) {};
 
-		bool			bDisplayLabel;
-		bool			bDisplayGraph;
+		bool			bDisplayLabel = false;
+		bool			bDisplayGraph = false;
 		Pen				color;
 	};
 
@@ -172,25 +171,25 @@ public:
 	Profiler(uint32_t uRunningAverageSize = 0, uint32_t uRunningAverageSpan = 1);
 	virtual ~Profiler();
 
-	ProfilerProbe *AddProbe(const char *pszName);
-	ProfilerProbe *AddProbe(const char *pszName,  uint32_t uRunningAverageSize, uint32_t uRunningAverageSpan=1);
-	void					RemoveProbe(ProfilerProbe *pProbe);
-	void					StartAllProbes(void);
+	ProfilerProbe *add_probe(const char *pszName);
+	ProfilerProbe *add_probe(const char *pszName,  uint32_t uRunningAverageSize, uint32_t uRunningAverageSpan=1);
+	void					remove_probe(ProfilerProbe *pProbe);
+	void					start_all_probes();
 
-	void					LogProbes(void);
+	void					log_probes();
 
-	uint32_t			GetProbeCount(void);
-	uint32_t			GetPageCount();
+	uint32_t			get_probe_count();
+	uint32_t			get_page_count();
 
-	void 					SetDisplaySize(uint16_t uWidth, uint32_t uHeight);
-	void					SetGraphTime(uint32_t uTimeUs);
-	void					SetRows(uint8_t uRows);
-	void					SetAlpha(uint8_t uAlpha);
-	void					DisplayProbeOverlay(uint8_t uPage);
-	void					DisplayHistory(bool bDisplayHistory, Pen color = Pen(0,255,0));
+	void 					set_display_size(uint16_t uWidth, uint32_t uHeight);
+	void					set_graph_time(uint32_t uTimeUs);
+	void					set_rows(uint8_t uRows);
+	void					set_alpha(uint8_t uAlpha);
+	void					display_probe_overlay(uint8_t uPage);
+	void					display_history(bool bDisplayHistory, Pen color = Pen(0,255,0));
 
-	void 					SetupGraphElement(DisplayMetric metric, bool bDisplayLabel, bool bDisplayGraph, Pen color);
-	GraphElement  &GetGraphElement(DisplayMetric metric);
+	void 					setup_graph_element(DisplayMetric metric, bool bDisplayLabel, bool bDisplayGraph, Pen color);
+	GraphElement  &get_graph_element(DisplayMetric metric);
 
 private:
 	static const char *g_pszMetricNames[];
