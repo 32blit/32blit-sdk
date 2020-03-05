@@ -120,7 +120,7 @@ void init() {
 	player1.position.x = 3.5;
 	player1.position.y = 3.5;
 
-	tan_half_fov = tan(HALF_FOV);
+	tan_half_fov = tanf(HALF_FOV);
 
 	for (int x = 0; x < SCREEN_WIDTH; x++) {
 		lut_camera_displacement[x] = (float)(2 * x) / (float)(SCREEN_WIDTH) - 1.0f;
@@ -167,14 +167,14 @@ void init() {
 
 // TODO: should be in the vec2 class
 Vec2 rotate_point(Vec2 p, Vec2 v) {
-	float a = atan2(v.y, v.x);
+	float a = atan2f(v.y, v.x);
 	return rotate_vector(p, a);
 }
 
 // TODO: should be in the vec2 class
 Vec2 rotate_vector(Vec2 v, float a) {
-	float c = cos(a);
-	float s = sin(a);
+	float c = cosf(a);
+	float s = sinf(a);
 	float tx = v.x * c - v.y * s;
 	float ty = v.x * s + v.y * c;
 	return Vec2{ tx, ty };
@@ -182,7 +182,7 @@ Vec2 rotate_vector(Vec2 v, float a) {
 
 // TODO: should be in the vec2 class
 float measure_vector(Vec2 v) {
-	return sqrt((v.x * v.x) + (v.y * v.y));
+	return sqrtf((v.x * v.x) + (v.y * v.y));
 }
 
 uint32_t elapsed;
@@ -361,7 +361,7 @@ void render(uint32_t time) {
 
 	// draw bug spray    
 	//rect ss_spray_rect(40, 160 - 32, 24, 32);
-	int offset = int(sin((player1.position.x + player1.position.y) * 4) * 3); // bob
+	int offset = int(sinf((player1.position.x + player1.position.y) * 4) * 3); // bob
 
 	screen.sprite(Rect(5, 16, 3, 4), Point(SCREEN_WIDTH - 48, VIEW_HEIGHT - 30 + offset));
 

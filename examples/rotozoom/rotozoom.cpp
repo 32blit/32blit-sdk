@@ -49,8 +49,8 @@ void rotozoom(uint32_t time_ms) {
 
   static Pen palette[] = { Pen(0, 0, 0), Pen(255, 255, 255), Pen(0, 255, 0) };
 
-  int32_t c = cos(angle * pi / 180.0f) * 1024;
-  int32_t s = sin(angle * pi / 180.0f) * 1024;
+  int32_t c = cosf(angle * pi / 180.0f) * 1024;
+  int32_t s = sinf(angle * pi / 180.0f) * 1024;
 
   angle += 0.25f;
   angle = angle >= 360.0f ? 0.0f : angle;
@@ -95,7 +95,7 @@ void render(uint32_t time_ms) {
   mask.pen = Pen(50);
   mask.clear();
   mask.pen = Pen(255);
-  Point centre = Point(160 + sin(time_ms / 200.0f) * 40, 120 + cos(time_ms / 200.0f) * 40);
+  Point centre = Point(160 + sinf(time_ms / 200.0f) * 40, 120 + cosf(time_ms / 200.0f) * 40);
   mask.circle(centre, 100);
 
   //screen.mask = &mask;

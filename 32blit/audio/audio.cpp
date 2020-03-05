@@ -36,8 +36,8 @@ namespace blit {
 
       auto &channel = channels[c];
 
-      // increment the waveform position counter. this provides an 
-      // Q16 fixed point value representing how far through 
+      // increment the waveform position counter. this provides an
+      // Q16 fixed point value representing how far through
       // the current waveform we are
       channel.waveform_offset += ((channel.frequency * 256) << 8) / sample_rate;
 
@@ -60,7 +60,7 @@ namespace blit {
             break;
         }
       }
- 
+
       channel.adsr += channel.adsr_step;
       channel.adsr_frame++;
 
@@ -131,7 +131,7 @@ namespace blit {
 
         // apply channel filter
         if (channel.filter_enable) {
-          float filter_epow = 1 - exp(-(1.0f / 22050.0f) * 2.0f * pi * int32_t(channel.filter_cutoff_frequency));
+          float filter_epow = 1 - expf(-(1.0f / 22050.0f) * 2.0f * pi * int32_t(channel.filter_cutoff_frequency));
           channel_sample += (channel_sample - channel.filter_last_sample) * filter_epow;
         }
 

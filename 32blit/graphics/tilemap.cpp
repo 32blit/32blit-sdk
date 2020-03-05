@@ -26,7 +26,7 @@ namespace blit {
   int32_t TileMap::offset(const Point &p) {
     int32_t cx = ((uint16_t)p.x) & (bounds.w - 1);
     int32_t cy = ((uint16_t)p.y) & (bounds.h - 1);
-    
+
     if ((p.x ^ cx) | (p.y ^ cy)) {
       if (repeat_mode == DEFAULT_FILL)
         return default_tile_id;
@@ -103,8 +103,8 @@ namespace blit {
   void TileMap::draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback) {
     //bool not_scaled = (from.w - to.w) | (from.h - to.h);
 
-    viewport = dest->clip.intersection(viewport);    
-    
+    viewport = dest->clip.intersection(viewport);
+
     for (uint16_t y = viewport.y; y < viewport.y + viewport.h; y++) {
       Vec2 swc(viewport.x, y);
       Vec2 ewc(viewport.x + viewport.w, y);
@@ -158,21 +158,21 @@ namespace blit {
     Vec2 dwc = (ewc - swc) / float(c);
     int32_t doff = dest->offset(s.x, s.y);
     do {
-      int16_t wcx = floor(wc.x);
-      int16_t wcy = floor(wc.y);
-     
+      int16_t wcx = floorf(wc.x);
+      int16_t wcy = floorf(wc.y);
+
       int32_t toff = offset(wcx >> 3, wcy >> 3);
 
       if (toff != -1) {
         uint8_t tile_id = tiles[toff];
         uint8_t transform = transforms[toff];
-      
+
         // coordinate within sprite
         uint8_t u = wcx & 0b111;
         uint8_t v = wcy & 0b111;
-      
+
         // if this tile has a transform then modify the uv coordinates
-        if (transform) {  
+        if (transform) {
           v = (transform & 0b010) ? (7 - v) : v;
           u = (transform & 0b100) ? (7 - u) : u;
           if (transform & 0b001) { uint8_t tmp = u; u = v; v = tmp; }

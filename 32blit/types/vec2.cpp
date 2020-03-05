@@ -26,7 +26,7 @@ namespace blit {
   float Vec2::angle(Vec2 o) {
     //atan2d(x1*y2-y1*x2,x1*x2+y1*y2);
 
-    return atan2(this->x * o.y - this->y * o.x, this->x * o.x + this->y * o.y);
+    return std::atan2(this->x * o.y - this->y * o.x, this->x * o.x + this->y * o.y);
     //return acos(this->dot(o));
   }
 

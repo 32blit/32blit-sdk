@@ -7,6 +7,7 @@
 #include "platformer.hpp"
 
 using namespace blit;
+using std::floor;
 
 Size screen_size(160, 120);
 

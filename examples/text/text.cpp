@@ -65,7 +65,7 @@ void render(uint32_t time) {
     text_rect.x += 160;
 
     // clipping
-    Rect clip(text_rect.x + 30 + 30 * cos(time / 1000.0f), text_rect.y, 60, 80);
+    Rect clip(text_rect.x + 30 + 30 * cosf(time / 1000.0f), text_rect.y, 60, 80);
     screen.pen = Pen(64, 64, 64);
     screen.rectangle(text_rect);
 
