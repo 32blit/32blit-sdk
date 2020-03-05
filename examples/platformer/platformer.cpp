@@ -164,7 +164,7 @@ struct Player {
   void render() {
     uint8_t animation = Player::STILL;
 
-    if (abs(vel.x) > 1) {
+    if (std::abs(vel.x) > 1) {
       animation = Player::WALKING;
     }
     if (!on_ground()) {
@@ -603,14 +603,14 @@ void render_light(Point pt, float radius, bool shadows = false) {
       Vec2 rv1 = p1;
       Vec2 rv2 = p2;
 
-      if ((abs(rv1.x) * abs(rv1.y)) < rs && (abs(rv2.x) * abs(rv2.y)) < rs) {
+      if ((std::abs(rv1.x) * std::abs(rv1.y)) < rs && (std::abs(rv2.x) * std::abs(rv2.y)) < rs) {
         // (max_light_radius * 2) = cludge to ensure shadows are projected far enough
         // actually we should project shadows to the bounds of the light bounding box
         // there is no need to "guess" but that requires working out the intersection
         // with the edge of the bounding box and optionally inserting points at the corners
         // if required. a task for another day....
-        float c1 = (max_light_radius * 2) / float(std::max(abs(rv1.x), abs(rv1.y)));
-        float c2 = (max_light_radius * 2) / float(std::max(abs(rv2.x), abs(rv2.y)));
+        float c1 = (max_light_radius * 2) / float(std::max(std::abs(rv1.x), std::abs(rv1.y)));
+        float c2 = (max_light_radius * 2) / float(std::max(std::abs(rv2.x), std::abs(rv2.y)));
 
         Vec2 p3 = rv1 * c1;
         Vec2 p4 = rv2 * c2;
