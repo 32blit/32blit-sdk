@@ -15,6 +15,23 @@ Windows needs a little help to find the required dependencies for local builds.
  - First download SDL as described in the [Visual Studio](Windows-VisualStudio.md) docs.
  - Add `"SDL2_DIR": "${workspaceRoot}/vs/sdl/"` to `configureSettings` (See "CMake Arguments" below)
 
+## Mac specific setup
+
+If you are running Catalina or higher, you may find difficulty in debugging local builds. To fix this, you need to install the [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) extension. Add a 'Build and attach' configuration like so:
+
+- Add a configuration with Debug > Add Configuration
+- Paste in the following
+
+``` json
+{
+   "name": "Launch and Debug",
+   "type": "lldb",
+   "request": "launch",
+   "program": "${command:cmake.launchTargetPath}"
+}
+```
+Now, when you want to attach the debugger, run with that configuration and now your breakpoints will be respected 🎉
+
 ## Initial setup for local builds
 You should get a notification asking if you want to configure the project. Click "Yes" and select "[Unspecified]" from the "Select a Kit" dropdown for a local build with the default compiler.
 
