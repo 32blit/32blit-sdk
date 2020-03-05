@@ -30,8 +30,8 @@ uint32_t ProfilerProbe::StoreElapsedUs(bool bRestart)
 		{
 			if(m_uRunningAverageSpanIndex == 0)
 			{
-				m_pRunningAverage->Add((float)m_metrics.uElapsedUs);
-				m_metrics.uAvgElapsedUs = m_pRunningAverage->Average();
+				m_pRunningAverage->add((float)m_metrics.uElapsedUs);
+				m_metrics.uAvgElapsedUs = m_pRunningAverage->average();
 				m_uRunningAverageSpanIndex = m_uRunningAverageSpan-1;
 			}
 			else
@@ -265,8 +265,8 @@ void Profiler::DisplayProbeOverlay(uint8_t uPage)
 					const RunningAverage<float> *pRunningAverage = pProbe->GetRunningAverage();
 					if(pRunningAverage)
 					{
-						const std::size_t uDataPoints = pRunningAverage->Count();
-						const std::size_t uSize       = pRunningAverage->Size();
+						const std::size_t uDataPoints = pRunningAverage->count();
+						const std::size_t uSize       = pRunningAverage->size();
 
 						float fXInc = (float)uUseWidth / uSize;
 						float fX = m_uBorder+(uUseWidth) - (fXInc*uDataPoints);

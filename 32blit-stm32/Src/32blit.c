@@ -231,14 +231,14 @@ void blit_i2c_tick() {
       }
       break;
     case PROC_ACL:
-      accel_x.Add(((int8_t)i2c_buffer[1] << 6) | (i2c_buffer[0] >> 2));
-      accel_y.Add(((int8_t)i2c_buffer[3] << 6) | (i2c_buffer[2] >> 2));
-      accel_z.Add(((int8_t)i2c_buffer[5] << 6) | (i2c_buffer[4] >> 2));
+      accel_x.add(((int8_t)i2c_buffer[1] << 6) | (i2c_buffer[0] >> 2));
+      accel_y.add(((int8_t)i2c_buffer[3] << 6) | (i2c_buffer[2] >> 2));
+      accel_z.add(((int8_t)i2c_buffer[5] << 6) | (i2c_buffer[4] >> 2));
 
       blit::tilt = Vec3(
-        accel_x.Average(),
-        accel_y.Average(),
-        accel_z.Average()
+        accel_x.average(),
+        accel_y.average(),
+        accel_z.average()
       );
 
       blit::tilt.normalize();
@@ -714,9 +714,9 @@ void blit_process_input() {
   blit::hack_left = (adc3data[0] >> 1) / 32768.0f;
   blit::hack_right = (adc3data[1] >> 1)  / 32768.0f;
 
-  battery_average.Add(6.6f * adc3data[2] / 65535.0f);
+  battery_average.add(6.6f * adc3data[2] / 65535.0f);
 
-  battery = battery_average.Average();
+  battery = battery_average.average();
 }
 
 char *get_fr_err_text(FRESULT err){
