@@ -24,7 +24,7 @@ void init() {
 float angle = 0.0f;
 
 float deg2rad(float a) {
-  return a * (M_PI / 180.0f);
+  return a * (pi / 180.0f);
 }
 
 void draw(std::array<Vec2, 4> vecs, std::vector<Mat3> trs) {

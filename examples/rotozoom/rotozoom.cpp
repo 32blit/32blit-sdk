@@ -49,8 +49,8 @@ void rotozoom(uint32_t time_ms) {
 
   static Pen palette[] = { Pen(0, 0, 0), Pen(255, 255, 255), Pen(0, 255, 0) };
 
-  int32_t c = cos(angle * M_PI / 180.0f) * 1024;
-  int32_t s = sin(angle * M_PI / 180.0f) * 1024;
+  int32_t c = cos(angle * pi / 180.0f) * 1024;
+  int32_t s = sin(angle * pi / 180.0f) * 1024;
 
   angle += 0.25f;
   angle = angle >= 360.0f ? 0.0f : angle;

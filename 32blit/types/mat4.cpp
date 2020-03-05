@@ -2,11 +2,10 @@
 */
 #include <cmath>
 
-#undef M_PI
-#define M_PI           3.14159265358979323846f  /* pi */
-
 #include "mat4.hpp"
 #include "vec3.hpp"
+
+#include "../math/constants.hpp"
 
 Mat4::Mat4() {
   v00 = 0.0f; v10 = 0.0f; v20 = 0.0f; v30 = 0.0f;
@@ -26,7 +25,7 @@ Mat4 Mat4::identity() {
 Mat4 Mat4::rotation(float a, Vec3 v) {
   v.normalize();
 
-  a *= (M_PI / 180.0f);
+  a *= (blit::pi / 180.0f);
 
   float c = cosf(a);
   float s = sinf(a);

@@ -41,8 +41,6 @@ using namespace blit;
 
 #define PASSAGE_COUNT 5
 
-#define M_PIf float(M_PI)
-
 // Number of times a player can jump sequentially
 // including mid-air jumps and the initial ground
 // or wall jump
@@ -715,7 +713,7 @@ void render(uint32_t time_ms) {
 
         uint8_t x = 10;
         for(auto c : text) {
-            uint8_t y = 20 + (5.0f * sinf((time_ms / 250.0f) + (float(x) / text.length() * 2.0f * M_PIf)));
+            uint8_t y = 20 + (5.0f * sinf((time_ms / 250.0f) + (float(x) / text.length() * 2.0f * pi)));
             Pen color_letter = hsv_to_rgba((x - 10) / 140.0f, 0.5f, 0.8f);
             screen.pen = color_letter;
             char buf[2];

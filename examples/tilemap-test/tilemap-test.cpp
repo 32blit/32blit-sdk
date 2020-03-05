@@ -31,7 +31,7 @@ using namespace blit;
 
 
   float deg2rad(float a) {
-    return a * (M_PI / 180.0f);
+    return a * (pi / 180.0f);
   }
 
   uint32_t current_time;

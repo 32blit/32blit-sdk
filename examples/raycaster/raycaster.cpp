@@ -421,10 +421,10 @@ void render_sky() {
 
 		// TODO: for the API? 
 		// Convert the facing vector to an angle in degrees
-		//float r = abs(atan2(ray.x, ray.y) * 180.0 / M_PI);
+		//float r = abs(atan2(ray.x, ray.y) * 180.0 / pi);
 
 		float r = std::atan2(ray.x, ray.y);
-		r = (r > 0.0f ? r : (2.0f * float(M_PI) + r)) * 360.0f / (2.0f * float(M_PI));
+		r = (r > 0.0f ? r : (2.0f * pi + r)) * 360.0f / (2.0f * pi);
 
 
 		Point uv(24 + (int(r * 3.0f) % 16), 160 - 32);
@@ -441,7 +441,7 @@ void render_sky() {
 void render_stars() {
 	// Get the player's facing angle in degrees from 0 to 359
 	float r = std::atan2(player1.direction.x, player1.direction.y);
-	r = (r > 0.0f ? r : (2.0f * float(M_PI) + r)) * 360.0f / (2.0f * float(M_PI));
+	r = (r > 0.0f ? r : (2.0f * pi + r)) * 360.0f / (2.0f * pi);
 
 	for (int s = 0; s < num_stars; s++) {
 		star *sp = &stars[s];

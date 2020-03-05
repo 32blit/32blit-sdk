@@ -4,9 +4,6 @@
 
 #include "32blit.hpp"
 
-#undef M_PI
-constexpr float  M_PI = 3.14159265358979323846f;  /* pi */
-
 constexpr float M_PI_H = 1.5707963267948966f;
 
 constexpr float EPSILON = 0.00000001f;
@@ -19,7 +16,7 @@ constexpr uint8_t TEXTURE_WIDTH = 8;
 constexpr uint8_t TEXTURE_HEIGHT = 8;
 constexpr uint8_t TEXTURE_SCALE = 1;
 constexpr uint8_t PLAYER_FOV = 90;
-constexpr float HALF_FOV = PLAYER_FOV / 360.0f * M_PI;
+constexpr float HALF_FOV = PLAYER_FOV / 360.0f * blit::pi;
 
 constexpr uint8_t MAP_WIDTH = 16;
 constexpr uint8_t MAP_HEIGHT = 16;

@@ -3,11 +3,6 @@
 #include <cstdint>
 #include <string>
 
-#ifndef M_PI
-  #define M_PI           3.14159265358979323846f  /* pi */
-#endif
-
-
 namespace blit {
   const uint32_t LINEAR = 1UL << 0;
 
