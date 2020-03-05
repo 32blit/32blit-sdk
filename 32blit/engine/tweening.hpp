@@ -7,7 +7,7 @@ namespace blit {
   const uint32_t LINEAR = 1UL << 0;
 
   struct Tween {
-    typedef float (*TweenFunction)(uint32_t t, float b, float c, uint32_t d);
+    using TweenFunction = float (*)(uint32_t t, float b, float c, uint32_t d);
     TweenFunction function = nullptr;
 
     float from = 0.0f;

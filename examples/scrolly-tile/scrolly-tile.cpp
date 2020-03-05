@@ -102,7 +102,7 @@ enum enum_state {
 };
 enum_state game_state = enum_state::menu;
 
-typedef uint8_t (*tile_callback)(uint8_t tile, uint8_t x, uint8_t y, void *args);
+using tile_callback = uint8_t (*)(uint8_t tile, uint8_t x, uint8_t y, void *args);
 
 uint32_t prng_lfsr = 0;
 const uint16_t prng_tap = 0x74b8;

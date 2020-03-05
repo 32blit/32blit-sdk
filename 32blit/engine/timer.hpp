@@ -6,7 +6,7 @@
 namespace blit {
 
   struct Timer {
-    typedef void (*TimerCallback)(Timer &timer);
+    using TimerCallback = void (*)(Timer &timer);
 
     // uint32_t callback;                      // reference to Lua callback function (can be obtained via `ref = _G['function_name']`)
     
