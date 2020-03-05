@@ -17,7 +17,7 @@ using namespace blit;
 #define POLYGON_COUNT (unsigned int)10
 
 
-typedef struct player {
+struct player {
     Vec2 velocity;
     Vec2 position;
     float rotation = 0;
@@ -29,16 +29,16 @@ typedef struct player {
     unsigned int t_shot_fired = 0;
     Vec2 shot_origin;
     Vec2 shot_target;
-} player;
+};
 
-typedef struct polygon {
+struct polygon {
     float colour_offset;
     Vec2 velocity;
     float rotational_velocity = 0;
     Vec2 origin;
     std::vector<Vec2> points;
     bool prune = false;
-} polygon;
+};
 
 std::vector<polygon> polygons;
 
