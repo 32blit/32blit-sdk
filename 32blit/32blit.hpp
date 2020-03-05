@@ -25,8 +25,9 @@
 #undef M_PI
 #define M_PI           3.14159265358979323846f  /* pi */
 
-constexpr float math_pi = 3.14159265358979323846f;
-
+namespace blit {
+    constexpr float pi = 3.14159265358979323846f;
+}
 
 #ifdef TARGET_32BLIT_HW
 #define __SECTION__(S) __attribute__((section(S)))

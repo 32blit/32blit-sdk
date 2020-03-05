@@ -131,7 +131,7 @@ namespace blit {
 
         // apply channel filter
         if (channel.filter_enable) {
-          float filter_epow = 1 - exp(-(1.0f / 22050.0f) * 2.0f * math_pi * int32_t(channel.filter_cutoff_frequency));
+          float filter_epow = 1 - exp(-(1.0f / 22050.0f) * 2.0f * pi * int32_t(channel.filter_cutoff_frequency));
           channel_sample += (channel_sample - channel.filter_last_sample) * filter_epow;
         }
 
