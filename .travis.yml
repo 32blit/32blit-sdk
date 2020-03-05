@@ -31,8 +31,10 @@ jobs:
     - name: "Linux"
       env:
         - RELEASE_FILE=${TRAVIS_BUILD_DIR}${REPO}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}-LIN64
+        - CMAKE_ARGS="-DCMAKE_CXX_CLANG_TIDY=clang-tidy;-header-filter=32blit;-checks=performance-*,portability-*,modernize-*,-modernize-use-trailing-return-type,-modernize-avoid-c-arrays,-modernize-use-nodiscard"
       addons:
         apt:
+          clang-tidy
           libsdl2-dev
           libsdl2-image-dev
           python3-pip
