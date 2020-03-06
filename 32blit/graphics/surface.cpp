@@ -415,7 +415,8 @@ namespace blit {
           palette_entries[pidx * 4 + 3]);
       }
 
-      for (uint8_t b = *bytes; bytes < ((uint8_t *)image) + sizeof(packed_image) + (image->palette_entry_count * 4) + image->byte_count; b = *++bytes) {
+      for (; bytes < ((uint8_t *)image) + sizeof(packed_image) + (image->palette_entry_count * 4) + image->byte_count; ++bytes) {
+        uint8_t b = *bytes;
         for (auto j = 0; j < 8; j++) {
           col <<= 1;
           col |= ((0b10000000 >> j) & b) ? 1 : 0;
