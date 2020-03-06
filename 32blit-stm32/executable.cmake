@@ -29,6 +29,7 @@ function(blit_executable NAME SOURCES)
 	set_target_properties(${NAME} PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT} SUFFIX ".elf")
 
 	blit_executable_common(${NAME})
+	target_link_libraries(${NAME} ${PIC_STDLIBS})
 
 	add_custom_command(TARGET ${NAME} POST_BUILD
 		COMMENT "Building ${NAME}.reloc.bin"
