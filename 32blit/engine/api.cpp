@@ -1,11 +1,16 @@
 #include "api.hpp"
 #include "api_private.hpp"
 
+#ifdef TARGET_32BLIT_HW
+extern char __api_start;
+#endif
+
 namespace blit {
 #ifdef TARGET_32BLIT_HW
-  __attribute__((section(".api"))) API api;
+  API &api = *(API *)&__api_start;
 #else
-  API api;
+  API real_api;
+  API &api = real_api;
 #endif
 
   uint32_t &buttons = api.buttons;
