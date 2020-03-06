@@ -18,7 +18,7 @@ namespace blit {
    * \param p
    * \param variable
    */
-  void Surface::text(std::string message, const Font &font, const Point &p, bool variable, TextAlign align, Rect clip) {
+  void Surface::text(const std::string &message, const Font &font, const Point &p, bool variable, TextAlign align, Rect clip) {
     text(message, font, Rect(p.x, p.y, 0, 0), variable, align, clip);
   }
 
@@ -30,7 +30,7 @@ namespace blit {
    * \param r
    * \param variable
    */
-  void Surface::text(std::string message, const Font &font, const Rect &r, bool variable, TextAlign align, Rect clip) {
+  void Surface::text(const std::string &message, const Font &font, const Rect &r, bool variable, TextAlign align, Rect clip) {
     Point c(r.x, r.y); // caret position
 
     // default clip rect to rect if passed in
@@ -65,7 +65,7 @@ namespace blit {
     const int char_size = font.char_w * height_bytes;
 
     size_t char_off = 0;
-    for (char &chr : message) {
+    for (char chr : message) {
       // draw character
 
       uint8_t chr_idx = chr & 0x7F;
@@ -129,7 +129,7 @@ namespace blit {
     return font.char_w_variable[chr_idx];
   }
 
-  Size Surface::measure_text(std::string message, const Font &font, bool variable) {
+  Size Surface::measure_text(const std::string &message, const Font &font, bool variable) {
     const int line_height = font.char_h + font.spacing_y;
 
     Size bounds(0, 0);
@@ -171,7 +171,7 @@ namespace blit {
   }
 }
 
-std::string Surface::wrap_text(std::string message, int32_t width, const Font &font, bool variable, bool words) {
+std::string Surface::wrap_text(const std::string &message, int32_t width, const Font &font, bool variable, bool words) {
   std::string ret;
 
   int current_x = 0;
