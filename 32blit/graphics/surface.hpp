@@ -139,10 +139,10 @@ namespace blit {
     void triangle(Point p1, Point p2, Point p3);
     void polygon(std::vector<Point> p);
 
-    void text(std::string message, const Font &font, const Rect &r, bool variable = true, TextAlign align = TextAlign::top_left, Rect clip = Rect(0, 0, 1000, 1000));
-    void text(std::string message, const Font &font, const Point &p, bool variable = true, TextAlign align = TextAlign::top_left, Rect clip = Rect(0, 0, 1000, 1000));
-    Size measure_text(std::string message, const Font &font, bool variable = true);
-    std::string wrap_text(std::string message, int32_t width, const Font &font, bool variable = true, bool words = true);
+    void text(const std::string &message, const Font &font, const Rect &r, bool variable = true, TextAlign align = TextAlign::top_left, Rect clip = Rect(0, 0, 1000, 1000));
+    void text(const std::string &message, const Font &font, const Point &p, bool variable = true, TextAlign align = TextAlign::top_left, Rect clip = Rect(0, 0, 1000, 1000));
+    Size measure_text(const std::string &message, const Font &font, bool variable = true);
+    std::string wrap_text(const std::string &message, int32_t width, const Font &font, bool variable = true, bool words = true);
 
     /*void outline_circle(const point &c, int32_t r);
 
