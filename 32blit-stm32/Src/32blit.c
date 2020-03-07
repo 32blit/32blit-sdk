@@ -454,12 +454,8 @@ void blit_menu_render(uint32_t time) {
   #else
   ::render(time);
   #endif
-  int screen_width = 160;
-  int screen_height = 120;
-  if (display::mode == blit::ScreenMode::hires) {
-    screen_width = 320;
-    screen_height = 240;
-  }
+  const int screen_width = blit::screen.bounds.w;
+  const int screen_height = blit::screen.bounds.h;
 
   const Pen bar_background_color = Pen(40, 40, 60);
 
