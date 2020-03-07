@@ -55,5 +55,5 @@ namespace blit {
   };
   #pragma pack(pop)
 
-  extern API api;
+  extern API &api;
 }
