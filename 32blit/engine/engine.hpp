@@ -7,7 +7,7 @@
 
 namespace blit {
 
-  enum   ScreenMode  { lores, hires };
+  enum   ScreenMode  { lores, hires, hires_palette };
   extern Surface      &screen;
 
 
