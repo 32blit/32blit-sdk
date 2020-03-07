@@ -285,6 +285,8 @@ void blit_init() {
       persist.reset_target = prtFirmware;
     }
 
+    blit::api.vibration = 0.0f;
+
     blit_update_volume();
 
     // enable cycle counting
