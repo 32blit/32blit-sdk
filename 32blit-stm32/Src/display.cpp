@@ -76,6 +76,18 @@ namespace display {
     return screen;
   }
 
+  void set_screen_palette(const Pen *colours, int num_cols) {
+    if(mode != ScreenMode::hires_palette)
+      return;
+
+    for(int i = 0; i < num_cols; i++) {
+      LTDC_Layer1->CLUTWR = (i << 24) | (colours[i].b << 16) | (colours[i].g << 8) | colours[i].r;
+    }
+
+    LTDC_Layer1->CR |= LTDC_LxCR_CLUTEN;
+    LTDC->SRCR = LTDC_SRCR_IMR;
+  }
+
   void dma2d_hires_flip(const Surface &source) {
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 3); 
 
