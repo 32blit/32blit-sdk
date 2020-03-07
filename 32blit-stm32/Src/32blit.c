@@ -389,6 +389,18 @@ std::string menu_name (MenuItem item) {
 
 MenuItem menu_item = BACKLIGHT;
 
+static const Pen menu_colours[]{
+  {0}, 
+  { 30,  30,  50, 200}, // background
+  {255, 255, 255}, // foreground
+  { 40,  40,  60}, // bar background
+  { 50,  50,  70}, // selected item background
+  {255, 128,   0}, // battery unknown
+  {  0, 255,   0}, // battery usb host/adapter port
+  {255,   0,   0}, // battery otg
+  {100, 100, 255}, // battery charging
+};
+
 float menu_y (MenuItem item) { return item * 10 + 20; }
 float menu_selection_y (MenuItem item) { return menu_y(item) - 1; }
 Point menu_title_origin (MenuItem item) { return Point(5, item * 10 + 20); }
@@ -458,12 +470,15 @@ void blit_menu_render(uint32_t time) {
   const int screen_width = blit::screen.bounds.w;
   const int screen_height = blit::screen.bounds.h;
 
-  const Pen bar_background_color = Pen(40, 40, 60);
+  const Pen menu_bg_colour = menu_colours[1];
+  const Pen foreground_colour = menu_colours[2];
+  const Pen bar_background_color = menu_colours[3];
+  const Pen selected_item_bg_colour = menu_colours[4];
 
-  screen.pen = Pen(30, 30, 50, 200);
+  screen.pen = menu_bg_colour;
   screen.clear();
 
-  screen.pen = Pen(255, 255, 255);
+  screen.pen = foreground_colour;
 
   screen.text("System Menu", minimal_font, Point(5, 5));
 
@@ -491,16 +506,16 @@ void blit_menu_render(uint32_t time) {
 
   switch(battery_status >> 6){
     case 0b00: // Unknown
-        screen.pen = Pen(255, 128, 0);
+        screen.pen = menu_colours[5];
         break;
     case 0b01: // USB Host
-        screen.pen = Pen(0, 255, 0);
+        screen.pen = menu_colours[6];
         break;
     case 0b10: // Adapter Port
-        screen.pen = Pen(0, 255, 0);
+        screen.pen = menu_colours[6];
         break;
     case 0b11: // OTG
-        screen.pen = Pen(255, 0, 0);
+        screen.pen = menu_colours[7];
         break;
   }
   screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_meter_width, 5));
@@ -508,16 +523,16 @@ void blit_menu_render(uint32_t time) {
   if(battery_charge_status == 0b01 || battery_charge_status == 0b10){
     uint16_t battery_fill_width = uint32_t(time / 500.0f) % battery_meter_width;
     battery_fill_width = std::max((uint16_t)0, std::min((uint16_t)battery_meter_width, battery_fill_width));
-    screen.pen = Pen(100, 100, 255);
+    screen.pen = menu_colours[8];
     screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_fill_width, 5));
   }
 
   // Horizontal Line
-  screen.pen = Pen(255, 255, 255);
+  screen.pen = foreground_colour;
   screen.rectangle(Rect(0, 15, screen_width, 1));
 
   // Selected item
-  screen.pen = Pen(50, 50, 70);
+  screen.pen = selected_item_bg_colour;
   screen.rectangle(menu_item_frame(menu_item, screen_width));
 
   // Menu rows
@@ -525,26 +540,26 @@ void blit_menu_render(uint32_t time) {
   for (int i = BACKLIGHT; i < LAST_COUNT; i++) {
     const MenuItem item = (MenuItem)i;
 
-    screen.pen = Pen(255, 255, 255);
+    screen.pen = foreground_colour;
     screen.text(menu_name(item), minimal_font, menu_title_origin(item));
 
     switch (i) {
       case BACKLIGHT:
         screen.pen = bar_background_color;
         screen.rectangle(Rect(screen_width / 2, 21, 75, 5));
-        screen.pen = Pen(255, 255, 255);
+        screen.pen = foreground_colour;
         screen.rectangle(Rect(screen_width / 2, 21, 75 * persist.backlight, 5));
 
         break;
       case VOLUME:
         screen.pen = bar_background_color;
         screen.rectangle(Rect(screen_width / 2, 31, 75, 5));
-        screen.pen = Pen(255, 255, 255);
+        screen.pen = foreground_colour;
         screen.rectangle(Rect(screen_width / 2, 31, 75 * persist.volume, 5));
 
         break;
       default:
-        screen.pen = Pen(255, 255, 255);
+        screen.pen = foreground_colour;
         screen.text("Press A", minimal_font, press_a_origin(item, screen_width));
         break;  
     }
@@ -553,7 +568,7 @@ void blit_menu_render(uint32_t time) {
 
 
   // Bottom horizontal Line
-  screen.pen = Pen(255, 255, 255);
+  screen.pen = foreground_colour;
   screen.rectangle(Rect(0, screen_height - 15, screen_width, 1));
 
 }
