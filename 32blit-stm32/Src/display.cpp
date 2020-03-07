@@ -215,7 +215,7 @@ namespace display {
     } else {
         // paletted
         uint32_t *s = (uint32_t *)source.data;
-        uint32_t *d = (uint32_t *)(&__ltdc_start);
+        uint32_t *d = (uint32_t *)(&__ltdc_start + 320 * 240 * 2);
         uint32_t c = (320 * 240) >> 2;
         while(c--) {
           *d++ = *s++;
@@ -273,9 +273,11 @@ namespace display {
   void update_ltdc_for_mode() {
     if(mode == ScreenMode::hires_palette) {
       LTDC_Layer1->PFCR = LTDC_PIXEL_FORMAT_L8;
+      LTDC_Layer1->CFBAR  = (uint32_t)&__ltdc_start + 320 * 240 * 2;  // frame buffer start address
       LTDC_Layer1->CR |= LTDC_LxCR_CLUTEN;
     } else {
       LTDC_Layer1->PFCR = LTDC_PIXEL_FORMAT_RGB888;
+      LTDC_Layer1->CFBAR  = (uint32_t)&__ltdc_start;  // frame buffer start address
       LTDC_Layer1->CR &= ~LTDC_LxCR_CLUTEN;
     }
 
