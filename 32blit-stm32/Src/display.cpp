@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <cstring>
 
 #include "spi-st7272a.h"
 #include "32blit.hpp"
@@ -33,10 +34,14 @@ namespace display {
   Surface __fb_hires_pal((uint8_t *)&__fb_start, PixelFormat::P, Size(320, 240));
   Surface __fb_lores((uint8_t *)&__fb_start, PixelFormat::RGB, Size(160, 120));
 
+  Pen palette[256];
+
   ScreenMode mode = ScreenMode::lores;
   bool needs_render = false;
 
   void init() {
+    __fb_hires_pal.palette = palette;
+
     // TODO: replace interrupt setup with non HAL method
     HAL_NVIC_SetPriority(LTDC_IRQn, 4, 4);
     HAL_NVIC_EnableIRQ(LTDC_IRQn);
@@ -79,6 +84,8 @@ namespace display {
   void set_screen_palette(const Pen *colours, int num_cols) {
     if(mode != ScreenMode::hires_palette)
       return;
+
+    memcpy(palette, colours, num_cols * sizeof(blit::Pen));
 
     for(int i = 0; i < num_cols; i++) {
       LTDC_Layer1->CLUTWR = (i << 24) | (colours[i].b << 16) | (colours[i].g << 8) | colours[i].r;

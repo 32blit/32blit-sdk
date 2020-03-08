@@ -118,6 +118,8 @@ System::System() {
 	s_loop_update = SDL_CreateSemaphore(0);
 	s_loop_redraw = SDL_CreateSemaphore(0);
 	s_loop_ended = SDL_CreateSemaphore(0);
+
+	__fb_hires_pal.palette = palette;
 }
 
 System::~System() {
