@@ -400,6 +400,8 @@ static const Pen menu_colours[]{
   {255,   0,   0}, // battery otg
   {100, 100, 255}, // battery charging
 };
+static constexpr int num_menu_colours = sizeof(menu_colours) / sizeof(Pen);
+static Pen menu_saved_colours[num_menu_colours];
 
 float menu_y (MenuItem item) { return item * 10 + 20; }
 float menu_selection_y (MenuItem item) { return menu_y(item) - 1; }
@@ -470,10 +472,12 @@ void blit_menu_render(uint32_t time) {
   const int screen_width = blit::screen.bounds.w;
   const int screen_height = blit::screen.bounds.h;
 
-  const Pen menu_bg_colour = menu_colours[1];
-  const Pen foreground_colour = menu_colours[2];
-  const Pen bar_background_color = menu_colours[3];
-  const Pen selected_item_bg_colour = menu_colours[4];
+  auto pallette_col = [](int index) {return screen.format == PixelFormat::P ? Pen(index) : menu_colours[index];};
+
+  const Pen menu_bg_colour = pallette_col(1);
+  const Pen foreground_colour = pallette_col(2);
+  const Pen bar_background_color = pallette_col(3);
+  const Pen selected_item_bg_colour = pallette_col(4);
 
   screen.pen = menu_bg_colour;
   screen.clear();
@@ -506,16 +510,16 @@ void blit_menu_render(uint32_t time) {
 
   switch(battery_status >> 6){
     case 0b00: // Unknown
-        screen.pen = menu_colours[5];
+        screen.pen = pallette_col(5);
         break;
     case 0b01: // USB Host
-        screen.pen = menu_colours[6];
+        screen.pen = pallette_col(6);
         break;
     case 0b10: // Adapter Port
-        screen.pen = menu_colours[6];
+        screen.pen = pallette_col(6);
         break;
     case 0b11: // OTG
-        screen.pen = menu_colours[7];
+        screen.pen = pallette_col(7);
         break;
   }
   screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_meter_width, 5));
@@ -523,7 +527,7 @@ void blit_menu_render(uint32_t time) {
   if(battery_charge_status == 0b01 || battery_charge_status == 0b10){
     uint16_t battery_fill_width = uint32_t(time / 500.0f) % battery_meter_width;
     battery_fill_width = std::max((uint16_t)0, std::min((uint16_t)battery_meter_width, battery_fill_width));
-    screen.pen = menu_colours[8];
+    screen.pen = pallette_col(8);
     screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_fill_width, 5));
   }
 
@@ -577,11 +581,20 @@ void blit_menu() {
   if(blit::update == blit_menu_update) {
     blit::update = ::update;
     blit::render = ::render;
+
+    // restore game colours
+    if(screen.format == PixelFormat::P)
+      set_screen_palette(menu_saved_colours, num_menu_colours);
   }
   else
   {
     blit::update = blit_menu_update;
     blit::render = blit_menu_render;
+
+    if(screen.format == PixelFormat::P) {
+      memcpy(menu_saved_colours, screen.palette, num_menu_colours * sizeof(Pen));
+      set_screen_palette(menu_colours, num_menu_colours);
+    }
   }
 }
 
