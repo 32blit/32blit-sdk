@@ -29,7 +29,7 @@ namespace blit {
   class File final {
   public:
     File() = default;
-    File(std::string filename, int mode = OpenMode::read) {open(filename, OpenMode::read);}
+    File(std::string filename, int mode = OpenMode::read) {open(filename, mode);}
     File(const File &) = delete;
     File(File &&other) noexcept {
       *this = std::move(other);
