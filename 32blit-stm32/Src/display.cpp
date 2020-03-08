@@ -38,6 +38,7 @@ namespace display {
 
   ScreenMode mode = ScreenMode::lores;
   bool needs_render = false;
+  int palette_needs_update = 0;
 
   void init() {
     __fb_hires_pal.palette = palette;
@@ -82,17 +83,8 @@ namespace display {
   }
 
   void set_screen_palette(const Pen *colours, int num_cols) {
-    if(mode != ScreenMode::hires_palette)
-      return;
-
     memcpy(palette, colours, num_cols * sizeof(blit::Pen));
-
-    for(int i = 0; i < num_cols; i++) {
-      LTDC_Layer1->CLUTWR = (i << 24) | (colours[i].b << 16) | (colours[i].g << 8) | colours[i].r;
-    }
-
-    LTDC_Layer1->CR |= LTDC_LxCR_CLUTEN;
-    LTDC->SRCR = LTDC_SRCR_IMR;
+    palette_needs_update = num_cols;
   }
 
   void dma2d_hires_flip(const Surface &source) {
@@ -221,6 +213,15 @@ namespace display {
       
     } else {
         // paletted
+        if(palette_needs_update) {
+          for(int i = 0; i < palette_needs_update; i++) {
+            LTDC_Layer1->CLUTWR = (i << 24) | (palette[i].b << 16) | (palette[i].g << 8) | palette[i].r;
+          }
+
+          LTDC->SRCR = LTDC_SRCR_IMR;
+          palette_needs_update = 0;
+        }
+
         uint32_t *s = (uint32_t *)source.data;
         uint32_t *d = (uint32_t *)(&__ltdc_start + 320 * 240 * 2);
         uint32_t c = (320 * 240) >> 2;
