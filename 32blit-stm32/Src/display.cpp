@@ -39,6 +39,7 @@ namespace display {
   ScreenMode mode = ScreenMode::lores;
   bool needs_render = false;
   int palette_needs_update = 0;
+  uint8_t palette_update_delay = 0;
 
   void init() {
     __fb_hires_pal.palette = palette;
@@ -84,6 +85,7 @@ namespace display {
 
   void set_screen_palette(const Pen *colours, int num_cols) {
     memcpy(palette, colours, num_cols * sizeof(blit::Pen));
+    palette_update_delay = 1;
     palette_needs_update = num_cols;
   }
 
@@ -213,7 +215,7 @@ namespace display {
       
     } else {
         // paletted
-        if(palette_needs_update) {
+        if(palette_needs_update && palette_update_delay-- == 0) {
           for(int i = 0; i < palette_needs_update; i++) {
             LTDC_Layer1->CLUTWR = (i << 24) | (palette[i].b << 16) | (palette[i].g << 8) | palette[i].r;
           }
