@@ -70,6 +70,15 @@ void DFUBoot(void)
   NVIC_SystemReset();
 }
 
+static void init_api_shared() {
+  // Reset button state, this prevents the user app immediately seeing the last button transition used to launch the game
+  api.buttons = 0;
+
+  // reset shared outputs
+  api.vibration = 0.0f;
+  api.LED = Pen();
+}
+
 int blit_debugf(const char * psFormatString, va_list args)
 {
 	return vprintf(psFormatString, args);
@@ -285,7 +294,7 @@ void blit_init() {
       persist.reset_target = prtFirmware;
     }
 
-    blit::api.vibration = 0.0f;
+    init_api_shared();
 
     blit_update_volume();
 
@@ -786,8 +795,7 @@ void blit_switch_execution(void)
   persist.reset_target = prtFirmware;
   #endif
 
-  // Reset button state, this prevents the user app immediately seeing the last button transition used to launch the game
-  buttons = 0;
+  init_api_shared();
 
   // Stop the ADC DMA
   HAL_ADC_Stop_DMA(&hadc1);
