@@ -9,5 +9,7 @@ extern "C" void cpp_do_init() {
     blit::update = update;
     blit::render = render;
 
+    blit::set_screen_mode(blit::ScreenMode::lores);
+
     init();
 }
