@@ -63,6 +63,9 @@ jobs:
           zip
       install:
         - python3 -m pip install bitstring construct
+      after_success:
+        - curl -O https://raw.githubusercontent.com/danvk/travis-weigh-in/adcc3a3e5bc16b360aa379d0fc23c3a6e1d9b21d/weigh_in.py
+        - python weigh_in.py firmware/flash-loader/flash-loader.bin
       before_deploy:
         - make install
         - tar -zcf ${RELEASE_FILE}.tar.gz bin/
