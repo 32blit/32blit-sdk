@@ -49,7 +49,7 @@ namespace blit {
     uint32_t (*get_max_us_timer)();
 
     // jepg
-    JPEGImage (*decode_jpeg_buffer)(uint8_t *ptr, uint32_t len);
+    JPEGImage (*decode_jpeg_buffer)(const uint8_t *ptr, uint32_t len);
     JPEGImage (*decode_jpeg_file)(std::string filename);
 
   };
