@@ -14,7 +14,7 @@ cache:
 jobs:
   include:
     - name: "Emscripten"
-      env: CACHE_NAME=emscripten
+      env: CACHE_NAME=emscripten1
       cache:
         directories:
           - $HOME/.emscripten_ports
