@@ -354,3 +354,6 @@ MigrationBackup/
 
 # SDL dependencies
 sdl/
+
+
+assets.*
