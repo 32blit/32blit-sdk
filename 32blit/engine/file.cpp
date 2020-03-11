@@ -14,7 +14,21 @@ namespace blit {
   static std::map<std::string, BufferFile> buf_files;
 
   std::vector<FileInfo> list_files(std::string path) {
-    return api.list_files(path);
+    auto ret = api.list_files(path);
+
+    for(auto &buf_file : buf_files) {
+      auto slash_pos = buf_file.first.find_last_of('/');
+      if(slash_pos == std::string::npos)
+        slash_pos = 0;
+      
+      if(buf_file.first.substr(0, slash_pos) == path) {
+        FileInfo info = {};
+        info.name = buf_file.first.substr(slash_pos == 0 ? 0 : slash_pos + 1);
+        ret.push_back(info);
+      }
+    }
+
+    return ret;
   }
 
   bool file_exists(std::string path) {
