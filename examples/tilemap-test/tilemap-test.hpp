@@ -13,7 +13,7 @@ static uint8_t layer_environment_transforms[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 
 static const uint8_t packed_data[] = {
   0x53, 0x50, 0x52, 0x49, 0x54, 0x45, 0x00, 0x00, // type: sprite
-  0x94, 0x28, // payload size (10388)
+  0x00, 0x28, // payload size (10240)
 
   0x80, 0x00, // width (128)
   0x80, 0x00, // height (128)
