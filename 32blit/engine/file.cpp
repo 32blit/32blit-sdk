@@ -34,7 +34,7 @@ namespace blit {
     // check for buffer
     auto it = buf_files.find(file);
 
-    if (it != buf_files.end()) {
+    if (mode == OpenMode::read && it != buf_files.end()) {
       buf = it->second.ptr;
       buf_len = it->second.length;
       return true;
