@@ -14,7 +14,7 @@ cache:
 jobs:
   include:
     - name: "Emscripten"
-      env: CACHE_NAME=emscripten
+      env: CACHE_NAME=emscripten1
       cache:
         directories:
           - $HOME/.emscripten_ports
@@ -22,8 +22,11 @@ jobs:
       services:
         - docker
       before_install:
-        - docker run -dit --name emscripten -v $(pwd):/src -v $HOME/.emscripten_ports:/emsdk_portable/.data/ports -v $HOME/.emscripten_cache:/emsdk_portable/.data/cache trzeci/emscripten:sdk-incoming-64bit bash
+        - docker run -dit --name emscripten -v $(pwd):/src -v $HOME/.emscripten_ports:/emsdk_portable/.data/ports -v $HOME/.emscripten_cache:/emsdk_portable/.data/cache trzeci/emscripten:1.39.10-fastcomp bash
       install:
+        - docker exec -it emscripten apt update
+        - docker exec -it emscripten apt -y install python3-setuptools
+        - docker exec -it emscripten python3 -m pip install 32blit
       script:
         - docker exec -it emscripten emcmake cmake -B build.em -G "Unix Makefiles"
         - docker exec -it emscripten make -C build.em
@@ -62,7 +65,7 @@ jobs:
           python3-setuptools
           zip
       install:
-        - python3 -m pip install bitstring construct
+        - python3 -m pip install 32blit bitstring construct
       after_success:
         - curl -O https://raw.githubusercontent.com/danvk/travis-weigh-in/adcc3a3e5bc16b360aa379d0fc23c3a6e1d9b21d/weigh_in.py
         - python weigh_in.py firmware/flash-loader/flash-loader.bin
