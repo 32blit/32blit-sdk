@@ -80,18 +80,21 @@ LoopCopyDataInit:
   cmp  r2, r3
   bcc  CopyDataInit
 
-  ldr  r2, =_sbss
-  b  LoopFillZerobss
-// Zero fill the bss segment.
-FillZerobss:
-  movs  r3, #0
-  str  r3, [r2], #4
+// Copy ITCM
+  movs  r1, #0
+  b  LoopCopyITCMInit
+CopyITCMInit:
+  ldr  r3, =itcm_data
+  ldr  r3, [r3, r1]
+  str  r3, [r0, r1]
+  adds  r1, r1, #4
 
-LoopFillZerobss:
-  ldr  r3, = _ebss
+LoopCopyITCMInit:
+  ldr  r0, =itcm_text_start
+  ldr  r3, =itcm_text_end
+  adds  r2, r0, r1
   cmp  r2, r3
-  bcc  FillZerobss
-
+  bcc  CopyITCMInit
   
 // check for magic number and branch to DFuSe
   ldr r0, =0x2001FFFC // Magic RAM location for sekret reboot key
@@ -113,6 +116,19 @@ RegularBoot:
 
 // Call the clock system intitialization function.
   bl  SystemInit
+
+  ldr  r2, =_sbss
+  b  LoopFillZerobss
+// Zero fill the bss segment.
+FillZerobss:
+  movs  r3, #0
+  str  r3, [r2], #4
+
+LoopFillZerobss:
+  ldr  r3, = _ebss
+  cmp  r2, r3
+  bcc  FillZerobss
+
 // Call static constructors
     bl __libc_init_array
 // Call the application's entry point.

@@ -45,15 +45,15 @@ DTCMRAM (xrw)       : ORIGIN = DEFINED(FLASH_TARGET_INT) ? 0x20000000 : 0x200004
                       LENGTH = DEFINED(FLASH_TARGET_INT) ? 1K : 127K
 /*RAM_D1 (xrw)        : ORIGIN = 0x24000000, LENGTH = 287K*/
 LTDC (rw)           : ORIGIN = 0x24047C00, LENGTH = 225K
-RAM_D2 (xrw)        : ORIGIN = 0x30000000, LENGTH =  63K
+/*RAM_D2 (xrw)        : ORIGIN = 0x30000000, LENGTH =  63K*/
 FRAMEBUFFER (rw)    : ORIGIN = 0x3000FC00, LENGTH = 225K
 RAM_D3 (xrw)        : ORIGIN = 0x38000000, LENGTH =  64K
 PERSIST (rw)        : ORIGIN = 0x38800000, LENGTH =   4K
 ITCMISR (xrw)       : ORIGIN = 0x00000000, LENGTH =   4K
-/*ITCMRAM (xrw)       : ORIGIN = 0x00001000, LENGTH =  58K*/
+ITCMRAM (xrw)       : ORIGIN = 0x00001000, LENGTH =  58K
 
-MAIN_RAM (xrw)      : ORIGIN = DEFINED(FLASH_TARGET_INT) ? 0x00001000 : 0x24000000,
-                      LENGTH = DEFINED(FLASH_TARGET_INT) ? 58K : 362K
+MAIN_RAM (xrw)      : ORIGIN = DEFINED(FLASH_TARGET_INT) ? 0x30000000 : 0x24000000,
+                      LENGTH = DEFINED(FLASH_TARGET_INT) ? 63K : 362K
 
 API (rw)            : ORIGIN = 0x0000f800, LENGTH = 2K
 
@@ -174,6 +174,16 @@ SECTIONS
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
   } >MAIN_RAM
+
+  itcm_data = LOADADDR(.itcm);
+  .itcm :
+  {
+    . = ALIGN(4);
+    itcm_text_start = .;
+    *(.itcm)         /* ITCM code section */
+    . = ALIGN(4);
+    itcm_text_end = .;
+  } >ITCMRAM AT> FLASH
 
   .ltdc (NOLOAD):
   {
