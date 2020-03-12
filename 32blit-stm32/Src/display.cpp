@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <cstring>
 
 #include "spi-st7272a.h"
 #include "32blit.hpp"
@@ -24,16 +25,25 @@ void LTDC_IRQHandler() {
   }
 }
 
-namespace display {  
+namespace display {
+
+  void update_ltdc_for_mode();
 
   // lo and hi res screen back buffers
   Surface __fb_hires((uint8_t *)&__fb_start, PixelFormat::RGB, Size(320, 240));
+  Surface __fb_hires_pal((uint8_t *)&__fb_start, PixelFormat::P, Size(320, 240));
   Surface __fb_lores((uint8_t *)&__fb_start, PixelFormat::RGB, Size(160, 120));
+
+  Pen palette[256];
 
   ScreenMode mode = ScreenMode::lores;
   bool needs_render = false;
+  int palette_needs_update = 0;
+  uint8_t palette_update_delay = 0;
 
   void init() {
+    __fb_hires_pal.palette = palette;
+
     // TODO: replace interrupt setup with non HAL method
     HAL_NVIC_SetPriority(LTDC_IRQn, 4, 4);
     HAL_NVIC_EnableIRQ(LTDC_IRQn);
@@ -57,8 +67,26 @@ namespace display {
 
   Surface &set_screen_mode(ScreenMode new_mode) {
     mode = new_mode;
-    screen = mode == ScreenMode::hires ? __fb_hires : __fb_lores;
+    switch(mode) {
+      case ScreenMode::lores:
+        screen = __fb_lores;
+        break;
+      case ScreenMode::hires:
+        screen = __fb_hires;
+        break;
+      case ScreenMode::hires_palette:
+        screen = __fb_hires_pal;
+        break;
+    }
+
+    update_ltdc_for_mode();
     return screen;
+  }
+
+  void set_screen_palette(const Pen *colours, int num_cols) {
+    memcpy(palette, colours, num_cols * sizeof(blit::Pen));
+    palette_update_delay = 1;
+    palette_needs_update = num_cols;
   }
 
   void dma2d_hires_flip(const Surface &source) {
@@ -160,7 +188,7 @@ namespace display {
       
       uint32_t flip_end = DWT->CYCCNT;
       flip_time = ((flip_end - flip_start) / 1000) * 1000;
-    }else{
+    } else if(mode == ScreenMode::hires) {
             
       //screen.text(std::to_string(flip_time), minimal_font, Point(140,40));
       //uint32_t flip_start = DWT->CYCCNT;
@@ -185,6 +213,23 @@ namespace display {
       //flip_time = ((flip_end - flip_start) / 1000) * 1000;
 
       
+    } else {
+        // paletted
+        if(palette_needs_update && palette_update_delay-- == 0) {
+          for(int i = 0; i < palette_needs_update; i++) {
+            LTDC_Layer1->CLUTWR = (i << 24) | (palette[i].b << 16) | (palette[i].g << 8) | palette[i].r;
+          }
+
+          LTDC->SRCR = LTDC_SRCR_IMR;
+          palette_needs_update = 0;
+        }
+
+        uint32_t *s = (uint32_t *)source.data;
+        uint32_t *d = (uint32_t *)(&__ltdc_start + 320 * 240 * 2);
+        uint32_t c = (320 * 240) >> 2;
+        while(c--) {
+          *d++ = *s++;
+        }
     }
 
     // since the ltdc hardware pulls frame data directly over the memory bus
@@ -233,5 +278,19 @@ namespace display {
 
     // enable LTDC      
     LTDC->GCR |= LTDC_GCR_LTDCEN;   
+  }
+
+  void update_ltdc_for_mode() {
+    if(mode == ScreenMode::hires_palette) {
+      LTDC_Layer1->PFCR = LTDC_PIXEL_FORMAT_L8;
+      LTDC_Layer1->CFBAR  = (uint32_t)&__ltdc_start + 320 * 240 * 2;  // frame buffer start address
+      LTDC_Layer1->CR |= LTDC_LxCR_CLUTEN;
+    } else {
+      LTDC_Layer1->PFCR = LTDC_PIXEL_FORMAT_RGB888;
+      LTDC_Layer1->CFBAR  = (uint32_t)&__ltdc_start;  // frame buffer start address
+      LTDC_Layer1->CR &= ~LTDC_LxCR_CLUTEN;
+    }
+
+    LTDC->SRCR = LTDC_SRCR_IMR;
   }
 }

@@ -17,6 +17,10 @@ namespace blit {
     screen = api.set_screen_mode(new_mode);
   }
 
+  void set_screen_palette(const Pen *colours, int num_cols) {
+    api.set_screen_palette(colours, num_cols);
+  }
+
   uint32_t now() {
     return api.now();
   }

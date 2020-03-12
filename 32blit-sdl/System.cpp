@@ -14,7 +14,10 @@
 // blit framebuffer memory
 uint8_t framebuffer[320 * 240 * 3];
 blit::Surface __fb_hires((uint8_t *)framebuffer, blit::PixelFormat::RGB, blit::Size(320, 240));
+blit::Surface __fb_hires_pal((uint8_t *)framebuffer, blit::PixelFormat::P, blit::Size(320, 240));
 blit::Surface __fb_lores((uint8_t *)framebuffer, blit::PixelFormat::RGB, blit::Size(160, 120));
+
+static blit::Pen palette[256];
 
 // blit debug callback
 void debug(std::string message) {
@@ -30,14 +33,23 @@ int blit_debugf(const char * psFormatString, va_list args)
 blit::ScreenMode _mode = blit::ScreenMode::lores;
 blit::Surface &set_screen_mode(blit::ScreenMode new_mode) {
 	_mode = new_mode;
-	if (_mode == blit::ScreenMode::hires) {
-		blit::screen = __fb_hires;
-	}
-	else {
-		blit::screen = __fb_lores;
-	}
+    switch(_mode) {
+      case blit::ScreenMode::lores:
+        blit::screen = __fb_lores;
+        break;
+      case blit::ScreenMode::hires:
+        blit::screen = __fb_hires;
+        break;
+      case blit::ScreenMode::hires_palette:
+        blit::screen = __fb_hires_pal;
+        break;
+    }
 
 	return blit::screen;
+}
+
+static void set_screen_palette(const blit::Pen *colours, int num_cols) {
+	memcpy(palette, colours, num_cols * sizeof(blit::Pen));
 }
 
 // blit timer callback
@@ -106,6 +118,8 @@ System::System() {
 	s_loop_update = SDL_CreateSemaphore(0);
 	s_loop_redraw = SDL_CreateSemaphore(0);
 	s_loop_ended = SDL_CreateSemaphore(0);
+
+	__fb_hires_pal.palette = palette;
 }
 
 System::~System() {
@@ -126,6 +140,7 @@ void System::run() {
 	blit::api.debug = ::debug;
 	blit::api.debugf = ::blit_debugf;
 	blit::api.set_screen_mode = ::set_screen_mode;
+	blit::api.set_screen_palette = ::set_screen_palette;
 	blit::update = ::update;
 	blit::render = ::render;
 
@@ -226,9 +241,21 @@ void System::update_texture(SDL_Texture *texture) {
 	if (_mode == blit::ScreenMode::lores) {
 		SDL_UpdateTexture(texture, nullptr, __fb_lores.data, 160 * 3);
 	}
-	else
-	{
+	else if(_mode == blit::ScreenMode::hires) {
 		SDL_UpdateTexture(texture, nullptr, __fb_hires.data, 320 * 3);
+	} else {
+		uint8_t col_fb[320 * 240 * 3];
+
+		auto in = __fb_hires_pal.data, out = col_fb;
+
+		for(int i = 0; i < 320 * 240; i++) {
+			uint8_t index = *(in++);
+			(*out++) = palette[index].r;
+			(*out++) = palette[index].g;
+			(*out++) = palette[index].b;
+		}
+
+		SDL_UpdateTexture(texture, nullptr, col_fb, 320 * 3);
 	}
 }
 

@@ -24,7 +24,8 @@ namespace blit {
 
     AudioChannel *channels;
 
-    Surface     &(*set_screen_mode)  (ScreenMode new_mode);
+    Surface &(*set_screen_mode)  (ScreenMode new_mode);
+    void (*set_screen_palette)  (const Pen *colours, int num_cols);
     uint32_t (*now)();
     uint32_t (*random)();
 
