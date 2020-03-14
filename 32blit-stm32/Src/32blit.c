@@ -28,6 +28,8 @@
 #include "graphics/color.hpp"
 #include "engine/running_average.hpp"
 
+#include "usbd_cdc_if.h"
+
 #include "stdarg.h"
 using namespace blit;
 
@@ -106,6 +108,12 @@ uint32_t get_max_us_timer()
 {
 	uint32_t uTicksPerUs = SystemCoreClock / 1000000;
 	return UINT32_MAX / uTicksPerUs;
+}
+
+void cdc_usb_resume(uint8_t *pbuff)
+{
+  USBD_CDC_SetRxBuffer(&hUsbDeviceHS, pbuff);
+  USBD_CDC_ReceivePacket(&hUsbDeviceHS);
 }
 
 std::string battery_vbus_status() {
@@ -340,7 +348,8 @@ void blit_init() {
     blit::api.decode_jpeg_buffer = blit_decode_jpeg_buffer;
     blit::api.decode_jpeg_file = blit_decode_jpeg_file;
 
-
+    blit::api.cdc_usb_resume = cdc_usb_resume;
+    
   display::init();
   
   blit::init();

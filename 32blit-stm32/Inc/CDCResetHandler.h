@@ -8,7 +8,7 @@
 #ifndef SRC_CDCRESETHANDLER_H_
 #define SRC_CDCRESETHANDLER_H_
 
-#include "CDCCommandHandler.h"
+#include "engine/CDCCommandHandler.h"
 
 class CDCResetHandler : public CDCCommandHandler
 {

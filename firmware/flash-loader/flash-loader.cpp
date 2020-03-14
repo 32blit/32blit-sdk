@@ -2,7 +2,7 @@
 #include "graphics/color.hpp"
 #include <cmath>
 #include "quadspi.h"
-#include "CDCCommandStream.h"
+#include "engine/CDCCommandStream.h"
 #include "USBManager.h"
 
 #include <cstring>

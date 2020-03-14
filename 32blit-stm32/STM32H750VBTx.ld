@@ -191,7 +191,7 @@ SECTIONS
     __api_start = .;
     KEEP(*(.api))         /* api data section */
     __api_end = .;
-  } >API
+  } >API  AT> FLASH
 
   .persist (NOLOAD):
   {

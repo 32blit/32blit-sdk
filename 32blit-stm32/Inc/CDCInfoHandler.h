@@ -8,7 +8,7 @@
 #ifndef SRC_CDCINFOHANDLER_H_
 #define SRC_CDCINFOHANDLER_H_
 
-#include "CDCCommandHandler.h"
+#include "engine/CDCCommandHandler.h"
 
 class CDCInfoHandler : public CDCCommandHandler
 {

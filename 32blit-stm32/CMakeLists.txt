@@ -82,9 +82,6 @@ list(APPEND SOURCES
 	Src/32blit.c
 	Src/CDCLogging.c
 	startup_stm32h750xx.s
-	Src/CDCDataStream.cpp 
-	Src/CDCCommandStream.cpp 
-	Src/CDCCommandHandler.cpp 
 	Src/CDCResetHandler.cpp
 	Src/CDCInfoHandler.cpp 
 	Src/USBManager.cpp

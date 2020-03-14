@@ -4,10 +4,11 @@
  *  Created on: 17 Jan 2020
  *      Author: andrewcapon
  */
-#include "32blit.h"
-#include "usbd_cdc_if.h"
-extern USBD_HandleTypeDef hUsbDeviceHS;
+#include "32blit.hpp"
+//#include "usbd_cdc_if.h"
+//extern USBD_HandleTypeDef hUsbDeviceHS;
 
+#include "engine/api_private.hpp"
 #include "CDCCommandStream.h"
 
 void CDCCommandStream::Init(void)
@@ -23,15 +24,9 @@ void CDCCommandStream::AddCommandHandler(CDCCommandHandler::CDCFourCC uCommand, 
 }
 
 
-void CDCCommandStream::LogTimeTaken(CDCCommandHandler::StreamResult result, uint32_t uBytesHandled)
-{
-	// can be used to log time taken
-}
-
-
 void CDCCommandStream::Stream(void)
 {
-  static uint32_t uLastResumeTime = HAL_GetTick();
+  static uint32_t uLastResumeTime = blit::api.now();
 
   if(m_bNeedsUSBResume) // FIFO Full, so empty and resume USB
   {
@@ -42,13 +37,12 @@ void CDCCommandStream::Stream(void)
       ReleaseFifoReadElement();
     }
     m_bNeedsUSBResume = false;
-    USBD_CDC_SetRxBuffer(&hUsbDeviceHS, GetFifoWriteBuffer());
-    USBD_CDC_ReceivePacket(&hUsbDeviceHS);
-    uLastResumeTime = HAL_GetTick();
+    blit::api.cdc_usb_resume(GetFifoWriteBuffer());
+    uLastResumeTime = blit::api.now();
   }
   else
   {
-    if(HAL_GetTick() > uLastResumeTime + 10) // USB Stalled, empty FIFO
+    if(blit::api.now() > uLastResumeTime + 10) // USB Stalled, empty FIFO
     {
       // empty fifo
       while(CDCFifoElement *pElement = GetFifoReadElement())
@@ -63,7 +57,7 @@ void CDCCommandStream::Stream(void)
 
 uint8_t CDCCommandStream::Stream(uint8_t *data, uint32_t len)
 {
-	blit_disable_ADC();
+	//blit_disable_ADC();
 	uint8_t   *pScanPos  = data;
 
 	CDCCommandHandler::CDCFourCC uCommand   = 0;
@@ -130,7 +124,6 @@ uint8_t CDCCommandStream::Stream(uint8_t *data, uint32_t len)
 	if(m_state == stDispatch)
 	{
 		m_uRetryCount = 0;
-		m_uDispatchTime = HAL_GetTick();
 
 		m_pCurrentCommandHandler = m_commandHandlers[uCommand];
 		if(m_pCurrentCommandHandler)
@@ -140,7 +133,6 @@ uint8_t CDCCommandStream::Stream(uint8_t *data, uint32_t len)
 			else
 			{
 				m_state = stDetect;
-				LogTimeTaken(CDCCommandHandler::srFinish, 0);
 			}
 		}
 		else
@@ -159,8 +151,7 @@ uint8_t CDCCommandStream::Stream(uint8_t *data, uint32_t len)
 			{
 				// handler has finished or failed go back to detect state
 				m_state = stDetect;
-				LogTimeTaken(result, m_pCurrentCommandHandler->GetBytesHandled());
-				blit_enable_ADC();
+				//blit_enable_ADC();
 			}
 			break;
 
@@ -169,8 +160,7 @@ uint8_t CDCCommandStream::Stream(uint8_t *data, uint32_t len)
 				if(m_uRetryCount > 1)
 				{
 					m_state = stDetect;
-					LogTimeTaken(result, m_pCurrentCommandHandler->GetBytesHandled());
-					blit_enable_ADC();
+					//blit_enable_ADC();
 				}
 			break;
 
@@ -181,11 +171,6 @@ uint8_t CDCCommandStream::Stream(uint8_t *data, uint32_t len)
 
 
 	return m_state != stDetect;
-}
-
-uint32_t CDCCommandStream::GetTimeTaken(void)
-{
-	return HAL_GetTick() - m_uDispatchTime;
 }
 
 

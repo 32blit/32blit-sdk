@@ -1,5 +1,5 @@
 #include "32blit.hpp"
-#include "CDCCommandHandler.h"
+#include "engine/CDCCommandHandler.h"
 #include "fatfs.h"
 #include "persistence.h"
 

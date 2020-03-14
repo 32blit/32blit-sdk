@@ -18,7 +18,7 @@
   ******************************************************************************
   */
 /* USER CODE END Header */
-#include "CDCCommandStream.h"
+#include "engine/CDCCommandStream.h"
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc_if.h"

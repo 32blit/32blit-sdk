@@ -53,6 +53,8 @@ namespace blit {
     JPEGImage (*decode_jpeg_buffer)(uint8_t *ptr, uint32_t len);
     JPEGImage (*decode_jpeg_file)(std::string filename);
 
+    // CDC Serial handling
+    void (*cdc_usb_resume)(uint8_t *pbuff);
   };
   #pragma pack(pop)
 

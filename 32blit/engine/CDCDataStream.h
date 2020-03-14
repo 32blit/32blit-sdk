@@ -8,7 +8,6 @@
 #ifndef SRC_CDCDATASTREAM_H_
 #define SRC_CDCDATASTREAM_H_
 
-#include "stm32h7xx_hal.h"
 #include <cstring>
 #include <streambuf>
 #include <istream>

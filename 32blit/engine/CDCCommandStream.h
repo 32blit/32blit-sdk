@@ -10,7 +10,7 @@
 
 #include <map>
 
-#include "CDCCommandHandler.h"
+#include "engine/CDCCommandHandler.h"
 
 // for receiving at fullspeed CDC we need as many fifo elements as the time taken in ms in the main loop
 // Also for code that does not require fast streaming this could be set to 1
@@ -35,7 +35,6 @@ public:
 	void AddCommandHandler(CDCCommandHandler::CDCFourCC uCommand, CDCCommandHandler *pCommandHandler);
 
 
-	uint32_t GetTimeTaken(void);
 	void     Stream(void);
 	uint8_t  Stream(uint8_t *data, uint32_t len);
 
@@ -63,8 +62,6 @@ private:
 	CDCCommandHandler														*m_pCurrentCommandHandler;
 	std::map<uint32_t, CDCCommandHandler*> 	m_commandHandlers;
 
-	uint32_t m_uDispatchTime;
-
 	CDCDataStream	m_dataStream;
 
 	uint8_t m_uRetryCount = 0;
@@ -78,7 +75,6 @@ private:
 	bool					m_bNeedsUSBResume;
 
 
-	void 			LogTimeTaken(CDCCommandHandler::StreamResult result, uint32_t uBytesHandled);
 
 };
 

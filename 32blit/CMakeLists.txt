@@ -11,7 +11,10 @@ set(SOURCES
 	engine/timer.cpp
 	engine/tweening.cpp
 	engine/version.cpp
-	graphics/blend.cpp
+  engine/CDCCommandHandler.cpp
+  engine/CDCDataStream.cpp
+  engine/CDCCommandStream.cpp 
+  graphics/blend.cpp
 	graphics/color.cpp
 	graphics/filter.cpp
 	graphics/font.cpp
@@ -49,3 +52,8 @@ endif()
 
 configure_file(version_defs.hpp.in version_defs.hpp)
 target_include_directories(BlitEngine PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
+target_compile_definitions(BlitEngine
+  PRIVATE
+ 	-DCDC_FIFO_BUFFERS=${CDC_FIFO_BUFFERS}
+)

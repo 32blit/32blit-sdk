@@ -43,7 +43,7 @@
 #include "graphics/color.hpp"
 #include "CDCResetHandler.h"
 #include "CDCInfoHandler.h"
-#include "CDCCommandStream.h"
+#include "engine/CDCCommandStream.h"
 #include "USBManager.h"
 
 /* USER CODE END Includes */
