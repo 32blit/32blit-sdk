@@ -1,0 +1,131 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+       {
+            "name": "32blit-stm32 Debug loader",
+            "type": "cppdbg",
+            "request": "launch",
+            "preLaunchTask": "flash loader",
+            "logging": {
+                "moduleLoad": true,
+                "trace": true,
+                "engineLogging": true,
+                "programOutput": true,
+                "exceptions": true
+            },
+            "program": "${workspaceFolder}/build/firmware/flash-loader/flash-loader.elf",
+            "targetArchitecture": "arm",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "debugServerArgs": "-s /Development/32blit/32BlitMacOpenOCD -s /Development/32blit/32BlitMacOpenOCD/OpenOCD/tcl -f debug.cfg",
+            "serverLaunchTimeout" : 20000,
+            "serverStarted": "Info : Listening on port",
+            "filterStderr": true,
+            "setupCommands": [
+                { "text": "-target-select remote localhost:3333", "description": "connect to target", "ignoreFailures": false },
+                { "text": "-environment-cd ${workspaceRoot}"},
+                { "text": "-interpreter-exec console \"monitor halt\"", "ignoreFailures": false },
+                { "text": "-interpreter-exec console \"monitor reset init\"", "ignoreFailures": false },
+            ],
+            "osx": {
+                "MIMode": "gdb",
+                "MIDebuggerPath": "arm-none-eabi-gdb",
+                "debugServerPath": "/Development/32blit/32BlitMacOpenOCD/OpenOCD/openocd",
+                "serverStarted": "Info : Listening on port",
+            },
+            "windows": {
+                "MIMode": "gdb",
+                "miDebuggerPath": "",
+                "debugServerPath": "",
+                "serverStarted": "Info : Listening on port",
+            }
+        },
+        {
+          "name": "32blit-stm32 cmake target",
+          "type": "cppdbg",
+          "request": "launch",
+          "preLaunchTask": "flash cmake target",
+          "logging": {
+              "moduleLoad": true,
+              "trace": false,
+              "engineLogging": false,
+              "programOutput": true,
+              "exceptions": true
+          },
+          "program": "${command:cmake.launchTargetPath}",
+          "targetArchitecture": "arm",
+          "args": [],
+          "stopAtEntry": false,
+          "cwd": "${workspaceFolder}",
+          "environment": [],
+          "externalConsole": false,
+          "debugServerArgs": "-s /Development/32blit/32BlitMacOpenOCD -s /Development/32blit/32BlitMacOpenOCD/OpenOCD/tcl -f debug.cfg",
+          "serverLaunchTimeout" : 20000,
+          "serverStarted": "Info : Listening on port",
+          "filterStderr": true,
+          "setupCommands": [
+              { "text": "-target-select remote localhost:3333", "description": "connect to target", "ignoreFailures": false },
+              { "text": "-environment-cd ${workspaceRoot}"},
+              { "text": "-interpreter-exec console \"monitor halt\"", "ignoreFailures": false },
+              { "text": "-interpreter-exec console \"monitor reset init\"", "ignoreFailures": false },
+          ],
+          "osx": {
+              "MIMode": "gdb",
+              "MIDebuggerPath": "arm-none-eabi-gdb",
+              "debugServerPath": "/Development/32blit/32BlitMacOpenOCD/OpenOCD/openocd",
+              "serverStarted": "Info : Listening on port",
+          },
+          "windows": {
+              "MIMode": "gdb",
+              "miDebuggerPath": "",
+              "debugServerPath": "",
+              "serverStarted": "Info : Listening on port",
+          }
+      },
+        {
+          "name": "32blit-stm32 Debug graphics-benchmark",
+          "type": "cppdbg",
+          "request": "launch",
+          "preLaunchTask": "flash profiler",
+          "logging": {
+              "moduleLoad": true,
+              "trace": true,
+              "engineLogging": true,
+              "programOutput": true,
+              "exceptions": true
+          },
+          "program": "${workspaceFolder}/build/examples/graphics-benchmark/graphics-benchmark.elf",
+          "targetArchitecture": "arm",
+          "args": [],
+          "stopAtEntry": true,
+          "cwd": "${workspaceFolder}",
+          "environment": [],
+          "externalConsole": false,
+          "debugServerArgs": "-s /Development/32blit/32BlitMacOpenOCD -s /Development/32blit/32BlitMacOpenOCD/OpenOCD/tcl -f debug.cfg",
+          "serverLaunchTimeout" : 20000,
+          "serverStarted": "Info : Listening on port",
+          "filterStderr": true,
+          "setupCommands": [
+              { "text": "-target-select remote localhost:3333", "description": "connect to target", "ignoreFailures": false },
+              { "text": "-environment-cd ${workspaceRoot}"},
+              { "text": "-interpreter-exec console \"monitor halt\"", "ignoreFailures": false },
+              { "text": "-interpreter-exec console \"monitor reset init\"", "ignoreFailures": false },
+          ],
+          "osx": {
+              "MIMode": "gdb",
+              "MIDebuggerPath": "arm-none-eabi-gdb",
+              "debugServerPath": "/Development/32blit/32BlitMacOpenOCD/OpenOCD/openocd",
+              "serverStarted": "Info : Listening on port",
+          },
+          "windows": {
+              "MIMode": "gdb",
+              "miDebuggerPath": "",
+              "debugServerPath": "",
+              "serverStarted": "Info : Listening on port",
+          }
+      }
+    ]
+}

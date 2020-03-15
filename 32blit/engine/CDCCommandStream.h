@@ -15,6 +15,11 @@
 // for receiving at fullspeed CDC we need as many fifo elements as the time taken in ms in the main loop
 // Also for code that does not require fast streaming this could be set to 1
 // So this will need tuning and define should come from cmake.
+// If nothing from cmake default to 4 buffers
+
+#ifndef CDC_FIFO_BUFFERS
+#define CDC_FIFO_BUFFERS 4
+#endif
 
 struct CDCFifoElement
 {
