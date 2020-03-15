@@ -52,8 +52,3 @@ endif()
 
 configure_file(version_defs.hpp.in version_defs.hpp)
 target_include_directories(BlitEngine PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-
-target_compile_definitions(BlitEngine
-  PRIVATE
- 	-DCDC_FIFO_BUFFERS=${CDC_FIFO_BUFFERS}
-)
