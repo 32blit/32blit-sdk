@@ -20,7 +20,9 @@ Now, on your computer navigate on your drive were you want your working local co
 
 Then, type git clone and paste the link and hit enter, ie:
 
-"git clone https://github.com/YourAccount/32blit-beta.git" Where YourAccount is your github account
+$ git clone https://github.com/YourAccount/32blit-beta.git
+
+Where YourAccount is your github account
 
 [more detailed info here..](https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository)
 
@@ -30,11 +32,19 @@ cd into that new folder, ie cd 32blit-beta.
 
 Here enter the following commands, with your info:
 
- git config --global user.name "Your Name"
+$ git config --global user.name "Your Name"
 
- git config --global user.email "your(at)email.com"
+$ git config --global user.email "your(at)email.com"
 
 Replace the values inside the quotes with your name and email address, this is to identify who made the changes and how to contact you, it's not your github account info.
+
+
+If you use vi or vim, change the defualt editor to:
+$ git config --global core.editor vim
+
+$ git config --global merge.tool vimdiff
+
+
 
 [more detailed info here..](https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup)
 
@@ -47,7 +57,7 @@ Firstly, navigate to your 32blit-beta repo folder to run all your git commands.
 
 As a test create or modify a file in the repo and run this command:
 
-git status
+$ git status
 
 ### Add command
 It will list tracked and untracked files that have been changed.
@@ -56,7 +66,7 @@ We want git to track (or store) the changes of the files in a Staging Area (ie r
 
 We can add the files individually or just add all the files recursively in the project with a single command:
 
-git add .
+$ git add .
 
 
 [more detailed info on add here..](https://git-scm.com/book/en/v2/Getting-Started-Getting-Help) and [here](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository)
@@ -69,27 +79,27 @@ view the file .gitignore in the repo root folder, it shows you which files will 
 ### Local changes
 To see your changes in the repo run:
 
-git diff 
+$ git diff 
 
 
 To limit to files only tracked (in the staged area), run:
 
-git diff --staged
+$ git diff --staged
 
 ### Removing or moving a local file
 Remove it as normal, then to tell git to remove it from the repository, run:
 
-git rm deleted-filename
+$ git rm deleted-filename
 
 Similarly, moving a file run:
 
-git mv moved-filename
+$ git mv moved-filename
 
 
 ### Local commit
 To track your file changes over time, you will need to make (many) local commits to your files, run:
 
-git commit -a -m "Commit message"
+$ git commit -a -m "Commit message"
 
 This command will store changes to all files modified, not in the .gitignore file and use the message in between quotes.
 
@@ -103,11 +113,10 @@ Remember, if you remove or add a file, you'll need to do a "git add ." command a
 ### Updating your remote repo
 You will be asked for you github username and password each time:
 
-git push
+$ git push
 
-# Head repo
 
-## Merging into offical repo
+### Merging into offical Head repo
 
 ---
 
