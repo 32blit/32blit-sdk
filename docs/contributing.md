@@ -1,7 +1,7 @@
 # Git guide
 
 This is a very biginers and quick guide to git/github on how to contribute to the project.
-
+---
 
 ## Setup
 First, make sure you have the git software install on your computere, follow the instructions here: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
@@ -36,6 +36,8 @@ Replace the values inside the quotes with your name and email address, this is t
 
 [more detailed info here..](https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup)
 
+---
+
 ## Using git on your local repo
 
 ### listing changes
@@ -58,11 +60,11 @@ git add .
 [more detailed info on add here..](https://git-scm.com/book/en/v2/Getting-Started-Getting-Help) and [here](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository)
 
 
-## Ignored files
+### Ignored files
 view the file .gitignore in the repo root folder, it shows you which files will not be tracked and mostlikely you wont need to change these.
 
 
-## local commit
+### local commit
 To track your file changes over time, you will need to make (many) local commits to your files, run:
 
 git commit -a -m "Commit message"
@@ -71,7 +73,7 @@ This command will store changes to all files modified, not in the .gitignore fil
 
 Remember, if you remove or add a file, you'll need to do a "git add ." command again, before commiting.
 
-# local changes
+### local changes
 To see your changes in the repo run:
 
 git diff 
@@ -81,9 +83,11 @@ To limit to files only tracked (in the staged area), run:
 
 git diff --staged
 
-# your remote repo
+---
 
-## Updating your remote repo
+## your remote repo
+
+### Updating your remote repo
 You will be asked for you github username and password each time:
 
 git push
@@ -92,6 +96,7 @@ git push
 
 ## Merging into offical repo
 
+---
 
 # Helpful links
 * [Youtube video: Introduction to Git](https://www.youtube.com/watch?v=USjZcfj8yxE) and the [webpage: Introduction to Git](https://www.notion.so/Introduction-to-Git-ac396a0697704709a12b6a0e545db049)
