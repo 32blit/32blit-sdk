@@ -12,7 +12,7 @@ Go to: https://github.com/pimoroni/32blit-beta
 
 Click the Fork link, this will mirror the official (or Head) repo (short for repository) into your github account and it will redirect you there automatically, ie: YourAccount/32blit-beta.
 
-While here, click the big green "Clone or download" button, you will copy the link provide, ie: https://github.com/YourAccount/32blit-beta.git
+Next, click the big green "Clone or download" button, you will copy the link provide, ie: https://github.com/YourAccount/32blit-beta.git
 
 Now, on your computer navigate on your drive were you want your working local copy of the repo locatated, ie /home/YourAccount/repos
 
@@ -27,8 +27,10 @@ Where YourAccount is your github account
 This will create a new folder called '32blit-beta' and download your repo here.
 cd into that new folder, ie cd 32blit-beta
 Here enter the following commads, with your info:
-**git config --global user.name "Your Name"**
-**git config --global user.email "your@email.com"**
+
+git config --global user.name "Your Name"
+git config --global user.email "your@email.com"
+
 Replace the values inside the quotes with your name and email address, this is to identify who made the canges and how to contact you, it's not your github account info.
 [more detailed info here..](https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup)
 
@@ -37,27 +39,27 @@ Replace the values inside the quotes with your name and email address, this is t
 ### listing changes
 Firstly, navigate to your 32blit-beta repo folder to run all your git commands.
 As a test create or modify a file in the repo and run this command:
-**git status**
+git status
 
 ### Add command
 It will list tracked and untracked files that have been changed.
 We want git to track (or store) the changes of the files in a Staging Area (ie revision history), so we need to tell git to track them with the add command.
 We can add the files individually or just add all the files recursively in the project with a single command:
-**git add .**
+git add .
 
 
 [more detailed info on add here..](https://git-scm.com/book/en/v2/Getting-Started-Getting-Help) and [here](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository)
 
 
 ## Ignored files
-view the file **.gitignore** in the repo root folder, it shows you which files will not be tracked and mostlikely you wont need to change these.
+view the file .gitignore in the repo root folder, it shows you which files will not be tracked and mostlikely you wont need to change these.
 
 
 ## local commit
 To track your file changes over time, you will need to make (many) local commits to your files, run:
-**git commit -a -m "Commit message"**
+git commit -a -m "Commit message"
 
-This command will store changes to all files modified, not in the **.gitignore** file and use the message in between quotes.
+This command will store changes to all files modified, not in the .gitignore file and use the message in between quotes.
 Remember, if you remove or add a file, you'll need to do a "git add ." command again, before commiting.
 
 ## local/remote changesgit push
