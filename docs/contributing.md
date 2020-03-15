@@ -2,18 +2,22 @@
 
 This is a very biginers and quick guide to git/github on how to contribute to the project.
 
+
 ## Setup
 First, make sure you have the git software install on your computere, follow the instructions here: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 
 Next, create or log into github.com
+
 Go to: https://github.com/pimoroni/32blit-beta
 
-Click the Fork link, this will mirror the official repo (short for repository) into your github account and it will redirect you there automatically, ie: YourAccount/32blit-beta
+Click the Fork link, this will mirror the official (or Head) repo (short for repository) into your github account and it will redirect you there automatically, ie: YourAccount/32blit-beta.
+
 While here, click the big green "Clone or download" button, you will copy the link provide, ie: https://github.com/YourAccount/32blit-beta.git
 
 Now, on your computer navigate on your drive were you want your working local copy of the repo locatated, ie /home/YourAccount/repos
+
 Then, type git clone and paste the link and hit enter, ie:
-**git clone https://github.com/YourAccount/32blit-beta.git**
+"git clone https://github.com/YourAccount/32blit-beta.git"
 
 Where YourAccount is your github account
 
@@ -42,7 +46,7 @@ We can add the files individually or just add all the files recursively in the p
 **git add .**
 
 
-[more detailed info on add here..](https://git-scm.com/book/en/v2/Getting-Started-Getting-Help) and (https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository)
+[more detailed info on add here..](https://git-scm.com/book/en/v2/Getting-Started-Getting-Help) and [here](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository)
 
 
 ## Ignored files
@@ -51,16 +55,20 @@ view the file **.gitignore** in the repo root folder, it shows you which files w
 
 ## local commit
 To track your file changes over time, you will need to make (many) local commits to your files, run:
-**git commit -m "Commit message"**
+**git commit -a -m "Commit message"**
 
-This command will store changes to all files modified, not in the **.gitignore** file.
-The commit message should be a descriptive summary of the changes that you are committing to the repository.
+This command will store changes to all files modified, not in the **.gitignore** file and use the message in between quotes.
+Remember, if you remove or add a file, you'll need to do a "git add ." command again, before commiting.
 
-## local/remote changes
-git log
+## local/remote changesgit push
+To see your changes in the repo run:
 git diff 
+To limit to files only tracked (in the staged area), run:
 git diff --staged
+
 ## Updating your remote repo
+You will be asked for you github username and password each time:
+git push
 
 ## Merging into offical repo
 
