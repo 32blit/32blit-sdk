@@ -121,21 +121,9 @@ $ git push
 
 ## Merging into offical Head repo
 
-To contribute to the actual project, you need to repeat the process above, create a new directory and run the git clone command but using the pimoroni project URL:
-
-$ git clone https://github.com/pimoroni/32blit-beta.git
-
-The instructions above work exactly the same.
-
-### See updates
-
-$ git log
-
-### Update your local repo
-
-
-$ git pull
-
+Log into github.com.
+On your 32blit-beta clone repo, click the "Pull request" button.
+Now, clieck the "create pull request" button.
 
 ---
 
