@@ -115,6 +115,9 @@ You will be asked for you github username and password each time:
 
 $ git push
 
+---
+
+## Official (Head) repo
 
 ### Merging into offical Head repo
 
