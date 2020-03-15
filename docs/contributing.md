@@ -133,4 +133,7 @@ Now, click the "create pull request" button.
 
 # Helpful links
 * [Youtube video: Introduction to Git](https://www.youtube.com/watch?v=USjZcfj8yxE) and the [webpage: Introduction to Git](https://www.notion.so/Introduction-to-Git-ac396a0697704709a12b6a0e545db049)
-* [Cheat sheet](https://github.github.com/training-kit)
+* [A Git cheat sheet](https://github.github.com/training-kit)
+
+
+
