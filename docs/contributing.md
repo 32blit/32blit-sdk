@@ -1,18 +1,19 @@
 # A quick Git guide
 
 This is a very beginners and quick guide to git/github on how to contribute to the project.
+First you're guided in setting up your clone github repo (short for repository) and then how to contribute to the main project.
 
 
 ---
 
-## Setup
+## Setup your clone repo
 First, make sure you have the git software install on your computer, follow the instructions here: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 
 Next, create or log into github.com
 
 Go to: https://github.com/pimoroni/32blit-beta
 
-Click the Fork link, this will mirror the official (or Head) repo (short for repository) into your github account and it will redirect you there automatically, ie: YourAccount/32blit-beta.
+Click the Fork link, this will mirror the official repo into your github account and it will redirect you there automatically, ie: YourAccount/32blit-beta.
 
 Next, click the big green "Clone or download" button, you will copy the link provide, ie: github.com/YourAccount/32blit-beta.git
 
@@ -116,12 +117,24 @@ You will be asked for you github username and password each time:
 $ git push
 
 ---
+---
 
-## Official (Head) repo
+## Merging into offical Head repo
 
-### Merging into offical Head repo
+To contribute to the actual project, you need to repeat the process above, create a new directory and run the git clone command but using the pimoroni project URL:
 
-$ git push master
+$ git clone https://github.com/pimoroni/32blit-beta.git
+
+The instructions above work exactly the same.
+
+### See updates
+
+$ git log
+
+### Update your local repo
+
+
+$ git pull
 
 
 ---
