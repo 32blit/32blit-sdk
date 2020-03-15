@@ -1,6 +1,8 @@
-# Git guide
+# A quick Git guide
 
 This is a very biginers and quick guide to git/github on how to contribute to the project.
+
+
 ---
 
 ## Setup
