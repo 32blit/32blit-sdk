@@ -10,7 +10,7 @@ Next, create or log into github.com
 
 Go to: https://github.com/pimoroni/32blit-beta
 
-Click the Fork link, this will mirror the official (or Head) repo (short for repository) into your github account and it will redirect you there automatically, ie: YourAccount/32blit-beta
+Click the Fork link, this will mirror the official (or Head) repo (short for repository) into your github account and it will redirect you there automatically, ie: YourAccount/32blit-beta.
 
 While here, click the big green "Clone or download" button, you will copy the link provide, ie: https://github.com/YourAccount/32blit-beta.git
 
