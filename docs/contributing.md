@@ -1,12 +1,12 @@
 # A quick Git guide
 
-This is a very biginers and quick guide to git/github on how to contribute to the project.
+This is a very beginners and quick guide to git/github on how to contribute to the project.
 
 
 ---
 
 ## Setup
-First, make sure you have the git software install on your computere, follow the instructions here: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
+First, make sure you have the git software install on your computer, follow the instructions here: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 
 Next, create or log into github.com
 
@@ -16,7 +16,7 @@ Click the Fork link, this will mirror the official (or Head) repo (short for rep
 
 Next, click the big green "Clone or download" button, you will copy the link provide, ie: github.com/YourAccount/32blit-beta.git
 
-Now, on your computer navigate on your drive were you want your working local copy of the repo locatated, ie /home/YourAccount/repos
+Now, on your computer navigate on your drive were you want your working local copy of the repo located, ie /home/YourAccount/repos
 
 Then, type git clone and paste the link and hit enter, ie:
 
@@ -28,13 +28,13 @@ This will create a new folder called '32blit-beta' and download your repo here.
 
 cd into that new folder, ie cd 32blit-beta.
 
-Here enter the following commads, with your info:
+Here enter the following commands, with your info:
 
- git config --global user.name "Your Name"
+ git config --global user.name "Your Name"
 
- git config --global user.email "your@email.com"
+ git config --global user.email "your@email.com"
 
-Replace the values inside the quotes with your name and email address, this is to identify who made the canges and how to contact you, it's not your github account info.
+Replace the values inside the quotes with your name and email address, this is to identify who made the changes and how to contact you, it's not your github account info.
 
 [more detailed info here..](https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup)
 
@@ -63,7 +63,7 @@ git add .
 
 
 ### Ignored files
-view the file .gitignore in the repo root folder, it shows you which files will not be tracked and mostlikely you wont need to change these.
+view the file .gitignore in the repo root folder, it shows you which files will not be tracked and most-likely you wont need to change these.
 
 
 ### local commit
@@ -73,7 +73,7 @@ git commit -a -m "Commit message"
 
 This command will store changes to all files modified, not in the .gitignore file and use the message in between quotes.
 
-Remember, if you remove or add a file, you'll need to do a "git add ." command again, before commiting.
+Remember, if you remove or add a file, you'll need to do a "git add ." command again, before committing.
 
 ### local changes
 To see your changes in the repo run:
@@ -84,6 +84,15 @@ git diff
 To limit to files only tracked (in the staged area), run:
 
 git diff --staged
+
+### Removing or moving a local file
+Remove it as normal, then to tell git to remove it from the repository, run:
+
+git rm deleted-filename
+
+Similarly, moving a file run:
+
+git mv moved-filename
 
 ---
 
@@ -104,3 +113,53 @@ git push
 * [Youtube video: Introduction to Git](https://www.youtube.com/watch?v=USjZcfj8yxE) and the [webpage: Introduction to Git](https://www.notion.so/Introduction-to-Git-ac396a0697704709a12b6a0e545db049)
 * [Cheat sheet](https://github.github.com/training-kit)
 
+On Sun, Mar 15, 2020 at 4:31 AM eBay - betterworldbookswest <better_lrib3226ua@members.ebay.com> wrote:
+ 	 		 New message: ##- Please type your reply above this...	 																																																									 																		 															 										 New message from: betterworldbookswest (151,033 ) ##- Please type your reply above this line -##
+
+Your request (4174932) has been updated. To add additional comments, reply to this email.
+----------------------------------------------
+
+Kathleen, Mar 14, 1:25 PM EDT
+
+Hello,
+
+Thank you for writing! Please keep in mind that because we deal mostly in used books, any extra components, such as CDs, DVDs, figurines, or access codes are usually not included.
+
+CDs/DVDs: If the book does include a CD or DVD, it will be noted in the book's condition description ("With CD!"). Otherwise, there is no CD or DVD included, even if the term is used in the book's title. This is because items published with these qualifiers are legally binding and cannot be adjusted by sellers.
+
+Access Codes: Unless the book is described as "New," please assume that the book does not have an access code.
+
+Should you have any additional questions, we'll be happy to check on it for you.
+
+Sincerely,
+
+Kathleen
+
+---------------------------------------------- 										 				 Reply Dear mikeauman,
+
+##- Please type your reply above this line -##
+
+Your request (4174932) has been updated. To add additional comments, reply to this email.
+----------------------------------------------
+
+Kathleen, Mar 14, 1:25 PM EDT
+
+Hello,
+
+Thank you for writing! Please keep in mind that because we deal mostly in used books, any extra components, such as CDs, DVDs, figurines, or access codes are usually not included.
+
+CDs/DVDs: If the book does include a CD or DVD, it will be noted in the book's condition description ("With CD!"). Otherwise, there is no CD or DVD included, even if the term is used in the book's title. This is because items published with these qualifiers are legally binding and cannot be adjusted by sellers.
+
+Access Codes: Unless the book is described as "New," please assume that the book does not have an access code.
+
+Should you have any additional questions, we'll be happy to check on it for you.
+
+Sincerely,
+
+Kathleen
+
+----------------------------------------------
+
+- betterworldbookswest 	 
+Game Developer's Marketplace : The Definitive Guide to Making It Big in the Inte Price: US $11.93 Buy it now Quantity remaining: 1
+ Buy it now 	 	 		 Get to know the seller betterworldbookswest 		 			 			 • 			 Located: Mishawaka, IN, United States 			 			 			 • 			 Member since: 15 Jul, 2016 			 			 			 • 			 Positive Feedback: 99.4% 			 		 	   		 We scan messages to enforce policies. Only purchases on eBay are covered by eBay Money Back Guarantee. Asking your trading partner to complete a transaction outside of eBay is not allowed. 	 Email reference ID: [#a11-qgg8kk5uhw#]_[#affc7828b26c4b9298c5aef273f26bd3#]We don't check this mailbox, so please don't reply to this message. If you have a question, go to Help & Contact.eBay sent this message to Mike Garcia (mikeauman). Learn more about account protection. eBay is committed to your privacy. Learn more about our privacy notice and user agreement.©1995-2020 eBay Inc., eBay Marketplaces GmbH, Helvetiastrasse 15/17, 3005 Bern, Switzerland
