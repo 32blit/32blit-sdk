@@ -90,20 +90,20 @@ void Profiler::remove_probe(ProfilerProbe *pProbe)
 
 void Profiler::start_all_probes()
 {
-	for(ProfilerProbesIter iP = m_probes.begin(); iP != m_probes.end(); iP++)
-		(*iP)->start();
+  for(ProfilerProbe *pProbe : m_probes)
+    pProbe->start();
 }
 
 void Profiler::clear_all_probes()
 {
-	for(ProfilerProbesIter iP = m_probes.begin(); iP != m_probes.end(); iP++)
-		(*iP)->clear();
+  for(ProfilerProbe *pProbe : m_probes)
+    pProbe->clear();
 }
+
 void Profiler::log_probes()
 {
-	for(ProfilerProbesIter iP = m_probes.begin(); iP != m_probes.end(); iP++)
+  for(ProfilerProbe *pProbe : m_probes)
 	{
-		ProfilerProbe *pProbe = *(iP);
 		const ProfilerProbe::Metrics &metrics = pProbe->elapsed_metrics();
 		printf("%-16s %" PRIu32 ",\t%" PRIu32 ",\t%" PRIu32 ",\t%" PRIu32 "\n\r", pProbe->name(), metrics.uMinElapsedUs, metrics.uElapsedUs, metrics.uAvgElapsedUs, metrics. uMaxElapsedUs);
 	}
@@ -221,10 +221,8 @@ void Profiler::display_probe_overlay(uint8_t uPage)
 
 			uint16_t uBarHeight = (m_uRowHeight/uBarCount);
 
-
-			for(ProfilerProbesIter iP = m_probes.begin() + uStartProbe; iP != m_probes.begin() + uStartProbe + m_uRows && iP != m_probes.end(); iP++)
+      for(ProfilerProbe *pProbe : m_probes)
 			{
-				ProfilerProbe *pProbe = (*iP);
 				ProfilerProbe::Metrics metrics = pProbe->elapsed_metrics();
 
 				uint32_t uUseGraphTimeUs;
