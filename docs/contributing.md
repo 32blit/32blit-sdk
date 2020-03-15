@@ -17,6 +17,7 @@ Next, click the big green "Clone or download" button, you will copy the link pro
 Now, on your computer navigate on your drive were you want your working local copy of the repo locatated, ie /home/YourAccount/repos
 
 Then, type git clone and paste the link and hit enter, ie:
+
 "git clone https://github.com/YourAccount/32blit-beta.git" Where YourAccount is your github account
 
 [more detailed info here..](https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository)
@@ -39,13 +40,18 @@ Replace the values inside the quotes with your name and email address, this is t
 
 ### listing changes
 Firstly, navigate to your 32blit-beta repo folder to run all your git commands.
+
 As a test create or modify a file in the repo and run this command:
+
 git status
 
 ### Add command
 It will list tracked and untracked files that have been changed.
+
 We want git to track (or store) the changes of the files in a Staging Area (ie revision history), so we need to tell git to track them with the add command.
+
 We can add the files individually or just add all the files recursively in the project with a single command:
+
 git add .
 
 
@@ -58,25 +64,36 @@ view the file .gitignore in the repo root folder, it shows you which files will 
 
 ## local commit
 To track your file changes over time, you will need to make (many) local commits to your files, run:
+
 git commit -a -m "Commit message"
 
 This command will store changes to all files modified, not in the .gitignore file and use the message in between quotes.
+
 Remember, if you remove or add a file, you'll need to do a "git add ." command again, before commiting.
 
-## local/remote changesgit push
+# local changes
 To see your changes in the repo run:
+
 git diff 
+
+
 To limit to files only tracked (in the staged area), run:
+
 git diff --staged
+
+# your remote repo
 
 ## Updating your remote repo
 You will be asked for you github username and password each time:
+
 git push
+
+# Head repo
 
 ## Merging into offical repo
 
 
-## Helpful links
-* [Youtube video: Introduction to Git](https://www.youtube.com/watch?v=USjZcfj8yxE) [webpage: Introduction to Git](https://www.notion.so/Introduction-to-Git-ac396a0697704709a12b6a0e545db049)
-* [Cheat sheet] (https://github.github.com/training-kit)
+# Helpful links
+* [Youtube video: Introduction to Git](https://www.youtube.com/watch?v=USjZcfj8yxE) and the [webpage: Introduction to Git](https://www.notion.so/Introduction-to-Git-ac396a0697704709a12b6a0e545db049)
+* [Cheat sheet](https://github.github.com/training-kit)
 
