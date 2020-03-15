@@ -46,7 +46,7 @@ We can add the files individually or just add all the files recursively in the p
 **git add .**
 
 
-[more detailed info on add here..](https://git-scm.com/book/en/v2/Getting-Started-Getting-Help) and (https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository)
+[more detailed info on add here..](https://git-scm.com/book/en/v2/Getting-Started-Getting-Help) and [here](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository)
 
 
 ## Ignored files
