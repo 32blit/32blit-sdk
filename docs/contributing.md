@@ -119,13 +119,13 @@ $ git push
 ---
 ---
 
-## Merging into offical Head repo
+## Merging into official Head repo
 
 Log into github.com.
 
 On your 32blit-beta clone repo, click the "Pull request" button.
 
-Now, clieck the "create pull request" button.
+Now, click the "create pull request" button.
 
 ---
 
