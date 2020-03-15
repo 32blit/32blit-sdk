@@ -118,6 +118,7 @@ $ git push
 
 ### Merging into offical Head repo
 
+$ git push master
 ---
 
 # Helpful links
