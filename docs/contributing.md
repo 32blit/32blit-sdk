@@ -123,7 +123,9 @@ $ git push
 
 Log into github.com.
 
-On your 32blit-beta clone repo, click the "Pull request" button.
+On your 32blit-beta clone repo, click the "Pull request" tab.
+
+Next, click the "New pull request" button.
 
 Now, click the "create pull request" button.
 
