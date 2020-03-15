@@ -94,16 +94,20 @@ void Profiler::start_all_probes()
 		(*iP)->start();
 }
 
+void Profiler::clear_all_probes()
+{
+	for(ProfilerProbesIter iP = m_probes.begin(); iP != m_probes.end(); iP++)
+		(*iP)->clear();
+}
 void Profiler::log_probes()
 {
-	printf("\n\r");
 	for(ProfilerProbesIter iP = m_probes.begin(); iP != m_probes.end(); iP++)
 	{
 		ProfilerProbe *pProbe = *(iP);
 		const ProfilerProbe::Metrics &metrics = pProbe->elapsed_metrics();
 		printf("%-16s %" PRIu32 ",\t%" PRIu32 ",\t%" PRIu32 ",\t%" PRIu32 "\n\r", pProbe->name(), metrics.uMinElapsedUs, metrics.uElapsedUs, metrics.uAvgElapsedUs, metrics. uMaxElapsedUs);
 	}
-
+	printf("\n\r");
 }
 
 uint32_t Profiler::get_probe_count()

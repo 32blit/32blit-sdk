@@ -81,6 +81,7 @@ public:
 
 	void clear()
 	{
+    	m_pRunningAverage->reset();
 		m_metrics.clear();
 		m_uStartUs = 0;
 	}
@@ -175,6 +176,7 @@ public:
 	ProfilerProbe *add_probe(const char *pszName,  uint32_t uRunningAverageSize, uint32_t uRunningAverageSpan=1);
 	void					remove_probe(ProfilerProbe *pProbe);
 	void					start_all_probes();
+    void					clear_all_probes();
 
 	void					log_probes();
 
