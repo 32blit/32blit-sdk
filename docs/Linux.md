@@ -3,8 +3,8 @@
 First install the required tools:
 
 ```
-sudo apt install git gcc g++ gcc-arm-none-eabi cmake make python3 python3-pip libsdl2-dev libsdl2-image-dev
-pip3 install construct bitstring
+sudo apt install git gcc g++ gcc-arm-none-eabi cmake make python3 python3-pip python3-setuptools libsdl2-dev libsdl2-image-dev
+sudo pip3 install construct bitstring
 ```
 
 ## Building & Running on 32Blit
