@@ -60,7 +60,7 @@ To track your file changes over time, you will need to make (many) local commits
 This command will store changes to all files modified, not in the **.gitignore** file and use the message in between quotes.
 Remember, if you remove or add a file, you'll need to do a "git add ." command again, before commiting.
 
-## local/remote changes
+## local/remote changesgit push
 To see your changes in the repo run:
 git diff 
 To limit to files only tracked (in the staged area), run:
