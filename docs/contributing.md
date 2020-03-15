@@ -12,26 +12,27 @@ Go to: https://github.com/pimoroni/32blit-beta
 
 Click the Fork link, this will mirror the official (or Head) repo (short for repository) into your github account and it will redirect you there automatically, ie: YourAccount/32blit-beta.
 
-Next, click the big green "Clone or download" button, you will copy the link provide, ie: https://github.com/YourAccount/32blit-beta.git
+Next, click the big green "Clone or download" button, you will copy the link provide, ie: github.com/YourAccount/32blit-beta.git
 
 Now, on your computer navigate on your drive were you want your working local copy of the repo locatated, ie /home/YourAccount/repos
 
 Then, type git clone and paste the link and hit enter, ie:
-"git clone https://github.com/YourAccount/32blit-beta.git"
-
-Where YourAccount is your github account
+"git clone https://github.com/YourAccount/32blit-beta.git" Where YourAccount is your github account
 
 [more detailed info here..](https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository)
 
-
 This will create a new folder called '32blit-beta' and download your repo here.
-cd into that new folder, ie cd 32blit-beta
+
+cd into that new folder, ie cd 32blit-beta.
+
 Here enter the following commads, with your info:
 
-git config --global user.name "Your Name"
-git config --global user.email "your@email.com"
+ git config --global user.name "Your Name"
+
+ git config --global user.email "your@email.com"
 
 Replace the values inside the quotes with your name and email address, this is to identify who made the canges and how to contact you, it's not your github account info.
+
 [more detailed info here..](https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup)
 
 ## Using git on your local repo
@@ -76,6 +77,6 @@ git push
 
 
 ## Helpful links
-* [Youtube video: Introduction to Git](https://www.youtube.com/watch?v=USjZcfj8yxE) [webpage: Introduction to Git] https://www.notion.so/Introduction-to-Git-ac396a0697704709a12b6a0e545db049) 
+* [Youtube video: Introduction to Git](https://www.youtube.com/watch?v=USjZcfj8yxE) [webpage: Introduction to Git](https://www.notion.so/Introduction-to-Git-ac396a0697704709a12b6a0e545db049)
 * [Cheat sheet] (https://github.github.com/training-kit)
 
