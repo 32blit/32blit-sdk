@@ -25,8 +25,8 @@ static blit::JPEGImage decode_jpeg_rwops(SDL_RWops *rwops)
   return ret;
 }
 
-blit::JPEGImage blit_decode_jpeg_buffer(uint8_t *ptr, uint32_t len) {
-  auto rwops = SDL_RWFromMem(ptr, len);
+blit::JPEGImage blit_decode_jpeg_buffer(const uint8_t *ptr, uint32_t len) {
+  auto rwops = SDL_RWFromConstMem(ptr, len);
   return decode_jpeg_rwops(rwops);
 }
 

@@ -95,7 +95,7 @@ namespace blit {
     uint16_t                        row_stride;               // bytes per row
 
     Surface                        *mask = nullptr;           // optional mask
-    Pen                            *palette;                  // palette entries (for paletted images)
+    Pen                            *palette = nullptr;        // palette entries (for paletted images)
 
     SpriteSheet                    *sprites = nullptr;        // active spritesheet
 
