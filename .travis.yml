@@ -58,12 +58,15 @@ jobs:
         - RELEASE_FILE=${TRAVIS_BUILD_DIR}${REPO}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}-STM32
       addons:
         apt:
-          gcc-arm-none-eabi
-          libnewlib-arm-none-eabi
-          libstdc++-arm-none-eabi-newlib
-          python3-pip
-          python3-setuptools
-          zip
+          sources:
+            sourceline: "ppa:daft-freak/arm-gcc"
+          packages:
+            gcc-arm-none-eabi
+            libnewlib-arm-none-eabi
+            libstdc++-arm-none-eabi-newlib
+            python3-pip
+            python3-setuptools
+            zip
       install:
         - python3 -m pip install 32blit bitstring construct
       after_success:
