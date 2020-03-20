@@ -15,14 +15,14 @@ namespace blit {
 
     inline Point& operator-= (const Point &a) { x -= a.x; y -= a.y; return *this; }
     inline Point& operator+= (const Point &a) { x += a.x; y += a.y; return *this; }
-    inline Point& operator*= (const float a) { x *= a;   y *= a;   return *this; }
+    inline Point& operator*= (const float a) { x = static_cast<int32_t>(x * a); y = static_cast<int32_t>(y * a); return *this; }
     inline Point& operator*= (const Mat3 &a) { this->transform(a); return *this; }
     inline Point& operator/= (const int32_t a) { x /= a;   y /= a;   return *this; }
 
     void   transform(const Mat3 &m) {     
-      float tx = x; float ty = y;
-      this->x = (m.v00 * tx + m.v01 * ty + m.v02);
-      this->y = (m.v10 * tx + m.v11 * ty + m.v12);
+      float tx = static_cast<float>(x); float ty = static_cast<float>(y);
+      this->x = static_cast<int32_t>(m.v00 * tx + m.v01 * ty + m.v02);
+      this->y = static_cast<int32_t>(m.v10 * tx + m.v11 * ty + m.v12);
     }
   };
 
