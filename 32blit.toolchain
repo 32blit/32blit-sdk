@@ -44,3 +44,4 @@ set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g -Og")
 set(CMAKE_EXE_LINKER_FLAGS_INIT "-specs=nosys.specs -Wl,--gc-sections,--no-wchar-size-warning")
 
 add_definitions(-DTARGET_32BLIT_HW)
+set(32BLIT_HW 1)
