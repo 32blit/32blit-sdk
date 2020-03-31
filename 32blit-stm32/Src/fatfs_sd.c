@@ -193,6 +193,8 @@ static bool SD_TxDataBlock(const uint8_t *buff, BYTE token)
 		/* recv buffer clear */
 		while (SPI_RxByte() == 0);
 	}
+	else
+		return TRUE;
 
 	/* transmit 0x05 accepted */
 	if ((resp & 0x1F) == 0x05) return TRUE;

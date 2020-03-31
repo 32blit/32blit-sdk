@@ -44,9 +44,9 @@ namespace sound {
     TIM_MasterConfigTypeDef sMasterConfig = {0};
 
     htim6.Instance = TIM6;
-    htim6.Init.Prescaler = 128;
+    htim6.Init.Prescaler = 310;
     htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
-    htim6.Init.Period = 85;
+    htim6.Init.Period = 34;
 
     if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
     {

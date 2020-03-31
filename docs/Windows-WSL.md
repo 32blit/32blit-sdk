@@ -19,6 +19,10 @@ After that, proceed to the Microsoft Store to download Ubuntu for WSL.
 The following requirements enable cross-compile to 32Blit via ARM GCC and to Windows via MinGW:
 
 ```shell
+# Ubuntu 18.04's gcc-arm-none-eabi is too old, this repo backports the one from 19.10
+sudo add-apt-repository ppa:daft-freak/arm-gcc
+sudo apt update
+
 sudo apt install gcc gcc-arm-none-eabi gcc-mingw-w64 g++-mingw-w64 unzip cmake make python3 python3-pip
 pip3 install construct bitstring
 ```

@@ -81,6 +81,7 @@ public:
 
 	void clear()
 	{
+    	m_pRunningAverage->reset();
 		m_metrics.clear();
 		m_uStartUs = 0;
 	}
@@ -153,7 +154,6 @@ class Profiler
 {
 public:
 	typedef std::vector<ProfilerProbe *>						ProfilerProbes;
-	typedef std::vector<ProfilerProbe *>::iterator	ProfilerProbesIter;
 	enum DisplayMetric {dmMin, dmCur, dmAvg, dmMax};
 
 
@@ -175,6 +175,7 @@ public:
 	ProfilerProbe *add_probe(const char *pszName,  uint32_t uRunningAverageSize, uint32_t uRunningAverageSpan=1);
 	void					remove_probe(ProfilerProbe *pProbe);
 	void					start_all_probes();
+    void					clear_all_probes();
 
 	void					log_probes();
 

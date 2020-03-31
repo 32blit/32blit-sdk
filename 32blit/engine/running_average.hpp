@@ -54,9 +54,9 @@ public:
 
 	void reset()
 	{
-		m_uSize 	= 0;
 		m_uIndex 	= 0;
 		m_average = 0;
+    	m_bFull   = false;
 		m_data.clear();
 
 	}

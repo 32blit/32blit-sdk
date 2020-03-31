@@ -17,7 +17,7 @@ namespace blit {
     Rect(Point tl, Size s) : x(tl.x), y(tl.y), w(s.w), h(s.h) {}
     Rect(int32_t x, int32_t y, int32_t w, int32_t h) : x(x), y(y), w(w), h(h) {}
 
-    inline Rect& operator*= (const float a) { x *= a; y *= a; w *= a; h *= a; return *this; }
+    inline Rect& operator*= (const float a) { x = static_cast<int32_t>(x * a); y = static_cast<int32_t>(y * a); w = static_cast<int32_t>(w * a); h = static_cast<int32_t>(h * a); return *this; }
 
     bool empty() const {
       return w <= 0 || h <= 0; 
