@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.8)
 project (examples)
 include (../32blit.cmake)
 add_subdirectory(another-world)
