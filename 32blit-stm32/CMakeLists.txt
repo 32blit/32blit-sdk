@@ -170,8 +170,6 @@ set(MCU_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}")
 set(MCU_LINKER_SCRIPT "${MCU_LINKER_SCRIPT}" PARENT_SCOPE)
 set(MCU_LINKER_SCRIPT_EXT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT_EXT}" PARENT_SCOPE)
 
-find_package(PythonInterp 3 REQUIRED)
-
 function(blit_executable_common NAME)
 	target_link_libraries(${NAME} BlitEngine)
 	set_property(TARGET ${NAME} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Map=${NAME}.map,--cref")
@@ -202,6 +200,8 @@ function(blit_executable NAME SOURCES)
 endfunction()
 
 function(blit_executable_int_flash NAME SOURCES)
+	find_package(PythonInterp 3.6 REQUIRED)
+
 	add_executable(${NAME} $<TARGET_OBJECTS:BlitHalSTM32> ${SOURCES} ${ARGN})
 
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.bin ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.dfu
