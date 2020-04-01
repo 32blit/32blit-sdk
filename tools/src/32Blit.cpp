@@ -92,7 +92,9 @@ bool OpenComPort(const char *pszComPort, bool bTestConnection = false)
 uint32_t WriteCom(char *pBuffer, uint32_t uLen)
 {
     DWORD dwWritten = 0;
-    if (!WriteFile(hComm, pBuffer, uLen, NULL, &osTX) && GetLastError() == ERROR_IO_PENDING)
+    auto write = WriteFile(hComm, pBuffer, uLen, NULL, &osTX);
+    auto err = GetLastError();
+    if (!write && err == ERROR_IO_PENDING)
         GetOverlappedResult(hComm, &osTX, &dwWritten, TRUE);
     return dwWritten;
 }
