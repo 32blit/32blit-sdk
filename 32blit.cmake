@@ -14,9 +14,9 @@ if (NOT DEFINED BLIT_ONCE)
 
 	add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/32blit 32blit)
 
-	find_package(PythonInterp 3 REQUIRED)
-
 	function (blit_assets_yaml TARGET FILE)
+		find_package(PythonInterp 3.6 REQUIRED)
+
 		# cause cmake to reconfigure whenever the asset list changes
 		set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
 
