@@ -124,3 +124,11 @@ bool create_directory(std::string path) {
 
   return r == FR_OK || r == FR_EXIST;
 }
+
+bool rename_file(std::string old_name, std::string new_name) {
+  return f_rename(old_name.c_str(), new_name.c_str()) == FR_OK;
+}
+
+bool remove_file(std::string path) {
+  return f_unlink(path.c_str()) == FR_OK;
+}

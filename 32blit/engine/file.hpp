@@ -25,6 +25,9 @@ namespace blit {
   bool directory_exists(std::string path);
 
   bool create_directory(std::string path);
+
+  bool rename_file(std::string old_name, std::string new_name);
+  bool remove_file(std::string path);
   
   class File final {
   public:

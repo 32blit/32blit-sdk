@@ -332,6 +332,8 @@ void blit_init() {
     blit::api.file_exists = ::file_exists;
     blit::api.directory_exists = ::directory_exists;
     blit::api.create_directory = ::create_directory;
+    blit::api.rename_file = ::rename_file;
+    blit::api.remove_file = ::remove_file;
 
     blit::api.enable_us_timer = ::enable_us_timer;
     blit::api.get_us_timer = ::get_us_timer;

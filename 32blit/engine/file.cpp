@@ -42,6 +42,14 @@ namespace blit {
     return api.create_directory(path);
   }
 
+  bool rename_file(std::string old_name, std::string new_name) {
+    return api.rename_file(old_name, new_name);
+  }
+
+  bool remove_file(std::string path) {
+    return api.remove_file(path);
+  }
+
   bool File::open(std::string file, int mode) {
     close();
 
