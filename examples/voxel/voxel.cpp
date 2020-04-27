@@ -233,7 +233,6 @@ void render(uint32_t time_ms) {
 
 void update(uint32_t time_ms) {
   static uint16_t tick = 0;
-  static uint32_t last_buttons = 0;
   
   tick++;
 
@@ -283,13 +282,11 @@ void update(uint32_t time_ms) {
     }
   }
 
-  if(!(buttons & A) && (last_buttons & A)) {
+  if(buttons.released & A) {
     terrain_index++;
     if(terrain_index > 4) {
       terrain_index = 1;
     }
     load_map();
   }
-
-  last_buttons = buttons;
 }

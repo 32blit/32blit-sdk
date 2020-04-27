@@ -83,24 +83,21 @@ void init()
 void render(uint32_t time)
 {
 	static Point    ptMiddle(SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
-	static uint32_t lastButtons = 0;
 
 	//static ProfilerProbe *pAwayRenderProbe = g_profiler.AddProbe("AwayFromRender");
 
 
 	//pAwayRenderProbe->StoreElapsedUs(true);
 
-	uint32_t changedButtons = buttons ^ lastButtons;
-
-	bool button_a = buttons & changedButtons & Button::A;
-	bool button_b = buttons & changedButtons & Button::B;
-	bool button_x = buttons & changedButtons & Button::X;
-	bool button_y = buttons & changedButtons & Button::Y;
-	bool button_up = buttons & changedButtons & Button::DPAD_UP;
-	bool button_down = buttons & changedButtons & Button::DPAD_DOWN;
-	bool button_left = buttons & changedButtons & Button::DPAD_LEFT;
-	bool button_right = buttons & changedButtons & Button::DPAD_RIGHT;
-	bool button_home = buttons & changedButtons & Button::HOME;
+	bool button_a = buttons.pressed & Button::A;
+	bool button_b = buttons.pressed & Button::B;
+	bool button_x = buttons.pressed & Button::X;
+	bool button_y = buttons.pressed & Button::Y;
+	bool button_up = buttons.pressed & Button::DPAD_UP;
+	bool button_down = buttons.pressed & Button::DPAD_DOWN;
+	bool button_left = buttons.pressed & Button::DPAD_LEFT;
+	bool button_right = buttons.pressed & Button::DPAD_RIGHT;
+	bool button_home = buttons.pressed & Button::HOME;
 
 	if(button_up && (g_uRows>1))
 	{
@@ -157,8 +154,6 @@ void render(uint32_t time)
 		// Log to CDC current values
 		g_profiler.log_probes();
 	}
-
-	lastButtons = buttons;
 
 	g_pRenderProbe->start();
 

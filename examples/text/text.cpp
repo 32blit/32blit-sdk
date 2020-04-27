@@ -3,7 +3,6 @@
 using namespace blit;
 
 bool variable_width = true;
-uint32_t prev_buttons = buttons;
 TextAlign alignment = TextAlign::top_left;
 
 std::string alignment_to_string(TextAlign alignment) {
@@ -77,7 +76,7 @@ void render(uint32_t time) {
 }
 
 void update(uint32_t time) {
-    if ((prev_buttons & Button::A) && !(buttons & Button::A))
+    if (buttons.released & Button::A)
         variable_width = !variable_width;
 
     alignment = TextAlign::top_left;
@@ -95,6 +94,4 @@ void update(uint32_t time) {
 	else if (!(buttons & Button::DPAD_LEFT)) {
 		alignment = (TextAlign)(alignment | TextAlign::center_h);
 	}
-
-    prev_buttons = buttons;
 }
