@@ -260,29 +260,24 @@ void FlashLoader::RenderFlashCDC(uint32_t time)
 void FlashLoader::RenderFlashFile(uint32_t time)
 {
 	static uint32_t lastRepeat = 0;
-	static uint32_t lastButtons = 0;
 
 	if(!m_bFsInit)
 		FSInit();
 
-	uint32_t changedButtons = buttons ^ lastButtons;
+	bool button_a = buttons.pressed & Button::A;
+	bool button_x = buttons.pressed & Button::X;
+	bool button_y = buttons.pressed & Button::Y;
 
-	bool button_a = buttons & changedButtons & Button::A;
-	bool button_x = buttons & changedButtons & Button::X;
-	bool button_y = buttons & changedButtons & Button::Y;
+	bool button_up = buttons.pressed & Button::DPAD_UP;
+	bool button_down = buttons.pressed & Button::DPAD_DOWN;
 
-	bool button_up = buttons & changedButtons & Button::DPAD_UP;
-	bool button_down = buttons & changedButtons & Button::DPAD_DOWN;
-
-	bool button_home = buttons & changedButtons & Button::HOME;
+	bool button_home = buttons.pressed & Button::HOME;
 
 	if(time - lastRepeat > 150 || button_up || button_down) {
 		button_up = buttons & Button::DPAD_UP;
 		button_down = buttons & Button::DPAD_DOWN;
 		lastRepeat = time;
 	}
-
-	lastButtons = buttons;
 
 	screen.pen = Pen(0,0,0);
 	screen.rectangle(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
