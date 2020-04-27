@@ -6,6 +6,7 @@
 #include "engine.hpp"
 #include "file.hpp"
 #include "../audio/audio.hpp"
+#include "../engine/input.hpp"
 #include "../graphics/jpeg.hpp"
 #include "../graphics/surface.hpp"
 #include "../types/vec2.hpp"
@@ -14,7 +15,7 @@
 namespace blit {
   #pragma pack(push, 4)
   struct API {
-    uint32_t buttons;
+    ButtonState buttons;
     float hack_left;
     float hack_right;
     float vibration;

@@ -15,7 +15,7 @@ namespace blit {
 
   static_assert(sizeof(API) < 2048);
 
-  uint32_t &buttons = api.buttons;
+  ButtonState &buttons = api.buttons;
   float &hack_left = api.hack_left;
   float &hack_right = api.hack_right;
   float &vibration = api.vibration;

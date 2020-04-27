@@ -72,7 +72,9 @@ void DFUBoot(void)
 
 static void init_api_shared() {
   // Reset button state, this prevents the user app immediately seeing the last button transition used to launch the game
-  api.buttons = 0;
+  api.buttons.state = 0;
+  api.buttons.pressed = 0;
+  api.buttons.released = 0;
 
   // reset shared outputs
   api.vibration = 0.0f;
