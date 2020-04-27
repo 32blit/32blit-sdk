@@ -421,16 +421,14 @@ Point press_a_origin (MenuItem item, float screen_width) { return Point(screen_w
 Rect menu_item_frame (MenuItem item, float screen_width) { return Rect (0, item * 10 + 19, screen_width, 9); }
 
 void blit_menu_update(uint32_t time) {
-  static uint32_t last_buttons = 0;
-  uint32_t changed_buttons = blit::buttons ^ last_buttons;
-  if(blit::buttons & changed_buttons & blit::Button::DPAD_UP) {
+  if(blit::buttons.pressed & blit::Button::DPAD_UP) {
     menu_item --;
     
-  } else if (blit::buttons & changed_buttons & blit::Button::DPAD_DOWN) {
+  } else if (blit::buttons.pressed & blit::Button::DPAD_DOWN) {
     menu_item ++;
     
   } else {
-    bool button_a = blit::buttons & changed_buttons & blit::Button::A;
+    bool button_a = blit::buttons.pressed & blit::Button::A;
     switch(menu_item) {
       case BACKLIGHT:
         if (blit::buttons & blit::Button::DPAD_LEFT) {
@@ -468,8 +466,6 @@ void blit_menu_update(uint32_t time) {
         break;
     }
   }
-
-  last_buttons = blit::buttons;
 }
 
 void blit_menu_render(uint32_t time) {
