@@ -14,13 +14,6 @@ extern void render(uint32_t time);
 extern char *get_fr_err_text(FRESULT err);
 extern bool blit_sd_detected();
 
-// LTDC and framebuffer handling
-extern char __ltdc_start;
-extern void blit_swap();
-extern void blit_flip();
-extern blit::Surface &set_screen_mode(blit::ScreenMode new_mode);
-extern void blit_clear_framebuffer();
-
 // Blit setup and main loop
 extern void blit_tick();
 extern void blit_init();
@@ -30,9 +23,6 @@ extern void blit_update_vibration();
 extern void blit_update_led();
 extern void blit_process_input();
 extern void blit_i2c_tick();
-
-// Audio
-extern void blit_enable_amp();
 
 // Switching execution
 extern void blit_switch_execution(void);
