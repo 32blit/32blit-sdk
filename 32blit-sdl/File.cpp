@@ -170,3 +170,11 @@ bool create_directory(std::string path) {
   return mkdir((basePath + path).c_str(), 0755) == 0 || errno == EEXIST;
 #endif
 }
+
+bool rename_file(std::string old_name, std::string new_name) {
+  return rename((basePath + old_name).c_str(), (basePath + new_name).c_str()) == 0;
+}
+
+bool remove_file(std::string path) {
+  return remove((basePath + path).c_str()) == 0;
+}
