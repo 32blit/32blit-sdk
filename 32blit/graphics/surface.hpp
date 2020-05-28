@@ -4,6 +4,7 @@
 #include <vector>
 #include <array>
 #include <cstdint>
+#include <string>
 
 #ifdef WIN32
 #define __attribute__(A)
