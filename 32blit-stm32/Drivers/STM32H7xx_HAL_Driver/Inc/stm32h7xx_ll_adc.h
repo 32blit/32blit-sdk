@@ -23,6 +23,8 @@
 
 #ifdef __cplusplus
 extern "C" {
+ 
+#define register // removed in C++17, has no effect at > -O0 anyway
 #endif
 
 /* Includes ------------------------------------------------------------------*/
