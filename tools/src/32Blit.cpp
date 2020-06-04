@@ -7,6 +7,7 @@
 
 #if defined(WIN32) || defined(__MINGW32__)
 #include <windows.h>
+#include <setupapi.h>
 #else
 #include <fcntl.h>
 #include <unistd.h>
@@ -162,21 +163,89 @@ bool HandleRX()
   return bResult;
 }
 
+#define BUFF_LEN 20
+
 std::string GuessPortName()
 {
-  TCHAR targetPath[1024];
+    HDEVINFO DeviceInfoSet;
+    DWORD DeviceIndex = 0;
+    SP_DEVINFO_DATA DeviceInfoData;
+    PCSTR DevEnum = "USB";
+    TCHAR ExpectedDeviceId[80] = { 0 }; //Store hardware id
+    BYTE szBuffer[1024] = { 0 };
+    DEVPROPTYPE ulPropertyType;
+    DWORD dwSize = 0;
+    DWORD Error = 0;
+    std::string _32blitCOMport = "";
+    //create device hardware id for 32blit
+    strcpy_s(ExpectedDeviceId, "VID_0483&PID_5740");
+    //SetupDiGetClassDevs returns a handle to a device information set
+    DeviceInfoSet = SetupDiGetClassDevs(
+        NULL,
+        DevEnum,
+        NULL,
+        DIGCF_ALLCLASSES | DIGCF_PRESENT);
+    if (DeviceInfoSet == INVALID_HANDLE_VALUE)
+        return "";
+    //Fills a block of memory with zeros
+    ZeroMemory(&DeviceInfoData, sizeof(SP_DEVINFO_DATA));
+    DeviceInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
+    //Receive information about an enumerated device
+    while (SetupDiEnumDeviceInfo(
+        DeviceInfoSet,
+        DeviceIndex,
+        &DeviceInfoData))
+    {
+        DeviceIndex++;
+        //Retrieves a specified Plug and Play device property
+        if (SetupDiGetDeviceRegistryProperty(DeviceInfoSet, &DeviceInfoData, SPDRP_HARDWAREID,
+            &ulPropertyType, (BYTE*)szBuffer,
+            sizeof(szBuffer),   // The size, in bytes
+            &dwSize))
+        {
+            if (strstr((const char*)szBuffer, ExpectedDeviceId) == NULL) {
+                continue;
+            }
 
-  for (int i = 1; i < 256; i++)
-  {
-    auto portName = "COM" + std::to_string(i);
-
-    // just return the first USB serial
-    if (QueryDosDevice(portName.c_str(), targetPath, 1024) && std::string(targetPath).find("USB") != std::string::npos)
-      return portName;
-  }
-
-  return "";
+            HKEY hDeviceRegistryKey;
+            //Get the key
+            hDeviceRegistryKey = SetupDiOpenDevRegKey(DeviceInfoSet, &DeviceInfoData, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
+            if (hDeviceRegistryKey == INVALID_HANDLE_VALUE)
+            {
+                Error = GetLastError();
+                break; //Not able to open registry
+            }
+            else
+            {
+                // Read in the name of the port
+                char pszPortName[BUFF_LEN];
+                DWORD dwSize = sizeof(pszPortName);
+                DWORD dwType = 0;
+                if ((RegQueryValueEx(hDeviceRegistryKey, "PortName", NULL, &dwType, (LPBYTE)pszPortName, &dwSize) == ERROR_SUCCESS) && (dwType == REG_SZ))
+                {
+                    // Check if it really is a com port
+                    if (strncmp(pszPortName, "COM", 3) == 0)
+                    {
+                        int nPortNr = atoi(pszPortName + 3);
+                        if (nPortNr != 0)
+                        {
+                            _32blitCOMport = pszPortName;
+                            break;
+                        }
+                    }
+                }
+                // Close the key now that we are finished with it
+                RegCloseKey(hDeviceRegistryKey);
+            }
+        }
+    }
+    if (DeviceInfoSet)
+    {
+        SetupDiDestroyDeviceInfoList(DeviceInfoSet);
+    }
+    return _32blitCOMport;
 }
+
 
 void usleep(uint32_t uSecs)
 {
