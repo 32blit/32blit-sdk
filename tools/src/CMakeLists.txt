@@ -9,3 +9,7 @@ if(APPLE)
     find_library(IOKIT_LIBRARY IOKit)
     target_link_libraries(32Blit ${COREFOUNDATION_LIBRARY} ${IOKIT_LIBRARY})
 endif()
+
+if(WIN32)
+    target_link_libraries(32Blit setupapi)
+endif()
