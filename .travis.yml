@@ -100,16 +100,7 @@ jobs:
           python3-setuptools
           zip
       before_script:
-        - |
-          if [ ! -f SDL2_image-2.0.5/README.txt ]; then
-            curl https://libsdl.org/release/SDL2-devel-2.0.10-mingw.tar.gz -o SDL2.tar.gz
-            curl https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.0.5-mingw.tar.gz -o SDL2_image.tar.gz
-            tar -xf SDL2.tar.gz
-            tar -xf SDL2_image.tar.gz
-            sed -i "s|/opt/local|$PWD/SDL2-2.0.10|g" ./SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/sdl2-config.cmake
-            # copy SDL2_image into SDL2
-            cp -r ./SDL2_image-2.0.5/x86_64-w64-mingw32 ./SDL2-2.0.10/
-          fi
+        - ci/install_sdl_mingw.sh
 
     - name: "macOS"
       os: osx
@@ -118,16 +109,7 @@ jobs:
          - $HOME/Library/Frameworks/SDL2.framework
          - $HOME/Library/Frameworks/SDL2_image.framework
       before_script:
-        - |
-          if [ ! -f ~/Library/Frameworks/SDL2_image.framework/SDL2_image ]; then
-            curl https://libsdl.org/release/SDL2-2.0.10.dmg -o SDL2.dmg
-            curl http://libsdl.org/projects/SDL_image/release/SDL2_image-2.0.5.dmg -o SDL2_image.dmg
-            hdiutil mount SDL2.dmg
-            hdiutil mount SDL2_image.dmg
-            mkdir -p ~/Library/Frameworks
-            cp -r /Volumes/SDL2/SDL2.framework ~/Library/Frameworks/
-            cp -r /Volumes/SDL2_image/SDL2_image.framework ~/Library/Frameworks/
-          fi
+        - ci/install_sdl_macos.sh
 
     - name: "Visual Studio (CMake)"
       os: windows
@@ -143,16 +125,7 @@ jobs:
         - export PATH=$PATH:"c:\Python38"
         - ln -s /c/Python38/python.exe /c/Python38/python3.exe
       before_script:
-        - |
-          if [ ! -f vs/sdl/include/SDL_image.h ]; then
-            curl https://libsdl.org/release/SDL2-devel-2.0.10-VC.zip -o SDL2.zip
-            curl https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.0.5-VC.zip -o SDL2_image.zip
-            unzip SDL2.zip -d vs/sdl
-            unzip SDL2_image.zip -d vs/sdl
-            # move dirs up
-            mv vs/sdl/SDL2-2.0.10/* vs/sdl
-            cp -r vs/sdl/SDL2_image-2.0.5/* vs/sdl
-          fi
+        - ci/install_sdl_vs.sh
       before_deploy:
         - cmake --build . --target install
         - 7z a ${RELEASE_FILE}.zip bin/*
@@ -175,16 +148,7 @@ jobs:
         - ln -s /c/Python38/python.exe /c/Python38/python3.exe
       script:
         - export PATH=$PATH:"c:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin"
-        - |
-          if [ ! -f vs/sdl/include/SDL_image.h ]; then
-            curl https://libsdl.org/release/SDL2-devel-2.0.10-VC.zip -o SDL2.zip
-            curl https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.0.5-VC.zip -o SDL2_image.zip
-            unzip SDL2.zip -d vs/sdl
-            unzip SDL2_image.zip -d vs/sdl
-            # move dirs up
-            mv vs/sdl/SDL2-2.0.10/* vs/sdl
-            cp -r vs/sdl/SDL2_image-2.0.5/* vs/sdl
-          fi
+        - ci/install_sdl_vs.sh
         - msbuild.exe vs/32blit.sln
 
 install:
