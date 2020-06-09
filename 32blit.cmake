@@ -55,7 +55,7 @@ if (NOT DEFINED BLIT_ONCE)
 			message(WARNING "32Blit tool not found")
 		endif()
 
-		add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/32blit-stm32 32blit-stm32)
+		include(${CMAKE_CURRENT_LIST_DIR}/32blit-stm32/executable.cmake)
 	else()
 		add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/32blit-sdl 32blit-sdl)
 	endif()

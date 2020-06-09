@@ -5,6 +5,7 @@ include(32blit.cmake)
 add_subdirectory(examples)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Generic)
+    add_subdirectory(32blit-stm32)
     add_subdirectory(firmware)
 endif()
 
