@@ -63,7 +63,6 @@ typedef long ssize_t;
 HANDLE hComm = INVALID_HANDLE_VALUE;
 OVERLAPPED osRX = { 0 };
 OVERLAPPED osTX = { 0 };
-DWORD dwWritten = 0; // should be in WriteCom() but doesn't work on stack, windows guy needs to look at this
 bool bWaitingOnRx = false;
 
 void CloseCom()
@@ -71,6 +70,7 @@ void CloseCom()
   CloseHandle(osRX.hEvent);
   CloseHandle(osTX.hEvent);
   CloseHandle(hComm);
+  hComm = INVALID_HANDLE_VALUE;
 }
 
 bool OpenComPort(const char *pszComPort, bool bTestConnection = false)
@@ -92,11 +92,10 @@ bool OpenComPort(const char *pszComPort, bool bTestConnection = false)
 
 uint32_t WriteCom(char *pBuffer, uint32_t uLen)
 {
-  if (!WriteFile(hComm, pBuffer, uLen, &dwWritten, &osTX))
-  {
-    GetOverlappedResult(hComm, &osTX, &dwWritten, TRUE);
-  }
-  return dwWritten;
+    DWORD dwWritten = 0;
+    if (!WriteFile(hComm, pBuffer, uLen, NULL, &osTX) && GetLastError() == ERROR_IO_PENDING)
+        GetOverlappedResult(hComm, &osTX, &dwWritten, TRUE);
+    return dwWritten;
 }
 
 bool GetRXByte(char &rxByte)
