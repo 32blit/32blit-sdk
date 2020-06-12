@@ -53,25 +53,24 @@ jobs:
         edge: true
 
     - name: "STM32"
+      dist: focal
       env:
         - TOOLCHAIN=../32blit.toolchain
         - RELEASE_FILE=${TRAVIS_BUILD_DIR}${REPO}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}-STM32
       addons:
         apt:
-          sources:
-            sourceline: "ppa:daft-freak/arm-gcc"
-          packages:
-            gcc-arm-none-eabi
-            libnewlib-arm-none-eabi
-            libstdc++-arm-none-eabi-newlib
-            python3-pip
-            python3-setuptools
-            zip
+          gcc-arm-none-eabi
+          libnewlib-arm-none-eabi
+          libstdc++-arm-none-eabi-newlib
+          python2
+          python3-pip
+          python3-setuptools
+          zip
       install:
         - python3 -m pip install 32blit bitstring construct
       after_success:
         - curl -O https://raw.githubusercontent.com/danvk/travis-weigh-in/adcc3a3e5bc16b360aa379d0fc23c3a6e1d9b21d/weigh_in.py
-        - python weigh_in.py firmware/flash-loader/flash-loader.bin
+        - python2 weigh_in.py firmware/flash-loader/flash-loader.bin
       before_deploy:
         - make install
         - tar -zcf ${RELEASE_FILE}.tar.gz bin/
@@ -100,16 +99,7 @@ jobs:
           python3-setuptools
           zip
       before_script:
-        - |
-          if [ ! -f SDL2_image-2.0.5/README.txt ]; then
-            curl https://libsdl.org/release/SDL2-devel-2.0.10-mingw.tar.gz -o SDL2.tar.gz
-            curl https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.0.5-mingw.tar.gz -o SDL2_image.tar.gz
-            tar -xf SDL2.tar.gz
-            tar -xf SDL2_image.tar.gz
-            sed -i "s|/opt/local|$PWD/SDL2-2.0.10|g" ./SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/sdl2-config.cmake
-            # copy SDL2_image into SDL2
-            cp -r ./SDL2_image-2.0.5/x86_64-w64-mingw32 ./SDL2-2.0.10/
-          fi
+        - ci/install_sdl_mingw.sh
 
     - name: "macOS"
       os: osx
@@ -118,16 +108,7 @@ jobs:
          - $HOME/Library/Frameworks/SDL2.framework
          - $HOME/Library/Frameworks/SDL2_image.framework
       before_script:
-        - |
-          if [ ! -f ~/Library/Frameworks/SDL2_image.framework/SDL2_image ]; then
-            curl https://libsdl.org/release/SDL2-2.0.10.dmg -o SDL2.dmg
-            curl http://libsdl.org/projects/SDL_image/release/SDL2_image-2.0.5.dmg -o SDL2_image.dmg
-            hdiutil mount SDL2.dmg
-            hdiutil mount SDL2_image.dmg
-            mkdir -p ~/Library/Frameworks
-            cp -r /Volumes/SDL2/SDL2.framework ~/Library/Frameworks/
-            cp -r /Volumes/SDL2_image/SDL2_image.framework ~/Library/Frameworks/
-          fi
+        - ci/install_sdl_macos.sh
 
     - name: "Visual Studio (CMake)"
       os: windows
@@ -143,16 +124,7 @@ jobs:
         - export PATH=$PATH:"c:\Python38"
         - ln -s /c/Python38/python.exe /c/Python38/python3.exe
       before_script:
-        - |
-          if [ ! -f vs/sdl/include/SDL_image.h ]; then
-            curl https://libsdl.org/release/SDL2-devel-2.0.10-VC.zip -o SDL2.zip
-            curl https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.0.5-VC.zip -o SDL2_image.zip
-            unzip SDL2.zip -d vs/sdl
-            unzip SDL2_image.zip -d vs/sdl
-            # move dirs up
-            mv vs/sdl/SDL2-2.0.10/* vs/sdl
-            cp -r vs/sdl/SDL2_image-2.0.5/* vs/sdl
-          fi
+        - ci/install_sdl_vs.sh
       before_deploy:
         - cmake --build . --target install
         - 7z a ${RELEASE_FILE}.zip bin/*
@@ -175,16 +147,7 @@ jobs:
         - ln -s /c/Python38/python.exe /c/Python38/python3.exe
       script:
         - export PATH=$PATH:"c:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin"
-        - |
-          if [ ! -f vs/sdl/include/SDL_image.h ]; then
-            curl https://libsdl.org/release/SDL2-devel-2.0.10-VC.zip -o SDL2.zip
-            curl https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.0.5-VC.zip -o SDL2_image.zip
-            unzip SDL2.zip -d vs/sdl
-            unzip SDL2_image.zip -d vs/sdl
-            # move dirs up
-            mv vs/sdl/SDL2-2.0.10/* vs/sdl
-            cp -r vs/sdl/SDL2_image-2.0.5/* vs/sdl
-          fi
+        - ci/install_sdl_vs.sh
         - msbuild.exe vs/32blit.sln
 
 install:
