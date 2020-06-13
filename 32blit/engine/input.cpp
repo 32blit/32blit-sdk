@@ -13,7 +13,7 @@ namespace blit {
    * \return `true` for pressed, `false` for released.
    */
   bool pressed(uint32_t button) {
-    return buttons & button;
+    return buttons.state & button;
   }
 
 }

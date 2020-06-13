@@ -68,6 +68,8 @@ namespace blit {
     while (pending_update_time >= update_rate_ms) {
       update(time - pending_update_time); // create fake timestamp that would have been accurate for the update event
       pending_update_time -= update_rate_ms;
+
+      api.buttons.pressed = api.buttons.released = 0;
     }
 
     last_tick_time = time;

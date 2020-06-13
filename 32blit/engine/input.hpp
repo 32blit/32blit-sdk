@@ -19,6 +19,25 @@ namespace blit {
     JOYSTICK = 1024
   };
 
-  extern bool pressed(uint32_t button);
+  struct ButtonState {
+    ButtonState &operator=(uint32_t v) {
+      uint32_t changed = state ^ v;
 
+      pressed |= changed & v;
+      released |= changed & state;
+
+      state = v;
+
+      return *this;
+    }
+
+    operator uint32_t() const {
+      return state;
+    }
+
+    uint32_t state;
+    uint32_t pressed, released; // state change since last update
+  };
+
+  extern bool pressed(uint32_t button);
 }

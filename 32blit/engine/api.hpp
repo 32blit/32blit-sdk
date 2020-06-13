@@ -7,7 +7,7 @@
 #include "../types/vec3.hpp"
 
 namespace blit {
-  extern uint32_t &buttons;
+  extern ButtonState &buttons;
   extern float &hack_left;
   extern float &hack_right;
   extern float &vibration;

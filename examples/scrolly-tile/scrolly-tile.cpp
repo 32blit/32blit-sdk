@@ -492,11 +492,6 @@ uint8_t collide_player_ud(uint8_t tile, uint8_t x, uint8_t y, void *args) {
 }
 
 void update(uint32_t time_ms) {
-    static uint16_t last_buttons = 0;
-    uint16_t changed = buttons ^ last_buttons;
-    uint16_t pressed = changed & buttons;
-    uint16_t released = changed & ~buttons;
-
     int32_t water_dist = player_position.y - (SCREEN_H - water_level);
     if (water_dist < 0) {
         water_dist = 0;
@@ -506,38 +501,36 @@ void update(uint32_t time_ms) {
 #endif
 
     if (game_state == enum_state::menu) {
-        if(pressed & Button::B) {
+        if(buttons.pressed & Button::B) {
             new_game();
         }
-        else if(pressed & Button::DPAD_UP) {
+        else if(buttons.pressed & Button::DPAD_UP) {
             current_random_source = RANDOM_TYPE_PRNG;
             new_level();
         }
-        else if(pressed & Button::DPAD_DOWN) {
+        else if(buttons.pressed & Button::DPAD_DOWN) {
             current_random_source = RANDOM_TYPE_HRNG;
             new_level();
         }
-        else if(pressed & Button::DPAD_RIGHT) {
+        else if(buttons.pressed & Button::DPAD_RIGHT) {
             if(current_random_source == RANDOM_TYPE_PRNG) {
                 current_random_seed++;
                 new_level();
             }
         }
-        else if(pressed & Button::DPAD_LEFT) {
+        else if(buttons.pressed & Button::DPAD_LEFT) {
             if(current_random_source == RANDOM_TYPE_PRNG) {
                 current_random_seed--;
                 new_level();
             }
         }
-        last_buttons = buttons;
         return;
     }
 
     if(game_state == enum_state::dead){
-        if(pressed & Button::B) {
+        if(buttons.pressed & Button::B) {
             game_state = enum_state::menu;
         }
-        last_buttons = buttons;
         return;
     }
 
@@ -583,7 +576,7 @@ void update(uint32_t time_ms) {
         }
 
         if(player_jump_count){
-            if(pressed & Button::A) {
+            if(buttons.pressed & Button::A) {
                 if(player_state == wall_left
                 || player_state == wall_right
                 || player_state == near_wall_left
@@ -668,8 +661,6 @@ void update(uint32_t time_ms) {
         }
         for_each_tile(collide_player_ud, (void *)&tile_offset);
     }
-
-    last_buttons = buttons;
 }
 
 void render_summary() {
