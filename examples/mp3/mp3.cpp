@@ -29,16 +29,30 @@ void init() {
 }
 
 void render(uint32_t time) {
-  int play_time = stream.get_current_sample() / 22050;
-
-  char buf[100];
-  snprintf(buf, 100, "%i/%i seconds", play_time, stream.get_duration_ms() / 1000);
-
   screen.pen = Pen(0, 0, 0);
-  screen.clear();
+	screen.clear();
 
-  screen.pen = Pen(0xFF, 0xFF, 0xFF);
-  screen.text(buf, blit::minimal_font, blit::Point(0, 0));
+	screen.alpha = 255;
+	screen.pen = Pen(255, 255, 255);
+	screen.rectangle(Rect(0, 0, 320, 14));
+	screen.pen = Pen(0, 0, 0);
+	screen.text("MP3 Playback", minimal_font, Point(5, 4));
+
+  int play_time = (stream.get_current_sample() * 1000) / 22050;
+
+  // current time / duration
+  screen.pen = Pen(255, 255, 255);
+  Rect text_rect(5, 30, screen.bounds.w - 10, 10);
+  screen.text(std::to_string(play_time / 1000), minimal_font, text_rect);
+  screen.text(std::to_string(stream.get_duration_ms() / 1000), minimal_font, text_rect, true, TextAlign::top_right);
+
+  // progress
+  screen.pen = Pen(40, 40, 40);
+  screen.rectangle(Rect(5, 40, screen.bounds.w - 10, 10));
+
+  screen.pen = Pen(255, 255, 255);
+  float w = static_cast<float>(screen.bounds.w - 10) / stream.get_duration_ms() * play_time;
+  screen.rectangle(Rect(5, 40, w, 10));
 }
 
 void update(uint32_t time) {
