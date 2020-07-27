@@ -21,17 +21,17 @@ extern USBManager g_usbManager;
 // c calls to c++ object
 void init()
 {
-	flashLoader.Init();
+  flashLoader.Init();
 }
 
 void render(uint32_t time)
 {
-	flashLoader.Render(time);
+  flashLoader.Render(time);
 }
 
 void update(uint32_t time)
 {
-	flashLoader.Update(time);
+  flashLoader.Update(time);
 }
 
 
@@ -40,317 +40,317 @@ void update(uint32_t time)
 // Init() Register command handlers
 void FlashLoader::Init()
 {
-	blit::set_screen_mode(ScreenMode::hires);
+  blit::set_screen_mode(ScreenMode::hires);
 
-	// register PROG
-	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value, this);
+  // register PROG
+  g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value, this);
 
-	// register SAVE
-	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'S', 'A', 'V', 'E'>::value, this);
+  // register SAVE
+  g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'S', 'A', 'V', 'E'>::value, this);
 
-	// register LS
-	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value, this);
+  // register LS
+  g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value, this);
 
-	m_uCurrentFile = persist.selected_menu_item;
+  m_uCurrentFile = persist.selected_menu_item;
 }
 
 
 // FSInit() Read a page worth of *.BIN filenames from the SDCard
 void FlashLoader::FSInit(void)
 {
-	m_filemeta.clear();
-	m_max_width_size = 0;
+  m_filemeta.clear();
+  m_max_width_size = 0;
 
-	for(auto &file : ::list_files("/"))
-	{
-		if(file.flags & blit::FileFlags::directory)
-			continue;
+  for(auto &file : ::list_files("/"))
+  {
+    if(file.flags & blit::FileFlags::directory)
+      continue;
 
-		if(file.name.length() < 4)
-			continue;
+    if(file.name.length() < 4)
+      continue;
 
-		if(file.name.compare(file.name.length() - 4, 4, ".bin") == 0 || file.name.compare(file.name.length() - 4, 4, ".BIN") == 0)
-		{
-			m_filemeta.push_back(file);
-			m_max_width_size = std::max(m_max_width_size, screen.measure_text(std::to_string(file.size), minimal_font).w);
-		}
-	}
+    if(file.name.compare(file.name.length() - 4, 4, ".bin") == 0 || file.name.compare(file.name.length() - 4, 4, ".BIN") == 0)
+    {
+      m_filemeta.push_back(file);
+      m_max_width_size = std::max(m_max_width_size, screen.measure_text(std::to_string(file.size), minimal_font).w);
+    }
+  }
 
-	if(m_uCurrentFile > m_filemeta.size()) {
-		m_uCurrentFile = m_filemeta.size() - 1;
-	}
+  if(m_uCurrentFile > m_filemeta.size()) {
+    m_uCurrentFile = m_filemeta.size() - 1;
+  }
 
-	m_bFsInit = true;
+  m_bFsInit = true;
 }
 
 
 // Flash(): Flash a file from the SDCard to external flash
 bool FlashLoader::Flash(const char *pszFilename)
 {
-	bool bResult = false;
+  bool bResult = false;
 
-	FIL file;
-	FRESULT res = f_open(&file, pszFilename, FA_READ);
-	if(res != FR_OK)
-		return false;
+  FIL file;
+  FRESULT res = f_open(&file, pszFilename, FA_READ);
+  if(res != FR_OK)
+    return false;
 
-	// get file length
-	FSIZE_t uSize = f_size(&file);
-	FSIZE_t uTotalBytesRead = 0;
-	size_t uOffset = 0;
+  // get file length
+  FSIZE_t uSize = f_size(&file);
+  FSIZE_t uTotalBytesRead = 0;
+  size_t uOffset = 0;
 
-	if(!uSize)
-	{
-		f_close(&file);
-		return false;
-	}
+  if(!uSize)
+  {
+    f_close(&file);
+    return false;
+  }
 
-	// quick and dirty erase
-	QSPI_WriteEnable(&hqspi);
-	qspi_chip_erase();
+  // quick and dirty erase
+  QSPI_WriteEnable(&hqspi);
+  qspi_chip_erase();
 
-	bool bFinished = false;
+  bool bFinished = false;
 
-	while(uTotalBytesRead < uSize)
-	{
-		// limited ram so a bit at a time
-		UINT uBytesRead = 0;
-		res = f_read(&file, (void *)m_buffer, BUFFER_SIZE, &uBytesRead);
+  while(uTotalBytesRead < uSize)
+  {
+    // limited ram so a bit at a time
+    UINT uBytesRead = 0;
+    res = f_read(&file, (void *)m_buffer, BUFFER_SIZE, &uBytesRead);
 
-		if(res != FR_OK)
-			break;
-	
-		if(qspi_write_buffer(uOffset, m_buffer, uBytesRead) != QSPI_OK)
-			break;
+    if(res != FR_OK)
+      break;
+  
+    if(qspi_write_buffer(uOffset, m_buffer, uBytesRead) != QSPI_OK)
+      break;
 
-		if(qspi_read_buffer(uOffset, m_verifyBuffer, uBytesRead) != QSPI_OK)
-			break;
+    if(qspi_read_buffer(uOffset, m_verifyBuffer, uBytesRead) != QSPI_OK)
+      break;
 
-		// compare buffers
-		bool bVerified = true;
-		for(uint32_t uB = 0; bVerified && uB < uBytesRead; uB++)
-			bVerified = m_buffer[uB] == m_verifyBuffer[uB];
+    // compare buffers
+    bool bVerified = true;
+    for(uint32_t uB = 0; bVerified && uB < uBytesRead; uB++)
+      bVerified = m_buffer[uB] == m_verifyBuffer[uB];
 
-		if(!bVerified)
-			break;
+    if(!bVerified)
+      break;
 
-		uOffset += uBytesRead;
-		uTotalBytesRead += uBytesRead;
-	}
+    uOffset += uBytesRead;
+    uTotalBytesRead += uBytesRead;
+  }
 
-	f_close(&file);
+  f_close(&file);
 
-	return uTotalBytesRead == uSize;
+  return uTotalBytesRead == uSize;
 }
 
 
 // Render() Call relevant render based on state
 void FlashLoader::Render(uint32_t time)
 {
-	switch(m_state)
-	{
-		case stFlashFile:
-		case stLS:
-			RenderFlashFile(time);
-			break;
+  switch(m_state)
+  {
+    case stFlashFile:
+    case stLS:
+      RenderFlashFile(time);
+      break;
 
-		case stSaveFile:
-			RenderSaveFile(time);
-			break;
+    case stSaveFile:
+      RenderSaveFile(time);
+      break;
 
-		case stFlashCDC:
-			RenderFlashCDC(time);
-			break;
+    case stFlashCDC:
+      RenderFlashCDC(time);
+      break;
 
-		case stSwitch:
-			blit_switch_execution();
-		break;
+    case stSwitch:
+      blit_switch_execution();
+    break;
 
-		case stMassStorage:
-			RenderMassStorage(time);
-		break;
-	}
+    case stMassStorage:
+      RenderMassStorage(time);
+    break;
+  }
 }
 
 void FlashLoader::RenderMassStorage(uint32_t time)
 {
-	static uint8_t uActivityAnim = 0;
+  static uint8_t uActivityAnim = 0;
 
-	screen.pen = Pen(0,0,0);
-	screen.clear();
-	screen.pen = Pen(255, 255, 255);
-	char buffer[128];
-	sprintf(buffer, "Mass Storage mode (%s)", g_usbManager.GetStateName());
-	screen.text(buffer, minimal_font, ROW(0));
+  screen.pen = Pen(0,0,0);
+  screen.clear();
+  screen.pen = Pen(255, 255, 255);
+  char buffer[128];
+  sprintf(buffer, "Mass Storage mode (%s)", g_usbManager.GetStateName());
+  screen.text(buffer, minimal_font, ROW(0));
 
-	if(uActivityAnim)
-	{
-		screen.pen = Pen(0, 255, 0, uActivityAnim);
-		screen.circle(Point(320-6, 6), 6);
-		uActivityAnim = uActivityAnim>>1;
+  if(uActivityAnim)
+  {
+    screen.pen = Pen(0, 255, 0, uActivityAnim);
+    screen.circle(Point(320-6, 6), 6);
+    uActivityAnim = uActivityAnim>>1;
 
-	}
-	else
-	{
-		if(g_usbManager.HasHadActivity())
-			uActivityAnim = 255;
-	}
+  }
+  else
+  {
+    if(g_usbManager.HasHadActivity())
+      uActivityAnim = 255;
+  }
 }
 
 // RenderSaveFile() Render file save progress %
 void FlashLoader::RenderSaveFile(uint32_t time)
 {
-	screen.pen = Pen(0,0,0);
-	screen.clear();
-	screen.pen = Pen(255, 255, 255);
-	char buffer[128];
-	sprintf(buffer, "Saving %.2u%%", (uint16_t)m_fPercent);
-	screen.text(buffer, minimal_font, ROW(0));
+  screen.pen = Pen(0,0,0);
+  screen.clear();
+  screen.pen = Pen(255, 255, 255);
+  char buffer[128];
+  sprintf(buffer, "Saving %.2u%%", (uint16_t)m_fPercent);
+  screen.text(buffer, minimal_font, ROW(0));
 }
 
 
 // RenderFlashCDC() Render flashing progress %
 void FlashLoader::RenderFlashCDC(uint32_t time)
 {
-	screen.pen = Pen(0,0,0);
-	screen.clear();
-	screen.pen = Pen(255, 255, 255);
+  screen.pen = Pen(0,0,0);
+  screen.clear();
+  screen.pen = Pen(255, 255, 255);
 
-	char buffer[128];
-	sprintf(buffer, "Flashing %.2u%%", (uint16_t)m_fPercent);
-	screen.text(buffer, minimal_font, ROW(0));
+  char buffer[128];
+  sprintf(buffer, "Flashing %.2u%%", (uint16_t)m_fPercent);
+  screen.text(buffer, minimal_font, ROW(0));
 }
 
 
 // RenderFlashFile() Render main ui for selecting files to flash
 void FlashLoader::RenderFlashFile(uint32_t time)
 {
-	screen.pen = Pen(0,0,0);
-	screen.clear();
-	screen.pen = Pen(255, 255, 255);
+  screen.pen = Pen(0,0,0);
+  screen.clear();
+  screen.pen = Pen(255, 255, 255);
 
-	// just display
-	if(!m_filemeta.empty())
-	{
-		screen.pen = Pen(50, 50, 70);
-		screen.rectangle(Rect(0, ROW_HEIGHT*m_uCurrentFile, screen.bounds.w, ROW_HEIGHT));
-		screen.pen = Pen(255, 255, 255);
+  // just display
+  if(!m_filemeta.empty())
+  {
+    screen.pen = Pen(50, 50, 70);
+    screen.rectangle(Rect(0, ROW_HEIGHT*m_uCurrentFile, screen.bounds.w, ROW_HEIGHT));
+    screen.pen = Pen(255, 255, 255);
 
-		int y = 0;
-		// adjust alignment rect for vertical spacing
-		const int text_align_height = ROW_HEIGHT + minimal_font.spacing_y;
-		const int size_x = screen.bounds.w - 5 - m_max_width_size;
-		
-		for(auto &file : m_filemeta)
-		{
-			screen.text(file.name, minimal_font, Rect(5, y, size_x - 9, text_align_height), true, TextAlign::center_v);
-			screen.line(Point(size_x - 4, y), Point(size_x - 4, y + ROW_HEIGHT));
-			screen.text(std::to_string(file.size), minimal_font, Rect(size_x, y, m_max_width_size, text_align_height), true, TextAlign::center_right);
-			y += ROW_HEIGHT;
-		}
-	}
-	else
-	{
-		screen.text("No Files Found.", minimal_font, ROW(0));
-	}
+    int y = 0;
+    // adjust alignment rect for vertical spacing
+    const int text_align_height = ROW_HEIGHT + minimal_font.spacing_y;
+    const int size_x = screen.bounds.w - 5 - m_max_width_size;
+    
+    for(auto &file : m_filemeta)
+    {
+      screen.text(file.name, minimal_font, Rect(5, y, size_x - 9, text_align_height), true, TextAlign::center_v);
+      screen.line(Point(size_x - 4, y), Point(size_x - 4, y + ROW_HEIGHT));
+      screen.text(std::to_string(file.size), minimal_font, Rect(size_x, y, m_max_width_size, text_align_height), true, TextAlign::center_right);
+      y += ROW_HEIGHT;
+    }
+  }
+  else
+  {
+    screen.text("No Files Found.", minimal_font, ROW(0));
+  }
 }
 
 
 void FlashLoader::Update(uint32_t time)
 {
-	if(m_state == stLS)
-	{
-		FSInit();
-		m_state = stFlashFile;
-	}
+  if(m_state == stLS)
+  {
+    FSInit();
+    m_state = stFlashFile;
+  }
 
-	bool button_home = buttons.pressed & Button::HOME;
-	
-	if(m_state == stFlashFile)
-	{
-		static uint32_t lastRepeat = 0;
+  bool button_home = buttons.pressed & Button::HOME;
+  
+  if(m_state == stFlashFile)
+  {
+    static uint32_t lastRepeat = 0;
 
-		if(!m_bFsInit)
-			FSInit();
+    if(!m_bFsInit)
+      FSInit();
 
-		bool button_a = buttons.pressed & Button::A;
-		bool button_x = buttons.pressed & Button::X;
-		bool button_y = buttons.pressed & Button::Y;
+    bool button_a = buttons.pressed & Button::A;
+    bool button_x = buttons.pressed & Button::X;
+    bool button_y = buttons.pressed & Button::Y;
 
-		bool button_up = buttons.pressed & Button::DPAD_UP;
-		bool button_down = buttons.pressed & Button::DPAD_DOWN;
+    bool button_up = buttons.pressed & Button::DPAD_UP;
+    bool button_down = buttons.pressed & Button::DPAD_DOWN;
 
-		if(time - lastRepeat > 150 || button_up || button_down) {
-			button_up = buttons & Button::DPAD_UP;
-			button_down = buttons & Button::DPAD_DOWN;
-			lastRepeat = time;
-		}
+    if(time - lastRepeat > 150 || button_up || button_down) {
+      button_up = buttons & Button::DPAD_UP;
+      button_down = buttons & Button::DPAD_DOWN;
+      lastRepeat = time;
+    }
 
-		if(button_home)
-		{
-			// switch to mass media
-			g_usbManager.SetType(USBManager::usbtMSC);
-			m_state = stMassStorage;
+    if(button_home)
+    {
+      // switch to mass media
+      g_usbManager.SetType(USBManager::usbtMSC);
+      m_state = stMassStorage;
 
-		}
+    }
 
-		if(button_up)
-		{
-			if(m_uCurrentFile > 0) {
-				m_uCurrentFile--;
-			} else {
-				m_uCurrentFile = m_filemeta.size() - 1;
-			}
-		}
+    if(button_up)
+    {
+      if(m_uCurrentFile > 0) {
+        m_uCurrentFile--;
+      } else {
+        m_uCurrentFile = m_filemeta.size() - 1;
+      }
+    }
 
-		if(button_down)
-		{
-			if(m_uCurrentFile < (m_filemeta.size() - 1)) {
-				m_uCurrentFile++;
-			} else {
-				m_uCurrentFile = 0;
-			}
-		}
+    if(button_down)
+    {
+      if(m_uCurrentFile < (m_filemeta.size() - 1)) {
+        m_uCurrentFile++;
+      } else {
+        m_uCurrentFile = 0;
+      }
+    }
 
-		if(button_a)
-		{
-			if(Flash(m_filemeta[m_uCurrentFile].name.c_str())) {
-				blit_switch_execution();
-			}
-		}
+    if(button_a)
+    {
+      if(Flash(m_filemeta[m_uCurrentFile].name.c_str())) {
+        blit_switch_execution();
+      }
+    }
 
-		using Iterator = std::vector<FileInfo>::iterator;
-		using Compare = bool(const FileInfo &, const FileInfo &);
-		if (button_x)
-		{
-			// Sort by filename
-			std::sort<Iterator, Compare>(m_filemeta.begin(), m_filemeta.end(), [](const auto &a, const auto &b) { return a.name < b.name; });
-		}
+    using Iterator = std::vector<FileInfo>::iterator;
+    using Compare = bool(const FileInfo &, const FileInfo &);
+    if (button_x)
+    {
+      // Sort by filename
+      std::sort<Iterator, Compare>(m_filemeta.begin(), m_filemeta.end(), [](const auto &a, const auto &b) { return a.name < b.name; });
+    }
 
-		if (button_y)
-		{
-			// Sort by filesize
-			std::sort<Iterator, Compare>(m_filemeta.begin(), m_filemeta.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
-		}
+    if (button_y)
+    {
+      // Sort by filesize
+      std::sort<Iterator, Compare>(m_filemeta.begin(), m_filemeta.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
+    }
 
-		persist.selected_menu_item = m_uCurrentFile;
-	}
-	else if(m_state == stMassStorage)
-	{
-		bool switch_back = g_usbManager.GetState() == USBManager::usbsMSCUnmounted;
+    persist.selected_menu_item = m_uCurrentFile;
+  }
+  else if(m_state == stMassStorage)
+  {
+    bool switch_back = g_usbManager.GetState() == USBManager::usbsMSCUnmounted;
 
-		// allow switching back manually if it was never mounted
-		if(button_home && g_usbManager.GetState() == USBManager::usbsMSCInititalising)
-			switch_back = true;
+    // allow switching back manually if it was never mounted
+    if(button_home && g_usbManager.GetState() == USBManager::usbsMSCInititalising)
+      switch_back = true;
 
-		if(switch_back)
-		{
-			// Switch back to CDC
-			g_usbManager.SetType(USBManager::usbtCDC);
-			FSInit();
-			m_state = stFlashFile;
-		}
-	}
+    if(switch_back)
+    {
+      // Switch back to CDC
+      g_usbManager.SetType(USBManager::usbtCDC);
+      FSInit();
+      m_state = stFlashFile;
+    }
+  }
 }
 
 
@@ -366,30 +366,30 @@ void FlashLoader::Update(uint32_t time)
 // StreamInit() Initialise state machine
 bool FlashLoader::StreamInit(CDCFourCC uCommand)
 {
-	//printf("streamInit()\n\r");
-	m_fPercent = 0.0f;
-	bool bNeedStream = true;
-	switch(uCommand)
-	{
-		case CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value:
-			m_state = stFlashCDC;
-			m_parseState = stFilename;
-			m_uParseIndex = 0;
-		break;
+  //printf("streamInit()\n\r");
+  m_fPercent = 0.0f;
+  bool bNeedStream = true;
+  switch(uCommand)
+  {
+    case CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value:
+      m_state = stFlashCDC;
+      m_parseState = stFilename;
+      m_uParseIndex = 0;
+    break;
 
-		case CDCCommandHandler::CDCFourCCMake<'S', 'A', 'V', 'E'>::value:
-			m_state = stSaveFile;
-			m_parseState = stFilename;
-			m_uParseIndex = 0;
-		break;
+    case CDCCommandHandler::CDCFourCCMake<'S', 'A', 'V', 'E'>::value:
+      m_state = stSaveFile;
+      m_parseState = stFilename;
+      m_uParseIndex = 0;
+    break;
 
-		case CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value:
-			m_state = stLS;
-			bNeedStream = false;
-		break;
+    case CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value:
+      m_state = stLS;
+      bNeedStream = false;
+    break;
 
-	}
-	return bNeedStream;
+  }
+  return bNeedStream;
 }
 
 
@@ -397,29 +397,29 @@ bool FlashLoader::StreamInit(CDCFourCC uCommand)
 // Note: currently qspi_write_buffer only works for sizes of 256 max
 bool FlashLoader::FlashData(uint32_t uOffset, uint8_t *pBuffer, uint32_t uLen)
 {
-	bool bResult = false;
-	if(QSPI_OK == qspi_write_buffer(uOffset, pBuffer, uLen))
-	{
-		if(QSPI_OK == qspi_read_buffer(uOffset, m_verifyBuffer, uLen))
-		{
-			// compare buffers
-			bResult = true;
+  bool bResult = false;
+  if(QSPI_OK == qspi_write_buffer(uOffset, pBuffer, uLen))
+  {
+    if(QSPI_OK == qspi_read_buffer(uOffset, m_verifyBuffer, uLen))
+    {
+      // compare buffers
+      bResult = true;
 
-			for(uint32_t uB = 0; bResult && uB < uLen; uB++)
-				bResult = pBuffer[uB] == m_verifyBuffer[uB];
-		}
-	}
-	return bResult;
+      for(uint32_t uB = 0; bResult && uB < uLen; uB++)
+        bResult = pBuffer[uB] == m_verifyBuffer[uB];
+    }
+  }
+  return bResult;
 }
 
 
 // SaveData() Saves date to file on SDCard
 bool FlashLoader::SaveData(uint8_t *pBuffer, uint32_t uLen)
 {
-	UINT uWritten;
-	FRESULT res = f_write(&m_file, pBuffer, uLen, &uWritten);
+  UINT uWritten;
+  FRESULT res = f_write(&m_file, pBuffer, uLen, &uWritten);
 
-	return !res && (uWritten == uLen);
+  return !res && (uWritten == uLen);
 
 }
 
@@ -431,166 +431,166 @@ bool FlashLoader::SaveData(uint8_t *pBuffer, uint32_t uLen)
 // stData     : The binary data (.bin file)
 CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStream)
 {
-	CDCCommandHandler::StreamResult result = srContinue;
-	uint8_t byte;
-	while(dataStream.GetStreamLength() && result == srContinue)
-	{
-		switch (m_parseState)
-		{
-			case stFilename:
-				if(m_uParseIndex < MAX_FILENAME)
-				{
-					while(result == srContinue && m_parseState == stFilename && dataStream.Get(byte))
-					{
-						m_sFilename[m_uParseIndex++] = byte;
-						if (byte == 0)
-						{
-							m_parseState = stLength;
-							m_uParseIndex = 0;
-						}
-					}
-				}
-				else
-				{
-					printf("Failed to read filename\n\r");
-					result =srError;
-				}
-			break;
+  CDCCommandHandler::StreamResult result = srContinue;
+  uint8_t byte;
+  while(dataStream.GetStreamLength() && result == srContinue)
+  {
+    switch (m_parseState)
+    {
+      case stFilename:
+        if(m_uParseIndex < MAX_FILENAME)
+        {
+          while(result == srContinue && m_parseState == stFilename && dataStream.Get(byte))
+          {
+            m_sFilename[m_uParseIndex++] = byte;
+            if (byte == 0)
+            {
+              m_parseState = stLength;
+              m_uParseIndex = 0;
+            }
+          }
+        }
+        else
+        {
+          printf("Failed to read filename\n\r");
+          result =srError;
+        }
+      break;
 
 
-			case stLength:
-				if(m_uParseIndex < MAX_FILELEN)
-				{
-					while(result == srContinue && m_parseState == stLength && dataStream.Get(byte))
-					{
-						m_sFilelen[m_uParseIndex++] = byte;
-						if (byte == 0)
-						{
-							m_parseState = stData;
-							m_uParseIndex = 0;
-							char *pEndPtr;
-							m_uFilelen = strtoul(m_sFilelen, &pEndPtr, 10);
-							if(m_uFilelen)
-							{
-								// init file or flash
-								switch(m_state)
-								{
-									case stSaveFile:
-									{
-										FRESULT res = f_open(&m_file, m_sFilename, FA_CREATE_ALWAYS | FA_WRITE);
-										if(res)
-										{
-											printf("Failed to create file (%s)\n\r", m_sFilename);
-											result = srError;
-										}
-									}
-									break;
+      case stLength:
+        if(m_uParseIndex < MAX_FILELEN)
+        {
+          while(result == srContinue && m_parseState == stLength && dataStream.Get(byte))
+          {
+            m_sFilelen[m_uParseIndex++] = byte;
+            if (byte == 0)
+            {
+              m_parseState = stData;
+              m_uParseIndex = 0;
+              char *pEndPtr;
+              m_uFilelen = strtoul(m_sFilelen, &pEndPtr, 10);
+              if(m_uFilelen)
+              {
+                // init file or flash
+                switch(m_state)
+                {
+                  case stSaveFile:
+                  {
+                    FRESULT res = f_open(&m_file, m_sFilename, FA_CREATE_ALWAYS | FA_WRITE);
+                    if(res)
+                    {
+                      printf("Failed to create file (%s)\n\r", m_sFilename);
+                      result = srError;
+                    }
+                  }
+                  break;
 
-									case stFlashCDC:
-										QSPI_WriteEnable(&hqspi);
-										qspi_chip_erase();
-									break;
+                  case stFlashCDC:
+                    QSPI_WriteEnable(&hqspi);
+                    qspi_chip_erase();
+                  break;
 
-									default:
-									break;
-								}
-							}
-							else
-							{
-								printf("Failed to parse filelen\n\r");
-								result =srError;
-							}
-						}
-					}
-				}
-				else
-				{
-					printf("Failed to read filelen\n\r");
-					result =srError;
-				}
-			break;
+                  default:
+                  break;
+                }
+              }
+              else
+              {
+                printf("Failed to parse filelen\n\r");
+                result =srError;
+              }
+            }
+          }
+        }
+        else
+        {
+          printf("Failed to read filelen\n\r");
+          result =srError;
+        }
+      break;
 
-			case stData:
-					while((result == srContinue) && (m_parseState == stData) && (m_uParseIndex <= m_uFilelen) && dataStream.Get(byte))
-					{
-						uint32_t uByteOffset = m_uParseIndex % PAGE_SIZE;
-						m_buffer[uByteOffset] = byte;
+      case stData:
+          while((result == srContinue) && (m_parseState == stData) && (m_uParseIndex <= m_uFilelen) && dataStream.Get(byte))
+          {
+            uint32_t uByteOffset = m_uParseIndex % PAGE_SIZE;
+            m_buffer[uByteOffset] = byte;
 
-						// check buffer needs writing
-						volatile uint32_t uWriteLen = 0;
-						bool bEOS = false;
-						if (m_uParseIndex == m_uFilelen-1)
-						{
-							uWriteLen = uByteOffset+1;
-							bEOS = true;
-						}
-						else
-							if(uByteOffset == PAGE_SIZE-1)
-								uWriteLen = PAGE_SIZE;
+            // check buffer needs writing
+            volatile uint32_t uWriteLen = 0;
+            bool bEOS = false;
+            if (m_uParseIndex == m_uFilelen-1)
+            {
+              uWriteLen = uByteOffset+1;
+              bEOS = true;
+            }
+            else
+              if(uByteOffset == PAGE_SIZE-1)
+                uWriteLen = PAGE_SIZE;
 
-						if(uWriteLen)
-						{
-							switch(m_state)
-							{
-								case stSaveFile:
-									// save data
-									if(!SaveData(m_buffer, uWriteLen))
-									{
-										printf("Failed to save to SDCard\n\r");
-										result = srError;
-									}
+            if(uWriteLen)
+            {
+              switch(m_state)
+              {
+                case stSaveFile:
+                  // save data
+                  if(!SaveData(m_buffer, uWriteLen))
+                  {
+                    printf("Failed to save to SDCard\n\r");
+                    result = srError;
+                  }
 
-									// end of stream close up
-									if(bEOS)
-									{
-										f_close(&m_file);
-										m_bFsInit = false;
-										m_state = stFlashFile;
-										if(result != srError)
-											result = srFinish;
-									}
-								break;
+                  // end of stream close up
+                  if(bEOS)
+                  {
+                    f_close(&m_file);
+                    m_bFsInit = false;
+                    m_state = stFlashFile;
+                    if(result != srError)
+                      result = srFinish;
+                  }
+                break;
 
-								case stFlashCDC:
-								{
-									// save data
-									volatile uint32_t uPage = (m_uParseIndex / PAGE_SIZE);
-									if(!FlashData(uPage*PAGE_SIZE, m_buffer, uWriteLen))
-									{
-										printf("Failed to write to flash\n\r");
-										result = srError;
-									}
+                case stFlashCDC:
+                {
+                  // save data
+                  volatile uint32_t uPage = (m_uParseIndex / PAGE_SIZE);
+                  if(!FlashData(uPage*PAGE_SIZE, m_buffer, uWriteLen))
+                  {
+                    printf("Failed to write to flash\n\r");
+                    result = srError;
+                  }
 
-									// end of stream close up
-									if(bEOS)
-									{
-										if(result != srError)
-										{
-											result = srFinish;
-											m_state = stSwitch;
-										}
-										else
-											m_state = stFlashFile;
-									}
-								}
-								break;
+                  // end of stream close up
+                  if(bEOS)
+                  {
+                    if(result != srError)
+                    {
+                      result = srFinish;
+                      m_state = stSwitch;
+                    }
+                    else
+                      m_state = stFlashFile;
+                  }
+                }
+                break;
 
-								default:
-								break;
-							}
-						}
+                default:
+                break;
+              }
+            }
 
-						m_uParseIndex++;
-						m_uBytesHandled = m_uParseIndex;
-						m_fPercent = ((float)m_uParseIndex/(float)m_uFilelen)* 100.0f;
-					}
-			break;
-		}
-	}
+            m_uParseIndex++;
+            m_uBytesHandled = m_uParseIndex;
+            m_fPercent = ((float)m_uParseIndex/(float)m_uFilelen)* 100.0f;
+          }
+      break;
+    }
+  }
 
-	if(result==srError)
-		m_state = stFlashFile;
+  if(result==srError)
+    m_state = stFlashFile;
 
-	return result;
+  return result;
 }
 
