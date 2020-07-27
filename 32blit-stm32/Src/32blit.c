@@ -121,6 +121,9 @@ std::string battery_vbus_status() {
     case 0b11: // OTG
       return "OTG";
   }
+
+  // unreachable
+  return "";
 }
 
 std::string battery_charge_status() {
@@ -134,6 +137,9 @@ std::string battery_charge_status() {
     case 0b11: // Charge Done
       return "Done";
   }
+
+  // unreachable
+  return "";
 }
 
 void blit_tick() {
