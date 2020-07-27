@@ -4,20 +4,11 @@
 #include "persistence.h"
 
 #define BUFFER_SIZE (256)
-#define MAX_FILENAMES 24
-#define MAX_FILENAME_LENGTH 32
-#define MAX_FILESIZE_LENGTH 12
 #define ROW_HEIGHT 10
 #define ROW(x) Point(0,x * ROW_HEIGHT)
 #define MAX_FILENAME 256+1
 #define MAX_FILELEN 16+1
 #define PAGE_SIZE 256
-
-typedef struct {
-	char sFilename[MAX_FILENAME_LENGTH + 1] = { 0 };
-	FSIZE_t fstFilesize = 0;
-	char sFilesize[MAX_FILESIZE_LENGTH + 1] = { 0 };
-} FILEMETA;
 
 class FlashLoader : public CDCCommandHandler
 {
@@ -45,14 +36,13 @@ private:
 	bool FlashData(uint32_t uOffset, uint8_t *pBuffer, uint32_t uLen);
 	bool SaveData(uint8_t *pBuffer, uint32_t uLen);
 
-	FILEMETA m_filemeta[MAX_FILENAMES] = { 0 };
+	std::vector<blit::FileInfo> m_filemeta;
 	int32_t m_max_width_name = 0, m_max_width_size = 0;
 
 	uint8_t m_buffer[PAGE_SIZE];
 	uint8_t m_verifyBuffer[PAGE_SIZE];
 
-	uint8_t m_uFileCount = 0;
-	uint8_t m_uCurrentFile = 0;
+	unsigned m_uCurrentFile = 0;
 	bool		m_bFsInit = false;
 	State		m_state = stFlashFile;
 

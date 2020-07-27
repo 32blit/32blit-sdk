@@ -4,6 +4,7 @@
 #include "quadspi.h"
 #include "CDCCommandStream.h"
 #include "USBManager.h"
+#include "file.hpp"
 
 #include <cstring>
 #include <stdio.h>
@@ -57,39 +58,28 @@ void FlashLoader::Init()
 // FSInit() Read a page worth of *.BIN filenames from the SDCard
 void FlashLoader::FSInit(void)
 {
-	// needed as init is called before sdcard is mounted currently.
-	m_uFileCount = 0;
+	m_filemeta.clear();
+	m_max_width_name = m_max_width_size = 0;
 
-	volatile FRESULT fr;     /* Return value */
-	DIR dj;         /* Directory search object */
-	FILINFO fno;    /* File information */
-	Size s;			/* Size of rendered texts */
-
-	fr = f_findfirst(&dj, &fno, "", "*.BIN");
-
-	while (fr == FR_OK && fno.fname[0] && m_uFileCount < MAX_FILENAMES)
+	for(auto &file : ::list_files("/"))
 	{
-		if(fno.fname[0]!='.')
+		if(file.flags & blit::FileFlags::directory)
+			continue;
+
+		if(file.name.length() < 4)
+			continue;
+
+		if(file.name.compare(file.name.length() - 4, 4, ".bin") == 0 || file.name.compare(file.name.length() - 4, 4, ".BIN") == 0)
 		{
-			strncpy(m_filemeta[m_uFileCount].sFilename, fno.fname, MAX_FILENAME_LENGTH);
-			s = screen.measure_text(m_filemeta[m_uFileCount].sFilename, minimal_font, true);
-			if (s.w > m_max_width_name) m_max_width_name = s.w;
-
-			m_filemeta[m_uFileCount].fstFilesize = fno.fsize;
-			sprintf(m_filemeta[m_uFileCount].sFilesize, "%lu", m_filemeta[m_uFileCount].fstFilesize);
-			s = screen.measure_text(m_filemeta[m_uFileCount].sFilesize, minimal_font, true);
-			if (s.w > m_max_width_size) m_max_width_size = s.w;
-
-			m_uFileCount++;
+			m_filemeta.push_back(file);
+			m_max_width_name = std::max(m_max_width_name, screen.measure_text(file.name, minimal_font).w);
+			m_max_width_size = std::max(m_max_width_size, screen.measure_text(std::to_string(file.size), minimal_font).w);
 		}
-		fr = f_findnext(&dj, &fno);
 	}
 
-	if(m_uCurrentFile > m_uFileCount) {
-		m_uCurrentFile = m_uFileCount;
+	if(m_uCurrentFile > m_filemeta.size()) {
+		m_uCurrentFile = m_filemeta.size() - 1;
 	}
-
-	f_closedir(&dj);
 
 	m_bFsInit = true;
 }
@@ -255,18 +245,22 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 	screen.pen = Pen(255, 255, 255);
 
 	// just display
-	if(m_uFileCount)
+	if(!m_filemeta.empty())
 	{
 		screen.pen = Pen(50, 50, 70);
 		screen.rectangle(Rect(0, ROW_HEIGHT*m_uCurrentFile, screen.bounds.w, ROW_HEIGHT));
 		screen.pen = Pen(255, 255, 255);
 
-		for(uint8_t uF = 0; uF < m_uFileCount; uF++) {
-			// TODO: A single line of text should probably vertically center in a 10px bounding box
-			// but in this case it needs to be fudged to 14 pixels
-			screen.text(m_filemeta[uF].sFilename, minimal_font, Rect(ROW(uF).x + 5, ROW(uF).y, m_max_width_name, 14), true, TextAlign::center_v);
-			screen.line(Point(m_max_width_name + 10, ROW(uF).y), Point(m_max_width_name + 10, ROW(uF).y + 14));
-			screen.text(m_filemeta[uF].sFilesize, minimal_font, Rect(m_max_width_name + 16, ROW(uF).y, m_max_width_size, 14), true, TextAlign::center_right);
+		int y = 0;
+		// adjust alignment rect for vertical spacing
+		const int text_align_height = ROW_HEIGHT + minimal_font.spacing_y;
+		
+		for(auto &file : m_filemeta)
+		{
+			screen.text(file.name, minimal_font, Rect(5, y, m_max_width_name, text_align_height), true, TextAlign::center_v);
+			screen.line(Point(m_max_width_name + 10, y), Point(m_max_width_name + 10, y + ROW_HEIGHT));
+			screen.text(std::to_string(file.size), minimal_font, Rect(m_max_width_name + 16, y, m_max_width_size, text_align_height), true, TextAlign::center_right);
+			y += ROW_HEIGHT;
 		}
 	}
 	else
@@ -319,13 +313,13 @@ void FlashLoader::Update(uint32_t time)
 			if(m_uCurrentFile > 0) {
 				m_uCurrentFile--;
 			} else {
-				m_uCurrentFile = m_uFileCount - 1;
+				m_uCurrentFile = m_filemeta.size() - 1;
 			}
 		}
 
 		if(button_down)
 		{
-			if(m_uCurrentFile < (m_uFileCount - 1)) {
+			if(m_uCurrentFile < (m_filemeta.size() - 1)) {
 				m_uCurrentFile++;
 			} else {
 				m_uCurrentFile = 0;
@@ -334,7 +328,7 @@ void FlashLoader::Update(uint32_t time)
 
 		if(button_a)
 		{
-			if(Flash(m_filemeta[m_uCurrentFile].sFilename)) {
+			if(Flash(m_filemeta[m_uCurrentFile].name.c_str())) {
 				blit_switch_execution();
 			}
 		}
@@ -342,13 +336,13 @@ void FlashLoader::Update(uint32_t time)
 		if (button_x)
 		{
 			// Sort by filename
-			std::sort(&m_filemeta[0], &m_filemeta[m_uFileCount], [](auto a, auto b) { return strcmp(a.sFilename, b.sFilename) <= 0; });
+			std::sort(m_filemeta.begin(), m_filemeta.end(), [](const auto &a, const auto &b) { return a.name < b.name; });
 		}
 
 		if (button_y)
 		{
 			// Sort by filesize
-			std::sort(&m_filemeta[0], &m_filemeta[m_uFileCount], [](auto a, auto b) { return a.fstFilesize <= b.fstFilesize; });
+			std::sort(m_filemeta.begin(), m_filemeta.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
 		}
 
 		persist.selected_menu_item = m_uCurrentFile;
