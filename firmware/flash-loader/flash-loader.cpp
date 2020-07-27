@@ -91,70 +91,56 @@ bool FlashLoader::Flash(const char *pszFilename)
 
 	FIL file;
 	FRESULT res = f_open(&file, pszFilename, FA_READ);
-	if(!res)
+	if(res != FR_OK)
+		return false;
+
+	// get file length
+	FSIZE_t uSize = f_size(&file);
+	FSIZE_t uTotalBytesRead = 0;
+	size_t uOffset = 0;
+
+	if(!uSize)
 	{
-		// get file length
-		FSIZE_t uSize = f_size(&file);
-		FSIZE_t uTotalBytesRead = 0;
-		size_t uOffset = 0;
-
-		if(uSize)
-		{
-			// quick and dirty erase
-			QSPI_WriteEnable(&hqspi);
-			qspi_chip_erase();
-
-			bool bFinished = false;
-
-			while(!bFinished)
-			{
-				// limited ram so a bit at a time
-				UINT uBytesRead = 0;
-				res = f_read(&file, (void *)m_buffer, BUFFER_SIZE, &uBytesRead);
-
-				if(!res)
-				{
-					if(uBytesRead)
-					{
-						if(QSPI_OK == qspi_write_buffer(uOffset, m_buffer, uBytesRead))
-						{
-							if(QSPI_OK == qspi_read_buffer(uOffset, m_verifyBuffer, uBytesRead))
-							{
-								// compare buffers
-								bool bVerified = true;
-								for(uint32_t uB = 0; bVerified && uB < uBytesRead; uB++)
-									bVerified = m_buffer[uB] == m_verifyBuffer[uB];
-
-								if(bVerified)
-								{
-									uOffset += uBytesRead;
-									uTotalBytesRead += uBytesRead;
-								}
-								else
-									bFinished = true;
-							}
-							else
-								bFinished = true;
-						}
-						else
-							bFinished = true;
-					}
-
-					if(uBytesRead < BUFFER_SIZE)
-					{
-						bFinished = true;
-						bResult = uTotalBytesRead == uSize;
-					}
-				}
-				else
-					bFinished = true;
-			}
-		}
-
 		f_close(&file);
+		return false;
 	}
 
-	return bResult;
+	// quick and dirty erase
+	QSPI_WriteEnable(&hqspi);
+	qspi_chip_erase();
+
+	bool bFinished = false;
+
+	while(uTotalBytesRead < uSize)
+	{
+		// limited ram so a bit at a time
+		UINT uBytesRead = 0;
+		res = f_read(&file, (void *)m_buffer, BUFFER_SIZE, &uBytesRead);
+
+		if(res != FR_OK)
+			break;
+	
+		if(qspi_write_buffer(uOffset, m_buffer, uBytesRead) != QSPI_OK)
+			break;
+
+		if(qspi_read_buffer(uOffset, m_verifyBuffer, uBytesRead) != QSPI_OK)
+			break;
+
+		// compare buffers
+		bool bVerified = true;
+		for(uint32_t uB = 0; bVerified && uB < uBytesRead; uB++)
+			bVerified = m_buffer[uB] == m_verifyBuffer[uB];
+
+		if(!bVerified)
+			break;
+
+		uOffset += uBytesRead;
+		uTotalBytesRead += uBytesRead;
+	}
+
+	f_close(&file);
+
+	return uTotalBytesRead == uSize;
 }
 
 
