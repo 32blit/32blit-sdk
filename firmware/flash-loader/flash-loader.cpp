@@ -162,17 +162,10 @@ void FlashLoader::Render(uint32_t time)
   {
     case stFlashFile:
     case stLS:
+    case stSaveFile:
+    case stFlashCDC:
       RenderFlashFile(time);
       break;
-
-    case stSaveFile:
-      RenderSaveFile(time);
-      break;
-
-    case stFlashCDC:
-      RenderFlashCDC(time);
-      break;
-
     case stSwitch:
       blit_switch_execution();
     break;
@@ -209,31 +202,6 @@ void FlashLoader::RenderMassStorage(uint32_t time)
       uActivityAnim = 255;
   }
 }
-
-// RenderSaveFile() Render file save progress %
-void FlashLoader::RenderSaveFile(uint32_t time)
-{
-  screen.pen = Pen(0,0,0);
-  screen.clear();
-  screen.pen = Pen(255, 255, 255);
-  char buffer[128];
-  sprintf(buffer, "Saving %.2u%%", (uint16_t)m_fPercent);
-  screen.text(buffer, minimal_font, ROW(0));
-}
-
-
-// RenderFlashCDC() Render flashing progress %
-void FlashLoader::RenderFlashCDC(uint32_t time)
-{
-  screen.pen = Pen(0,0,0);
-  screen.clear();
-  screen.pen = Pen(255, 255, 255);
-
-  char buffer[128];
-  sprintf(buffer, "Flashing %.2u%%", (uint16_t)m_fPercent);
-  screen.text(buffer, minimal_font, ROW(0));
-}
-
 
 // RenderFlashFile() Render main ui for selecting files to flash
 void FlashLoader::RenderFlashFile(uint32_t time)
@@ -422,6 +390,8 @@ bool FlashLoader::FlashData(uint32_t uOffset, uint8_t *pBuffer, uint32_t uLen)
         bResult = pBuffer[uB] == m_verifyBuffer[uB];
     }
   }
+
+  progress.update(uOffset + uLen);
   return bResult;
 }
 
@@ -432,8 +402,9 @@ bool FlashLoader::SaveData(uint8_t *pBuffer, uint32_t uLen)
   UINT uWritten;
   FRESULT res = f_write(&m_file, pBuffer, uLen, &uWritten);
 
-  return !res && (uWritten == uLen);
+  progress.update(f_tell(&m_file));
 
+  return !res && (uWritten == uLen);
 }
 
 
@@ -496,12 +467,15 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                       printf("Failed to create file (%s)\n\r", m_sFilename);
                       result = srError;
                     }
+                    else
+                      progress.show("Saving " + std::string(m_sFilename) +  " to SD card...", m_uFilelen);
                   }
                   break;
 
                   case stFlashCDC:
                     QSPI_WriteEnable(&hqspi);
                     qspi_chip_erase();
+                    progress.show("Saving " + std::string(m_sFilename) +  " to flash...", m_uFilelen);
                   break;
 
                   default:
@@ -561,6 +535,8 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                     m_state = stFlashFile;
                     if(result != srError)
                       result = srFinish;
+
+                    progress.hide();
                   }
                 break;
 
@@ -584,6 +560,8 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                     }
                     else
                       m_state = stFlashFile;
+
+                    progress.hide();
                   }
                 }
                 break;
@@ -601,8 +579,10 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
     }
   }
 
-  if(result==srError)
+  if(result == srError) {
     m_state = stFlashFile;
+    progress.hide();
+  }
 
   return result;
 }
