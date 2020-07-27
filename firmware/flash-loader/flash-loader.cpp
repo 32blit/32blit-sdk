@@ -220,15 +220,6 @@ void FlashLoader::RenderMassStorage(uint32_t time)
 		if(g_usbManager.HasHadActivity())
 			uActivityAnim = 255;
 	}
-
-
-	if(g_usbManager.GetState() == USBManager::usbsMSCUnmounted)
-	{
-		// Swicth back to CDC
-		g_usbManager.SetType(USBManager::usbtCDC);
-		FSInit();
-		m_state = stFlashFile;
-	}
 }
 
 // RenderSaveFile() Render file save progress %
@@ -292,6 +283,8 @@ void FlashLoader::Update(uint32_t time)
 		FSInit();
 		m_state = stFlashFile;
 	}
+
+	bool button_home = buttons.pressed & Button::HOME;
 	
 	if(m_state == stFlashFile)
 	{
@@ -306,8 +299,6 @@ void FlashLoader::Update(uint32_t time)
 
 		bool button_up = buttons.pressed & Button::DPAD_UP;
 		bool button_down = buttons.pressed & Button::DPAD_DOWN;
-
-		bool button_home = buttons.pressed & Button::HOME;
 
 		if(time - lastRepeat > 150 || button_up || button_down) {
 			button_up = buttons & Button::DPAD_UP;
@@ -361,6 +352,22 @@ void FlashLoader::Update(uint32_t time)
 		}
 
 		persist.selected_menu_item = m_uCurrentFile;
+	}
+	else if(m_state == stMassStorage)
+	{
+		bool switch_back = g_usbManager.GetState() == USBManager::usbsMSCUnmounted;
+
+		// allow switching back manually if it was never mounted
+		if(button_home && g_usbManager.GetState() == USBManager::usbsMSCInititalising)
+			switch_back = true;
+
+		if(switch_back)
+		{
+			// Switch back to CDC
+			g_usbManager.SetType(USBManager::usbtCDC);
+			FSInit();
+			m_state = stFlashFile;
+		}
 	}
 }
 
