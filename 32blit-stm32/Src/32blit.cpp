@@ -430,7 +430,7 @@ std::string menu_name (MenuItem item) {
     case SCREENSHOT: return "Take Screenshot";
     case DFU: return "DFU Mode";
     case SHIPPING: return "Power Off";
-    case SWITCH_EXE: return (EXTERNAL_LOAD_ADDRESS == 0x90000000 && !user_tick) ? "Launch Game" : "Exit Game";
+    case SWITCH_EXE: return blit_user_code_running() ? "Exit Game" :  "Launch Game";
     case LAST_COUNT: return "";
   };
   return "";
@@ -875,10 +875,10 @@ typedef bool(*tickFunction)(uint32_t);
 
 void blit_switch_execution(uint32_t address)
 {
-  if(EXTERNAL_LOAD_ADDRESS == 0x90000000 && !user_tick)
-    persist.reset_target = prtGame;
-  else
+  if(blit_user_code_running())
     persist.reset_target = prtFirmware;
+  else
+    persist.reset_target = prtGame;
 
   init_api_shared();
 
@@ -955,6 +955,15 @@ void blit_switch_execution(uint32_t address)
 	while(1)
 	{
 	}
+}
+
+bool blit_user_code_running() {
+  // running fully linked code from ext flash
+  if(APPLICATION_VTOR == 0x90000000)
+    return true;
+
+  // loaded user-only game from flash
+  return user_tick != nullptr;
 }
 
 void blit_reset_with_error() {
