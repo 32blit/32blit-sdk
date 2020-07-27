@@ -202,7 +202,7 @@ void FlashLoader::RenderMassStorage(uint32_t time)
 	static uint8_t uActivityAnim = 0;
 
 	screen.pen = Pen(0,0,0);
-	screen.rectangle(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
+	screen.clear();
 	screen.pen = Pen(255, 255, 255);
 	char buffer[128];
 	sprintf(buffer, "Mass Storage mode (%s)", g_usbManager.GetStateName());
@@ -226,7 +226,7 @@ void FlashLoader::RenderMassStorage(uint32_t time)
 void FlashLoader::RenderSaveFile(uint32_t time)
 {
 	screen.pen = Pen(0,0,0);
-	screen.rectangle(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
+	screen.clear();
 	screen.pen = Pen(255, 255, 255);
 	char buffer[128];
 	sprintf(buffer, "Saving %.2u%%", (uint16_t)m_fPercent);
@@ -238,7 +238,7 @@ void FlashLoader::RenderSaveFile(uint32_t time)
 void FlashLoader::RenderFlashCDC(uint32_t time)
 {
 	screen.pen = Pen(0,0,0);
-	screen.rectangle(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
+	screen.clear();
 	screen.pen = Pen(255, 255, 255);
 
 	char buffer[128];
@@ -251,14 +251,14 @@ void FlashLoader::RenderFlashCDC(uint32_t time)
 void FlashLoader::RenderFlashFile(uint32_t time)
 {
 	screen.pen = Pen(0,0,0);
-	screen.rectangle(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
+	screen.clear();
 	screen.pen = Pen(255, 255, 255);
 
 	// just display
 	if(m_uFileCount)
 	{
 		screen.pen = Pen(50, 50, 70);
-		screen.rectangle(Rect(0, ROW_HEIGHT*m_uCurrentFile, SCREEN_WIDTH, ROW_HEIGHT));
+		screen.rectangle(Rect(0, ROW_HEIGHT*m_uCurrentFile, screen.bounds.w, ROW_HEIGHT));
 		screen.pen = Pen(255, 255, 255);
 
 		for(uint8_t uF = 0; uF < m_uFileCount; uF++) {

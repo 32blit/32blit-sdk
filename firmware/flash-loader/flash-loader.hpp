@@ -3,8 +3,6 @@
 #include "fatfs.h"
 #include "persistence.h"
 
-#define SCREEN_WIDTH 320
-#define SCREEN_HEIGHT 240
 #define BUFFER_SIZE (256)
 #define MAX_FILENAMES 24
 #define MAX_FILENAME_LENGTH 32
