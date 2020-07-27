@@ -87,19 +87,17 @@ void FlashLoader::FSInit(void)
 // Flash(): Flash a file from the SDCard to external flash
 bool FlashLoader::Flash(const char *pszFilename)
 {
-  bool bResult = false;
-
   FIL file;
   FRESULT res = f_open(&file, pszFilename, FA_READ);
   if(res != FR_OK)
     return false;
 
   // get file length
-  FSIZE_t uSize = f_size(&file);
-  FSIZE_t uTotalBytesRead = 0;
-  size_t uOffset = 0;
+  FSIZE_t bytes_total = f_size(&file);
+  FSIZE_t bytes_flashed = 0;
+  size_t offset = 0;
 
-  if(!uSize)
+  if(!bytes_total)
   {
     f_close(&file);
     return false;
@@ -109,38 +107,42 @@ bool FlashLoader::Flash(const char *pszFilename)
   QSPI_WriteEnable(&hqspi);
   qspi_chip_erase();
 
-  bool bFinished = false;
+  progress.show("Copying from SD card to flash...", bytes_total);
 
-  while(uTotalBytesRead < uSize)
+  while(bytes_flashed < bytes_total)
   {
     // limited ram so a bit at a time
-    UINT uBytesRead = 0;
-    res = f_read(&file, (void *)m_buffer, BUFFER_SIZE, &uBytesRead);
+    UINT bytes_read = 0;
+    res = f_read(&file, (void *)m_buffer, BUFFER_SIZE, &bytes_read);
 
     if(res != FR_OK)
       break;
   
-    if(qspi_write_buffer(uOffset, m_buffer, uBytesRead) != QSPI_OK)
+    if(qspi_write_buffer(offset, m_buffer, bytes_read) != QSPI_OK)
       break;
 
-    if(qspi_read_buffer(uOffset, m_verifyBuffer, uBytesRead) != QSPI_OK)
+    if(qspi_read_buffer(offset, m_verifyBuffer, bytes_read) != QSPI_OK)
       break;
 
     // compare buffers
-    bool bVerified = true;
-    for(uint32_t uB = 0; bVerified && uB < uBytesRead; uB++)
-      bVerified = m_buffer[uB] == m_verifyBuffer[uB];
+    bool verified = true;
+    for(uint32_t uB = 0; verified && uB < bytes_read; uB++)
+      verified = m_buffer[uB] == m_verifyBuffer[uB];
 
-    if(!bVerified)
+    if(!verified)
       break;
 
-    uOffset += uBytesRead;
-    uTotalBytesRead += uBytesRead;
+    offset += bytes_read;
+    bytes_flashed += bytes_read;
+
+    progress.update(bytes_flashed);
   }
 
   f_close(&file);
 
-  return uTotalBytesRead == uSize;
+  progress.hide();
+
+  return bytes_flashed == bytes_total;
 }
 
 
@@ -170,6 +172,8 @@ void FlashLoader::Render(uint32_t time)
       RenderMassStorage(time);
     break;
   }
+
+  progress.draw();
 }
 
 void FlashLoader::RenderMassStorage(uint32_t time)
