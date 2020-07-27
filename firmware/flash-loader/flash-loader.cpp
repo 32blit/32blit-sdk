@@ -11,6 +11,8 @@
 #include <stdlib.h>
 using namespace blit;
 
+constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
+
 extern QSPI_HandleTypeDef hqspi;
 extern CDCCommandStream g_commandStream;
 
@@ -103,9 +105,16 @@ bool FlashLoader::Flash(const char *pszFilename)
     return false;
   }
 
-  // quick and dirty erase
-  QSPI_WriteEnable(&hqspi);
-  qspi_chip_erase();
+  // erase the sectors needed to write the image  
+  uint32_t sector_count = (bytes_total / qspi_flash_sector_size) + 1;
+
+  progress.show("Erasing flash sectors...", sector_count);
+
+  for(uint32_t sector = 0; sector < sector_count; sector++) {
+    qspi_sector_erase(sector * qspi_flash_sector_size);
+
+    progress.update(sector);    
+  }
 
   progress.show("Copying from SD card to flash...", bytes_total);
 
