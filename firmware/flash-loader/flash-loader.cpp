@@ -20,6 +20,20 @@ FlashLoader flashLoader;
 
 extern USBManager g_usbManager;
 
+void erase_qspi_flash(uint32_t start_sector, uint32_t size_bytes) {
+  uint32_t sector_count = (size_bytes / qspi_flash_sector_size) + 1;
+
+  progress.show("Erasing flash sectors...", sector_count);
+
+  for(uint32_t sector = 0; sector < sector_count; sector++) {
+    qspi_sector_erase((start_sector + sector) * qspi_flash_sector_size);
+
+    progress.update(sector);
+  }
+
+  progress.hide();
+}
+
 // c calls to c++ object
 void init()
 {
@@ -105,16 +119,8 @@ bool FlashLoader::Flash(const char *pszFilename)
     return false;
   }
 
-  // erase the sectors needed to write the image  
-  uint32_t sector_count = (bytes_total / qspi_flash_sector_size) + 1;
-
-  progress.show("Erasing flash sectors...", sector_count);
-
-  for(uint32_t sector = 0; sector < sector_count; sector++) {
-    qspi_sector_erase(sector * qspi_flash_sector_size);
-
-    progress.update(sector);    
-  }
+  // erase the sectors needed to write the image
+  erase_qspi_flash(0, bytes_total);
 
   progress.show("Copying from SD card to flash...", bytes_total);
 
@@ -473,8 +479,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   break;
 
                   case stFlashCDC:
-                    QSPI_WriteEnable(&hqspi);
-                    qspi_chip_erase();
+                    erase_qspi_flash(0, m_uFilelen);
                     progress.show("Saving " + std::string(m_sFilename) +  " to flash...", m_uFilelen);
                   break;
 
