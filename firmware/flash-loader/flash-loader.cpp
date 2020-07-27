@@ -166,9 +166,6 @@ void FlashLoader::Render(uint32_t time)
     case stFlashCDC:
       RenderFlashFile(time);
       break;
-    case stSwitch:
-      blit_switch_execution();
-    break;
 
     case stMassStorage:
       RenderMassStorage(time);
@@ -239,10 +236,13 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 
 void FlashLoader::Update(uint32_t time)
 {
-  if(m_state == stLS)
-  {
+  if(m_state == stLS) {
     FSInit();
     m_state = stFlashFile;
+  }
+  else if(m_state == stSwitch) {
+    blit_switch_execution();
+    return; // not reached
   }
 
   bool button_home = buttons.pressed & Button::HOME;
