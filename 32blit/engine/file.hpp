@@ -18,6 +18,7 @@ namespace blit {
   struct FileInfo {
     std::string name;
     int flags;
+    uint32_t size;
   };
 
   std::vector<FileInfo> list_files(std::string path);

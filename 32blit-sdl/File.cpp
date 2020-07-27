@@ -97,6 +97,7 @@ std::vector<blit::FileInfo> list_files(std::string path) {
       continue;
 
     info.flags = 0;
+    info.size = findData.nFileSizeLow;
 
     if(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
       info.flags |= blit::FileFlags::directory;
@@ -123,15 +124,15 @@ std::vector<blit::FileInfo> list_files(std::string path) {
     if(info.name == "." || info.name == "..")
       continue;
 
-    info.flags = 0;
+    struct stat stat_buf;
 
-    if(ent->d_type == DT_LNK) {
-      // lookup link target
-      struct stat stat_buf;
-  
-      if(stat((basePath + path + "/" + info.name).c_str(), &stat_buf) >= 0 && S_ISDIR(stat_buf.st_mode))
-        info.flags |= blit::FileFlags::directory;
-    } else if(ent->d_type == DT_DIR)
+    if(stat((basePath + path + "/" + info.name).c_str(), &stat_buf) < 0)
+      continue;
+
+    info.flags = 0;
+    info.size = stat_buf.st_size;
+
+    if(S_ISDIR(stat_buf.st_mode))
       info.flags |= blit::FileFlags::directory;
 
     ret.push_back(info);
