@@ -59,7 +59,7 @@ void FlashLoader::Init()
 void FlashLoader::FSInit(void)
 {
 	m_filemeta.clear();
-	m_max_width_name = m_max_width_size = 0;
+	m_max_width_size = 0;
 
 	for(auto &file : ::list_files("/"))
 	{
@@ -72,7 +72,6 @@ void FlashLoader::FSInit(void)
 		if(file.name.compare(file.name.length() - 4, 4, ".bin") == 0 || file.name.compare(file.name.length() - 4, 4, ".BIN") == 0)
 		{
 			m_filemeta.push_back(file);
-			m_max_width_name = std::max(m_max_width_name, screen.measure_text(file.name, minimal_font).w);
 			m_max_width_size = std::max(m_max_width_size, screen.measure_text(std::to_string(file.size), minimal_font).w);
 		}
 	}
@@ -254,12 +253,13 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 		int y = 0;
 		// adjust alignment rect for vertical spacing
 		const int text_align_height = ROW_HEIGHT + minimal_font.spacing_y;
+		const int size_x = screen.bounds.w - 5 - m_max_width_size;
 		
 		for(auto &file : m_filemeta)
 		{
-			screen.text(file.name, minimal_font, Rect(5, y, m_max_width_name, text_align_height), true, TextAlign::center_v);
-			screen.line(Point(m_max_width_name + 10, y), Point(m_max_width_name + 10, y + ROW_HEIGHT));
-			screen.text(std::to_string(file.size), minimal_font, Rect(m_max_width_name + 16, y, m_max_width_size, text_align_height), true, TextAlign::center_right);
+			screen.text(file.name, minimal_font, Rect(5, y, size_x - 9, text_align_height), true, TextAlign::center_v);
+			screen.line(Point(size_x - 4, y), Point(size_x - 4, y + ROW_HEIGHT));
+			screen.text(std::to_string(file.size), minimal_font, Rect(size_x, y, m_max_width_size, text_align_height), true, TextAlign::center_right);
 			y += ROW_HEIGHT;
 		}
 	}

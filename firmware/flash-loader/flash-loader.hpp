@@ -37,7 +37,7 @@ private:
 	bool SaveData(uint8_t *pBuffer, uint32_t uLen);
 
 	std::vector<blit::FileInfo> m_filemeta;
-	int32_t m_max_width_name = 0, m_max_width_size = 0;
+	int32_t m_max_width_size = 0;
 
 	uint8_t m_buffer[PAGE_SIZE];
 	uint8_t m_verifyBuffer[PAGE_SIZE];
