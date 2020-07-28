@@ -13,6 +13,8 @@ using namespace blit;
 
 constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 
+Vec2 file_list_scroll_offset(20.0f, 0.0f);
+
 extern QSPI_HandleTypeDef hqspi;
 extern CDCCommandStream g_commandStream;
 
@@ -159,23 +161,27 @@ bool FlashLoader::Flash(const char *pszFilename)
 }
 
 void FlashLoader::Render(uint32_t time) {
-  screen.pen = Pen(0,0,0);
+  screen.pen = Pen(5, 8, 12);
   screen.clear();
-  screen.pen = Pen(255, 255, 255);
+
+  screen.pen = Pen(0, 0, 0, 100);
+  screen.rectangle(Rect(10, 0, 100, 240));
 
   // list files on SD card
   if(!m_filemeta.empty()) {
-    screen.pen = Pen(50, 50, 70);
-    screen.rectangle(Rect(0, ROW_HEIGHT*persist.selected_menu_item, screen.bounds.w, ROW_HEIGHT));
-    screen.pen = Pen(255, 255, 255);
-
-    int y = 0;
+    int y = 115 - file_list_scroll_offset.y;
     // adjust alignment rect for vertical spacing
     const int text_align_height = ROW_HEIGHT + minimal_font.spacing_y;
-    const int size_x = screen.bounds.w - 5 - m_max_width_size;
-
+    const int size_x = 115;
+    
+    uint32_t i = 0;
     for(auto &file : m_filemeta) {
-      screen.text(file.name, minimal_font, Rect(5, y, size_x - 9, text_align_height), true, TextAlign::center_v);
+      if(i++ == persist.selected_menu_item)
+        screen.pen = Pen(235, 245, 255);
+      else
+        screen.pen = Pen(80, 100, 120);
+
+      screen.text(file.name, minimal_font, Rect(file_list_scroll_offset.x, y, 100 - 20, text_align_height), true, TextAlign::center_v);
       screen.line(Point(size_x - 4, y), Point(size_x - 4, y + ROW_HEIGHT));
       screen.text(std::to_string(file.size), minimal_font, Rect(size_x, y, m_max_width_size, text_align_height), true, TextAlign::center_right);
       y += ROW_HEIGHT;
@@ -275,6 +281,9 @@ void FlashLoader::Update(uint32_t time)
         persist.selected_menu_item = 0;
       }
     }
+
+    // scroll list towards selected item  
+    file_list_scroll_offset.y += ((persist.selected_menu_item * 10) - file_list_scroll_offset.y) / 5.0f;
 
     if(button_a)
     {
