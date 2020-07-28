@@ -162,12 +162,10 @@ void render_yield() {
 
 void blit_tick() {
   if(exit_game) {
-    #if EXTERNAL_LOAD_ADDRESS == 0x90000000
-      // Already in firmware menu
-    #else
-    blit::LED.r = 0;
-    blit_switch_execution(0);
-    #endif
+    if(blit_user_code_running()) {
+      blit::LED.r = 0;
+      blit_switch_execution(0);
+    }
   }
 
   do_render();
