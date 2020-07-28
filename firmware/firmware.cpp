@@ -209,7 +209,7 @@ void update(uint32_t time)
     if(button_a)
     {
       if(flash_from_sd_to_qspi_flash(files[persist.selected_menu_item].name.c_str())) {
-        blit_switch_execution();
+        blit_switch_execution(0);
       }
     }
 
@@ -523,7 +523,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                     if(result != srError)
                     {
                       result = srFinish;
-                      blit_switch_execution();
+                      blit_switch_execution(0);
                     }
                     else
                       state = stFlashFile;
