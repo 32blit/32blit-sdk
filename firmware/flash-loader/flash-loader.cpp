@@ -29,7 +29,6 @@ int32_t max_width_size = 0;
 uint8_t buffer[PAGE_SIZE];
 uint8_t verify_buffer[PAGE_SIZE];
 
-bool		bFsInit = false;
 State		state = stFlashFile;
 
 FIL file;
@@ -73,8 +72,6 @@ void load_file_list()
   if(persist.selected_menu_item > files.size()) {
     persist.selected_menu_item = files.size() - 1;
   }
-
-  bFsInit = true;
 }
 
 void mass_storage_overlay(uint32_t time)
@@ -105,6 +102,7 @@ void mass_storage_overlay(uint32_t time)
 
 void init() {
   blit::set_screen_mode(ScreenMode::hires);
+  load_file_list();
 
   // register PROG
   g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value, &flashLoader);
@@ -169,9 +167,6 @@ void update(uint32_t time)
   if(state == stFlashFile)
   {
     static uint32_t lastRepeat = 0;
-
-    if(!bFsInit)
-      load_file_list();
 
     bool button_a = buttons.pressed & Button::A;
     bool button_x = buttons.pressed & Button::X;
@@ -507,7 +502,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   if(bEOS)
                   {
                     f_close(&file);
-                    bFsInit = false;
+                    load_file_list();
                     state = stFlashFile;
                     if(result != srError)
                       result = srFinish;
