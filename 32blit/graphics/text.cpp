@@ -41,6 +41,9 @@ namespace blit {
     clip.w = std::min(clip.w, bounds.w - clip.x);
     clip.h = std::min(clip.h, bounds.h - clip.y);
 
+    if(!clip.intersects(r))
+      return;
+
     // check vertical alignment
     if ((align & 0b11) != TextAlign::top) {
       Size bounds = measure_text(message, font, variable);
@@ -76,6 +79,9 @@ namespace blit {
       const uint8_t* font_chr = &font.data[chr_idx * char_size];
 
       for (uint8_t y = 0; y < font.char_h; y++) {
+        if (c.y + y < 0)
+          continue;
+
         uint32_t po = offset(Point(c.x, c.y + y));
 
         for (uint8_t x = 0; x < font.char_w; x++) {
