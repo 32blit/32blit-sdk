@@ -66,7 +66,6 @@ private:
   bool Flash(const char *pszFilename);
   void FSInit(void);
 
-  void RenderFlashFile(uint32_t time);
   void RenderMassStorage(uint32_t time);
 
   bool FlashData(uint32_t uOffset, uint8_t *pBuffer, uint32_t uLen);

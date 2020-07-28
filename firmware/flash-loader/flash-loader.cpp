@@ -160,23 +160,35 @@ bool FlashLoader::Flash(const char *pszFilename)
   return bytes_flashed == bytes_total;
 }
 
+void FlashLoader::Render(uint32_t time) {
+  screen.pen = Pen(0,0,0);
+  screen.clear();
+  screen.pen = Pen(255, 255, 255);
 
-// Render() Call relevant render based on state
-void FlashLoader::Render(uint32_t time)
-{
-  switch(m_state)
-  {
-    case stFlashFile:
-    case stLS:
-    case stSaveFile:
-    case stFlashCDC:
-      RenderFlashFile(time);
-      break;
+  // list files on SD card
+  if(!m_filemeta.empty()) {
+    screen.pen = Pen(50, 50, 70);
+    screen.rectangle(Rect(0, ROW_HEIGHT*m_uCurrentFile, screen.bounds.w, ROW_HEIGHT));
+    screen.pen = Pen(255, 255, 255);
 
-    case stMassStorage:
-      RenderMassStorage(time);
-    break;
+    int y = 0;
+    // adjust alignment rect for vertical spacing
+    const int text_align_height = ROW_HEIGHT + minimal_font.spacing_y;
+    const int size_x = screen.bounds.w - 5 - m_max_width_size;
+
+    for(auto &file : m_filemeta) {
+      screen.text(file.name, minimal_font, Rect(5, y, size_x - 9, text_align_height), true, TextAlign::center_v);
+      screen.line(Point(size_x - 4, y), Point(size_x - 4, y + ROW_HEIGHT));
+      screen.text(std::to_string(file.size), minimal_font, Rect(size_x, y, m_max_width_size, text_align_height), true, TextAlign::center_right);
+      y += ROW_HEIGHT;
+    }
   }
+  else {
+    screen.text("No Files Found.", minimal_font, ROW(0));
+  }
+
+  if(m_state == stMassStorage)
+    RenderMassStorage(time);
 
   progress.draw();
 }
@@ -185,12 +197,13 @@ void FlashLoader::RenderMassStorage(uint32_t time)
 {
   static uint8_t uActivityAnim = 0;
 
-  screen.pen = Pen(0,0,0);
+  screen.pen = Pen(0, 0, 0, 200);
   screen.clear();
+
   screen.pen = Pen(255, 255, 255);
   char buffer[128];
   sprintf(buffer, "Mass Storage mode (%s)", g_usbManager.GetStateName());
-  screen.text(buffer, minimal_font, ROW(0));
+  screen.text(buffer, minimal_font, Rect(Point(0), screen.bounds), true, TextAlign::center_center);
 
   if(uActivityAnim)
   {
@@ -205,40 +218,6 @@ void FlashLoader::RenderMassStorage(uint32_t time)
       uActivityAnim = 255;
   }
 }
-
-// RenderFlashFile() Render main ui for selecting files to flash
-void FlashLoader::RenderFlashFile(uint32_t time)
-{
-  screen.pen = Pen(0,0,0);
-  screen.clear();
-  screen.pen = Pen(255, 255, 255);
-
-  // just display
-  if(!m_filemeta.empty())
-  {
-    screen.pen = Pen(50, 50, 70);
-    screen.rectangle(Rect(0, ROW_HEIGHT*m_uCurrentFile, screen.bounds.w, ROW_HEIGHT));
-    screen.pen = Pen(255, 255, 255);
-
-    int y = 0;
-    // adjust alignment rect for vertical spacing
-    const int text_align_height = ROW_HEIGHT + minimal_font.spacing_y;
-    const int size_x = screen.bounds.w - 5 - m_max_width_size;
-    
-    for(auto &file : m_filemeta)
-    {
-      screen.text(file.name, minimal_font, Rect(5, y, size_x - 9, text_align_height), true, TextAlign::center_v);
-      screen.line(Point(size_x - 4, y), Point(size_x - 4, y + ROW_HEIGHT));
-      screen.text(std::to_string(file.size), minimal_font, Rect(size_x, y, m_max_width_size, text_align_height), true, TextAlign::center_right);
-      y += ROW_HEIGHT;
-    }
-  }
-  else
-  {
-    screen.text("No Files Found.", minimal_font, ROW(0));
-  }
-}
-
 
 void FlashLoader::Update(uint32_t time)
 {
