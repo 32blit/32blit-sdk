@@ -11,7 +11,7 @@
 #include <stdlib.h>
 using namespace blit;
 
-enum State {stFlashFile, stSaveFile, stFlashCDC, stLS, stSwitch, stMassStorage};
+enum State {stFlashFile, stSaveFile, stFlashCDC, stLS, stMassStorage};
 
 constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 
@@ -156,10 +156,6 @@ void update(uint32_t time)
   if(state == stLS) {
     load_file_list();
     state = stFlashFile;
-  }
-  else if(state == stSwitch) {
-    blit_switch_execution();
-    return; // not reached
   }
 
   bool button_home = buttons.pressed & Button::HOME;
@@ -527,7 +523,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                     if(result != srError)
                     {
                       result = srFinish;
-                      state = stSwitch;
+                      blit_switch_execution();
                     }
                     else
                       state = stFlashFile;
