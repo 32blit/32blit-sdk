@@ -15,7 +15,6 @@ constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 
 Vec2 file_list_scroll_offset(20.0f, 0.0f);
 
-extern QSPI_HandleTypeDef hqspi;
 extern CDCCommandStream g_commandStream;
 
 FlashLoader flashLoader;
@@ -338,7 +337,7 @@ void FlashLoader::Update(uint32_t time)
 bool FlashLoader::StreamInit(CDCFourCC uCommand)
 {
   //printf("streamInit()\n\r");
-  m_fPercent = 0.0f;
+
   bool bNeedStream = true;
   switch(uCommand)
   {
@@ -562,7 +561,6 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
 
             m_uParseIndex++;
             m_uBytesHandled = m_uParseIndex;
-            m_fPercent = ((float)m_uParseIndex/(float)m_uFilelen)* 100.0f;
           }
       break;
     }

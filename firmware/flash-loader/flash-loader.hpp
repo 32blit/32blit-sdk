@@ -89,7 +89,4 @@ private:
   uint32_t m_uFilelen = 0;
 
   FIL m_file;
-
-  float m_fPercent;
-
 };
