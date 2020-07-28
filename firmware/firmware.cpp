@@ -37,7 +37,7 @@ FIL file;
 // error dialog
 int selected_dialog_option = 0;
 
-bool flash_from_sd_to_qspi_flash(const char *filename);
+uint32_t flash_from_sd_to_qspi_flash(const char *filename);
 
 void erase_qspi_flash(uint32_t start_sector, uint32_t size_bytes) {
   uint32_t sector_count = (size_bytes / qspi_flash_sector_size) + 1;
@@ -264,9 +264,9 @@ void update(uint32_t time)
 
     if(button_a)
     {
-      if(flash_from_sd_to_qspi_flash(files[persist.selected_menu_item].name.c_str())) {
-        blit_switch_execution(0);
-      }
+      auto offset = flash_from_sd_to_qspi_flash(files[persist.selected_menu_item].name.c_str());
+      if(offset != 0xFFFFFFFF)
+        blit_switch_execution(offset);
     }
 
     if (button_x) {
@@ -297,8 +297,24 @@ void update(uint32_t time)
   }
 }
 
+// returns address to flash file to
+uint32_t get_flash_offset_for_file(uint8_t *bin_header) {
+  auto magic = reinterpret_cast<uint32_t *>(bin_header)[0];
+
+  // temporary load address for working on multiple app support without PIC being ready
+  // in future this will probably be more of a "find free space" function
+  if(magic == 0x54494C42 /*BLIT*/) {
+    auto expected_addr = reinterpret_cast<uint32_t *>(bin_header)[4];
+
+    // this should be sector aligned to not break things later...
+    return expected_addr - 0x90000000;
+  }
+
+  return 0;
+}
+
 // Flash(): Flash a file from the SDCard to external flash
-bool flash_from_sd_to_qspi_flash(const char *filename)
+uint32_t flash_from_sd_to_qspi_flash(const char *filename)
 {
   FIL file;
   FRESULT res = f_open(&file, filename, FA_READ);
@@ -307,6 +323,7 @@ bool flash_from_sd_to_qspi_flash(const char *filename)
 
   // get file length
   FSIZE_t bytes_total = f_size(&file);
+  UINT bytes_read = 0;
   FSIZE_t bytes_flashed = 0;
   size_t offset = 0;
 
@@ -316,15 +333,24 @@ bool flash_from_sd_to_qspi_flash(const char *filename)
     return false;
   }
 
+  // check header
+  if(f_read(&file, (void *)buffer, 20, &bytes_read) != FR_OK) {
+    f_close(&file);
+    return false;
+  }
+  f_lseek(&file, 0);
+
+  uint32_t flash_offset = get_flash_offset_for_file(buffer);
+  offset = flash_offset;
+
   // erase the sectors needed to write the image
-  erase_qspi_flash(0, bytes_total);
+  erase_qspi_flash(flash_offset / qspi_flash_sector_size, bytes_total);
 
   progress.show("Copying from SD card to flash...", bytes_total);
 
   while(bytes_flashed < bytes_total)
   {
     // limited ram so a bit at a time
-    UINT bytes_read = 0;
     res = f_read(&file, (void *)buffer, BUFFER_SIZE, &bytes_read);
 
     if(res != FR_OK)
@@ -354,7 +380,7 @@ bool flash_from_sd_to_qspi_flash(const char *filename)
 
   progress.hide();
 
-  return bytes_flashed == bytes_total;
+  return bytes_flashed == bytes_total ? flash_offset : 0xFFFFFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -493,8 +519,6 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   break;
 
                   case stFlashCDC:
-                    erase_qspi_flash(0, m_uFilelen);
-                    progress.show("Saving " + std::string(m_sFilename) +  " to flash...", m_uFilelen);
                   break;
 
                   default:
@@ -561,9 +585,18 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
 
                 case stFlashCDC:
                 {
+                  uint32_t uPage = (m_uParseIndex / PAGE_SIZE);
+                  // first page, check header
+                  if(uPage == 0) {
+                    flash_start_offset = get_flash_offset_for_file(buffer);
+
+                    // erase
+                    erase_qspi_flash(flash_start_offset / qspi_flash_sector_size, m_uFilelen);
+                    progress.show("Saving " + std::string(m_sFilename) +  " to flash...", m_uFilelen);
+                  }
+
                   // save data
-                  volatile uint32_t uPage = (m_uParseIndex / PAGE_SIZE);
-                  if(!FlashData(uPage*PAGE_SIZE, buffer, uWriteLen))
+                  if(!FlashData(flash_start_offset + uPage*PAGE_SIZE, buffer, uWriteLen))
                   {
                     printf("Failed to write to flash\n\r");
                     result = srError;
@@ -575,7 +608,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                     if(result != srError)
                     {
                       result = srFinish;
-                      blit_switch_execution(0);
+                      blit_switch_execution(flash_start_offset);
                     }
                     else
                       state = stFlashFile;
