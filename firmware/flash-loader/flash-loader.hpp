@@ -77,7 +77,6 @@ private:
   uint8_t m_buffer[PAGE_SIZE];
   uint8_t m_verifyBuffer[PAGE_SIZE];
 
-  unsigned m_uCurrentFile = 0;
   bool		m_bFsInit = false;
   State		m_state = stFlashFile;
 

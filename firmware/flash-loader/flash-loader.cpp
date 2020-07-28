@@ -66,8 +66,6 @@ void FlashLoader::Init()
 
   // register LS
   g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value, this);
-
-  m_uCurrentFile = persist.selected_menu_item;
 }
 
 
@@ -92,8 +90,8 @@ void FlashLoader::FSInit(void)
     }
   }
 
-  if(m_uCurrentFile > m_filemeta.size()) {
-    m_uCurrentFile = m_filemeta.size() - 1;
+  if(persist.selected_menu_item > m_filemeta.size()) {
+    persist.selected_menu_item = m_filemeta.size() - 1;
   }
 
   m_bFsInit = true;
@@ -168,7 +166,7 @@ void FlashLoader::Render(uint32_t time) {
   // list files on SD card
   if(!m_filemeta.empty()) {
     screen.pen = Pen(50, 50, 70);
-    screen.rectangle(Rect(0, ROW_HEIGHT*m_uCurrentFile, screen.bounds.w, ROW_HEIGHT));
+    screen.rectangle(Rect(0, ROW_HEIGHT*persist.selected_menu_item, screen.bounds.w, ROW_HEIGHT));
     screen.pen = Pen(255, 255, 255);
 
     int y = 0;
@@ -262,25 +260,25 @@ void FlashLoader::Update(uint32_t time)
 
     if(button_up)
     {
-      if(m_uCurrentFile > 0) {
-        m_uCurrentFile--;
+      if(persist.selected_menu_item > 0) {
+        persist.selected_menu_item--;
       } else {
-        m_uCurrentFile = m_filemeta.size() - 1;
+        persist.selected_menu_item = m_filemeta.size() - 1;
       }
     }
 
     if(button_down)
     {
-      if(m_uCurrentFile < (m_filemeta.size() - 1)) {
-        m_uCurrentFile++;
+      if(persist.selected_menu_item < (m_filemeta.size() - 1)) {
+        persist.selected_menu_item++;
       } else {
-        m_uCurrentFile = 0;
+        persist.selected_menu_item = 0;
       }
     }
 
     if(button_a)
     {
-      if(Flash(m_filemeta[m_uCurrentFile].name.c_str())) {
+      if(Flash(m_filemeta[persist.selected_menu_item].name.c_str())) {
         blit_switch_execution();
       }
     }
@@ -298,8 +296,6 @@ void FlashLoader::Update(uint32_t time)
       // Sort by filesize
       std::sort<Iterator, Compare>(m_filemeta.begin(), m_filemeta.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
     }
-
-    persist.selected_menu_item = m_uCurrentFile;
   }
   else if(m_state == stMassStorage)
   {
