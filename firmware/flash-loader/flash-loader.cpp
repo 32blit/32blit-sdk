@@ -11,6 +11,8 @@
 #include <stdlib.h>
 using namespace blit;
 
+enum State {stFlashFile, stSaveFile, stFlashCDC, stLS, stSwitch, stMassStorage};
+
 constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 
 Vec2 file_list_scroll_offset(20.0f, 0.0f);
@@ -20,6 +22,19 @@ extern CDCCommandStream g_commandStream;
 FlashLoader flashLoader;
 
 extern USBManager g_usbManager;
+
+std::vector<blit::FileInfo> m_filemeta;
+int32_t m_max_width_size = 0;
+
+uint8_t m_buffer[PAGE_SIZE];
+uint8_t m_verifyBuffer[PAGE_SIZE];
+
+bool		m_bFsInit = false;
+State		m_state = stFlashFile;
+
+FIL m_file;
+
+bool Flash(const char *pszFilename);
 
 void erase_qspi_flash(uint32_t start_sector, uint32_t size_bytes) {
   uint32_t sector_count = (size_bytes / qspi_flash_sector_size) + 1;
@@ -35,43 +50,9 @@ void erase_qspi_flash(uint32_t start_sector, uint32_t size_bytes) {
   progress.hide();
 }
 
-// c calls to c++ object
-void init()
-{
-  flashLoader.Init();
-}
-
-void render(uint32_t time)
-{
-  flashLoader.Render(time);
-}
-
-void update(uint32_t time)
-{
-  flashLoader.Update(time);
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// Init() Register command handlers
-void FlashLoader::Init()
-{
-  blit::set_screen_mode(ScreenMode::hires);
-
-  // register PROG
-  g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value, this);
-
-  // register SAVE
-  g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'S', 'A', 'V', 'E'>::value, this);
-
-  // register LS
-  g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value, this);
-}
-
 
 // FSInit() Read a page worth of *.BIN filenames from the SDCard
-void FlashLoader::FSInit(void)
+void FSInit(void)
 {
   m_filemeta.clear();
   m_max_width_size = 0;
@@ -98,68 +79,46 @@ void FlashLoader::FSInit(void)
   m_bFsInit = true;
 }
 
-
-// Flash(): Flash a file from the SDCard to external flash
-bool FlashLoader::Flash(const char *pszFilename)
+void RenderMassStorage(uint32_t time)
 {
-  FIL file;
-  FRESULT res = f_open(&file, pszFilename, FA_READ);
-  if(res != FR_OK)
-    return false;
+  static uint8_t uActivityAnim = 0;
 
-  // get file length
-  FSIZE_t bytes_total = f_size(&file);
-  FSIZE_t bytes_flashed = 0;
-  size_t offset = 0;
+  screen.pen = Pen(0, 0, 0, 200);
+  screen.clear();
 
-  if(!bytes_total)
+  screen.pen = Pen(255, 255, 255);
+  char buffer[128];
+  sprintf(buffer, "Mass Storage mode (%s)", g_usbManager.GetStateName());
+  screen.text(buffer, minimal_font, Rect(Point(0), screen.bounds), true, TextAlign::center_center);
+
+  if(uActivityAnim)
   {
-    f_close(&file);
-    return false;
+    screen.pen = Pen(0, 255, 0, uActivityAnim);
+    screen.circle(Point(320-6, 6), 6);
+    uActivityAnim = uActivityAnim>>1;
+
   }
-
-  // erase the sectors needed to write the image
-  erase_qspi_flash(0, bytes_total);
-
-  progress.show("Copying from SD card to flash...", bytes_total);
-
-  while(bytes_flashed < bytes_total)
+  else
   {
-    // limited ram so a bit at a time
-    UINT bytes_read = 0;
-    res = f_read(&file, (void *)m_buffer, BUFFER_SIZE, &bytes_read);
-
-    if(res != FR_OK)
-      break;
-  
-    if(qspi_write_buffer(offset, m_buffer, bytes_read) != QSPI_OK)
-      break;
-
-    if(qspi_read_buffer(offset, m_verifyBuffer, bytes_read) != QSPI_OK)
-      break;
-
-    // compare buffers
-    bool verified = true;
-    for(uint32_t uB = 0; verified && uB < bytes_read; uB++)
-      verified = m_buffer[uB] == m_verifyBuffer[uB];
-
-    if(!verified)
-      break;
-
-    offset += bytes_read;
-    bytes_flashed += bytes_read;
-
-    progress.update(bytes_flashed);
+    if(g_usbManager.HasHadActivity())
+      uActivityAnim = 255;
   }
-
-  f_close(&file);
-
-  progress.hide();
-
-  return bytes_flashed == bytes_total;
 }
 
-void FlashLoader::Render(uint32_t time) {
+void init() {
+  blit::set_screen_mode(ScreenMode::hires);
+
+  // register PROG
+  g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value, &flashLoader);
+
+  // register SAVE
+  g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'S', 'A', 'V', 'E'>::value, &flashLoader);
+
+  // register LS
+  g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value, &flashLoader);
+}
+
+void render(uint32_t time) {
   screen.pen = Pen(5, 8, 12);
   screen.clear();
 
@@ -196,33 +155,7 @@ void FlashLoader::Render(uint32_t time) {
   progress.draw();
 }
 
-void FlashLoader::RenderMassStorage(uint32_t time)
-{
-  static uint8_t uActivityAnim = 0;
-
-  screen.pen = Pen(0, 0, 0, 200);
-  screen.clear();
-
-  screen.pen = Pen(255, 255, 255);
-  char buffer[128];
-  sprintf(buffer, "Mass Storage mode (%s)", g_usbManager.GetStateName());
-  screen.text(buffer, minimal_font, Rect(Point(0), screen.bounds), true, TextAlign::center_center);
-
-  if(uActivityAnim)
-  {
-    screen.pen = Pen(0, 255, 0, uActivityAnim);
-    screen.circle(Point(320-6, 6), 6);
-    uActivityAnim = uActivityAnim>>1;
-
-  }
-  else
-  {
-    if(g_usbManager.HasHadActivity())
-      uActivityAnim = 255;
-  }
-}
-
-void FlashLoader::Update(uint32_t time)
+void update(uint32_t time)
 {
   if(m_state == stLS) {
     FSInit();
@@ -323,8 +256,65 @@ void FlashLoader::Update(uint32_t time)
   }
 }
 
+// Flash(): Flash a file from the SDCard to external flash
+bool Flash(const char *pszFilename)
+{
+  FIL file;
+  FRESULT res = f_open(&file, pszFilename, FA_READ);
+  if(res != FR_OK)
+    return false;
 
+  // get file length
+  FSIZE_t bytes_total = f_size(&file);
+  FSIZE_t bytes_flashed = 0;
+  size_t offset = 0;
 
+  if(!bytes_total)
+  {
+    f_close(&file);
+    return false;
+  }
+
+  // erase the sectors needed to write the image
+  erase_qspi_flash(0, bytes_total);
+
+  progress.show("Copying from SD card to flash...", bytes_total);
+
+  while(bytes_flashed < bytes_total)
+  {
+    // limited ram so a bit at a time
+    UINT bytes_read = 0;
+    res = f_read(&file, (void *)m_buffer, BUFFER_SIZE, &bytes_read);
+
+    if(res != FR_OK)
+      break;
+  
+    if(qspi_write_buffer(offset, m_buffer, bytes_read) != QSPI_OK)
+      break;
+
+    if(qspi_read_buffer(offset, m_verifyBuffer, bytes_read) != QSPI_OK)
+      break;
+
+    // compare buffers
+    bool verified = true;
+    for(uint32_t uB = 0; verified && uB < bytes_read; uB++)
+      verified = m_buffer[uB] == m_verifyBuffer[uB];
+
+    if(!verified)
+      break;
+
+    offset += bytes_read;
+    bytes_flashed += bytes_read;
+
+    progress.update(bytes_flashed);
+  }
+
+  f_close(&file);
+
+  progress.hide();
+
+  return bytes_flashed == bytes_total;
+}
 
 //////////////////////////////////////////////////////////////////////
 // Streaming Code
@@ -365,7 +355,7 @@ bool FlashLoader::StreamInit(CDCFourCC uCommand)
 
 // FlashData() Flash data to the QSPI flash
 // Note: currently qspi_write_buffer only works for sizes of 256 max
-bool FlashLoader::FlashData(uint32_t uOffset, uint8_t *pBuffer, uint32_t uLen)
+bool FlashData(uint32_t uOffset, uint8_t *pBuffer, uint32_t uLen)
 {
   bool bResult = false;
   if(QSPI_OK == qspi_write_buffer(uOffset, pBuffer, uLen))
@@ -386,7 +376,7 @@ bool FlashLoader::FlashData(uint32_t uOffset, uint8_t *pBuffer, uint32_t uLen)
 
 
 // SaveData() Saves date to file on SDCard
-bool FlashLoader::SaveData(uint8_t *pBuffer, uint32_t uLen)
+bool SaveData(uint8_t *pBuffer, uint32_t uLen)
 {
   UINT uWritten;
   FRESULT res = f_write(&m_file, pBuffer, uLen, &uWritten);
