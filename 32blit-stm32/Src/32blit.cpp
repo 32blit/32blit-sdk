@@ -893,20 +893,28 @@ void blit_switch_execution(uint32_t address)
     NVIC_SystemReset();
   }
 
-	// enable qspi memory mapping if needed
-	if(EXTERNAL_LOAD_ADDRESS >= 0x90000000)
+	// switch to user app in external flash
+	if(EXTERNAL_LOAD_ADDRESS >= 0x90000000) {
 		qspi_enable_memorymapped_mode();
 
-  uint32_t magic = (*(__IO uint32_t*) (EXTERNAL_LOAD_ADDRESS));
+    auto app_ptr = ((__IO uint32_t*) (EXTERNAL_LOAD_ADDRESS + address));
+    uint32_t magic = app_ptr[0];
 
-  if(magic == 0x54494C42 /*BLIT*/) {
-    pFunction init = (pFunction) (*(__IO uint32_t*) (EXTERNAL_LOAD_ADDRESS + 12));
-    init();
+    if(magic == 0x54494C42 /*BLIT*/) {
+      pFunction init = (pFunction) app_ptr[3];
+      init();
 
-    blit::render = user_render = (renderFunction) (*(__IO uint32_t*) (EXTERNAL_LOAD_ADDRESS + 4));
-    do_tick = user_tick = (tickFunction) (*(__IO uint32_t*) (EXTERNAL_LOAD_ADDRESS + 8));
-    return;
+      blit::render = user_render = (renderFunction) app_ptr[1];
+      do_tick = user_tick = (tickFunction) app_ptr[2];
+      return;
+    }
+    // anything flashed at a non-zero offset should have a valid header
+    else if(address != 0)
+      return;
   }
+
+  // old-style soft-reset to app with linked HAL
+  // left for compatibility/testing
 
   // Stop the ADC DMA
   HAL_ADC_Stop_DMA(&hadc1);
