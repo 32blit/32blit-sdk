@@ -168,7 +168,7 @@ void update(uint32_t time)
   {
     static uint32_t lastRepeat = 0;
 
-    bool button_a = buttons.pressed & Button::A;
+    bool button_a = buttons.released & Button::A;
     bool button_x = buttons.pressed & Button::X;
     bool button_y = buttons.pressed & Button::Y;
 
