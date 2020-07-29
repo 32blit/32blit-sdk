@@ -422,11 +422,9 @@ static const Pen menu_colours[]{
 static constexpr int num_menu_colours = sizeof(menu_colours) / sizeof(Pen);
 static Pen menu_saved_colours[num_menu_colours];
 
-float menu_y (MenuItem item) { return item * 10 + 20; }
-float menu_selection_y (MenuItem item) { return menu_y(item) - 1; }
 Point menu_title_origin (MenuItem item) { return Point(5, item * 10 + 20); }
-Point press_a_origin (MenuItem item, float screen_width) { return Point(screen_width/2, item * 10 + 20); }
-Rect menu_item_frame (MenuItem item, float screen_width) { return Rect (0, item * 10 + 19, screen_width, 9); }
+Point press_a_origin (MenuItem item, int screen_width) { return Point(screen_width/2, item * 10 + 20); }
+Rect menu_item_frame (MenuItem item, int screen_width) { return Rect (0, item * 10 + 19, screen_width, 9); }
 
 void blit_menu_update(uint32_t time) {
   if(blit::buttons.pressed & blit::Button::DPAD_UP) {
@@ -548,7 +546,7 @@ void blit_menu_render(uint32_t time) {
 
   // Horizontal Line
   screen.pen = foreground_colour;
-  screen.rectangle(Rect(0, 15, screen_width, 1));
+  screen.h_span(Point(0, 15), screen_width);
 
   // Selected item
   screen.pen = selected_item_bg_colour;
@@ -562,7 +560,7 @@ void blit_menu_render(uint32_t time) {
     screen.pen = foreground_colour;
     screen.text(menu_name(item), minimal_font, menu_title_origin(item));
 
-    switch (i) {
+    switch (item) {
       case BACKLIGHT:
         screen.pen = bar_background_color;
         screen.rectangle(Rect(screen_width / 2, 21, 75, 5));
@@ -588,7 +586,7 @@ void blit_menu_render(uint32_t time) {
 
   // Bottom horizontal Line
   screen.pen = foreground_colour;
-  screen.rectangle(Rect(0, screen_height - 15, screen_width, 1));
+  screen.h_span(Point(0, screen_height - 15), screen_width);
 
 }
 
