@@ -14,6 +14,7 @@ using namespace blit;
 enum State {stFlashFile, stSaveFile, stFlashCDC, stLS, stMassStorage};
 
 constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
+constexpr uint32_t qspi_flash_size = 32768 * 1024;
 
 Vec2 file_list_scroll_offset(20.0f, 0.0f);
 
@@ -22,6 +23,13 @@ extern CDCCommandStream g_commandStream;
 FlashLoader flashLoader;
 
 extern USBManager g_usbManager;
+
+struct FlashGame {
+  uint32_t offset;
+  // TODO: metadata?
+};
+
+std::vector<FlashGame> flashed_games;
 
 std::vector<blit::FileInfo> files;
 int32_t max_width_size = 0;
@@ -86,9 +94,24 @@ void load_file_list() {
   }
 
   sort_file_list();
+}
 
-  if(persist.selected_menu_item > files.size()) {
-    persist.selected_menu_item = files.size() - 1;
+void scan_flash() {
+  for(uint32_t offset = 0; offset < qspi_flash_size; offset += qspi_flash_sector_size) {
+    uint8_t header_buf[4];
+
+    if(qspi_read_buffer(offset, header_buf, 4) != QSPI_OK)
+      break;
+
+    auto magic = reinterpret_cast<uint32_t *>(header_buf)[0];
+    if(magic != 0x54494C42)
+      continue;
+
+    FlashGame game;
+    game.offset = offset;
+    flashed_games.push_back(game);
+
+    // TODO: when we have a header with metadata, we'll be able to skip to the end
   }
 }
 
@@ -123,6 +146,11 @@ void init() {
   screen.clear();
 
   load_file_list();
+  scan_flash();
+
+  auto total_items = files.size() + flashed_games.size();
+  if(persist.selected_menu_item > total_items)
+    persist.selected_menu_item = total_items - 1;
 
   // register PROG
   g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value, &flashLoader);
@@ -141,14 +169,27 @@ void render(uint32_t time) {
   screen.pen = Pen(0, 0, 0, 100);
   screen.rectangle(Rect(10, 0, 100, 240));
 
+  // adjust alignment rect for vertical spacing
+  const int text_align_height = ROW_HEIGHT + minimal_font.spacing_y;
+
+  int y = 115 - file_list_scroll_offset.y;
+  uint32_t i = 0;
+
+  // list installed
+  for(auto &game : flashed_games) {
+    if(i++ == persist.selected_menu_item)
+      screen.pen = Pen(235, 245, 255);
+    else
+      screen.pen = Pen(80, 100, 120);
+
+    screen.text("game @" + std::to_string(game.offset / qspi_flash_sector_size), minimal_font, Rect(file_list_scroll_offset.x, y, 100 - 20, text_align_height), true, TextAlign::center_v);
+    y += ROW_HEIGHT;
+  }
+
   // list files on SD card
   if(!files.empty()) {
-    int y = 115 - file_list_scroll_offset.y;
-    // adjust alignment rect for vertical spacing
-    const int text_align_height = ROW_HEIGHT + minimal_font.spacing_y;
     const int size_x = 115;
-    
-    uint32_t i = 0;
+
     for(auto &file : files) {
       if(i++ == persist.selected_menu_item)
         screen.pen = Pen(235, 245, 255);
@@ -241,18 +282,20 @@ void update(uint32_t time)
 
     }
 
+    auto total_items = files.size() + flashed_games.size();
+
     if(button_up)
     {
       if(persist.selected_menu_item > 0) {
         persist.selected_menu_item--;
       } else {
-        persist.selected_menu_item = files.size() - 1;
+        persist.selected_menu_item = total_items - 1;
       }
     }
 
     if(button_down)
     {
-      if(persist.selected_menu_item < (files.size() - 1)) {
+      if(persist.selected_menu_item < (total_items - 1)) {
         persist.selected_menu_item++;
       } else {
         persist.selected_menu_item = 0;
@@ -264,7 +307,14 @@ void update(uint32_t time)
 
     if(button_a)
     {
-      auto offset = flash_from_sd_to_qspi_flash(files[persist.selected_menu_item].name.c_str());
+      uint32_t offset;
+      if(persist.selected_menu_item < flashed_games.size())
+        offset = flashed_games[persist.selected_menu_item].offset;
+      else {
+        auto &file = files[persist.selected_menu_item - flashed_games.size()];
+        offset = flash_from_sd_to_qspi_flash(file.name.c_str());
+      }
+
       if(offset != 0xFFFFFFFF)
         blit_switch_execution(offset);
     }
