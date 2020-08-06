@@ -191,9 +191,28 @@ static bool SD_RxDataBlock(BYTE *buff, UINT len)
 	/* receive data */
 	if(len > 16)
 	{
-		// SD card expects 0xff dummy bytes for reads
-		memset(buff, 0xFF, len);
-		HAL_SPI_TransmitReceive(HSPI_SDCARD, buff, buff, len, SPI_TIMEOUT);
+		Timer1 = SPI_TIMEOUT;
+
+		// manual txrx
+		SPI_Start(len);
+
+		// the only length that will be used here is 512
+		uint32_t *buff32 = (uint32_t *)buff;
+		const uint32_t *end = buff32 + len / 4;
+
+		while(buff32 != end && Timer1)
+		{
+			if((HSPI_SDCARD)->Instance->SR & SPI_FLAG_TXP)
+				*((__IO uint32_t *)&(HSPI_SDCARD)->Instance->TXDR) = 0xFFFFFFFF;
+
+			if(((HSPI_SDCARD)->Instance->SR & SPI_FLAG_RXWNE))
+				*(buff32++) = *((__IO uint32_t *)&(HSPI_SDCARD)->Instance->RXDR);
+		}
+
+		while(!((HSPI_SDCARD)->Instance->SR & SPI_FLAG_EOT) && Timer1); // wait for end
+		
+		// end
+		SPI_End();
 	}
 	else
 	{
