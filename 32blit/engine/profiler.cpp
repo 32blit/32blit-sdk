@@ -105,9 +105,9 @@ void Profiler::log_probes()
   for(ProfilerProbe *pProbe : m_probes)
 	{
 		const ProfilerProbe::Metrics &metrics = pProbe->elapsed_metrics();
-		printf("%-16s %" PRIu32 ",\t%" PRIu32 ",\t%" PRIu32 ",\t%" PRIu32 "\n\r", pProbe->name(), metrics.uMinElapsedUs, metrics.uElapsedUs, metrics.uAvgElapsedUs, metrics. uMaxElapsedUs);
+		debugf("%-16s %" PRIu32 ",\t%" PRIu32 ",\t%" PRIu32 ",\t%" PRIu32 "\n\r", pProbe->name(), metrics.uMinElapsedUs, metrics.uElapsedUs, metrics.uAvgElapsedUs, metrics. uMaxElapsedUs);
 	}
-	printf("\n\r");
+	debugf("\n\r");
 }
 
 uint32_t Profiler::get_probe_count()
