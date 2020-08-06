@@ -3,6 +3,7 @@
 
 #include "stm32h7xx_hal.h"
 #include <stdbool.h>
+#include <string.h>
 #include "diskio.h"
 #include "fatfs_sd.h"
 
@@ -187,10 +188,18 @@ static bool SD_RxDataBlock(BYTE *buff, UINT len)
 	/* invalid response */
 	if(token != 0xFE) return FALSE;
 
-
 	/* receive data */
-	while(len--)
-		SPI_RxBytePtr(buff++);
+	if(len > 16)
+	{
+		// SD card expects 0xff dummy bytes for reads
+		memset(buff, 0xFF, len);
+		HAL_SPI_TransmitReceive(HSPI_SDCARD, buff, buff, len, SPI_TIMEOUT);
+	}
+	else
+	{
+		while(len--)
+			SPI_RxBytePtr(buff++);
+	}
 
 	/* discard CRC */
 	SPI_RxByte();
