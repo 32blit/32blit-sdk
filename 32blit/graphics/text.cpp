@@ -18,7 +18,7 @@ namespace blit {
    * \param p
    * \param variable
    */
-  void Surface::text(const std::string &message, const Font &font, const Point &p, bool variable, TextAlign align, Rect clip) {
+  void Surface::text(std::string_view message, const Font &font, const Point &p, bool variable, TextAlign align, Rect clip) {
     text(message, font, Rect(p.x, p.y, 0, 0), variable, align, clip);
   }
 
@@ -30,7 +30,7 @@ namespace blit {
    * \param r
    * \param variable
    */
-  void Surface::text(const std::string &message, const Font &font, const Rect &r, bool variable, TextAlign align, Rect clip) {
+  void Surface::text(std::string_view message, const Font &font, const Rect &r, bool variable, TextAlign align, Rect clip) {
     Point c(r.x, r.y); // caret position
 
     // default clip rect to rect if passed in
@@ -129,7 +129,7 @@ namespace blit {
     return font.char_w_variable[chr_idx];
   }
 
-  Size Surface::measure_text(const std::string &message, const Font &font, bool variable) {
+  Size Surface::measure_text(std::string_view message, const Font &font, bool variable) {
     const int line_height = font.char_h + font.spacing_y;
 
     Size bounds(0, 0);
@@ -171,7 +171,7 @@ namespace blit {
   }
 }
 
-std::string Surface::wrap_text(const std::string &message, int32_t width, const Font &font, bool variable, bool words) {
+std::string Surface::wrap_text(std::string_view message, int32_t width, const Font &font, bool variable, bool words) {
   std::string ret;
 
   int current_x = 0;
@@ -196,12 +196,14 @@ std::string Surface::wrap_text(const std::string &message, int32_t width, const 
     if (current_x > width) {
       if(!words || last_space == std::string::npos) {
         // no space to break at or we're not breaking on words
-        ret += message.substr(copied_off, i - copied_off - 1) + "\n";
+        ret += message.substr(copied_off, i - copied_off - 1);
+        ret += "\n";
         copied_off = i - 1;
         current_x = char_width;
       } else {
         // break at last space
-        ret += message.substr(copied_off, last_space - copied_off) + "\n";
+        ret += message.substr(copied_off, last_space - copied_off);
+        ret += "\n";
         copied_off = last_space + 1; // don't copy the space
         last_space = std::string::npos;
         current_x = measure_text(message.substr(copied_off, i - copied_off + 1), font, variable).w;
