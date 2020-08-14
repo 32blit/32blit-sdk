@@ -220,15 +220,6 @@ void FlashLoader::RenderMassStorage(uint32_t time)
 		if(g_usbManager.HasHadActivity())
 			uActivityAnim = 255;
 	}
-
-
-	if(g_usbManager.GetState() == USBManager::usbsMSCUnmounted)
-	{
-		// Swicth back to CDC
-		g_usbManager.SetType(USBManager::usbtCDC);
-		FSInit();
-		m_state = stFlashFile;
-	}
 }
 
 // RenderSaveFile() Render file save progress %
@@ -259,26 +250,6 @@ void FlashLoader::RenderFlashCDC(uint32_t time)
 // RenderFlashFile() Render main ui for selecting files to flash
 void FlashLoader::RenderFlashFile(uint32_t time)
 {
-	static uint32_t lastRepeat = 0;
-
-	if(!m_bFsInit)
-		FSInit();
-
-	bool button_a = buttons.pressed & Button::A;
-	bool button_x = buttons.pressed & Button::X;
-	bool button_y = buttons.pressed & Button::Y;
-
-	bool button_up = buttons.pressed & Button::DPAD_UP;
-	bool button_down = buttons.pressed & Button::DPAD_DOWN;
-
-	bool button_home = buttons.pressed & Button::HOME;
-
-	if(time - lastRepeat > 150 || button_up || button_down) {
-		button_up = buttons & Button::DPAD_UP;
-		button_down = buttons & Button::DPAD_DOWN;
-		lastRepeat = time;
-	}
-
 	screen.pen = Pen(0,0,0);
 	screen.rectangle(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
 	screen.pen = Pen(255, 255, 255);
@@ -302,53 +273,6 @@ void FlashLoader::RenderFlashFile(uint32_t time)
 	{
 		screen.text("No Files Found.", minimal_font, ROW(0));
 	}
-
-	if(button_home)
-	{
-		// switch to mass media
-		g_usbManager.SetType(USBManager::usbtMSC);
-		m_state = stMassStorage;
-
-	}
-
-	if(button_up)
-	{
-		if(m_uCurrentFile > 0) {
-			m_uCurrentFile--;
-		} else {
-			m_uCurrentFile = m_uFileCount - 1;
-		}
-	}
-
-	if(button_down)
-	{
-		if(m_uCurrentFile < (m_uFileCount - 1)) {
-			m_uCurrentFile++;
-		} else {
-			m_uCurrentFile = 0;
-		}
-	}
-
-	if(button_a)
-	{
-		if(Flash(m_filemeta[m_uCurrentFile].sFilename)) {
-			blit_switch_execution();
-		}
-	}
-
-	if (button_x)
-	{
-		// Sort by filename
-		std::sort(&m_filemeta[0], &m_filemeta[m_uFileCount], [](auto a, auto b) { return strcmp(a.sFilename, b.sFilename) <= 0; });
-	}
-
-	if (button_y)
-	{
-		// Sort by filesize
-		std::sort(&m_filemeta[0], &m_filemeta[m_uFileCount], [](auto a, auto b) { return a.fstFilesize <= b.fstFilesize; });
-	}
-
-	persist.selected_menu_item = m_uCurrentFile;
 }
 
 
@@ -358,6 +282,92 @@ void FlashLoader::Update(uint32_t time)
 	{
 		FSInit();
 		m_state = stFlashFile;
+	}
+
+	bool button_home = buttons.pressed & Button::HOME;
+	
+	if(m_state == stFlashFile)
+	{
+		static uint32_t lastRepeat = 0;
+
+		if(!m_bFsInit)
+			FSInit();
+
+		bool button_a = buttons.pressed & Button::A;
+		bool button_x = buttons.pressed & Button::X;
+		bool button_y = buttons.pressed & Button::Y;
+
+		bool button_up = buttons.pressed & Button::DPAD_UP;
+		bool button_down = buttons.pressed & Button::DPAD_DOWN;
+
+		if(time - lastRepeat > 150 || button_up || button_down) {
+			button_up = buttons & Button::DPAD_UP;
+			button_down = buttons & Button::DPAD_DOWN;
+			lastRepeat = time;
+		}
+
+		if(button_home)
+		{
+			// switch to mass media
+			g_usbManager.SetType(USBManager::usbtMSC);
+			m_state = stMassStorage;
+
+		}
+
+		if(button_up)
+		{
+			if(m_uCurrentFile > 0) {
+				m_uCurrentFile--;
+			} else {
+				m_uCurrentFile = m_uFileCount - 1;
+			}
+		}
+
+		if(button_down)
+		{
+			if(m_uCurrentFile < (m_uFileCount - 1)) {
+				m_uCurrentFile++;
+			} else {
+				m_uCurrentFile = 0;
+			}
+		}
+
+		if(button_a)
+		{
+			if(Flash(m_filemeta[m_uCurrentFile].sFilename)) {
+				blit_switch_execution();
+			}
+		}
+
+		if (button_x)
+		{
+			// Sort by filename
+			std::sort(&m_filemeta[0], &m_filemeta[m_uFileCount], [](auto a, auto b) { return strcmp(a.sFilename, b.sFilename) <= 0; });
+		}
+
+		if (button_y)
+		{
+			// Sort by filesize
+			std::sort(&m_filemeta[0], &m_filemeta[m_uFileCount], [](auto a, auto b) { return a.fstFilesize <= b.fstFilesize; });
+		}
+
+		persist.selected_menu_item = m_uCurrentFile;
+	}
+	else if(m_state == stMassStorage)
+	{
+		bool switch_back = g_usbManager.GetState() == USBManager::usbsMSCUnmounted;
+
+		// allow switching back manually if it was never mounted
+		if(button_home && g_usbManager.GetState() == USBManager::usbsMSCInititalising)
+			switch_back = true;
+
+		if(switch_back)
+		{
+			// Switch back to CDC
+			g_usbManager.SetType(USBManager::usbtCDC);
+			FSInit();
+			m_state = stFlashFile;
+		}
 	}
 }
 

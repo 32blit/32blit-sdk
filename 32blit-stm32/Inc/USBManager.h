@@ -4,6 +4,8 @@
 #include "usb_device.h"
 #include "i2c.h"
 
+extern USBD_HandleTypeDef hUsbDeviceHS;
+
 class USBManager
 {
 public:
@@ -71,6 +73,14 @@ public:
 	{
 		// On linux we seem to get many start/stops so use a timer to set mount status.
 		const uint32_t uMountUnmountTime = 500;
+
+		// can't be mounted if there's no usb connection
+		// maybe show some kind of warning if previously mounted?
+		if(hUsbDeviceHS.dev_state != USBD_STATE_CONFIGURED)
+		{
+			m_state = usbsMSCInititalising;
+			m_bHasHadSomeActivity = false;
+		}
 
 		switch(m_state)
 		{
