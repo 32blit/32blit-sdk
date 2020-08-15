@@ -53,8 +53,6 @@ namespace blit {
   uint32_t last_tick_time = 0;
 
   bool tick(uint32_t time) {
-    bool has_rendered = false;
-
     if (last_tick_time == 0) {
       last_tick_time = time;
     }

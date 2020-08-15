@@ -17,6 +17,7 @@ namespace blit {
     inline Vec2& operator+= (const Vec2 &a) { x += a.x; y += a.y; return *this; }
     inline Vec2& operator*= (const float a) { x *= a;   y *= a;   return *this; }
     inline Vec2& operator*= (const Mat3 &a) { this->transform(a); return *this; }
+    inline Vec2& operator*= (const Vec2 &a) { x *= a.x; y *= a.y; return *this; }
     inline Vec2& operator/= (const float a) { x /= a;   y /= a;   return *this; }
     inline Vec2& operator/= (const Vec2 &a) { x /= a.x;   y /= a.y;   return *this; }
 
@@ -90,6 +91,7 @@ namespace blit {
   inline Vec2 operator+  (Vec2 lhs, const Vec2 &rhs) { lhs += rhs; return lhs; }
   inline Vec2 operator*  (Vec2 lhs, const float a) { lhs *= a; return lhs; }
   inline Vec2 operator*  (Vec2 lhs, const Mat3 &a) { lhs *= a; return lhs; }
+  inline Vec2 operator*  (Vec2 lhs, const Vec2 &rhs) { lhs *= rhs; return lhs; }
   inline Vec2 operator/  (Vec2 lhs, const float a) { lhs /= a; return lhs; }
   inline Vec2 operator/  (Vec2 lhs, const Vec2 &rhs) { lhs.x /= rhs.x; lhs.y /= rhs.y; return lhs; }
 

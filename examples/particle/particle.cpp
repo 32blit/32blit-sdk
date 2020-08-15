@@ -110,7 +110,7 @@ void spark(uint32_t time_ms) {
 
   float w = sinf(time_ms / 1000.0f) * 0.05f;
 
-  Vec2 gravity = Vec2(0, 9.8 * 2) * td;
+  Vec2 gravity = Vec2(0, 9.8f * 2) * td;
 
   for (auto &p : s) {
     if (p.generated) {

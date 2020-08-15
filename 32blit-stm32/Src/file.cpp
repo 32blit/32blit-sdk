@@ -93,6 +93,7 @@ std::vector<blit::FileInfo> list_files(std::string path) {
 
     info.name = ent.fname;
     info.flags = 0;
+    info.size = ent.fsize;
 
     if(ent.fattrib & AM_DIR)
       info.flags |= blit::FileFlags::directory;

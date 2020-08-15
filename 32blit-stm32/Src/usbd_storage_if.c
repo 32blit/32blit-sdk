@@ -197,7 +197,7 @@ int8_t STORAGE_GetCapacity_HS(uint8_t lun, uint32_t *block_num, uint16_t *block_
   /* USER CODE BEGIN 10 */
 	// get sector size and count
 	DWORD sectorCount = 0;
-	DWORD sectorSize = 0;
+	WORD sectorSize = 0;
 	if (disk_ioctl(lun, GET_SECTOR_SIZE, &sectorSize) == RES_OK)
 	{
 		if (disk_ioctl(lun, GET_SECTOR_COUNT, &sectorCount) == RES_OK)
