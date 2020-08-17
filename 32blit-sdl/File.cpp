@@ -146,21 +146,21 @@ std::vector<blit::FileInfo> list_files(std::string path) {
 
 bool file_exists(std::string path) {
 #ifdef WIN32
-	DWORD attribs = GetFileAttributesA(path.c_str());
+	DWORD attribs = GetFileAttributesA((basePath + path).c_str());
 	return (attribs != INVALID_FILE_ATTRIBUTES && !(attribs & FILE_ATTRIBUTE_DIRECTORY));
 #else
   struct stat stat_buf;
-  return (stat(path.c_str(), &stat_buf) == 0 && S_ISREG(stat_buf.st_mode));
+  return (stat((basePath + path).c_str(), &stat_buf) == 0 && S_ISREG(stat_buf.st_mode));
 #endif
 }
 
 bool directory_exists(std::string path) {
 #ifdef WIN32
-	DWORD attribs = GetFileAttributesA(path.c_str());
+	DWORD attribs = GetFileAttributesA((basePath + path).c_str());
 	return (attribs != INVALID_FILE_ATTRIBUTES && (attribs & FILE_ATTRIBUTE_DIRECTORY));
 #else
   struct stat stat_buf;
-  return (stat(path.c_str(), &stat_buf) == 0 && S_ISDIR(stat_buf.st_mode));
+  return (stat((basePath + path).c_str(), &stat_buf) == 0 && S_ISDIR(stat_buf.st_mode));
 #endif
 }
 
