@@ -119,6 +119,8 @@ namespace blit {
 
     Surface *load(const packed_image *image);
 
+    bool save(const std::string &filename);
+
     // helpers to retrieve pointer to pixel
     __attribute__((always_inline)) inline uint8_t* ptr(const Rect &r)   { return data + r.x * pixel_stride + r.y * row_stride; }
     __attribute__((always_inline)) inline uint8_t* ptr(const Point &p)  { return data + p.x * pixel_stride + p.y * row_stride; }

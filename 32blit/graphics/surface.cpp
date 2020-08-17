@@ -7,6 +7,8 @@
 #include "sprite.hpp"
 #include "surface.hpp"
 
+#include "../engine/file.hpp"
+
 using namespace blit;
 
 namespace blit {
@@ -24,6 +26,84 @@ namespace blit {
   Surface *Surface::load(const packed_image *image) {
     uint8_t *buffer = new uint8_t[pixel_format_stride[image->format] * image->width * image->height];
     return new Surface(buffer, (PixelFormat)image->format, image);
+  }
+
+  bool Surface::save(const std::string &filename) {
+    File file;
+
+    if(!file.open(filename, OpenMode::write))
+      return false;
+
+    unsigned int data_size = row_stride * bounds.h;
+    unsigned int palette_size = format == PixelFormat::P ? 256 : 0;
+
+#pragma pack(push, 2)
+    struct BMPHeader {
+      char header[2]{'B', 'M'};
+      uint32_t file_size;
+      uint16_t reserved[2]{};
+      uint32_t data_offset;
+
+      uint32_t info_size = 40; // BITMAPINFOHEADER size
+      int32_t w;
+      int32_t h;
+      uint16_t planes = 1;
+      uint16_t bpp;
+      uint32_t compression = 0;
+      uint32_t image_size;
+      int32_t res_x = 0;
+      int32_t res_y = 0;
+      uint32_t palette_cols = 0; // default
+      uint32_t important_cols = 0;
+    };
+#pragma pack(pop)
+
+    BMPHeader head;
+    head.file_size = sizeof(head) + palette_size * 4 + data_size;
+    head.data_offset = sizeof(head) + palette_size * 4;
+
+    head.w = bounds.w;
+    head.h = bounds.h;
+    head.bpp = pixel_stride * 8;
+    head.image_size = data_size;
+
+    file.write(0, sizeof(head), reinterpret_cast<char *>(&head));
+
+    uint32_t offset = sizeof(head);
+
+    if(format == PixelFormat::P) {
+      for(auto i = 0u; i < palette_size; i++) {
+        uint8_t col[4]{palette[i].b, palette[i].g, palette[i].r, palette[i].a};
+        file.write(offset, 4, reinterpret_cast<char *>(col));
+        offset += 4;
+      }
+    }
+
+    for(int y = 0; y < bounds.h; y++) {
+        // flip y
+        auto in_offset = (bounds.h - 1 - y) * row_stride;
+
+        if(pixel_stride == 1)
+          file.write(offset, row_stride, reinterpret_cast<char *>(data + in_offset));
+        else {
+          // r/b swap
+          char pixel[4];
+
+          for(int x = 0; x < bounds.w; x++) {
+            pixel[0] = data[in_offset + x * pixel_stride + 2];
+            pixel[1] = data[in_offset + x * pixel_stride + 1];
+            pixel[2] = data[in_offset + x * pixel_stride + 0];
+
+            if(pixel_stride == 4)
+              pixel[3] = data[in_offset + x * pixel_stride + 3];
+
+            file.write(offset + x * pixel_stride, pixel_stride, pixel);
+          }
+        }
+        offset += row_stride;
+    }
+
+    return true;
   }
 
   void Surface::init() {
