@@ -333,16 +333,18 @@ void FlashLoader::Update(uint32_t time)
 			}
 		}
 
+		using Iterator = std::vector<FileInfo>::iterator;
+		using Compare = bool(const FileInfo &, const FileInfo &);
 		if (button_x)
 		{
 			// Sort by filename
-			std::sort(m_filemeta.begin(), m_filemeta.end(), [](const auto &a, const auto &b) { return a.name < b.name; });
+			std::sort<Iterator, Compare>(m_filemeta.begin(), m_filemeta.end(), [](const auto &a, const auto &b) { return a.name < b.name; });
 		}
 
 		if (button_y)
 		{
 			// Sort by filesize
-			std::sort(m_filemeta.begin(), m_filemeta.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
+			std::sort<Iterator, Compare>(m_filemeta.begin(), m_filemeta.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
 		}
 
 		persist.selected_menu_item = m_uCurrentFile;
