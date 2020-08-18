@@ -49,6 +49,7 @@ FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 
 bool needs_render = true;
 bool exit_game = false;
+bool take_screenshot = false;
 uint32_t flip_cycle_count = 0;
 float volume_log_base = 2.0f;
 RunningAverage<float> battery_average(8);
@@ -282,6 +283,22 @@ void blit_update_volume() {
     blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * persist.volume) / log(volume_log_base));
 }
 
+static void save_screenshot() {
+  int index = 0;
+  char buf[100];
+
+  do {
+    snprintf(buf, 100, "screenshot%i.bmp", index);
+
+    if(!::file_exists(buf))
+      break;
+
+    index++;
+  } while(true);
+
+  screen.save(buf);
+}
+
 void blit_init() {
     // enable backup sram
     __HAL_RCC_RTC_ENABLE();
@@ -366,6 +383,7 @@ void blit_init() {
 enum MenuItem {
     BACKLIGHT,
     VOLUME,
+    SCREENSHOT,
     DFU,
     SHIPPING,
     SWITCH_EXE,
@@ -394,6 +412,7 @@ std::string menu_name (MenuItem item) {
   switch (item) {
     case BACKLIGHT: return "Backlight";
     case VOLUME: return "Volume";
+    case SCREENSHOT: return "Take Screenshot";
     case DFU: return "DFU Mode";
     case SHIPPING: return "Power Off";
 #if EXTERNAL_LOAD_ADDRESS == 0x90000000
@@ -453,6 +472,10 @@ void blit_menu_update(uint32_t time) {
         persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
         blit_update_volume();
         break;
+      case SCREENSHOT:
+        if(button_a)
+          take_screenshot = true;
+        break;
       case DFU:
         if(button_a){
           DFUBoot();
@@ -475,13 +498,22 @@ void blit_menu_update(uint32_t time) {
 }
 
 void blit_menu_render(uint32_t time) {
-  #if EXTERNAL_LOAD_ADDRESS == 0x90000000  // TODO We probably need a nicer way of detecting that we're compiling a firmware build (-DFIRMWARE maybe?)
-  // Don't attempt to render firmware game selection menu behind system menu
-  // At the moment `render` handles input in the firmware, so this results
-  // in all kinds of fun an exciting weirdness.
-  #else
+
   ::render(time);
-  #endif
+
+  // save screenshot before we render the menu over it
+  if(take_screenshot) {
+    // restore game colours
+    if(screen.format == PixelFormat::P)
+      set_screen_palette(menu_saved_colours, num_menu_colours);
+  
+    save_screenshot();
+    take_screenshot = false;
+
+    if(screen.format == PixelFormat::P)
+      set_screen_palette(menu_colours, num_menu_colours);
+  }
+
   const int screen_width = blit::screen.bounds.w;
   const int screen_height = blit::screen.bounds.h;
 
