@@ -21,19 +21,19 @@ namespace blit {
     uint32_t size;
   };
 
-  std::vector<FileInfo> list_files(std::string path);
-  bool file_exists(std::string path);
-  bool directory_exists(std::string path);
+  std::vector<FileInfo> list_files(const std::string &path);
+  bool file_exists(const std::string &path);
+  bool directory_exists(const std::string &path);
 
-  bool create_directory(std::string path);
+  bool create_directory(const std::string &path);
 
-  bool rename_file(std::string old_name, std::string new_name);
-  bool remove_file(std::string path);
+  bool rename_file(const std::string &old_name, const std::string &new_name);
+  bool remove_file(const std::string &path);
   
   class File final {
   public:
     File() = default;
-    File(std::string filename, int mode = OpenMode::read) {open(filename, mode);}
+    File(const std::string &filename, int mode = OpenMode::read) {open(filename, mode);}
     File(const File &) = delete;
     File(File &&other) noexcept {
       *this = std::move(other);
@@ -55,7 +55,7 @@ namespace blit {
       return *this;
     }
 
-    bool open(std::string file, int mode = OpenMode::read);
+    bool open(const std::string &file, int mode = OpenMode::read);
     int32_t read(uint32_t offset, uint32_t length, char *buffer);
     int32_t write(uint32_t offset, uint32_t length, const char *buffer);
     void close();
