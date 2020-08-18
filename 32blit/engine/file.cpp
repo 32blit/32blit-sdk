@@ -13,7 +13,7 @@ namespace blit {
 
   static std::map<std::string, BufferFile> buf_files;
 
-  std::vector<FileInfo> list_files(std::string path) {
+  std::vector<FileInfo> list_files(const std::string &path) {
     auto ret = api.list_files(path);
 
     for(auto &buf_file : buf_files) {
@@ -31,26 +31,26 @@ namespace blit {
     return ret;
   }
 
-  bool file_exists(std::string path) {
+  bool file_exists(const std::string &path) {
     return api.file_exists(path) || buf_files.find(path) != buf_files.end();
   }
-  bool directory_exists(std::string path) {
+  bool directory_exists(const std::string &path) {
     return api.directory_exists(path);
   }
 
-  bool create_directory(std::string path) {
+  bool create_directory(const std::string &path) {
     return api.create_directory(path);
   }
 
-  bool rename_file(std::string old_name, std::string new_name) {
+  bool rename_file(const std::string &old_name, const std::string &new_name) {
     return api.rename_file(old_name, new_name);
   }
 
-  bool remove_file(std::string path) {
+  bool remove_file(const std::string &path) {
     return api.remove_file(path);
   }
 
-  bool File::open(std::string file, int mode) {
+  bool File::open(const std::string &file, int mode) {
     close();
 
     // check for buffer

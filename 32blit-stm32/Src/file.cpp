@@ -5,7 +5,7 @@
 
 #include "file.hpp"
 
-void *open_file(std::string file, int mode) {
+void *open_file(const std::string &file, int mode) {
   FIL *f = new FIL();
 
   BYTE ff_mode = 0;
@@ -78,7 +78,7 @@ uint32_t get_file_length(void *fh)
   return f_size((FIL *)fh);
 }
 
-std::vector<blit::FileInfo> list_files(std::string path) {
+std::vector<blit::FileInfo> list_files(const std::string &path) {
   std::vector<blit::FileInfo> ret;
 
   auto dir = new DIR();
@@ -106,30 +106,32 @@ std::vector<blit::FileInfo> list_files(std::string path) {
   return ret;
 }
 
-bool file_exists(std::string path) {
+bool file_exists(const std::string &path) {
   FILINFO info;
   return f_stat(path.c_str(), &info) == FR_OK && !(info.fattrib & AM_DIR);
 }
 
-bool directory_exists(std::string path) {
+bool directory_exists(const std::string &path) {
   FILINFO info;
   return f_stat(path.c_str(), &info) == FR_OK && (info.fattrib & AM_DIR);
 }
 
-bool create_directory(std::string path) {
+bool create_directory(const std::string &path) {
+  FRESULT r;
+
   // strip trailing slash
   if(path.back() == '/')
-    path = path.substr(0, path.length() - 1);
-
-  FRESULT r = f_mkdir(path.c_str());
+     r = f_mkdir(path.substr(0, path.length() - 1).c_str());
+  else
+    r = f_mkdir(path.c_str());
 
   return r == FR_OK || r == FR_EXIST;
 }
 
-bool rename_file(std::string old_name, std::string new_name) {
+bool rename_file(const std::string &old_name, const std::string &new_name) {
   return f_rename(old_name.c_str(), new_name.c_str()) == FR_OK;
 }
 
-bool remove_file(std::string path) {
+bool remove_file(const std::string &path) {
   return f_unlink(path.c_str()) == FR_OK;
 }
