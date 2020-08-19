@@ -2,6 +2,7 @@
 
 #include "32blit.h"
 #include "usb_device.h"
+#include "usb_host.h"
 #include "i2c.h"
 
 extern USBD_HandleTypeDef hUsbDeviceHS;
@@ -133,6 +134,29 @@ public:
 			default:
 			break;
 		}
+
+		// update otg mode
+		// we're polling this here due to issues getting the interrupt working
+		int new_mode = USB_GetMode(USB_OTG_HS);
+		if(otg_mode != new_mode) {
+			USB_DisableGlobalInt(USB_OTG_HS);
+
+			if(new_mode) { // host
+				MX_USB_DEVICE_Deinit();
+				MX_USB_HOST_Init();
+
+				// force CDC
+				m_type = usbtCDC;
+				m_state = usbsCDC;
+			} else {
+				MX_USB_HOST_Deinit();
+				MX_USB_DEVICE_Init();
+			}
+
+			USB_EnableGlobalInt(USB_OTG_HS);
+
+			otg_mode = new_mode;
+		}
 	}
 
 private:
@@ -142,6 +166,8 @@ private:
 	uint32_t		m_unmountStartTime;
 	bool				m_bHasActivity;
 	bool				m_bHasHadSomeActivity;
+
+	int otg_mode = 0;
 
 	const char 	*m_stateNames[usbsMSCUnmounted+1] = {"CDC", "MSC Initialising", "MSC Mounting", "MSC Mounted", "MSC Unmounting", "MSC Unmounted"};
 };

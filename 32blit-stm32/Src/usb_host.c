@@ -77,6 +77,9 @@ void MX_USB_HOST_Init(void)
   {
     Error_Handler();
   }
+
+  USB_SetCurrentMode(USB_OTG_HS, USB_DRD_MODE); // switch to dual role
+
   if (USBH_RegisterClass(&hUsbHostHS, USBH_CDC_CLASS) != USBH_OK)
   {
     Error_Handler();
