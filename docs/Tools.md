@@ -2,7 +2,7 @@
 
 The individual asset tools have been deprecated in favour of https://github.com/pimoroni/32blit-tools which installs `32blit` or `32blit.exe` command on Linux/Mac or Windows respectively.
 
-Head on over to https://github.com/pimoroni/32blit-tools for documentation covering the new tools.
+Head on over to https://github.com/pimoroni/32blit-tools for documentation covering the installation of the new tools.
 
 # Asset Pipeline
 
@@ -37,7 +37,7 @@ This file will include `sprites_data`, `sprites_data_length`, `level_data`, and 
 You can load sprites like so:
 
 ```c++
-screen.sprites = SpriteSheet::load(asset_sprites);
+screen.sprites = SpriteSheet::load(sprites_data);
 ```
 
 For your level data you might want to create an in-memory copy of it that you can edit to change your level in game:
