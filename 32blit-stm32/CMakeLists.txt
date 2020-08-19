@@ -37,6 +37,7 @@ list(APPEND SOURCES
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd_ex.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_jpeg.c
+	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_hcd.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_usb.c
 	Middlewares/Third_Party/FatFs/src/diskio.c
 	Middlewares/Third_Party/FatFs/src/ff.c
@@ -48,18 +49,25 @@ list(APPEND SOURCES
 	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c
 	Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c
 	Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc.c
-  Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_bot.c
-  Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_data.c
-  Src/usbd_msc_scsi.c
+	Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_bot.c
+	Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_data.c
+	Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c
+	Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ctlreq.c
+	Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ioreq.c
+	Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_pipes.c
+	Middlewares/ST/STM32_USB_Host_Library/Class/CDC/Src/usbh_cdc.c
+	Src/usbd_msc_scsi.c
 	Src/system_stm32h7xx.c
 	Src/user_diskio.c
 	Src/fatfs.c
 	Src/fatfs_sd.c
 	Src/usb_otg.c
 	Src/usb_device.c
+	Src/usb_host.c
 	Src/usbd_conf.c
 	Src/usbd_desc.c
 	Src/usbd_cdc_if.c
+	Src/usbh_conf.c
 	Src/usbd_storage_if.c
 	Src/display.cpp
 	Src/gpio.cpp
@@ -127,6 +135,8 @@ set(INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/ST/STM32_USB_Device_Library/Core/Inc
 	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
 	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Inc
+	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/ST/STM32_USB_Host_Library/Core/Inc
+	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/ST/STM32_USB_Host_Library/Class/CDC/Inc
 	${CMAKE_CURRENT_SOURCE_DIR}/Utilities
 	${CMAKE_CURRENT_SOURCE_DIR}/../32blit
 	${CMAKE_CURRENT_SOURCE_DIR}/../launcher-shared
