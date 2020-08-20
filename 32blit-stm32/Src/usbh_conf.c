@@ -69,23 +69,6 @@ void HAL_HCD_MspInit(HCD_HandleTypeDef* hcdHandle)
   /* USER CODE END USB_OTG_HS_MspInit 0 */
   
     __HAL_RCC_GPIOB_CLK_ENABLE();
-    /**USB_OTG_HS GPIO Configuration    
-    PB12     ------> USB_OTG_HS_ID
-    PB13     ------> USB_OTG_HS_VBUS
-    PB14     ------> USB_OTG_HS_DM
-    PB15     ------> USB_OTG_HS_DP 
-    */
-    GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_14|GPIO_PIN_15;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF12_OTG2_FS;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_13;
-    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     /* Peripheral clock enable */
     __HAL_RCC_USB_OTG_HS_CLK_ENABLE();
@@ -104,14 +87,6 @@ void HAL_HCD_MspDeInit(HCD_HandleTypeDef* hcdHandle)
   /* USER CODE END USB_OTG_HS_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_USB_OTG_HS_CLK_DISABLE();
-  
-    /**USB_OTG_HS GPIO Configuration    
-    PB12     ------> USB_OTG_HS_ID
-    PB13     ------> USB_OTG_HS_VBUS
-    PB14     ------> USB_OTG_HS_DM
-    PB15     ------> USB_OTG_HS_DP 
-    */
-    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15);
 
   /* USER CODE BEGIN USB_OTG_HS_MspDeInit 1 */
 
