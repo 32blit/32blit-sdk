@@ -1,5 +1,7 @@
 #include "usbd_def.h"
 #include "usbd_cdc_if.h"
+#include "usb_host.h"
+#include "usbh_cdc.h"
 
 #include "CDCCommandHandler.h"
 #include "CDCCommandStream.h"
@@ -7,6 +9,7 @@
 #include "engine/api_private.hpp"
 
 extern CDCCommandStream g_commandStream;
+extern USBH_HandleTypeDef hUsbHostHS;
 
 using namespace blit;
 
@@ -60,11 +63,23 @@ namespace multiplayer {
     g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'U', 'S', 'E', 'R'>::value, &cdc_user_handler);
   }
 
+  void cdc_send(const uint8_t *data, uint16_t length) {
+    if(USB_GetMode(USB_OTG_HS)) { // host
+      // FIXME: should this be using the transmit callback and have a queue somewhere?
+      USBH_CDC_Transmit(&hUsbHostHS, (uint8_t *)data, length);
+
+      while(((CDC_HandleTypeDef *) hUsbHostHS.pActiveClass->pData)->data_tx_state != CDC_IDLE)
+        MX_USB_HOST_Process();
+    } else { // device
+      while(USBD_BUSY == CDC_Transmit_HS((uint8_t *)data, length));
+    }
+  }
+
   void send_message(const uint8_t *data, uint16_t length) {
     // header
-    while(USBD_BUSY == CDC_Transmit_HS((uint8_t *)"32BLUSER", 8));
-    while(USBD_BUSY == CDC_Transmit_HS((uint8_t *)&length, 2));
+    cdc_send((uint8_t *)"32BLUSER", 8);
+    cdc_send((uint8_t *)&length, 2);
 
-    while(USBD_BUSY == CDC_Transmit_HS((uint8_t *)data, length));
+    cdc_send((uint8_t *)data, length);
   }
 }
