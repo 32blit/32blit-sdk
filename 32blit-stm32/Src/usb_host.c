@@ -90,6 +90,19 @@ void MX_USB_HOST_Init(void)
   /* USER CODE END USB_HOST_Init_PostTreatment */
 }
 
+void MX_USB_HOST_Deinit(void)
+{
+  if (USBH_Stop(&hUsbHostHS) != USBH_OK)
+  {
+    Error_Handler();
+  }
+
+  if (USBH_DeInit(&hUsbHostHS) != USBH_OK)
+  {
+    Error_Handler();
+  }
+}
+
 /*
  * Background task
  */
