@@ -37,6 +37,8 @@
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
+void usb_host_ready(USBH_HandleTypeDef *phost);
+
 /* USER CODE END PFP */
 
 /* USB Host core handle declaration */
@@ -131,6 +133,7 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 
   case HOST_USER_CLASS_ACTIVE:
   Appli_state = APPLICATION_READY;
+  usb_host_ready(phost);
   break;
 
   case HOST_USER_CONNECTION:
