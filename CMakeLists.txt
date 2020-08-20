@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
+cmake_policy(SET CMP0069 NEW)
 project(32blit)
 include(32blit.cmake)
 add_subdirectory(examples)
