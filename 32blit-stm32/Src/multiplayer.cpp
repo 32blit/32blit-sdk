@@ -9,6 +9,7 @@
 #include "engine/api_private.hpp"
 
 extern CDCCommandStream g_commandStream;
+extern USBD_HandleTypeDef hUsbDeviceHS;
 extern USBH_HandleTypeDef hUsbHostHS;
 
 using namespace blit;
@@ -65,13 +66,20 @@ namespace multiplayer {
 
   void cdc_send(const uint8_t *data, uint16_t length) {
     if(USB_GetMode(USB_OTG_HS)) { // host
+      if(hUsbHostHS.gState != HOST_CLASS)
+        return;
+  
       // FIXME: should this be using the transmit callback and have a queue somewhere?
       USBH_CDC_Transmit(&hUsbHostHS, (uint8_t *)data, length);
 
-      while(((CDC_HandleTypeDef *) hUsbHostHS.pActiveClass->pData)->data_tx_state != CDC_IDLE)
+      while(((CDC_HandleTypeDef *) hUsbHostHS.pActiveClass->pData)->data_tx_state != CDC_IDLE){
         MX_USB_HOST_Process();
+        //HOST_CLASS
+        if(hUsbHostHS.gState != HOST_CLASS)
+          break; // stopped being connected
+      }
     } else { // device
-      while(USBD_BUSY == CDC_Transmit_HS((uint8_t *)data, length));
+      while(hUsbDeviceHS.dev_state == USBD_STATE_CONFIGURED && CDC_Transmit_HS((uint8_t *)data, length) == USBD_BUSY);
     }
   }
 
