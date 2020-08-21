@@ -23,4 +23,7 @@ emcmake cmake .. -G "Unix Makefiles"
 make
 python3 -m http.server
 ```
+
+If your project is based on the template, make sure to include the `-D32BLIT_PATH="/path/to/32blit/repo"` parameter to the `cmake` command.
+
 Finally, open the URL given by Python's HTTP server in your browser and open your project's .html file.
