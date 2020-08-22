@@ -59,6 +59,7 @@ typedef enum
   URB_IDLE = 0,
   URB_DONE,
   URB_NOTREADY,
+  URB_NAK_WAIT,
   URB_NYET,
   URB_ERROR,
   URB_STALL
@@ -116,6 +117,10 @@ typedef struct
   uint32_t use_dedicated_ep1;       /*!< Enable or disable the use of the dedicated EP1 interrupt.              */
 
   uint32_t use_external_vbus;       /*!< Enable or disable the use of the external VBUS.                        */
+
+  uint32_t NakCount;                /*!< Set USB host Nak Count.                                                */
+  
+  uint32_t NakTimeout;              /*!< Set USB host Nak Timeout defined in micro second.                      */
 } USB_OTG_CfgTypeDef;
 
 typedef struct
@@ -198,6 +203,8 @@ typedef struct
   uint32_t  dma_addr;           /*!< 32 bits aligned transfer buffer address.                                   */
 
   uint32_t  ErrCnt;             /*!< Host channel error count.*/
+
+  uint32_t  NakCnt;             /*!< Host channel NAK count.                                                    */
 
   USB_OTG_URBStateTypeDef  urb_state;  /*!< URB state.
                                             This parameter can be any value of @ref USB_OTG_URBStateTypeDef */
@@ -477,6 +484,7 @@ HAL_StatusTypeDef USB_HC_Init(USB_OTG_GlobalTypeDef *USBx,
 HAL_StatusTypeDef USB_HC_StartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_HCTypeDef *hc, uint8_t dma);
 uint32_t          USB_HC_ReadInterrupt(USB_OTG_GlobalTypeDef *USBx);
 HAL_StatusTypeDef USB_HC_Halt(USB_OTG_GlobalTypeDef *USBx, uint8_t hc_num);
+HAL_StatusTypeDef USB_HC_Activate(USB_OTG_GlobalTypeDef *USBx , uint8_t hc_num);
 HAL_StatusTypeDef USB_DoPing(USB_OTG_GlobalTypeDef *USBx, uint8_t ch_num);
 HAL_StatusTypeDef USB_StopHost(USB_OTG_GlobalTypeDef *USBx);
 HAL_StatusTypeDef USB_ActivateRemoteWakeup(USB_OTG_GlobalTypeDef *USBx);

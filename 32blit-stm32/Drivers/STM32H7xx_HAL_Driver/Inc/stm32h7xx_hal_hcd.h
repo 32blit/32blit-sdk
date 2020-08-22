@@ -181,6 +181,7 @@ HAL_StatusTypeDef      HAL_HCD_HC_Init(HCD_HandleTypeDef *hhcd,
                                        uint16_t mps);
 
 HAL_StatusTypeDef     HAL_HCD_HC_Halt(HCD_HandleTypeDef *hhcd, uint8_t ch_num);
+HAL_StatusTypeDef     HAL_HCD_HC_Activate(HCD_HandleTypeDef *hhcd, uint8_t ch_num);
 void                  HAL_HCD_MspInit(HCD_HandleTypeDef *hhcd);
 void                  HAL_HCD_MspDeInit(HCD_HandleTypeDef *hhcd);
 

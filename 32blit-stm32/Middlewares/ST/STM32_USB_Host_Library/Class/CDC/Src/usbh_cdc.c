@@ -763,6 +763,18 @@ static void CDC_ProcessReception(USBH_HandleTypeDef *phost)
 #endif
 #endif
       }
+      else if (URB_Status == USBH_URB_NAK_WAIT)
+      {
+        CDC_Handle->data_rx_state = CDC_RECEIVE_DATA_WAIT;
+#if (USBH_USE_OS == 1)
+        osMessagePut (phost->os_event, USBH_URB_EVENT, 0);
+#endif
+        if ((phost->Timer - phost->NakTimer) > phost->NakTimeout)
+        {
+          phost->NakTimer = phost->Timer;
+          USBH_ActivatePipe(phost, CDC_Handle->DataItf.InPipe);
+        }
+    }
       break;
 
     default:

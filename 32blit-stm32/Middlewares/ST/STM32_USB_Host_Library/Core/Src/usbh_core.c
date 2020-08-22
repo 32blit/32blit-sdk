@@ -506,6 +506,16 @@ USBH_StatusTypeDef  USBH_Process(USBH_HandleTypeDef *phost)
 
       phost->device.speed = USBH_LL_GetSpeed(phost);
 
+      /* Set Non-periodic IN Nak timeout */
+      if (phost->device.speed == USBH_SPEED_HIGH)
+      {
+        phost->NakTimeout = (USBH_HS_NAK_TIMEOUT_MS / 125U);
+      }
+      else
+      {
+        phost->NakTimeout = USBH_FS_NAK_TIMEOUT_MS / 1000U;
+      }
+
       phost->gState = HOST_ENUMERATION;
 
       phost->Control.pipe_out = USBH_AllocPipe(phost, 0x00U);

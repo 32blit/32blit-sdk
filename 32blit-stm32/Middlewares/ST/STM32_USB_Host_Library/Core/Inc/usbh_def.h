@@ -383,6 +383,7 @@ typedef enum
   USBH_URB_IDLE = 0U,
   USBH_URB_DONE,
   USBH_URB_NOTREADY,
+  USBH_URB_NAK_WAIT,
   USBH_URB_NYET,
   USBH_URB_ERROR,
   USBH_URB_STALL
@@ -459,6 +460,8 @@ typedef struct _USBH_HandleTypeDef
   uint32_t              ClassNumber;
   uint32_t              Pipes[16];
   __IO uint32_t         Timer;
+  uint32_t              NakTimer;
+  uint32_t              NakTimeout;
   uint8_t               id;
   void                 *pData;
   void (* pUser)(struct _USBH_HandleTypeDef *pHandle, uint8_t id);

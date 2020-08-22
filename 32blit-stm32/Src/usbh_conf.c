@@ -208,6 +208,8 @@ USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
   hhcd_USB_OTG_HS.Init.Sof_enable = DISABLE;
   hhcd_USB_OTG_HS.Init.low_power_enable = DISABLE;
   hhcd_USB_OTG_HS.Init.use_external_vbus = DISABLE;
+  hhcd_USB_OTG_HS.Init.NakCount = 3U;
+  hhcd_USB_OTG_HS.Init.NakTimeout = USBH_HS_NAK_TIMEOUT_MS;
   if (HAL_HCD_Init(&hhcd_USB_OTG_HS) != HAL_OK)
   {
     Error_Handler( );
@@ -368,6 +370,18 @@ USBH_StatusTypeDef USBH_LL_ClosePipe(USBH_HandleTypeDef *phost, uint8_t pipe)
   usb_status = USBH_Get_USB_Status(hal_status);
   
   return usb_status;
+}
+
+/**
+  * @brief  Activate a pipe of the Low Level Driver.
+  * @param  phost: Host handle
+  * @param  pipe: Pipe index
+  * @retval USBH Status
+  */
+USBH_StatusTypeDef USBH_LL_ActivatePipe(USBH_HandleTypeDef * phost, uint8_t pipe)
+{
+  HAL_HCD_HC_Activate(phost->pData, pipe);
+  return USBH_OK;
 }
 
 /**

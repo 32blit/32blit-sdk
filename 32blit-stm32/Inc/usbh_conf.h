@@ -88,7 +88,9 @@
  
 /*----------   -----------*/
 #define USBH_USE_OS      0U
- 
+
+#define USBH_FS_NAK_TIMEOUT_MS                1000U /* Timeout in micro Second */
+#define USBH_HS_NAK_TIMEOUT_MS                125U  /* Timeout in micro Second */
  
  
 

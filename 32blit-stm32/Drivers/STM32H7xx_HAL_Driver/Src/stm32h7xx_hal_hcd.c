@@ -258,6 +258,24 @@ HAL_StatusTypeDef HAL_HCD_HC_Halt(HCD_HandleTypeDef *hhcd, uint8_t ch_num)
 }
 
 /**
+  * @brief  Activate a host channel.
+  * @param  hhcd HCD handle
+  * @param  ch_num Channel number.
+  *         This parameter can be a value from 1 to 15
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_HCD_HC_Activate(HCD_HandleTypeDef *hhcd, uint8_t ch_num)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+
+  __HAL_LOCK(hhcd);
+  (void)USB_HC_Activate(hhcd->Instance, (uint8_t)ch_num);
+  __HAL_UNLOCK(hhcd);
+
+  return status;
+}
+
+/**
   * @brief  DeInitialize the host driver.
   * @param  hhcd HCD handle
   * @retval HAL status
@@ -1172,6 +1190,7 @@ static void HCD_HC_IN_IRQHandler(HCD_HandleTypeDef *hhcd, uint8_t chnum)
   }
   else if ((USBx_HC(ch_num)->HCINT & USB_OTG_HCINT_ACK) == USB_OTG_HCINT_ACK)
   {
+    hhcd->hc[ch_num].NakCnt = 0U;
     __HAL_HCD_CLEAR_HC_INT(ch_num, USB_OTG_HCINT_ACK);
   }
   else if ((USBx_HC(ch_num)->HCINT & USB_OTG_HCINT_STALL) == USB_OTG_HCINT_STALL)
@@ -1282,12 +1301,24 @@ static void HCD_HC_IN_IRQHandler(HCD_HandleTypeDef *hhcd, uint8_t chnum)
     }
     else if (hhcd->hc[ch_num].state == HC_NAK)
     {
-      hhcd->hc[ch_num].urb_state  = URB_NOTREADY;
-      /* re-activate the channel  */
-      tmpreg = USBx_HC(ch_num)->HCCHAR;
-      tmpreg &= ~USB_OTG_HCCHAR_CHDIS;
-      tmpreg |= USB_OTG_HCCHAR_CHENA;
-      USBx_HC(ch_num)->HCCHAR = tmpreg;
+      hhcd->hc[ch_num].state = HC_IDLE;
+      hhcd->hc[ch_num].NakCnt++;
+
+      if ((hhcd->hc[ch_num].NakCnt >= hhcd->Init.NakCount) &&
+          (hhcd->Init.NakTimeout != 0U) && (hhcd->Init.NakCount != 0U))
+      {
+        hhcd->hc[ch_num].urb_state = URB_NAK_WAIT;
+        hhcd->hc[ch_num].NakCnt = 0U;
+      }
+      else
+      {
+        hhcd->hc[ch_num].urb_state  = URB_NOTREADY;
+        /* re-activate the channel  */
+        tmpreg = USBx_HC(ch_num)->HCCHAR;
+        tmpreg &= ~USB_OTG_HCCHAR_CHDIS;
+        tmpreg |= USB_OTG_HCCHAR_CHENA;
+        USBx_HC(ch_num)->HCCHAR = tmpreg;
+      }
     }
     else
     {
