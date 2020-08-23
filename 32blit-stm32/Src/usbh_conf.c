@@ -88,7 +88,7 @@ void HAL_HCD_MspDeInit(HCD_HandleTypeDef* hcdHandle)
 
   /* USER CODE END USB_OTG_HS_MspDeInit 0 */
     /* Peripheral clock disable */
-    __HAL_RCC_USB_OTG_HS_CLK_DISABLE();
+    //__HAL_RCC_USB_OTG_HS_CLK_DISABLE();
 
     /* Peripheral interrupt Deinit*/
     HAL_NVIC_DisableIRQ(OTG_HS_IRQn);
