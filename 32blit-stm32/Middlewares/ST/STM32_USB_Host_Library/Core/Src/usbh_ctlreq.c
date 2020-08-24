@@ -969,6 +969,8 @@ static USBH_StatusTypeDef USBH_HandleControl(USBH_HandleTypeDef *phost)
         phost->Control.errorcount = 0U;
         USBH_ErrLog("Control error: Device not responding");
         phost->gState = HOST_IDLE;
+        USBH_FreePipe(phost, phost->Control.pipe_out);
+        USBH_FreePipe(phost, phost->Control.pipe_in);
         status = USBH_FAIL;
       }
       break;
