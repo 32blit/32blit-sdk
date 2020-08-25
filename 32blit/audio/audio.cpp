@@ -30,7 +30,7 @@ namespace blit {
   }
 
   uint16_t get_audio_frame() {
-    int64_t sample = 0;  // used to combine channel output
+    int32_t sample = 0;  // used to combine channel output
 
     for(int c = 0; c < CHANNEL_COUNT; c++) {
 
@@ -75,7 +75,7 @@ namespace blit {
       // check if any waveforms are active for this channel
       if(channel.waveforms) {
         uint8_t waveform_count = 0;
-        int64_t channel_sample = 0;
+        int32_t channel_sample = 0;
 
         if(channel.waveforms & Waveform::NOISE) {
           channel_sample += (channel.noise - 0x7fff) >> 2;
@@ -123,10 +123,10 @@ namespace blit {
 
         channel_sample = channel_sample / waveform_count;
 
-        channel_sample = (channel_sample * int32_t(channel.adsr >> 8)) >> 16;
+        channel_sample = (int64_t(channel_sample) * int32_t(channel.adsr >> 8)) >> 16;
 
         // apply channel volume
-        channel_sample = (channel_sample * int32_t(channel.volume)) >> 16;
+        channel_sample = (int64_t(channel_sample) * int32_t(channel.volume)) >> 16;
 
         // apply channel filter
         if (channel.filter_enable) {
@@ -141,7 +141,7 @@ namespace blit {
       }
     }
 
-    sample = (sample * int32_t(volume)) >> 16;
+    sample = (int64_t(sample) * int32_t(volume)) >> 16;
 
     // clip result to 16-bit and convert to unsigned
     sample = sample <= -0x7fff ? -0x7fff : (sample > 0x7fff ? 0x7fff : sample);

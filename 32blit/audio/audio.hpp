@@ -75,7 +75,7 @@ namespace blit {
   
       uint32_t  waveform_offset  = 0;   // voice offset (Q8)
 
-      int64_t   filter_last_sample = 0;
+      int32_t   filter_last_sample = 0;
       bool      filter_enable = false;
       uint16_t  filter_cutoff_frequency = 0;
 
