@@ -144,7 +144,7 @@ namespace blit {
     sample = (int64_t(sample) * int32_t(volume)) >> 16;
 
     // clip result to 16-bit and convert to unsigned
-    sample = sample <= -0x7fff ? -0x7fff : (sample > 0x7fff ? 0x7fff : sample);
-    return sample + 0x7fff;
+    sample = sample <= -0x8000 ? -0x8000 : (sample > 0x7fff ? 0x7fff : sample);
+    return sample + 0x8000;
   }
 }
