@@ -79,7 +79,7 @@ namespace blit {
       }
 
       // copy the trailing bytes as needed
-      d = (uint8_t*)de;
+      d = (uint8_t*)d32;
       while (d < de) {
         *d = blend((s32 & 0xff), *d, a); s32 >>= 8; d++;
       }
@@ -129,7 +129,7 @@ namespace blit {
       }
 
       // copy the trailing bytes as needed
-      d = (uint8_t*)de;
+      d = (uint8_t*)d32;
       while (d < de) {
         *d = (s32 & 0xff); s32 >>= 8; d++;
       }
