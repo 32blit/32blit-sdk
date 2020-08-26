@@ -33,6 +33,9 @@ State		state = stFlashFile;
 
 FIL file;
 
+// error dialog
+int selected_dialog_option = 0;
+
 bool flash_from_sd_to_qspi_flash(const char *filename);
 
 void erase_qspi_flash(uint32_t start_sector, uint32_t size_bytes) {
@@ -148,11 +151,46 @@ void render(uint32_t time) {
   if(state == stMassStorage)
     mass_storage_overlay(time);
 
+  // error dialog overlay
+  if(persist.reset_error) {
+    screen.pen = Pen(0, 0, 0, 200);
+    screen.clear();
+
+    screen.pen = Pen(255, 255, 255);
+
+    screen.text("Oops!\n\nRestart game?", minimal_font, Point(screen.bounds.w / 2, screen.bounds.h / 2), true, TextAlign::center_center);
+
+    screen.pen = selected_dialog_option == 0 ? Pen(235, 245, 255) : Pen(80, 100, 120);
+    screen.text("No", minimal_font, Point(screen.bounds.w / 3, screen.bounds.h - 80), true, TextAlign::center_center);
+
+    screen.pen = selected_dialog_option == 1 ? Pen(235, 245, 255) : Pen(80, 100, 120);
+    screen.text("Yes", minimal_font, Point(screen.bounds.w / 3 * 2, screen.bounds.h - 80), true, TextAlign::center_center);
+  }
+
   progress.draw();
 }
 
 void update(uint32_t time)
 {
+  if(persist.reset_error) {
+    // only two options
+    if(buttons.pressed & Button::DPAD_RIGHT)
+      selected_dialog_option ^= 1;
+    else if(buttons.pressed & Button::DPAD_LEFT)
+      selected_dialog_option ^= 1;
+
+    if(buttons.released & Button::A) {
+      if(selected_dialog_option == 1) // yes
+        blit_switch_execution(0);
+      else
+        persist.reset_target = prtFirmware;
+
+      persist.reset_error = false;
+    }
+
+    return;
+  }
+
   if(state == stLS) {
     load_file_list();
     state = stFlashFile;
