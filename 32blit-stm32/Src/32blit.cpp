@@ -325,6 +325,7 @@ void blit_init() {
       persist.backlight = 1.0f;
       persist.selected_menu_item = 0;
       persist.reset_target = prtFirmware;
+      persist.reset_error = false;
     }
 
     init_api_shared();
@@ -916,3 +917,8 @@ void blit_switch_execution(uint32_t address)
 	}
 }
 
+void blit_reset_with_error() {
+  persist.reset_error = true;
+  SCB_CleanDCache();
+  NVIC_SystemReset();
+}
