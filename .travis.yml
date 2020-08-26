@@ -30,6 +30,12 @@ jobs:
       script:
         - docker exec -it emscripten emcmake cmake -B build.em -G "Unix Makefiles"
         - docker exec -it emscripten make -C build.em
+      before_deploy:
+        - cp build.em/examples/*/*.{js,wasm} site/examples
+      deploy:
+        provider: pages:git
+        local_dir: site
+        edge: true
     
     - name: "Linux"
       env:
