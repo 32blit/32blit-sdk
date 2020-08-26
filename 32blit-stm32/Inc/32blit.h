@@ -14,6 +14,8 @@ extern void render(uint32_t time);
 extern char *get_fr_err_text(FRESULT err);
 extern bool blit_sd_detected();
 
+extern void render_yield();
+
 // Blit setup and main loop
 extern void blit_tick();
 extern void blit_init();
