@@ -110,7 +110,7 @@ namespace blit {
     // if destination is not double-word aligned copy at most three bytes until it is
     uint8_t* de = d + c * 3;
     while (uintptr_t(d) & 0b11) {
-      *d = s32 & 0xff000000; d++;
+      *d = s32 & 0xff; d++;
       // rotate the aligned rgbr/gbrg/brgb quad
       s32 >>= 8; s32 |= uint8_t(s32 & 0xff) << 24;
     }
