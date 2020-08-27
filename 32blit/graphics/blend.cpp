@@ -223,7 +223,7 @@ namespace blit {
         d += 4;
       }       
 
-      s += src->palette ? 1 : 4;
+      s += (src->palette ? 1 : 4) * src_step;
     } while (--cnt);
   }
 
@@ -247,7 +247,7 @@ namespace blit {
         d += 3;
       }       
 
-      s += src->palette ? 1 : 4;
+      s += (src->palette ? 1 : 4) * src_step;
     } while (--cnt);
   }
 
