@@ -101,6 +101,13 @@ void blit_debug(std::string message) {
   screen.text(message, minimal_font, Point(0, 0));
 }
 
+void blit_exit(bool is_error) {
+  if(is_error)
+    blit_reset_with_error(); // likely an abort
+  else
+    blit_switch_execution(0); // switch back to firmware
+}
+
 void enable_us_timer()
 {
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
@@ -372,6 +379,8 @@ void blit_init() {
     blit::api.debugf = blit_debugf;
     blit::api.now = HAL_GetTick;
     blit::api.random = HAL_GetRandom;
+    blit::api.exit = blit_exit;
+
     blit::api.set_screen_mode = display::set_screen_mode;
     blit::api.set_screen_palette = display::set_screen_palette;
     display::set_screen_mode(blit::lores);

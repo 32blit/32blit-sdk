@@ -32,6 +32,7 @@ namespace blit {
     void (*set_screen_palette)  (const Pen *colours, int num_cols);
     uint32_t (*now)();
     uint32_t (*random)();
+    void (*exit)(bool is_error);
 
     // serial debug
     void (*debug)(std::string message);
