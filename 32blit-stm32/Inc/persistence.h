@@ -19,6 +19,7 @@ struct Persist {
 
   PersistResetTarget reset_target;
   bool reset_error; // last reset was caused by an error
+  uint32_t last_game_offset;
 };
 
 extern Persist persist;

@@ -330,6 +330,7 @@ void blit_init() {
       persist.selected_menu_item = 0;
       persist.reset_target = prtFirmware;
       persist.reset_error = false;
+      persist.last_game_offset = 0;
     }
 
     init_api_shared();
@@ -497,7 +498,7 @@ void blit_menu_update(uint32_t time) {
         break;
       case SWITCH_EXE:
         if(button_a){
-          blit_switch_execution(0); // TODO: store offset for last used game
+          blit_switch_execution(persist.last_game_offset);
         }
         break;
       case LAST_COUNT:
@@ -901,6 +902,8 @@ void blit_switch_execution(uint32_t address)
     uint32_t magic = app_ptr[0];
 
     if(magic == 0x54494C42 /*BLIT*/) {
+      persist.last_game_offset = address;
+
       pFunction init = (pFunction) app_ptr[3];
       init();
 
