@@ -58,26 +58,29 @@ void Multiplayer::update() {
         recv_len = head[8] | (head[9] << 8);
         recv_buf = new uint8_t[recv_len];
         recv_off = 0;
-    } else {
-        auto read = SDLNet_TCP_Recv(socket, recv_buf + recv_off, recv_len - recv_off);
-        if(read < 0) {
-            // failed
-            delete[] recv_buf;
-            recv_buf = nullptr;
-            disconnect();
+
+        if(SDLNet_CheckSockets(sock_set, 0) <= 0)
             return;
-        }
+    }
 
-        recv_off += read;
+    auto read = SDLNet_TCP_Recv(socket, recv_buf + recv_off, recv_len - recv_off);
+    if(read < 0) {
+        // failed
+        delete[] recv_buf;
+        recv_buf = nullptr;
+        disconnect();
+        return;
+    }
 
-        // got message, pass to user
-        if(recv_off == recv_len) {
-            if(api.message_received)
-                api.message_received(recv_buf, recv_len);
+    recv_off += read;
 
-            delete[] recv_buf;
-            recv_buf = nullptr;
-        }
+    // got message, pass to user
+    if(recv_off == recv_len) {
+        if(api.message_received)
+            api.message_received(recv_buf, recv_len);
+
+        delete[] recv_buf;
+        recv_buf = nullptr;
     }
 }
 
