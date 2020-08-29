@@ -144,16 +144,18 @@ int main(void)
   MX_JPEG_Init();
   /* USER CODE BEGIN 2 */
 
-  blit_init();
   //NVIC_SetPriority(SysTick_IRQn, 0x0);
 
 #if (INITIALISE_QSPI==1)
   qspi_init();
+#endif
+
+  blit_init();
+
+#if (INITIALISE_QSPI==1)
   if((persist.reset_target == prtGame) && HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port,  BUTTON_MENU_Pin) && !persist.reset_error)
     blit_switch_execution(persist.last_game_offset);
 #endif
-
-
 
   // add CDC handler to reset device on receiving "_RST" and "SWIT"
 	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', 'R', 'S', 'T'>::value, &g_resetHandler);
