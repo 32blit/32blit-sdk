@@ -461,7 +461,7 @@ void blit_menu_update(uint32_t time) {
     menu_item ++;
     
   } else {
-    bool button_a = blit::buttons.pressed & blit::Button::A;
+    bool button_a = blit::buttons.released & blit::Button::A;
     switch(menu_item) {
       case BACKLIGHT:
         if (blit::buttons & blit::Button::DPAD_LEFT) {
