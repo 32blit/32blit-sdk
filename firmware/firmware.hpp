@@ -54,31 +54,8 @@ public:
   virtual StreamResult StreamData(CDCDataStream &dataStream);
   virtual bool StreamInit(CDCFourCC uCommand);
 
-
-  void Init(void);
-  void Render(uint32_t time);
-  void Update(uint32_t time);
-
 private:
-  enum State {stFlashFile, stSaveFile, stFlashCDC, stLS, stSwitch, stMassStorage};
   enum ParseState {stFilename, stLength, stData};
-
-  bool Flash(const char *pszFilename);
-  void FSInit(void);
-
-  void RenderMassStorage(uint32_t time);
-
-  bool FlashData(uint32_t uOffset, uint8_t *pBuffer, uint32_t uLen);
-  bool SaveData(uint8_t *pBuffer, uint32_t uLen);
-
-  std::vector<blit::FileInfo> m_filemeta;
-  int32_t m_max_width_size = 0;
-
-  uint8_t m_buffer[PAGE_SIZE];
-  uint8_t m_verifyBuffer[PAGE_SIZE];
-
-  bool		m_bFsInit = false;
-  State		m_state = stFlashFile;
 
   ParseState m_parseState = stFilename;
 
@@ -87,6 +64,4 @@ private:
 
   uint32_t m_uParseIndex = 0;
   uint32_t m_uFilelen = 0;
-
-  FIL m_file;
 };
