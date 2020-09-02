@@ -4,6 +4,8 @@
 #include "particle.hpp"
 #include "engine.hpp"
 
+namespace blit {
+
   /**
    * Create a new particle generator.
    *
@@ -56,3 +58,4 @@
 
     last_time_ms = time_ms;
   }
+}
