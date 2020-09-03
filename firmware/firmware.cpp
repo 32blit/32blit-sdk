@@ -11,7 +11,7 @@
 #include <stdlib.h>
 using namespace blit;
 
-enum State {stFlashFile, stSaveFile, stFlashCDC, stLS, stSwitch, stMassStorage};
+enum State {stFlashFile, stSaveFile, stFlashCDC, stLS, stMassStorage};
 
 constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 
@@ -32,6 +32,9 @@ uint8_t verify_buffer[PAGE_SIZE];
 State		state = stFlashFile;
 
 FIL file;
+
+// error dialog
+int selected_dialog_option = 0;
 
 bool flash_from_sd_to_qspi_flash(const char *filename);
 
@@ -148,18 +151,49 @@ void render(uint32_t time) {
   if(state == stMassStorage)
     mass_storage_overlay(time);
 
+  // error dialog overlay
+  if(persist.reset_error) {
+    screen.pen = Pen(0, 0, 0, 200);
+    screen.clear();
+
+    screen.pen = Pen(255, 255, 255);
+
+    screen.text("Oops!\n\nRestart game?", minimal_font, Point(screen.bounds.w / 2, screen.bounds.h / 2), true, TextAlign::center_center);
+
+    screen.pen = selected_dialog_option == 0 ? Pen(235, 245, 255) : Pen(80, 100, 120);
+    screen.text("No", minimal_font, Point(screen.bounds.w / 3, screen.bounds.h - 80), true, TextAlign::center_center);
+
+    screen.pen = selected_dialog_option == 1 ? Pen(235, 245, 255) : Pen(80, 100, 120);
+    screen.text("Yes", minimal_font, Point(screen.bounds.w / 3 * 2, screen.bounds.h - 80), true, TextAlign::center_center);
+  }
+
   progress.draw();
 }
 
 void update(uint32_t time)
 {
+  if(persist.reset_error) {
+    // only two options
+    if(buttons.pressed & Button::DPAD_RIGHT)
+      selected_dialog_option ^= 1;
+    else if(buttons.pressed & Button::DPAD_LEFT)
+      selected_dialog_option ^= 1;
+
+    if(buttons.released & Button::A) {
+      if(selected_dialog_option == 1) // yes
+        blit_switch_execution(0);
+      else
+        persist.reset_target = prtFirmware;
+
+      persist.reset_error = false;
+    }
+
+    return;
+  }
+
   if(state == stLS) {
     load_file_list();
     state = stFlashFile;
-  }
-  else if(state == stSwitch) {
-    blit_switch_execution();
-    return; // not reached
   }
 
   bool button_home = buttons.pressed & Button::HOME;
@@ -168,7 +202,7 @@ void update(uint32_t time)
   {
     static uint32_t lastRepeat = 0;
 
-    bool button_a = buttons.pressed & Button::A;
+    bool button_a = buttons.released & Button::A;
     bool button_x = buttons.pressed & Button::X;
     bool button_y = buttons.pressed & Button::Y;
 
@@ -213,7 +247,7 @@ void update(uint32_t time)
     if(button_a)
     {
       if(flash_from_sd_to_qspi_flash(files[persist.selected_menu_item].name.c_str())) {
-        blit_switch_execution();
+        blit_switch_execution(0);
       }
     }
 
@@ -527,7 +561,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                     if(result != srError)
                     {
                       result = srFinish;
-                      state = stSwitch;
+                      blit_switch_execution(0);
                     }
                     else
                       state = stFlashFile;

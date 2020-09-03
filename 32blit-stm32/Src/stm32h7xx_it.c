@@ -29,6 +29,8 @@
 //uint32_t total_samples;
 //__attribute__((section(".dac_data"))) uint16_t sine_wave_array[32];
 
+extern void blit_reset_with_error();
+
 //uint8_t dac_ready;
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
@@ -96,7 +98,9 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-
+#ifdef NDEBUG
+  blit_reset_with_error();
+#endif
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {

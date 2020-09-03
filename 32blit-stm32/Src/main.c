@@ -149,8 +149,8 @@ int main(void)
 
 #if (INITIALISE_QSPI==1)
   qspi_init();
-  if((persist.reset_target == prtGame) && HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port,  BUTTON_MENU_Pin))
-    blit_switch_execution();
+  if((persist.reset_target == prtGame) && HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port,  BUTTON_MENU_Pin) && !persist.reset_error)
+    blit_switch_execution(0); // TODO: store offset for last used game
 #endif
 
 

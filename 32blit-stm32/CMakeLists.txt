@@ -80,7 +80,7 @@ list(APPEND SOURCES
 	Src/sys.c
 	Src/tim.c
 	Src/rng.c
-	Src/32blit.c
+	Src/32blit.cpp
 	Src/CDCLogging.c
 	Src/CDCDataStream.cpp 
 	Src/CDCCommandStream.cpp 
@@ -100,7 +100,6 @@ set_source_files_properties(
 	Src/usbd_desc.c
 	Src/usbd_cdc_if.c
 	Src/usbd_storage_if.c
-	Src/32blit.c
 	Src/CDCLogging.c
 	
 	PROPERTIES LANGUAGE CXX

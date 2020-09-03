@@ -160,7 +160,7 @@ void blit_tick() {
       // Already in firmware menu
     #else
     blit::LED.r = 0;
-    blit_switch_execution();
+    blit_switch_execution(0);
     #endif
   }
 
@@ -325,6 +325,7 @@ void blit_init() {
       persist.backlight = 1.0f;
       persist.selected_menu_item = 0;
       persist.reset_target = prtFirmware;
+      persist.reset_error = false;
     }
 
     init_api_shared();
@@ -461,7 +462,7 @@ void blit_menu_update(uint32_t time) {
     menu_item ++;
     
   } else {
-    bool button_a = blit::buttons.pressed & blit::Button::A;
+    bool button_a = blit::buttons.released & blit::Button::A;
     switch(menu_item) {
       case BACKLIGHT:
         if (blit::buttons & blit::Button::DPAD_LEFT) {
@@ -496,7 +497,7 @@ void blit_menu_update(uint32_t time) {
         break;
       case SWITCH_EXE:
         if(button_a){
-          blit_switch_execution();
+          blit_switch_execution(0); // TODO: store offset for last used game
         }
         break;
       case LAST_COUNT:
@@ -856,7 +857,7 @@ char *get_fr_err_text(FRESULT err){
 typedef  void (*pFunction)(void);
 pFunction JumpToApplication;
 
-void blit_switch_execution(void)
+void blit_switch_execution(uint32_t address)
 {
   #if EXTERNAL_LOAD_ADDRESS == 0x90000000
   persist.reset_target = prtGame;
@@ -916,3 +917,8 @@ void blit_switch_execution(void)
 	}
 }
 
+void blit_reset_with_error() {
+  persist.reset_error = true;
+  SCB_CleanDCache();
+  NVIC_SystemReset();
+}
