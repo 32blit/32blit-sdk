@@ -68,25 +68,24 @@ void sort_file_list() {
     }
 }
 
-void load_file_list()
-{
+void load_file_list() {
   files.clear();
   max_width_size = 0;
 
-  for(auto &file : ::list_files("/"))
-  {
+  for(auto &file : ::list_files("/")) {
     if(file.flags & blit::FileFlags::directory)
       continue;
 
     if(file.name.length() < 4)
       continue;
 
-    if(file.name.compare(file.name.length() - 4, 4, ".bin") == 0 || file.name.compare(file.name.length() - 4, 4, ".BIN") == 0)
-    {
+    if(file.name.compare(file.name.length() - 4, 4, ".bin") == 0 || file.name.compare(file.name.length() - 4, 4, ".BIN") == 0) {
       files.push_back(file);
       max_width_size = std::max(max_width_size, screen.measure_text(std::to_string(file.size), minimal_font).w);
     }
   }
+
+  sort_file_list();
 
   if(persist.selected_menu_item > files.size()) {
     persist.selected_menu_item = files.size() - 1;
