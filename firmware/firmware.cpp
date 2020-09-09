@@ -25,6 +25,7 @@ extern USBManager g_usbManager;
 
 std::vector<blit::FileInfo> files;
 int32_t max_width_size = 0;
+SortBy file_sort = SortBy::name;
 
 uint8_t buffer[PAGE_SIZE];
 uint8_t verify_buffer[PAGE_SIZE];
@@ -50,6 +51,21 @@ void erase_qspi_flash(uint32_t start_sector, uint32_t size_bytes) {
   }
 
   progress.hide();
+}
+
+void sort_file_list() {
+    using Iterator = std::vector<FileInfo>::iterator;
+    using Compare = bool(const FileInfo &, const FileInfo &);
+
+    if (file_sort == SortBy::name) {
+      // Sort by filename
+      std::sort<Iterator, Compare>(files.begin(), files.end(), [](const auto &a, const auto &b) { return a.name < b.name; });
+    }
+
+    if (file_sort == SortBy::size) {
+      // Sort by filesize
+      std::sort<Iterator, Compare>(files.begin(), files.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
+    }
 }
 
 void load_file_list()
@@ -251,18 +267,14 @@ void update(uint32_t time)
       }
     }
 
-    using Iterator = std::vector<FileInfo>::iterator;
-    using Compare = bool(const FileInfo &, const FileInfo &);
-    if (button_x)
-    {
-      // Sort by filename
-      std::sort<Iterator, Compare>(files.begin(), files.end(), [](const auto &a, const auto &b) { return a.name < b.name; });
+    if (button_x) {
+      file_sort = SortBy::name;
+      sort_file_list();
     }
 
-    if (button_y)
-    {
-      // Sort by filesize
-      std::sort<Iterator, Compare>(files.begin(), files.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
+    if (button_y) {
+      file_sort = SortBy::size;
+      sort_file_list();
     }
   }
   else if(state == stMassStorage)

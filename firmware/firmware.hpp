@@ -13,6 +13,11 @@
 
 using namespace blit;
 
+enum class SortBy {
+  name,
+  size
+};
+
 // progress bar
 struct {
   std::string message;
