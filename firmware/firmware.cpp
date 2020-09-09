@@ -362,7 +362,7 @@ void update(uint32_t time)
 
     if(buttons.released & Button::A) {
       if(selected_dialog_option == 1) // yes
-        blit_switch_execution(0);
+        blit_switch_execution(persist.last_game_offset);
       else
         persist.reset_target = prtFirmware;
 
