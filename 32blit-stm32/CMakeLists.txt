@@ -215,6 +215,7 @@ function(blit_executable_int_flash NAME SOURCES)
 
 	target_include_directories(${NAME} PRIVATE ${HAL_INCLUDE_DIRS})
 	target_compile_definitions(${NAME} PRIVATE ${HAL_DEFINITIONS})
+	target_compile_options(${NAME} PUBLIC "$<$<CONFIG:RELEASE>:-Os>") # always optimise for size if targetting internal flash
 
 	add_custom_command(TARGET ${NAME} POST_BUILD
 		COMMENT "Building ${NAME}.dfu"
