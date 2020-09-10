@@ -4,20 +4,27 @@
 #include <string>
 #include <vector>
 
+/** 32blit namespace */
 namespace blit {
 
   enum OpenMode {
+    /// Open file for reading
     read  = 1 << 0,
+    /// Open file for writing
     write = 1 << 1
   };
 
   enum FileFlags {
+    /// Is a directory
     directory = 1
   };
 
   struct FileInfo {
+    /// Name of the file
     std::string name;
+    /// Flags (see ::FileFlags)
     int flags;
+    /// Size of the file
     uint32_t size;
   };
 
@@ -30,6 +37,9 @@ namespace blit {
   bool rename_file(const std::string &old_name, const std::string &new_name);
   bool remove_file(const std::string &path);
   
+  /**
+   * Class for accessing files on the SD card (device), the game directory (SDL) or in memory. 
+   */
   class File final {
   public:
     File() = default;
@@ -61,11 +71,12 @@ namespace blit {
     void close();
     uint32_t get_length();
 
+    /** \returns `true` if file is open */
     bool is_open() const {
       return buf != nullptr || fh != nullptr;
     }
 
-    // for buffers pretending to be files
+    /** \returns pointer to data for in-memory files */
     const uint8_t *get_ptr() const {
       return buf;
     }
