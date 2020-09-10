@@ -34,6 +34,7 @@ void init() {
 }
 
 void render(uint32_t time) {
+	screen.clip = Rect(Point(0, 0), screen.bounds);
 	screen.pen = Pen(0, 0, 0);
 	screen.clear();
 
@@ -72,7 +73,8 @@ void render(uint32_t time) {
     text = screen.wrap_text(text, text_rect.w, minimal_font, variable_width);
 
     screen.pen = Pen(0xFF, 0xFF, 0xFF);
-    screen.text(text, minimal_font, text_rect, variable_width, TextAlign::center_center, clip);
+    screen.clip = clip;
+    screen.text(text, minimal_font, text_rect, variable_width, TextAlign::center_center);
 }
 
 void update(uint32_t time) {
