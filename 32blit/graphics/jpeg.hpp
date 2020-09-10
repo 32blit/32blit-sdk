@@ -8,6 +8,7 @@
 namespace blit {
   struct JPEGImage {
     blit::Size size;
+    /// Raw RGB image data
     uint8_t *data;
   };
 
