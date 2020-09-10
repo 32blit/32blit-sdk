@@ -11,24 +11,26 @@ using namespace blit;
 namespace blit {
 
   /**
-   * TODO: Document this function
+   * Draw text to surface using the specified font and the current pen.
    *
-   * \param message
-   * \param font
-   * \param p
-   * \param variable
+   * \param message Text to draw
+   * \param font Font to use
+   * \param p Point to align text to
+   * \param variable Draw text using variable character widths
+   * \param align Alignment
    */
   void Surface::text(std::string_view message, const Font &font, const Point &p, bool variable, TextAlign align) {
     text(message, font, Rect(p.x, p.y, 0, 0), variable, align);
   }
 
   /**
-   * TODO: Document this function
+   * Draw text to surface using the specified font and the current pen.
    *
-   * \param message
-   * \param font
-   * \param r
-   * \param variable
+   * \param message Text to draw
+   * \param font Font to use
+   * \param r Rect to align text to
+   * \param variable Draw text using variable character widths
+   * \param align Alignment
    */
   void Surface::text(std::string_view message, const Font &font, const Rect &r, bool variable, TextAlign align) {
     Point c(r.x, r.y); // caret position
@@ -127,6 +129,15 @@ namespace blit {
     return font.char_w_variable[chr_idx];
   }
 
+  /**
+   * Calculate the size that text would take up using the specified font
+   *
+   * \param message Text to measure
+   * \param font Font to use for measurement
+   * \param variable Use variable character widths
+   * 
+   * \returns Measured Size of text
+   */
   Size Surface::measure_text(std::string_view message, const Font &font, bool variable) {
     const int line_height = font.char_h + font.spacing_y;
 
@@ -169,6 +180,17 @@ namespace blit {
   }
 }
 
+/**
+ * Wrap text to fit the specified width
+ *
+ * \param message Text to wrap
+ * \param width Maximum width of a line of text
+ * \param font Font to use for measurement
+ * \param variable Use variable character widths
+ * \param words Attempt to break lines between words if `true`
+ * 
+ * \returns Wrapped text
+ */
 std::string Surface::wrap_text(std::string_view message, int32_t width, const Font &font, bool variable, bool words) {
   std::string ret;
 
