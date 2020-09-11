@@ -4,15 +4,17 @@
 
 namespace blit {
 
-  // All sprite mirroring and rotations (90/180/270) can be composed
-  // of simple horizontal/vertical flips and x/y coordinate swaps.
-  //
-  // The bits set represent the transforms required to achieve the
-  // end result. Operations are performed (if needed) in the following 
-  // order: horizontal flip -> vertical flip -> x/y swap
-  // 
-  // For example a 90 degree rotation needs a vertical flip
-  // followed by an x/y coordinate swap.
+  /** 
+   * All sprite mirroring and rotations (90/180/270) can be composed
+   * of simple horizontal/vertical flips and x/y coordinate swaps.
+   *
+   * The bits set represent the transforms required to achieve the
+   * end result. Operations are performed (if needed) in the following 
+   * order: horizontal flip -> vertical flip -> x/y swap
+   * 
+   * For example a 90 degree rotation needs a vertical flip
+   * followed by an x/y coordinate swap.
+  */
   enum SpriteTransform {
     NONE = 0b000,
     HORIZONTAL = 0b001,
