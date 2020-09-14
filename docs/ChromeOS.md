@@ -29,7 +29,7 @@ On your Chromebook in chrome visit `chrome://flags/#crostini-usb-allow-unsupport
 You will need to restart Linux for this to take effect. The easiest way to do this is to restart the Chromebook. 
 Shutdown from terminal does not seem to close gracefully and you lose your terminal history.
 
-Once Linux is back up and running an update should pull down some new packages thanks to the flag that has just been enabled. 
+Once Linux is back up and running performing an update should pull down some new packages thanks to the flag that has just been enabled. 
 
 You can do this with `sudo apt update && sudo apt upgrade`
 
