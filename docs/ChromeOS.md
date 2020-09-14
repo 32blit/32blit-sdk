@@ -24,7 +24,7 @@ Alternatively you could install a browser within the virtual machine itself.
 By default Chrome OS prevents Linux from having access to most USB devices.
 This means an extra step is required to flash the firmware, once this is done you can follow the Linux instructions for flashing firmware.
 
-On your Chromebook in chrome visit chrome://flags/#crostini-usb-allow-unsupported and enable the flag. These flags are experimental features that can be turned on and off and some like this one affect what the Linux Beta can do. Enabling this flag allows you to give Linux access to any USB device.
+On your Chromebook in chrome visit `chrome://flags/#crostini-usb-allow-unsupported` and enable the flag. These flags are experimental features that can be turned on and off and some like this one affect what the Linux Beta can do. Enabling this flag allows you to give Linux access to any USB device.
 
 You will need to restart Linux for this to take effect. The easiest way to do this is to restart the Chromebook. 
 Shutdown from terminal does not seem to close gracefully and you lose your terminal history.
