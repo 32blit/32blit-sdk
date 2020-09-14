@@ -24,7 +24,7 @@ sudo add-apt-repository ppa:daft-freak/arm-gcc
 sudo apt update
 
 sudo apt install gcc gcc-arm-none-eabi gcc-mingw-w64 g++-mingw-w64 unzip cmake make python3 python3-pip
-pip3 install construct bitstring
+pip3 install 32blit construct bitstring
 ```
 
 ## Building & Running on 32Blit
