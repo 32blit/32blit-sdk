@@ -139,6 +139,10 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
   } >DTCMRAM AT> FLASH
 
+  .flash_end :
+  {
+    _flash_end = .;
+  } > FLASH
 
   /* Uninitialized data section */
   . = ALIGN(4);
