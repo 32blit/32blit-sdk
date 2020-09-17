@@ -2,7 +2,12 @@
 
 The individual asset tools have been deprecated in favour of https://github.com/pimoroni/32blit-tools which installs `32blit` or `32blit.exe` command on Linux/Mac or Windows respectively.
 
-Head on over to https://github.com/pimoroni/32blit-tools for documentation covering the installation of the new tools.
+You can install these tools with `pip`:
+```
+pip3 install 32blit
+```
+
+Head on over to https://github.com/pimoroni/32blit-tools for further documentation covering the installation of the new tools.
 
 # Asset Pipeline
 
@@ -59,6 +64,12 @@ for(auto x = 0; x < level_width * level_height; x++){
 level = new TileMap((uint8_t *)local_level_data, nullptr, Size(level_width, level_height), screen.sprites);
 ```
 
+# Visual Studio
+To use `assets.yml` with a Visual Studio project, you need to run the packer as a pre-build step. Make sure that the output path is in the project's include path.
+```
+python -m ttblit pack --force --config $(ProjectDir)\assets.yml --output $(ProjectDir)
+```
+
 # Old Tools
 
 ## Sprite Builder
@@ -72,7 +83,7 @@ Have a look into the script for further details regarding the formats.
 ### Prerequisites:
 
 ``` shell
-sudo python3 -m pip install construct bitarray bitstring pillow
+python3 -m pip install construct bitarray bitstring pillow
 ```
 
 ### Usage:
