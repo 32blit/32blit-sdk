@@ -7,6 +7,7 @@
 #include "graphics/mode7.hpp"
 
 #include "flight.hpp"
+#include "assets.hpp"
 
 using namespace blit;
 

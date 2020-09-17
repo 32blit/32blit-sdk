@@ -1,0 +1,6 @@
+assets.cpp:
+  assets/flight.png:
+    name: packed_data
+
+  assets/water.png:
+    name: water_packed_data
