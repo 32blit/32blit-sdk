@@ -78,6 +78,7 @@ After the build completes you will want to add the two files it generates to the
 Failing to do this may cause errors when trying to debug similar to the ones below.
 
 `LNK2001	unresolved external symbol "unsigned char const * const sprites_data" (?sprites_data@@3QBEB)`
+
 `LNK1120	1 unresolved externals`
 
 
