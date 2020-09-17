@@ -67,7 +67,7 @@ level = new TileMap((uint8_t *)local_level_data, nullptr, Size(level_width, leve
 # Visual Studio
 To use `assets.yml` with a Visual Studio project, you need to run the packer as a pre-build step. Make sure that the output path is in the project's include path.
 ```
-python -m ttblit pack --force --config $(ProjectDir)\assets.yml --output $(ProjectDir)
+python -m ttblit pack --force --config $(ProjectDir)assets.yml --output $(ProjectDir)
 ```
 
 # Old Tools
