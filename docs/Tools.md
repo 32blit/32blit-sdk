@@ -67,8 +67,21 @@ level = new TileMap((uint8_t *)local_level_data, nullptr, Size(level_width, leve
 # Visual Studio
 To use `assets.yml` with a Visual Studio project, you need to run the packer as a pre-build step. Make sure that the output path is in the project's include path.
 ```
-python -m ttblit pack --force --config $(ProjectDir)\assets.yml --output $(ProjectDir)
+python -m ttblit pack --force --config $(ProjectDir)assets.yml --output $(ProjectDir)
 ```
+To add the build step right click the project and click properties. From there go to build events and paste the command into the command line text box.
+
+If the step is failing to complete then make sure that both python and the 32blit pip package is installed. 
+
+After the build completes you will want to add the two files it generates to the project. (assets.cpp and assets.hpp).
+Right click the project go to add then existing item and choose the two files from the project directory.
+
+Failing to do this may cause errors when trying to debug similar to the ones below.
+
+`LNK2001	unresolved external symbol "unsigned char const * const sprites_data" (?sprites_data@@3QBEB)`
+
+`LNK1120	1 unresolved externals`
+
 
 # Old Tools
 
