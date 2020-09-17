@@ -74,6 +74,7 @@ To add the build step right click the project and click properties. From there g
 If the step is failing to complete then make sure that both python and the 32blit pip package is installed. 
 
 After the build completes you will want to add the two files it generates to the project. (assets.cpp and assets.hpp).
+Right click the project go to add then existing item and choose the two files from the project directory.
 
 Failing to do this may cause errors when trying to debug similar to the ones below.
 
