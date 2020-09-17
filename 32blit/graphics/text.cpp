@@ -18,8 +18,8 @@ namespace blit {
    * \param p
    * \param variable
    */
-  void Surface::text(std::string_view message, const Font &font, const Point &p, bool variable, TextAlign align, Rect clip) {
-    text(message, font, Rect(p.x, p.y, 0, 0), variable, align, clip);
+  void Surface::text(std::string_view message, const Font &font, const Point &p, bool variable, TextAlign align) {
+    text(message, font, Rect(p.x, p.y, 0, 0), variable, align);
   }
 
   /**
@@ -30,16 +30,8 @@ namespace blit {
    * \param r
    * \param variable
    */
-  void Surface::text(std::string_view message, const Font &font, const Rect &r, bool variable, TextAlign align, Rect clip) {
+  void Surface::text(std::string_view message, const Font &font, const Rect &r, bool variable, TextAlign align) {
     Point c(r.x, r.y); // caret position
-
-    // default clip rect to rect if passed in
-    if(r.w > 0 && clip.w == 1000)
-      clip = r;
-
-    // clamp clip rect to screen
-    clip.w = std::min(clip.w, bounds.w - clip.x);
-    clip.h = std::min(clip.h, bounds.h - clip.y);
 
     if(!clip.intersects(r))
       return;
