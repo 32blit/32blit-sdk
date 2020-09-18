@@ -7,7 +7,7 @@
 
 Renderer::Renderer(SDL_Window *window, int width, int height) : sys_width(width), sys_height(height) {
 	//SDL_SetHint(SDL_HINT_RENDER_DRIVER, "openGL");
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	renderer = SDL_CreateRenderer(window, -1, 0);
 	if (renderer == nullptr) {
 		fprintf(stderr, "could not create renderer: %s\n", SDL_GetError());
 	}
