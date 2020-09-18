@@ -15,6 +15,10 @@ jobs:
   include:
     - name: "Emscripten"
       env: CACHE_NAME=emscripten2
+      addons:
+        apt:
+          doxygen
+          graphviz
       cache:
         directories:
           - $HOME/.emscripten_ports
@@ -30,6 +34,14 @@ jobs:
       script:
         - docker exec -it emscripten emcmake cmake -B build.em -G "Unix Makefiles"
         - docker exec -it emscripten make -C build.em
+      before_deploy:
+        - cd 32blit && doxygen doxygen.conf && cd ..
+        - cp -r 32blit/documentation/html/* site
+        - cp build.em/examples/*/*.{js,wasm} site/examples
+      deploy:
+        provider: pages:git
+        local_dir: site
+        edge: true
     
     - name: "Linux"
       env:
