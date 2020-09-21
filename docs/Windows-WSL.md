@@ -52,14 +52,14 @@ You will need to cross-compile SDL2 for MinGW and install both it, and SDL2-imag
 
 ### Installing SDL2 & SDL2_image
 
-This will install the SDL2 development headers and libraries into `/usr/local/cross-tools/x86_64-w64-mingw32/`.
+This will install the SDL2 64bit mingw development headers and libraries into `/opt/local/x86_64-w64-mingw32/`.
 
-If you use a different directory then you will have to supply the SDL2 dir to the `cmake` command below using `-DSDL2_DIR`. For example: `cmake .. -DCMAKE_TOOLCHAIN_FILE=../mingw.toolchain -DSDL2_DIR=/usr/local/cross-tools/x86_64-w64-mingw32/lib/cmake/SDL2`
+Note: the `lib/cmake/SDL2/sdl2-config.cmake` shipped with these libraries expects them to be in `/opt/local`, if you change the install path you will have to modify this file.
 
-First, make sure the `cross-tools` directory (or your chosen alternative) exists:
+First, make sure the `/opt/local/` directory exists:
 
 ```shell
-sudo mkdir -p /usr/local/cross-tools/
+sudo mkdir -p /opt/local/
 ```
 
 #### SDL2
@@ -69,7 +69,7 @@ Grab and install the SDL2 mingw development package:
 ```shell
 wget https://libsdl.org/release/SDL2-devel-2.0.10-mingw.tar.gz
 tar xzf SDL2-devel-2.0.10-mingw.tar.gz
-sudo cp -r SDL2-2.0.10/x86_64-w64-mingw32 /usr/local/cross-tools/
+sudo cp -r SDL2-2.0.10/x86_64-w64-mingw32 /opt/local/
 ```
 
 #### SDL2_image
@@ -79,7 +79,7 @@ Grab and install the SDL2_image mingw development package:
 ```shell
 wget https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.0.5-mingw.tar.gz
 tar xzf SDL2_image-devel-2.0.5-mingw.tar.gz
-sudo cp -r SDL2_image-2.0.5/x86_64-w64-mingw32 /usr/local/cross-tools/
+sudo cp -r SDL2_image-2.0.5/x86_64-w64-mingw32 /opt/local/
 ```
 
 ### Building

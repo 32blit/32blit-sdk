@@ -1,5 +1,5 @@
 if(NOT DEFINED SDL2_DIR)
-	set(SDL2_DIR /usr/local/cross-tools/x86_64-w64-mingw32/lib/cmake/SDL2)
+	set(SDL2_DIR /opt/local/x86_64-w64-mingw32/lib/cmake/SDL2)
 endif()
 list(APPEND CMAKE_MODULE_PATH ${SDL2_DIR})
 include(sdl2-config REQUIRED)
