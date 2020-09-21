@@ -11,8 +11,9 @@ If you're more familiar with Visual Studio then you should [follow the instructi
   - [Installing requirements inside WSL](#installing-requirements-inside-wsl)
 - [Building & Running on 32Blit](#building--running-on-32blit)
 - [Building & Running Locally](#building--running-locally)
-  - [Building & Installing SDL2](#building--installing-sdl2)
-  - [Installing SLD2-Image](#installing-sld2-image)
+  - [Installing SDL2 & SDL2_image](#installing-sdl2--sdl2_image)
+    - [SDL2](#sdl2)
+    - [SDL2_image](#sdl2_image)
   - [Building](#building)
     - [Single Example](#single-example)
     - [Build Everything](#build-everything)
@@ -49,38 +50,36 @@ You can use WSL on Windows to cross-compile your project (or any 32Blit example)
 
 You will need to cross-compile SDL2 for MinGW and install both it, and SDL2-image.
 
-### Building & Installing SDL2
+### Installing SDL2 & SDL2_image
 
-Grab the SDL2 source code and unzip it with the following commands:
+This will install the SDL2 development headers and libraries into `/usr/local/cross-tools/x86_64-w64-mingw32/`.
 
-```shell
-wget https://www.libsdl.org/release/SDL2-2.0.10.zip
-unzip SDL2-2.0.10.zip
-cd SDL2-2.0.10
-```
+If you use a different directory then you will have to supply the SDL2 dir to the `cmake` command below using `-DSDL2_DIR`. For example: `cmake .. -DCMAKE_TOOLCHAIN_FILE=../mingw.toolchain -DSDL2_DIR=/usr/local/cross-tools/x86_64-w64-mingw32/lib/cmake/SDL2`
 
-Then build and install it:
+First, make sure the `cross-tools` directory (or your chosen alternative) exists:
 
 ```shell
-mkdir build.mingw
-cd build.mingw
-../configure --target=x86_64-w64-mingw32 --host=x86_64-w64-mingw32 --build=x86_64--linux --prefix=/usr/local/cross-tools/x86_64-w64-mingw32/
-make
-sudo make install
+sudo mkdir -p /usr/local/cross-tools/
 ```
 
-This will install the SDL2 development headers and libraries into `/usr/local/cross-tools/x86_64-w64-mingw32/` if you use a different directory then you will have to supply the SDL2 dir to the `cmake` command below using `-DSDL2_DIR=/usr/local/cross-tools/x86_64-w64-mingw32/lib/cmake/SDL2`
+#### SDL2
 
-### Installing SLD2-Image
+Grab and install the SDL2 mingw development package:
 
-SDL2 Image can be a little trickier to build from source, so we'll grab the pre-compiled mingw packages and install them alongside SDL2 in `/usr/local/cross-tools/x86_64-w64-mingw32/`:
+```shell
+wget https://libsdl.org/release/SDL2-devel-2.0.10-mingw.tar.gz
+tar xzf SDL2-devel-2.0.10-mingw.tar.gz
+sudo cp -r SDL2-2.0.10/x86_64-w64-mingw32 /usr/local/cross-tools/
+```
+
+#### SDL2_image
+
+Grab and install the SDL2_image mingw development package:
 
 ```shell
 wget https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.0.5-mingw.tar.gz
 tar xzf SDL2_image-devel-2.0.5-mingw.tar.gz
-sudo cp -r bin /usr/local/cross-tools/x86_64-w64-mingw32/
-sudo cp -r lib /usr/local/cross-tools/x86_64-w64-mingw32/
-sudo cp -r include /usr/local/cross-tools/x86_64-w64-mingw32/
+sudo cp -r SDL2_image-2.0.5/x86_64-w64-mingw32 /usr/local/cross-tools/
 ```
 
 ### Building
