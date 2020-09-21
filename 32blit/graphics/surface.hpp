@@ -34,6 +34,7 @@ namespace blit {
   };
 #pragma pack(pop)
 
+  /// Text alignment
   enum TextAlign {
     left          = 0b0000,
     center_h      = 0b0100,
