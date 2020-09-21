@@ -1,10 +1,22 @@
-# Building & Running on Win32 (WSL and MinGW)
+# Building & Running on Win32 (WSL and MinGW) <!-- omit in toc -->
 
 These instructions cover setting up Windows Subsystem for Linux so that you can cross-compile Windows-compatible binaries with MinGW.
 
 They assume a basic knowledge of the Linux command-line, installing tools and compiling code from source.
 
 If you're more familiar with Visual Studio then you should [follow the instructions in Windows-VisualStudio.md](Windows-VisualStudio.md)
+
+- [Setting Up](#setting-up)
+  - [Windows Subsystem for Linux (WSL)](#windows-subsystem-for-linux-wsl)
+  - [Installing requirements inside WSL](#installing-requirements-inside-wsl)
+- [Building & Running on 32Blit](#building--running-on-32blit)
+- [Building & Running Locally](#building--running-locally)
+  - [Building & Installing SDL2](#building--installing-sdl2)
+  - [Installing SLD2-Image](#installing-sld2-image)
+  - [Building](#building)
+    - [Single Example](#single-example)
+    - [Build Everything](#build-everything)
+  - [Troubleshooting](#troubleshooting)
 
 ## Setting Up
 
@@ -35,7 +47,9 @@ If you want to run code on 32Blit, you should now refer to [Building & Running O
 
 You can use WSL on Windows to cross-compile your project (or any 32Blit example) into a Windows .exe for testing locally.
 
-First you'll need to cross-compile SDL2 for MinGW and install it.
+You will need to cross-compile SDL2 for MinGW and install both it, and SDL2-image.
+
+### Building & Installing SDL2
 
 Grab the SDL2 source code and unzip it with the following commands:
 
@@ -57,6 +71,20 @@ sudo make install
 
 This will install the SDL2 development headers and libraries into `/usr/local/cross-tools/x86_64-w64-mingw32/` if you use a different directory then you will have to supply the SDL2 dir to the `cmake` command below using `-DSDL2_DIR=/usr/local/cross-tools/x86_64-w64-mingw32/lib/cmake/SDL2`
 
+### Installing SLD2-Image
+
+SDL2 Image can be a little trickier to build from source, so we'll grab the pre-compiled mingw packages and install them alongside SDL2 in `/usr/local/cross-tools/x86_64-w64-mingw32/`:
+
+```shell
+wget https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.0.5-mingw.tar.gz
+tar xzf SDL2_image-devel-2.0.5-mingw.tar.gz
+sudo cp -r bin /usr/local/cross-tools/x86_64-w64-mingw32/
+sudo cp -r lib /usr/local/cross-tools/x86_64-w64-mingw32/
+sudo cp -r include /usr/local/cross-tools/x86_64-w64-mingw32/
+```
+
+### Building
+
 Finally, set up the 32Blit Makefile from the root of the repository with the following commands:
 
 ```shell
@@ -64,6 +92,8 @@ mkdir build.mingw
 cd build.mingw
 cmake .. -DCMAKE_TOOLCHAIN_FILE=../mingw.toolchain
 ```
+
+#### Single Example
 
 Now to make any example, type:
 
@@ -87,7 +117,7 @@ WSL will launch the example in Windows, using the required `SDL2.dll` that will 
 
 Don't forget to include `SDL2.dll` this if you want to redistribute a game/example.
 
-### Build Everything
+#### Build Everything
 
 Alternatively you can build everything by just typing:
 
