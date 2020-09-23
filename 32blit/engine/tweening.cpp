@@ -50,24 +50,24 @@ namespace blit {
   }
 
   float tween_linear(uint32_t t, float b, float c, uint32_t d) {
-    return c * t / d + b;
+    return (c - b) * t / d + b;
   }
 
   float tween_ease_in_quad(uint32_t t, float b, float c, uint32_t d) {
     float ft = float(t) / float(d);
-    return -c * ft * (ft - 2) + b;
+    return -(c - b) * ft * (ft - 2) + b;
   }
 
   float tween_ease_out_quad(uint32_t t, float b, float c, uint32_t d) {
     float ft = float(t) / float(d);
-    return c * ft * ft + b;
+    return (c - b) * ft * ft + b;
   }
 
   float tween_ease_in_out_quad(uint32_t t, float b, float c, uint32_t d) {
-    float ft = (float)t / d / 2.0f;
-    if (ft < 1) return c / 2 * ft * ft + b;
+    float ft = (float)t / d * 2.0f;
+    if (ft < 1) return (c - b) / 2 * ft * ft + b;
     ft--;
-    return -c / 2 * (ft*(ft - 2) - 1) + b;
+    return -(c - b) / 2 * (ft*(ft - 2) - 1) + b;
   }
 
   /**
