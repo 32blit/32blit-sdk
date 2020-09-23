@@ -1,0 +1,4 @@
+assets.hpp:
+  assets/fire.png:
+    palette: assets/fire_palette.png
+    name: fire_data
