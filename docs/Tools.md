@@ -1,13 +1,23 @@
-# Tools
+# Tools <!-- omit in toc -->
 
 The individual asset tools have been deprecated in favour of https://github.com/pimoroni/32blit-tools which installs `32blit` or `32blit.exe` command on Linux/Mac or Windows respectively.
 
 You can install these tools with `pip`:
+
 ```
 pip3 install 32blit
 ```
 
 Head on over to https://github.com/pimoroni/32blit-tools for further documentation covering the installation of the new tools.
+
+- [Asset Pipeline](#asset-pipeline)
+- [Visual Studio](#visual-studio)
+- [Old Tools](#old-tools)
+  - [Sprite Builder](#sprite-builder)
+    - [Prerequisites](#prerequisites)
+    - [Usage](#usage)
+      - [Packed](#packed)
+      - [Raw](#raw)
 
 # Asset Pipeline
 
@@ -93,13 +103,13 @@ The script outputs to a C++ byte-array and includes a header with information ab
 
 Have a look into the script for further details regarding the formats.
 
-### Prerequisites:
+### Prerequisites
 
 ``` shell
 python3 -m pip install construct bitarray bitstring pillow
 ```
 
-### Usage:
+### Usage
 
 Currently `sprite-builder` knows two types of conversion:
 

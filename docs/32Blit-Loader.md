@@ -1,6 +1,12 @@
-# 32Blit Loader Tool
+# 32Blit Loader Tool <!-- omit in toc -->
 
 The 32Blit loader is a tool for saving 32Blit games to your SD card over USB, or flashing them directly to the 32Blit's external flash for quick and easy testing.
+
+- [Building The 32Blit Loader Tool](#building-the-32blit-loader-tool)
+  - [macOS & Linux](#macos--linux)
+  - [Windows - Visual Studio](#windows---visual-studio)
+  - [Windows - WSL](#windows---wsl)
+- [Usage](#usage)
 
 ## Building The 32Blit Loader Tool
 

@@ -1,6 +1,17 @@
-# Building & Running On 32Blit
+# Building & Running On 32Blit <!-- omit in toc -->
 
 These instructions assume a basic familiarity with the Linux command-line and with compiling software from source.
+
+- [Prerequisites](#prerequisites)
+  - [Examples](#examples)
+    - [Building An Example](#building-an-example)
+    - [Uploading An Example](#uploading-an-example)
+  - [Your Own Projects](#your-own-projects)
+- [Troubleshooting](#troubleshooting)
+    - [Flasher Can't Find 32Blit Port](#flasher-cant-find-32blit-port)
+    - [CMake Errors](#cmake-errors)
+
+# Prerequisites
 
 Make sure you've prepared your 32Blit by following the instructions in:
 
@@ -71,6 +82,6 @@ If `make example.flash` fails to find the correct port, re-run `cmake` with `-DF
 
 Port-detection does not work if your device is in DFU mode. Either reset it to get it out, or it it's stuck in DFU mode (or just boots into a black screen), you may need to reflash the firmware.
 
-### Cmake Errors
+### CMake Errors
 
 If you see `cannot create target because another target with the same name already exists` you've probably run `cmake ..` in the wrong directory (the project directory rather than the build directory), you should remove all but your project files and `cmake ..` again from the build directory.

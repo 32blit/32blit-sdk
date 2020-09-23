@@ -1,8 +1,14 @@
-# Visual Studio 2019
+# Visual Studio 2019 <!-- omit in toc -->
 
 You can use Visual Studio 2019 to examine the samples (compile them and run them in an SDL window) or to build your own apps for the 32blit API.
 
 See [Building & Running On 32Blit](32blit.md) if you want to compile examples/projects to run on 32Blit.
+
+- [Requirements](#requirements)
+- [Option 1: Use the solution file](#option-1-use-the-solution-file)
+  - [Get started with your own game](#get-started-with-your-own-game)
+- [Option 2: Use Visual Studio's built-in CMake support](#option-2-use-visual-studios-built-in-cmake-support)
+- [Troubleshooting](#troubleshooting)
 
 ## Requirements
 

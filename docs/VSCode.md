@@ -1,7 +1,22 @@
-# Setting up Visual Studio Code
+# Setting up Visual Studio Code <!-- omit in toc -->
+
+These instructions cover setting up Visual Studio Code to build the CMake project.
+
+A working knowledge of using and configuring Visual Studio Code is assumed.
+
+- [Requirements](#requirements)
+- [Windows specific setup](#windows-specific-setup)
+- [Mac specific setup](#mac-specific-setup)
+- [Initial setup for local builds](#initial-setup-for-local-builds)
+- [IntelliSense](#intellisense)
+- [CMake Arguments](#cmake-arguments)
+- [Debugger configuration](#debugger-configuration)
+- [Building for 32Blit](#building-for-32blit)
 
 ## Requirements
+
 You'll need to install:
+
  - [Visual Studio Code](https://code.visualstudio.com/)
  - The [C/C++ extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools)
  - The [CMake Tools extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools)
