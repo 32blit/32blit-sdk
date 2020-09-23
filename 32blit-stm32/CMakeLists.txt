@@ -73,6 +73,7 @@ list(APPEND SOURCES
 	Src/hrtim.c
 	Src/i2c.c
 	Src/i2c-msa301.c
+	Src/i2c-lis3dh.c
 	Src/i2c-bq24295.c
 	Src/quadspi.c
 	Src/spi.c
@@ -136,6 +137,15 @@ target_include_directories(BlitHalSTM32
 	PRIVATE
 		${INCLUDE_DIRS}
 )
+
+OPTION(BETA_32BLIT "Build for 32blit beta unit compatibility (MSA301 accelerometer)" OFF)
+
+IF(BETA_32BLIT)
+	set(DEFINITIONS
+		${DEFINITIONS}
+		-DBETA_32BLIT
+	)
+ENDIF(BETA_32BLIT)
 
 target_compile_definitions(BlitHalSTM32
 	PRIVATE
