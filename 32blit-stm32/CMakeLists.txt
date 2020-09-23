@@ -170,6 +170,8 @@ set(MCU_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}")
 set(MCU_LINKER_SCRIPT "${MCU_LINKER_SCRIPT}" PARENT_SCOPE)
 set(MCU_LINKER_SCRIPT_EXT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT_EXT}" PARENT_SCOPE)
 
+set(USER_STARTUP ${CMAKE_CURRENT_SOURCE_DIR}/startup_user.s ${CMAKE_CURRENT_SOURCE_DIR}/startup_user.cpp PARENT_SCOPE)
+
 function(blit_executable_common NAME)
 	target_link_libraries(${NAME} BlitEngine)
 	set_property(TARGET ${NAME} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Map=${NAME}.map,--cref")
@@ -183,7 +185,8 @@ function(blit_executable_common NAME)
 endfunction()
 
 function(blit_executable NAME SOURCES)
-	add_executable(${NAME} $<TARGET_OBJECTS:BlitHalSTM32Ext> ${SOURCES} ${ARGN})
+	set_source_files_properties(${USER_STARTUP} PROPERTIES LANGUAGE CXX)
+	add_executable(${NAME} ${USER_STARTUP} ${SOURCES} ${ARGN})
 
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.bin
 		DESTINATION bin

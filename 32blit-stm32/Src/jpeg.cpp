@@ -7,11 +7,12 @@ extern "C" {
 #include "JPEG/jpeg_utils.h"
 }
 
+#include "jpeg.hpp"
 #include "engine/file.hpp"
-#include "graphics/jpeg.hpp"
 
 static bool jpeg_tables_initialised = false;
 
+static blit::AllocateCallback jpeg_alloc;
 static JPEG_HandleTypeDef jpeg_handle;
 static const int jpeg_max_block_len = 768; // can fit a whole number of all block sizes
 static uint8_t jpeg_dec_block[jpeg_max_block_len];
@@ -26,7 +27,7 @@ void HAL_JPEG_InfoReadyCallback(JPEG_HandleTypeDef *hjpeg, JPEG_ConfTypeDef *pIn
   // allocate output RGB buffer
   if(pInfo->ImageWidth * pInfo->ImageHeight != 0) {
     uint32_t jpeg_out_len = pInfo->ImageWidth * pInfo->ImageHeight * 3;
-    jpeg_out_buf = new uint8_t[jpeg_out_len];
+    jpeg_out_buf = jpeg_alloc(jpeg_out_len);
   }
   // else fail horribly
 
@@ -51,12 +52,13 @@ void HAL_JPEG_DataReadyCallback(JPEG_HandleTypeDef *hjpeg, uint8_t *pDataOut, ui
 }
 
 
-blit::JPEGImage blit_decode_jpeg_buffer(const uint8_t *ptr, uint32_t len) {
+blit::JPEGImage blit_decode_jpeg_buffer(const uint8_t *ptr, uint32_t len, blit::AllocateCallback alloc) {
   if(!jpeg_tables_initialised) {
     JPEG_InitColorTables();
     jpeg_tables_initialised = true;
   }
 
+  jpeg_alloc = alloc;
   jpeg_in_buf = ptr;
   jpeg_in_len = len;
   jpeg_in_off = 0;
@@ -77,7 +79,7 @@ blit::JPEGImage blit_decode_jpeg_buffer(const uint8_t *ptr, uint32_t len) {
   return {blit::Size(conf.ImageWidth, conf.ImageHeight), jpeg_out_buf};
 }
 
-blit::JPEGImage blit_decode_jpeg_file(std::string filename) {
+blit::JPEGImage blit_decode_jpeg_file(std::string filename, blit::AllocateCallback alloc) {
   blit::File file(filename);
 
   if(!file.is_open())
@@ -90,6 +92,7 @@ blit::JPEGImage blit_decode_jpeg_file(std::string filename) {
     jpeg_tables_initialised = true;
   }
 
+  jpeg_alloc = alloc;
   jpeg_in_buf = new uint8_t[1024];
   jpeg_in_len = file.read(0, 1024, (char *)jpeg_in_buf);
   jpeg_in_off = 0;

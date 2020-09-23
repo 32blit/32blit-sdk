@@ -61,6 +61,12 @@ const uint32_t long_press_exit_time = 1000;
 
 __attribute__((section(".persist"))) Persist persist;
 
+static bool (*do_tick)(uint32_t time) = blit::tick;
+
+// pointers to user code
+static bool (*user_tick)(uint32_t time) = nullptr;
+static void (*user_render)(uint32_t time) = nullptr;
+
 void DFUBoot(void)
 {
   // Set the special magic word value that's checked by the assembly entry Point upon boot
@@ -156,12 +162,10 @@ void render_yield() {
 
 void blit_tick() {
   if(exit_game) {
-    #if EXTERNAL_LOAD_ADDRESS == 0x90000000
-      // Already in firmware menu
-    #else
-    blit::LED.r = 0;
-    blit_switch_execution(0);
-    #endif
+    if(blit_user_code_running()) {
+      blit::LED.r = 0;
+      blit_switch_execution(0);
+    }
   }
 
   do_render();
@@ -171,7 +175,7 @@ void blit_tick() {
   blit_update_led();
   blit_update_vibration();
 
-  blit::tick(blit::now());
+  do_tick(blit::now());
 }
 
 bool blit_sd_detected() {
@@ -326,6 +330,7 @@ void blit_init() {
       persist.selected_menu_item = 0;
       persist.reset_target = prtFirmware;
       persist.reset_error = false;
+      persist.last_game_offset = 0;
     }
 
     init_api_shared();
@@ -424,11 +429,7 @@ std::string menu_name (MenuItem item) {
     case SCREENSHOT: return "Take Screenshot";
     case DFU: return "DFU Mode";
     case SHIPPING: return "Power Off";
-#if EXTERNAL_LOAD_ADDRESS == 0x90000000
-    case SWITCH_EXE: return "Launch Game";
-#else
-    case SWITCH_EXE: return "Exit Game";
-#endif
+    case SWITCH_EXE: return blit_user_code_running() ? "Exit Game" :  "Launch Game";
     case LAST_COUNT: return "";
   };
   return "";
@@ -497,7 +498,7 @@ void blit_menu_update(uint32_t time) {
         break;
       case SWITCH_EXE:
         if(button_a){
-          blit_switch_execution(0); // TODO: store offset for last used game
+          blit_switch_execution(persist.last_game_offset);
         }
         break;
       case LAST_COUNT:
@@ -508,7 +509,10 @@ void blit_menu_update(uint32_t time) {
 
 void blit_menu_render(uint32_t time) {
 
-  ::render(time);
+  if(user_render)
+    user_render(time);
+  else
+    ::render(time);
 
   // save screenshot before we render the menu over it
   if(take_screenshot) {
@@ -632,18 +636,26 @@ void blit_menu_render(uint32_t time) {
 }
 
 void blit_menu() {
-  if(blit::update == blit_menu_update) {
-    blit::update = ::update;
-    blit::render = ::render;
+  if(blit::update == blit_menu_update && do_tick == blit::tick) {
+    if (user_tick) {
+      // user code was running
+      do_tick = user_tick;
+      blit::render = user_render;
+    } else {
+      blit::update = ::update;
+      blit::render = ::render;
+    }
 
     // restore game colours
     if(screen.format == PixelFormat::P)
       set_screen_palette(menu_saved_colours, num_menu_colours);
+
   }
   else
   {
     blit::update = blit_menu_update;
     blit::render = blit_menu_render;
+    do_tick = blit::tick;
 
     if(screen.format == PixelFormat::P) {
       memcpy(menu_saved_colours, screen.palette, num_menu_colours * sizeof(Pen));
@@ -857,15 +869,55 @@ char *get_fr_err_text(FRESULT err){
 typedef  void (*pFunction)(void);
 pFunction JumpToApplication;
 
+typedef void(*renderFunction)(uint32_t);
+typedef bool(*tickFunction)(uint32_t);
+
 void blit_switch_execution(uint32_t address)
 {
-  #if EXTERNAL_LOAD_ADDRESS == 0x90000000
-  persist.reset_target = prtGame;
-  #else
-  persist.reset_target = prtFirmware;
-  #endif
+  if(blit_user_code_running())
+    persist.reset_target = prtFirmware;
+  else
+    persist.reset_target = prtGame;
 
   init_api_shared();
+
+  // returning from game running on top of the firmware
+  if(user_tick) {
+    user_tick = nullptr;
+    user_render = nullptr;
+    blit::render = ::render;
+    blit::update = ::update;
+    do_tick = blit::tick;
+
+    // TODO: may be possible to return to the menu without a hard reset but currently flashing doesn't work
+    SCB_CleanDCache();
+    NVIC_SystemReset();
+  }
+
+	// switch to user app in external flash
+	if(EXTERNAL_LOAD_ADDRESS >= 0x90000000) {
+		qspi_enable_memorymapped_mode();
+
+    auto app_ptr = ((__IO uint32_t*) (EXTERNAL_LOAD_ADDRESS + address));
+    uint32_t magic = app_ptr[0];
+
+    if(magic == 0x54494C42 /*BLIT*/) {
+      persist.last_game_offset = address;
+
+      pFunction init = (pFunction) app_ptr[3];
+      init();
+
+      blit::render = user_render = (renderFunction) app_ptr[1];
+      do_tick = user_tick = (tickFunction) app_ptr[2];
+      return;
+    }
+    // anything flashed at a non-zero offset should have a valid header
+    else if(address != 0)
+      return;
+  }
+
+  // old-style soft-reset to app with linked HAL
+  // left for compatibility/testing
 
   // Stop the ADC DMA
   HAL_ADC_Stop_DMA(&hadc1);
@@ -893,9 +945,6 @@ void blit_switch_execution(uint32_t address)
   HAL_NVIC_DisableIRQ(TIM2_IRQn);
 
 	volatile uint32_t uAddr = EXTERNAL_LOAD_ADDRESS;
-	// enable qspi memory mapping if needed
-	if(EXTERNAL_LOAD_ADDRESS >= 0x90000000)
-		qspi_enable_memorymapped_mode();
 
 	/* Disable I-Cache */
 	SCB_DisableICache();
@@ -915,6 +964,15 @@ void blit_switch_execution(uint32_t address)
 	while(1)
 	{
 	}
+}
+
+bool blit_user_code_running() {
+  // running fully linked code from ext flash
+  if(APPLICATION_VTOR == 0x90000000)
+    return true;
+
+  // loaded user-only game from flash
+  return user_tick != nullptr;
 }
 
 void blit_reset_with_error() {

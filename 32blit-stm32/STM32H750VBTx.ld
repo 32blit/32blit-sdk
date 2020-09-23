@@ -41,15 +41,19 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-DTCMRAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 128K
-RAM_D1 (xrw)        : ORIGIN = 0x24000000, LENGTH = 287K
+DTCMRAM (xrw)       : ORIGIN = DEFINED(FLASH_TARGET_INT) ? 0x20000000 : 0x20000400,
+                      LENGTH = DEFINED(FLASH_TARGET_INT) ? 1K : 127K
+/*RAM_D1 (xrw)        : ORIGIN = 0x24000000, LENGTH = 287K*/
 LTDC (rw)           : ORIGIN = 0x24047C00, LENGTH = 225K
-RAM_D2 (xrw)        : ORIGIN = 0x30000000, LENGTH =  63K
+/*RAM_D2 (xrw)        : ORIGIN = 0x30000000, LENGTH =  63K*/
 FRAMEBUFFER (rw)    : ORIGIN = 0x3000FC00, LENGTH = 225K
 RAM_D3 (xrw)        : ORIGIN = 0x38000000, LENGTH =  64K
 PERSIST (rw)        : ORIGIN = 0x38800000, LENGTH =   4K
 ITCMISR (xrw)       : ORIGIN = 0x00000000, LENGTH =   4K
 ITCMRAM (xrw)       : ORIGIN = 0x00001000, LENGTH =  58K
+
+MAIN_RAM (xrw)      : ORIGIN = DEFINED(FLASH_TARGET_INT) ? 0x30000000 : 0x24000000,
+                      LENGTH = DEFINED(FLASH_TARGET_INT) ? 63K : 362K
 
 API (rw)            : ORIGIN = 0x0000f800, LENGTH = 2K
 
@@ -158,7 +162,7 @@ SECTIONS
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
-  } >RAM_D1
+  } >MAIN_RAM
 
   /* User_heap_stack section, used to check that there is enough RAM left */
   ._user_heap_stack :
@@ -169,7 +173,7 @@ SECTIONS
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
-  } >RAM_D1
+  } >MAIN_RAM
 
   itcm_data = LOADADDR(.itcm);
   .itcm :

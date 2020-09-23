@@ -8,10 +8,11 @@
 #include "usbd_cdc_if.h"
 
 #include "CDCInfoHandler.h"
+#include "32blit.h"
 
 bool CDCInfoHandler::StreamInit(CDCFourCC uCommand)
 {
-	if(APPLICATION_VTOR >= 0x90000000)
+	if(blit_user_code_running())
 		while(USBD_BUSY == CDC_Transmit_HS((uint8_t *)"32BL_EXT", 8))
 				;
 	else
