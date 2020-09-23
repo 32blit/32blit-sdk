@@ -1,8 +1,8 @@
 # Building & Running on Win32 (WSL and MinGW) <!-- omit in toc -->
 
-These instructions cover setting up Windows Subsystem for Linux so that you can cross-compile Windows-compatible binaries with MinGW.
+These instructions cover setting up Windows Subsystem for Linux so that you can cross-compile Windows-compatible binaries with MinGW. This approach is included for completeness but not recommended, since MinGW binaries are statically linked and much larger than the Visual Studio output.
 
-They assume a basic knowledge of the Linux command-line, installing tools and compiling code from source.
+A basic knowledge of the Linux command-line, installing tools and compiling code from source is assumed.
 
 If you're more familiar with Visual Studio then you should [follow the instructions in Windows-VisualStudio.md](Windows-VisualStudio.md)
 
