@@ -1,4 +1,12 @@
+# Chrome OS <!-- omit in toc -->
+
+These instructions cover building 32blit on a Chrome OS Linux VM.
+
 Chrome OS (Chromebook) uses a Linux virtual machine to run Linux software. Once the virtual machine is set up you can follow the the [General Readme](../README.md) and the [Linux](Linux.md) instructions.
+
+- [Installing the Linux Beta](#installing-the-linux-beta)
+- [Sharing folders with the Linux virtual machine](#sharing-folders-with-the-linux-virtual-machine)
+- [Flashing the firmware (DFU mode) and USB access](#flashing-the-firmware-dfu-mode-and-usb-access)
 
 # Installing the Linux Beta
 

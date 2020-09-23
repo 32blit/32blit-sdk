@@ -1,8 +1,20 @@
-# 32Blit Firmware
+# 32Blit Firmware <!-- omit in toc -->
 
 This repository includes firmware for the 32Blit that lets you manage games on SD card, and copy or flash games via USB serial.
 
-In order to use it, you will need to:
+- [Prerequisites](#prerequisites)
+- [Building & Flashing The 32Blit Firmware](#building--flashing-the-32blit-firmware)
+  - [Building The Firmware](#building-the-firmware)
+  - [Flashing The Firmware To Your 32Blit](#flashing-the-firmware-to-your-32blit)
+    - [Prepare the device](#prepare-the-device)
+    - [Linux and macOS](#linux-and-macos)
+    - [Windows](#windows)
+- [Troubleshooting](#troubleshooting)
+  - [Finding The Right DFU Device](#finding-the-right-dfu-device)
+
+# Prerequisites
+
+In order to use the 32blit firmware, you will need to:
 
 1. Build and install the 32Blit firmware (if you don't have it already)
 2. [Build the flash loader](32Blit-Loader.md) tool in `tools/src`
@@ -65,8 +77,8 @@ If this fails you can run the `DfusSeDemo` application and pick your 32Blit (it 
 
 In the "Upload Action" section hit "Choose" and select the `firmware.dfu` file you built earlier. (It should be in `build.stm32/firmware/firmware.dfu`) and finally hit "Upgrade" to flash the file.
 
-## Troubleshooting
+# Troubleshooting
 
-### Finding The Right DFU Device
+## Finding The Right DFU Device
 
 If you have more than one device in DFU mode connected to your computer then find the 32blit using `lsusb` and add `-d vid:pid` to the dfu-util command. Replace `vid:pid` with the 4 character ID strings to target the correct device.

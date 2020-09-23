@@ -1,4 +1,19 @@
-# Building & Running on macOS
+# Building & Running on macOS <!-- omit in toc -->
+
+These instructions cover building 32blit on macOS.
+
+- [Prerequisites](#prerequisites)
+- [Python3](#python3)
+  - [Installing python3](#installing-python3)
+  - [Installing pip3 dependecies](#installing-pip3-dependecies)
+  - [Verifying install](#verifying-install)
+- [Installing `gcc-arm-none-eabi`](#installing-gcc-arm-none-eabi)
+- [Building & Running on 32Blit](#building--running-on-32blit)
+- [Building & Running Locally](#building--running-locally)
+  - [Build Everything](#build-everything)
+- [Troubleshooting](#troubleshooting)
+
+## Prerequisites
 
 You will need build tools and CMake. Assuming you have [homebrew](https://docs.brew.sh/Installation) installed:
 
@@ -24,6 +39,7 @@ pip3 install 32blit
 TODO: Document install of `construct` and `bitstring` for Python 3 (probably need a requirements.txt for the tools directory)
 
 ###  Verifying install
+
 ``` shell
 python3 --version
 ```
