@@ -140,9 +140,12 @@ using namespace blit;
 
   std::function<Mat3(uint8_t)> betamax = [](uint8_t y) -> Mat3 {
     float step = (current_time / 250.0f) + (y / 25.0f);
+    Point shake(0, 0);
 
     int8_t scale = int8_t((sinf(step) + 1.0f) * 5);
-    Point shake((blit::random() % scale) - scale / 2, (blit::random() % scale) - scale / 2);
+    if (scale > 0) {
+      shake = Point((blit::random() % scale) - scale / 2, (blit::random() % scale) - scale / 2);
+    }
 
     Mat3 transform = Mat3::identity();
     transform *= Mat3::translation(Vec2(256 + shake.x, 156 + shake.y)); // offset to middle of world      
