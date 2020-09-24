@@ -115,16 +115,16 @@ namespace blit {
 
       err += y; y++; err += y;
 
-      h_span(Point(c.x - x, c.y + lastY), x * 2);
+      h_span(Point(c.x - x, c.y + lastY), x * 2 + 1);
       if (lastY != 0) {
-        h_span(Point(c.x - x, c.y - lastY), x * 2);
+        h_span(Point(c.x - x, c.y - lastY), x * 2 + 1);
       }
 
       if (err >= 0) {
         if (x != lastY) {
-          h_span(Point(c.x - lastY, c.y + x), lastY * 2);
+          h_span(Point(c.x - lastY, c.y + x), lastY * 2 + 1);
           if (x != 0) {
-            h_span(Point(c.x - lastY, c.y - x), lastY * 2);
+            h_span(Point(c.x - lastY, c.y - x), lastY * 2 + 1);
           }
 
           err -= x; x--; err -= x;
