@@ -26,6 +26,7 @@ extern USBManager g_usbManager;
 
 struct FlashGame {
   uint32_t offset;
+  uint32_t size;
   // TODO: metadata?
 };
 
@@ -98,17 +99,20 @@ void load_file_list() {
 
 void scan_flash() {
   for(uint32_t offset = 0; offset < qspi_flash_size; offset += qspi_flash_sector_size) {
-    uint8_t header_buf[4];
+    uint8_t header_buf[40];
 
-    if(qspi_read_buffer(offset, header_buf, 4) != QSPI_OK)
+    if(qspi_read_buffer(offset, header_buf, 40) != QSPI_OK)
       break;
 
     auto magic = reinterpret_cast<uint32_t *>(header_buf)[0];
     if(magic != 0x54494C42)
       continue;
 
+    auto end = reinterpret_cast<uint32_t *>(header_buf)[5];
+
     FlashGame game;
     game.offset = offset;
+    game.size = end - 0x90000000;
     flashed_games.push_back(game);
 
     // TODO: when we have a header with metadata, we'll be able to skip to the end
