@@ -22,7 +22,10 @@ function(blit_executable NAME SOURCES)
 		DESTINATION bin
 	)
 
-	set_target_properties(${NAME} PROPERTIES LINK_FLAGS "-specs=nano.specs -u _printf_float -T ${MCU_LINKER_SCRIPT} ${MCU_LINKER_FLAGS_EXT}")
+	set_target_properties(${NAME} PROPERTIES
+		COMPILE_FLAGS "-fPIC -mno-pic-data-is-text-relative -mno-single-pic-base"
+		LINK_FLAGS "-specs=nano.specs -u _printf_float -fPIC -T ${MCU_LINKER_SCRIPT} ${MCU_LINKER_FLAGS_EXT}"
+	)
 	set_target_properties(${NAME} PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT} SUFFIX ".elf")
 
 	blit_executable_common(${NAME})
