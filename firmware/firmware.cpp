@@ -582,6 +582,7 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
   FSIZE_t bytes_total = f_size(&file);
   UINT bytes_read = 0;
   FSIZE_t bytes_flashed = 0;
+
   size_t offset = 0;
 
   if(!bytes_total)
@@ -599,12 +600,13 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
   f_lseek(&file, 0);
 
   uint32_t flash_offset = get_flash_offset_for_file(header);
-  offset = flash_offset;
 
   // erase the sectors needed to write the image
   erase_qspi_flash(flash_offset / qspi_flash_sector_size, bytes_total);
 
   progress.show("Copying from SD card to flash...", bytes_total);
+
+  uint32_t got_start = 0, got_end = 0;
 
   while(bytes_flashed < bytes_total)
   {
@@ -613,11 +615,32 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
 
     if(res != FR_OK)
       break;
+
+    // PIC binary
+    uint32_t magic = *((uint32_t *)buffer);
+    if(offset == 0 && magic == 0x54494C42 /*BLIT*/) {
+      got_start = *((uint32_t *)buffer + 6) - 0x90000000;
+      got_end = *((uint32_t *)buffer + 7) - 0x90000000;
+    } else if(offset == 0)
+      flash_offset = 0;
   
-    if(qspi_write_buffer(offset, buffer, bytes_read) != QSPI_OK)
+    // GOT patching
+    if(offset < got_end && offset + BUFFER_SIZE >= got_start) {
+      for(size_t i = got_start; i < got_end; i += 4) {
+        if(i < offset || i - offset >= BUFFER_SIZE)
+          continue;
+
+        uint32_t val = *(uint32_t *)(buffer + i - offset);
+
+        if(val >= 0x90000000)
+          *(uint32_t *)(buffer + i - offset) = val + flash_offset;
+      }
+    }
+
+    if(qspi_write_buffer(offset + flash_offset, buffer, bytes_read) != QSPI_OK)
       break;
 
-    if(qspi_read_buffer(offset, verify_buffer, bytes_read) != QSPI_OK)
+    if(qspi_read_buffer(offset + flash_offset, verify_buffer, bytes_read) != QSPI_OK)
       break;
 
     // compare buffers

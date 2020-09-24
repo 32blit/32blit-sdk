@@ -114,6 +114,8 @@ g_pfnVectors:
   .word  do_init
   .word _flash_end
   .word flash_start // temp
+  .word _gotstart
+  .word _gotend
 
 /*
 .weak      render
