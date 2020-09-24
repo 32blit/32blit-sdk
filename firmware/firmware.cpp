@@ -592,21 +592,6 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
     return false;
   }
 
-  // check header
-  BlitGameHeader header;
-  if(f_read(&file, (void *)&header, sizeof(header), &bytes_read) != FR_OK) {
-    f_close(&file);
-    return false;
-  }
-  f_lseek(&file, 0);
-
-  uint32_t flash_offset = get_flash_offset_for_file(header);
-
-  // erase the sectors needed to write the image
-  erase_qspi_flash(flash_offset / qspi_flash_sector_size, bytes_total);
-
-  progress.show("Copying from SD card to flash...", bytes_total);
-
   // check for prepended relocation info
   char buf[4];
   f_read(&file, buf, 4, &bytes_read);
@@ -627,6 +612,22 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
   } else {
     f_lseek(&file, 0);
   }
+
+  // check header
+  auto off = f_tell(&file);
+  BlitGameHeader header;
+  if(f_read(&file, (void *)&header, sizeof(header), &bytes_read) != FR_OK) {
+    f_close(&file);
+    return false;
+  }
+  f_lseek(&file, off);
+
+  uint32_t flash_offset = get_flash_offset_for_file(header);
+
+  // erase the sectors needed to write the image
+  erase_qspi_flash(flash_offset / qspi_flash_sector_size, bytes_total);
+
+  progress.show("Copying from SD card to flash...", bytes_total);
 
   uint32_t got_start = 0, got_end = 0;
   uint32_t initfini_start = 0, initfini_end = 0;
