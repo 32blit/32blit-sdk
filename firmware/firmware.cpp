@@ -559,13 +559,25 @@ void update(uint32_t time) {
 // returns address to flash file to
 uint32_t get_flash_offset_for_file(BlitGameHeader &bin_header) {
 
-  // temporary load address for working on multiple app support without PIC being ready
-  // in future this will probably be more of a "find free space" function
   if(bin_header.magic == blit_game_magic) {
     auto expected_addr = bin_header.start;
 
-    // this should be sector aligned to not break things later...
-    return expected_addr - qspi_flash_address;
+    if(current_directory->name != "FLASH")
+      scan_flash();
+
+    if(game_list.empty())
+      return 0;
+
+    auto last_game_end = game_list.back().offset + game_list.back().size;
+
+    // round
+    last_game_end = calc_num_blocks(last_game_end) * qspi_flash_sector_size;
+
+    // TODO: handle full
+    if(last_game_end >= qspi_flash_size)
+      return 0;
+
+    return last_game_end;
   }
 
   return 0;
