@@ -11,6 +11,19 @@
 
 using namespace blit;
 
+#ifdef _MSC_VER
+#include <intrin.h>
+static int log2i(unsigned int x) {
+    unsigned long idx = 0;
+    _BitScanReverse(&idx, x);
+    return idx;
+}
+#else
+static int log2i(unsigned int x) {
+    return 8 * sizeof(unsigned int) - __builtin_clz(x) - 1;
+}
+#endif
+
 namespace blit {
 
 
@@ -477,7 +490,7 @@ namespace blit {
 
     bounds = Size(image->width, image->height);
 
-    uint8_t bit_depth = uint8_t(ceil(log(image->palette_entry_count) / log(2)));
+    uint8_t bit_depth = log2i(std::max(1, (int)image->palette_entry_count - 1)) + 1;
 
     uint8_t col = 0;
     uint8_t bit = 0;
