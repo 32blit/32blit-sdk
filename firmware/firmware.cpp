@@ -45,6 +45,84 @@ State		state = stFlashFile;
 
 FIL file;
 
+// metadata stuff
+struct BlitGameMetadata {
+  std::string title, description, version;
+};
+
+void parse_metadata(char *data, uint16_t metadata_len, BlitGameMetadata &metadata) {
+
+  // parse strings
+  uint16_t offset = 0;
+
+  auto len = strlen(data);
+  metadata.title = std::string(data, len);
+  offset += len + 1;
+
+  len = strlen(data + offset);
+  metadata.description = std::string(data + offset, len);
+  offset += len + 1;
+
+  len = strlen(data + offset);
+  metadata.version = std::string(data + offset, len);
+  offset += len + 1;
+
+  if(offset != metadata_len) {
+    // icon/splash
+  }
+}
+
+bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata) {
+  uint8_t buf[10];
+  if(qspi_read_buffer(offset, buf, 10) != QSPI_OK)
+    return false;
+
+  if(memcmp(buf, "BLITMETA", 8) != 0)
+    return false;
+
+  auto metadata_len = *reinterpret_cast<uint16_t *>(buf + 8);
+  auto metadata_buf = new uint8_t[metadata_len];
+  if(qspi_read_buffer(offset + 10, metadata_buf, metadata_len) != QSPI_OK) {
+    delete[] metadata_buf;
+    return false;
+  }
+
+  parse_metadata(reinterpret_cast<char *>(metadata_buf), metadata_len, metadata);
+
+  delete[] metadata_buf;
+  return true;
+}
+
+bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata) {
+  FIL fh;
+  f_open(&fh, filename.c_str(), FA_READ);
+
+  BlitGameHeader header;
+  UINT bytes_read;
+  f_read(&fh, &header, sizeof(header), &bytes_read);
+
+  if(header.magic == blit_game_magic) {
+    uint8_t buf[10];
+    f_lseek(&fh, (header.end - 0x90000000));
+    auto res = f_read(&fh, buf, 10, &bytes_read);
+
+    if(bytes_read == 10 && memcmp(buf, "BLITMETA", 8) == 0) {
+      auto metadata_len = *reinterpret_cast<uint16_t *>(buf + 8);
+      auto metadata_buf = new uint8_t[metadata_len];
+      f_read(&fh, metadata_buf, metadata_len, &bytes_read);
+
+      parse_metadata(reinterpret_cast<char *>(metadata_buf), metadata_len, metadata);
+      delete[] metadata_buf;
+
+      f_close(&fh);
+      return true;
+    }
+  }
+
+  f_close(&fh);
+  return false;
+}
+
 // error dialog
 int selected_dialog_option = 0;
 
@@ -96,6 +174,12 @@ void load_file_list() {
       GameInfo game;
       game.title = game.filename = file.name;
       game.size = file.size;
+      
+      // check for metadata
+      BlitGameMetadata meta;
+      if(parse_file_metadata(file.name, meta))
+        game.title = meta.title;
+
       games.push_back(game);
 
       max_width_size = std::max(max_width_size, screen.measure_text(std::to_string(file.size), minimal_font).w);
@@ -119,6 +203,12 @@ void scan_flash() {
     game.offset = offset;
     game.size = header.end - 0x90000000;
     game.title = "game @" + std::to_string(game.offset / qspi_flash_sector_size);
+
+    // check for valid metadata
+    BlitGameMetadata meta;
+    if(parse_flash_metadata(offset + game.size, meta))
+      game.title = meta.title;
+
     games.push_back(game);
 
     // TODO: when we have a header with metadata, we'll be able to skip to the end
