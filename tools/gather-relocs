@@ -11,8 +11,30 @@ elf_filename = sys.argv[1]
 bin_filename = sys.argv[2]
 out_filename = sys.argv[3]
 
+def get_flash_addr_offsets(section):
+    section_data = section.data()
+    section_addrs = struct.unpack(f'<{len(section_data) // 4}I', section_data)
+    section_offsets = []
+
+    for i, addr in enumerate(section_addrs):
+        # filter out non-flash
+        if addr < 0x90000000:
+            continue
+
+        section_offsets.append(section['sh_addr'] + i * 4) # offset to this address in the section
+
+    return section_offsets
+
+
 with open(elf_filename, 'rb') as f:
     elffile = ELFFile(f)
+
+    # get addresses of GOT values that need patched
+    got_offsets = get_flash_addr_offsets( elffile.get_section_by_name('.got'))
+
+    # and the init/fini arrays
+    init_offsets = get_flash_addr_offsets( elffile.get_section_by_name('.init_array'))
+    fini_offsets = get_flash_addr_offsets( elffile.get_section_by_name('.fini_array'))
 
     reloc_offsets = []
 
@@ -49,16 +71,18 @@ with open(elf_filename, 'rb') as f:
 
         # map RAM address back to flash
         flash_offset = (reloc['r_offset'] - sdata) + sidata
-        print("{:08X} -> {:08X}".format(reloc['r_offset'], flash_offset))
+        #print("{:08X} -> {:08X}".format(reloc['r_offset'], flash_offset))
 
         assert((flash_offset & 3) == 0)
 
         reloc_offsets.append(flash_offset)
 
     with open(out_filename, 'wb') as out_f:
+        all_offsets = got_offsets + init_offsets + fini_offsets + reloc_offsets
+
         out_f.write(b"RELO")
-        out_f.write(struct.pack("<L", len(reloc_offsets)))
-        for off in reloc_offsets:
+        out_f.write(struct.pack("<L", len(all_offsets)))
+        for off in all_offsets:
             out_f.write(struct.pack("<L", off))
 
         out_f.write(open(bin_filename, 'rb').read())
