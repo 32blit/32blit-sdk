@@ -154,6 +154,8 @@ bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata
   return false;
 }
 
+BlitGameMetadata selected_game_metadata;
+
 // error dialog
 int selected_dialog_option = 0;
 
@@ -404,6 +406,8 @@ void update(uint32_t time)
 
     auto total_items = games.size();
 
+    auto old_menu_item = persist.selected_menu_item;
+
     if(button_up)
     {
       if(persist.selected_menu_item > 0) {
@@ -424,6 +428,16 @@ void update(uint32_t time)
 
     // scroll list towards selected item  
     file_list_scroll_offset.y += ((persist.selected_menu_item * 10) - file_list_scroll_offset.y) / 5.0f;
+
+    // load metadata for selected item
+    if(persist.selected_menu_item != old_menu_item) {
+
+      auto &game = games[persist.selected_menu_item];
+      if(game.filename.empty())
+        parse_flash_metadata(game.offset, selected_game_metadata, true);
+      else
+        parse_file_metadata(game.filename, selected_game_metadata, true);
+    }
 
     if(button_a)
     {
