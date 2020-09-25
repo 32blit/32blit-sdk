@@ -25,15 +25,16 @@ FlashLoader flashLoader;
 
 extern USBManager g_usbManager;
 
-struct FlashGame {
-  uint32_t offset;
+struct GameInfo {
+  std::string title;
   uint32_t size;
-  // TODO: metadata?
+
+  std::string filename; // if on SD
+  uint32_t offset; // in in flash
 };
 
-std::vector<FlashGame> flashed_games;
+std::vector<GameInfo> games;
 
-std::vector<blit::FileInfo> files;
 int32_t max_width_size = 0;
 SortBy file_sort = SortBy::name;
 
@@ -64,22 +65,23 @@ void erase_qspi_flash(uint32_t start_sector, uint32_t size_bytes) {
 }
 
 void sort_file_list() {
-    using Iterator = std::vector<FileInfo>::iterator;
-    using Compare = bool(const FileInfo &, const FileInfo &);
+    using Iterator = std::vector<GameInfo>::iterator;
+    using Compare = bool(const GameInfo &, const GameInfo &);
 
     if (file_sort == SortBy::name) {
       // Sort by filename
-      std::sort<Iterator, Compare>(files.begin(), files.end(), [](const auto &a, const auto &b) { return a.name < b.name; });
+      std::sort<Iterator, Compare>(games.begin(), games.end(), [](const auto &a, const auto &b) { return a.title < b.title; });
     }
 
     if (file_sort == SortBy::size) {
       // Sort by filesize
-      std::sort<Iterator, Compare>(files.begin(), files.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
+      std::sort<Iterator, Compare>(games.begin(), games.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
     }
 }
 
 void load_file_list() {
-  files.clear();
+  games.erase(std::remove_if(games.begin(), games.end(), [](auto &game){return !game.filename.empty();}), games.end());
+
   max_width_size = 0;
 
   for(auto &file : ::list_files("/")) {
@@ -90,7 +92,12 @@ void load_file_list() {
       continue;
 
     if(file.name.compare(file.name.length() - 4, 4, ".bin") == 0 || file.name.compare(file.name.length() - 4, 4, ".BIN") == 0) {
-      files.push_back(file);
+
+      GameInfo game;
+      game.title = game.filename = file.name;
+      game.size = file.size;
+      games.push_back(game);
+
       max_width_size = std::max(max_width_size, screen.measure_text(std::to_string(file.size), minimal_font).w);
     }
   }
@@ -108,10 +115,11 @@ void scan_flash() {
     if(header.magic != blit_game_magic)
       continue;
 
-    FlashGame game;
+    GameInfo game;
     game.offset = offset;
     game.size = header.end - 0x90000000;
-    flashed_games.push_back(game);
+    game.title = "game @" + std::to_string(game.offset / qspi_flash_sector_size);
+    games.push_back(game);
 
     // TODO: when we have a header with metadata, we'll be able to skip to the end
   }
@@ -147,10 +155,10 @@ void init() {
   set_screen_mode(ScreenMode::hires);
   screen.clear();
 
-  load_file_list();
   scan_flash();
+  load_file_list();
 
-  auto total_items = files.size() + flashed_games.size();
+  auto total_items = games.size();
   if(persist.selected_menu_item > total_items)
     persist.selected_menu_item = total_items - 1;
 
@@ -177,28 +185,17 @@ void render(uint32_t time) {
   int y = 115 - file_list_scroll_offset.y;
   uint32_t i = 0;
 
-  // list installed
-  for(auto &game : flashed_games) {
-    if(i++ == persist.selected_menu_item)
-      screen.pen = Pen(235, 245, 255);
-    else
-      screen.pen = Pen(80, 100, 120);
-
-    screen.text("game @" + std::to_string(game.offset / qspi_flash_sector_size), minimal_font, Rect(file_list_scroll_offset.x, y, 100 - 20, text_align_height), true, TextAlign::center_v);
-    y += ROW_HEIGHT;
-  }
-
-  // list files on SD card
-  if(!files.empty()) {
+  // list games
+  if(!games.empty()) {
     const int size_x = 115;
 
-    for(auto &file : files) {
+    for(auto &file : games) {
       if(i++ == persist.selected_menu_item)
         screen.pen = Pen(235, 245, 255);
       else
         screen.pen = Pen(80, 100, 120);
 
-      screen.text(file.name, minimal_font, Rect(file_list_scroll_offset.x, y, 100 - 20, text_align_height), true, TextAlign::center_v);
+      screen.text(file.title, minimal_font, Rect(file_list_scroll_offset.x, y, 100 - 20, text_align_height), true, TextAlign::center_v);
       screen.line(Point(size_x - 4, y), Point(size_x - 4, y + ROW_HEIGHT));
       screen.text(std::to_string(file.size), minimal_font, Rect(size_x, y, max_width_size, text_align_height), true, TextAlign::center_right);
       y += ROW_HEIGHT;
@@ -284,7 +281,7 @@ void update(uint32_t time)
 
     }
 
-    auto total_items = files.size() + flashed_games.size();
+    auto total_items = games.size();
 
     if(button_up)
     {
@@ -310,12 +307,12 @@ void update(uint32_t time)
     if(button_a)
     {
       uint32_t offset;
-      if(persist.selected_menu_item < flashed_games.size())
-        offset = flashed_games[persist.selected_menu_item].offset;
-      else {
-        auto &file = files[persist.selected_menu_item - flashed_games.size()];
-        offset = flash_from_sd_to_qspi_flash(file.name.c_str());
-      }
+      auto &game = games[persist.selected_menu_item];
+
+      if(game.filename.empty())
+        offset = games[persist.selected_menu_item].offset; // flash
+      else
+        offset = flash_from_sd_to_qspi_flash(game.filename.c_str()); // sd
 
       if(offset != 0xFFFFFFFF)
         blit_switch_execution(offset);
