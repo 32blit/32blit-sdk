@@ -73,6 +73,14 @@ void parse_metadata(char *data, uint16_t metadata_len, BlitGameMetadata &metadat
 }
 
 bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata) {
+
+  BlitGameHeader header;
+
+  if(qspi_read_buffer(offset, reinterpret_cast<uint8_t *>(&header), sizeof(header)) != QSPI_OK)
+    return false;
+
+  offset += header.end - 0x90000000;
+
   uint8_t buf[10];
   if(qspi_read_buffer(offset, buf, 10) != QSPI_OK)
     return false;
@@ -201,12 +209,12 @@ void scan_flash() {
 
     GameInfo game;
     game.offset = offset;
-    game.size = header.end - 0x90000000;
+    game.size = header.end - 0x90000000; // TODO: include metadata size
     game.title = "game @" + std::to_string(game.offset / qspi_flash_sector_size);
 
     // check for valid metadata
     BlitGameMetadata meta;
-    if(parse_flash_metadata(offset + game.size, meta))
+    if(parse_flash_metadata(offset, meta))
       game.title = meta.title;
 
     games.push_back(game);
