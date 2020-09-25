@@ -111,8 +111,8 @@ g_pfnVectors:
   .word  _Z6renderm
   .word  _ZN4blit4tickEm
   .word  do_init
-  .word flash_start
   .word _flash_end
+  .word flash_start // temp
 
 /*
 .weak      render

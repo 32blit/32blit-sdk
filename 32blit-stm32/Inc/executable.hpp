@@ -15,6 +15,6 @@ struct BlitGameHeader {
   BlitTickFunction tick;
   BlitInitFunction init;
 
-  uint32_t start;
   uint32_t end;
+  uint32_t start;
 };
