@@ -142,3 +142,7 @@ endfunction()
 function(blit_executable_int_flash NAME SOURCES)
 	blit_executable(${NAME} ${SOURCES} ${ARGN})
 endfunction()
+
+function(blit_metadata TARGET FILE)
+	# do nothing
+endfunction()

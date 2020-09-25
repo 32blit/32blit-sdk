@@ -31,3 +31,15 @@ function(blit_executable NAME SOURCES)
 		add_custom_target(${NAME}.flash DEPENDS ${NAME} COMMAND ${32BLIT_TOOL} PROG ${FLASH_PORT} ${NAME}.bin)
 	endif()
 endfunction()
+
+function(blit_metadata TARGET FILE)
+	find_package(PythonInterp 3.6 REQUIRED)
+
+	add_custom_command(
+		TARGET ${TARGET} POST_BUILD
+		COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit metadata --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --file ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.bin
+	)
+
+	# force relink on change so that the post-build commands are rerun
+	set_property(TARGET ${TARGET} APPEND PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
+endfunction()
