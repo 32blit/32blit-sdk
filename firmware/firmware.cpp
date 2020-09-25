@@ -329,6 +329,17 @@ void render(uint32_t time) {
     screen.text("No Files Found.", minimal_font, Point(20, screen.bounds.h / 2), true, TextAlign::center_v);
   }
 
+  // game info
+
+  if(selected_game_metadata.splash)
+    screen.blit(selected_game_metadata.splash, Rect(Point(0, 0), selected_game_metadata.splash->bounds), Point(172, 20));
+
+  Rect desc_rect(172, 138, 128, 72);
+
+  screen.pen = Pen(80, 100, 120);
+  std::string wrapped_desc = screen.wrap_text(selected_game_metadata.description, desc_rect.w, minimal_font);
+  screen.text(wrapped_desc, minimal_font, desc_rect);
+
   if(state == stMassStorage)
     mass_storage_overlay(time);
 
