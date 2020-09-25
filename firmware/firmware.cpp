@@ -5,6 +5,7 @@
 #include "CDCCommandStream.h"
 #include "USBManager.h"
 #include "file.hpp"
+#include "executable.hpp"
 
 #include <cstring>
 #include <stdio.h>
@@ -99,20 +100,17 @@ void load_file_list() {
 
 void scan_flash() {
   for(uint32_t offset = 0; offset < qspi_flash_size; offset += qspi_flash_sector_size) {
-    uint8_t header_buf[40];
+    BlitGameHeader header;
 
-    if(qspi_read_buffer(offset, header_buf, 40) != QSPI_OK)
+    if(qspi_read_buffer(offset, reinterpret_cast<uint8_t *>(&header), sizeof(header)) != QSPI_OK)
       break;
 
-    auto magic = reinterpret_cast<uint32_t *>(header_buf)[0];
-    if(magic != 0x54494C42)
+    if(header.magic != blit_game_magic)
       continue;
-
-    auto end = reinterpret_cast<uint32_t *>(header_buf)[5];
 
     FlashGame game;
     game.offset = offset;
-    game.size = end - 0x90000000;
+    game.size = header.end - 0x90000000;
     flashed_games.push_back(game);
 
     // TODO: when we have a header with metadata, we'll be able to skip to the end
@@ -352,13 +350,12 @@ void update(uint32_t time)
 }
 
 // returns address to flash file to
-uint32_t get_flash_offset_for_file(uint8_t *bin_header) {
-  auto magic = reinterpret_cast<uint32_t *>(bin_header)[0];
+uint32_t get_flash_offset_for_file(BlitGameHeader &bin_header) {
 
   // temporary load address for working on multiple app support without PIC being ready
   // in future this will probably be more of a "find free space" function
-  if(magic == 0x54494C42 /*BLIT*/) {
-    auto expected_addr = reinterpret_cast<uint32_t *>(bin_header)[4];
+  if(bin_header.magic == blit_game_magic) {
+    auto expected_addr = bin_header.start;
 
     // this should be sector aligned to not break things later...
     return expected_addr - 0x90000000;
@@ -388,13 +385,14 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
   }
 
   // check header
-  if(f_read(&file, (void *)buffer, 20, &bytes_read) != FR_OK) {
+  BlitGameHeader header;
+  if(f_read(&file, (void *)&header, sizeof(header), &bytes_read) != FR_OK) {
     f_close(&file);
     return false;
   }
   f_lseek(&file, 0);
 
-  uint32_t flash_offset = get_flash_offset_for_file(buffer);
+  uint32_t flash_offset = get_flash_offset_for_file(header);
   offset = flash_offset;
 
   // erase the sectors needed to write the image
@@ -642,7 +640,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   uint32_t uPage = (m_uParseIndex / PAGE_SIZE);
                   // first page, check header
                   if(uPage == 0) {
-                    flash_start_offset = get_flash_offset_for_file(buffer);
+                    flash_start_offset = get_flash_offset_for_file(*reinterpret_cast<BlitGameHeader *>(buffer));
 
                     // erase
                     erase_qspi_flash(flash_start_offset / qspi_flash_sector_size, m_uFilelen);

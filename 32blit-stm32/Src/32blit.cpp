@@ -10,7 +10,7 @@
 #include "gpio.hpp"
 #include "file.hpp"
 #include "jpeg.hpp"
-
+#include "executable.hpp"
 
 #include "adc.h"
 #include "tim.h"
@@ -869,9 +869,6 @@ char *get_fr_err_text(FRESULT err){
 typedef  void (*pFunction)(void);
 pFunction JumpToApplication;
 
-typedef void(*renderFunction)(uint32_t);
-typedef bool(*tickFunction)(uint32_t);
-
 void blit_switch_execution(uint32_t address)
 {
   if(blit_user_code_running())
@@ -898,17 +895,17 @@ void blit_switch_execution(uint32_t address)
 	if(EXTERNAL_LOAD_ADDRESS >= 0x90000000) {
 		qspi_enable_memorymapped_mode();
 
-    auto app_ptr = ((__IO uint32_t*) (EXTERNAL_LOAD_ADDRESS + address));
-    uint32_t magic = app_ptr[0];
+    auto game_header = ((__IO BlitGameHeader *) (EXTERNAL_LOAD_ADDRESS + address));
 
-    if(magic == 0x54494C42 /*BLIT*/) {
+    if(game_header->magic == blit_game_magic) {
       persist.last_game_offset = address;
 
-      pFunction init = (pFunction) app_ptr[3];
+      // load function pointers
+      auto init = (BlitInitFunction)((uint8_t *)game_header->init);
       init();
 
-      blit::render = user_render = (renderFunction) app_ptr[1];
-      do_tick = user_tick = (tickFunction) app_ptr[2];
+      blit::render = user_render = (BlitRenderFunction) ((uint8_t *)game_header->render);
+      do_tick = user_tick = (BlitTickFunction) ((uint8_t *)game_header->tick);
       return;
     }
     // anything flashed at a non-zero offset should have a valid header
