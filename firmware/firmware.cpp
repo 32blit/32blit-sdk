@@ -47,12 +47,14 @@ FIL file;
 
 // metadata stuff
 struct BlitGameMetadata {
+  uint16_t length = 0;
   std::string title, description, version;
 
   Surface *icon = nullptr, *splash = nullptr;
 };
 
 void parse_metadata(char *data, uint16_t metadata_len, BlitGameMetadata &metadata, bool unpack_images) {
+  metadata.length = metadata_len;
 
   // parse strings
   uint16_t offset = 0;
@@ -234,13 +236,15 @@ void scan_flash() {
 
     GameInfo game;
     game.offset = offset;
-    game.size = header.end - 0x90000000; // TODO: include metadata size
+    game.size = header.end - 0x90000000;
     game.title = "game @" + std::to_string(game.offset / qspi_flash_sector_size);
 
     // check for valid metadata
     BlitGameMetadata meta;
-    if(parse_flash_metadata(offset, meta))
+    if(parse_flash_metadata(offset, meta)) {
       game.title = meta.title;
+      game.size += meta.length + 10;
+    }
 
     games.push_back(game);
 
