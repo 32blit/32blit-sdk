@@ -160,7 +160,8 @@ void render(uint32_t time) {
     }
   }
   else {
-    screen.text("No Files Found.", minimal_font, ROW(0));
+    screen.pen = Pen(235, 245, 255);
+    screen.text("No Files Found.", minimal_font, Point(20, screen.bounds.h / 2), true, TextAlign::center_v);
   }
 
   if(state == stMassStorage)
