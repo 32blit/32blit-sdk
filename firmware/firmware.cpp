@@ -36,7 +36,6 @@ struct GameInfo {
 
 std::vector<GameInfo> games;
 
-int32_t max_width_size = 0;
 SortBy file_sort = SortBy::name;
 
 uint8_t buffer[PAGE_SIZE];
@@ -86,8 +85,6 @@ void sort_file_list() {
 void load_file_list() {
   games.erase(std::remove_if(games.begin(), games.end(), [](auto &game){return !game.filename.empty();}), games.end());
 
-  max_width_size = 0;
-
   for(auto &file : ::list_files("/")) {
     if(file.flags & blit::FileFlags::directory)
       continue;
@@ -107,8 +104,6 @@ void load_file_list() {
         game.title = meta.title;
 
       games.push_back(game);
-
-      max_width_size = std::max(max_width_size, screen.measure_text(std::to_string(file.size), minimal_font).w);
     }
   }
 
@@ -214,8 +209,6 @@ void render(uint32_t time) {
         screen.pen = Pen(80, 100, 120);
 
       screen.text(file.title, minimal_font, Rect(file_list_scroll_offset.x, y, 100 - 20, text_align_height), true, TextAlign::center_v);
-      screen.line(Point(size_x - 4, y), Point(size_x - 4, y + ROW_HEIGHT));
-      screen.text(std::to_string(file.size), minimal_font, Rect(size_x, y, max_width_size, text_align_height), true, TextAlign::center_right);
       y += ROW_HEIGHT;
     }
   }
@@ -235,6 +228,12 @@ void render(uint32_t time) {
   std::string wrapped_desc = screen.wrap_text(selected_game_metadata.description, desc_rect.w, minimal_font);
   screen.text(wrapped_desc, minimal_font, desc_rect);
 
+  int num_blocks = (games[persist.selected_menu_item].size - 1) / qspi_flash_sector_size + 1;
+  char buf[20];
+  snprintf(buf, 20, "%i block%s", num_blocks, num_blocks == 1 ? "" : "s");
+  screen.text(buf, minimal_font, Point(172, 216));
+
+  // overlays
   if(state == stMassStorage)
     mass_storage_overlay(time);
 
