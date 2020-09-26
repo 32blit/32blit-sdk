@@ -4,27 +4,19 @@
 #include <cstdlib>
 
 #include "tilemap-test.hpp"
+#include "assets.hpp"
 
 using namespace blit;
 
 
-  TileMap* background;
   TileMap* environment;
 
   /* setup */
   void init() {
     blit::set_screen_mode(ScreenMode::lores);
 
-    // fix tile ids from .tmx file
-    for (auto i = 0; i < (64 * 64); i++) {
-      if (layer_environment[i] != 0)
-        layer_environment[i]--;
-    }
-
-    //sprites.generate_mipmaps(3);
-    
-    screen.sprites = SpriteSheet::load(packed_data);
-    environment = new TileMap((uint8_t*)layer_environment, nullptr, Size(64, 64), screen.sprites);
+    screen.sprites = SpriteSheet::load(asset_platformer);
+    environment = new TileMap((uint8_t*)asset_tilemap, nullptr, Size(64, 64), screen.sprites);
   }
 
   Mat3 world_transform;
@@ -61,8 +53,8 @@ using namespace blit;
 
     Mat3 transform = Mat3::identity();
     transform *= Mat3::translation(Vec2(256, 156)); // offset to middle of world
-    transform *= Mat3::rotation(deg2rad(angle)); // apply dream effect wave
-    transform *= Mat3::scale(Vec2(scale, scale)); // apply dream effect wave
+    transform *= Mat3::rotation(deg2rad(angle)); // apply rotation
+    transform *= Mat3::scale(Vec2(scale, scale)); // apply scaling
     transform *= Mat3::translation(Vec2(-80, -60)); // transform to centre of framebuffer
 
     return transform;
@@ -75,7 +67,7 @@ using namespace blit;
 
     Mat3 transform = Mat3::identity();
     transform *= Mat3::translation(Vec2(256, 156)); // offset to middle of world
-    transform *= Mat3::scale(Vec2(scale, scale)); // apply dream effect wave
+    transform *= Mat3::scale(Vec2(scale, scale)); // apply zoom effect using scaling
     transform *= Mat3::translation(Vec2(-80, -60)); // transform to centre of framebuffer
 
     return transform;
@@ -87,11 +79,11 @@ using namespace blit;
     progress = progress > 1.0f ? 1.0f : progress;
 
     screen.alpha = y + (255 - 120);
-    float scale = y / 30.0f;
+    float scale = (y + 1) / 30.0f;
 
     Mat3 transform = Mat3::identity();
     transform *= Mat3::translation(Vec2(156, 130 + progress * 80.0f)); // offset to middle of world      
-    transform *= Mat3::scale(Vec2(1.0f / scale, 1.0f / scale)); // apply dream effect wave      
+    transform *= Mat3::scale(Vec2(1.0f / scale, 1.0f / scale)); // apply scaling- increases with y to give a depth effect
     transform *= Mat3::translation(Vec2(-80, -60)); // transform to centre of framebuffer
 
     return transform;
@@ -104,7 +96,7 @@ using namespace blit;
 
     Mat3 transform = Mat3::identity();
     transform *= Mat3::translation(Vec2(156, 130)); // offset to middle of world      
-    transform *= Mat3::translation(Vec2(x_offset, 0)); // apply dream effect wave      
+    transform *= Mat3::translation(Vec2(x_offset, 0)); // apply a water ripple effect
     transform *= Mat3::translation(Vec2(-80, -60)); // transform to centre of framebuffer
 
     return transform;
@@ -224,7 +216,7 @@ using namespace blit;
       else
         screen.pen = Pen(255, 255, 255, 100);
 
-      screen.text(effect_names[i], minimal_font, Rect(2, 2 + (i * 10), 100, 10));
+      screen.text(effect_names[i], minimal_font, Rect(5, 19 + (i * 10), 100, 10));
     }
 
     uint32_t ms_end = now();
@@ -245,6 +237,11 @@ using namespace blit;
     }
     */
 
+    screen.pen = Pen(255, 255, 255);
+    screen.rectangle(Rect(0, 0, 320, 14));
+
+    screen.pen = Pen(0, 0, 0);
+    screen.text("Tilemap demo", minimal_font, Point(5, 4));
     screen.watermark();
   }
 
@@ -259,7 +256,6 @@ using namespace blit;
         effect = effect == 0 ? effect_names.size() - 1 : effect - 1;
       }
     }
-
 
     last_buttons = buttons;
 }
