@@ -222,6 +222,9 @@ void render(uint32_t time) {
   if(selected_game_metadata.splash)
     screen.blit(selected_game_metadata.splash, Rect(Point(0, 0), selected_game_metadata.splash->bounds), Point(172, 20));
 
+  screen.pen = Pen(235, 245, 255);
+  screen.text(selected_game_metadata.title, minimal_font, Point(172, 124));
+
   Rect desc_rect(172, 138, 128, 72);
 
   screen.pen = Pen(80, 100, 120);
