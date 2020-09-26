@@ -67,7 +67,7 @@ namespace blit {
       if(channel.waveform_offset & 0b10000) {
         // if the waveform offset overflows then generate a new
         // random noise sample
-        channel.noise = (rand() & 0x0fff) - 0x07ff;
+        channel.noise = (blit::random() & 0xffff) - 0x7fff;
       }
 
       channel.waveform_offset &= 0xffff;
@@ -78,7 +78,6 @@ namespace blit {
         int32_t channel_sample = 0;
 
         if(channel.waveforms & Waveform::NOISE) {
-          channel_sample += (channel.noise - 0x7fff) >> 2;
           channel_sample += channel.noise;
           waveform_count++;
         }
