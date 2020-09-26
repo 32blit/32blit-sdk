@@ -70,15 +70,13 @@ bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata, bool unpa
     return false;
 
   auto metadata_len = *reinterpret_cast<uint16_t *>(buf + 8);
-  auto metadata_buf = new uint8_t[metadata_len];
+  uint8_t metadata_buf[0xFFFF];
   if(qspi_read_buffer(offset + 10, metadata_buf, metadata_len) != QSPI_OK) {
-    delete[] metadata_buf;
     return false;
   }
 
   parse_metadata(reinterpret_cast<char *>(metadata_buf), metadata_len, metadata, unpack_images);
 
-  delete[] metadata_buf;
   return true;
 }
 
@@ -97,11 +95,11 @@ bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata
 
     if(bytes_read == 10 && memcmp(buf, "BLITMETA", 8) == 0) {
       auto metadata_len = *reinterpret_cast<uint16_t *>(buf + 8);
-      auto metadata_buf = new uint8_t[metadata_len];
+
+      uint8_t metadata_buf[0xFFFF];
       f_read(&fh, metadata_buf, metadata_len, &bytes_read);
 
       parse_metadata(reinterpret_cast<char *>(metadata_buf), metadata_len, metadata, unpack_images);
-      delete[] metadata_buf;
 
       f_close(&fh);
       return true;
