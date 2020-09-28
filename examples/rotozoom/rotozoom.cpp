@@ -35,13 +35,10 @@ uint8_t mask_buffer[320 * 240];
 Surface hires_mask(mask_buffer, PixelFormat::M, Size(320, 240));
 Surface lores_mask(mask_buffer, PixelFormat::M, Size(160, 120));
 Surface mask = hires_mask;
-SpriteSheet *ss;
+
 /* setup */
 void init() {
   set_screen_mode(hires);
-
-  ss = SpriteSheet::load(packed_data);
-  screen.sprites = ss;
 }
 
 void rotozoom(uint32_t time_ms) {
@@ -138,12 +135,10 @@ void update(uint32_t time) {
     if ((buttons & DPAD_UP)) {
       set_screen_mode(lores);
       mask = lores_mask;
-      screen.sprites = ss;
     }
     else {
       set_screen_mode(hires);
       mask = hires_mask;
-      screen.sprites = ss;
     }
   }
 
