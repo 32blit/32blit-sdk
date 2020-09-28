@@ -34,7 +34,8 @@ struct GameInfo {
   uint32_t offset; // in in flash
 };
 
-std::vector<GameInfo> games;
+std::vector<GameInfo> flash_games, sd_games;
+bool display_flash = true;
 
 SortBy file_sort = SortBy::name;
 
@@ -77,17 +78,19 @@ void sort_file_list() {
 
     if (file_sort == SortBy::name) {
       // Sort by filename
-      std::sort<Iterator, Compare>(games.begin(), games.end(), [](const auto &a, const auto &b) { return a.title < b.title; });
+      std::sort<Iterator, Compare>(flash_games.begin(), flash_games.end(), [](const auto &a, const auto &b) { return a.title < b.title; });
+      std::sort<Iterator, Compare>(sd_games.begin(), sd_games.end(), [](const auto &a, const auto &b) { return a.title < b.title; });
     }
 
     if (file_sort == SortBy::size) {
       // Sort by filesize
-      std::sort<Iterator, Compare>(games.begin(), games.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
+      std::sort<Iterator, Compare>(flash_games.begin(), flash_games.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
+      std::sort<Iterator, Compare>(sd_games.begin(), sd_games.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
     }
 }
 
 void load_file_list() {
-  games.erase(std::remove_if(games.begin(), games.end(), [](auto &game){return !game.filename.empty();}), games.end());
+  sd_games.clear();
 
   for(auto &file : ::list_files("/")) {
     if(file.flags & blit::FileFlags::directory)
@@ -107,7 +110,7 @@ void load_file_list() {
       if(parse_file_metadata(file.name, meta))
         game.title = meta.title;
 
-      games.push_back(game);
+      sd_games.push_back(game);
     }
   }
 
@@ -115,6 +118,8 @@ void load_file_list() {
 }
 
 void scan_flash() {
+  flash_games.clear();
+
   for(uint32_t offset = 0; offset < qspi_flash_size;) {
     BlitGameHeader header;
 
@@ -138,13 +143,15 @@ void scan_flash() {
       game.size += meta.length + 10;
     }
 
-    games.push_back(game);
+    flash_games.push_back(game);
 
     offset += calc_num_blocks(game.size);
   }
 }
 
 void load_current_game_metadata() {
+  auto &games = display_flash ? flash_games : sd_games;
+
   auto &game = games[persist.selected_menu_item];
   bool loaded;
   if(game.filename.empty())
@@ -192,6 +199,8 @@ void init() {
   scan_flash();
   load_file_list();
 
+  auto &games = display_flash ? flash_games : sd_games;
+
   auto total_items = games.size();
   if(persist.selected_menu_item > total_items)
     persist.selected_menu_item = total_items - 1;
@@ -222,6 +231,7 @@ void render(uint32_t time) {
   uint32_t i = 0;
 
   // list games
+  auto &games = display_flash ? flash_games : sd_games;
   if(!games.empty()) {
     const int size_x = 115;
 
@@ -335,6 +345,7 @@ void update(uint32_t time)
 
     }
 
+    auto &games = display_flash ? flash_games : sd_games;
     auto total_items = games.size();
 
     auto old_menu_item = persist.selected_menu_item;
@@ -355,6 +366,13 @@ void update(uint32_t time)
       } else {
         persist.selected_menu_item = 0;
       }
+    }
+
+    // switch between flash and SD lists
+    if(buttons.pressed & (Button::DPAD_LEFT | Button::DPAD_RIGHT)) {
+      display_flash = !display_flash;
+      persist.selected_menu_item = 0;
+      load_current_game_metadata();
     }
 
     // scroll list towards selected item  
