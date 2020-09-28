@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <array>
 #include "raycaster.hpp"
+#include "assets.hpp"
 #include "32blit.hpp"
 
 using namespace blit;
@@ -103,7 +104,7 @@ void init() {
 	//printf("Init: STARTED\n");
 	//engine::render = ::render;
 	//engine::update = ::update;
-	screen.sprites = SpriteSheet::load(packed_data);
+	screen.sprites = SpriteSheet::load(asset_raycaster);
 
 	map.add_layer("walls", map_data_walls);
 	map_layer_walls = &map.layers["walls"];
@@ -113,8 +114,6 @@ void init() {
 	map.add_layer("floor", map_data_floor);
 	map_layer_floor = &map.layers["floor"];
 	map_layer_floor->add_flags({ 3, 4, 5 }, TileFlags::NO_GRASS);
-
-	//my_sprites.s.load_from_packed(packed_data);
 
 	player1.direction.y = -1;
 	player1.position.x = 3.5;
