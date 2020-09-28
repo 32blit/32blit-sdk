@@ -9,6 +9,22 @@ struct BlitGameMetadata {
   std::string title, description, version;
 
   blit::Surface *icon = nullptr, *splash = nullptr;
+
+  void free_surfaces() {
+    if(icon) {
+      delete[] icon->data;
+      delete[] icon->palette;
+      delete icon;
+      icon = nullptr;
+    }
+
+    if(splash) {
+      delete[] splash->data;
+      delete[] splash->palette;
+      delete splash;
+      splash = nullptr;
+    }
+  }
 };
 
 bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata, bool unpack_images = false);

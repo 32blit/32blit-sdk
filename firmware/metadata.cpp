@@ -27,19 +27,8 @@ void parse_metadata(char *data, uint16_t metadata_len, BlitGameMetadata &metadat
   metadata.version = std::string(data + offset, len);
   offset += len + 1;
 
-  if(unpack_images && metadata.icon) {
-    delete[] metadata.icon->data;
-    delete[] metadata.icon->palette;
-    delete metadata.icon;
-    metadata.icon = nullptr;
-  }
-
-  if(unpack_images && metadata.splash) {
-    delete[] metadata.splash->data;
-    delete[] metadata.splash->palette;
-    delete metadata.splash;
-    metadata.splash = nullptr;
-  }
+  if(unpack_images && metadata.icon)
+    metadata.free_surfaces();
 
   if(offset != metadata_len && unpack_images) {
     // icon/splash
