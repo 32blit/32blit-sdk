@@ -12,20 +12,21 @@ using namespace blit;
 void parse_metadata(char *data, uint16_t metadata_len, BlitGameMetadata &metadata, bool unpack_images) {
   metadata.length = metadata_len;
 
-  // parse strings
-  uint16_t offset = 0;
+  struct RawMetadata {
+    uint32_t crc32;
+    char datetime[16];
+    char title[25];
+    char description[129];
+    char version[17];
+    char author[17];
+  };
 
-  auto len = strlen(data);
-  metadata.title = std::string(data, len);
-  offset += len + 1;
+  auto raw_meta = reinterpret_cast<RawMetadata *>(data);
+  metadata.title = raw_meta->title;
+  metadata.description = raw_meta->description;
+  metadata.version = raw_meta->version;
 
-  len = strlen(data + offset);
-  metadata.description = std::string(data + offset, len);
-  offset += len + 1;
-
-  len = strlen(data + offset);
-  metadata.version = std::string(data + offset, len);
-  offset += len + 1;
+  uint16_t offset = sizeof(RawMetadata);
 
   if(unpack_images && metadata.icon)
     metadata.free_surfaces();
