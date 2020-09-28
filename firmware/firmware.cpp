@@ -53,6 +53,10 @@ int selected_dialog_option = 0;
 
 uint32_t flash_from_sd_to_qspi_flash(const char *filename);
 
+int calc_num_blocks(uint32_t size) {
+  return (size - 1) / qspi_flash_sector_size + 1;
+}
+
 void erase_qspi_flash(uint32_t start_sector, uint32_t size_bytes) {
   uint32_t sector_count = (size_bytes / qspi_flash_sector_size) + 1;
 
@@ -111,14 +115,16 @@ void load_file_list() {
 }
 
 void scan_flash() {
-  for(uint32_t offset = 0; offset < qspi_flash_size; offset += qspi_flash_sector_size) {
+  for(uint32_t offset = 0; offset < qspi_flash_size;) {
     BlitGameHeader header;
 
     if(qspi_read_buffer(offset, reinterpret_cast<uint8_t *>(&header), sizeof(header)) != QSPI_OK)
       break;
 
-    if(header.magic != blit_game_magic)
+    if(header.magic != blit_game_magic) {
+      offset += qspi_flash_sector_size;
       continue;
+    }
 
     GameInfo game;
     game.offset = offset;
@@ -134,7 +140,7 @@ void scan_flash() {
 
     games.push_back(game);
 
-    // TODO: when we have a header with metadata, we'll be able to skip to the end
+    offset += calc_num_blocks(game.size);
   }
 }
 
@@ -231,7 +237,7 @@ void render(uint32_t time) {
   std::string wrapped_desc = screen.wrap_text(selected_game_metadata.description, desc_rect.w, minimal_font);
   screen.text(wrapped_desc, minimal_font, desc_rect);
 
-  int num_blocks = (games[persist.selected_menu_item].size - 1) / qspi_flash_sector_size + 1;
+  int num_blocks = calc_num_blocks(games[persist.selected_menu_item].size);
   char buf[20];
   snprintf(buf, 20, "%i block%s", num_blocks, num_blocks == 1 ? "" : "s");
   screen.text(buf, minimal_font, Point(172, 216));
