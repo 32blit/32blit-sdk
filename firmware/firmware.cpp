@@ -144,6 +144,14 @@ void scan_flash() {
   }
 }
 
+void load_current_game_metadata() {
+  auto &game = games[persist.selected_menu_item];
+  if(game.filename.empty())
+    parse_flash_metadata(game.offset, selected_game_metadata, true);
+  else
+    parse_file_metadata(game.filename, selected_game_metadata, true);
+}
+
 void mass_storage_overlay(uint32_t time)
 {
   static uint8_t uActivityAnim = 0;
@@ -180,6 +188,8 @@ void init() {
   auto total_items = games.size();
   if(persist.selected_menu_item > total_items)
     persist.selected_menu_item = total_items - 1;
+
+  load_current_game_metadata();
 
   // register PROG
   g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value, &flashLoader);
@@ -344,14 +354,8 @@ void update(uint32_t time)
     file_list_scroll_offset.y += ((persist.selected_menu_item * 10) - file_list_scroll_offset.y) / 5.0f;
 
     // load metadata for selected item
-    if(persist.selected_menu_item != old_menu_item) {
-
-      auto &game = games[persist.selected_menu_item];
-      if(game.filename.empty())
-        parse_flash_metadata(game.offset, selected_game_metadata, true);
-      else
-        parse_file_metadata(game.filename, selected_game_metadata, true);
-    }
+    if(persist.selected_menu_item != old_menu_item)
+      load_current_game_metadata();
 
     if(button_a)
     {
