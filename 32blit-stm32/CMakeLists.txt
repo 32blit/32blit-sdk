@@ -149,23 +149,6 @@ target_compile_definitions(BlitHalSTM32
 target_compile_options(BlitHalSTM32 PUBLIC "$<$<CONFIG:RELEASE>:-Os>")
 set_target_properties(BlitHalSTM32 PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
 
-# 2nd build for external flash
-add_library(BlitHalSTM32Ext OBJECT ${SOURCES})
-
-target_include_directories(BlitHalSTM32Ext
-	PRIVATE
-		${INCLUDE_DIRS}
-)
-
-target_compile_definitions(BlitHalSTM32Ext
-	PRIVATE
-		${DEFINITIONS}
-		-DAPPLICATION_VTOR=${APPLICATION_VTOR_EXT}
-		-DEXTERNAL_LOAD_ADDRESS=${EXTERNAL_LOAD_ADDRESS_EXT}
-		-DINITIALISE_QSPI=${INITIALISE_QSPI_EXT}
-    -DCDC_FIFO_BUFFERS=${CDC_FIFO_BUFFERS_EXT}
-)
-
 function(blit_executable_int_flash NAME SOURCES)
 	find_package(PythonInterp 3.6 REQUIRED)
 
