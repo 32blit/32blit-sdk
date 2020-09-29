@@ -11,6 +11,8 @@
 #include <cstring>
 #include <stdio.h>
 #include <stdlib.h>
+#include <list>
+
 using namespace blit;
 
 enum State {stFlashFile, stSaveFile, stFlashCDC, stLS, stMassStorage};
@@ -34,11 +36,9 @@ struct GameInfo {
   uint32_t offset; // in in flash
 };
 
-std::string current_directory = "/";
 std::vector<GameInfo> flash_games, sd_games;
-std::vector<std::string> directory_list;
-
-int current_directory_index = 0;
+std::list<std::string> directory_list;
+std::list<std::string>::iterator current_directory;
 
 bool display_flash = true;
 
@@ -104,10 +104,7 @@ void load_directory_list(std::string directory) {
     }
   }
 
-  using Iterator = std::vector<std::string>::iterator;
-  using Compare = bool(const std::string &, const std::string &);
-
-  std::sort<Iterator, Compare>(directory_list.begin(), directory_list.end(), [](const auto &a, const auto &b) { return a > b; });
+  directory_list.sort([](const auto &a, const auto &b) { return a > b; });
 
   directory_list.push_back("FLASH");
 }
@@ -174,7 +171,7 @@ void scan_flash() {
 }
 
 void load_current_game_metadata() {
-  auto &games = current_directory.compare("FLASH") == 0 ? flash_games : sd_games;
+  auto &games = current_directory->compare("FLASH") == 0 ? flash_games : sd_games;
 
   bool loaded = false;
   if(!games.empty()) {
@@ -225,10 +222,10 @@ void init() {
 
   scan_flash();
   load_directory_list("/");
-  current_directory = directory_list.empty() ? "/" : directory_list.front();
-  load_file_list(current_directory);
+  current_directory = directory_list.begin();
+  load_file_list(*current_directory);
 
-  auto &games = current_directory.compare("FLASH") == 0 ? flash_games : sd_games;
+  auto &games = current_directory->compare("FLASH") == 0 ? flash_games : sd_games;
 
   auto total_items = games.size();
   if(persist.selected_menu_item > total_items)
@@ -261,7 +258,7 @@ void render(uint32_t time) {
   // list folders
   if(!directory_list.empty()) {
     for(auto &directory : directory_list) {
-      if(directory.compare(current_directory) == 0)
+      if(directory.compare(*current_directory) == 0)
         screen.pen = Pen(235, 245, 255);
       else
         screen.pen = Pen(80, 100, 120);
@@ -276,7 +273,7 @@ void render(uint32_t time) {
   uint32_t i = 0;
 
   // list games
-  auto &games = current_directory.compare("FLASH") == 0 ? flash_games : sd_games;
+  auto &games = current_directory->compare("FLASH") == 0 ? flash_games : sd_games;
   if(!games.empty()) {
     const int size_x = 115;
 
@@ -359,7 +356,7 @@ void update(uint32_t time)
   }
 
   if(state == stLS) {
-    load_file_list(current_directory);
+    load_file_list(*current_directory);
     state = stFlashFile;
   }
 
@@ -391,7 +388,7 @@ void update(uint32_t time)
     }
 
     //auto &games = display_flash ? flash_games : sd_games;
-    auto &games = current_directory.compare("FLASH") == 0 ? flash_games : sd_games;
+    auto &games = current_directory->compare("FLASH") == 0 ? flash_games : sd_games;
     auto total_items = games.size();
 
     auto old_menu_item = persist.selected_menu_item;
@@ -416,21 +413,22 @@ void update(uint32_t time)
 
     // switch between flash and SD lists
     if(buttons.pressed & Button::DPAD_LEFT) {
-      current_directory_index--;
-      if(current_directory_index < 0) {
-        current_directory_index = directory_list.size() - 1;
-      }
+      if(current_directory == directory_list.begin())
+        current_directory = --directory_list.end();
+      else
+        --current_directory;
     }
+
     if(buttons.pressed & Button::DPAD_RIGHT) {
-      //display_flash = !display_flash;
-      current_directory_index++;
-      if((uint32_t)current_directory_index >= directory_list.size()) {
-        current_directory_index = 0;
+      current_directory++;
+      if(current_directory == directory_list.end()) {
+        current_directory = directory_list.begin();
       }
     }
+
     if(buttons.pressed & (Button::DPAD_LEFT | Button::DPAD_RIGHT)) {
-      current_directory = directory_list[current_directory_index];
-      load_file_list(current_directory);
+      if(*current_directory != "FLASH")
+        load_file_list(*current_directory);
       persist.selected_menu_item = 0;
       load_current_game_metadata();
     }
@@ -478,7 +476,7 @@ void update(uint32_t time)
     {
       // Switch back to CDC
       g_usbManager.SetType(USBManager::usbtCDC);
-      load_file_list(current_directory);
+      load_file_list(*current_directory);
       state = stFlashFile;
     }
   }
@@ -761,7 +759,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   if(bEOS)
                   {
                     f_close(&file);
-                    load_file_list(current_directory);
+                    load_file_list(*current_directory);
                     state = stFlashFile;
                     if(result != srError)
                       result = srFinish;
