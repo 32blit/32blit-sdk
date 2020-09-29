@@ -21,6 +21,7 @@ constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 constexpr uint32_t qspi_flash_size = 32768 * 1024;
 
 Vec2 file_list_scroll_offset(20.0f, 0.0f);
+float directory_list_scroll_offset = 0.0f;
 
 extern CDCCommandStream g_commandStream;
 
@@ -36,9 +37,14 @@ struct GameInfo {
   uint32_t offset; // in in flash
 };
 
+struct DirectoryInfo {
+  std::string name;
+  int x;
+};
+
 std::vector<GameInfo> game_list;
-std::list<std::string> directory_list;
-std::list<std::string>::iterator current_directory;
+std::list<DirectoryInfo> directory_list;
+std::list<DirectoryInfo>::iterator current_directory;
 
 bool display_flash = true;
 
@@ -98,13 +104,21 @@ void load_directory_list(std::string directory) {
   for(auto &folder : ::list_files(directory)) {
     if(folder.flags & blit::FileFlags::directory) {
       if(folder.name.compare("System Volume Information") == 0) continue;
-      directory_list.push_back(folder.name);
+      directory_list.push_back({folder.name, 0});
     }
   }
 
-  directory_list.sort([](const auto &a, const auto &b) { return a > b; });
+  directory_list.sort([](const auto &a, const auto &b) { return a.name > b.name; });
 
-  directory_list.push_back("FLASH");
+  directory_list.push_back({"FLASH", 0});
+
+  // measure positions
+  int x = 0;
+  for(auto &dir : directory_list) {
+    dir.x = x;
+
+    x += screen.measure_text(dir.name, minimal_font, true).w + 10;
+  }
 }
 
 void load_file_list(std::string directory) {
@@ -221,10 +235,10 @@ void init() {
   load_directory_list("/");
   current_directory = directory_list.begin();
 
-  if(*current_directory == "FLASH")
+  if(current_directory->name == "FLASH")
     scan_flash();
   else
-    load_file_list(*current_directory);
+    load_file_list(current_directory->name);
 
   auto total_items = game_list.size();
   if(persist.selected_menu_item > total_items)
@@ -252,20 +266,21 @@ void render(uint32_t time) {
   // adjust alignment rect for vertical spacing
   const int text_align_height = ROW_HEIGHT + minimal_font.spacing_y;
 
-  int x = 120;
-
   // list folders
   if(!directory_list.empty()) {
+    screen.clip = Rect(120, 5, 190, text_align_height);
+
     for(auto &directory : directory_list) {
-      if(directory.compare(*current_directory) == 0)
+      if(directory.name == current_directory->name)
         screen.pen = Pen(235, 245, 255);
       else
         screen.pen = Pen(80, 100, 120);
 
-      auto text_width = screen.measure_text(directory, minimal_font, true);
-      screen.text(directory, minimal_font, Rect(x, 5, 100 - 20, text_align_height), true, TextAlign::center_v);
-      x += text_width.w + 10;
+      int x = 120 + directory.x - directory_list_scroll_offset;
+      screen.text(directory.name, minimal_font, Rect(x, 5, 100 - 20, text_align_height), true, TextAlign::center_v);
     }
+
+    screen.clip = Rect(Point(0, 0), screen.bounds);
   }
 
   int y = 115 - file_list_scroll_offset.y;
@@ -354,7 +369,7 @@ void update(uint32_t time)
   }
 
   if(state == stLS) {
-    load_file_list(*current_directory);
+    load_file_list(current_directory->name);
     state = stFlashFile;
   }
 
@@ -423,10 +438,10 @@ void update(uint32_t time)
     }
 
     if(buttons.pressed & (Button::DPAD_LEFT | Button::DPAD_RIGHT)) {
-      if(*current_directory == "FLASH")
+      if(current_directory->name == "FLASH")
         scan_flash();
       else
-        load_file_list(*current_directory);
+        load_file_list(current_directory->name);
 
       persist.selected_menu_item = 0;
       load_current_game_metadata();
@@ -434,6 +449,8 @@ void update(uint32_t time)
 
     // scroll list towards selected item  
     file_list_scroll_offset.y += ((persist.selected_menu_item * 10) - file_list_scroll_offset.y) / 5.0f;
+
+    directory_list_scroll_offset += (current_directory->x - directory_list_scroll_offset) / 5.0f;
 
     // load metadata for selected item
     if(persist.selected_menu_item != old_menu_item)
@@ -475,7 +492,7 @@ void update(uint32_t time)
     {
       // Switch back to CDC
       g_usbManager.SetType(USBManager::usbtCDC);
-      load_file_list(*current_directory);
+      load_file_list(current_directory->name);
       state = stFlashFile;
     }
   }
@@ -758,7 +775,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   if(bEOS)
                   {
                     f_close(&file);
-                    load_file_list(*current_directory);
+                    load_file_list(current_directory->name);
                     state = stFlashFile;
                     if(result != srError)
                       result = srFinish;
