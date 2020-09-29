@@ -110,7 +110,8 @@ void load_directory_list(std::string directory) {
 
   directory_list.sort([](const auto &a, const auto &b) { return a.name > b.name; });
 
-  directory_list.push_back({"FLASH", 0});
+  directory_list.push_front({"/", 0});
+  directory_list.push_front({"FLASH", 0});
 
   // measure positions
   int x = 0;
@@ -135,7 +136,7 @@ void load_file_list(std::string directory) {
 
       GameInfo game;
       game.title = file.name.substr(0, file.name.length() - 4);
-      game.filename = directory + "/" + file.name;
+      game.filename = directory == "/" ? file.name : directory + "/" + file.name;
       game.size = file.size;
       
       // check for metadata
