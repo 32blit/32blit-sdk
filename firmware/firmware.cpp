@@ -36,7 +36,7 @@ struct GameInfo {
   uint32_t offset; // in in flash
 };
 
-std::vector<GameInfo> flash_games, sd_games;
+std::vector<GameInfo> game_list;
 std::list<std::string> directory_list;
 std::list<std::string>::iterator current_directory;
 
@@ -83,14 +83,12 @@ void sort_file_list() {
 
     if (file_sort == SortBy::name) {
       // Sort by filename
-      std::sort<Iterator, Compare>(flash_games.begin(), flash_games.end(), [](const auto &a, const auto &b) { return a.title < b.title; });
-      std::sort<Iterator, Compare>(sd_games.begin(), sd_games.end(), [](const auto &a, const auto &b) { return a.title < b.title; });
+      std::sort<Iterator, Compare>(game_list.begin(), game_list.end(), [](const auto &a, const auto &b) { return a.title < b.title; });
     }
 
     if (file_sort == SortBy::size) {
       // Sort by filesize
-      std::sort<Iterator, Compare>(flash_games.begin(), flash_games.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
-      std::sort<Iterator, Compare>(sd_games.begin(), sd_games.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
+      std::sort<Iterator, Compare>(game_list.begin(), game_list.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
     }
 }
 
@@ -110,7 +108,7 @@ void load_directory_list(std::string directory) {
 }
 
 void load_file_list(std::string directory) {
-  sd_games.clear();
+  game_list.clear();
 
   for(auto &file : ::list_files(directory)) {
     if(file.flags & blit::FileFlags::directory)
@@ -131,7 +129,7 @@ void load_file_list(std::string directory) {
       if(parse_file_metadata(file.name, meta))
         game.title = meta.title;
 
-      sd_games.push_back(game);
+      game_list.push_back(game);
     }
   }
 
@@ -139,7 +137,7 @@ void load_file_list(std::string directory) {
 }
 
 void scan_flash() {
-  flash_games.clear();
+  game_list.clear();
 
   for(uint32_t offset = 0; offset < qspi_flash_size;) {
     BlitGameHeader header;
@@ -164,18 +162,18 @@ void scan_flash() {
       game.size += meta.length + 10;
     }
 
-    flash_games.push_back(game);
+    game_list.push_back(game);
 
     offset += calc_num_blocks(game.size);
   }
+  sort_file_list();
 }
 
 void load_current_game_metadata() {
-  auto &games = current_directory->compare("FLASH") == 0 ? flash_games : sd_games;
-
   bool loaded = false;
-  if(!games.empty()) {
-    auto &game = games[persist.selected_menu_item];
+
+  if(!game_list.empty()) {
+    auto &game = game_list[persist.selected_menu_item];
 
     if(game.filename.empty())
       loaded = parse_flash_metadata(game.offset, selected_game_metadata, true);
@@ -220,14 +218,15 @@ void init() {
   set_screen_mode(ScreenMode::hires);
   screen.clear();
 
-  scan_flash();
   load_directory_list("/");
   current_directory = directory_list.begin();
-  load_file_list(*current_directory);
 
-  auto &games = current_directory->compare("FLASH") == 0 ? flash_games : sd_games;
+  if(*current_directory == "FLASH")
+    scan_flash();
+  else
+    load_file_list(*current_directory);
 
-  auto total_items = games.size();
+  auto total_items = game_list.size();
   if(persist.selected_menu_item > total_items)
     persist.selected_menu_item = total_items - 1;
 
@@ -273,11 +272,10 @@ void render(uint32_t time) {
   uint32_t i = 0;
 
   // list games
-  auto &games = current_directory->compare("FLASH") == 0 ? flash_games : sd_games;
-  if(!games.empty()) {
+  if(!game_list.empty()) {
     const int size_x = 115;
 
-    for(auto &file : games) {
+    for(auto &file : game_list) {
       if(i++ == persist.selected_menu_item)
         screen.pen = Pen(235, 245, 255);
       else
@@ -300,7 +298,7 @@ void render(uint32_t time) {
     std::string wrapped_desc = screen.wrap_text(selected_game_metadata.description, desc_rect.w, minimal_font);
     screen.text(wrapped_desc, minimal_font, desc_rect);
 
-    int num_blocks = calc_num_blocks(games[persist.selected_menu_item].size);
+    int num_blocks = calc_num_blocks(game_list[persist.selected_menu_item].size);
     char buf[20];
     snprintf(buf, 20, "%i block%s", num_blocks, num_blocks == 1 ? "" : "s");
     screen.text(buf, minimal_font, Point(172, 216));
@@ -387,9 +385,7 @@ void update(uint32_t time)
 
     }
 
-    //auto &games = display_flash ? flash_games : sd_games;
-    auto &games = current_directory->compare("FLASH") == 0 ? flash_games : sd_games;
-    auto total_items = games.size();
+    auto total_items = game_list.size();
 
     auto old_menu_item = persist.selected_menu_item;
 
@@ -427,8 +423,11 @@ void update(uint32_t time)
     }
 
     if(buttons.pressed & (Button::DPAD_LEFT | Button::DPAD_RIGHT)) {
-      if(*current_directory != "FLASH")
+      if(*current_directory == "FLASH")
+        scan_flash();
+      else
         load_file_list(*current_directory);
+
       persist.selected_menu_item = 0;
       load_current_game_metadata();
     }
@@ -443,10 +442,10 @@ void update(uint32_t time)
     if(button_a)
     {
       uint32_t offset;
-      auto &game = games[persist.selected_menu_item];
+      auto &game = game_list[persist.selected_menu_item];
 
       if(game.filename.empty())
-        offset = games[persist.selected_menu_item].offset; // flash
+        offset = game_list[persist.selected_menu_item].offset; // flash
       else
         offset = flash_from_sd_to_qspi_flash(game.filename.c_str()); // sd
 
