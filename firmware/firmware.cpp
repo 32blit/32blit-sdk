@@ -39,7 +39,7 @@ struct GameInfo {
 
 struct DirectoryInfo {
   std::string name;
-  int x;
+  int x, w;
 };
 
 std::vector<GameInfo> game_list;
@@ -104,21 +104,22 @@ void load_directory_list(std::string directory) {
   for(auto &folder : ::list_files(directory)) {
     if(folder.flags & blit::FileFlags::directory) {
       if(folder.name.compare("System Volume Information") == 0) continue;
-      directory_list.push_back({folder.name, 0});
+      directory_list.push_back({folder.name, 0, 0});
     }
   }
 
   directory_list.sort([](const auto &a, const auto &b) { return a.name > b.name; });
 
-  directory_list.push_front({"/", 0});
-  directory_list.push_front({"FLASH", 0});
+  directory_list.push_front({"/", 0, 0});
+  directory_list.push_front({"FLASH", 0, 0});
 
   // measure positions
   int x = 0;
   for(auto &dir : directory_list) {
     dir.x = x;
+    dir.w = screen.measure_text(dir.name, minimal_font).w;
 
-    x += screen.measure_text(dir.name, minimal_font, true).w + 10;
+    x += dir.w + 10;
   }
 }
 
@@ -277,8 +278,8 @@ void render(uint32_t time) {
       else
         screen.pen = Pen(80, 100, 120);
 
-      int x = 120 + directory.x - directory_list_scroll_offset;
-      screen.text(directory.name, minimal_font, Rect(x, 5, 100 - 20, text_align_height), true, TextAlign::center_v);
+      int x = 120 + 95 + directory.x - directory_list_scroll_offset;
+      screen.text(directory.name, minimal_font, Rect(x, 5, 190, text_align_height), true, TextAlign::center_v);
     }
 
     screen.clip = Rect(Point(0, 0), screen.bounds);
@@ -451,7 +452,7 @@ void update(uint32_t time)
     // scroll list towards selected item  
     file_list_scroll_offset.y += ((persist.selected_menu_item * 10) - file_list_scroll_offset.y) / 5.0f;
 
-    directory_list_scroll_offset += (current_directory->x - directory_list_scroll_offset) / 5.0f;
+    directory_list_scroll_offset += (current_directory->x + current_directory->w / 2 - directory_list_scroll_offset) / 5.0f;
 
     // load metadata for selected item
     if(persist.selected_menu_item != old_menu_item)
