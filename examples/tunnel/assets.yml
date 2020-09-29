@@ -1,0 +1,6 @@
+assets.hpp:
+  assets/tunnel.png:
+    name: packed_data
+
+  assets/ship.png:
+    name: packed_data_ship

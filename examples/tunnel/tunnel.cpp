@@ -5,6 +5,7 @@
 #include <array>
 
 #include "tunnel.hpp"
+#include "assets.hpp"
 
 using namespace blit;
 
