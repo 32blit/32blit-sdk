@@ -176,12 +176,15 @@ void scan_flash() {
 void load_current_game_metadata() {
   auto &games = current_directory.compare("FLASH") == 0 ? flash_games : sd_games;
 
-  auto &game = games[persist.selected_menu_item];
-  bool loaded;
-  if(game.filename.empty())
-    loaded = parse_flash_metadata(game.offset, selected_game_metadata, true);
-  else
-    loaded = parse_file_metadata(game.filename, selected_game_metadata, true);
+  bool loaded = false;
+  if(!games.empty()) {
+    auto &game = games[persist.selected_menu_item];
+
+    if(game.filename.empty())
+      loaded = parse_flash_metadata(game.offset, selected_game_metadata, true);
+    else
+      loaded = parse_file_metadata(game.filename, selected_game_metadata, true);
+  }
 
   // no valid metadata, reset
   if(!loaded) {
