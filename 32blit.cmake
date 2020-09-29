@@ -39,22 +39,6 @@ if (NOT DEFINED BLIT_ONCE)
 	if (${CMAKE_SYSTEM_NAME} STREQUAL Generic)
 		set(FLASH_PORT "AUTO" CACHE STRING "Port to use for flash")
 
-		# attempt to find the upload tool
-		find_program(32BLIT_TOOL 32Blit PATHS
-			${CMAKE_CURRENT_BINARY_DIR}/../build/tools/src/
-		)
-
-		if(NOT 32BLIT_TOOL)
-			message(WARNING "32Blit tool not found. Looking for 32Blit.exe instead")
-			find_program(32BLIT_TOOL 32Blit.exe PATHS
-				${CMAKE_CURRENT_BINARY_DIR}/../build.mingw/tools/src/
-			)
-		endif()
-
-		if(NOT 32BLIT_TOOL)
-			message(WARNING "32Blit tool not found")
-		endif()
-
 		include(${CMAKE_CURRENT_LIST_DIR}/32blit-stm32/executable.cmake)
 	else()
 		add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/32blit-sdl 32blit-sdl)

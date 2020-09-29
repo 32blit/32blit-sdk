@@ -15,6 +15,8 @@ function(blit_executable_common NAME)
 endfunction()
 
 function(blit_executable NAME SOURCES)
+	find_package(PythonInterp 3.6 REQUIRED)
+
 	set_source_files_properties(${USER_STARTUP} PROPERTIES LANGUAGE CXX)
 	add_executable(${NAME} ${USER_STARTUP} ${SOURCES} ${ARGN})
 
@@ -27,7 +29,5 @@ function(blit_executable NAME SOURCES)
 
 	blit_executable_common(${NAME})
 
-	if(32BLIT_TOOL)
-		add_custom_target(${NAME}.flash DEPENDS ${NAME} COMMAND ${32BLIT_TOOL} PROG ${FLASH_PORT} ${NAME}.bin)
-	endif()
+	add_custom_target(${NAME}.flash DEPENDS ${NAME} COMMAND ${PYTHON_EXECUTABLE} -m ttblit flash --port=${FLASH_PORT} flash --file=${CMAKE_CURRENT_BINARY_DIR}/${NAME}.bin)
 endfunction()
