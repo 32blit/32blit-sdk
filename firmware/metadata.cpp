@@ -52,6 +52,10 @@ bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata, bool unpa
 
   offset += header.end - 0x90000000;
 
+  // out of bounds
+  if(offset >= 0x2000000)
+    return false;
+
   uint8_t buf[10];
   if(qspi_read_buffer(offset, buf, 10) != QSPI_OK)
     return false;
