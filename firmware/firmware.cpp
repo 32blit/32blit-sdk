@@ -777,7 +777,21 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   if(bEOS)
                   {
                     f_close(&file);
-                    load_file_list(current_directory->name);
+
+                    // switch to dir
+                    auto name_str = std::string_view(m_sFilename);
+                    auto slash = name_str.find_last_of('/');
+                    auto dir = slash == std::string::npos ? "/" : name_str.substr(0, name_str.find_last_of('/'));
+
+                    for(current_directory = directory_list.begin(); current_directory != directory_list.end(); ++current_directory) {
+                      if(current_directory->name == dir) break;
+                    }
+
+                    if(current_directory == directory_list.end()) // couldn't find it
+                      current_directory = directory_list.begin();
+                    else
+                      load_file_list(current_directory->name);
+
                     state = stFlashFile;
                     if(result != srError)
                       result = srFinish;
