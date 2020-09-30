@@ -1,4 +1,5 @@
 #include "palette-swap.hpp"
+#include "assets.hpp"
 
 #define NUM_PALETTES 4
 #define SWATCH_SIZE 29

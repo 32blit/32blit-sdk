@@ -1,4 +1,5 @@
 #include "palette-cycle.hpp"
+#include "assets.hpp"
 
 using namespace blit;
 

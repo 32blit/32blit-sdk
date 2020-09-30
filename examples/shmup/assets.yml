@@ -1,0 +1,7 @@
+assets.hpp:
+  ../../assets/s4m_ur4i-space-shooter-backdrop.png:
+    name: sprites_background
+    palette: ../../assets/s4m_ur4i-space-shooter-backdrop-palette.png
+
+  ../../assets/s4m_ur4i-space-shooter-ships.png:
+    name: sprites_ships

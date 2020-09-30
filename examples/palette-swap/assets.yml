@@ -1,0 +1,4 @@
+assets.hpp:
+  assets/boar_ship.png:
+    palette: assets/boar_ship_palette.png
+    name: boar_ship
