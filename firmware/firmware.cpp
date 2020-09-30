@@ -243,7 +243,7 @@ void init() {
     load_file_list(current_directory->name);
 
   auto total_items = game_list.size();
-  if(persist.selected_menu_item > total_items)
+  if(persist.selected_menu_item >= total_items)
     persist.selected_menu_item = total_items - 1;
 
   load_current_game_metadata();
