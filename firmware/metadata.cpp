@@ -9,17 +9,17 @@
 
 using namespace blit;
 
+struct RawMetadata {
+  uint32_t crc32;
+  char datetime[16];
+  char title[25];
+  char description[129];
+  char version[17];
+  char author[17];
+};
+
 void parse_metadata(char *data, uint16_t metadata_len, BlitGameMetadata &metadata, bool unpack_images) {
   metadata.length = metadata_len;
-
-  struct RawMetadata {
-    uint32_t crc32;
-    char datetime[16];
-    char title[25];
-    char description[129];
-    char version[17];
-    char author[17];
-  };
 
   auto raw_meta = reinterpret_cast<RawMetadata *>(data);
   metadata.title = raw_meta->title;
@@ -88,7 +88,8 @@ bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata
     auto res = f_read(&fh, buf, 10, &bytes_read);
 
     if(bytes_read == 10 && memcmp(buf, "BLITMETA", 8) == 0) {
-      auto metadata_len = *reinterpret_cast<uint16_t *>(buf + 8);
+      // don't bother reading the whole thing if we don't want the images
+      auto metadata_len = unpack_images ? *reinterpret_cast<uint16_t *>(buf + 8) : sizeof(RawMetadata);
 
       uint8_t metadata_buf[0xFFFF];
       f_read(&fh, metadata_buf, metadata_len, &bytes_read);
