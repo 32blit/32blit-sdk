@@ -138,15 +138,6 @@ target_include_directories(BlitHalSTM32
 		${INCLUDE_DIRS}
 )
 
-OPTION(BETA_32BLIT "Build for 32blit beta unit compatibility (MSA301 accelerometer)" OFF)
-
-IF(BETA_32BLIT)
-	set(DEFINITIONS
-		${DEFINITIONS}
-		-DBETA_32BLIT
-	)
-ENDIF(BETA_32BLIT)
-
 target_compile_definitions(BlitHalSTM32
 	PRIVATE
 		${DEFINITIONS}

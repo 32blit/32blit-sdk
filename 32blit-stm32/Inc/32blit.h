@@ -5,6 +5,8 @@
 #include "fatfs.h"
 #include "persistence.h"
 
+extern bool is_beta_unit;
+
 // Functions defined by user code files
 extern void init();
 extern void update(uint32_t time);

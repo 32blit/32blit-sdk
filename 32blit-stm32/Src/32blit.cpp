@@ -245,13 +245,13 @@ void blit_i2c_tick() {
     case DELAY:
       break;
     case SEND_ACL:
-#ifdef BETA_32BLIT
-      i2c_reg = MSA301_X_ACCEL_RESISTER;
-      i2c_status = HAL_I2C_Master_Transmit_IT(&hi2c4, MSA301_DEVICE_ADDRESS, &i2c_reg, 1);
-#else
-      i2c_reg = LIS3DH_OUT_X_L | LIS3DH_ADDR_AUTO_INC;
-      i2c_status = HAL_I2C_Master_Transmit_IT(&hi2c4, LIS3DH_DEVICE_ADDRESS, &i2c_reg, 1);
-#endif
+      if(is_beta_unit){
+        i2c_reg = MSA301_X_ACCEL_RESISTER;
+        i2c_status = HAL_I2C_Master_Transmit_IT(&hi2c4, MSA301_DEVICE_ADDRESS, &i2c_reg, 1);
+      } else {
+        i2c_reg = LIS3DH_OUT_X_L | LIS3DH_ADDR_AUTO_INC;
+        i2c_status = HAL_I2C_Master_Transmit_IT(&hi2c4, LIS3DH_DEVICE_ADDRESS, &i2c_reg, 1);
+      }
       if(i2c_status == HAL_OK){
         i2c_state = RECV_ACL;
       } else {
@@ -259,11 +259,11 @@ void blit_i2c_tick() {
       }
       break;
     case RECV_ACL:
-#ifdef BETA_32BLIT
-      i2c_status = HAL_I2C_Master_Receive_IT(&hi2c4, MSA301_DEVICE_ADDRESS, i2c_buffer, 6);
-#else
-      i2c_status = HAL_I2C_Master_Receive_IT(&hi2c4, LIS3DH_DEVICE_ADDRESS, i2c_buffer, 6);
-#endif
+      if(is_beta_unit){
+        i2c_status = HAL_I2C_Master_Receive_IT(&hi2c4, MSA301_DEVICE_ADDRESS, i2c_buffer, 6);
+      } else {
+        i2c_status = HAL_I2C_Master_Receive_IT(&hi2c4, LIS3DH_DEVICE_ADDRESS, i2c_buffer, 6);
+      }
       if(i2c_status == HAL_OK){
         i2c_state = PROC_ACL;
       } else {
