@@ -57,6 +57,7 @@ RunningAverage<float> battery_average(8);
 float battery = 0.0f;
 uint8_t battery_status = 0;
 uint8_t battery_fault = 0;
+uint16_t accel_address = LIS3DH_DEVICE_ADDRESS;
 
 const uint32_t long_press_exit_time = 1000;
 
@@ -245,13 +246,8 @@ void blit_i2c_tick() {
     case DELAY:
       break;
     case SEND_ACL:
-      if(is_beta_unit){
-        i2c_reg = MSA301_X_ACCEL_RESISTER;
-        i2c_status = HAL_I2C_Master_Transmit_IT(&hi2c4, MSA301_DEVICE_ADDRESS, &i2c_reg, 1);
-      } else {
-        i2c_reg = LIS3DH_OUT_X_L | LIS3DH_ADDR_AUTO_INC;
-        i2c_status = HAL_I2C_Master_Transmit_IT(&hi2c4, LIS3DH_DEVICE_ADDRESS, &i2c_reg, 1);
-      }
+      i2c_reg = is_beta_unit ? MSA301_X_ACCEL_RESISTER : (LIS3DH_OUT_X_L | LIS3DH_ADDR_AUTO_INC);
+      i2c_status = HAL_I2C_Master_Transmit_IT(&hi2c4, accel_address, &i2c_reg, 1);
       if(i2c_status == HAL_OK){
         i2c_state = RECV_ACL;
       } else {
@@ -259,11 +255,7 @@ void blit_i2c_tick() {
       }
       break;
     case RECV_ACL:
-      if(is_beta_unit){
-        i2c_status = HAL_I2C_Master_Receive_IT(&hi2c4, MSA301_DEVICE_ADDRESS, i2c_buffer, 6);
-      } else {
-        i2c_status = HAL_I2C_Master_Receive_IT(&hi2c4, LIS3DH_DEVICE_ADDRESS, i2c_buffer, 6);
-      }
+      i2c_status = HAL_I2C_Master_Receive_IT(&hi2c4, accel_address, i2c_buffer, 6);
       if(i2c_status == HAL_OK){
         i2c_state = PROC_ACL;
       } else {
@@ -363,6 +355,7 @@ void blit_init() {
     f_mount(&filesystem, "", 1);  // this shouldn't be necessary here right?
     if(is_beta_unit){
       msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
+      accel_address = MSA301_DEVICE_ADDRESS;
     } else {
       lis3dh_init(&hi2c4);
     }
