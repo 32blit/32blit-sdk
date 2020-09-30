@@ -251,7 +251,7 @@ void blit_i2c_tick() {
       if(i2c_status == HAL_OK){
         i2c_state = RECV_ACL;
       } else {
-        blit_i2c_delay(16, SEND_ACL);
+        blit_i2c_delay(20, SEND_ACL);
       }
       break;
     case RECV_ACL:
@@ -259,7 +259,7 @@ void blit_i2c_tick() {
       if(i2c_status == HAL_OK){
         i2c_state = PROC_ACL;
       } else {
-        blit_i2c_delay(16, SEND_ACL);
+        blit_i2c_delay(20, SEND_ACL);
       }
       break;
     case PROC_ACL:
@@ -297,7 +297,7 @@ void blit_i2c_tick() {
     case PROC_BAT:
       battery_status = i2c_buffer[0];
       battery_fault = i2c_buffer[1];
-      blit_i2c_delay(16, SEND_ACL);
+      blit_i2c_delay(20, SEND_ACL);
       break;
   }
 }

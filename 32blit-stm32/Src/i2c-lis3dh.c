@@ -4,8 +4,8 @@ static void _i2c_send_8(I2C_HandleTypeDef *i2c_port, uint16_t address, uint8_t r
 
 void lis3dh_init(I2C_HandleTypeDef *i2c_port){
   _i2c_send_8(i2c_port, LIS3DH_DEVICE_ADDRESS, LIS3DH_CTRL_REG5, 0b10000000); // Reset
-  HAL_Delay(10);
-  _i2c_send_8(i2c_port, LIS3DH_DEVICE_ADDRESS, LIS3DH_CTRL_REG1, 0b01010111); // Enable XYZ, 100Hz
+  HAL_Delay(15);
+  _i2c_send_8(i2c_port, LIS3DH_DEVICE_ADDRESS, LIS3DH_CTRL_REG1, 0b01000111); // Enable XYZ, 50Hz
   _i2c_send_8(i2c_port, LIS3DH_DEVICE_ADDRESS, LIS3DH_CTRL_REG4, 0b10001000); // Enable high resolution mode & block data update
 }
 
