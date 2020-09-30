@@ -16,8 +16,12 @@ namespace blit {
 
   using AllocateCallback = uint8_t *(*)(size_t);
 
+  constexpr uint32_t api_version = 0;
+
   #pragma pack(push, 4)
   struct API {
+    uint32_t version = api_version;
+
     ButtonState buttons;
     float hack_left;
     float hack_right;
