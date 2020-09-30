@@ -361,8 +361,11 @@ void blit_init() {
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
     f_mount(&filesystem, "", 1);  // this shouldn't be necessary here right?
-    msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
-    lis3dh_init(&hi2c4);
+    if(is_beta_unit){
+      msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
+    } else {
+      lis3dh_init(&hi2c4);
+    }
     bq24295_init(&hi2c4);
     blit::api.debug = blit_debug;
     blit::api.debugf = blit_debugf;
