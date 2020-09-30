@@ -1,0 +1,8 @@
+title: Doom Fire
+description: The classic cellular automata animated pixel fire effect from the Final DOOM console port.
+author: andreban
+splash:
+  file: doom-fire.png
+icon:
+  file: doom-fire-icon.png
+version: v1.0.0

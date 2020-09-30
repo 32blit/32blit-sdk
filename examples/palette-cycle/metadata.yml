@@ -1,0 +1,8 @@
+title: Palette Cycle
+description: A burning torch animation using a static image with a cycling palette.
+author: pimoroni
+splash:
+  file: palette-cycle.png
+icon:
+  file: palette-cycle-icon.png
+version: v1.0.0

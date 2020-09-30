@@ -1,0 +1,8 @@
+title: Geometry
+description: Cleave through asteroids, slicing them into collectable chunks with your super powered mining laser
+author: pimoroni
+splash:
+  file: geometry.png
+icon:
+  file: geometry-icon.png
+version: v1.0.0

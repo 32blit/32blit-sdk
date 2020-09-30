@@ -1,0 +1,8 @@
+title: Rotozoom
+description: The classic rotating and zooming demo effect on the 32blit logo.
+author: pimoroni
+splash:
+  file: rotozoom.png
+icon:
+  file: rotozoom-icon.png
+version: v1.0.0
