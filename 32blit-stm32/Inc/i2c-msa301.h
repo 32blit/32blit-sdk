@@ -36,12 +36,7 @@
 extern "C" {
 #endif
 
-
 void msa301_init(I2C_HandleTypeDef *i2c_port, uint8_t power_mode , uint8_t low_power_bandwidth , uint8_t update_rate);
-
-void msa301_get_accel( I2C_HandleTypeDef *i2c_port, int16_t *data_buffer); //pass in reference to accerometer data buffer/store of int16[3] type 
-
-int16_t twos_comp( uint16_t value , uint8_t bits);
 
 #ifdef __cplusplus
 }

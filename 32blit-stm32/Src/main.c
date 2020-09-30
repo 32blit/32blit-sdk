@@ -68,6 +68,7 @@
 extern CDCCommandStream g_commandStream;
 CDCResetHandler g_resetHandler;
 CDCInfoHandler g_infoHandler;
+bool is_beta_unit = false;
 
 
 
@@ -118,6 +119,8 @@ int main(void)
   /* Initialize all configured peripherals */
   gpio::init();
   sound::init();
+
+  is_beta_unit = HAL_GPIO_ReadPin(VERSION_GPIO_Port, VERSION_Pin);
 
   //MX_GPIO_Init();
 

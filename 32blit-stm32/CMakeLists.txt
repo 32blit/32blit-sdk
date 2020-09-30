@@ -73,6 +73,7 @@ list(APPEND SOURCES
 	Src/hrtim.c
 	Src/i2c.c
 	Src/i2c-msa301.c
+	Src/i2c-lis3dh.c
 	Src/i2c-bq24295.c
 	Src/quadspi.c
 	Src/spi.c

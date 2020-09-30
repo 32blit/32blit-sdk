@@ -18,6 +18,7 @@
 #include "spi.h"
 #include "i2c.h"
 #include "i2c-msa301.h"
+#include "i2c-lis3dh.h"
 #include "i2c-bq24295.h"
 #include "fatfs.h"
 #include "quadspi.h"
@@ -244,8 +245,13 @@ void blit_i2c_tick() {
     case DELAY:
       break;
     case SEND_ACL:
-      i2c_reg = MSA301_X_ACCEL_RESISTER;
-      i2c_status = HAL_I2C_Master_Transmit_IT(&hi2c4, MSA301_DEVICE_ADDRESS, &i2c_reg, 1);
+      if(is_beta_unit){
+        i2c_reg = MSA301_X_ACCEL_RESISTER;
+        i2c_status = HAL_I2C_Master_Transmit_IT(&hi2c4, MSA301_DEVICE_ADDRESS, &i2c_reg, 1);
+      } else {
+        i2c_reg = LIS3DH_OUT_X_L | LIS3DH_ADDR_AUTO_INC;
+        i2c_status = HAL_I2C_Master_Transmit_IT(&hi2c4, LIS3DH_DEVICE_ADDRESS, &i2c_reg, 1);
+      }
       if(i2c_status == HAL_OK){
         i2c_state = RECV_ACL;
       } else {
@@ -253,7 +259,11 @@ void blit_i2c_tick() {
       }
       break;
     case RECV_ACL:
-      i2c_status = HAL_I2C_Master_Receive_IT(&hi2c4, MSA301_DEVICE_ADDRESS, i2c_buffer, 6);
+      if(is_beta_unit){
+        i2c_status = HAL_I2C_Master_Receive_IT(&hi2c4, MSA301_DEVICE_ADDRESS, i2c_buffer, 6);
+      } else {
+        i2c_status = HAL_I2C_Master_Receive_IT(&hi2c4, LIS3DH_DEVICE_ADDRESS, i2c_buffer, 6);
+      }
       if(i2c_status == HAL_OK){
         i2c_state = PROC_ACL;
       } else {
@@ -261,14 +271,15 @@ void blit_i2c_tick() {
       }
       break;
     case PROC_ACL:
+      // LIS3DH & MSA301 - 12-bit left-justified
       accel_x.add(((int8_t)i2c_buffer[1] << 6) | (i2c_buffer[0] >> 2));
       accel_y.add(((int8_t)i2c_buffer[3] << 6) | (i2c_buffer[2] >> 2));
       accel_z.add(((int8_t)i2c_buffer[5] << 6) | (i2c_buffer[4] >> 2));
 
       blit::tilt = Vec3(
-        accel_x.average(),
-        accel_y.average(),
-        accel_z.average()
+        -accel_x.average(),
+        -accel_y.average(),
+        -accel_z.average()
       );
 
       blit::tilt.normalize();
@@ -350,7 +361,11 @@ void blit_init() {
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
     f_mount(&filesystem, "", 1);  // this shouldn't be necessary here right?
-    msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
+    if(is_beta_unit){
+      msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
+    } else {
+      lis3dh_init(&hi2c4);
+    }
     bq24295_init(&hi2c4);
     blit::api.debug = blit_debug;
     blit::api.debugf = blit_debugf;
