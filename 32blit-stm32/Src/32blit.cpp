@@ -923,11 +923,17 @@ void blit_switch_execution(uint32_t address)
     auto game_header = ((__IO BlitGameHeader *) (EXTERNAL_LOAD_ADDRESS + address));
 
     if(game_header->magic == blit_game_magic) {
-      persist.last_game_offset = address;
-
       // load function pointers
       auto init = (BlitInitFunction)((uint8_t *)game_header->init);
-      init();
+      if(!init()) {
+        // this would just be a return, but qspi is already mapped by this point
+        persist.reset_target = prtFirmware;
+        SCB_CleanDCache();
+        NVIC_SystemReset();
+        return;
+      }
+  
+      persist.last_game_offset = address;
 
       blit::render = user_render = (BlitRenderFunction) ((uint8_t *)game_header->render);
       do_tick = user_tick = (BlitTickFunction) ((uint8_t *)game_header->tick);

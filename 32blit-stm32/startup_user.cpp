@@ -5,7 +5,9 @@ extern void init();
 extern void update(uint32_t time);
 extern void render(uint32_t time);
 
-extern "C" void cpp_do_init() {
+extern "C" bool cpp_do_init() {
+    if(blit::api.version < blit::api_version)
+        return false;
 
     blit::update = update;
     blit::render = render;
@@ -13,6 +15,8 @@ extern "C" void cpp_do_init() {
     blit::set_screen_mode(blit::ScreenMode::lores);
 
     init();
+
+    return true;
 }
 
 extern "C" void _exit(int code) {
