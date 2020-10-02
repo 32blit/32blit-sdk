@@ -117,7 +117,7 @@ void load_directory_list(std::string directory) {
   int x = 0;
   for(auto &dir : directory_list) {
     dir.x = x;
-    dir.w = screen.measure_text(dir.name, minimal_font).w;
+    dir.w = screen.measure_text(dir.name == "/" ? "ROOT" : dir.name, minimal_font).w;
 
     x += dir.w + 10;
   }
@@ -279,7 +279,7 @@ void render(uint32_t time) {
         screen.pen = Pen(80, 100, 120);
 
       int x = 120 + 95 + directory.x - directory_list_scroll_offset;
-      screen.text(directory.name, minimal_font, Rect(x, 5, 190, text_align_height), true, TextAlign::center_v);
+      screen.text(directory.name == "/" ? "ROOT" : directory.name, minimal_font, Rect(x, 5, 190, text_align_height), true, TextAlign::center_v);
     }
 
     screen.clip = Rect(Point(0, 0), screen.bounds);
