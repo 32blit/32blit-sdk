@@ -69,4 +69,5 @@ private:
 
   uint32_t m_uParseIndex = 0;
   uint32_t m_uFilelen = 0;
+  uint32_t flash_start_offset = 0;
 };
