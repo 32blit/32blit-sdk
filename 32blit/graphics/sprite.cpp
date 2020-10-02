@@ -1,6 +1,8 @@
 /*! \file sprite.cpp
     \brief Functions for drawing sprites.
 */
+#include <cstring>
+
 #include "surface.hpp"
 #include "sprite.hpp"
 
@@ -25,6 +27,9 @@ namespace blit {
   }
 
   SpriteSheet *SpriteSheet::load(const packed_image *image, uint8_t *buffer) {
+    if(memcmp(image->type, "SPRITEPK", 8) != 0)
+      return nullptr;
+
     if (buffer == nullptr) {
       buffer = new uint8_t[pixel_format_stride[image->format] * image->width * image->height];
     }
