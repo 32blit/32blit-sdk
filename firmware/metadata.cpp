@@ -22,9 +22,11 @@ void parse_metadata(char *data, uint16_t metadata_len, BlitGameMetadata &metadat
   metadata.length = metadata_len;
 
   auto raw_meta = reinterpret_cast<RawMetadata *>(data);
+
   metadata.title = raw_meta->title;
   metadata.description = raw_meta->description;
   metadata.version = raw_meta->version;
+  metadata.author = raw_meta->author;
 
   uint16_t offset = sizeof(RawMetadata);
 

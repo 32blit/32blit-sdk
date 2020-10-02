@@ -309,11 +309,13 @@ void render(uint32_t time) {
     screen.pen = Pen(235, 245, 255);
     screen.text(selected_game_metadata.title, minimal_font, Point(172, 124));
 
-    Rect desc_rect(172, 138, 128, 72);
+    Rect desc_rect(172, 138, 128, 64);
 
     screen.pen = Pen(80, 100, 120);
     std::string wrapped_desc = screen.wrap_text(selected_game_metadata.description, desc_rect.w, minimal_font);
     screen.text(wrapped_desc, minimal_font, desc_rect);
+
+    screen.text(selected_game_metadata.author, minimal_font, Point(172, 208));
 
     int num_blocks = calc_num_blocks(game_list[persist.selected_menu_item].size);
     char buf[20];

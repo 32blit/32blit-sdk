@@ -6,7 +6,7 @@
 
 struct BlitGameMetadata {
   uint16_t length = 0;
-  std::string title, description, version;
+  std::string title, description, version, author;
 
   blit::Surface *icon = nullptr, *splash = nullptr;
 
