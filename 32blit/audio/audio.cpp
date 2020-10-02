@@ -9,6 +9,19 @@
 
 namespace blit {
 
+  uint32_t prng_lfsr = 0x32B71700;
+  constexpr uint16_t prng_tap = 0x74b8;
+
+  uint32_t prng_lfsr_next() {
+    uint8_t lsb = prng_lfsr & 1;
+    prng_lfsr >>= 1;
+
+    if (lsb) {
+        prng_lfsr ^= prng_tap;
+    }
+    return prng_lfsr;
+  }
+
   uint32_t sample_rate = 22050;
 
   uint16_t volume = 0xffff;
@@ -67,7 +80,7 @@ namespace blit {
       if(channel.waveform_offset & 0b10000) {
         // if the waveform offset overflows then generate a new
         // random noise sample
-        channel.noise = (blit::random() & 0xffff) - 0x7fff;
+        channel.noise = (prng_lfsr_next() & 0xffff) - 0x7fff;
       }
 
       channel.waveform_offset &= 0xffff;
