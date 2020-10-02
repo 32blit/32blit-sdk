@@ -51,6 +51,8 @@ std::vector<GameInfo> game_list;
 std::list<DirectoryInfo> directory_list;
 std::list<DirectoryInfo>::iterator current_directory;
 
+uint32_t last_game_end_address = 0;
+
 bool display_flash = true;
 
 SortBy file_sort = SortBy::name;
@@ -217,6 +219,8 @@ void scan_flash() {
     game_list.push_back(game);
 
     offset += calc_num_blocks(game.size) * qspi_flash_sector_size;
+
+    last_game_end_address = offset;
   }
   sort_file_list();
 }
@@ -560,24 +564,11 @@ void update(uint32_t time) {
 uint32_t get_flash_offset_for_file(BlitGameHeader &bin_header) {
 
   if(bin_header.magic == blit_game_magic) {
-    auto expected_addr = bin_header.start;
-
-    if(current_directory->name != "FLASH")
-      scan_flash();
-
-    if(game_list.empty())
-      return 0;
-
-    auto last_game_end = game_list.back().offset + game_list.back().size;
-
-    // round
-    last_game_end = calc_num_blocks(last_game_end) * qspi_flash_sector_size;
-
     // TODO: handle full
-    if(last_game_end >= qspi_flash_size)
+    if(last_game_end_address + (bin_header.end - bin_header.start) >= qspi_flash_size)
       return 0;
 
-    return last_game_end;
+    return last_game_end_address;
   }
 
   return 0;
