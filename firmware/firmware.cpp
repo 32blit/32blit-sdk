@@ -193,7 +193,7 @@ void scan_flash() {
 
     game_list.push_back(game);
 
-    offset += calc_num_blocks(game.size);
+    offset += calc_num_blocks(game.size) * qspi_flash_sector_size;
   }
   sort_file_list();
 }
