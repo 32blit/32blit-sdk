@@ -109,8 +109,8 @@ const uint8_t STORAGE_Inquirydata_HS[] = {/* 36 */
   0x00,	
   0x00,
   'S', 'T', 'M', ' ', ' ', ' ', ' ', ' ', /* Manufacturer : 8 bytes */
-  'P', 'r', 'o', 'd', 'u', 'c', 't', ' ', /* Product      : 16 Bytes */
-  ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+  '3', '2', 'B', 'l', 'i', 't', ' ', 'S', /* Product      : 16 Bytes */
+  'D', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
   '0', '.', '0' ,'1'                      /* Version      : 4 Bytes */
 }; 
 /* USER CODE END INQUIRY_DATA_HS */
