@@ -155,6 +155,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{FA5CCE8B
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "voxel", "examples\voxel\voxel.vcxproj", "{2B7506AD-B420-4F2B-B002-6AAAF79D1E01}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tween-demo", "examples\tween-demo\tween-demo.vcxproj", "{46D6A7E3-73D9-422A-AD53-94D96380CDD5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -379,6 +381,14 @@ Global
 		{2B7506AD-B420-4F2B-B002-6AAAF79D1E01}.Release|x64.Build.0 = Release|x64
 		{2B7506AD-B420-4F2B-B002-6AAAF79D1E01}.Release|x86.ActiveCfg = Release|Win32
 		{2B7506AD-B420-4F2B-B002-6AAAF79D1E01}.Release|x86.Build.0 = Release|Win32
+		{46D6A7E3-73D9-422A-AD53-94D96380CDD5}.Debug|x64.ActiveCfg = Debug|x64
+		{46D6A7E3-73D9-422A-AD53-94D96380CDD5}.Debug|x64.Build.0 = Debug|x64
+		{46D6A7E3-73D9-422A-AD53-94D96380CDD5}.Debug|x86.ActiveCfg = Debug|Win32
+		{46D6A7E3-73D9-422A-AD53-94D96380CDD5}.Debug|x86.Build.0 = Debug|Win32
+		{46D6A7E3-73D9-422A-AD53-94D96380CDD5}.Release|x64.ActiveCfg = Release|x64
+		{46D6A7E3-73D9-422A-AD53-94D96380CDD5}.Release|x64.Build.0 = Release|x64
+		{46D6A7E3-73D9-422A-AD53-94D96380CDD5}.Release|x86.ActiveCfg = Release|Win32
+		{46D6A7E3-73D9-422A-AD53-94D96380CDD5}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -409,6 +419,7 @@ Global
 		{479BBF48-BF4B-42AF-AF55-6D4E0A74C987} = {E9DBB2E8-C9C5-4F46-9E6D-84D796FF4ABB}
 		{D76C8D59-9C85-4D8A-8B78-7CAEE5DFC314} = {FA5CCE8B-0951-484A-8D0C-AA871780F4A3}
 		{2B7506AD-B420-4F2B-B002-6AAAF79D1E01} = {E9DBB2E8-C9C5-4F46-9E6D-84D796FF4ABB}
+		{46D6A7E3-73D9-422A-AD53-94D96380CDD5} = {E9DBB2E8-C9C5-4F46-9E6D-84D796FF4ABB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A2B87694-5EB1-4C97-9262-7E18C4A3702E}
