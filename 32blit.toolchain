@@ -46,7 +46,7 @@ set(CMAKE_EXE_LINKER_FLAGS_INIT "-specs=nosys.specs -Wl,--gc-sections,--no-wchar
 
 # stdlibs
 set(STDLIB_PATH ${CMAKE_CURRENT_LIST_DIR}/stdlib)
-set(STDLIB_URL https://cupboard.daftgames.net/32blit/stdlibs.zip)
+set(STDLIB_URL https://get.pimoroni.com/stdlibs.zip)
 set(STDLIB_HASH "SHA256=867eb82d2329c962a5aa389f3b5a4a2efd6d75e5c7d464c92ed7b595f76eb90f")
 
 if(NOT EXISTS ${STDLIB_PATH}/stdlibs.zip)
