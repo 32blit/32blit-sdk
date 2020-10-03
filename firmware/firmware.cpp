@@ -36,7 +36,7 @@ extern USBManager g_usbManager;
 
 struct GameInfo {
   std::string title;
-  uint32_t size;
+  uint32_t size, checksum = 0;
 
   std::string filename; // if on SD
   uint32_t offset; // in in flash
@@ -168,8 +168,10 @@ void load_file_list(std::string directory) {
       
       // check for metadata
       BlitGameMetadata meta;
-      if(parse_file_metadata(file.name, meta))
+      if(parse_file_metadata(file.name, meta)) {
         game.title = meta.title;
+        game.checksum = meta.crc32;
+      }
 
       game_list.push_back(game);
     }
@@ -214,6 +216,7 @@ void scan_flash() {
     if(parse_flash_metadata(offset, meta)) {
       game.title = meta.title;
       game.size += meta.length + 10;
+      game.checksum = meta.crc32;
     }
 
     game_list.push_back(game);
@@ -507,13 +510,25 @@ void update(uint32_t time) {
 
     if(button_a)
     {
-      uint32_t offset;
-      auto &game = game_list[persist.selected_menu_item];
+      uint32_t offset = 0xFFFFFFFF;
+      auto game = game_list[persist.selected_menu_item];
 
       if(game.filename.empty())
         offset = game_list[persist.selected_menu_item].offset; // flash
-      else
-        offset = flash_from_sd_to_qspi_flash(game.filename.c_str()); // sd
+      else {
+        scan_flash();
+
+        for(auto &flash_game : game_list) {
+          // if a game with the same name/crc is already installed, launch that one instead of flashing it again
+          if(flash_game.checksum == game.checksum && flash_game.title == game.title) {
+            offset = flash_game.offset;
+            break;
+          }
+        }
+
+        if(offset == 0xFFFFFFFF)
+          offset = flash_from_sd_to_qspi_flash(game.filename.c_str()); // sd
+      }
 
       if(offset != 0xFFFFFFFF)
         launch_game(offset);
