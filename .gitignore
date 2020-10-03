@@ -366,3 +366,4 @@ _deps
 
 stdlib/no-pic
 stdlib/pic
+stdlib/*.zip

@@ -44,8 +44,21 @@ set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g -Og")
 
 set(CMAKE_EXE_LINKER_FLAGS_INIT "-specs=nosys.specs -Wl,--gc-sections,--no-wchar-size-warning")
 
-set(PIC_STDLIBS "-nodefaultlibs -L ${CMAKE_CURRENT_LIST_DIR}/stdlib/pic -lstdc++_nano -lm -Wl,--start-group -lgcc -lc_nano -Wl,--end-group -Wl,--start-group -lgcc -lc_nano -lnosys -Wl,--end-group")
-set(NONPIC_STDLIBS "-nodefaultlibs -L ${CMAKE_CURRENT_LIST_DIR}/stdlib/no-pic -lstdc++_nano -lm -Wl,--start-group -lgcc -lc_nano -Wl,--end-group -Wl,--start-group -lgcc -lc_nano -lnosys -Wl,--end-group")
+# stdlibs
+set(STDLIB_PATH ${CMAKE_CURRENT_LIST_DIR}/stdlib)
+set(STDLIB_URL https://cupboard.daftgames.net/32blit/stdlibs.zip)
+set(STDLIB_HASH "SHA256=867eb82d2329c962a5aa389f3b5a4a2efd6d75e5c7d464c92ed7b595f76eb90f")
+
+if(NOT EXISTS ${STDLIB_PATH}/stdlibs.zip)
+    file(DOWNLOAD ${STDLIB_URL} ${STDLIB_PATH}/stdlibs.zip EXPECTED_HASH ${STDLIB_HASH} SHOW_PROGRESS)
+
+    # CMake 3.18
+    #file(ARCHIVE_EXTRACT INPUT ${STDLIB_PATH}/stdlibs.zip DESTINATION ${STDLIB_PATH})
+    execute_process(COMMAND unzip -u ${STDLIB_PATH}/stdlibs.zip -d ${STDLIB_PATH})
+endif()
+
+set(PIC_STDLIBS "-nodefaultlibs -L ${STDLIB_PATH}/pic -lstdc++_nano -lm -Wl,--start-group -lgcc -lc_nano -Wl,--end-group -Wl,--start-group -lgcc -lc_nano -lnosys -Wl,--end-group")
+set(NONPIC_STDLIBS "-nodefaultlibs -L ${STDLIB_PATH}/no-pic -lstdc++_nano -lm -Wl,--start-group -lgcc -lc_nano -Wl,--end-group -Wl,--start-group -lgcc -lc_nano -lnosys -Wl,--end-group")
 
 add_definitions(-DTARGET_32BLIT_HW)
 set(32BLIT_HW 1)
