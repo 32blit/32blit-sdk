@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <list>
-#include <set>
 
 using namespace blit;
 
@@ -613,18 +612,20 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
   // check for prepended relocation info
   char buf[4];
   f_read(&file, buf, 4, &bytes_read);
-  std::set<uint32_t> relocation_offsets;
+  std::vector<uint32_t> relocation_offsets;
+  size_t cur_reloc = 0;
   bool has_relocs = false;
 
   if(memcmp(buf, "RELO", 4) == 0) {
     uint32_t num_relocs;
     f_read(&file, (void *)&num_relocs, 4, &bytes_read);
+    relocation_offsets.reserve(num_relocs);
 
     for(auto i = 0u; i < num_relocs; i++) {
       uint32_t reloc_offset;
       f_read(&file, (void *)&reloc_offset, 4, &bytes_read);
 
-      relocation_offsets.insert(reloc_offset - 0x90000000);
+      relocation_offsets.push_back(reloc_offset - 0x90000000);
     }
 
     bytes_total -= num_relocs * 4 + 8; // size of relocation data
@@ -657,9 +658,12 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
       break;
 
     // relocation patching
-    for(auto off = offset; off < offset + bytes_read; off += 4) {
-      if(relocation_offsets.count(off)) {
-        *(uint32_t *)(buffer + off - offset) += flash_offset;
+    if(cur_reloc < relocation_offsets.size()) {
+      for(auto off = offset; off < offset + bytes_read; off += 4) {
+        if(off == relocation_offsets[cur_reloc]) {
+          *(uint32_t *)(buffer + off - offset) += flash_offset;
+          cur_reloc++;
+        }
       }
     }
 
