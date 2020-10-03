@@ -907,6 +907,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   break;
 
                   case stFlashCDC:
+                    m_parseState = stRelocs;
                   break;
 
                   default:
@@ -927,6 +928,34 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
           result =srError;
         }
       break;
+
+      case stRelocs: {
+        uint32_t word;
+        if(m_uParseIndex > 1 && m_uParseIndex == num_relocs + 2) {
+          cur_reloc = 0;
+          m_parseState = stData;
+          m_uParseIndex = 0;
+        } else {
+          while(result == srContinue && dataStream.Get(word)) {
+            if(m_uParseIndex == 0 && word != 0x4F4C4552 /*RELO*/) {
+              printf("Missing relocation header\n");
+              result = srError;
+            } else if(m_uParseIndex == 1) {
+              num_relocs = word;
+              m_uFilelen -= num_relocs * 4 + 8;
+              relocation_offsets.reserve(num_relocs);
+            } else if(m_uParseIndex)
+              relocation_offsets.push_back(word - 0x90000000);
+
+            m_uParseIndex++;
+
+            // done
+            if(m_uParseIndex == num_relocs + 2)
+              break;
+          }
+        }
+        break;
+      }
 
       case stData:
           while((result == srContinue) && (m_parseState == stData) && (m_uParseIndex <= m_uFilelen) && dataStream.Get(byte))
@@ -995,6 +1024,18 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                     // erase
                     erase_qspi_flash(flash_start_offset / qspi_flash_sector_size, m_uFilelen);
                     progress.show("Saving " + std::string(m_sFilename) +  " to flash...", m_uFilelen);
+                  }
+
+                  // relocation patching
+                  if(cur_reloc < relocation_offsets.size()) {
+                    auto offset = uPage * PAGE_SIZE;
+
+                    for(auto off = offset; off < offset + uWriteLen; off += 4) {
+                      if(off == relocation_offsets[cur_reloc]) {
+                        *(uint32_t *)(buffer + off - offset) += flash_start_offset;
+                        cur_reloc++;
+                      }
+                    }
                   }
 
                   // save data
