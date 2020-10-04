@@ -126,7 +126,7 @@ uint32_t get_max_us_timer()
 	return UINT32_MAX / uTicksPerUs;
 }
 
-std::string battery_vbus_status() {
+const char *battery_vbus_status() {
   switch(battery_status >> 6){
     case 0b00: // Unknown
       return "Unknown";
@@ -142,7 +142,7 @@ std::string battery_vbus_status() {
   return "";
 }
 
-std::string battery_charge_status() {
+const char *battery_charge_status() {
   switch((battery_status >> 4) & 0b11){
     case 0b00: // Not Charging
       return "Nope";
@@ -569,11 +569,12 @@ void blit_menu_render(uint32_t time) {
 
   screen.text("System Menu", minimal_font, Point(5, 5));
 
-  screen.text(
-    "Charge: " + battery_charge_status() +
-    "   VBus: " + battery_vbus_status() + 
-    "   Voltage: " + std::to_string(int(battery)) + "." + std::to_string(int((battery - int(battery)) * 10.0f)) + "v",
-    minimal_font, Point(0, screen_height - 10));
+  char buf[100];
+  snprintf(buf, 100, "Charge: %s   VBus: %s   Voltage: %i.%iv",
+    battery_charge_status(),
+    battery_vbus_status(),
+    int(battery), int((battery - int(battery)) * 10.0f));
+  screen.text(buf, minimal_font, Point(0, screen_height - 10));
 
   /*
   // Raw register values can be displayed with a fixed-width font using std::bitset<8> for debugging
