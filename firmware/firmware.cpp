@@ -231,6 +231,8 @@ void init() {
   set_screen_mode(ScreenMode::hires);
   screen.clear();
 
+  screen.sprites = SpriteSheet::load(sprites);
+
   load_directory_list("/");
   current_directory = directory_list.begin();
 

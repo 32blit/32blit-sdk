@@ -4,6 +4,8 @@
 #include "fatfs.h"
 #include "persistence.h"
 
+#include "assets.hpp"
+
 #define BUFFER_SIZE (256)
 #define ROW_HEIGHT 10
 #define ROW(x) Point(0,x * ROW_HEIGHT)
@@ -98,7 +100,10 @@ struct {
     screen.pen = Pen(255, 255, 255);
     screen.text(message, minimal_font, Rect(dialog_rect.x + 6, dialog_rect.y + header_height + 5, dialog_rect.w - 12, 45));
 
-    screen.text("No      Yes    ", minimal_font, Rect(dialog_rect.x + 1, dialog_rect.y + dialog_rect.h - 17, dialog_rect.w - 2, 16), true, TextAlign::center_right);
+    screen.text("No      Yes    ", minimal_font, Rect(dialog_rect.x + 1, dialog_rect.y + dialog_rect.h - 17, dialog_rect.w - 2, 16 + minimal_font.spacing_y), true, TextAlign::center_right);
+  
+    screen.sprite(0, Point(dialog_rect.x + 185, dialog_rect.y + 71), SpriteTransform::R180);
+    screen.sprite(0, Point(dialog_rect.x + 218, dialog_rect.y + 71), SpriteTransform::R90);
   }
 
 } dialog;
