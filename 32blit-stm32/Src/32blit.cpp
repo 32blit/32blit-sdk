@@ -585,9 +585,9 @@ void blit_menu_render(uint32_t time) {
   */
 
   screen.text("bat", minimal_font, Point(screen_width / 2, 5));
-  uint16_t battery_meter_width = 55;
+  int battery_meter_width = 55;
   battery_meter_width = float(battery_meter_width) * (battery - 3.0f) / 1.1f;
-  battery_meter_width = std::max((uint16_t)0, std::min((uint16_t)55, battery_meter_width));
+  battery_meter_width = std::max(0, std::min(55, battery_meter_width));
 
   screen.pen = bar_background_color;
   screen.rectangle(Rect((screen_width / 2) + 20, 6, 55, 5));
@@ -609,8 +609,8 @@ void blit_menu_render(uint32_t time) {
   screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_meter_width, 5));
   uint8_t battery_charge_status = (battery_status >> 4) & 0b11;
   if(battery_charge_status == 0b01 || battery_charge_status == 0b10){
-    uint16_t battery_fill_width = uint32_t(time / 500.0f) % battery_meter_width;
-    battery_fill_width = std::max((uint16_t)0, std::min((uint16_t)battery_meter_width, battery_fill_width));
+    int battery_fill_width = (time / 500) % battery_meter_width;
+    battery_fill_width = std::min(battery_meter_width, battery_fill_width);
     screen.pen = pallette_col(8);
     screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_fill_width, 5));
   }
