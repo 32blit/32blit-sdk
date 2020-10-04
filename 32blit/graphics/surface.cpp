@@ -232,6 +232,9 @@ namespace blit {
     int y_step = top < bottom ? 1 : -1;
     int x_step = left < right ? 1 : -1;
 
+    if(t & SpriteTransform::XYSWAP)
+      x_step *= sprites->bounds.w;
+      
     uint32_t dest_offset = offset(dr);
     uint32_t src_offset;    
     
@@ -240,19 +243,15 @@ namespace blit {
     do {    
       uint8_t x_count = dr.w;
       uint8_t x = left;
-      do {      
-        if (t & SpriteTransform::XYSWAP)
-          src_offset = sprites->offset(sprite.x + y, sprite.y + x);
-        else
-          src_offset = sprites->offset(sprite.x + x, sprite.y + y);
 
-        bbf(sprites, src_offset, this, dest_offset, 1, 1);
-        dest_offset++;
+      if (t & SpriteTransform::XYSWAP)
+        src_offset = sprites->offset(sprite.x + y, sprite.y + x);
+      else
+        src_offset = sprites->offset(sprite.x + x, sprite.y + y);
 
-        x += x_step;
-      } while (--x_count);
+      bbf(sprites, src_offset, this, dest_offset, x_count, x_step);
 
-      dest_offset += bounds.w - dr.w;
+      dest_offset += bounds.w;
       y += y_step;
     } while (--y_count);
   }
