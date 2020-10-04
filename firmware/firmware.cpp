@@ -83,18 +83,34 @@ void erase_qspi_flash(uint32_t start_sector, uint32_t size_bytes) {
   progress.hide();
 }
 
+// insertion sort
+template <class Iterator, class Compare>
+void insertion_sort(Iterator first, Iterator last, Compare comp) {
+  if(last - first < 2)
+    return;
+
+  for(auto it = first + 1; it != last; ++it) {
+    auto temp = it;
+
+    while(temp != first && comp(*temp, *(temp - 1))) {
+      std::swap(*temp, *(temp - 1));
+      --temp;
+    }
+  }
+}
+
 void sort_file_list() {
     using Iterator = std::vector<GameInfo>::iterator;
     using Compare = bool(const GameInfo &, const GameInfo &);
 
     if (file_sort == SortBy::name) {
       // Sort by filename
-      std::sort<Iterator, Compare>(game_list.begin(), game_list.end(), [](const auto &a, const auto &b) { return a.title < b.title; });
+      insertion_sort<Iterator, Compare>(game_list.begin(), game_list.end(), [](const auto &a, const auto &b) { return a.title < b.title; });
     }
 
     if (file_sort == SortBy::size) {
       // Sort by filesize
-      std::sort<Iterator, Compare>(game_list.begin(), game_list.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
+      insertion_sort<Iterator, Compare>(game_list.begin(), game_list.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
     }
 }
 
