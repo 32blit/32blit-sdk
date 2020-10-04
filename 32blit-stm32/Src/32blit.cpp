@@ -447,7 +447,7 @@ inline MenuItem& operator--(MenuItem& type, int) {
 	return type;
 }
 
-std::string menu_name (MenuItem item) {
+const char *menu_name (MenuItem item) {
   switch (item) {
     case BACKLIGHT: return "Backlight";
     case VOLUME: return "Volume";
