@@ -567,7 +567,13 @@ void blit_menu_render(uint32_t time) {
 
   screen.pen = foreground_colour;
 
+  // header
   screen.text("System Menu", minimal_font, Point(5, 5));
+
+  screen.h_span(Point(0, 15), screen_width);
+
+  // footer
+  screen.h_span(Point(0, screen_height - 15), screen_width);
 
   char buf[100];
   snprintf(buf, 100, "Charge: %s   VBus: %s   Voltage: %i.%iv",
@@ -615,10 +621,6 @@ void blit_menu_render(uint32_t time) {
     screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_fill_width, 5));
   }
 
-  // Horizontal Line
-  screen.pen = foreground_colour;
-  screen.h_span(Point(0, 15), screen_width);
-
   // Selected item
   screen.pen = selected_item_bg_colour;
   screen.rectangle(menu_item_frame(menu_item, screen_width));
@@ -653,12 +655,6 @@ void blit_menu_render(uint32_t time) {
     }
 
   }
-
-
-  // Bottom horizontal Line
-  screen.pen = foreground_colour;
-  screen.h_span(Point(0, screen_height - 15), screen_width);
-
 }
 
 void blit_menu() {
