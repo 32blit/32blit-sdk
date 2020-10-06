@@ -28,6 +28,7 @@ float directory_list_scroll_offset = 0.0f;
 extern CDCCommandStream g_commandStream;
 
 FlashLoader flashLoader;
+CDCEraseHandler cdc_erase_handler;
 
 extern USBManager g_usbManager;
 
@@ -285,6 +286,8 @@ void init() {
 
   // register LS
   g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value, &flashLoader);
+
+  g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'E', 'R', 'S', 'E'>::value, &cdc_erase_handler);
 
   // error reset handling
   if(persist.reset_error) {
@@ -643,6 +646,31 @@ void cdc_flash_list() {
   // end marker
   uint32_t end = 0xFFFFFFFF;
   while(CDC_Transmit_HS((uint8_t *)&end, 4) == USBD_BUSY){}
+}
+
+// erase command handler
+CDCCommandHandler::StreamResult CDCEraseHandler::StreamData(CDCDataStream &dataStream) {
+  uint32_t offset;
+  if(!dataStream.Get(offset))
+    return srNeedData;
+
+  // reject unaligned
+  if(offset & (qspi_flash_sector_size - 1))
+    return srFinish;
+
+  // attempt to get size, falling back to a single sector
+  int erase_size = 1;
+  BlitGameHeader header;
+  if(read_flash_game_header(offset, header))
+    erase_size = calc_num_blocks(header.end - qspi_flash_address); // TODO: this does not include metadata, may result in some leftover junk
+
+  erase_qspi_flash(offset / qspi_flash_sector_size, erase_size * qspi_flash_sector_size);
+
+  // rescan
+  if(current_directory->name == "FLASH")
+    scan_flash();
+
+  return srFinish;
 }
 
 //////////////////////////////////////////////////////////////////////

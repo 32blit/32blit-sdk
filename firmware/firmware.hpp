@@ -108,6 +108,15 @@ struct {
 
 } dialog;
 
+class CDCEraseHandler final : public CDCCommandHandler {
+public:
+  StreamResult StreamData(CDCDataStream &dataStream) override;
+
+  bool StreamInit(CDCFourCC uCommand) override {
+    return true;
+  }
+};
+
 class FlashLoader : public CDCCommandHandler
 {
 public:
