@@ -20,6 +20,7 @@ enum State {stFlashFile, stSaveFile, stFlashCDC, stMassStorage};
 
 constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 constexpr uint32_t qspi_flash_size = 32768 * 1024;
+constexpr uint32_t qspi_flash_address = 0x90000000;
 
 Vec2 file_list_scroll_offset(20.0f, 0.0f);
 float directory_list_scroll_offset = 0.0f;
@@ -175,7 +176,7 @@ bool read_flash_game_header(uint32_t offset, BlitGameHeader &header) {
     return false;
 
   // make sure end/size is sensible
-  if(header.end <= 0x90000000)
+  if(header.end <= qspi_flash_address)
     return false;
 
   return true;
@@ -194,7 +195,7 @@ void scan_flash() {
 
     GameInfo game;
     game.offset = offset;
-    game.size = header.end - 0x90000000;
+    game.size = header.end - qspi_flash_address;
     game.title = "game @" + std::to_string(game.offset / qspi_flash_sector_size);
 
     // check for valid metadata
@@ -516,7 +517,7 @@ uint32_t get_flash_offset_for_file(BlitGameHeader &bin_header) {
     auto expected_addr = bin_header.start;
 
     // this should be sector aligned to not break things later...
-    return expected_addr - 0x90000000;
+    return expected_addr - qspi_flash_address;
   }
 
   return 0;
@@ -604,7 +605,7 @@ void cdc_flash_list() {
       continue;
     }
 
-    uint32_t size = header.end - 0x90000000;
+    uint32_t size = header.end - qspi_flash_address;
 
     // metadata header
     uint8_t buf[10];
