@@ -460,6 +460,16 @@ public:
     selected_item_background = get_menu_colour(4);
   }
 
+  void draw_slider(Point pos, int width, float value, Pen colour) const {
+    const int bar_margin = 2;
+    const int bar_height = item_h - bar_margin * 2;
+
+    screen.pen = bar_background_color;
+    screen.rectangle(Rect(pos, Size(width, bar_height)));
+    screen.pen = colour;
+    screen.rectangle(Rect(pos, Size(width * value, bar_height)));
+  }
+
 protected:
   void render_item(const Item &item, int y) const override {
     Menu::render_item(item, y);
@@ -471,18 +481,10 @@ protected:
 
     switch(item.id) {
       case BACKLIGHT:
-        screen.pen = bar_background_color;
-        screen.rectangle(Rect(screen_width / 2, y + bar_margin, 75, bar_height));
-        screen.pen = foreground_colour;
-        screen.rectangle(Rect(screen_width / 2, y + bar_margin, 75 * persist.backlight, bar_height));
-
+        draw_slider(Point(screen_width / 2, y + bar_margin), 75, persist.backlight, foreground_colour);
         break;
       case VOLUME:
-        screen.pen = bar_background_color;
-        screen.rectangle(Rect(screen_width / 2, y + bar_margin, 75, bar_height));
-        screen.pen = foreground_colour;
-        screen.rectangle(Rect(screen_width / 2, y + bar_margin, 75 * persist.volume, bar_height));
-
+        draw_slider(Point(screen_width / 2, y + bar_margin), 75, persist.volume, foreground_colour);
         break;
       default:
         screen.pen = foreground_colour;
