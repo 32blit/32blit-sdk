@@ -154,7 +154,8 @@ jobs:
          - vs/sdl/
       before_install:
         - choco uninstall -y mingw
-        - choco install -y visualstudio2019buildtools visualstudio2019-workload-vctools python3
+        - choco install -y visualstudio2019buildtools visualstudio2019-workload-vctools
+        - choco install -y python3 --version=3.8
         - export PATH=$PATH:"c:\Python38"
         - ln -s /c/Python38/python.exe /c/Python38/python3.exe
       script:
