@@ -35,11 +35,18 @@ endfunction()
 function(blit_metadata TARGET FILE)
 	find_package(PythonInterp 3.6 REQUIRED)
 
+	# cause cmake to reconfigure whenever the asset list changes
+	set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
+
+	# get the inputs/outputs for the asset tool (at configure time)
+	execute_process(COMMAND ${PYTHON_EXECUTABLE} -m ttblit cmake --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --cmake ${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
+	include(${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
+
 	add_custom_command(
 		TARGET ${TARGET} POST_BUILD
 		COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit metadata --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --file ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.bin
 	)
 
 	# force relink on change so that the post-build commands are rerun
-	set_property(TARGET ${TARGET} APPEND PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
+	set_property(TARGET ${TARGET} APPEND PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} ${METADATA_DEPENDS})
 endfunction()
