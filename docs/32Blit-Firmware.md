@@ -17,7 +17,7 @@ This repository includes firmware for the 32Blit that lets you manage games on S
 In order to use the 32blit firmware, you will need to:
 
 1. Build and install the 32Blit firmware (if you don't have it already)
-2. [Build the flash loader](32Blit-Loader.md) tool in `tools/src`
+2. The 32blit tools `pip install 32blit`
 3. Flash the firmware to your 32Blit
 
 You must make sure you have an ARM GCC cross-compile environment set up on your computer, refer to the relevant documentation below:
