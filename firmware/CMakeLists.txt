@@ -3,7 +3,7 @@ project (firmware)
 include (../32blit.cmake)
 
 blit_executable_int_flash(firmware firmware.cpp metadata.cpp)
-
+blit_assets_yaml(firmware assets.yml)
 
 target_compile_definitions(firmware
   PRIVATE
