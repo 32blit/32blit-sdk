@@ -166,16 +166,28 @@ void load_file_list(std::string directory) {
   sort_file_list();
 }
 
+// returns true is there is a valid header here
+bool read_flash_game_header(uint32_t offset, BlitGameHeader &header) {
+  if(qspi_read_buffer(offset, reinterpret_cast<uint8_t *>(&header), sizeof(header)) != QSPI_OK)
+    return false;
+
+  if(header.magic != blit_game_magic)
+    return false;
+
+  // make sure end/size is sensible
+  if(header.end <= 0x90000000)
+    return false;
+
+  return true;
+}
+
 void scan_flash() {
   game_list.clear();
 
   for(uint32_t offset = 0; offset < qspi_flash_size;) {
     BlitGameHeader header;
 
-    if(qspi_read_buffer(offset, reinterpret_cast<uint8_t *>(&header), sizeof(header)) != QSPI_OK)
-      break;
-
-    if(header.magic != blit_game_magic) {
+    if(!read_flash_game_header(offset, header)) {
       offset += qspi_flash_sector_size;
       continue;
     }
@@ -587,16 +599,7 @@ void cdc_flash_list() {
   for(uint32_t offset = 0; offset < qspi_flash_size;) {
     BlitGameHeader header;
 
-    if(qspi_read_buffer(offset, reinterpret_cast<uint8_t *>(&header), sizeof(header)) != QSPI_OK)
-      break;
-
-    if(header.magic != blit_game_magic) {
-      offset += qspi_flash_sector_size;
-      continue;
-    }
-
-    // make sure end/size is sensible
-    if(header.end <= 0x90000000) {
+    if(!read_flash_game_header(offset, header)) {
       offset += qspi_flash_sector_size;
       continue;
     }
