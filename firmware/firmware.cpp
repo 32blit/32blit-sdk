@@ -4,6 +4,7 @@
 #include "quadspi.h"
 #include "CDCCommandStream.h"
 #include "USBManager.h"
+#include "usbd_cdc_if.h"
 #include "file.hpp"
 #include "executable.hpp"
 #include "metadata.hpp"
@@ -15,7 +16,7 @@
 
 using namespace blit;
 
-enum State {stFlashFile, stSaveFile, stFlashCDC, stLS, stMassStorage};
+enum State {stFlashFile, stSaveFile, stFlashCDC, stMassStorage};
 
 constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 constexpr uint32_t qspi_flash_size = 32768 * 1024;
@@ -369,11 +370,6 @@ void update(uint32_t time)
   if(dialog.update())
     return;
 
-  if(state == stLS) {
-    load_file_list(current_directory->name);
-    state = stFlashFile;
-  }
-
   bool button_home = buttons.pressed & Button::HOME;
   
   if(state == stFlashFile)
@@ -585,6 +581,66 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
   return bytes_flashed == bytes_total ? flash_offset : 0xFFFFFFFF;
 }
 
+
+void cdc_flash_list() {
+  // scan through flash and send offset, size and metadata
+  for(uint32_t offset = 0; offset < qspi_flash_size;) {
+    BlitGameHeader header;
+
+    if(qspi_read_buffer(offset, reinterpret_cast<uint8_t *>(&header), sizeof(header)) != QSPI_OK)
+      break;
+
+    if(header.magic != blit_game_magic) {
+      offset += qspi_flash_sector_size;
+      continue;
+    }
+
+    // make sure end/size is sensible
+    if(header.end <= 0x90000000) {
+      offset += qspi_flash_sector_size;
+      continue;
+    }
+
+    uint32_t size = header.end - 0x90000000;
+
+    // metadata header
+    uint8_t buf[10];
+    if(qspi_read_buffer(offset + size, buf, 10) != QSPI_OK)
+      break;
+
+    while(CDC_Transmit_HS((uint8_t *)&offset, 4) == USBD_BUSY){}
+    while(CDC_Transmit_HS((uint8_t *)&size, 4) == USBD_BUSY){}
+
+    uint16_t metadata_len = 0;
+
+    if(memcmp(buf, "BLITMETA", 8) == 0)
+      metadata_len = *reinterpret_cast<uint16_t *>(buf + 8);
+
+    while(CDC_Transmit_HS((uint8_t *)&metadata_len, 2) == USBD_BUSY){}
+
+    // send metadata
+    uint32_t metadata_offset = offset + size + 10;
+    while(metadata_len) {
+      int chunk_size = std::min(256, (int)metadata_len);
+      uint8_t metadata_buf[256];
+
+      if(qspi_read_buffer(metadata_offset, metadata_buf, chunk_size) != QSPI_OK)
+        break;
+
+      while(CDC_Transmit_HS(metadata_buf, chunk_size) == USBD_BUSY){}
+
+      metadata_offset += chunk_size;
+      metadata_len -= chunk_size;
+    }
+
+    offset += calc_num_blocks(size) * qspi_flash_sector_size;
+  }
+
+  // end marker
+  uint32_t end = 0xFFFFFFFF;
+  while(CDC_Transmit_HS((uint8_t *)&end, 4) == USBD_BUSY){}
+}
+
 //////////////////////////////////////////////////////////////////////
 // Streaming Code
 //  The streaming code works with a simple state machine,
@@ -613,8 +669,8 @@ bool FlashLoader::StreamInit(CDCFourCC uCommand)
     break;
 
     case CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value:
-      state = stLS;
       bNeedStream = false;
+      cdc_flash_list();
     break;
 
   }
