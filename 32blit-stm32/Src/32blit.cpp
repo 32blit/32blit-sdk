@@ -28,6 +28,7 @@
 #include "engine/api_private.hpp"
 #include "graphics/color.hpp"
 #include "engine/running_average.hpp"
+#include "engine/menu.hpp"
 
 #include "stdarg.h"
 using namespace blit;
@@ -429,39 +430,6 @@ enum MenuItem {
     LAST_COUNT // leave me last pls
 };
 
-//pinched from http://www.cplusplus.com/forum/beginner/41790/
-inline MenuItem& operator++(MenuItem& eDOW, int) {
-  const int i = static_cast<int>(eDOW) + 1;
-	eDOW = static_cast<MenuItem>((i) % (LAST_COUNT));
-    return eDOW;
-}
-
-inline MenuItem& operator--(MenuItem& type, int) {
-	const int i = static_cast<int>(type)-1;
-	
-	if (i < 0) { // Check whether to cycle to last item if number goes below 0
-		type = static_cast<MenuItem>(LAST_COUNT - 1);
-	} else { // Else set it to current number -1
-		type = static_cast<MenuItem>((i) % LAST_COUNT);
-	}
-	return type;
-}
-
-const char *menu_name (MenuItem item) {
-  switch (item) {
-    case BACKLIGHT: return "Backlight";
-    case VOLUME: return "Volume";
-    case SCREENSHOT: return "Take Screenshot";
-    case DFU: return "DFU Mode";
-    case SHIPPING: return "Power Off";
-    case SWITCH_EXE: return blit_user_code_running() ? "Exit Game" :  "Launch Game";
-    case LAST_COUNT: return "";
-  };
-  return "";
-}
-
-MenuItem menu_item = BACKLIGHT;
-
 static const Pen menu_colours[]{
   {0}, 
   { 30,  30,  50, 200}, // background
@@ -476,60 +444,105 @@ static const Pen menu_colours[]{
 static constexpr int num_menu_colours = sizeof(menu_colours) / sizeof(Pen);
 static Pen menu_saved_colours[num_menu_colours];
 
-Point menu_title_origin (MenuItem item) { return Point(5, item * 10 + 20); }
-Point press_a_origin (MenuItem item, int screen_width) { return Point(screen_width/2, item * 10 + 20); }
-Rect menu_item_frame (MenuItem item, int screen_width) { return Rect (0, item * 10 + 19, screen_width, 9); }
+static Pen get_menu_colour(int index){return screen.format == PixelFormat::P ? Pen(index) : menu_colours[index];};
 
-void blit_menu_update(uint32_t time) {
-  if(blit::buttons.pressed & blit::Button::DPAD_UP) {
-    menu_item --;
-    
-  } else if (blit::buttons.pressed & blit::Button::DPAD_DOWN) {
-    menu_item ++;
-    
-  } else {
-    bool button_a = blit::buttons.released & blit::Button::A;
-    switch(menu_item) {
+class FirmwareMenu final : public Menu {
+public:
+  using Menu::Menu;
+
+  void prepare() {
+    // slightly nasty dynamic label
+    const_cast<Item *>(items)[SWITCH_EXE].label = blit_user_code_running() ? "Exit Game" :  "Launch Game";
+
+    background_colour = get_menu_colour(1);
+    foreground_colour = get_menu_colour(2);
+    bar_background_color = get_menu_colour(3);
+    selected_item_background = get_menu_colour(4);
+  }
+
+protected:
+  void render_item(const Item &item, int y) const override {
+    Menu::render_item(item, y);
+
+    const auto screen_width = screen.bounds.w;
+
+    const int bar_margin = 2;
+    const int bar_height = item_h - bar_margin * 2;
+
+    switch(item.id) {
       case BACKLIGHT:
-        if (blit::buttons & blit::Button::DPAD_LEFT) {
-          persist.backlight -= 1.0f / 256.0f;
-        } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
-          persist.backlight += 1.0f / 256.0f;
-        }
-        persist.backlight = std::fmin(1.0f, std::fmax(0.0f, persist.backlight));
+        screen.pen = bar_background_color;
+        screen.rectangle(Rect(screen_width / 2, y + bar_margin, 75, bar_height));
+        screen.pen = foreground_colour;
+        screen.rectangle(Rect(screen_width / 2, y + bar_margin, 75 * persist.backlight, bar_height));
+
         break;
       case VOLUME:
-        if (blit::buttons & blit::Button::DPAD_LEFT) {
-          persist.volume -= 1.0f / 256.0f;
-        } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
-          persist.volume += 1.0f / 256.0f;
-        }
-        persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
-        blit_update_volume();
+        screen.pen = bar_background_color;
+        screen.rectangle(Rect(screen_width / 2, y + bar_margin, 75, bar_height));
+        screen.pen = foreground_colour;
+        screen.rectangle(Rect(screen_width / 2, y + bar_margin, 75 * persist.volume, bar_height));
+
         break;
+      default:
+        screen.pen = foreground_colour;
+        screen.text("Press A", minimal_font, Point(screen_width / 2, y + item_margin_y));
+        break;  
+    }
+  }
+
+  void update_item(const Item &item) override {
+    if(item.id == BACKLIGHT) {
+      if (blit::buttons & blit::Button::DPAD_LEFT) {
+        persist.backlight -= 1.0f / 256.0f;
+      } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
+        persist.backlight += 1.0f / 256.0f;
+      }
+      persist.backlight = std::fmin(1.0f, std::fmax(0.0f, persist.backlight));
+    } else if(item.id == VOLUME) {
+      if (blit::buttons & blit::Button::DPAD_LEFT) {
+        persist.volume -= 1.0f / 256.0f;
+      } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
+        persist.volume += 1.0f / 256.0f;
+      }
+      persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
+      blit_update_volume();
+    }
+  }
+
+  void item_activated(const Item &item) override {
+    switch(item.id) {
       case SCREENSHOT:
-        if(button_a)
-          take_screenshot = true;
+        take_screenshot = true;
         break;
       case DFU:
-        if(button_a){
-          DFUBoot();
-        }
+        DFUBoot();
         break;
       case SHIPPING:
-        if(button_a){
-          bq24295_enable_shipping_mode(&hi2c4);
-        }
+        bq24295_enable_shipping_mode(&hi2c4);
         break;
       case SWITCH_EXE:
-        if(button_a){
-          blit_switch_execution(persist.last_game_offset);
-        }
-        break;
-      case LAST_COUNT:
+        blit_switch_execution(persist.last_game_offset);
         break;
     }
   }
+
+  Pen bar_background_color;
+};
+
+static Menu::Item firmware_menu_items[]{
+  {BACKLIGHT, "Backlight"},
+  {VOLUME, "Volume"},
+  {SCREENSHOT, "Take Screenshot"},
+  {DFU, "DFU Mode"},
+  {SHIPPING, "Power Off"},
+  {SWITCH_EXE, ""} // label depends on if a game is running
+};
+
+FirmwareMenu firmware_menu("System Menu", firmware_menu_items, MenuItem::LAST_COUNT);
+
+void blit_menu_update(uint32_t time) {
+  firmware_menu.update();
 }
 
 void blit_menu_render(uint32_t time) {
@@ -552,29 +565,17 @@ void blit_menu_render(uint32_t time) {
       set_screen_palette(menu_colours, num_menu_colours);
   }
 
+  firmware_menu.render();
+
   const int screen_width = blit::screen.bounds.w;
   const int screen_height = blit::screen.bounds.h;
 
-  auto pallette_col = [](int index) {return screen.format == PixelFormat::P ? Pen(index) : menu_colours[index];};
-
-  const Pen menu_bg_colour = pallette_col(1);
-  const Pen foreground_colour = pallette_col(2);
-  const Pen bar_background_color = pallette_col(3);
-  const Pen selected_item_bg_colour = pallette_col(4);
-
-  screen.pen = menu_bg_colour;
-  screen.clear();
+  const Pen foreground_colour = get_menu_colour(2);
+  const Pen bar_background_color = get_menu_colour(3);
 
   screen.pen = foreground_colour;
 
-  // header
-  screen.text("System Menu", minimal_font, Point(5, 5));
-
-  screen.h_span(Point(0, 15), screen_width);
-
-  // footer
-  screen.h_span(Point(0, screen_height - 15), screen_width);
-
+  // footer content
   char buf[100];
   snprintf(buf, 100, "Charge: %s   VBus: %s   Voltage: %i.%iv",
     battery_charge_status(),
@@ -590,6 +591,7 @@ void blit_menu_render(uint32_t time) {
     minimal_font, Point(0, screen_height - 10), false);
   */
 
+  // add battery info to header
   screen.text("bat", minimal_font, Point(screen_width / 2, 5));
   int battery_meter_width = 55;
   battery_meter_width = float(battery_meter_width) * (battery - 3.0f) / 1.1f;
@@ -600,16 +602,16 @@ void blit_menu_render(uint32_t time) {
 
   switch(battery_status >> 6){
     case 0b00: // Unknown
-        screen.pen = pallette_col(5);
+        screen.pen = get_menu_colour(5);
         break;
     case 0b01: // USB Host
-        screen.pen = pallette_col(6);
+        screen.pen = get_menu_colour(6);
         break;
     case 0b10: // Adapter Port
-        screen.pen = pallette_col(6);
+        screen.pen = get_menu_colour(6);
         break;
     case 0b11: // OTG
-        screen.pen = pallette_col(7);
+        screen.pen = get_menu_colour(7);
         break;
   }
   screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_meter_width, 5));
@@ -617,43 +619,8 @@ void blit_menu_render(uint32_t time) {
   if(battery_charge_status == 0b01 || battery_charge_status == 0b10){
     int battery_fill_width = (time / 500) % battery_meter_width;
     battery_fill_width = std::min(battery_meter_width, battery_fill_width);
-    screen.pen = pallette_col(8);
+    screen.pen = get_menu_colour(8);
     screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_fill_width, 5));
-  }
-
-  // Selected item
-  screen.pen = selected_item_bg_colour;
-  screen.rectangle(menu_item_frame(menu_item, screen_width));
-
-  // Menu rows
-
-  for (int i = BACKLIGHT; i < LAST_COUNT; i++) {
-    const MenuItem item = (MenuItem)i;
-
-    screen.pen = foreground_colour;
-    screen.text(menu_name(item), minimal_font, menu_title_origin(item));
-
-    switch (item) {
-      case BACKLIGHT:
-        screen.pen = bar_background_color;
-        screen.rectangle(Rect(screen_width / 2, 21, 75, 5));
-        screen.pen = foreground_colour;
-        screen.rectangle(Rect(screen_width / 2, 21, 75 * persist.backlight, 5));
-
-        break;
-      case VOLUME:
-        screen.pen = bar_background_color;
-        screen.rectangle(Rect(screen_width / 2, 31, 75, 5));
-        screen.pen = foreground_colour;
-        screen.rectangle(Rect(screen_width / 2, 31, 75 * persist.volume, 5));
-
-        break;
-      default:
-        screen.pen = foreground_colour;
-        screen.text("Press A", minimal_font, press_a_origin(item, screen_width));
-        break;  
-    }
-
   }
 }
 
@@ -675,6 +642,8 @@ void blit_menu() {
   }
   else
   {
+    firmware_menu.prepare();
+
     blit::update = blit_menu_update;
     blit::render = blit_menu_render;
     do_tick = blit::tick;
