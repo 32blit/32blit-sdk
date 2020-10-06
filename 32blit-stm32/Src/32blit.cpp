@@ -478,17 +478,19 @@ protected:
 
     const int bar_margin = 2;
     const int bar_height = item_h - bar_margin * 2;
-
+    const int bar_width = 75;
+    int bar_x = screen_width - bar_width - margin_x;
+  
     switch(item.id) {
       case BACKLIGHT:
-        draw_slider(Point(screen_width / 2, y + bar_margin), 75, persist.backlight, foreground_colour);
+        draw_slider(Point(bar_x, y + bar_margin), bar_width, persist.backlight, foreground_colour);
         break;
       case VOLUME:
-        draw_slider(Point(screen_width / 2, y + bar_margin), 75, persist.volume, foreground_colour);
+        draw_slider(Point(bar_x, y + bar_margin), bar_width, persist.volume, foreground_colour);
         break;
       default:
         screen.pen = foreground_colour;
-        screen.text("Press A", minimal_font, Point(screen_width / 2, y + item_margin_y));
+        screen.text("Press A", minimal_font, Point(screen_width - margin_x, y + item_margin_y), true, TextAlign::right);
         break;  
     }
   }
@@ -594,13 +596,13 @@ void blit_menu_render(uint32_t time) {
   */
 
   // add battery info to header
-  screen.text("bat", minimal_font, Point(screen_width / 2, 5));
+  screen.text("bat", minimal_font, Point(screen_width - 80, 5));
   int battery_meter_width = 55;
   battery_meter_width = float(battery_meter_width) * (battery - 3.0f) / 1.1f;
   battery_meter_width = std::max(0, std::min(55, battery_meter_width));
 
   screen.pen = bar_background_color;
-  screen.rectangle(Rect((screen_width / 2) + 20, 6, 55, 5));
+  screen.rectangle(Rect(screen_width - 60, 6, 55, 5));
 
   switch(battery_status >> 6){
     case 0b00: // Unknown
@@ -616,13 +618,13 @@ void blit_menu_render(uint32_t time) {
         screen.pen = get_menu_colour(7);
         break;
   }
-  screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_meter_width, 5));
+  screen.rectangle(Rect(screen_width - 60, 6, battery_meter_width, 5));
   uint8_t battery_charge_status = (battery_status >> 4) & 0b11;
   if(battery_charge_status == 0b01 || battery_charge_status == 0b10){
     int battery_fill_width = (time / 500) % battery_meter_width;
     battery_fill_width = std::min(battery_meter_width, battery_fill_width);
     screen.pen = get_menu_colour(8);
-    screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_fill_width, 5));
+    screen.rectangle(Rect(screen_width - 60, 6, battery_fill_width, 5));
   }
 }
 
