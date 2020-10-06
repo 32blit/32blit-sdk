@@ -67,7 +67,7 @@ int calc_num_blocks(uint32_t size) {
 }
 
 void erase_qspi_flash(uint32_t start_sector, uint32_t size_bytes) {
-  uint32_t sector_count = (size_bytes / qspi_flash_sector_size) + 1;
+  uint32_t sector_count = calc_num_blocks(size_bytes);
 
   progress.show("Erasing flash sectors...", sector_count);
 
