@@ -126,7 +126,7 @@ uint32_t get_max_us_timer()
 	return UINT32_MAX / uTicksPerUs;
 }
 
-std::string battery_vbus_status() {
+const char *battery_vbus_status() {
   switch(battery_status >> 6){
     case 0b00: // Unknown
       return "Unknown";
@@ -142,7 +142,7 @@ std::string battery_vbus_status() {
   return "";
 }
 
-std::string battery_charge_status() {
+const char *battery_charge_status() {
   switch((battery_status >> 4) & 0b11){
     case 0b00: // Not Charging
       return "Nope";
@@ -447,7 +447,7 @@ inline MenuItem& operator--(MenuItem& type, int) {
 	return type;
 }
 
-std::string menu_name (MenuItem item) {
+const char *menu_name (MenuItem item) {
   switch (item) {
     case BACKLIGHT: return "Backlight";
     case VOLUME: return "Volume";
@@ -567,13 +567,20 @@ void blit_menu_render(uint32_t time) {
 
   screen.pen = foreground_colour;
 
+  // header
   screen.text("System Menu", minimal_font, Point(5, 5));
 
-  screen.text(
-    "Charge: " + battery_charge_status() +
-    "   VBus: " + battery_vbus_status() + 
-    "   Voltage: " + std::to_string(int(battery)) + "." + std::to_string(int((battery - int(battery)) * 10.0f)) + "v",
-    minimal_font, Point(0, screen_height - 10));
+  screen.h_span(Point(0, 15), screen_width);
+
+  // footer
+  screen.h_span(Point(0, screen_height - 15), screen_width);
+
+  char buf[100];
+  snprintf(buf, 100, "Charge: %s   VBus: %s   Voltage: %i.%iv",
+    battery_charge_status(),
+    battery_vbus_status(),
+    int(battery), int((battery - int(battery)) * 10.0f));
+  screen.text(buf, minimal_font, Point(0, screen_height - 10));
 
   /*
   // Raw register values can be displayed with a fixed-width font using std::bitset<8> for debugging
@@ -584,9 +591,9 @@ void blit_menu_render(uint32_t time) {
   */
 
   screen.text("bat", minimal_font, Point(screen_width / 2, 5));
-  uint16_t battery_meter_width = 55;
+  int battery_meter_width = 55;
   battery_meter_width = float(battery_meter_width) * (battery - 3.0f) / 1.1f;
-  battery_meter_width = std::max((uint16_t)0, std::min((uint16_t)55, battery_meter_width));
+  battery_meter_width = std::max(0, std::min(55, battery_meter_width));
 
   screen.pen = bar_background_color;
   screen.rectangle(Rect((screen_width / 2) + 20, 6, 55, 5));
@@ -608,15 +615,11 @@ void blit_menu_render(uint32_t time) {
   screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_meter_width, 5));
   uint8_t battery_charge_status = (battery_status >> 4) & 0b11;
   if(battery_charge_status == 0b01 || battery_charge_status == 0b10){
-    uint16_t battery_fill_width = uint32_t(time / 500.0f) % battery_meter_width;
-    battery_fill_width = std::max((uint16_t)0, std::min((uint16_t)battery_meter_width, battery_fill_width));
+    int battery_fill_width = (time / 500) % battery_meter_width;
+    battery_fill_width = std::min(battery_meter_width, battery_fill_width);
     screen.pen = pallette_col(8);
     screen.rectangle(Rect((screen_width / 2) + 20, 6, battery_fill_width, 5));
   }
-
-  // Horizontal Line
-  screen.pen = foreground_colour;
-  screen.h_span(Point(0, 15), screen_width);
 
   // Selected item
   screen.pen = selected_item_bg_colour;
@@ -652,12 +655,6 @@ void blit_menu_render(uint32_t time) {
     }
 
   }
-
-
-  // Bottom horizontal Line
-  screen.pen = foreground_colour;
-  screen.h_span(Point(0, screen_height - 15), screen_width);
-
 }
 
 void blit_menu() {
