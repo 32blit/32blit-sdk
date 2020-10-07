@@ -46,7 +46,7 @@ namespace blit {
 
       // footer
       screen.pen = foreground_colour;
-      screen.h_span(Point(display_rect.x, display_rect.y + display_rect.h - 15), display_rect.w);
+      screen.h_span(Point(display_rect.x, display_rect.y + display_rect.h - footer_h), display_rect.w);
     }
 
     void update() {
