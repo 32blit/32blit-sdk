@@ -24,12 +24,14 @@ namespace blit {
       screen.rectangle(display_rect);
 
       // header
-      screen.pen = foreground_colour;
-      Rect header_rect(display_rect.x + item_padding_x, display_rect.y, display_rect.w - item_padding_x * 2, header_h);
+      screen.pen = header_background;
+      Rect header_rect(display_rect.x, display_rect.y, display_rect.w, header_h);
+      screen.rectangle(header_rect);
+
+      screen.pen = header_foreground;
+      header_rect.x += item_padding_x;
       header_rect.h += minimal_font.spacing_y; // adjust for alignment
       screen.text(title, minimal_font, header_rect, true, TextAlign::center_left);
-
-      screen.h_span(Point(display_rect.x, display_rect.y + header_h - 1), display_rect.w);
 
       int y = display_rect.y + header_h + margin_y;
 
@@ -48,8 +50,9 @@ namespace blit {
 
       // footer
       if(footer_h) {
-        screen.pen = foreground_colour;
-        screen.h_span(Point(display_rect.x, display_rect.y + display_rect.h - footer_h + 1), display_rect.w);
+        screen.pen = header_background;
+        Rect footer_rect(display_rect.x, display_rect.y + display_rect.h - footer_h, display_rect.w, footer_h);
+        screen.rectangle(footer_rect);
       }
     }
 
@@ -114,5 +117,8 @@ namespace blit {
     Pen background_colour = Pen(30,  30,  50, 200);
     Pen foreground_colour = Pen(255, 255, 255);
     Pen selected_item_background = Pen(50,  50,  70);
+
+    Pen header_background = Pen(235, 245, 255);
+    Pen header_foreground = Pen(3, 5, 7);
   };
 }

@@ -440,6 +440,8 @@ static const Pen menu_colours[]{
   {  0, 255,   0}, // battery usb host/adapter port
   {255,   0,   0}, // battery otg
   {100, 100, 255}, // battery charging
+  {235, 245, 255}, // header/footer bg
+  {  3,   5,   7}, // header/footer fg
 };
 static constexpr int num_menu_colours = sizeof(menu_colours) / sizeof(Pen);
 static Pen menu_saved_colours[num_menu_colours];
@@ -458,6 +460,8 @@ public:
     foreground_colour = get_menu_colour(2);
     bar_background_color = get_menu_colour(3);
     selected_item_background = get_menu_colour(4);
+    header_background = get_menu_colour(9);
+    header_foreground = get_menu_colour(10);
 
     display_rect.w = screen.bounds.w;
     display_rect.h = screen.bounds.h;
@@ -577,7 +581,7 @@ void blit_menu_render(uint32_t time) {
   const int screen_width = blit::screen.bounds.w;
   const int screen_height = blit::screen.bounds.h;
 
-  const Pen foreground_colour = get_menu_colour(2);
+  const Pen foreground_colour = get_menu_colour(10);
   const Pen bar_background_color = get_menu_colour(3);
 
   screen.pen = foreground_colour;
@@ -588,7 +592,7 @@ void blit_menu_render(uint32_t time) {
     battery_charge_status(),
     battery_vbus_status(),
     int(battery), int((battery - int(battery)) * 10.0f));
-  screen.text(buf, minimal_font, Point(0, screen_height - 10));
+  screen.text(buf, minimal_font, Point(5, screen_height - 11));
 
   /*
   // Raw register values can be displayed with a fixed-width font using std::bitset<8> for debugging
