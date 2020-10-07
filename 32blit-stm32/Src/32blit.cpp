@@ -478,8 +478,8 @@ public:
   }
 
 protected:
-  void render_item(const Item &item, int y) const override {
-    Menu::render_item(item, y);
+  void render_item(const Item &item, int y, int index) const override {
+    Menu::render_item(item, y, index);
 
     const auto screen_width = screen.bounds.w;
 

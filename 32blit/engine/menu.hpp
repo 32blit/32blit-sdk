@@ -35,15 +35,11 @@ namespace blit {
 
       int y = display_rect.y + header_h + margin_y;
 
-      // selected item
-      screen.pen = selected_item_background;
-      screen.rectangle(Rect(display_rect.x, y + current_item * (item_h + item_spacing), display_rect.w, item_h));
-
       // items
       for(int i = 0; i < num_items; i++) {
         auto &item = items[i];
 
-        render_item(item, y);
+        render_item(item, y, i);
 
         y += item_h + item_spacing;
       }
@@ -86,9 +82,18 @@ namespace blit {
     std::string_view title;
 
   protected:
-    virtual void render_item(const Item &item, int y) const {
+    virtual void render_item(const Item &item, int y, int index) const {
+      Rect item_rect(display_rect.x, y, display_rect.w, item_h);
+
+      // selected item
+      if(index == current_item) {
+        screen.pen = selected_item_background;
+        screen.rectangle(item_rect);
+      }
+      
       screen.pen = foreground_colour;
-      Rect item_rect(display_rect.x + item_padding_x, y + item_adjust_y, display_rect.w - item_padding_x * 2, item_h);
+      item_rect.x += item_padding_x;
+      item_rect.y += item_adjust_y;
       item_rect.h += minimal_font.spacing_y; // adjust for alignment
       screen.text(item.label, minimal_font, item_rect, true, TextAlign::center_left);
     }
