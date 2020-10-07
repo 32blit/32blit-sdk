@@ -25,9 +25,11 @@ namespace blit {
 
       // header
       screen.pen = foreground_colour;
-      screen.text(title, minimal_font, Point(display_rect.x + margin_x, display_rect.y + margin_y));
+      Rect header_rect(display_rect.x + item_padding_x, display_rect.y, display_rect.w - item_padding_x * 2, header_h);
+      header_rect.h += minimal_font.spacing_y; // adjust for alignment
+      screen.text(title, minimal_font, header_rect, true, TextAlign::center_left);
 
-      screen.h_span(Point(display_rect.x, display_rect.y + header_h), display_rect.w);
+      screen.h_span(Point(display_rect.x, display_rect.y + header_h - 1), display_rect.w);
 
       int y = display_rect.y + header_h + margin_y;
 
@@ -45,8 +47,10 @@ namespace blit {
       }
 
       // footer
-      screen.pen = foreground_colour;
-      screen.h_span(Point(display_rect.x, display_rect.y + display_rect.h - footer_h), display_rect.w);
+      if(footer_h) {
+        screen.pen = foreground_colour;
+        screen.h_span(Point(display_rect.x, display_rect.y + display_rect.h - footer_h + 1), display_rect.w);
+      }
     }
 
     void update() {
@@ -81,7 +85,9 @@ namespace blit {
   protected:
     virtual void render_item(const Item &item, int y) const {
       screen.pen = foreground_colour;
-      screen.text(item.label, minimal_font, Point(display_rect.x + margin_x, y + item_margin_y));
+      Rect item_rect(display_rect.x + item_padding_x, y + item_adjust_y, display_rect.w - item_padding_x * 2, item_h);
+      item_rect.h += minimal_font.spacing_y; // adjust for alignment
+      screen.text(item.label, minimal_font, item_rect, true, TextAlign::center_left);
     }
 
     virtual void update_item(const Item &item) {
@@ -96,11 +102,13 @@ namespace blit {
 
     // layout
     Rect display_rect;
-    const int header_h = 15, footer_h = 15;
-    const int margin_x = 5, margin_y = 5;
-    const int item_h = 9;
-    const int item_margin_y = 1;
-    const int item_spacing = 1;
+    int header_h = 16, footer_h = 16;
+    int margin_y = 5; // margin between items and header
+
+    int item_h = 9;
+    int item_padding_x = 5;
+    int item_adjust_y = 1; // minimal_font y is a bit off
+    int item_spacing = 1;
 
     // colours
     Pen background_colour = Pen(30,  30,  50, 200);
