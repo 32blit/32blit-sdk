@@ -23,9 +23,13 @@ namespace blit {
       screen.pen = background_colour;
       screen.rectangle(display_rect);
 
+      int x = display_rect.x;
+      int y = display_rect.y;
+      int w = display_rect.w;
+
       // header
       screen.pen = header_background;
-      Rect header_rect(display_rect.x, display_rect.y, display_rect.w, header_h);
+      Rect header_rect(x, y, w, header_h);
       screen.rectangle(header_rect);
 
       screen.pen = header_foreground;
@@ -33,12 +37,20 @@ namespace blit {
       header_rect.h += font.spacing_y; // adjust for alignment
       screen.text(title, font, header_rect, true, TextAlign::center_left);
 
-      int y = display_rect.y + header_h;
+      // y region to clip to
+      y += header_h;
       int display_height = display_rect.h - (header_h + footer_h);
 
+      // footer
+      if(footer_h) {
+        screen.pen = header_background;
+        Rect footer_rect(x, y + display_height, w, footer_h);
+        screen.rectangle(footer_rect);
+      }
+
       auto old_clip = screen.clip;
-      screen.clip = Rect(display_rect.x, y, display_rect.w, display_height);
-      y += scroll_offset + margin_y;
+      screen.clip = Rect(x, y, w, display_height);
+      y += (int)scroll_offset + margin_y;
 
       // items
       for(int i = 0; i < num_items; i++) {
@@ -50,13 +62,6 @@ namespace blit {
       }
 
       screen.clip = old_clip;
-
-      // footer
-      if(footer_h) {
-        screen.pen = header_background;
-        Rect footer_rect(display_rect.x, display_rect.y + display_rect.h - footer_h, display_rect.w, footer_h);
-        screen.rectangle(footer_rect);
-      }
     }
 
     void update(uint32_t time) {
