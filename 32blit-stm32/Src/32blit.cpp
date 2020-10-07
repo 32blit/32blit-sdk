@@ -553,7 +553,7 @@ static Menu::Item firmware_menu_items[]{
 FirmwareMenu firmware_menu("System Menu", firmware_menu_items, MenuItem::LAST_COUNT);
 
 void blit_menu_update(uint32_t time) {
-  firmware_menu.update();
+  firmware_menu.update(time);
 }
 
 void blit_menu_render(uint32_t time) {

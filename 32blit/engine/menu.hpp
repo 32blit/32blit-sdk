@@ -59,18 +59,31 @@ namespace blit {
       }
     }
 
-    void update() {
+    void update(uint32_t time) {
       // default size
       if(display_rect.w == 0 && display_rect.h == 0) {
         display_rect.w = screen.bounds.w;
         display_rect.h = screen.bounds.h;
       }
 
-      if(buttons.pressed & Button::DPAD_UP)
-        current_item = current_item == 0 ? num_items - 1 : current_item - 1;
-      else if(buttons.pressed & Button::DPAD_DOWN)
-        current_item = current_item == num_items - 1 ? 0 : current_item + 1;
-      else if(buttons.pressed & Button::A)
+      // key repeat for up/down
+      const int repeat_ms = 200;
+      if(buttons.pressed & (Button::DPAD_UP | Button::DPAD_DOWN))
+        repeat_start_time = time - repeat_ms;
+
+      if((time - repeat_start_time) >= repeat_ms) {
+        if(buttons & Button::DPAD_UP) {
+          if(--current_item < 0)
+            current_item += num_items;
+        } else if(buttons & Button::DPAD_DOWN) {
+          if(++current_item == num_items)
+            current_item = 0;
+        }
+
+        repeat_start_time = time;
+      }
+
+      if(buttons.pressed & Button::A)
         item_activated(items[current_item]);
 
       // scrolling
@@ -127,6 +140,8 @@ namespace blit {
     int num_items;
     int current_item = 0;
     float scroll_offset = 0.0f;
+
+    uint32_t repeat_start_time = 0;
 
     // layout
     Rect display_rect;
