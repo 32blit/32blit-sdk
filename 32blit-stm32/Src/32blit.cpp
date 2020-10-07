@@ -458,6 +458,9 @@ public:
     foreground_colour = get_menu_colour(2);
     bar_background_color = get_menu_colour(3);
     selected_item_background = get_menu_colour(4);
+
+    display_rect.w = screen.bounds.w;
+    display_rect.h = screen.bounds.h;
   }
 
   void draw_slider(Point pos, int width, float value, Pen colour) const {
