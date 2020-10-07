@@ -33,7 +33,12 @@ namespace blit {
       header_rect.h += font.spacing_y; // adjust for alignment
       screen.text(title, font, header_rect, true, TextAlign::center_left);
 
-      int y = display_rect.y + header_h + margin_y;
+      int y = display_rect.y + header_h;
+      int display_height = display_rect.h - (header_h + footer_h);
+
+      auto old_clip = screen.clip;
+      screen.clip = Rect(display_rect.x, y, display_rect.w, display_height);
+      y += scroll_offset + margin_y;
 
       // items
       for(int i = 0; i < num_items; i++) {
@@ -43,6 +48,8 @@ namespace blit {
 
         y += item_h + item_spacing;
       }
+
+      screen.clip = old_clip;
 
       // footer
       if(footer_h) {
@@ -65,6 +72,18 @@ namespace blit {
         current_item = current_item == num_items - 1 ? 0 : current_item + 1;
       else if(buttons.pressed & Button::A)
         item_activated(items[current_item]);
+
+      // scrolling
+      int total_height = num_items * (item_h + item_spacing);
+      int display_height = display_rect.h - (header_h + footer_h + margin_y * 2);
+  
+      int current_y = current_item * (item_h + item_spacing);
+      int target_scroll = display_height / 2 - current_y;
+
+      // clamp
+      target_scroll = std::min(0, std::max(-(total_height - display_height), target_scroll));
+
+      scroll_offset += (target_scroll - scroll_offset) * 0.2f;
 
       update_item(items[current_item]);
     }
@@ -107,6 +126,7 @@ namespace blit {
     const Item *items;
     int num_items;
     int current_item = 0;
+    float scroll_offset = 0.0f;
 
     // layout
     Rect display_rect;
