@@ -14,8 +14,8 @@ namespace blit {
       const char *label;
     };
 
-    Menu(std::string_view title, const Item *items = nullptr, int num_items = 0) : title(title), items(items), num_items(num_items),
-      display_rect(0, 0, 0, 0) {
+    Menu(std::string_view title, const Item *items = nullptr, int num_items = 0, const Font &font = minimal_font)
+      : title(title), items(items), num_items(num_items), display_rect(0, 0, 0, 0), font(font) {
     }
     virtual ~Menu() {}
 
@@ -30,8 +30,8 @@ namespace blit {
 
       screen.pen = header_foreground;
       header_rect.x += item_padding_x;
-      header_rect.h += minimal_font.spacing_y; // adjust for alignment
-      screen.text(title, minimal_font, header_rect, true, TextAlign::center_left);
+      header_rect.h += font.spacing_y; // adjust for alignment
+      screen.text(title, font, header_rect, true, TextAlign::center_left);
 
       int y = display_rect.y + header_h + margin_y;
 
@@ -94,8 +94,8 @@ namespace blit {
       screen.pen = foreground_colour;
       item_rect.x += item_padding_x;
       item_rect.y += item_adjust_y;
-      item_rect.h += minimal_font.spacing_y; // adjust for alignment
-      screen.text(item.label, minimal_font, item_rect, true, TextAlign::center_left);
+      item_rect.h += font.spacing_y; // adjust for alignment
+      screen.text(item.label, font, item_rect, true, TextAlign::center_left);
     }
 
     virtual void update_item(const Item &item) {
@@ -117,6 +117,8 @@ namespace blit {
     int item_padding_x = 5;
     int item_adjust_y = 1; // minimal_font y is a bit off
     int item_spacing = 1;
+
+    const Font &font;
 
     // colours
     Pen background_colour = Pen(30,  30,  50, 200);
