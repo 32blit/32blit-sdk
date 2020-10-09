@@ -623,6 +623,7 @@ void cdc_flash_list() {
     if(memcmp(buf, "BLITMETA", 8) == 0)
       metadata_len = *reinterpret_cast<uint16_t *>(buf + 8);
 
+    while(CDC_Transmit_HS((uint8_t *)"BLITMETA", 8) == USBD_BUSY){}
     while(CDC_Transmit_HS((uint8_t *)&metadata_len, 2) == USBD_BUSY){}
 
     // send metadata
