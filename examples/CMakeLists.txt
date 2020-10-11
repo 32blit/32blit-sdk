@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 project (examples)
 include (../32blit.cmake)
+add_subdirectory(animated_gif)
 add_subdirectory(another-world)
 add_subdirectory(audio-test)
 add_subdirectory(audio-wave)
