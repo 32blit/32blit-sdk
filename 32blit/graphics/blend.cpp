@@ -203,14 +203,19 @@ namespace blit {
 
 
   void RGBA_RGBA(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt, int32_t src_step) {
-    uint8_t* s = src->palette ? src->data + soff : src->data + (soff * 4);
+    uint8_t* s = src->palette ? src->data + soff : src->data + (soff * src->pixel_stride);
     uint8_t* d = dest->data + (doff * 3);
     uint8_t* m = dest->mask ? dest->mask->data + doff : nullptr;    
 
     do {
       Pen *pen = src->palette ? &src->palette[*s] : (Pen *)s;
 
-      uint16_t a = m ? alpha(pen->a, *m++, dest->alpha) : alpha(pen->a, dest->alpha);
+      uint16_t a;
+
+      if(src->format == PixelFormat::RGB)
+        a = m ? alpha(*m++, dest->alpha) : dest->alpha;
+      else
+        a = m ? alpha(pen->a, *m++, dest->alpha) : alpha(pen->a, dest->alpha);
 
       if (a >= 255) {
         *d++ = pen->r; *d++ = pen->g; *d++ = pen->b; d++;
@@ -223,19 +228,24 @@ namespace blit {
         d += 4;
       }       
 
-      s += (src->palette ? 1 : 4) * src_step;
+      s += src->pixel_stride * src_step;
     } while (--cnt);
   }
 
   void RGBA_RGB(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt, int32_t src_step) {
-    uint8_t* s = src->palette ? src->data + soff : src->data + (soff * 4);
+    uint8_t* s = src->palette ? src->data + soff : src->data + (soff * src->pixel_stride);
     uint8_t* d = dest->data + (doff * 3);
     uint8_t* m = dest->mask ? dest->mask->data + doff : nullptr;    
 
     do {
       Pen *pen = src->palette ? &src->palette[*s] : (Pen *)s;
 
-      uint16_t a = m ? alpha(pen->a, *m++, dest->alpha) : alpha(pen->a, dest->alpha);
+      uint16_t a;
+
+      if(src->format == PixelFormat::RGB)
+        a = m ? alpha(*m++, dest->alpha) : dest->alpha;
+      else
+        a = m ? alpha(pen->a, *m++, dest->alpha) : alpha(pen->a, dest->alpha);
 
       if (a >= 255) {
         *d++ = pen->r; *d++ = pen->g; *d++ = pen->b;
@@ -247,7 +257,7 @@ namespace blit {
         d += 3;
       }       
 
-      s += (src->palette ? 1 : 4) * src_step;
+      s += (src->pixel_stride) * src_step;
     } while (--cnt);
   }
 
