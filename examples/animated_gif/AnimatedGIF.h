@@ -12,16 +12,12 @@
 
 #ifndef __ANIMATEDGIF__
 #define __ANIMATEDGIF__
-#if defined( __MACH__ ) || defined( __LINUX__ ) || defined( __MCUXPRESSO ) || defined( TARGET_32BLIT_HW )
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #define memcpy_P memcpy
 #define PROGMEM
-#else
-#include <Arduino.h>
-#endif
 //
 // GIF Animator
 // Written by Larry Bank
