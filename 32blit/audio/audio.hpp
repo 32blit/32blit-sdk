@@ -41,7 +41,7 @@ namespace blit {
 
   #define CHANNEL_COUNT 8
 
-  extern uint32_t sample_rate;
+  const uint32_t sample_rate = 22050;
   extern uint16_t volume;
 
   enum Waveform {
