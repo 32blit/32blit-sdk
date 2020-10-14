@@ -14,7 +14,9 @@ namespace blit {
   void (*render)(uint32_t time)                     = nullptr;
 
   void set_screen_mode(ScreenMode new_mode) {
-    screen = api.set_screen_mode(new_mode);
+    auto &new_screen = api.set_screen_mode(new_mode);
+    screen = Surface(new_screen.data, new_screen.format, new_screen.bounds);
+    screen.palette = new_screen.palette;
   }
 
   void set_screen_palette(const Pen *colours, int num_cols) {
