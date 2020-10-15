@@ -350,6 +350,15 @@ void render(uint32_t time) {
       y += ROW_HEIGHT;
     }
 
+    // action icons
+    // delete
+    screen.sprite(2, Point(120, 20));
+    screen.sprite(0, Point(130, 20));
+
+    // run
+    screen.sprite(1, Point(120, 32));
+    screen.sprite(0, Point(130, 32), SpriteTransform::R90);
+
     // game info
     if(selected_game_metadata.splash)
       screen.blit(selected_game_metadata.splash, Rect(Point(0, 0), selected_game_metadata.splash->bounds), Point(172, 20));
