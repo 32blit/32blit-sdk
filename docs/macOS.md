@@ -83,7 +83,7 @@ Then, set up the 32Blit Makefile from the root of the repository with the follow
 ```shell
 mkdir build
 cd build
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../darwin.toolchain
+cmake ..
 ```
 
 Now to make any example, type:
