@@ -96,15 +96,13 @@ namespace display {
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 3); 
 
     // set the transform type (clear bits 17..16 of control register)
-    DMA2D->CR &= 0xfffcffff;
-    // set target pixel format (clear bits 3..0 of foreground format register)
-    DMA2D->FGPFCCR &= 0xfffffff0; 
-    DMA2D->FGPFCCR |= 0x00000001; // 0001 is for RGB888
+    DMA2D->CR &= (DMA2D->CR & ~DMA2D_CR_MODE) | (4 << DMA2D_CR_MODE_Pos);
+    // set source pixel format (clear bits 3..0 of foreground format register)
+    DMA2D->FGPFCCR = (DMA2D->FGPFCCR & ~DMA2D_FGPFCCR_CM) | 1 /*RGB888*/;
     // set source buffer address
     DMA2D->FGMAR = (uintptr_t)source.data; 
     // set target pixel format (clear bits 3..0 of output format register)
-    DMA2D->OPFCCR &= 0xfffffff0;
-    DMA2D->OPFCCR |= 0x00000001; // 0001 is for RGB888
+    DMA2D->OPFCCR = (DMA2D->OPFCCR & ~DMA2D_OPFCCR_CM) | 1 /*RGB888*/;
     // set target buffer address
     DMA2D->OMAR = (uintptr_t)&__ltdc_start;
     // set the number of pixels per line and number of lines    
@@ -123,23 +121,25 @@ namespace display {
   }
   
   void dma2d_hires_pal_flip(const Surface &source) {
+    // copy RGBA at quarter width
+    // work as 32bit type to save some bandwidth
 
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 1); 
     
     // set the transform type (clear bits 17..16 of control register)
-    DMA2D->CR &= 0xfffcffff;
-    // set target pixel format (clear bits 3..0 of foreground format register)
-    DMA2D->FGPFCCR &= 0xfffffff0;//work as 32bit type to save some bandwidth
+    DMA2D->CR &= (DMA2D->CR & ~DMA2D_CR_MODE) | (4 << DMA2D_CR_MODE_Pos);
+    // set source pixel format (clear bits 3..0 of foreground format register)
+    DMA2D->FGPFCCR = (DMA2D->FGPFCCR & ~DMA2D_FGPFCCR_CM) | 0 /*RGBA8888*/;
     
     // set source buffer address
     DMA2D->FGMAR = (uintptr_t)source.data; 
     // set target pixel format (clear bits 3..0 of output format register)
-    DMA2D->OPFCCR &= 0xfffffff0;//work as 32bit type to save some bandwidth
+    DMA2D->OPFCCR = (DMA2D->OPFCCR & ~DMA2D_OPFCCR_CM) | 0 /*RGBA8888*/;
     
     // set target buffer address
     DMA2D->OMAR = (uintptr_t)((uint32_t)&__ltdc_start + 320 * 240 * 2);
     // set the number of pixels per line and number of lines    
-    DMA2D->NLR = (80 << 16) | (240); //work as 32bit type to save some bandwidth
+    DMA2D->NLR = (80 << 16) | (240);
     // set the source offset
     DMA2D->FGOR = 0;
     // set the output offset
