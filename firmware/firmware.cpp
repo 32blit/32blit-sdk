@@ -483,7 +483,22 @@ void update(uint32_t time)
         blit_switch_execution(offset);
     }
 
+    // delete current game
     if (button_x) {
+      auto &game = game_list[persist.selected_menu_item];
+
+      dialog.show("Confirm", "Really delete " + game.title + "?", [](bool yes){
+        if(yes) {
+          auto &game = game_list[persist.selected_menu_item];
+          if(game.filename.empty())
+            erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
+          else
+            ::remove_file(game.filename);
+
+          load_file_list(current_directory->name);
+          load_current_game_metadata();
+        }
+      });
     }
 
     if (button_y) {
