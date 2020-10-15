@@ -484,12 +484,10 @@ void update(uint32_t time)
     }
 
     if (button_x) {
-      file_sort = SortBy::name;
-      sort_file_list();
     }
 
     if (button_y) {
-      file_sort = SortBy::size;
+      file_sort = file_sort == SortBy::name ? SortBy::size : SortBy::name;
       sort_file_list();
     }
   }
