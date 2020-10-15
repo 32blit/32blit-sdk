@@ -4,6 +4,7 @@
 #include "quadspi.h"
 #include "CDCCommandStream.h"
 #include "USBManager.h"
+#include "usbd_cdc_if.h"
 #include "file.hpp"
 #include "executable.hpp"
 #include "metadata.hpp"
@@ -15,10 +16,11 @@
 
 using namespace blit;
 
-enum State {stFlashFile, stSaveFile, stFlashCDC, stLS, stMassStorage};
+enum State {stFlashFile, stSaveFile, stFlashCDC, stMassStorage};
 
 constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 constexpr uint32_t qspi_flash_size = 32768 * 1024;
+constexpr uint32_t qspi_flash_address = 0x90000000;
 
 Vec2 file_list_scroll_offset(20.0f, 0.0f);
 float directory_list_scroll_offset = 0.0f;
@@ -26,6 +28,7 @@ float directory_list_scroll_offset = 0.0f;
 extern CDCCommandStream g_commandStream;
 
 FlashLoader flashLoader;
+CDCEraseHandler cdc_erase_handler;
 
 extern USBManager g_usbManager;
 
@@ -67,7 +70,7 @@ int calc_num_blocks(uint32_t size) {
 }
 
 void erase_qspi_flash(uint32_t start_sector, uint32_t size_bytes) {
-  uint32_t sector_count = (size_bytes / qspi_flash_sector_size) + 1;
+  uint32_t sector_count = calc_num_blocks(size_bytes);
 
   progress.show("Erasing flash sectors...", sector_count);
 
@@ -165,23 +168,35 @@ void load_file_list(std::string directory) {
   sort_file_list();
 }
 
+// returns true is there is a valid header here
+bool read_flash_game_header(uint32_t offset, BlitGameHeader &header) {
+  if(qspi_read_buffer(offset, reinterpret_cast<uint8_t *>(&header), sizeof(header)) != QSPI_OK)
+    return false;
+
+  if(header.magic != blit_game_magic)
+    return false;
+
+  // make sure end/size is sensible
+  if(header.end <= qspi_flash_address)
+    return false;
+
+  return true;
+}
+
 void scan_flash() {
   game_list.clear();
 
   for(uint32_t offset = 0; offset < qspi_flash_size;) {
     BlitGameHeader header;
 
-    if(qspi_read_buffer(offset, reinterpret_cast<uint8_t *>(&header), sizeof(header)) != QSPI_OK)
-      break;
-
-    if(header.magic != blit_game_magic) {
+    if(!read_flash_game_header(offset, header)) {
       offset += qspi_flash_sector_size;
       continue;
     }
 
     GameInfo game;
     game.offset = offset;
-    game.size = header.end - 0x90000000;
+    game.size = header.end - qspi_flash_address;
     game.title = "game @" + std::to_string(game.offset / qspi_flash_sector_size);
 
     // check for valid metadata
@@ -271,6 +286,8 @@ void init() {
 
   // register LS
   g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value, &flashLoader);
+
+  g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'E', 'R', 'S', 'E'>::value, &cdc_erase_handler);
 
   // error reset handling
   if(persist.reset_error) {
@@ -368,11 +385,6 @@ void update(uint32_t time)
 {
   if(dialog.update())
     return;
-
-  if(state == stLS) {
-    load_file_list(current_directory->name);
-    state = stFlashFile;
-  }
 
   bool button_home = buttons.pressed & Button::HOME;
   
@@ -508,7 +520,7 @@ uint32_t get_flash_offset_for_file(BlitGameHeader &bin_header) {
     auto expected_addr = bin_header.start;
 
     // this should be sector aligned to not break things later...
-    return expected_addr - 0x90000000;
+    return expected_addr - qspi_flash_address;
   }
 
   return 0;
@@ -585,6 +597,83 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
   return bytes_flashed == bytes_total ? flash_offset : 0xFFFFFFFF;
 }
 
+
+void cdc_flash_list() {
+  // scan through flash and send offset, size and metadata
+  for(uint32_t offset = 0; offset < qspi_flash_size;) {
+    BlitGameHeader header;
+
+    if(!read_flash_game_header(offset, header)) {
+      offset += qspi_flash_sector_size;
+      continue;
+    }
+
+    uint32_t size = header.end - qspi_flash_address;
+
+    // metadata header
+    uint8_t buf[10];
+    if(qspi_read_buffer(offset + size, buf, 10) != QSPI_OK)
+      break;
+
+    while(CDC_Transmit_HS((uint8_t *)&offset, 4) == USBD_BUSY){}
+    while(CDC_Transmit_HS((uint8_t *)&size, 4) == USBD_BUSY){}
+
+    uint16_t metadata_len = 0;
+
+    if(memcmp(buf, "BLITMETA", 8) == 0)
+      metadata_len = *reinterpret_cast<uint16_t *>(buf + 8);
+
+    while(CDC_Transmit_HS((uint8_t *)"BLITMETA", 8) == USBD_BUSY){}
+    while(CDC_Transmit_HS((uint8_t *)&metadata_len, 2) == USBD_BUSY){}
+
+    // send metadata
+    uint32_t metadata_offset = offset + size + 10;
+    while(metadata_len) {
+      int chunk_size = std::min(256, (int)metadata_len);
+      uint8_t metadata_buf[256];
+
+      if(qspi_read_buffer(metadata_offset, metadata_buf, chunk_size) != QSPI_OK)
+        break;
+
+      while(CDC_Transmit_HS(metadata_buf, chunk_size) == USBD_BUSY){}
+
+      metadata_offset += chunk_size;
+      metadata_len -= chunk_size;
+    }
+
+    offset += calc_num_blocks(size) * qspi_flash_sector_size;
+  }
+
+  // end marker
+  uint32_t end = 0xFFFFFFFF;
+  while(CDC_Transmit_HS((uint8_t *)&end, 4) == USBD_BUSY){}
+}
+
+// erase command handler
+CDCCommandHandler::StreamResult CDCEraseHandler::StreamData(CDCDataStream &dataStream) {
+  uint32_t offset;
+  if(!dataStream.Get(offset))
+    return srNeedData;
+
+  // reject unaligned
+  if(offset & (qspi_flash_sector_size - 1))
+    return srFinish;
+
+  // attempt to get size, falling back to a single sector
+  int erase_size = 1;
+  BlitGameHeader header;
+  if(read_flash_game_header(offset, header))
+    erase_size = calc_num_blocks(header.end - qspi_flash_address); // TODO: this does not include metadata, may result in some leftover junk
+
+  erase_qspi_flash(offset / qspi_flash_sector_size, erase_size * qspi_flash_sector_size);
+
+  // rescan
+  if(current_directory->name == "FLASH")
+    scan_flash();
+
+  return srFinish;
+}
+
 //////////////////////////////////////////////////////////////////////
 // Streaming Code
 //  The streaming code works with a simple state machine,
@@ -613,8 +702,8 @@ bool FlashLoader::StreamInit(CDCFourCC uCommand)
     break;
 
     case CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value:
-      state = stLS;
       bNeedStream = false;
+      cdc_flash_list();
     break;
 
   }
