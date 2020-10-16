@@ -63,6 +63,7 @@ FIL file;
 
 BlitGameMetadata selected_game_metadata;
 
+void scan_flash();
 uint32_t flash_from_sd_to_qspi_flash(const char *filename);
 
 int calc_num_blocks(uint32_t size) {
@@ -140,6 +141,11 @@ void load_directory_list(std::string directory) {
 }
 
 void load_file_list(std::string directory) {
+  if(directory == "FLASH") {
+    scan_flash();
+    return;
+  }
+
   game_list.clear();
 
   for(auto &file : ::list_files(directory)) {
@@ -267,10 +273,7 @@ void init() {
   load_directory_list("/");
   current_directory = directory_list.begin();
 
-  if(current_directory->name == "FLASH")
-    scan_flash();
-  else
-    load_file_list(current_directory->name);
+  load_file_list(current_directory->name);
 
   auto total_items = game_list.size();
   if(persist.selected_menu_item >= total_items)
@@ -346,6 +349,15 @@ void render(uint32_t time) {
       screen.text(file.title, minimal_font, Rect(file_list_scroll_offset.x, y, 100 - 20, text_align_height), true, TextAlign::center_v);
       y += ROW_HEIGHT;
     }
+
+    // action icons
+    // delete
+    screen.sprite(2, Point(120, 20));
+    screen.sprite(0, Point(130, 20));
+
+    // run
+    screen.sprite(1, Point(120, 32));
+    screen.sprite(0, Point(130, 32), SpriteTransform::R90);
 
     // game info
     if(selected_game_metadata.splash)
@@ -451,10 +463,7 @@ void update(uint32_t time)
     }
 
     if(buttons.pressed & (Button::DPAD_LEFT | Button::DPAD_RIGHT)) {
-      if(current_directory->name == "FLASH")
-        scan_flash();
-      else
-        load_file_list(current_directory->name);
+      load_file_list(current_directory->name);
 
       persist.selected_menu_item = 0;
       load_current_game_metadata();
@@ -483,13 +492,26 @@ void update(uint32_t time)
         blit_switch_execution(offset);
     }
 
+    // delete current game
     if (button_x) {
-      file_sort = SortBy::name;
-      sort_file_list();
+      auto &game = game_list[persist.selected_menu_item];
+
+      dialog.show("Confirm", "Really delete " + game.title + "?", [](bool yes){
+        if(yes) {
+          auto &game = game_list[persist.selected_menu_item];
+          if(game.filename.empty())
+            erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
+          else
+            ::remove_file(game.filename);
+
+          load_file_list(current_directory->name);
+          load_current_game_metadata();
+        }
+      });
     }
 
     if (button_y) {
-      file_sort = SortBy::size;
+      file_sort = file_sort == SortBy::name ? SortBy::size : SortBy::name;
       sort_file_list();
     }
   }
