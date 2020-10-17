@@ -16,7 +16,6 @@ These instructions assume a basic familiarity with the Linux command-line and wi
 Make sure you've prepared your 32Blit by following the instructions in:
 
 * [Building & Flashing The 32Blit Firmware](32Blit-Firmware.md#building--flashing-the-32blit-firmware)
-* [Building The 32Blit Loader Tool](32Blit-Loader.md#building-the-32blit-loader-tool)
 
 You should also make sure you have a cross-compile environment set up on your computer, refer to the relevant documentation below:
 
@@ -47,9 +46,7 @@ For example you might type `make raycaster` which will give you `examples/raycas
 
 ### Uploading An Example
 
-This requires the [flash loader tool](32Blit-Loader.md) to be in your PATH or built in an adjacent `build` or `build.mingw` directory from a local build (Run the build for your platform in the top level).
-
-With the tool available, and your device out of DFU mode, you can now run:
+With your device out of DFU mode (displaying the game list), you can now run:
 
 ```
 make [example-name].flash
@@ -62,6 +59,19 @@ make logo.flash
 ```
 
 To build, flash and run the `logo` example.
+
+Alternatively, you can use the tool directly:
+```
+32blit flash flash --file=[filename].bin
+```
+
+Or, to save to the SD card:
+```
+32blit flash save --file=[filename].bin
+```
+
+(If `32blit` is not found you can use `python3 -m ttblit` instead)
+
 
 ## Your Own Projects
 
@@ -78,7 +88,7 @@ make
 
 ### Flasher Can't Find 32Blit Port
 
-If `make example.flash` fails to find the correct port, re-run `cmake` with `-DFLASH_PORT=[PORT PATH]`.  
+If `make example.flash` fails with `Unable to find 32Blit`, re-run `cmake` with `-DFLASH_PORT=[PORT PATH]`.  
 
 Port-detection does not work if your device is in DFU mode. Either reset it to get it out, or it it's stuck in DFU mode (or just boots into a black screen), you may need to reflash the firmware.
 
