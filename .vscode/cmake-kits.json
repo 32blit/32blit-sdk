@@ -1,0 +1,6 @@
+[
+    {
+      "name": "32Blit",
+      "toolchainFile": "${workspaceFolder}/32blit.toolchain"
+    }
+]
