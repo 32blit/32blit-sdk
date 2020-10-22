@@ -25,12 +25,20 @@ namespace blit {
 
     for(auto &buf_file : buf_files) {
       auto slash_pos = buf_file.first.find_last_of('/');
-      if(slash_pos == std::string::npos)
-        slash_pos = 0;
       
-      if(buf_file.first.substr(0, slash_pos) == path) {
+      bool match = false;
+      if(slash_pos == std::string::npos) // file in root
+        match = path.empty() || path == "/";
+      else {
+        if(!path.empty() && path.back() == '/') // path has trailing slash
+          match = buf_file.first.substr(0, slash_pos + 1) == path;
+        else
+          match = buf_file.first.substr(0, slash_pos) == path;
+      }
+
+      if(match) {
         FileInfo info = {};
-        info.name = buf_file.first.substr(slash_pos == 0 ? 0 : slash_pos + 1);
+        info.name = buf_file.first.substr(slash_pos == std::string::npos ? 0 : slash_pos + 1);
         ret.push_back(info);
       }
     }
