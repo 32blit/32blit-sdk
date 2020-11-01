@@ -1,0 +1,8 @@
+title: Palette Swap
+description: A basic demo of sprite recolour using palette swap.
+author: pimoroni
+splash:
+  file: ../no-image.png
+icon:
+  file: ../no-icon.png
+version: v1.0.0

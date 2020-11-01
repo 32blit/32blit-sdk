@@ -1,0 +1,8 @@
+title: Logo
+description: Something something logo.
+author: pimoroni
+splash:
+  file: ../no-image.png
+icon:
+  file: ../no-icon.png
+version: v1.0.0
