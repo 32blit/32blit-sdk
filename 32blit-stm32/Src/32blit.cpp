@@ -46,8 +46,8 @@ __attribute__((section(".dma_data"))) ALIGN_32BYTES(__IO uint16_t adc1data[ADC_B
 __attribute__((section(".dma_data"))) ALIGN_32BYTES(__IO uint16_t adc3data[ADC_BUFFER_SIZE]);
 
 FATFS filesystem;
-FRESULT SD_Error = FR_INVALID_PARAMETER;
-FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
+extern Disk_drvTypeDef disk;
+static bool fs_mounted = false;
 
 bool needs_render = true;
 bool exit_game = false;
@@ -185,11 +185,25 @@ void blit_tick() {
   blit_update_led();
   blit_update_vibration();
 
+  // SD card inserted/removed
+  if(blit_sd_detected() != fs_mounted) {
+    if(!fs_mounted)
+      fs_mounted = f_mount(&filesystem, "", 1) == FR_OK;
+    else
+      fs_mounted = false;
+
+    disk.is_initialized[0] = fs_mounted; // this gets set without checking if the init succeeded, un-set it if the init failed (or the card was removed)
+  }
+
   do_tick(blit::now());
 }
 
 bool blit_sd_detected() {
   return HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_11) == 1;
+}
+
+bool blit_sd_mounted() {
+  return fs_mounted;
 }
 
 void hook_render(uint32_t time) {
@@ -368,7 +382,8 @@ void blit_init() {
     DWT->CYCCNT = 0;
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
-    f_mount(&filesystem, "", 1);  // this shouldn't be necessary here right?
+    fs_mounted = f_mount(&filesystem, "", 1) == FR_OK;  // this shouldn't be necessary here right?
+
     if(is_beta_unit){
       msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
       accel_address = MSA301_DEVICE_ADDRESS;

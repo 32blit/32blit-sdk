@@ -22,6 +22,7 @@ constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 constexpr uint32_t qspi_flash_size = 32768 * 1024;
 constexpr uint32_t qspi_flash_address = 0x90000000;
 
+bool sd_detected = true;
 Vec2 file_list_scroll_offset(20.0f, 0.0f);
 float directory_list_scroll_offset = 0.0f;
 
@@ -264,12 +265,7 @@ void mass_storage_overlay(uint32_t time)
   }
 }
 
-void init() {
-  set_screen_mode(ScreenMode::hires);
-  screen.clear();
-
-  screen.sprites = SpriteSheet::load(sprites);
-
+void init_lists() {
   load_directory_list("/");
   current_directory = directory_list.begin();
 
@@ -280,6 +276,15 @@ void init() {
     persist.selected_menu_item = total_items - 1;
 
   load_current_game_metadata();
+}
+
+void init() {
+  set_screen_mode(ScreenMode::hires);
+  screen.clear();
+
+  screen.sprites = SpriteSheet::load(sprites);
+
+  init_lists();
 
   // register PROG
   g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value, &flashLoader);
@@ -382,7 +387,11 @@ void render(uint32_t time) {
   }
   else {
     screen.pen = Pen(235, 245, 255);
-    screen.text("No Files Found.", minimal_font, Point(20, screen.bounds.h / 2), true, TextAlign::center_v);
+
+    if(current_directory->name != "FLASH" && !blit_sd_detected())
+      screen.text("No SD Card\nDetected.", minimal_font, Point(60, screen.bounds.h / 2), true, TextAlign::center_center);
+    else
+      screen.text("No Games Found.", minimal_font, Point(60, screen.bounds.h / 2), true, TextAlign::center_center);
   }
 
   // overlays
@@ -393,8 +402,13 @@ void render(uint32_t time) {
   dialog.draw();
 }
 
-void update(uint32_t time)
-{
+void update(uint32_t time) {
+
+  if(blit_sd_mounted() != sd_detected) {
+    init_lists();
+    sd_detected = blit_sd_mounted();
+  }
+
   if(dialog.update())
     return;
 
