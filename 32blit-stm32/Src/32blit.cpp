@@ -202,6 +202,10 @@ bool blit_sd_detected() {
   return HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_11) == 1;
 }
 
+bool blit_sd_mounted() {
+  return fs_mounted;
+}
+
 void hook_render(uint32_t time) {
   /*
   Replace blit::render = ::render; with blit::render = hook_render;
