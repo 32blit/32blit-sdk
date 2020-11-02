@@ -46,8 +46,6 @@ __attribute__((section(".dma_data"))) ALIGN_32BYTES(__IO uint16_t adc1data[ADC_B
 __attribute__((section(".dma_data"))) ALIGN_32BYTES(__IO uint16_t adc3data[ADC_BUFFER_SIZE]);
 
 FATFS filesystem;
-FRESULT SD_Error = FR_INVALID_PARAMETER;
-FRESULT SD_FileOpenError = FR_INVALID_PARAMETER;
 
 bool needs_render = true;
 bool exit_game = false;
