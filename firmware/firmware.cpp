@@ -382,7 +382,11 @@ void render(uint32_t time) {
   }
   else {
     screen.pen = Pen(235, 245, 255);
-    screen.text("No Files Found.", minimal_font, Point(20, screen.bounds.h / 2), true, TextAlign::center_v);
+
+    if(current_directory->name != "FLASH" && !blit_sd_detected())
+      screen.text("No SD Card\nDetected.", minimal_font, Point(60, screen.bounds.h / 2), true, TextAlign::center_center);
+    else
+      screen.text("No Games Found.", minimal_font, Point(60, screen.bounds.h / 2), true, TextAlign::center_center);
   }
 
   // overlays
