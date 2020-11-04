@@ -5,7 +5,7 @@
 
 #include "audio-wave.hpp"
 
-#include "glass.h"
+#include "assets.hpp"
 
 /*
     Wave example:
@@ -32,14 +32,14 @@
 
 using namespace blit;
 
-void buffCallBack(void *);    //Declare our callback here instead of putting the whole thing here.
+void buff_callback(void *);    //Declare our callback here instead of putting the whole thing here.
 
 /* setup */
 void init() {
 
   // Setup channel
   channels[0].waveforms                  = Waveform::WAVE; // Set type to WAVE
-  channels[0].callback_waveBufferRefresh = &buffCallBack;  // Set callback address
+  channels[0].callback_waveBufferRefresh = &buff_callback;  // Set callback address
 
   screen.pen = Pen(0, 0, 0, 255);
   screen.clear();
@@ -47,37 +47,37 @@ void init() {
 
 
 // Static wave config
-static uint32_t wavSize = 0;
-static uint16_t wavPos = 0;
-static uint16_t wavSampleRate = 0;
-static const uint16_t *wavSample;
+static uint32_t wav_size = 0;
+static uint16_t wav_pos = 0;
+static uint16_t wav_sample_rate = 0;
+static const uint8_t *wav_sample;
 
 
 // Called everytime audio buffer ends
-void buffCallBack(void *) {
+void buff_callback(void *) {
 
   // Copy 64 bytes to the channel audio buffer
   for (int x = 0; x < 64; x++) {
     // If current sample position is greater than the sample length, fill the rest of the buffer with zeros.
     // Note: The sample used here has an offset, so we adjust by 0x7f. 
-    channels[0].wave_buffer[x] = (wavPos < wavSize) ? wavSample[wavPos] - 0x7f : 0;
+    channels[0].wave_buffer[x] = (wav_pos < wav_size) ? wav_sample[wav_pos] - 0x7f : 0;
 
     // As the engine is 22050Hz, we can timestretch to match by incrementing our sample every other step (every even 'x')
-    if (wavSampleRate == 11025) {
-      if (x % 2) wavPos++;
+    if (wav_sample_rate == 11025) {
+      if (x % 2) wav_pos++;
     } else {
-      wavPos++;
+      wav_pos++;
     }
   }
   
   // For this example, clear the values
-  if (wavPos >= wavSize) {
+  if (wav_pos >= wav_size) {
     channels[0].off();        // Stop playback of this channel.
     //Clear buffer
-    wavSample = nullptr;
-    wavSize = 0;
-    wavPos = 0;
-    wavSampleRate = 0;
+    wav_sample = nullptr;
+    wav_size = 0;
+    wav_pos = 0;
+    wav_sample_rate = 0;
   }
 }
 
@@ -93,19 +93,16 @@ void render(uint32_t time_ms) {
 
   screen.pen = Pen(64, 64, 64);
 	screen.text("Press A to break screen.", minimal_font, Point(20, 60));
+} 
 
-
+void update(uint32_t time_ms) {
   bool button_a = blit::buttons & blit::Button::A;
 
   // If 'A' button pushed
   if(button_a){
-    wavSample = glass_wav;        // Set sample to the array in glass.h
-    wavSize = glass_wav_len;      // Set the array length to the value in glass.h
+    wav_sample = glass_wav;        // Set sample to the array in assets.hpp
+    wav_size = glass_wav_length;      // Set the array length to the value in assets.hpp
     channels[0].trigger_attack(); // Start the playback.
   }
-} 
-
-void update(uint32_t time_ms) {
-
 }
   
