@@ -50,7 +50,7 @@ void init() {
 static uint32_t wavSize = 0;
 static uint16_t wavPos = 0;
 static uint16_t wavSampleRate = 0;
-static const uint16_t *wavSample;
+static const uint8_t *wavSample;
 
 
 // Called everytime audio buffer ends
