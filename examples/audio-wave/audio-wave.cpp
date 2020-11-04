@@ -94,7 +94,9 @@ void render(uint32_t time_ms) {
   screen.pen = Pen(64, 64, 64);
 	screen.text("Press A to break screen.", minimal_font, Point(20, 60));
 
+} 
 
+void update(uint32_t time_ms) {
   bool button_a = blit::buttons & blit::Button::A;
 
   // If 'A' button pushed
@@ -103,9 +105,5 @@ void render(uint32_t time_ms) {
     wavSize = glass_wav_len;      // Set the array length to the value in glass.h
     channels[0].trigger_attack(); // Start the playback.
   }
-} 
-
-void update(uint32_t time_ms) {
-
 }
   
