@@ -5,7 +5,7 @@
 
 #include "audio-wave.hpp"
 
-#include "glass.h"
+#include "assets.hpp"
 
 /*
     Wave example:
@@ -101,8 +101,8 @@ void update(uint32_t time_ms) {
 
   // If 'A' button pushed
   if(button_a){
-    wavSample = glass_wav;        // Set sample to the array in glass.h
-    wavSize = glass_wav_len;      // Set the array length to the value in glass.h
+    wavSample = glass_wav;        // Set sample to the array in assets.hpp
+    wavSize = glass_wav_length;      // Set the array length to the value in assets.hpp
     channels[0].trigger_attack(); // Start the playback.
   }
 }
