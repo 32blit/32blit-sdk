@@ -1,0 +1,8 @@
+title: Voxel
+description: A pseudo 3D voxel terrain engine fashioned after retro flight simulators.
+author: pimoroni
+splash:
+  file: voxel.png
+icon:
+  file: voxel-icon.png
+version: v1.0.0

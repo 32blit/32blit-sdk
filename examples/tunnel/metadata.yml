@@ -1,0 +1,8 @@
+title: Tunnel
+description: A basic side-scrolling tunnel projection.
+author: pimoroni
+splash:
+  file: tunnel.png
+icon:
+  file: tunnel-icon.png
+version: v1.0.0

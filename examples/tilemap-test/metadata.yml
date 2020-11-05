@@ -1,0 +1,8 @@
+title: Tilemap Test
+description: A showcase of Tilemap transform functions
+author: pimoroni
+splash:
+  file: ../no-image.png
+icon:
+  file: ../no-icon.png
+version: v1.0.0

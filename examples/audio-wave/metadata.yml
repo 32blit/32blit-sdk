@@ -1,0 +1,8 @@
+title: Audio Wave
+description: A simple demo of arbitrary waveform audio. Press a button to hear a glass smash sound.
+author: tinwhisker
+splash:
+  file: audio-wave.png
+icon:
+  file: audio-wave-icon.png
+version: v1.0.0

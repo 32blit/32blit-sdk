@@ -1,0 +1,8 @@
+title: Fizzlefade
+description: The classic fizzle fade screen transition effect using a LFSR.
+author: pimoroni
+splash:
+  file: ../no-image.png
+icon:
+  file: ../no-icon.png
+version: v1.0.0

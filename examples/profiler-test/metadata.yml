@@ -1,0 +1,8 @@
+title: Profiler Test
+description: A test of the 32blit profiler API.
+author: pimoroni
+splash:
+  file: ../no-image.png
+icon:
+  file: ../no-icon.png
+version: v1.0.0
