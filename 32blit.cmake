@@ -6,6 +6,13 @@ if (NOT DEFINED BLIT_ONCE)
 
 	find_package(PythonInterp 3.6 REQUIRED)
 
+	# make sure that the tools are installed
+	execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import ttblit" RESULT_VARIABLE IMPORT_STATUS ERROR_QUIET)
+
+	if(${IMPORT_STATUS}) # non-zero result
+		message(FATAL_ERROR "32Blit tools not found!\nInstall with: python3 -m pip install 32blit\n")
+	endif()
+
 	if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 		set(CMAKE_BUILD_TYPE "Release")
 	endif()
