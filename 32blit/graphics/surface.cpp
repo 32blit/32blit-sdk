@@ -41,6 +41,9 @@ namespace blit {
     if(memcmp(image->type, "SPRITEPK", 8) != 0)
       return nullptr;
 
+    if(image->format > (uint8_t)PixelFormat::M)
+      return nullptr;
+
     uint8_t *buffer = new uint8_t[pixel_format_stride[image->format] * image->width * image->height];
     return new Surface(buffer, (PixelFormat)image->format, image);
   }
