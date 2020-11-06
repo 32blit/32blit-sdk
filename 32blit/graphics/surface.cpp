@@ -507,7 +507,7 @@ namespace blit {
           palette_entries[pidx * 4 + 3]);
       }
 
-      for (; bytes < ((uint8_t *)image) + sizeof(packed_image) + (image->palette_entry_count * 4) + image->byte_count; ++bytes) {
+      for (; bytes < ((uint8_t *)image) + image->byte_count; ++bytes) {
         uint8_t b = *bytes;
         for (auto j = 0; j < 8; j++) {
           col <<= 1;
@@ -523,7 +523,7 @@ namespace blit {
     }else{
       Pen *pdest = (Pen *)data;
 
-      for (; bytes < ((uint8_t *)image) +  sizeof(packed_image) + (image->palette_entry_count * 4) + image->byte_count; ++bytes) {
+      for (; bytes < ((uint8_t *)image) + image->byte_count; ++bytes) {
         uint8_t b = *bytes;
         for (auto j = 0; j < 8; j++) {
           col <<= 1;
