@@ -15,8 +15,6 @@ function(blit_executable_common NAME)
 endfunction()
 
 function(blit_executable NAME SOURCES)
-	find_package(PythonInterp 3.6 REQUIRED)
-
 	set_source_files_properties(${USER_STARTUP} PROPERTIES LANGUAGE CXX)
 	add_executable(${NAME} ${USER_STARTUP} ${SOURCES} ${ARGN})
 
@@ -33,8 +31,6 @@ function(blit_executable NAME SOURCES)
 endfunction()
 
 function(blit_metadata TARGET FILE)
-	find_package(PythonInterp 3.6 REQUIRED)
-
 	# cause cmake to reconfigure whenever the asset list changes
 	set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
 

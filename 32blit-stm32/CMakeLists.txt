@@ -151,8 +151,6 @@ target_compile_options(BlitHalSTM32 PUBLIC "$<$<CONFIG:RELEASE>:-Os>")
 set_target_properties(BlitHalSTM32 PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 function(blit_executable_int_flash NAME SOURCES)
-	find_package(PythonInterp 3.6 REQUIRED)
-
 	add_executable(${NAME} $<TARGET_OBJECTS:BlitHalSTM32> ${SOURCES} ${ARGN})
 
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.bin ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.dfu
