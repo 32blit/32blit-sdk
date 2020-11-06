@@ -116,7 +116,8 @@ namespace blit {
     Surface(uint8_t *data, const PixelFormat &format, const Size &bounds);
     Surface(uint8_t *data, const PixelFormat &format, const packed_image *image);
 
-    Surface *load(const packed_image *image);
+    static Surface *load(const packed_image *image);
+    static Surface *load(const uint8_t *data);
 
     bool save(const std::string &filename);
 

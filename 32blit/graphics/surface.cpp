@@ -1,6 +1,7 @@
 /*! \file surface.cpp
 */
 #include <algorithm>
+#include <cstring>
 #include <string>
 
 #include "font.hpp"
@@ -37,8 +38,15 @@ namespace blit {
   }
 
   Surface *Surface::load(const packed_image *image) {
+    if(memcmp(image->type, "SPRITEPK", 8) != 0)
+      return nullptr;
+
     uint8_t *buffer = new uint8_t[pixel_format_stride[image->format] * image->width * image->height];
     return new Surface(buffer, (PixelFormat)image->format, image);
+  }
+
+  Surface *Surface::load(const uint8_t *data) {
+    return load((const packed_image *)data);
   }
 
   bool Surface::save(const std::string &filename) {
