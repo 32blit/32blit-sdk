@@ -485,11 +485,16 @@ namespace blit {
    */
   void Surface::load_from_packed(const packed_image *image) {        
     uint8_t *palette_entries = ((uint8_t *)image) + sizeof(packed_image);
-    uint8_t *bytes = ((uint8_t *)image) + sizeof(packed_image) + (image->palette_entry_count * 4);
+
+    int palette_entry_count = image->palette_entry_count;
+    if(palette_entry_count == 0)
+      palette_entry_count = 256;
+
+    uint8_t *bytes = ((uint8_t *)image) + sizeof(packed_image) + (palette_entry_count * 4);
 
     bounds = Size(image->width, image->height);
 
-    uint8_t bit_depth = log2i(std::max(1, (int)image->palette_entry_count - 1)) + 1;
+    uint8_t bit_depth = log2i(std::max(1, palette_entry_count - 1)) + 1;
 
     uint8_t col = 0;
     uint8_t bit = 0;
@@ -499,7 +504,7 @@ namespace blit {
       uint8_t *pdest = (uint8_t *)data;
       
       palette = new Pen[256];
-      for (uint8_t pidx = 0; pidx < image->palette_entry_count; pidx++) {
+      for (int pidx = 0; pidx < palette_entry_count; pidx++) {
         palette[pidx] = Pen(
           palette_entries[pidx * 4 + 0],
           palette_entries[pidx * 4 + 1],
