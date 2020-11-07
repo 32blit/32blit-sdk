@@ -52,6 +52,20 @@ namespace blit {
     return load((const packed_image *)data);
   }
 
+  Surface *Surface::load_read_only(const packed_image *image) {
+    if(memcmp(image->type, "SPRITERW", 8) != 0)
+      return nullptr;
+
+    if(image->format > (uint8_t)PixelFormat::M)
+      return nullptr;
+
+    return new Surface(nullptr, (PixelFormat)image->format, image);
+  }
+
+  Surface *Surface::load_read_only(const uint8_t *data) {
+    return load_read_only((const packed_image *)data);
+  }
+
   bool Surface::save(const std::string &filename) {
     File file;
 
@@ -525,8 +539,11 @@ namespace blit {
     }
 
     if (is_raw) {
-      // raw, just copy the data
-      memcpy(data, bytes, image->width * image->height * pixel_format_stride[image->format]);
+      if(data) // just copy the data
+        memcpy(data, bytes, image->width * image->height * pixel_format_stride[image->format]);
+      else // no data pointer, assume load_read_only is being used
+        data = bytes;
+
       return;
     }
 

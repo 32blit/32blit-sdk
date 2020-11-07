@@ -119,6 +119,9 @@ namespace blit {
     static Surface *load(const packed_image *image);
     static Surface *load(const uint8_t *data);
 
+    static Surface *load_read_only(const packed_image *image);
+    static Surface *load_read_only(const uint8_t *data);
+
     bool save(const std::string &filename);
 
     // helpers to retrieve pointer to pixel
