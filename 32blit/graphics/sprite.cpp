@@ -27,7 +27,7 @@ namespace blit {
   }
 
   SpriteSheet *SpriteSheet::load(const packed_image *image, uint8_t *buffer) {
-    if(memcmp(image->type, "SPRITEPK", 8) != 0)
+    if(memcmp(image->type, "SPRITEPK", 8) != 0 && memcmp(image->type, "SPRITERW", 8) != 0)
       return nullptr;
 
     if(image->format > (uint8_t)PixelFormat::M)

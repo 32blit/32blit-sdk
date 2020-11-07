@@ -38,7 +38,7 @@ namespace blit {
   }
 
   Surface *Surface::load(const packed_image *image) {
-    if(memcmp(image->type, "SPRITEPK", 8) != 0)
+    if(memcmp(image->type, "SPRITEPK", 8) != 0 && memcmp(image->type, "SPRITERW", 8) != 0)
       return nullptr;
 
     if(image->format > (uint8_t)PixelFormat::M)
@@ -501,6 +501,8 @@ namespace blit {
     if(palette_entry_count == 0)
       palette_entry_count = 256;
 
+    bool is_raw = image->type[6] == 'R' && image->type[7] == 'W'; // "SPRITERW"
+
     uint8_t *bytes = ((uint8_t *)image) + sizeof(packed_image) + (palette_entry_count * 4);
 
     bounds = Size(image->width, image->height);
@@ -511,9 +513,7 @@ namespace blit {
     uint8_t bit = 0;
 
     if (format == PixelFormat::P) {
-      // load paletted
-      uint8_t *pdest = (uint8_t *)data;
-      
+      // load palette
       palette = new Pen[256];
       for (int pidx = 0; pidx < palette_entry_count; pidx++) {
         palette[pidx] = Pen(
@@ -522,6 +522,17 @@ namespace blit {
           palette_entries[pidx * 4 + 2],
           palette_entries[pidx * 4 + 3]);
       }
+    }
+
+    if (is_raw) {
+      // raw, just copy the data
+      memcpy(data, bytes, image->width * image->height * pixel_format_stride[image->format]);
+      return;
+    }
+
+    if (format == PixelFormat::P) {
+      // load paletted
+      uint8_t *pdest = (uint8_t *)data;
 
       for (; bytes < ((uint8_t *)image) + image->byte_count; ++bytes) {
         uint8_t b = *bytes;
@@ -531,12 +542,13 @@ namespace blit {
 
           bit++;
           if (bit == bit_depth) {
-            *pdest++ = col;            
+            *pdest++ = col;
             bit = 0; col = 0;
           }
         }
       }
-    }else{
+    } else {
+      // packed RGBA
       Pen *pdest = (Pen *)data;
 
       for (; bytes < ((uint8_t *)image) + image->byte_count; ++bytes) {
