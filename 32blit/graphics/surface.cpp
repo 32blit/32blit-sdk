@@ -37,6 +37,13 @@ namespace blit {
     init();
   }
 
+  /**
+   * Loads a packed or raw image asset into a `Surface`
+   * 
+   * \param image
+   * 
+   * \return `Surface` containng loaded data or `nullptr` if the image was invalid
+   */
   Surface *Surface::load(const packed_image *image) {
     if(memcmp(image->type, "SPRITEPK", 8) != 0 && memcmp(image->type, "SPRITERW", 8) != 0)
       return nullptr;
@@ -48,10 +55,25 @@ namespace blit {
     return new Surface(buffer, (PixelFormat)image->format, image);
   }
 
+  /**
+   * \overload
+   * 
+   * \param data pointer to an image asset
+   */
   Surface *Surface::load(const uint8_t *data) {
     return load((const packed_image *)data);
   }
 
+  /**
+   * Similar to @ref load, but the resulting `Surface` points directly at the image data instead of copying it.
+   * `data` should not be modified after loading, so no drawing can be done to this surface. If the image is paletted, the palette can still be modified.
+   * 
+   * Only works for non-packed images.
+   *
+   * \param image
+   * 
+   * \return `Surface` containng loaded data or `nullptr` if the image was invalid
+   */
   Surface *Surface::load_read_only(const packed_image *image) {
     if(memcmp(image->type, "SPRITERW", 8) != 0)
       return nullptr;
@@ -62,6 +84,11 @@ namespace blit {
     return new Surface(nullptr, (PixelFormat)image->format, image);
   }
 
+  /**
+   * \overload
+   * 
+   * \param data pointer to an image asset
+   */
   Surface *Surface::load_read_only(const uint8_t *data) {
     return load_read_only((const packed_image *)data);
   }
