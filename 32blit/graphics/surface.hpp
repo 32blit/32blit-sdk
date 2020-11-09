@@ -24,11 +24,9 @@ namespace blit {
 #pragma pack(push, 1)
   struct packed_image {
     uint8_t type[8];
-    uint16_t byte_count;
+    uint32_t byte_count;
     uint16_t width;
     uint16_t height;
-    uint16_t cols;
-    uint16_t rows;
     uint8_t format;
     uint8_t palette_entry_count;
   };
@@ -118,7 +116,11 @@ namespace blit {
     Surface(uint8_t *data, const PixelFormat &format, const Size &bounds);
     Surface(uint8_t *data, const PixelFormat &format, const packed_image *image);
 
-    Surface *load(const packed_image *image);
+    static Surface *load(const packed_image *image);
+    static Surface *load(const uint8_t *data);
+
+    static Surface *load_read_only(const packed_image *image);
+    static Surface *load_read_only(const uint8_t *data);
 
     bool save(const std::string &filename);
 

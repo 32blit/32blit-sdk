@@ -1,6 +1,7 @@
 /*! \file surface.cpp
 */
 #include <algorithm>
+#include <cstring>
 #include <string>
 
 #include "font.hpp"
@@ -36,9 +37,60 @@ namespace blit {
     init();
   }
 
+  /**
+   * Loads a packed or raw image asset into a `Surface`
+   * 
+   * \param image
+   * 
+   * \return `Surface` containng loaded data or `nullptr` if the image was invalid
+   */
   Surface *Surface::load(const packed_image *image) {
+    if(memcmp(image->type, "SPRITEPK", 8) != 0 && memcmp(image->type, "SPRITERW", 8) != 0)
+      return nullptr;
+
+    if(image->format > (uint8_t)PixelFormat::M)
+      return nullptr;
+
     uint8_t *buffer = new uint8_t[pixel_format_stride[image->format] * image->width * image->height];
     return new Surface(buffer, (PixelFormat)image->format, image);
+  }
+
+  /**
+   * \overload
+   * 
+   * \param data pointer to an image asset
+   */
+  Surface *Surface::load(const uint8_t *data) {
+    return load((const packed_image *)data);
+  }
+
+  /**
+   * Similar to @ref load, but the resulting `Surface` points directly at the image data instead of copying it.
+   * `data` should not be modified after loading, so no drawing can be done to this surface. If the image is paletted, the palette can still be modified.
+   * 
+   * Only works for non-packed images.
+   *
+   * \param image
+   * 
+   * \return `Surface` containng loaded data or `nullptr` if the image was invalid
+   */
+  Surface *Surface::load_read_only(const packed_image *image) {
+    if(memcmp(image->type, "SPRITERW", 8) != 0)
+      return nullptr;
+
+    if(image->format > (uint8_t)PixelFormat::M)
+      return nullptr;
+
+    return new Surface(nullptr, (PixelFormat)image->format, image);
+  }
+
+  /**
+   * \overload
+   * 
+   * \param data pointer to an image asset
+   */
+  Surface *Surface::load_read_only(const uint8_t *data) {
+    return load_read_only((const packed_image *)data);
   }
 
   bool Surface::save(const std::string &filename) {
@@ -485,29 +537,48 @@ namespace blit {
    */
   void Surface::load_from_packed(const packed_image *image) {        
     uint8_t *palette_entries = ((uint8_t *)image) + sizeof(packed_image);
-    uint8_t *bytes = ((uint8_t *)image) + sizeof(packed_image) + (image->palette_entry_count * 4);
+
+    int palette_entry_count = image->palette_entry_count;
+    if(palette_entry_count == 0)
+      palette_entry_count = 256;
+
+    bool is_raw = image->type[6] == 'R' && image->type[7] == 'W'; // "SPRITERW"
+
+    uint8_t *bytes = ((uint8_t *)image) + sizeof(packed_image) + (palette_entry_count * 4);
 
     bounds = Size(image->width, image->height);
 
-    uint8_t bit_depth = log2i(std::max(1, (int)image->palette_entry_count - 1)) + 1;
+    uint8_t bit_depth = log2i(std::max(1, palette_entry_count - 1)) + 1;
 
     uint8_t col = 0;
     uint8_t bit = 0;
 
     if (format == PixelFormat::P) {
-      // load paletted
-      uint8_t *pdest = (uint8_t *)data;
-      
+      // load palette
       palette = new Pen[256];
-      for (uint8_t pidx = 0; pidx < image->palette_entry_count; pidx++) {
+      for (int pidx = 0; pidx < palette_entry_count; pidx++) {
         palette[pidx] = Pen(
           palette_entries[pidx * 4 + 0],
           palette_entries[pidx * 4 + 1],
           palette_entries[pidx * 4 + 2],
           palette_entries[pidx * 4 + 3]);
       }
+    }
 
-      for (; bytes < ((uint8_t *)image) + sizeof(packed_image) + (image->palette_entry_count * 4) + image->byte_count; ++bytes) {
+    if (is_raw) {
+      if(data) // just copy the data
+        memcpy(data, bytes, image->width * image->height * pixel_format_stride[image->format]);
+      else // no data pointer, assume load_read_only is being used
+        data = bytes;
+
+      return;
+    }
+
+    if (format == PixelFormat::P) {
+      // load paletted
+      uint8_t *pdest = (uint8_t *)data;
+
+      for (; bytes < ((uint8_t *)image) + image->byte_count; ++bytes) {
         uint8_t b = *bytes;
         for (auto j = 0; j < 8; j++) {
           col <<= 1;
@@ -515,15 +586,16 @@ namespace blit {
 
           bit++;
           if (bit == bit_depth) {
-            *pdest++ = col;            
+            *pdest++ = col;
             bit = 0; col = 0;
           }
         }
       }
-    }else{
+    } else {
+      // packed RGBA
       Pen *pdest = (Pen *)data;
 
-      for (; bytes < ((uint8_t *)image) +  sizeof(packed_image) + (image->palette_entry_count * 4) + image->byte_count; ++bytes) {
+      for (; bytes < ((uint8_t *)image) + image->byte_count; ++bytes) {
         uint8_t b = *bytes;
         for (auto j = 0; j < 8; j++) {
           col <<= 1;

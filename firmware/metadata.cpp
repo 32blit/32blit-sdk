@@ -35,13 +35,12 @@ void parse_metadata(char *data, uint16_t metadata_len, BlitGameMetadata &metadat
 
   if(offset != metadata_len && unpack_images) {
     // icon/splash
-    // not really sprite sheets, but that's where the load helper is...
     auto image = reinterpret_cast<packed_image *>(data + offset);
-    metadata.icon = SpriteSheet::load(reinterpret_cast<uint8_t *>(data + offset));
-    offset += sizeof(packed_image) + image->byte_count + image->palette_entry_count * 4;
+    metadata.icon = Surface::load(reinterpret_cast<uint8_t *>(data + offset));
+    offset += image->byte_count;
 
     image = reinterpret_cast<packed_image *>(data + offset);
-    metadata.splash = SpriteSheet::load(reinterpret_cast<uint8_t *>(data + offset));
+    metadata.splash = Surface::load(reinterpret_cast<uint8_t *>(data + offset));
   }
 }
 
