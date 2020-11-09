@@ -118,6 +118,7 @@ namespace blit {
 
     static Surface *load(const packed_image *image);
     static Surface *load(const uint8_t *data);
+    static Surface *load(std::string &filename);
 
     static Surface *load_read_only(const packed_image *image);
     static Surface *load_read_only(const uint8_t *data);

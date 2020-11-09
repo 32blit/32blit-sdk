@@ -42,7 +42,7 @@ namespace blit {
    * 
    * \param image
    * 
-   * \return `Surface` containng loaded data or `nullptr` if the image was invalid
+   * \return `Surface` containing loaded data or `nullptr` if the image was invalid
    */
   Surface *Surface::load(const packed_image *image) {
     if(memcmp(image->type, "SPRITEPK", 8) != 0 && memcmp(image->type, "SPRITERW", 8) != 0)
@@ -65,6 +65,27 @@ namespace blit {
   }
 
   /**
+   * \overload
+   * 
+   * \param filename string filename
+   */
+  Surface *Surface::load(std::string &filename) {
+    File file;
+
+    if(!file.open(filename, OpenMode::read))
+      return nullptr;
+
+    // Read the header from the file
+    packed_image *image = (packed_image *)malloc(sizeof(packed_image));
+    file.read(0, sizeof(packed_image), (char *)image);
+
+    uint8_t *data = new uint8_t[image->byte_count];
+    file.read(0, image->byte_count, (char *)data);
+
+    return load((const packed_image *)data);
+  }
+
+  /**
    * Similar to @ref load, but the resulting `Surface` points directly at the image data instead of copying it.
    * `data` should not be modified after loading, so no drawing can be done to this surface. If the image is paletted, the palette can still be modified.
    * 
@@ -72,7 +93,7 @@ namespace blit {
    *
    * \param image
    * 
-   * \return `Surface` containng loaded data or `nullptr` if the image was invalid
+   * \return `Surface` containing loaded data or `nullptr` if the image was invalid
    */
   Surface *Surface::load_read_only(const packed_image *image) {
     if(memcmp(image->type, "SPRITERW", 8) != 0)
