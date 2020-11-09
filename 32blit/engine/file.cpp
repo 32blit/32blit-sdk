@@ -16,7 +16,7 @@ namespace blit {
   /**
    * Lists files on the SD card (device), the game directory (SDL) or in memory.
    *
-   * \param path Path to list files at, relative the the root of the SD card or game directory (SDL).
+   * \param path Path to list files at, relative to the root of the SD card or game directory (SDL).
    * 
    * \return Vector of files/directories
    */
@@ -49,7 +49,7 @@ namespace blit {
   /**
    * Check if the specified path exists and is a file
    *
-   * \param path Path to check existence of, relative the the root of the SD card (device) or game directory (SDL).
+   * \param path Path to check existence of, relative to the root of the SD card (device) or game directory (SDL).
    * 
    * \return true if file exists
    */
@@ -60,7 +60,7 @@ namespace blit {
   /**
    * Check if the specified path exists and is a directory
    *
-   * \param path Path to check existence of, relative the the root of the SD card (device) or game directory (SDL).
+   * \param path Path to check existence of, relative to the root of the SD card (device) or game directory (SDL).
    * 
    * \return true if directory exists
    */
@@ -71,7 +71,7 @@ namespace blit {
   /**
    * Create a directory
    *
-   * \param path Path to create, relative the the root of the SD card (device) or game directory (SDL).
+   * \param path Path to create, relative to the root of the SD card (device) or game directory (SDL).
    * 
    * \return true if directory created successfully
    */
@@ -82,7 +82,7 @@ namespace blit {
   /**
    * Rename a file/directory
    *
-   * \param old_name Path to rename, relative the the root of the SD card (device) or game directory (SDL).
+   * \param old_name Path to rename, relative to the root of the SD card (device) or game directory (SDL).
    * \param new_name New name
    * 
    * \return true if file renamed successfully
@@ -94,7 +94,7 @@ namespace blit {
   /**
    * Remove a file
    *
-   * \param path Path to remove, relative the the root of the SD card (device) or game directory (SDL).
+   * \param path Path to remove, relative to the root of the SD card (device) or game directory (SDL).
    * 
    * \return true if file removed successfully
    */
