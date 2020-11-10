@@ -1,6 +1,9 @@
 name: CMake
 
-on: [push]
+on: 
+  push:
+  release:
+    types: [created]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -9,6 +12,8 @@ env:
 jobs:
   build:
     runs-on: ubuntu-18.04
+    env:
+      RELEASE_FILE: ${{github.event.repository.name}}-${{github.event.release.tag_name}}-LIN64
 
     steps:
     - uses: actions/checkout@v2
@@ -24,7 +29,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX=`pwd`
 
     - uses: ammaraskar/gcc-problem-matcher@master
     - name: Build
@@ -38,3 +43,22 @@ jobs:
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
     #  run: ctest -C $BUILD_TYPE
+
+    - name: Package Release
+      if: github.event_name == 'release'
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        cmake --build . --target install
+        tar -zcf ${RELEASE_FILE}.tar.gz bin/
+
+    - name: Upload
+      if: github.event_name == 'release'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      with:
+        asset_path: ${{runner.workspace}}/build/${{env.RELEASE_FILE}}.tar.gz
+        upload_url: ${{github.event.release.upload_url}}
+        asset_name: ${{env.RELEASE_FILE}}.tar.gz
+        asset_content_type: application/octet-stream #??
