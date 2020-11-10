@@ -66,6 +66,7 @@ namespace blit {
     }
 
     bool open(const std::string &file, int mode = OpenMode::read);
+    bool File::open(const uint8_t *buf, uint32_t buf_len);
     int32_t read(uint32_t offset, uint32_t length, char *buffer);
     int32_t write(uint32_t offset, uint32_t length, const char *buffer);
     void close();
