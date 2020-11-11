@@ -11,17 +11,45 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-18.04
+            release-suffix: LIN64
+          - os: windows-latest
+            release-suffix: WIN64
+            cmake-args: -DSDL2_DIR=$PWD/../32blit-beta/vs/sdl
+
+    runs-on: ${{matrix.os}}
+
     env:
-      RELEASE_FILE: ${{github.event.repository.name}}-${{github.event.release.tag_name}}-LIN64
+      RELEASE_FILE: ${{github.event.repository.name}}-${{github.event.release.tag_name}}-${{matrix.release-suffix}}
 
     steps:
     - uses: actions/checkout@v2
     
+    # Linux deps
     - name: Install deps
+      if: runner.os == 'Linux'
       run: |
         sudo apt install libsdl2-dev libsdl2-image-dev python3-setuptools
         pip3 install 32blit
+
+    # macOS deps
+    - name: Install deps
+      if: runner.os == 'macOS'
+      run: |
+        ci/install_sdl_macos.sh
+        python3 -m pip install 32blit
+
+    # Windows (VS) deps
+    - name: Install deps
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |
+        ci/install_sdl_vs.sh
+        python -m pip install 32blit
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{runner.workspace}}/build
@@ -29,7 +57,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX=`pwd`
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX=`pwd` ${{matrix.cmake-args}}
 
     - uses: ammaraskar/gcc-problem-matcher@master
     - name: Build
@@ -45,7 +73,7 @@ jobs:
     #  run: ctest -C $BUILD_TYPE
 
     - name: Package Release
-      if: github.event_name == 'release'
+      if: github.event_name == 'release' && matrix.release-suffix != ''
       shell: bash
       working-directory: ${{runner.workspace}}/build
       run: |
@@ -53,7 +81,7 @@ jobs:
         tar -zcf ${RELEASE_FILE}.tar.gz bin/
 
     - name: Upload
-      if: github.event_name == 'release'
+      if: github.event_name == 'release' && matrix.release-suffix != ''
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
