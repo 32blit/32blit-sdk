@@ -46,7 +46,7 @@ int32_t read_file(void *fh, uint32_t offset, uint32_t length, char *buffer) {
     size_t bytes_read = SDL_RWread(file, buffer, 1, length);
 
     if(bytes_read > 0)
-      return bytes_read;
+      return (int32_t)bytes_read;
   }
 
   return -1;
@@ -56,10 +56,10 @@ int32_t write_file(void *fh, uint32_t offset, uint32_t length, const char *buffe
   auto file = (SDL_RWops *)fh;
 
   if(file && SDL_RWseek(file, offset, RW_SEEK_SET) != -1) {
-    size_t bytes_read = SDL_RWwrite(file, buffer, 1, length);
+    size_t bytes_written = SDL_RWwrite(file, buffer, 1, length);
 
-    if(bytes_read > 0)
-      return bytes_read;
+    if(bytes_written > 0)
+      return (int32_t)bytes_written;
   }
 
   return -1;
@@ -74,7 +74,7 @@ uint32_t get_file_length(void *fh)
   auto file = (SDL_RWops *)fh;
   SDL_RWseek(file, 0, RW_SEEK_END);
 
-  return SDL_RWtell(file);
+  return (uint32_t)SDL_RWtell(file);
 }
 
 std::vector<blit::FileInfo> list_files(const std::string &path) {
