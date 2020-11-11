@@ -30,7 +30,7 @@ jobs:
           - os: ubuntu-20.04
             name: Emscripten
             em: true
-            apt-packages: python3-setuptools
+            apt-packages: doxygen graphviz python3-setuptools
             cmake-pre: emcmake
 
           - os: macos-latest
@@ -133,3 +133,20 @@ jobs:
         upload_url: ${{github.event.release.upload_url}}
         asset_name: ${{env.RELEASE_FILE}}.zip
         asset_content_type: application/zip
+
+    # build the docs if this is the Emscripten build (we need the examples)
+    - name: Build Docs
+      if: matrix.em
+      run: |
+        cd 32blit && doxygen doxygen.conf && cd ..
+        cp -r 32blit/documentation/html/* site
+        cp ../build/examples/*/*.{js,wasm} site/examples
+
+    - name: Deploy to GitHub Pages
+      if: github.ref == 'refs/heads/master' && matrix.em # github.event_name == 'release'
+      uses: crazy-max/ghaction-github-pages@v2
+      with:
+        target_branch: gh-pages
+        build_dir: site
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
