@@ -37,6 +37,12 @@ jobs:
             cmake-pre: emcmake
             apt-packages: doxygen graphviz python3-setuptools
 
+          - os: ubuntu-20.04
+            name: MinGW
+            cache-key: mingw
+            cmake-args: -DCMAKE_TOOLCHAIN_FILE=../32blit-beta/mingw.toolchain -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSDL2_DIR=$PWD/../32blit-beta/SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/ 
+            apt-packages: ccache g++-mingw-w64 python3-setuptools
+
           - os: macos-latest
             name: macOS
             cache-key: macos
@@ -85,6 +91,10 @@ jobs:
       run: |
         ci/install_sdl_vs.sh
         python -m pip install 32blit
+
+    - name: MinGW deps
+      if: matrix.name == 'MinGW'
+      run: ci/install_sdl_mingw.sh
 
     - name: Setup Emscripten
       if: matrix.em
