@@ -20,7 +20,7 @@ namespace blit {
     inline Point& operator/= (const int32_t a) { x /= a;   y /= a;   return *this; }
 
     void   transform(const Mat3 &m) {     
-      float tx = static_cast<float>(x); float ty = static_cast<float>(y);
+      auto tx = static_cast<float>(x); auto ty = static_cast<float>(y);
       this->x = static_cast<int32_t>(m.v00 * tx + m.v01 * ty + m.v02);
       this->y = static_cast<int32_t>(m.v10 * tx + m.v11 * ty + m.v12);
     }
