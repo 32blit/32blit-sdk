@@ -14,12 +14,17 @@ jobs:
     name: ${{matrix.name}}
     strategy:
       matrix:
-        os: [ubuntu-18.04, macos-latest, windows-latest]
         include:
-          - os: ubuntu-18.04
+          - os: ubuntu-20.04
             name: Linux
             release-suffix: LIN64
             cmake-args: '"-DCMAKE_CXX_CLANG_TIDY=clang-tidy;-header-filter=32blit;-checks=performance-*,portability-*,modernize-*,-modernize-use-trailing-return-type,-modernize-avoid-c-arrays,-modernize-use-nodiscard"'
+            apt-packages: clang-tidy libsdl2-dev libsdl2-image-dev python3-setuptools
+          - os: ubuntu-20.04
+            name: STM32
+            release-suffix: STM32
+            cmake-args: -DCMAKE_TOOLCHAIN_FILE=../32blit-beta/32blit.toolchain
+            apt-packages: gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib python3-setuptools
           - os: macos-latest
             name: macOS
           - os: windows-latest
@@ -39,7 +44,7 @@ jobs:
     - name: Install deps
       if: runner.os == 'Linux'
       run: |
-        sudo apt install clang-tidy libsdl2-dev libsdl2-image-dev python3-setuptools
+        sudo apt update && sudo apt install ${{matrix.apt-packages}}
         pip3 install 32blit
 
     # macOS deps
