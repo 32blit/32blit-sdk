@@ -11,14 +11,19 @@ env:
 
 jobs:
   build:
+    name: ${{matrix.name}}
     strategy:
       matrix:
         os: [ubuntu-18.04, macos-latest, windows-latest]
         include:
           - os: ubuntu-18.04
+            name: Linux
             release-suffix: LIN64
             cmake-args: '"-DCMAKE_CXX_CLANG_TIDY=clang-tidy;-header-filter=32blit;-checks=performance-*,portability-*,modernize-*,-modernize-use-trailing-return-type,-modernize-avoid-c-arrays,-modernize-use-nodiscard"'
+          - os: macos-latest
+            name: macOS
           - os: windows-latest
+            name: Visual Studio (CMake)
             release-suffix: WIN64
             cmake-args: -DSDL2_DIR=$PWD/../32blit-beta/vs/sdl
 
