@@ -20,13 +20,22 @@ jobs:
             release-suffix: LIN64
             cmake-args: '"-DCMAKE_CXX_CLANG_TIDY=clang-tidy;-header-filter=32blit;-checks=performance-*,portability-*,modernize-*,-modernize-use-trailing-return-type,-modernize-avoid-c-arrays,-modernize-use-nodiscard"'
             apt-packages: clang-tidy libsdl2-dev libsdl2-image-dev python3-setuptools
+
           - os: ubuntu-20.04
             name: STM32
             release-suffix: STM32
             cmake-args: -DCMAKE_TOOLCHAIN_FILE=../32blit-beta/32blit.toolchain
             apt-packages: gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib python3-setuptools
+
+          - os: ubuntu-20.04
+            name: Emscripten
+            em: true
+            apt-packages: python3-setuptools
+            cmake-pre: emcmake
+
           - os: macos-latest
             name: macOS
+
           - os: windows-latest
             name: Visual Studio (CMake)
             release-suffix: WIN64
@@ -62,13 +71,19 @@ jobs:
         ci/install_sdl_vs.sh
         python -m pip install 32blit
 
+    - name: Setup Emscripten
+      if: matrix.em
+      uses: mymindstorm/setup-emsdk@v7
+      with:
+        version: 2.0.4
+
     - name: Create Build Environment
       run: cmake -E make_directory ${{runner.workspace}}/build
 
     - name: Configure CMake
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX=`pwd` ${{matrix.cmake-args}}
+      run: ${{matrix.cmake-pre}} cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX=`pwd` ${{matrix.cmake-args}}
 
     # Problem matching
     - if: runner.os != 'Windows'
