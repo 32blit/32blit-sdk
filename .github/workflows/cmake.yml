@@ -90,8 +90,9 @@ jobs:
       run: |
         cmake --build . --target install
         tar -zcf ${RELEASE_FILE}.tar.gz bin/
+        7z a ${RELEASE_FILE}.zip bin/*
 
-    - name: Upload
+    - name: Upload tar
       if: github.event_name == 'release' && matrix.release-suffix != ''
       uses: actions/upload-release-asset@v1
       env:
@@ -101,3 +102,14 @@ jobs:
         upload_url: ${{github.event.release.upload_url}}
         asset_name: ${{env.RELEASE_FILE}}.tar.gz
         asset_content_type: application/octet-stream #??
+
+    - name: Upload zip
+      if: github.event_name == 'release' && matrix.release-suffix != ''
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      with:
+        asset_path: ${{runner.workspace}}/build/${{env.RELEASE_FILE}}.zip
+        upload_url: ${{github.event.release.upload_url}}
+        asset_name: ${{env.RELEASE_FILE}}.zip
+        asset_content_type: application/zip
