@@ -649,8 +649,9 @@ namespace blit {
       palette = nullptr;
     }
 
-    //if(!file.get_ptr())
-    //  delete[] bytes;
+    if (!file.get_ptr()) {
+      delete[] (uint8_t*)(bytes - image.byte_count + offset);
+    }
   }
 
   /**
