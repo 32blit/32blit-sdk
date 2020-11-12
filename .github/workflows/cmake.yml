@@ -1,0 +1,155 @@
+name: CMake
+
+on: 
+  push:
+  pull_request:
+  release:
+    types: [created]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    name: ${{matrix.name}}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            name: Linux
+            cache-key: linux
+            release-suffix: LIN64
+            cmake-args: '"-DCMAKE_CXX_CLANG_TIDY=clang-tidy;-header-filter=32blit;-checks=performance-*,portability-*,modernize-*,-modernize-use-trailing-return-type,-modernize-avoid-c-arrays,-modernize-use-nodiscard" -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache'
+            apt-packages: ccache clang-tidy libsdl2-dev libsdl2-image-dev python3-setuptools
+
+          - os: ubuntu-20.04
+            name: STM32
+            cache-key: stm32
+            release-suffix: STM32
+            cmake-args: -DCMAKE_TOOLCHAIN_FILE=../32blit-beta/32blit.toolchain -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+            apt-packages: ccache gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib python3-setuptools
+
+          - os: ubuntu-20.04
+            name: MinGW
+            cache-key: mingw
+            cmake-args: -DCMAKE_TOOLCHAIN_FILE=../32blit-beta/mingw.toolchain -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSDL2_DIR=$PWD/../32blit-beta/SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/ 
+            apt-packages: ccache g++-mingw-w64 python3-setuptools
+
+          - os: macos-latest
+            name: macOS
+            cache-key: macos
+
+          - os: windows-latest
+            name: Visual Studio
+            cache-key: windows
+            release-suffix: WIN64
+            cmake-args: -DSDL2_DIR=$PWD/../32blit-beta/vs/sdl
+
+    runs-on: ${{matrix.os}}
+
+    env:
+      RELEASE_FILE: ${{github.event.repository.name}}-${{github.event.release.tag_name}}-${{matrix.release-suffix}}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Cache
+      uses: actions/cache@v2
+      with:
+        path: /home/runner/.ccache
+        key: ccache-${{matrix.cache-key}}-${{github.ref}}-${{github.sha}}
+        restore-keys: |
+          ccache-${{matrix.cache-key}}-${{github.ref}}
+          ccache-${{matrix.cache-key}}-
+    
+    # Linux deps
+    - name: Install deps
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt update && sudo apt install ${{matrix.apt-packages}}
+        pip3 install 32blit
+
+    # macOS deps
+    - name: Install deps
+      if: runner.os == 'macOS'
+      run: |
+        ci/install_sdl_macos.sh
+        python3 -m pip install 32blit
+
+    # Windows (VS) deps
+    - name: Install deps
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |
+        ci/install_sdl_vs.sh
+        python -m pip install 32blit
+
+    - name: MinGW deps
+      if: matrix.name == 'MinGW'
+      run: ci/install_sdl_mingw.sh
+
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{runner.workspace}}/build
+
+    - name: Set Tag Variable
+      if: github.event_name == 'release'
+      shell: bash
+      run: echo "TRAVIS_TAG=${{github.event.release.tag_name}}" >> $GITHUB_ENV
+
+    - name: Configure CMake
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX=`pwd` ${{matrix.cmake-args}}
+
+    # Problem matching
+    - if: runner.os != 'Windows'
+      uses: ammaraskar/gcc-problem-matcher@master
+    - if: runner.os == 'Windows'
+      uses: ammaraskar/msvc-problem-matcher@master
+
+    - name: Build
+      working-directory: ${{runner.workspace}}/build
+      shell: bash
+      run: |
+        ccache --zero-stats || true
+        cmake --build . --config $BUILD_TYPE -j 2
+        ccache --show-stats || true
+
+    #- name: Test
+    #  working-directory: ${{runner.workspace}}/build
+    #  shell: bash
+      # Execute tests defined by the CMake configuration.  
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+    #  run: ctest -C $BUILD_TYPE
+
+    - name: Package Release
+      if: github.event_name == 'release' && matrix.release-suffix != ''
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        cmake --build . --target install
+        tar -zcf ${RELEASE_FILE}.tar.gz bin/
+        7z a ${RELEASE_FILE}.zip bin/*
+
+    - name: Upload tar
+      if: github.event_name == 'release' && matrix.release-suffix != ''
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      with:
+        asset_path: ${{runner.workspace}}/build/${{env.RELEASE_FILE}}.tar.gz
+        upload_url: ${{github.event.release.upload_url}}
+        asset_name: ${{env.RELEASE_FILE}}.tar.gz
+        asset_content_type: application/octet-stream #??
+
+    - name: Upload zip
+      if: github.event_name == 'release' && matrix.release-suffix != ''
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      with:
+        asset_path: ${{runner.workspace}}/build/${{env.RELEASE_FILE}}.zip
+        upload_url: ${{github.event.release.upload_url}}
+        asset_name: ${{env.RELEASE_FILE}}.zip
+        asset_content_type: application/zip

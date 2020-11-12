@@ -3,6 +3,7 @@
 
 #ifdef TARGET_32BLIT_HW
 extern char __api_start;
+#pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
 
 namespace blit {
