@@ -9,6 +9,8 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
+  EM_VERSION: 2.0.4
+  EM_CACHE_FOLDER: 'emsdk-cache'
 
 jobs:
   build:
@@ -22,10 +24,18 @@ jobs:
         sudo apt update && sudo apt install doxygen graphviz python3-setuptools
         pip3 install 32blit
 
+    - name: Setup cache
+      id: cache-system-libraries
+      uses: actions/cache@v2
+      with:
+        path: ${{env.EM_CACHE_FOLDER}}
+        key: ${{env.EM_VERSION}}-${{runner.os}}
+
     - name: Setup Emscripten
       uses: mymindstorm/setup-emsdk@v7
       with:
-        version: 2.0.4
+        version: ${{env.EM_VERSION}}
+        actions-cache-folder: ${{env.EM_CACHE_FOLDER}}
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{runner.workspace}}/build
