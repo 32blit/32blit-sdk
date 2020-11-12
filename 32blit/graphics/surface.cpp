@@ -33,6 +33,13 @@ namespace blit {
   }
 
   Surface::Surface(uint8_t *data, const PixelFormat &format, const packed_image *image) : data(data), format(format) {
+    File f_image;
+    f_image.open((const uint8_t *)image, image->byte_count);
+    load_from_packed(f_image);
+    init();
+  }
+
+  Surface::Surface(uint8_t *data, const PixelFormat &format, File &image) : data(data), format(format) {
     load_from_packed(image);
     init();
   }
@@ -75,14 +82,11 @@ namespace blit {
     if(!file.open(filename, OpenMode::read))
       return nullptr;
 
-    // Read the header from the file
-    packed_image *image = (packed_image *)malloc(sizeof(packed_image));
-    file.read(0, sizeof(packed_image), (char *)image);
+    packed_image image;
+    file.read(0, sizeof(packed_image), (char *)&image);
 
-    uint8_t *data = new uint8_t[image->byte_count];
-    file.read(0, image->byte_count, (char *)data);
-
-    return load((const packed_image *)data);
+    uint8_t *buffer = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
+    return new Surface(buffer, (PixelFormat)image.format, file);
   }
 
   /**
@@ -556,50 +560,59 @@ namespace blit {
    *
    * \param image
    */
-  void Surface::load_from_packed(const packed_image *image) {        
-    uint8_t *palette_entries = ((uint8_t *)image) + sizeof(packed_image);
+  void Surface::load_from_packed(File &file) {
+    packed_image image;
+    file.read(0, sizeof(packed_image), (char *)&image);
 
-    int palette_entry_count = image->palette_entry_count;
+    int palette_entry_count = image.palette_entry_count;
     if(palette_entry_count == 0)
       palette_entry_count = 256;
 
-    bool is_raw = image->type[6] == 'R' && image->type[7] == 'W'; // "SPRITERW"
+    bool is_raw = image.type[6] == 'R' && image.type[7] == 'W'; // SPRITE[RW]
 
-    uint8_t *bytes = ((uint8_t *)image) + sizeof(packed_image) + (palette_entry_count * 4);
-
-    bounds = Size(image->width, image->height);
+    bounds = Size(image.width, image.height);
 
     uint8_t bit_depth = log2i(std::max(1, palette_entry_count - 1)) + 1;
 
     uint8_t col = 0;
     uint8_t bit = 0;
 
-    if (format == PixelFormat::P) {
+    // Skip over image header to palette entries
+    uint32_t offset = sizeof(packed_image);
+
+    if (format == PixelFormat::P || !is_raw) {
       // load palette
       palette = new Pen[256];
-      for (int pidx = 0; pidx < palette_entry_count; pidx++) {
-        palette[pidx] = Pen(
-          palette_entries[pidx * 4 + 0],
-          palette_entries[pidx * 4 + 1],
-          palette_entries[pidx * 4 + 2],
-          palette_entries[pidx * 4 + 3]);
-      }
+      file.read(offset, palette_entry_count * 4, (char *)palette);
+      offset += palette_entry_count * 4;
     }
 
     if (is_raw) {
-      if(data) // just copy the data
-        memcpy(data, bytes, image->width * image->height * pixel_format_stride[image->format]);
+      if(data) // just read/copy the data
+        file.read(offset, image.width * image.height * pixel_format_stride[image.format], (char *)data);
       else // no data pointer, assume load_read_only is being used
-        data = bytes;
+        data = (uint8_t *)file.get_ptr() + offset;
 
       return;
     }
+
+    // avoid allocating if in flash
+    const uint8_t *bytes, *end;
+
+    if(file.get_ptr())
+      bytes = file.get_ptr() + offset;
+    else {
+      bytes = new uint8_t[image.width * image.height * pixel_format_stride[image.format]];
+      file.read(offset, image.width * image.height * pixel_format_stride[image.format], (char *)bytes);
+    }
+
+    end = bytes + image.byte_count - offset;
 
     if (format == PixelFormat::P) {
       // load paletted
       uint8_t *pdest = (uint8_t *)data;
 
-      for (; bytes < ((uint8_t *)image) + image->byte_count; ++bytes) {
+      for (; bytes < end; ++bytes) {
         uint8_t b = *bytes;
         for (auto j = 0; j < 8; j++) {
           col <<= 1;
@@ -616,7 +629,7 @@ namespace blit {
       // packed RGBA
       Pen *pdest = (Pen *)data;
 
-      for (; bytes < ((uint8_t *)image) + image->byte_count; ++bytes) {
+      for (; bytes < end; ++bytes) {
         uint8_t b = *bytes;
         for (auto j = 0; j < 8; j++) {
           col <<= 1;
@@ -624,17 +637,20 @@ namespace blit {
 
           bit++;
           if (bit == bit_depth) {
-            *pdest++ = Pen(
-              palette_entries[col * 4 + 0],
-              palette_entries[col * 4 + 1],
-              palette_entries[col * 4 + 2],
-              palette_entries[col * 4 + 3]);
+            *pdest++ = palette[col];
 
             bit = 0; col = 0;
           }
         }
       }
+
+      // unpacked, no longer needed
+      delete[] palette;
+      palette = nullptr;
     }
+
+    //if(!file.get_ptr())
+    //  delete[] bytes;
   }
 
   /**

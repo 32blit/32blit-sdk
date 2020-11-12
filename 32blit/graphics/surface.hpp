@@ -12,6 +12,7 @@
 #endif
 
 #include "font.hpp"
+#include "../engine/file.hpp"
 #include "../types/rect.hpp"
 #include "../types/size.hpp"
 #include "../graphics/blend.hpp"
@@ -110,11 +111,12 @@ namespace blit {
 
   private:
     void init();
-    void load_from_packed(const packed_image *image);
+    void load_from_packed(File &file);
 
   public:
     Surface(uint8_t *data, const PixelFormat &format, const Size &bounds);
     Surface(uint8_t *data, const PixelFormat &format, const packed_image *image);
+    Surface(uint8_t *data, const PixelFormat &format, File &image);
 
     static Surface *load(const packed_image *image);
     static Surface *load(const uint8_t *data);

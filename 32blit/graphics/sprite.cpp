@@ -24,6 +24,11 @@ namespace blit {
     cols = bounds.w / 8;
   }
 
+  SpriteSheet::SpriteSheet(uint8_t *data, PixelFormat format, File &image) : Surface(data, format, image) {  
+    rows = bounds.h / 8;
+    cols = bounds.w / 8;
+  }
+
   SpriteSheet *SpriteSheet::load(const uint8_t *data, uint8_t *buffer) {
     return load((packed_image *)data, buffer);
   }
@@ -48,18 +53,14 @@ namespace blit {
     if (!file.open(filename, OpenMode::read))
       return nullptr;
 
-    // Read the header from the file
-    packed_image* header = (packed_image*)malloc(sizeof(packed_image));
-    file.read(0, sizeof(packed_image), (char*)header);
-
-    uint8_t *image = new uint8_t[header->byte_count];
-    file.read(0, header->byte_count, (char*)image);
+    packed_image image;
+    file.read(0, sizeof(packed_image), (char *)&image);
 
     if (buffer == nullptr) {
-      buffer = new uint8_t[pixel_format_stride[header->format] * header->width * header->height];
+      buffer = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
     }
 
-    return new SpriteSheet(buffer, (PixelFormat)header->format, (packed_image *)image);
+    return new SpriteSheet(buffer, (PixelFormat)image.format, file);
   }
 
   /**
