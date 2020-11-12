@@ -68,7 +68,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt update && sudo apt install ${{matrix.apt-packages}}
-        pip3 install 32blit
+        pip3 install 32blit pyelftools
 
     # macOS deps
     - name: Install deps
