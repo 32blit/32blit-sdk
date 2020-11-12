@@ -48,7 +48,7 @@ jobs:
             cache-key: macos
 
           - os: windows-latest
-            name: Visual Studio (CMake)
+            name: Visual Studio
             cache-key: windows
             release-suffix: WIN64
             cmake-args: -DSDL2_DIR=$PWD/../32blit-beta/vs/sdl
