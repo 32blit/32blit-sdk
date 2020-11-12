@@ -31,13 +31,6 @@ jobs:
             apt-packages: ccache gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib python3-setuptools
 
           - os: ubuntu-20.04
-            name: Emscripten
-            cache-key: emscripten
-            em: true
-            cmake-pre: emcmake
-            apt-packages: doxygen graphviz python3-setuptools
-
-          - os: ubuntu-20.04
             name: MinGW
             cache-key: mingw
             cmake-args: -DCMAKE_TOOLCHAIN_FILE=../32blit-beta/mingw.toolchain -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSDL2_DIR=$PWD/../32blit-beta/SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/ 
@@ -96,12 +89,6 @@ jobs:
       if: matrix.name == 'MinGW'
       run: ci/install_sdl_mingw.sh
 
-    - name: Setup Emscripten
-      if: matrix.em
-      uses: mymindstorm/setup-emsdk@v7
-      with:
-        version: 2.0.4
-
     - name: Create Build Environment
       run: cmake -E make_directory ${{runner.workspace}}/build
 
@@ -113,7 +100,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: ${{matrix.cmake-pre}} cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX=`pwd` ${{matrix.cmake-args}}
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX=`pwd` ${{matrix.cmake-args}}
 
     # Problem matching
     - if: runner.os != 'Windows'
@@ -166,20 +153,3 @@ jobs:
         upload_url: ${{github.event.release.upload_url}}
         asset_name: ${{env.RELEASE_FILE}}.zip
         asset_content_type: application/zip
-
-    # build the docs if this is the Emscripten build (we need the examples)
-    - name: Build Docs
-      if: matrix.em
-      run: |
-        cd 32blit && doxygen doxygen.conf && cd ..
-        cp -r 32blit/documentation/html/* site
-        cp ../build/examples/*/*.{js,wasm} site/examples
-
-    - name: Deploy to GitHub Pages
-      if: github.ref == 'refs/heads/master' && matrix.em # github.event_name == 'release'
-      uses: crazy-max/ghaction-github-pages@v2
-      with:
-        target_branch: gh-pages
-        build_dir: site
-      env:
-        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
