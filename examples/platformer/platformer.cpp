@@ -74,7 +74,7 @@ struct Player {
   }
 
   uint8_t animation_sprite_index(uint8_t animation) {
-    uint8_t animation_length = animations[animation].size();
+    auto animation_length = animations[animation].size();
     return animations[animation][uint32_t(animation_frame) % animation_length];
   }
 

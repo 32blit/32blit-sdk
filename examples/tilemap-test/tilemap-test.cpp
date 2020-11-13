@@ -210,7 +210,7 @@ using namespace blit;
 
 
     screen.alpha = 255;
-    for (auto i = 0; i < effect_names.size(); i++) {
+    for (auto i = 0u; i < effect_names.size(); i++) {
       if (effect == i)
         screen.pen = Pen(255, 255, 255);
       else
@@ -248,12 +248,14 @@ using namespace blit;
 
   uint32_t last_buttons = 0;
   void update(uint32_t time) {
+    auto last_effect = uint8_t(effect_names.size() - 1);
+
     if (buttons != last_buttons) {
       if (pressed(Button::DPAD_DOWN)) {
-        effect = effect == effect_names.size() - 1 ? 0 : effect + 1;
+        effect = effect == last_effect ? 0 : effect + 1;
       }
       if (pressed(Button::DPAD_UP)) {
-        effect = effect == 0 ? effect_names.size() - 1 : effect - 1;
+        effect = effect == 0 ? last_effect : effect - 1;
       }
     }
 
