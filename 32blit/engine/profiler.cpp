@@ -190,7 +190,7 @@ void Profiler::display_probe_overlay(uint8_t uPage)
 
 		// display header
 		screen.pen = Pen(255, 255, 255, m_uAlpha);
-		sprintf(buffer, "%" PRIu32 " (%u/%u)", m_uGraphTimeUs, uPage, uMaxPage);
+		snprintf(buffer, 64, "%" PRIu32 " (%u/%u)", m_uGraphTimeUs, uPage, uMaxPage);
 		screen.text(buffer, minimal_font, Point(m_uBorder, m_uBorder));
 
 		// labels
@@ -240,7 +240,7 @@ void Profiler::display_probe_overlay(uint8_t uPage)
 					screen.pen = Pen(255, 255, 255, m_uAlpha);
 					if(m_graphElements[uM].bDisplayLabel)
 					{
-						sprintf(buffer, "%" PRIu32, metrics[uM]);
+						snprintf(buffer, 64, "%" PRIu32, metrics[uM]);
 						screen.text(buffer, minimal_font, Rect(uMetricX, uY, uMetricWidth, m_uRowHeight), true, TextAlign::center_v);
 						uMetricX+=uMetricWidth;
 					}
