@@ -165,7 +165,7 @@ namespace blit {
         if (end == std::string::npos)
           end = message.length();
 
-        line_len = (end - char_off) * font.char_w;
+        line_len = int(end - char_off) * font.char_w;
         char_off = end;
       }
     }
