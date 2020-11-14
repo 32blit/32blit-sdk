@@ -179,8 +179,8 @@ public:
 
 	void					log_probes();
 
-	uint32_t			get_probe_count();
-	uint32_t			get_page_count();
+	size_t        get_probe_count();
+	size_t        get_page_count();
 
 	void 					set_display_size(uint16_t uWidth, uint32_t uHeight);
 	void					set_graph_time(uint32_t uTimeUs);
