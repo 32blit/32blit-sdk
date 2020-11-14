@@ -168,7 +168,7 @@ using namespace blit;
     return transform;
   };
 
-  std::function<Mat3(uint8_t)> effect_callbacks[]{
+  const std::function<Mat3(uint8_t)> effect_callbacks[]{
     zoom,
     dream,
     ripple,
@@ -180,7 +180,7 @@ using namespace blit;
     shake
   };
 
-  std::vector<std::string> effect_names = {
+  const std::array<std::string, 9> effect_names{
     "zoom",
     "dream",
     "ripple",
