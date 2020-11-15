@@ -297,14 +297,16 @@ void init() {
 
   g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'E', 'R', 'S', 'E'>::value, &cdc_erase_handler);
 
+  // auto-launch
+  if(persist.reset_target == prtGame)
+    blit_switch_execution(persist.last_game_offset);
+
   // error reset handling
   if(persist.reset_error) {
     dialog.show("Oops!", "Restart game?", [](bool yes){
 
       if(yes)
         blit_switch_execution(persist.last_game_offset);
-      else
-        persist.reset_target = prtFirmware;
 
       persist.reset_error = false;
     });
