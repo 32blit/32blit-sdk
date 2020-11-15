@@ -117,10 +117,11 @@ if(DEFINED VIDEO_CAPTURE AND VIDEO_CAPTURE)
 endif()
 
 function(blit_executable NAME SOURCES)
-	add_executable(${NAME} ${SOURCES} ${ARGN})
+	add_executable(${NAME} MACOSX_BUNDLE ${SOURCES} ${ARGN})
 
 	install(TARGETS ${NAME}
 		RUNTIME DESTINATION bin
+		BUNDLE DESTINATION bin
 	)
 
 	if (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
@@ -136,6 +137,12 @@ function(blit_executable NAME SOURCES)
 			SUFFIX ".html"
 			LINK_FLAGS "-s ENVIRONMENT=web -s SDL2_IMAGE_FORMATS=['jpg']"
 		)
+	endif()
+
+	if(APPLE)
+	    # install the SDL frameworks
+		install(DIRECTORY ${SDL2_LIBRARIES} DESTINATION "bin/${NAME}.app/Contents/Frameworks")
+		install(DIRECTORY ${SDL2_IMAGE_LIBRARY} DESTINATION "bin/${NAME}.app/Contents/Frameworks")
 	endif()
 endfunction()
 
