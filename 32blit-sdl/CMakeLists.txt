@@ -85,9 +85,13 @@ if(SDL2_IMAGE_DLL)
 	install(FILES ${SDL2_IMAGE_DLL} DESTINATION bin)
 endif()
 
+if(NOT 32BLIT_SDL_TITLE)
+	set(32BLIT_SDL_TITLE CMake!)
+endif()
+
 target_compile_definitions(BlitHalSDL
 	PRIVATE
-		-DWINDOW_TITLE=\"CMake!\"
+		-DWINDOW_TITLE=\"${32BLIT_SDL_TITLE}\"
 )
 
 if(DEFINED VIDEO_CAPTURE AND VIDEO_CAPTURE)
