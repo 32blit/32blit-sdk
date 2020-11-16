@@ -148,7 +148,7 @@ function(blit_executable NAME SOURCES)
 		)
 	endif()
 
-	if(APPLE)
+	if(APPLE AND SDL2_LIBRARIES MATCHES "\.framework$")
 	    # install the SDL frameworks
 		install(DIRECTORY ${SDL2_LIBRARIES} DESTINATION "bin/$<TARGET_FILE_NAME:${NAME}>.app/Contents/Frameworks")
 		install(DIRECTORY ${SDL2_IMAGE_LIBRARY} DESTINATION "bin/$<TARGET_FILE_NAME:${NAME}>.app/Contents/Frameworks")
