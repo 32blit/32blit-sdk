@@ -62,6 +62,7 @@ namespace blit {
     const int char_size = font.char_w * height_bytes;
 
     size_t char_off = 0;
+    uint8_t fixwidth = 0;
     for (char chr : message) {
       // draw character
 
@@ -71,6 +72,13 @@ namespace blit {
       uint8_t char_width = 0;
 
       const uint8_t* font_chr = &font.data[chr_idx * char_size];
+
+      // If this is a narrow character in fixed-width, center it in the render box
+      if (!variable)
+      {
+        fixwidth = (font.char_w - font.char_w_variable[chr_idx]) / 2;
+        c.x += fixwidth;
+      }
 
       for (uint8_t y = 0; y < font.char_h; y++) {
         if (c.y + y < 0)
@@ -90,7 +98,9 @@ namespace blit {
       }
 
       if (!variable)
-        char_width = font.char_w;
+      {
+        char_width = font.char_w - fixwidth;
+      }
       else
         char_width = font.char_w_variable[chr_idx];
 
