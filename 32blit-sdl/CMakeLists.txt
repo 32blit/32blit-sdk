@@ -141,8 +141,8 @@ function(blit_executable NAME SOURCES)
 
 	if(APPLE)
 	    # install the SDL frameworks
-		install(DIRECTORY ${SDL2_LIBRARIES} DESTINATION "bin/${NAME}.app/Contents/Frameworks")
-		install(DIRECTORY ${SDL2_IMAGE_LIBRARY} DESTINATION "bin/${NAME}.app/Contents/Frameworks")
+		install(DIRECTORY ${SDL2_LIBRARIES} DESTINATION "bin/$<TARGET_FILE_NAME:${NAME}>.app/Contents/Frameworks")
+		install(DIRECTORY ${SDL2_IMAGE_LIBRARY} DESTINATION "bin/$<TARGET_FILE_NAME:${NAME}>.app/Contents/Frameworks")
 	endif()
 endfunction()
 
@@ -151,5 +151,18 @@ function(blit_executable_int_flash NAME SOURCES)
 endfunction()
 
 function(blit_metadata TARGET FILE)
-	# do nothing
+	# cause cmake to reconfigure whenever the asset list changes
+	set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
+
+	# parse the metadata to variables
+	execute_process(COMMAND ${PYTHON_EXECUTABLE} -m ttblit cmake --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --cmake ${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
+	include(${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
+
+	set_target_properties(${TARGET} PROPERTIES
+		OUTPUT_NAME ${METADATA_TITLE}
+		MACOSX_BUNDLE_BUNDLE_NAME ${METADATA_TITLE}
+		MACOSX_BUNDLE_SHORT_VERSION_STRING ${METADATA_VERSION}
+		MACOSX_BUNDLE_LONG_VERSION_STRING ${METADATA_VERSION}
+		MACOSX_BUNDLE_COPYRIGHT "${METADATA_AUTHOR}"
+	)
 endfunction()
