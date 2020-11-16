@@ -23,7 +23,7 @@ namespace blit {
     };
     uint8_t state = STOPPED;
 
-    void init(TimerCallback callback, uint32_t duration, int32_t loops);
+    void init(TimerCallback callback, uint32_t duration, int32_t loops = -1);
     void start();
     void stop();
 

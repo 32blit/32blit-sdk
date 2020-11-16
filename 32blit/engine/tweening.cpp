@@ -19,7 +19,7 @@ namespace blit {
    * @param duration Duration of the tween in milliseconds.
    * @param loops Number of times the tween should repeat, -1 = forever.
    */
-  void Tween::init(TweenFunction function, float from, float to, uint32_t duration, int32_t loops = -1) {
+  void Tween::init(TweenFunction function, float from, float to, uint32_t duration, int32_t loops) {
     this->loops = loops;
     this->function = function;
     this->from = from;
