@@ -597,22 +597,22 @@ namespace blit {
     }
 
     // avoid allocating if in flash
-    const uint8_t *bytes, *end;
+    const uint8_t *image_data, *end;
 
     if(file.get_ptr())
-      bytes = file.get_ptr() + offset;
+      image_data = file.get_ptr() + offset;
     else {
-      bytes = new uint8_t[image.width * image.height * pixel_format_stride[image.format]];
-      file.read(offset, image.width * image.height * pixel_format_stride[image.format], (char *)bytes);
+      image_data = new uint8_t[image.width * image.height * pixel_format_stride[image.format]];
+      file.read(offset, image.width * image.height * pixel_format_stride[image.format], (char *)image_data);
     }
 
-    end = bytes + image.byte_count - offset;
+    end = image_data + image.byte_count - offset;
 
     if (format == PixelFormat::P) {
       // load paletted
       uint8_t *pdest = (uint8_t *)data;
 
-      for (; bytes < end; ++bytes) {
+      for (auto bytes = image_data; bytes < end; ++bytes) {
         uint8_t b = *bytes;
         for (auto j = 0; j < 8; j++) {
           col <<= 1;
@@ -629,7 +629,7 @@ namespace blit {
       // packed RGBA
       Pen *pdest = (Pen *)data;
 
-      for (; bytes < end; ++bytes) {
+      for (auto bytes = image_data; bytes < end; ++bytes) {
         uint8_t b = *bytes;
         for (auto j = 0; j < 8; j++) {
           col <<= 1;
@@ -650,7 +650,7 @@ namespace blit {
     }
 
     if (!file.get_ptr()) {
-      delete[] (uint8_t*)(bytes - image.byte_count + offset);
+      delete[] image_data;
     }
   }
 
