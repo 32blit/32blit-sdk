@@ -35,7 +35,7 @@ void render(uint32_t time) {
 
   screen.text("Time:", minimal_font, Point(COL1, ROW1));
 
-  sprintf(text_buf, "%" PRIu32, time);
+  snprintf(text_buf, 100, "%" PRIu32, time);
   screen.text(text_buf, minimal_font, Point(COL2, ROW1));
 
   blit::debugf("Hello from 32blit time = %lu\n\r", time);

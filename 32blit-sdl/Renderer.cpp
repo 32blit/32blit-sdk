@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cstdio>
+#include <cmath>
 #include "SDL.h"
 
 #include "Renderer.hpp"
@@ -37,8 +38,8 @@ void Renderer::set_mode(Mode new_mode) {
 		dest.w = win_width; dest.h = win_height;
 	} else {
 		float current_pixel_size = std::min((float)win_width / sys_width, (float)win_height / sys_height);
-		if (mode == KeepPixels) current_pixel_size = (int)current_pixel_size;
-		else if (mode == KeepPixelsLores) current_pixel_size = ((int)(2*current_pixel_size)) / 2.0;
+		if (mode == KeepPixels) current_pixel_size = floor(current_pixel_size);
+		else if (mode == KeepPixelsLores) current_pixel_size = (floor(2*current_pixel_size)) / 2.0f;
 		dest.w = sys_width * current_pixel_size;
 		dest.h = sys_height * current_pixel_size;
 		dest.x = (win_width - dest.w) / 2;

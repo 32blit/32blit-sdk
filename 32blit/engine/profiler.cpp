@@ -52,7 +52,8 @@ const char *Profiler::g_pszMetricNames[4]= {"Min", "Cur", "Avg", "Max"};
 
 Profiler::Profiler(uint32_t uRunningAverageSize, uint32_t uRunningAverageSpan ) : m_uGraphTimeUs(20000), m_uRunningAverageSize(uRunningAverageSize), m_uRunningAverageSpan(uRunningAverageSpan), m_uRowHeight(10), m_uBorder(5), m_uHeaderSize(15), m_uAlpha(160)
 {
-	api.enable_us_timer();
+  if(api.enable_us_timer)
+	  api.enable_us_timer();
 
 	// default to lowres
 	set_display_size(160, 120);
@@ -110,15 +111,14 @@ void Profiler::log_probes()
 	debugf("\n\r");
 }
 
-uint32_t Profiler::get_probe_count()
+size_t Profiler::get_probe_count()
 {
 	return m_probes.size();
 }
 
-uint32_t Profiler::get_page_count()
+size_t Profiler::get_page_count()
 {
-	uint32_t uPages = (m_probes.size() + m_uRows - 1) / m_uRows;
-	return uPages;
+	return (m_probes.size() + m_uRows - 1) / m_uRows;
 }
 
 void Profiler::set_display_size(uint16_t uWidth, uint32_t uHeight)
@@ -184,13 +184,13 @@ void Profiler::display_probe_overlay(uint8_t uPage)
 		uint16_t uNameX = m_uBorder;
 		uint16_t uMetricX  = uNameX + uNameWidth;
 
-		uint16_t uMaxPage = get_page_count();
+		auto uMaxPage = uint8_t(get_page_count());
 		if(uPage > uMaxPage)
 			uPage = uMaxPage;
 
 		// display header
 		screen.pen = Pen(255, 255, 255, m_uAlpha);
-		sprintf(buffer, "%" PRIu32 " (%u/%u)", m_uGraphTimeUs, uPage, uMaxPage);
+		snprintf(buffer, 64, "%" PRIu32 " (%u/%u)", m_uGraphTimeUs, uPage, uMaxPage);
 		screen.text(buffer, minimal_font, Point(m_uBorder, m_uBorder));
 
 		// labels
@@ -240,7 +240,7 @@ void Profiler::display_probe_overlay(uint8_t uPage)
 					screen.pen = Pen(255, 255, 255, m_uAlpha);
 					if(m_graphElements[uM].bDisplayLabel)
 					{
-						sprintf(buffer, "%" PRIu32, metrics[uM]);
+						snprintf(buffer, 64, "%" PRIu32, metrics[uM]);
 						screen.text(buffer, minimal_font, Rect(uMetricX, uY, uMetricWidth, m_uRowHeight), true, TextAlign::center_v);
 						uMetricX+=uMetricWidth;
 					}

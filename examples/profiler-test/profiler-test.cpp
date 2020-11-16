@@ -34,7 +34,7 @@ ProfilerProbe *g_pUpdateProbe;
 uint32_t g_uSize = 2;
 uint32_t g_uSizeMax	= SCREEN_HEIGHT-1;
 uint32_t g_uSizeMin	= 2;
-uint32_t g_uSizeChange = 1;
+int g_uSizeChange = 1;
 
 bool g_bGraphEnabled   = true;
 bool g_bLabelsEnabled  = true;

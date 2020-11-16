@@ -96,7 +96,7 @@ void render(uint32_t time) {
     ));
 
     if(joystick_history.size() > 256){
-        int trim = joystick_history.size() - 256;
+        auto trim = joystick_history.size() - 256;
         joystick_history.erase(joystick_history.begin(), joystick_history.begin() + trim);
     }
 

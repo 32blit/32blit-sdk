@@ -114,7 +114,7 @@ bool Input::handle_controller_button(int button, bool state) {
 }
 
 bool Input::handle_controller_motion(int axis, int value) {
-	float fvalue = value / 32768.0;
+	float fvalue = value / 32768.0f;
 	switch(axis) {
 		case SDL_CONTROLLER_AXIS_LEFTX:
 			target->set_joystick(0, fvalue);
@@ -135,7 +135,7 @@ bool Input::handle_controller_motion(int axis, int value) {
 }
 
 void Input::_virtual_tilt(int x, int y) {
-	int z = 80;
+	float z = 80.0f;
 	x = x - (win_width / 2);
 	y = y - (win_height / 2);
 	blit::Vec3 shadow_tilt(x, y, z);

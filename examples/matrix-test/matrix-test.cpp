@@ -28,7 +28,7 @@ float deg2rad(float a) {
 }
 
 void draw(std::array<Vec2, 4> vecs, std::vector<Mat3> trs) {
-  int s = (150) / trs.size();
+  auto s = uint8_t(150 / trs.size());
   Pen p(255, 255, 255, 32);
 
   auto o = Vec2(80, 60);
@@ -57,7 +57,7 @@ void draw(std::array<Vec2, 4> vecs, std::vector<Mat3> trs) {
   }
 
   // then apply the translations in reverse and ensure we end up back at the start
-  for (int i = trs.size() - 1; i >= 0; i--) {
+  for (auto i = trs.size() - 1; i >= 0; i--) {
     Mat3 tr = trs[i];
 
     tr.inverse();
