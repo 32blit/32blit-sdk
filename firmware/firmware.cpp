@@ -239,6 +239,12 @@ void load_current_game_metadata() {
   }
 }
 
+void launch_game(uint32_t address) {
+  selected_game_metadata.free_surfaces();
+
+  blit_switch_execution(address);
+}
+
 void mass_storage_overlay(uint32_t time)
 {
   static uint8_t uActivityAnim = 0;
@@ -297,14 +303,16 @@ void init() {
 
   g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'E', 'R', 'S', 'E'>::value, &cdc_erase_handler);
 
+  // auto-launch
+  if(persist.reset_target == prtGame)
+    launch_game(persist.last_game_offset);
+
   // error reset handling
   if(persist.reset_error) {
     dialog.show("Oops!", "Restart game?", [](bool yes){
 
       if(yes)
-        blit_switch_execution(persist.last_game_offset);
-      else
-        persist.reset_target = prtFirmware;
+        launch_game(persist.last_game_offset);
 
       persist.reset_error = false;
     });
@@ -503,7 +511,7 @@ void update(uint32_t time) {
         offset = flash_from_sd_to_qspi_flash(game.filename.c_str()); // sd
 
       if(offset != 0xFFFFFFFF)
-        blit_switch_execution(offset);
+        launch_game(offset);
     }
 
     // delete current game
@@ -949,7 +957,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                     if(result != srError)
                     {
                       result = srFinish;
-                      blit_switch_execution(flash_start_offset);
+                      launch_game(flash_start_offset);
                     }
                     else
                       state = stFlashFile;

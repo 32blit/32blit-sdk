@@ -156,8 +156,9 @@ int main(void)
   blit_init();
 
 #if (INITIALISE_QSPI==1)
-  if((persist.reset_target == prtGame) && HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port,  BUTTON_MENU_Pin) && !persist.reset_error)
-    blit_switch_execution(persist.last_game_offset);
+  // don't switch to game if it crashed, or menu is held
+  if(persist.reset_target == prtGame && (!HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port,  BUTTON_MENU_Pin) || persist.reset_error))
+    persist.reset_target = prtFirmware;
 #endif
 
   // add CDC handler to reset device on receiving "_RST" and "SWIT"
