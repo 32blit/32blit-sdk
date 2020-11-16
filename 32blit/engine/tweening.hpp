@@ -27,7 +27,7 @@ namespace blit {
     };
     uint8_t state = STOPPED;
 
-    void init(TweenFunction function, float start, float end, uint32_t duration, int32_t loops);
+    void init(TweenFunction function, float start, float end, uint32_t duration, int32_t loops = -1);
     void start();
     void stop();
 
