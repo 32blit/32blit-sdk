@@ -47,7 +47,7 @@ namespace blit {
     }
   }
 
-  void MapLayer::texture_span(Surface *dest, Point s, uint16_t c, Surface *sprites, Vec2 swc, Vec2 ewc, uint8_t mipmap_index = 0) {
+  void MapLayer::texture_span(Surface *dest, Point s, uint16_t c, Surface *sprites, Vec2 swc, Vec2 ewc, uint8_t mipmap_index) {
     BlitBlendFunc bbf = dest->bbf;
 
     int world_size = map->bounds.w * 8;
