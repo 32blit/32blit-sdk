@@ -73,7 +73,7 @@ memcpy(local_level_data, level_data, level_width * level_height);
 level = new TileMap(local_level_data, nullptr, Size(level_width, level_height), screen.sprites);
 ```
 
-## Additional options
+## Additional Options
 ```yaml
 assets.cpp:                         # Output filename, can also be a .hpp
     assets/sprites.png:
@@ -82,7 +82,7 @@ assets.cpp:                         # Output filename, can also be a .hpp
 
         type: image/image           # Type of this asset, usually auto-detected from the extension
 
-        pallete: assets/palette.png # Optional palette for the image. Supports .act, .pal, .gpl and any image file
+        palette: assets/palette.png # Optional palette for the image. Supports .act, .pal, .gpl and any image file
 
         transparent: 255,0,255      # Optional colour to map to transparency
 
