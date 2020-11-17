@@ -11,6 +11,7 @@ pip3 install 32blit
 Head on over to https://github.com/pimoroni/32blit-tools for further documentation covering the installation of the new tools.
 
 - [Asset Pipeline](#asset-pipeline)
+  - [Additional Options](#additional-options)
 - [Visual Studio](#visual-studio)
 - [Old Tools](#old-tools)
   - [Sprite Builder](#sprite-builder)
@@ -70,6 +71,76 @@ memcpy(local_level_data, level_data, level_width * level_height);
 
 // Load our level data into the TileMap
 level = new TileMap(local_level_data, nullptr, Size(level_width, level_height), screen.sprites);
+```
+
+## Additional options
+```yaml
+assets.cpp:                         # Output filename, can also be a .hpp
+    assets/sprites.png:
+        name: sprites_data          # Name of variable generated for this asset, if omitted is generated from the
+                                    # file name
+
+        type: image/image           # Type of this asset, usually auto-detected from the extension
+
+        pallete: assets/palette.png # Optional palette for the image. Supports .act, .pal, .gpl and any image file
+
+        transparent: 255,0,255      # Optional colour to map to transparency
+
+        packed: yes                 # Pack the image into the minimum number of bits, for example an image with
+                                    # two colours would use one bit per pixel. Set to false to always use eight
+                                    # bits per pixel
+
+        strict: true                # Allow only the colours defined in the palette, if false (the default)
+                                    # colours are automatically added to the palette
+
+    # If you do not need to specify any options other than the name, you can use
+    assets/sprites.png: sprites_data
+
+    # Parses a Tiled map
+    assets/level.tmx:
+        name: level_data
+        type: map/tiled
+    
+    # Embeds a file without any processing
+    assets/raw.bin:
+        name: raw_bin
+        type: raw/binary
+    
+    # Parses a CSV file into an array of bytes
+    assets/raw.csv:
+        name: csv_data
+        type: raw/csv
+     
+    # Generates a font from an image
+    # It can be used as `const Font font(asset_font)`
+    assets/font.png:
+        name: asset_font
+
+        type: font/image            # This is required here as it would be auto-detected as an image asset
+
+        height: 8                   # The height of the font, should match the image file if specified
+
+        horizontal_spacing: 1       # Additional space between characters for variable-width mode (defaults to 1)
+
+        vertical_spacing: 1         # Space between lines (defaults to 1)
+
+        space_width: 4              # Width of the space character (defaults to 1)
+
+    # Generates a font from a font file, can use any format supported by freetype
+    assets/Comic_Sans_MS.ttf:
+        name: asset_comic_font
+
+        type: font/font
+
+        height: 16                  # The height of the font to request, the resulting font's height may be
+                                    # slightly different
+
+        vertical_spacing: 1         # Space between lines (defaults to 1)
+
+# It is also possible to define multiple outputs
+more-assets.hpp:
+    assets/extra_sprites.png: extra_sprites
+
 ```
 
 # Visual Studio
