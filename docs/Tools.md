@@ -63,15 +63,13 @@ constexpr uint16_t level_width = 64;
 constexpr uint16_t level_height = 64;
 
 // Allocate memory for the writeable copy of the level
-uint8_t *local_level_data = (uint8_t *)malloc(level_width * level_height);
+auto local_level_data = new uint8_t[level_width * level_height]
 
 // Copy read-only level data into writeable copy
-for(auto x = 0; x < level_width * level_height; x++){
-  local_level_data[x] = level_data[x];
-}
+memcpy(local_level_data, level_data, level_width * level_height);
 
 // Load our level data into the TileMap
-level = new TileMap((uint8_t *)local_level_data, nullptr, Size(level_width, level_height), screen.sprites);
+level = new TileMap(local_level_data, nullptr, Size(level_width, level_height), screen.sprites);
 ```
 
 # Visual Studio
