@@ -98,9 +98,7 @@ namespace blit {
       }
 
       if (!variable)
-      {
         char_width = font.char_w - fixwidth;
-      }
       else
         char_width = font.char_w_variable[chr_idx];
 
