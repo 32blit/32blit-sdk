@@ -37,9 +37,13 @@ namespace display {
   Pen palette[256];
 
   ScreenMode mode = ScreenMode::lores;
+  ScreenMode requested_mode = ScreenMode::lores;
+
   bool needs_render = false;
   int palette_needs_update = 0;
   uint8_t palette_update_delay = 0;
+
+  bool need_ltdc_mode_update = false;
 
   void init() {
     __fb_hires_pal.palette = palette;
@@ -66,8 +70,8 @@ namespace display {
   }
 
   Surface &set_screen_mode(ScreenMode new_mode) {
-    mode = new_mode;
-    switch(mode) {
+    requested_mode = new_mode;
+    switch(new_mode) {
       case ScreenMode::lores:
         screen = __fb_lores;
         break;
@@ -79,7 +83,6 @@ namespace display {
         break;
     }
 
-    update_ltdc_for_mode();
     return screen;
   }
 
@@ -148,6 +151,12 @@ namespace display {
 
   void flip(const Surface &source) {        
     static uint32_t flip_time = 0;
+
+    // switch colour mode if needed
+    if(need_ltdc_mode_update) {
+      update_ltdc_for_mode();
+      need_ltdc_mode_update = false;
+    }
 
     // TODO: both flip implementations can we done via DMA2D which will save
     // a heap of CPU time.
@@ -235,7 +244,13 @@ namespace display {
     // since the ltdc hardware pulls frame data directly over the memory bus
     // without passing through the mcu's cache layer we must invalidate the
     // affected area to ensure that all data has been committed into ram
-    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(&__ltdc_start), ltdc_buffer_size);    
+    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(&__ltdc_start), ltdc_buffer_size);   
+
+    // set new mode after displaying last frame in the old one
+    if(mode != requested_mode) {
+      mode = requested_mode;
+      need_ltdc_mode_update = true;
+    }
   }
 
   void screen_init() {
