@@ -29,9 +29,11 @@ namespace blit {
     uint16_t  rows, cols;
 
     SpriteSheet(uint8_t *data, PixelFormat format, const packed_image *image);
+    SpriteSheet(uint8_t *data, PixelFormat format, File &image);
 
     static SpriteSheet *load(const uint8_t *data, uint8_t *buffer = nullptr);
     static SpriteSheet *load(const packed_image *image, uint8_t *buffer = nullptr);
+    static SpriteSheet *load(const std::string& filename, uint8_t* buffer = nullptr);
 
     Rect sprite_bounds(const uint16_t &index);          
     Rect sprite_bounds(const Point &p);

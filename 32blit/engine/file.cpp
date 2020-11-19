@@ -102,6 +102,14 @@ namespace blit {
     return api.remove_file(path);
   }
 
+  bool File::open(const uint8_t *buf, uint32_t buf_len) {
+    close();
+
+    this->buf = buf;
+    this->buf_len = buf_len;
+    return true;
+  }
+
   /**
    * Open a file. If a file is already open it will be automatically closed.
    *

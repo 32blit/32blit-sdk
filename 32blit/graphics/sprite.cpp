@@ -6,6 +6,8 @@
 #include "surface.hpp"
 #include "sprite.hpp"
 
+#include "../engine/file.hpp"
+
 using namespace blit;
 
 namespace blit {
@@ -18,6 +20,11 @@ namespace blit {
    * \param[in] image
    */
   SpriteSheet::SpriteSheet(uint8_t *data, PixelFormat format, const packed_image *image) : Surface(data, format, image) {  
+    rows = bounds.h / 8;
+    cols = bounds.w / 8;
+  }
+
+  SpriteSheet::SpriteSheet(uint8_t *data, PixelFormat format, File &image) : Surface(data, format, image) {  
     rows = bounds.h / 8;
     cols = bounds.w / 8;
   }
@@ -38,6 +45,22 @@ namespace blit {
     }
     
     return new SpriteSheet(buffer, (PixelFormat)image->format, image);
+  }
+
+  SpriteSheet *SpriteSheet::load(const std::string& filename, uint8_t* buffer) {
+    File file;
+
+    if (!file.open(filename, OpenMode::read))
+      return nullptr;
+
+    packed_image image;
+    file.read(0, sizeof(packed_image), (char *)&image);
+
+    if (buffer == nullptr) {
+      buffer = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
+    }
+
+    return new SpriteSheet(buffer, (PixelFormat)image.format, file);
   }
 
   /**
