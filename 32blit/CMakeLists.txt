@@ -49,3 +49,9 @@ endif()
 
 configure_file(version_defs.hpp.in version_defs.hpp)
 target_include_directories(BlitEngine PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
+if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
+  target_compile_options(BlitEngine PRIVATE
+    -wd4244 # conversions
+  )
+endif()
