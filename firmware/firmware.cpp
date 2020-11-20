@@ -121,7 +121,7 @@ void load_directory_list(std::string directory) {
 
   for(auto &folder : ::list_files(directory)) {
     if(folder.flags & blit::FileFlags::directory) {
-      if(folder.name.compare("System Volume Information") == 0) continue;
+      if(folder.name.compare("System Volume Information") == 0 || folder.name[0] == '.') continue;
       directory_list.push_back({folder.name, 0, 0});
     }
   }
