@@ -142,6 +142,9 @@ bool remove_file(const std::string &path) {
 std::string get_save_path() {
   std::string app_name;
 
+  if(!directory_exists(".blit"))
+    create_directory(".blit");
+
   if(!blit_user_code_running())
     app_name = "_firmware";
   else {
@@ -163,6 +166,10 @@ std::string get_save_path() {
       app_name = std::to_string(persist.last_game_offset);
     }
   }
+
+  // make sure it exists
+  if(!directory_exists(".blit/" + app_name))
+    create_directory(".blit/" + app_name);
 
   return ".blit/" + app_name + "/";
 }
