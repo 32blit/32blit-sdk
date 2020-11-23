@@ -1,4 +1,5 @@
 add_library(BlitHalSDL STATIC
+	DefaultMetadata.cpp
 	File.cpp
 	Input.cpp
 	JPEG.cpp
@@ -188,4 +189,14 @@ function(blit_metadata TARGET FILE)
 		target_sources(${TARGET} PRIVATE ${ICON})
 		set_source_files_properties(${ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 	endif()
+
+	file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/metadata.cpp
+		CONTENT "
+const char *metadata_title = \"${METADATA_TITLE}\";
+const char *metadata_author = \"${METADATA_AUTHOR}\";
+const char *metadata_description = \"${METADATA_DESCRIPTION}\";
+const char *metadata_version = \"${METADATA_VERSION}\";
+		"
+	)
+	target_sources(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/metadata.cpp)
 endfunction()
