@@ -91,15 +91,6 @@ if(SDL2_IMAGE_DLL)
 	install(FILES ${SDL2_IMAGE_DLL} DESTINATION bin)
 endif()
 
-if(NOT 32BLIT_SDL_TITLE)
-	set(32BLIT_SDL_TITLE CMake!)
-endif()
-
-target_compile_definitions(BlitHalSDL
-	PRIVATE
-		-DWINDOW_TITLE=\"${32BLIT_SDL_TITLE}\"
-)
-
 if(DEFINED VIDEO_CAPTURE AND VIDEO_CAPTURE)
 	find_path(AVCODEC_INCLUDE_DIR libavcodec/avcodec.h)
 	find_library(AVCODEC_LIBRARY avcodec)
