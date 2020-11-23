@@ -13,6 +13,7 @@
 #include "System.hpp"
 #include "Renderer.hpp"
 #include "Audio.hpp"
+#include "UserCode.hpp"
 
 #ifdef VIDEO_CAPTURE
 #include "VideoCapture.hpp"
@@ -112,13 +113,13 @@ void handle_event(SDL_Event &event) {
 			} else if (event.type == System::timer_event) {
 				switch(event.user.code) {
 					case 0:
-						SDL_SetWindowTitle(window, WINDOW_TITLE);
+						SDL_SetWindowTitle(window, metadata_title);
 						break;
 					case 1:
-						SDL_SetWindowTitle(window, WINDOW_TITLE " [SLOW]");
+						SDL_SetWindowTitle(window, (std::string(metadata_title) + " [SLOW]").c_str());
 						break;
 					case 2:
-						SDL_SetWindowTitle(window, WINDOW_TITLE " [FROZEN]");
+						SDL_SetWindowTitle(window, (std::string(metadata_title) + " [FROZEN]").c_str());
 						break;
 				}
 			}
@@ -149,7 +150,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	window = SDL_CreateWindow(
-		WINDOW_TITLE,
+		metadata_title,
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		System::width*2, System::height*2,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
