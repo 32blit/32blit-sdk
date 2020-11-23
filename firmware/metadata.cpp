@@ -9,15 +9,6 @@
 
 using namespace blit;
 
-struct RawMetadata {
-  uint32_t crc32;
-  char datetime[16];
-  char title[25];
-  char description[129];
-  char version[17];
-  char author[17];
-};
-
 void parse_metadata(char *data, uint16_t metadata_len, BlitGameMetadata &metadata, bool unpack_images) {
   metadata.length = metadata_len;
 

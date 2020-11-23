@@ -18,3 +18,13 @@ struct BlitGameHeader {
   uint32_t end;
   uint32_t start;
 };
+
+// missing the "BLITMETA" header and size
+struct RawMetadata {
+  uint32_t crc32;
+  char datetime[16];
+  char title[25];
+  char description[129];
+  char version[17];
+  char author[17];
+};
