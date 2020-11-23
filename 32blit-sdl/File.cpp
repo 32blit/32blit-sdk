@@ -13,6 +13,7 @@
 #include "SDL.h"
 
 #include "File.hpp"
+#include "UserCode.hpp"
 
 static std::string basePath;
 
@@ -178,4 +179,13 @@ bool rename_file(const std::string &old_name, const std::string &new_name) {
 
 bool remove_file(const std::string &path) {
   return remove((basePath + path).c_str()) == 0;
+}
+
+std::string get_save_path() {
+  auto tmp = SDL_GetPrefPath(metadata_author, metadata_title);
+  std::string ret(tmp);
+
+  SDL_free(tmp);
+
+  return ret;
 }
