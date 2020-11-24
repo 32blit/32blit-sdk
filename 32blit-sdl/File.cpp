@@ -37,6 +37,14 @@ void *open_file(const std::string &name, int mode) {
     return nullptr;
 
   auto file = SDL_RWFromFile((basePath + name).c_str(), str_mode);
+
+  if(!file) {
+    // check if the path is under the save path
+    auto save_path = get_save_path();
+    if(name.compare(0, save_path.length(), save_path) == 0)
+      file = SDL_RWFromFile(name.c_str(), str_mode);
+  }
+
   return file;
 }
 
