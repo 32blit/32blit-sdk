@@ -77,3 +77,9 @@
 #define VIBE_EN_GPIO_Port           GPIOB
 #define VERSION_Pin                 GPIO_PIN_3
 #define VERSION_GPIO_Port           GPIOE
+#define LED_CHG_RED_Pin             GPIO_PIN_12
+#define LED_CHG_RED_Port            GPIOC
+#define LED_CHG_GREEN_Pin           GPIO_PIN_0
+#define LED_CHG_GREEN_Port          GPIOE
+#define LED_CHG_BLUE_Pin            GPIO_PIN_1
+#define LED_CHG_BLUE_Port           GPIOE

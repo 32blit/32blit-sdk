@@ -141,6 +141,7 @@ int main(void)
   MX_SPI4_Init();
   //MX_TIM6_Init();
   MX_TIM15_Init();
+  MX_TIM16_Init();
   MX_FATFS_Init();  
   MX_RNG_Init();
   MX_USB_DEVICE_Init();

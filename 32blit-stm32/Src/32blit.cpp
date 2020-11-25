@@ -60,6 +60,11 @@ uint8_t battery_status = 0;
 uint8_t battery_fault = 0;
 uint16_t accel_address = LIS3DH_DEVICE_ADDRESS;
 
+uint16_t charge_led_counter = 0;
+uint8_t charge_led_r = 0;
+uint8_t charge_led_g = 0;
+uint8_t charge_led_b = 0;
+
 const uint32_t long_press_exit_time = 1000;
 
 __attribute__((section(".persist"))) Persist persist;
@@ -263,6 +268,7 @@ void blit_i2c_tick() {
   if(HAL_I2C_GetState(&hi2c4) != HAL_I2C_STATE_READY){
     return;
   }
+
   switch(i2c_state) {
     case STOPPED:
     case DELAY:
@@ -305,6 +311,7 @@ void blit_i2c_tick() {
       }
 
       blit::tilt.normalize();
+
       i2c_state = SEND_BAT;
       break;
     case SEND_BAT:
@@ -369,6 +376,8 @@ void blit_init() {
     init_api_shared();
 
     blit_update_volume();
+
+    HAL_TIM_Base_Start_IT(&htim16);
 
     // enable cycle counting
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
@@ -700,6 +709,31 @@ void blit_update_led() {
 
     // Backlight
     __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 962 - (962 * persist.backlight));
+
+
+    // TODO we don't want to do this too often!
+    switch((battery_status >> 4) & 0b11){
+      case 0b00: // Not charging
+        charge_led_r = 128;
+        charge_led_b = 0;
+        charge_led_g = 0;
+        break;
+      case 0b01: // Pre-charge
+        charge_led_r = 128;
+        charge_led_b = 128;
+        charge_led_g = 0;
+        break;
+      case 0b10: // Fast Charging
+        charge_led_r = 0;
+        charge_led_b = 128;
+        charge_led_g = 0;
+        break;
+      case 0b11: // Charge Done
+        charge_led_r = 0;
+        charge_led_b = 0;
+        charge_led_g = 128;
+        break;
+    }
 }
 
 void HAL_ADC_ErrorCallback(ADC_HandleTypeDef* hadc){
@@ -729,6 +763,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     }
     HAL_TIM_Base_Stop(&htim2);
     HAL_TIM_Base_Stop_IT(&htim2);
+  } else if(htim == &htim16) {
+    charge_led_counter += 1;
+    charge_led_counter &= 0x3ff;
+    HAL_GPIO_WritePin(LED_CHG_RED_Port, LED_CHG_RED_Pin, charge_led_r > charge_led_counter ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    HAL_GPIO_WritePin(LED_CHG_GREEN_Port, LED_CHG_GREEN_Pin, charge_led_g > charge_led_counter ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    HAL_GPIO_WritePin(LED_CHG_BLUE_Port, LED_CHG_BLUE_Pin, charge_led_b > charge_led_counter ? GPIO_PIN_RESET : GPIO_PIN_SET);
   }
 }
 
@@ -949,6 +989,7 @@ void blit_switch_execution(uint32_t address)
 
   // Stop system button timer
   HAL_TIM_Base_Stop_IT(&htim2);
+  HAL_TIM_Base_Stop_IT(&htim16);
 
   // stop USB
   USBD_Stop(&hUsbDeviceHS);
