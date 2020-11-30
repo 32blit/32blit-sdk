@@ -208,13 +208,21 @@ static bool SD_RxDataBlock(BYTE *buff, UINT len)
 		uint32_t *buff32 = (uint32_t *)buff;
 		const uint32_t *end = buff32 + len / 4;
 
-		while(buff32 != end && Timer1)
-		{
-			if((HSPI_SDCARD)->Instance->SR & SPI_FLAG_TXP)
-				*((__IO uint32_t *)&(HSPI_SDCARD)->Instance->TXDR) = 0xFFFFFFFF;
+		// fill the 16 byte fifo
+		for(int i = 0; i < 4; i++)
+			*((__IO uint32_t *)&(HSPI_SDCARD)->Instance->TXDR) = 0xFFFFFFFF;
 
+		while(Timer1)
+		{
 			if(((HSPI_SDCARD)->Instance->SR & SPI_FLAG_RXWNE))
+			{
 				*(buff32++) = *((__IO uint32_t *)&(HSPI_SDCARD)->Instance->RXDR);
+
+				if(buff32 != end)
+					*((__IO uint32_t *)&(HSPI_SDCARD)->Instance->TXDR) = 0xFFFFFFFF; // refill tx
+				else
+					break;
+			}
 		}
 
 		while(!((HSPI_SDCARD)->Instance->SR & SPI_FLAG_EOT) && Timer1); // wait for end
