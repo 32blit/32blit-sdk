@@ -181,7 +181,7 @@ static uint8_t SD_CheckPower(void)
 }
 
 /* receive data block */
-static bool SD_RxDataBlock(BYTE *buff, UINT len)
+static bool SD_RxDataBlock(BYTE *buff, uint16_t len)
 {
 	uint8_t token;
 
