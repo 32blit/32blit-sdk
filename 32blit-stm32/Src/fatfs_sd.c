@@ -29,18 +29,22 @@ static void DESELECT(void)
 	HAL_GPIO_WritePin(SD_CS_PORT, SD_CS_PIN, GPIO_PIN_SET);
 }
 
-static void SPI_Start(uint16_t len)
+static void SPI_Start(SPI_TypeDef *spi, uint16_t len)
 {
-  MODIFY_REG((HSPI_SDCARD)->Instance->CR2, SPI_CR2_TSIZE, len);
-  (HSPI_SDCARD)->Instance->CR1 |= SPI_CR1_SPE; // enable
-  (HSPI_SDCARD)->Instance->CR1 |= SPI_CR1_CSTART; // start
+	spi->CR2 = len;
+
+	uint32_t cr1 = spi->CR1 | SPI_CR1_SPE;
+
+	spi->CR1 = cr1; // enable
+	spi->CR1 = cr1 | SPI_CR1_CSTART; // start
 }
 
-static void SPI_End()
+static void SPI_End(SPI_TypeDef *spi)
 {
-  __HAL_SPI_CLEAR_EOTFLAG(HSPI_SDCARD);
-  __HAL_SPI_CLEAR_TXTFFLAG(HSPI_SDCARD);
-  (HSPI_SDCARD)->Instance->CR1 &= ~SPI_CR1_SPE; // disable
+	// clear EOT/TXTF
+	spi->IFCR |= SPI_IFCR_EOTC | SPI_IFCR_TXTFC;
+
+	spi->CR1 &= ~SPI_CR1_SPE; // disable
 }
 
 /* SPI transmit a byte */
@@ -48,7 +52,7 @@ static void SPI_TxByte(uint8_t data)
 {
   uint32_t start = HAL_GetTick();
 
-  SPI_Start(1);
+  SPI_Start((HSPI_SDCARD)->Instance, 1);
 
   // wait for tx space
   while(!((HSPI_SDCARD)->Instance->SR & SPI_FLAG_TXP));
@@ -59,7 +63,7 @@ static void SPI_TxByte(uint8_t data)
   while(!((HSPI_SDCARD)->Instance->SR & SPI_FLAG_EOT) && HAL_GetTick() - start < SPI_TIMEOUT);
 
   // end
-  SPI_End();
+  SPI_End((HSPI_SDCARD)->Instance);
 }
 
 /* SPI transmit buffer */
@@ -76,7 +80,7 @@ static uint8_t SPI_RxByte(void)
 
   uint32_t start = HAL_GetTick();
 
-  SPI_Start(1);
+  SPI_Start((HSPI_SDCARD)->Instance, 1);
 
   while(!((HSPI_SDCARD)->Instance->SR & SPI_FLAG_TXP));
 
@@ -91,7 +95,7 @@ static uint8_t SPI_RxByte(void)
   while(!((HSPI_SDCARD)->Instance->SR & SPI_FLAG_EOT) && HAL_GetTick() - start < SPI_TIMEOUT);
 
   // end
-  SPI_End();
+  SPI_End((HSPI_SDCARD)->Instance);
 
   return data;
 }
@@ -194,7 +198,7 @@ static bool SD_RxDataBlock(BYTE *buff, UINT len)
 		Timer1 = SPI_TIMEOUT;
 
 		// manual txrx
-		SPI_Start(len);
+		SPI_Start((HSPI_SDCARD)->Instance, len);
 
 		// the only length that will be used here is 512
 		uint32_t *buff32 = (uint32_t *)buff;
@@ -212,7 +216,7 @@ static bool SD_RxDataBlock(BYTE *buff, UINT len)
 		while(!((HSPI_SDCARD)->Instance->SR & SPI_FLAG_EOT) && Timer1); // wait for end
 		
 		// end
-		SPI_End();
+		SPI_End((HSPI_SDCARD)->Instance);
 	}
 	else
 	{
