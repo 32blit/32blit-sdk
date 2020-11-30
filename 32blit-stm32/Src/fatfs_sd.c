@@ -52,18 +52,20 @@ static void SPI_TxByte(uint8_t data)
 {
   uint32_t start = HAL_GetTick();
 
-  SPI_Start((HSPI_SDCARD)->Instance, 1);
+  SPI_TypeDef *spi = (HSPI_SDCARD)->Instance;
+
+  SPI_Start(spi, 1);
 
   // wait for tx space
-  while(!((HSPI_SDCARD)->Instance->SR & SPI_FLAG_TXP));
+  while(!(spi->SR & SPI_FLAG_TXP));
 
-  *((__IO uint8_t *)&(HSPI_SDCARD)->Instance->TXDR) = data;
+  *((__IO uint8_t *)&spi->TXDR) = data;
 
   // wait for end
-  while(!((HSPI_SDCARD)->Instance->SR & SPI_FLAG_EOT) && HAL_GetTick() - start < SPI_TIMEOUT);
+  while(!(spi->SR & SPI_FLAG_EOT) && HAL_GetTick() - start < SPI_TIMEOUT);
 
   // end
-  SPI_End((HSPI_SDCARD)->Instance);
+  SPI_End(spi);
 }
 
 /* SPI transmit buffer */
@@ -80,22 +82,24 @@ static uint8_t SPI_RxByte(void)
 
   uint32_t start = HAL_GetTick();
 
-  SPI_Start((HSPI_SDCARD)->Instance, 1);
+  SPI_TypeDef *spi = (HSPI_SDCARD)->Instance;
 
-  while(!((HSPI_SDCARD)->Instance->SR & SPI_FLAG_TXP));
+  SPI_Start(spi, 1);
 
-  *((__IO uint8_t *)&(HSPI_SDCARD)->Instance->TXDR) = 0xFF;
+  while(!(spi->SR & SPI_FLAG_TXP));
+
+  *((__IO uint8_t *)&spi->TXDR) = 0xFF;
 
   // wait for a byte
-  while(!((HSPI_SDCARD)->Instance->SR & (SPI_FLAG_RXWNE | SPI_FLAG_FRLVL)) && HAL_GetTick() - start < SPI_TIMEOUT);
+  while(!(spi->SR & (SPI_FLAG_RXWNE | SPI_FLAG_FRLVL)) && HAL_GetTick() - start < SPI_TIMEOUT);
 
-  data = *((__IO uint8_t *)&(HSPI_SDCARD)->Instance->RXDR);
+  data = *((__IO uint8_t *)&spi->RXDR);
 
   // wait for end
-  while(!((HSPI_SDCARD)->Instance->SR & SPI_FLAG_EOT) && HAL_GetTick() - start < SPI_TIMEOUT);
+  while(!(spi->SR & SPI_FLAG_EOT) && HAL_GetTick() - start < SPI_TIMEOUT);
 
   // end
-  SPI_End((HSPI_SDCARD)->Instance);
+  SPI_End(spi);
 
   return data;
 }
