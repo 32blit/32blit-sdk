@@ -174,6 +174,18 @@ function(blit_metadata TARGET FILE)
 			MACOSX_BUNDLE_SHORT_VERSION_STRING ${METADATA_VERSION}
 			MACOSX_BUNDLE_LONG_VERSION_STRING ${METADATA_VERSION}
 			MACOSX_BUNDLE_COPYRIGHT "${METADATA_AUTHOR}"
+			MACOSX_BUNDLE_ICON_FILE icon
 		)
+
+		set(ICON ${CMAKE_CURRENT_BINARY_DIR}/icon.icns)
+
+		add_custom_command(
+			OUTPUT ${ICON}
+			COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit metadata --force --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --icns ${ICON}
+			DEPENDS ${METADATA_DEPENDS} ${CMAKE_CURRENT_SOURCE_DIR}/${FILE}
+		)
+
+		target_sources(${TARGET} PRIVATE ${ICON})
+		set_source_files_properties(${ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 	endif()
 endfunction()
