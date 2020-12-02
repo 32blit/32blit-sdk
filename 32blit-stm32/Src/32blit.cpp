@@ -373,6 +373,12 @@ void blit_init() {
       persist.last_game_offset = 0;
     }
 
+#if (INITIALISE_QSPI==1)
+    // don't switch to game if it crashed, or menu is held
+    if(persist.reset_target == prtGame && (!HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port,  BUTTON_MENU_Pin) || persist.reset_error))
+      persist.reset_target = prtFirmware;
+#endif
+
     init_api_shared();
 
     blit_update_volume();
