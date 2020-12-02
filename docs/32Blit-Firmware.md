@@ -53,6 +53,8 @@ make firmware
 
 To enter DFU mode either hold the X & Y buttons and press the reset button or select `dfu mode` from the on device menu. The screen will go dark, this is normal.
 
+![hold the X & Y buttons and press the reset button](resources/enter-dfu-mode.png)
+
 ### Linux and macOS
 
 Install `dfu-util` from your package manager then enter:
