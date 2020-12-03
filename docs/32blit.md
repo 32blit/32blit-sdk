@@ -6,7 +6,13 @@ These instructions assume a basic familiarity with the Linux command-line and wi
   - [Examples](#examples)
     - [Building An Example](#building-an-example)
     - [Uploading An Example](#uploading-an-example)
+      - [Via mass-storage mode](#via-mass-storage-mode)
+      - [With make](#with-make)
+      - [With the 32blit tool](#with-the-32blit-tool)
   - [Your Own Projects](#your-own-projects)
+  - [Running games](#running-games)
+    - [Launching](#launching)
+    - [Exiting](#exiting)
 - [Troubleshooting](#troubleshooting)
     - [Flasher Can't Find 32Blit Port](#flasher-cant-find-32blit-port)
     - [CMake Errors](#cmake-errors)
@@ -46,6 +52,18 @@ For example you might type `make raycaster` which will give you `examples/raycas
 
 ### Uploading An Example
 
+#### Via mass-storage mode
+
+If your 32blit is connected to your computer with a USB cable, you can switch into mass-storage mode and copy files over as if it were a USB storage device.
+
+![press the Home button](resources/enter-mass-storage-mode.png)
+
+A "USB Drive" device should pop up, and the text "Mass Storage Mode (MSC Mounted)" will show on your 32blit's screen.
+
+Once you're done copying files, eject the drive and your 32blit should resume.
+
+#### With make
+
 With your device out of DFU mode (displaying the game list), you can now run:
 
 ```
@@ -59,6 +77,8 @@ make logo.flash
 ```
 
 To build, flash and run the `logo` example.
+
+#### With the 32blit tool
 
 Alternatively, you can use the tool directly:
 ```
@@ -83,6 +103,18 @@ cd build.stm32
 cmake .. -D32BLIT_PATH="/path/to/32blit/repo" -DCMAKE_TOOLCHAIN_FILE=/path/to/32blit/repo/32blit.toolchain
 make
 ```
+
+## Running games
+
+### Launching
+
+Just select the game you want to launch from the menu screen and press A.
+
+### Exiting
+
+You can either press Menu and select "Exit Game" or long-press Menu to exit.
+
+![long press menu to exit a game](resources/exit-game.png)
 
 # Troubleshooting
 
