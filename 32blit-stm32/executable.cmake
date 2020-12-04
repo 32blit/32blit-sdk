@@ -22,10 +22,19 @@ function(blit_executable NAME SOURCES)
 		DESTINATION bin
 	)
 
-	set_target_properties(${NAME} PROPERTIES LINK_FLAGS "-specs=nano.specs -u _printf_float -T ${MCU_LINKER_SCRIPT} ${MCU_LINKER_FLAGS_EXT}")
+	set_target_properties(${NAME} PROPERTIES
+		COMPILE_FLAGS "-fPIC -mno-pic-data-is-text-relative -mno-single-pic-base"
+		LINK_FLAGS "-specs=nano.specs -u _printf_float -fPIC -T ${MCU_LINKER_SCRIPT} ${MCU_LINKER_FLAGS_EXT} -Wl,--emit-relocs"
+	)
 	set_target_properties(${NAME} PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT} SUFFIX ".elf")
 
 	blit_executable_common(${NAME})
+	target_link_libraries(${NAME} ${PIC_STDLIBS})
+
+	add_custom_command(TARGET ${NAME} POST_BUILD
+		COMMENT "Building ${NAME}.reloc.bin"
+		COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_RELOC_TOOL} $<TARGET_FILE:${NAME}> ${NAME}.bin ${NAME}.reloc.bin
+	)
 
 	add_custom_target(${NAME}.flash DEPENDS ${NAME} COMMAND ${PYTHON_EXECUTABLE} -m ttblit flash --port=${FLASH_PORT} flash --file=${CMAKE_CURRENT_BINARY_DIR}/${NAME}.bin)
 endfunction()
@@ -40,7 +49,7 @@ function(blit_metadata TARGET FILE)
 
 	add_custom_command(
 		TARGET ${TARGET} POST_BUILD
-		COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit metadata --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --file ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.bin
+		COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit metadata --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --file ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.reloc.bin
 	)
 
 	# force relink on change so that the post-build commands are rerun

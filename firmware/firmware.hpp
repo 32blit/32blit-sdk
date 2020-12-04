@@ -124,7 +124,7 @@ public:
   virtual bool StreamInit(CDCFourCC uCommand);
 
 private:
-  enum ParseState {stFilename, stLength, stData};
+  enum ParseState {stFilename, stLength, stRelocs, stData};
 
   ParseState m_parseState = stFilename;
 
@@ -134,4 +134,7 @@ private:
   uint32_t m_uParseIndex = 0;
   uint32_t m_uFilelen = 0;
   uint32_t flash_start_offset = 0;
+
+  uint32_t num_relocs = 0, cur_reloc = 0;
+  std::vector<uint32_t> relocation_offsets;
 };

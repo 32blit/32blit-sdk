@@ -75,6 +75,14 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
+  .got :
+  {
+    . = ALIGN(4);
+    _gotstart = .;
+    *(.got*)
+    _gotend = .;
+  } > FLASH
+
   /* The program code and other data goes into FLASH */
   .text :
   {

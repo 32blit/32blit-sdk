@@ -35,7 +35,7 @@ extern USBManager g_usbManager;
 
 struct GameInfo {
   std::string title;
-  uint32_t size;
+  uint32_t size, checksum = 0;
 
   std::string filename; // if on SD
   uint32_t offset; // in in flash
@@ -49,6 +49,8 @@ struct DirectoryInfo {
 std::vector<GameInfo> game_list;
 std::list<DirectoryInfo> directory_list;
 std::list<DirectoryInfo>::iterator current_directory;
+
+uint32_t last_game_end_address = 0;
 
 bool display_flash = true;
 
@@ -165,8 +167,10 @@ void load_file_list(std::string directory) {
       
       // check for metadata
       BlitGameMetadata meta;
-      if(parse_file_metadata(file.name, meta))
+      if(parse_file_metadata(file.name, meta)) {
         game.title = meta.title;
+        game.checksum = meta.crc32;
+      }
 
       game_list.push_back(game);
     }
@@ -211,11 +215,14 @@ void scan_flash() {
     if(parse_flash_metadata(offset, meta)) {
       game.title = meta.title;
       game.size += meta.length + 10;
+      game.checksum = meta.crc32;
     }
 
     game_list.push_back(game);
 
     offset += calc_num_blocks(game.size) * qspi_flash_sector_size;
+
+    last_game_end_address = offset;
   }
   sort_file_list();
 }
@@ -502,13 +509,25 @@ void update(uint32_t time) {
 
     if(button_a)
     {
-      uint32_t offset;
-      auto &game = game_list[persist.selected_menu_item];
+      uint32_t offset = 0xFFFFFFFF;
+      auto game = game_list[persist.selected_menu_item];
 
       if(game.filename.empty())
         offset = game_list[persist.selected_menu_item].offset; // flash
-      else
-        offset = flash_from_sd_to_qspi_flash(game.filename.c_str()); // sd
+      else {
+        scan_flash();
+
+        for(auto &flash_game : game_list) {
+          // if a game with the same name/crc is already installed, launch that one instead of flashing it again
+          if(flash_game.checksum == game.checksum && flash_game.title == game.title) {
+            offset = flash_game.offset;
+            break;
+          }
+        }
+
+        if(offset == 0xFFFFFFFF)
+          offset = flash_from_sd_to_qspi_flash(game.filename.c_str()); // sd
+      }
 
       if(offset != 0xFFFFFFFF)
         launch_game(offset);
@@ -558,13 +577,12 @@ void update(uint32_t time) {
 // returns address to flash file to
 uint32_t get_flash_offset_for_file(BlitGameHeader &bin_header) {
 
-  // temporary load address for working on multiple app support without PIC being ready
-  // in future this will probably be more of a "find free space" function
   if(bin_header.magic == blit_game_magic) {
-    auto expected_addr = bin_header.start;
+    // TODO: handle full
+    if(last_game_end_address + (bin_header.end - bin_header.start) >= qspi_flash_size)
+      return 0;
 
-    // this should be sector aligned to not break things later...
-    return expected_addr - qspi_flash_address;
+    return last_game_end_address;
   }
 
   return 0;
@@ -582,6 +600,7 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
   FSIZE_t bytes_total = f_size(&file);
   UINT bytes_read = 0;
   FSIZE_t bytes_flashed = 0;
+
   size_t offset = 0;
 
   if(!bytes_total)
@@ -590,34 +609,68 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
     return false;
   }
 
+  // check for prepended relocation info
+  char buf[4];
+  f_read(&file, buf, 4, &bytes_read);
+  std::vector<uint32_t> relocation_offsets;
+  size_t cur_reloc = 0;
+  bool has_relocs = false;
+
+  if(memcmp(buf, "RELO", 4) == 0) {
+    uint32_t num_relocs;
+    f_read(&file, (void *)&num_relocs, 4, &bytes_read);
+    relocation_offsets.reserve(num_relocs);
+
+    for(auto i = 0u; i < num_relocs; i++) {
+      uint32_t reloc_offset;
+      f_read(&file, (void *)&reloc_offset, 4, &bytes_read);
+
+      relocation_offsets.push_back(reloc_offset - 0x90000000);
+    }
+
+    bytes_total -= num_relocs * 4 + 8; // size of relocation data
+    has_relocs = true;
+  } else {
+    f_lseek(&file, 0);
+  }
+
   // check header
+  auto off = f_tell(&file);
   BlitGameHeader header;
   if(f_read(&file, (void *)&header, sizeof(header), &bytes_read) != FR_OK) {
     f_close(&file);
     return false;
   }
-  f_lseek(&file, 0);
+  f_lseek(&file, off);
 
-  uint32_t flash_offset = get_flash_offset_for_file(header);
-  offset = flash_offset;
+  uint32_t flash_offset = has_relocs ? get_flash_offset_for_file(header) : 0;
 
   // erase the sectors needed to write the image
   erase_qspi_flash(flash_offset / qspi_flash_sector_size, bytes_total);
 
   progress.show("Copying from SD card to flash...", bytes_total);
 
-  while(bytes_flashed < bytes_total)
-  {
+  while(bytes_flashed < bytes_total) {
     // limited ram so a bit at a time
     res = f_read(&file, (void *)buffer, BUFFER_SIZE, &bytes_read);
 
     if(res != FR_OK)
       break;
-  
-    if(qspi_write_buffer(offset, buffer, bytes_read) != QSPI_OK)
+
+    // relocation patching
+    if(cur_reloc < relocation_offsets.size()) {
+      for(auto off = offset; off < offset + bytes_read; off += 4) {
+        if(off == relocation_offsets[cur_reloc]) {
+          *(uint32_t *)(buffer + off - offset) += flash_offset;
+          cur_reloc++;
+        }
+      }
+    }
+
+    if(qspi_write_buffer(offset + flash_offset, buffer, bytes_read) != QSPI_OK)
       break;
 
-    if(qspi_read_buffer(offset, verify_buffer, bytes_read) != QSPI_OK)
+    if(qspi_read_buffer(offset + flash_offset, verify_buffer, bytes_read) != QSPI_OK)
       break;
 
     // compare buffers
@@ -854,6 +907,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   break;
 
                   case stFlashCDC:
+                    m_parseState = stRelocs;
                   break;
 
                   default:
@@ -874,6 +928,34 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
           result =srError;
         }
       break;
+
+      case stRelocs: {
+        uint32_t word;
+        if(m_uParseIndex > 1 && m_uParseIndex == num_relocs + 2) {
+          cur_reloc = 0;
+          m_parseState = stData;
+          m_uParseIndex = 0;
+        } else {
+          while(result == srContinue && dataStream.Get(word)) {
+            if(m_uParseIndex == 0 && word != 0x4F4C4552 /*RELO*/) {
+              printf("Missing relocation header\n");
+              result = srError;
+            } else if(m_uParseIndex == 1) {
+              num_relocs = word;
+              m_uFilelen -= num_relocs * 4 + 8;
+              relocation_offsets.reserve(num_relocs);
+            } else if(m_uParseIndex)
+              relocation_offsets.push_back(word - 0x90000000);
+
+            m_uParseIndex++;
+
+            // done
+            if(m_uParseIndex == num_relocs + 2)
+              break;
+          }
+        }
+        break;
+      }
 
       case stData:
           while((result == srContinue) && (m_parseState == stData) && (m_uParseIndex <= m_uFilelen) && dataStream.Get(byte))
@@ -942,6 +1024,18 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                     // erase
                     erase_qspi_flash(flash_start_offset / qspi_flash_sector_size, m_uFilelen);
                     progress.show("Saving " + std::string(m_sFilename) +  " to flash...", m_uFilelen);
+                  }
+
+                  // relocation patching
+                  if(cur_reloc < relocation_offsets.size()) {
+                    auto offset = uPage * PAGE_SIZE;
+
+                    for(auto off = offset; off < offset + uWriteLen; off += 4) {
+                      if(off == relocation_offsets[cur_reloc]) {
+                        *(uint32_t *)(buffer + off - offset) += flash_start_offset;
+                        cur_reloc++;
+                      }
+                    }
                   }
 
                   // save data

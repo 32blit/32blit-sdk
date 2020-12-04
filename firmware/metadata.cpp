@@ -22,6 +22,7 @@ void parse_metadata(char *data, uint16_t metadata_len, BlitGameMetadata &metadat
   metadata.length = metadata_len;
 
   auto raw_meta = reinterpret_cast<RawMetadata *>(data);
+  metadata.crc32 = raw_meta->crc32;
 
   metadata.title = raw_meta->title;
   metadata.description = raw_meta->description;
@@ -83,9 +84,23 @@ bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata
   UINT bytes_read;
   f_read(&fh, &header, sizeof(header), &bytes_read);
 
+  // skip relocation data
+  int off = 0;
+  if(header.magic == 0x4F4C4552 /* RELO */) {
+    f_lseek(&fh, 4);
+    uint32_t num_relocs;
+    f_read(&fh, (void *)&num_relocs, 4, &bytes_read);
+
+    off = num_relocs * 4 + 8;
+    f_lseek(&fh, off);
+
+    // re-read header
+    f_read(&fh, &header, sizeof(header), &bytes_read);
+  }
+
   if(header.magic == blit_game_magic) {
     uint8_t buf[10];
-    f_lseek(&fh, (header.end - 0x90000000));
+    f_lseek(&fh, (header.end - 0x90000000) + off);
     auto res = f_read(&fh, buf, 10, &bytes_read);
 
     if(bytes_read == 10 && memcmp(buf, "BLITMETA", 8) == 0) {

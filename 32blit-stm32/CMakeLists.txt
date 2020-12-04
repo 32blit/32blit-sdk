@@ -161,6 +161,7 @@ function(blit_executable_int_flash NAME SOURCES)
 	set_target_properties(${NAME} PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT} SUFFIX ".elf")
 
 	blit_executable_common(${NAME})
+	target_link_libraries(${NAME} ${NOPIC_STDLIBS})
 
 	target_include_directories(${NAME} PRIVATE ${HAL_INCLUDE_DIRS})
 	target_compile_definitions(${NAME} PRIVATE ${HAL_DEFINITIONS})

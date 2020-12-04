@@ -1,0 +1,58 @@
+#!/bin/bash
+set -e
+
+NEWLIB_VERSION=newlib-3.1.0.20181231
+JOBS=$(nproc --all)
+OUT_DIR_NOPIC=$PWD/no-pic
+OUT_DIR_PIC=$PWD/pic
+
+mkdir -p $OUT_DIR_NOPIC
+mkdir -p $OUT_DIR_PIC
+
+NEWLIB_FLAGS="--disable-newlib-supplied-syscalls \
+	--disable-nls \
+	--enable-newlib-reent-small \
+	--disable-newlib-fvwrite-in-streamio \
+	--disable-newlib-fseek-optimization \
+	--disable-newlib-wide-orient \
+	--enable-newlib-nano-malloc \
+	--disable-newlib-unbuf-stream-opt \
+	--enable-lite-exit \
+	--enable-newlib-global-atexit \
+	--enable-newlib-nano-formatted-io"
+
+mkdir -p build
+cd build
+
+wget -nc ftp://sourceware.org/pub/newlib/$NEWLIB_VERSION.tar.gz
+tar --skip-old-files -xaf $NEWLIB_VERSION.tar.gz
+cd $NEWLIB_VERSION
+
+mkdir -p build
+cd build
+../configure --target=arm-none-eabi \
+    $NEWLIB_FLAGS \
+    CFLAGS_FOR_TARGET="-g -Os -ffunction-sections -fdata-sections -fshort-wchar"
+
+make -j $JOBS
+
+cp arm-none-eabi/thumb/v7e-m/fpv5/hard/newlib/libc.a $OUT_DIR_NOPIC/libc_nano.a
+cp arm-none-eabi/thumb/v7e-m/fpv5/hard/newlib/libg.a $OUT_DIR_NOPIC/libg_nano.a
+cp arm-none-eabi/thumb/v7e-m/fpv5/hard/newlib/libm.a $OUT_DIR_NOPIC/
+cp arm-none-eabi/thumb/v7e-m/fpv5/hard/libgloss/libnosys/libnosys.a $OUT_DIR_NOPIC
+
+cd ..
+
+# PIC
+mkdir -p build-pic
+cd build-pic
+../configure --target=arm-none-eabi \
+    $NEWLIB_FLAGS \
+    CFLAGS_FOR_TARGET="-g -Os -ffunction-sections -fdata-sections -fshort-wchar -fPIC -mno-pic-data-is-text-relative -mno-single-pic-base"
+
+make -j $JOBS
+
+cp arm-none-eabi/thumb/v7e-m/fpv5/hard/newlib/libc.a $OUT_DIR_PIC/libc_nano.a
+cp arm-none-eabi/thumb/v7e-m/fpv5/hard/newlib/libg.a $OUT_DIR_PIC/libg_nano.a
+cp arm-none-eabi/thumb/v7e-m/fpv5/hard/newlib/libm.a $OUT_DIR_PIC/
+cp arm-none-eabi/thumb/v7e-m/fpv5/hard/libgloss/libnosys/libnosys.a $OUT_DIR_PIC
