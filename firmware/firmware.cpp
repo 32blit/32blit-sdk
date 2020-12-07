@@ -278,7 +278,7 @@ void load_current_game_metadata() {
 void launch_game(uint32_t address) {
   selected_game_metadata.free_surfaces();
 
-  blit_switch_execution(address);
+  blit_switch_execution(address, false);
 }
 
 bool launch_game_from_sd(const char *path) {
