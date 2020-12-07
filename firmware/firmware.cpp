@@ -282,6 +282,11 @@ void launch_game(uint32_t address) {
 }
 
 bool launch_game_from_sd(const char *path) {
+  if(is_qspi_memorymapped()) {
+    qspi_disable_memorymapped_mode();
+    blit_disable_user_code(); // assume user running
+  }
+
   scan_flash();
   uint32_t offset = 0xFFFFFFFF;
 
@@ -301,9 +306,13 @@ bool launch_game_from_sd(const char *path) {
     offset = flash_from_sd_to_qspi_flash(path);
 
   if(offset != 0xFFFFFFFF) {
-    launch_game(offset);
+    selected_game_metadata.free_surfaces();
+
+    blit_switch_execution(offset, true);
     return true;
   }
+
+  blit_enable_user_code();
 
   return false;
 }
