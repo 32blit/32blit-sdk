@@ -81,12 +81,10 @@ target_link_libraries(BlitHalSDL PUBLIC BlitEngine ${SDL2_LIBRARIES} ${SDL2_IMAG
 
 # copy SDL2.dll to build/install dir for windows users
 if(SDL2_DLL)
-	configure_file(${SDL2_DLL} ${CMAKE_BINARY_DIR}/SDL2.dll COPYONLY)
 	install(FILES ${SDL2_DLL} DESTINATION bin)
 endif()
 
 if(SDL2_IMAGE_DLL)
-	configure_file(${SDL2_IMAGE_DLL} ${CMAKE_BINARY_DIR}/SDL2_image.dll COPYONLY)
 	install(FILES ${SDL2_IMAGE_DLL} DESTINATION bin)
 endif()
 
@@ -140,6 +138,15 @@ function(blit_executable NAME SOURCES)
 	else()
   		target_link_libraries(${NAME} -Wl,--whole-archive BlitHalSDL -Wl,--no-whole-archive)
 	endif()
+
+    # windows dll fun
+    if(SDL2_DLL)
+        configure_file(${SDL2_DLL} ${CMAKE_CURRENT_BINARY_DIR}/SDL2.dll COPYONLY)
+    endif()
+
+    if(SDL2_IMAGE_DLL)
+        configure_file(${SDL2_IMAGE_DLL} ${CMAKE_CURRENT_BINARY_DIR}/SDL2_image.dll COPYONLY)
+    endif()
 
 	if(EMSCRIPTEN)
 		set_target_properties(${NAME} PROPERTIES

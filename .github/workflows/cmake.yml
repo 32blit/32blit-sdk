@@ -82,7 +82,6 @@ jobs:
       if: runner.os == 'Windows'
       shell: bash
       run: |
-        ci/install_sdl_vs.sh
         python -m pip install 32blit
 
     - name: MinGW deps
