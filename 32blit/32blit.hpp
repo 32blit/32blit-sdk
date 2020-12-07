@@ -6,6 +6,7 @@
 #include "engine/output.hpp"
 #include "engine/input.hpp"
 #include "audio/audio.hpp"
+#include "engine/save.hpp"
 #include "engine/timer.hpp"
 #include "engine/tweening.hpp"
 #include "graphics/blend.hpp"

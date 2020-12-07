@@ -429,6 +429,7 @@ void blit_init() {
     blit::api.create_directory = ::create_directory;
     blit::api.rename_file = ::rename_file;
     blit::api.remove_file = ::remove_file;
+    blit::api.get_save_path = ::get_save_path;
 
     blit::api.enable_us_timer = ::enable_us_timer;
     blit::api.get_us_timer = ::get_us_timer;
@@ -963,7 +964,14 @@ void blit_switch_execution(uint32_t address)
     if(game_header->magic == blit_game_magic) {
       // load function pointers
       auto init = (BlitInitFunction)((uint8_t *)game_header->init + address);
+
+      // set these up early so that blit_user_code_running works in code called from init
+      user_render = (BlitRenderFunction) ((uint8_t *)game_header->render + address);
+      user_tick = (BlitTickFunction) ((uint8_t *)game_header->tick + address);
+
       if(!init(address)) {
+        user_render = nullptr;
+        user_tick = nullptr;
         // this would just be a return, but qspi is already mapped by this point
         persist.reset_target = prtFirmware;
         SCB_CleanDCache();
@@ -973,8 +981,8 @@ void blit_switch_execution(uint32_t address)
   
       persist.last_game_offset = address;
 
-      blit::render = user_render = (BlitRenderFunction) ((uint8_t *)game_header->render + address);
-      do_tick = user_tick = (BlitTickFunction) ((uint8_t *)game_header->tick + address);
+      blit::render = user_render;
+      do_tick = user_tick;
       return;
     }
     // anything flashed at a non-zero offset should have a valid header

@@ -1,4 +1,5 @@
 add_library(BlitHalSDL STATIC
+	DefaultMetadata.cpp
 	File.cpp
 	Input.cpp
 	JPEG.cpp
@@ -87,15 +88,6 @@ endif()
 if(SDL2_IMAGE_DLL)
 	install(FILES ${SDL2_IMAGE_DLL} DESTINATION bin)
 endif()
-
-if(NOT 32BLIT_SDL_TITLE)
-	set(32BLIT_SDL_TITLE CMake!)
-endif()
-
-target_compile_definitions(BlitHalSDL
-	PRIVATE
-		-DWINDOW_TITLE=\"${32BLIT_SDL_TITLE}\"
-)
 
 if(DEFINED VIDEO_CAPTURE AND VIDEO_CAPTURE)
 	find_path(AVCODEC_INCLUDE_DIR libavcodec/avcodec.h)
@@ -195,4 +187,14 @@ function(blit_metadata TARGET FILE)
 		target_sources(${TARGET} PRIVATE ${ICON})
 		set_source_files_properties(${ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 	endif()
+
+	file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/metadata.cpp
+		CONTENT "
+const char *metadata_title = \"${METADATA_TITLE}\";
+const char *metadata_author = \"${METADATA_AUTHOR}\";
+const char *metadata_description = \"${METADATA_DESCRIPTION}\";
+const char *metadata_version = \"${METADATA_VERSION}\";
+		"
+	)
+	target_sources(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/metadata.cpp)
 endfunction()

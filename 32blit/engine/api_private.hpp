@@ -54,6 +54,7 @@ namespace blit {
     bool (*create_directory) (const std::string &path);
     bool (*rename_file) (const std::string &old_name, const std::string &new_name);
     bool (*remove_file) (const std::string &path);
+    std::string (*get_save_path)();
 
     // profiler
     void (*enable_us_timer)();

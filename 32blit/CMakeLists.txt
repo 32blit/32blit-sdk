@@ -7,7 +7,8 @@ set(SOURCES
 	engine/output.cpp
 	engine/particle.cpp
 	engine/profiler.cpp
-	engine/running_average.cpp
+  engine/running_average.cpp
+  engine/save.cpp
 	engine/timer.cpp
 	engine/tweening.cpp
 	engine/version.cpp

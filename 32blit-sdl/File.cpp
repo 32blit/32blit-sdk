@@ -13,6 +13,7 @@
 #include "SDL.h"
 
 #include "File.hpp"
+#include "UserCode.hpp"
 
 static std::string basePath;
 
@@ -36,6 +37,14 @@ void *open_file(const std::string &name, int mode) {
     return nullptr;
 
   auto file = SDL_RWFromFile((basePath + name).c_str(), str_mode);
+
+  if(!file) {
+    // check if the path is under the save path
+    auto save_path = get_save_path();
+    if(name.compare(0, save_path.length(), save_path) == 0)
+      file = SDL_RWFromFile(name.c_str(), str_mode);
+  }
+
   return file;
 }
 
@@ -178,4 +187,13 @@ bool rename_file(const std::string &old_name, const std::string &new_name) {
 
 bool remove_file(const std::string &path) {
   return remove((basePath + path).c_str()) == 0;
+}
+
+std::string get_save_path() {
+  auto tmp = SDL_GetPrefPath(metadata_author, metadata_title);
+  std::string ret(tmp);
+
+  SDL_free(tmp);
+
+  return ret;
 }
