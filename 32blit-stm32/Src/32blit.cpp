@@ -1000,3 +1000,16 @@ void blit_reset_with_error() {
   SCB_CleanDCache();
   NVIC_SystemReset();
 }
+
+extern void blit_enable_user_code() {
+  if(!user_tick)
+    return;
+
+  do_tick = user_tick;
+  blit::render = user_render;
+}
+
+extern void blit_disable_user_code() {
+  do_tick = blit::tick;
+  blit::render = ::render;
+}
