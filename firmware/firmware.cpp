@@ -650,9 +650,13 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
 
   progress.show("Copying from SD card to flash...", bytes_total);
 
+  const int buffer_size = 4096;
+  uint8_t buffer[buffer_size];
+  uint8_t verify_buffer[buffer_size];
+
   while(bytes_flashed < bytes_total) {
     // limited ram so a bit at a time
-    res = f_read(&file, (void *)buffer, BUFFER_SIZE, &bytes_read);
+    res = f_read(&file, (void *)buffer, buffer_size, &bytes_read);
 
     if(res != FR_OK)
       break;
