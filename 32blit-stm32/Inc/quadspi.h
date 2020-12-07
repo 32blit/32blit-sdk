@@ -161,6 +161,8 @@ HAL_StatusTypeDef qspi_sector_erase(uint32_t BlockAddress);
 HAL_StatusTypeDef qspi_write_buffer(size_t offset, const uint8_t* buffer, size_t length);
 HAL_StatusTypeDef qspi_read_buffer(size_t address, const uint8_t* buffer, size_t length);
 HAL_StatusTypeDef qspi_enable_memorymapped_mode(void);
+int is_qspi_memorymapped();
+void qspi_disable_memorymapped_mode(void);
 void QSPI_WriteEnable(QSPI_HandleTypeDef *hqspi);
 void qspi_chip_erase();
 
