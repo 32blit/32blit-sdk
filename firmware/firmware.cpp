@@ -8,6 +8,7 @@
 #include "file.hpp"
 #include "executable.hpp"
 #include "metadata.hpp"
+#include "engine/api_private.hpp"
 
 #include <cstring>
 #include <stdio.h>
@@ -331,6 +332,8 @@ void init_lists() {
 }
 
 void init() {
+  api.launch = launch_game_from_sd;
+
   set_screen_mode(ScreenMode::hires);
   screen.clear();
 
