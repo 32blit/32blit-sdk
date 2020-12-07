@@ -66,6 +66,8 @@ FIL file;
 
 BlitGameMetadata selected_game_metadata;
 
+SpriteSheet *spritesheet;
+
 void scan_flash();
 uint32_t flash_from_sd_to_qspi_flash(const char *filename);
 
@@ -323,7 +325,7 @@ void init() {
   set_screen_mode(ScreenMode::hires);
   screen.clear();
 
-  screen.sprites = SpriteSheet::load(sprites);
+  spritesheet = SpriteSheet::load(sprites);
 
   init_lists();
 
@@ -355,6 +357,8 @@ void init() {
 }
 
 void render(uint32_t time) {
+  screen.sprites = spritesheet;
+
   screen.pen = Pen(5, 8, 12);
   screen.clear();
 
