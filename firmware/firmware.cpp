@@ -279,6 +279,33 @@ void launch_game(uint32_t address) {
   blit_switch_execution(address);
 }
 
+bool launch_game_from_sd(const char *path) {
+  scan_flash();
+  uint32_t offset = 0xFFFFFFFF;
+
+  BlitGameMetadata meta;
+
+  if(parse_file_metadata(path, meta)) {
+    for(auto &flash_game : game_list) {
+      // if a game with the same name/crc is already installed, launch that one instead of flashing it again
+      if(flash_game.checksum == meta.crc32 && flash_game.title == meta.title) {
+        offset = flash_game.offset;
+        break;
+      }
+    }
+  }
+
+  if(offset == 0xFFFFFFFF)
+    offset = flash_from_sd_to_qspi_flash(path);
+
+  if(offset != 0xFFFFFFFF) {
+    launch_game(offset);
+    return true;
+  }
+
+  return false;
+}
+
 void init_lists() {
   load_directory_list("/");
   current_directory = directory_list.begin();
@@ -539,24 +566,9 @@ void update(uint32_t time) {
       auto game = game_list[persist.selected_menu_item];
 
       if(game.filename.empty())
-        offset = game_list[persist.selected_menu_item].offset; // flash
-      else {
-        scan_flash();
-
-        for(auto &flash_game : game_list) {
-          // if a game with the same name/crc is already installed, launch that one instead of flashing it again
-          if(flash_game.checksum == game.checksum && flash_game.title == game.title) {
-            offset = flash_game.offset;
-            break;
-          }
-        }
-
-        if(offset == 0xFFFFFFFF)
-          offset = flash_from_sd_to_qspi_flash(game.filename.c_str()); // sd
-      }
-
-      if(offset != 0xFFFFFFFF)
-        launch_game(offset);
+        launch_game(game_list[persist.selected_menu_item].offset); // flash
+      else
+        launch_game_from_sd(game.filename.c_str());
     }
 
     // delete current game
