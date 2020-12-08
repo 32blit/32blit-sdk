@@ -33,7 +33,7 @@ function(blit_executable NAME SOURCES)
 
 	add_custom_command(TARGET ${NAME} POST_BUILD
 		COMMENT "Building ${NAME}.blit"
-		COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_RELOC_TOOL} $<TARGET_FILE:${NAME}> ${NAME}.bin ${NAME}.blit
+		COMMAND ${PYTHON_EXECUTABLE} -m ttblit relocs --elf-file $<TARGET_FILE:${NAME}> --bin-file ${NAME}.bin --output ${NAME}.blit
 	)
 
 	add_custom_target(${NAME}.flash DEPENDS ${NAME} COMMAND ${PYTHON_EXECUTABLE} -m ttblit flash --port=${FLASH_PORT} flash --file=${CMAKE_CURRENT_BINARY_DIR}/${NAME}.blit)
