@@ -36,7 +36,7 @@ function(blit_executable NAME SOURCES)
 		COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_RELOC_TOOL} $<TARGET_FILE:${NAME}> ${NAME}.bin ${NAME}.reloc.bin
 	)
 
-	add_custom_target(${NAME}.flash DEPENDS ${NAME} COMMAND ${PYTHON_EXECUTABLE} -m ttblit flash --port=${FLASH_PORT} flash --file=${CMAKE_CURRENT_BINARY_DIR}/${NAME}.bin)
+	add_custom_target(${NAME}.flash DEPENDS ${NAME} COMMAND ${PYTHON_EXECUTABLE} -m ttblit flash --port=${FLASH_PORT} flash --file=${CMAKE_CURRENT_BINARY_DIR}/${NAME}.reloc.bin)
 endfunction()
 
 function(blit_metadata TARGET FILE)
