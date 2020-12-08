@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.8)
+project (mp3)
+include (../../32blit.cmake)
+blit_executable (mp3 mp3.cpp)
+blit_assets_yaml (mp3 assets.yml)
+blit_metadata (mp3 metadata.yml)
