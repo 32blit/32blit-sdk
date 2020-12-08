@@ -155,13 +155,13 @@ void load_file_list(std::string directory) {
     if(file.flags & blit::FileFlags::directory)
       continue;
 
-    if(file.name.length() < 4)
+    if(file.name.length() < 6) // minimum length for single-letter game (a.blit)
       continue;
 
-    if(file.name.compare(file.name.length() - 4, 4, ".blit") == 0 || file.name.compare(file.name.length() - 4, 4, ".BLIT") == 0) {
+    if(file.name.compare(file.name.length() - 5, 5, ".blit") == 0 || file.name.compare(file.name.length() - 5, 5, ".BLIT") == 0) {
 
       GameInfo game;
-      game.title = file.name.substr(0, file.name.length() - 4);
+      game.title = file.name.substr(0, file.name.length() - 5);
       game.filename = directory == "/" ? file.name : directory + "/" + file.name;
       game.size = file.size;
       
