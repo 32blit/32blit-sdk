@@ -18,7 +18,7 @@ function(blit_executable NAME SOURCES)
 	set_source_files_properties(${USER_STARTUP} PROPERTIES LANGUAGE CXX)
 	add_executable(${NAME} ${USER_STARTUP} ${SOURCES} ${ARGN})
 
-	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.bin
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.reloc.bin
 		DESTINATION bin
 	)
 
