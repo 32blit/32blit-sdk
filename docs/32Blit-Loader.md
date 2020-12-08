@@ -63,16 +63,16 @@ Options:
 
 * `--reconnect` - Reconnect after `PROG` to show debug output
 
-You can run `32Blit.exe` (Windows) or `32Blit` (Linux) manually to copy a bin file to either QSPI Flash or the SD Card on your device.
+You can run `32Blit.exe` (Windows) or `32Blit` (Linux) manually to copy a `.blit` file to either QSPI Flash or the SD Card on your device.
 
 For example to program to QSPI Flash from Windows:
 
 ```
-32Blit.exe PROG COM8 examples/raycaster/raycaster.bin
+32Blit.exe PROG COM8 examples/raycaster/raycaster.blit
 ```
 
 Or copy to the inserted SD card:
 
 ```
-32Blit.exe SAVE COM8 examples/raycaster/raycaster.bin
+32Blit.exe SAVE COM8 examples/raycaster/raycaster.blit
 ```

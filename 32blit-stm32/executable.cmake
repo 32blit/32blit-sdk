@@ -18,7 +18,7 @@ function(blit_executable NAME SOURCES)
 	set_source_files_properties(${USER_STARTUP} PROPERTIES LANGUAGE CXX)
 	add_executable(${NAME} ${USER_STARTUP} ${SOURCES} ${ARGN})
 
-	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.reloc.bin
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.blit
 		DESTINATION bin
 	)
 
@@ -32,11 +32,11 @@ function(blit_executable NAME SOURCES)
 	target_link_libraries(${NAME} ${PIC_STDLIBS})
 
 	add_custom_command(TARGET ${NAME} POST_BUILD
-		COMMENT "Building ${NAME}.reloc.bin"
-		COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_RELOC_TOOL} $<TARGET_FILE:${NAME}> ${NAME}.bin ${NAME}.reloc.bin
+		COMMENT "Building ${NAME}.blit"
+		COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_RELOC_TOOL} $<TARGET_FILE:${NAME}> ${NAME}.bin ${NAME}.blit
 	)
 
-	add_custom_target(${NAME}.flash DEPENDS ${NAME} COMMAND ${PYTHON_EXECUTABLE} -m ttblit flash --port=${FLASH_PORT} flash --file=${CMAKE_CURRENT_BINARY_DIR}/${NAME}.reloc.bin)
+	add_custom_target(${NAME}.flash DEPENDS ${NAME} COMMAND ${PYTHON_EXECUTABLE} -m ttblit flash --port=${FLASH_PORT} flash --file=${CMAKE_CURRENT_BINARY_DIR}/${NAME}.blit)
 endfunction()
 
 function(blit_metadata TARGET FILE)
@@ -49,7 +49,7 @@ function(blit_metadata TARGET FILE)
 
 	add_custom_command(
 		TARGET ${TARGET} POST_BUILD
-		COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit metadata --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --file ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.reloc.bin
+		COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit metadata --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --file ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.blit
 	)
 
 	# force relink on change so that the post-build commands are rerun

@@ -46,9 +46,9 @@ cmake .. -DCMAKE_TOOLCHAIN_FILE=../32blit.toolchain
 
 And then run `make examplename` to build an example.
 
-The result of the build will be a `.bin`, `.hex` and `.elf` file in the relevant example directory.
+The result of the build will be a `.blit`, `.bin`, `.hex` and `.elf` file in the relevant example directory.
 
-For example you might type `make raycaster` which will give you `examples/raycaster/raycaster.bin`.
+For example you might type `make raycaster` which will give you `examples/raycaster/raycaster.blitn`.
 
 ### Uploading An Example
 
@@ -82,12 +82,12 @@ To build, flash and run the `logo` example.
 
 Alternatively, you can use the tool directly:
 ```
-32blit flash flash --file=[filename].bin
+32blit flash flash --file=[filename].blit
 ```
 
 Or, to save to the SD card:
 ```
-32blit flash save --file=[filename].bin
+32blit flash save --file=[filename].blit
 ```
 
 (If `32blit` is not found you can use `python3 -m ttblit` instead)

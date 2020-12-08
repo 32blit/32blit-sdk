@@ -158,7 +158,7 @@ void load_file_list(std::string directory) {
     if(file.name.length() < 4)
       continue;
 
-    if(file.name.compare(file.name.length() - 4, 4, ".bin") == 0 || file.name.compare(file.name.length() - 4, 4, ".BIN") == 0) {
+    if(file.name.compare(file.name.length() - 4, 4, ".blit") == 0 || file.name.compare(file.name.length() - 4, 4, ".BLIT") == 0) {
 
       GameInfo game;
       game.title = file.name.substr(0, file.name.length() - 4);
