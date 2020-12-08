@@ -3,14 +3,22 @@ if (NOT DEFINED BLIT_ONCE)
 
 	set(CMAKE_CXX_STANDARD 17)
 	set(CMAKE_CXX_EXTENSIONS OFF)
+	set(BLIT_MINIMUM_TOOLS_VERSION "0.2.0")
 
 	find_package(PythonInterp 3.6 REQUIRED)
 
 	# make sure that the tools are installed
-	execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import ttblit" RESULT_VARIABLE IMPORT_STATUS ERROR_QUIET)
+	execute_process(COMMAND ${PYTHON_EXECUTABLE} -m ttblit version RESULT_VARIABLE VERSION_STATUS OUTPUT_VARIABLE TOOLS_VERSION ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-	if(${IMPORT_STATUS}) # non-zero result
-		message(FATAL_ERROR "32Blit tools not found!\nInstall with: python3 -m pip install 32blit\n")
+	# get just the python command to output to the user
+	get_filename_component(PYTHON_USER_EXECUTABLE "${PYTHON_EXECUTABLE}" NAME)
+
+	if(${VERSION_STATUS})
+		message(FATAL_ERROR "32Blit tools not found!\nInstall with: ${PYTHON_USER_EXECUTABLE} -m pip install 32blit\n")
+	endif()
+
+	if("${TOOLS_VERSION}" VERSION_LESS "${BLIT_MINIMUM_TOOLS_VERSION}")
+		message(FATAL_ERROR "32Blit tools out of date!\nYou have ${TOOLS_VERSION}, we need >= ${BLIT_MINIMUM_TOOLS_VERSION}\nUpdate with: ${PYTHON_USER_EXECUTABLE} -m pip install --upgrade 32blit\n")
 	endif()
 
 	if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
