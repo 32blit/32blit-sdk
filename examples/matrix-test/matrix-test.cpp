@@ -57,8 +57,8 @@ void draw(std::array<Vec2, 4> vecs, std::vector<Mat3> trs) {
   }
 
   // then apply the translations in reverse and ensure we end up back at the start
-  for (auto i = trs.size() - 1; i >= 0; i--) {
-    Mat3 tr = trs[i];
+  for (auto it = trs.rbegin(); it != trs.rend(); ++it) {
+    Mat3 &tr = *it;
 
     tr.inverse();
     for (auto &v : vecs) {
