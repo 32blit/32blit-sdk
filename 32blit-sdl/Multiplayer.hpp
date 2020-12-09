@@ -17,6 +17,8 @@ class Multiplayer final {
 
         void update();
 
+        bool is_connected() const;
+
         void send_message(const uint8_t *data, uint16_t length);
 
     private:

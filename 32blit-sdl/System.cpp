@@ -95,6 +95,10 @@ static const char *get_launch_path() {
 }
 
 extern Multiplayer *blit_multiplayer;
+bool blit_is_multiplayer_connected() {
+	return blit_multiplayer->is_connected();
+}
+
 void blit_send_message(const uint8_t *data, uint16_t length) {
 	blit_multiplayer->send_message(data, length);
 }
@@ -173,6 +177,7 @@ void System::run() {
 
   blit::api.get_launch_path = ::get_launch_path;
 
+	blit::api.is_multiplayer_connected = blit_is_multiplayer_connected;
 	blit::api.send_message = blit_send_message;
 
 	::set_screen_mode(blit::lores);

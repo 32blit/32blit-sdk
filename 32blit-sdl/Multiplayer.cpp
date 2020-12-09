@@ -118,6 +118,10 @@ void Multiplayer::update() {
     }
 }
 
+bool Multiplayer::is_connected() const {
+    return socket != nullptr;
+}
+
 void Multiplayer::send_message(const uint8_t *data, uint16_t length) {
     if(!socket)
         return;

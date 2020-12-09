@@ -299,6 +299,7 @@ void blit_init() {
 
     blit::api.get_launch_path = ::get_launch_path;
 
+    blit::api.is_multiplayer_connected = multiplayer::is_connected;
     blit::api.send_message = multiplayer::send_message;
 
   display::init();

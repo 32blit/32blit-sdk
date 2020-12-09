@@ -83,6 +83,14 @@ namespace multiplayer {
     }
   }
 
+  bool is_connected() {
+    // this really only means that something is connected, might not be another blit...
+    if(USB_GetMode(USB_OTG_HS))
+      return hUsbHostHS.gState == HOST_CLASS;
+    else
+      return hUsbDeviceHS.dev_state == USBD_STATE_CONFIGURED;
+  }
+
   void send_message(const uint8_t *data, uint16_t length) {
     // header
     cdc_send((uint8_t *)"32BLUSER", 8);
