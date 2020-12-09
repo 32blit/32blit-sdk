@@ -441,8 +441,8 @@ void update(uint32_t time) {
     bool button_down = buttons.pressed & Button::DPAD_DOWN;
 
     if(time - lastRepeat > 150 || button_up || button_down) {
-      button_up = buttons & Button::DPAD_UP;
-      button_down = buttons & Button::DPAD_DOWN;
+      button_up = buttons & Button::DPAD_UP || joystick.y < -0.5;
+      button_down = buttons & Button::DPAD_DOWN || joystick.y > 0.5;
       lastRepeat = time;
     }
 
