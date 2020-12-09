@@ -95,7 +95,7 @@ namespace blit {
     }    
   }
 
-  int MP3Stream::get_current_sample() const {
+  unsigned int MP3Stream::get_current_sample() const {
     return buffered_samples + blit::channels[channel].wave_buf_pos;
   }
 
