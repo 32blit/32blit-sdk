@@ -20,7 +20,7 @@ namespace blit {
 
     void update();
 
-    int get_current_sample() const;
+    unsigned int get_current_sample() const;
     int get_duration_ms() const;
 
   private:
@@ -52,7 +52,7 @@ namespace blit {
     int data_size[2]{};
     int cur_audio_buf = 0;
 
-    int buffered_samples = 0;
+    unsigned int buffered_samples = 0;
     int duration_ms = 0;
   };
 }
