@@ -1,3 +1,4 @@
+pip3 install --upgrade pyelftools
 pip3 install --upgrade 32blit
 rm -r build.stm32/
 mkdir build.stm32
