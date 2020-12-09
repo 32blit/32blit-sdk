@@ -15,7 +15,7 @@ class Multiplayer final {
     private:
         void disconnect();
 
-        TCPsocket socket = nullptr;
+        TCPsocket socket = nullptr, listen_socket = nullptr;
         SDLNet_SocketSet sock_set = nullptr;
 
         uint8_t *recv_buf = nullptr;

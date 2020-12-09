@@ -11,21 +11,36 @@ Multiplayer::Multiplayer() {
     IPaddress ip;
 
     // TODO: allow setting address somehow
-    if(SDLNet_ResolveHost(&ip, "localhost", 0x32B1) == -1) {
+    const uint16_t port = 0x32B1;
+    if(SDLNet_ResolveHost(&ip, "localhost", port) == -1) {
         std::cerr << "Failed to resolve host: " << SDLNet_GetError() << std::endl;
         return;
     }
 
     socket = SDLNet_TCP_Open(&ip);
+
     if(!socket) {
+        // try hosting instead
+        if(SDLNet_ResolveHost(&ip, nullptr, port) == -1) {
+            std::cerr << "Failed to resolve host: " << SDLNet_GetError() << std::endl;
+            return;
+        }
+
+        listen_socket = SDLNet_TCP_Open(&ip);
+    }
+
+    if(!socket && !listen_socket) {
         std::cerr << "Failed to open socket: " << SDLNet_GetError() << std::endl;
         return;
     }
 
     // shouldn't fail unless we ran out of memory
-    sock_set = SDLNet_AllocSocketSet(1);
+    sock_set = SDLNet_AllocSocketSet(2);
 
-    SDLNet_TCP_AddSocket(sock_set, socket);
+    if(listen_socket)
+        SDLNet_TCP_AddSocket(sock_set, listen_socket);
+    else
+        SDLNet_TCP_AddSocket(sock_set, socket);
 }
 
 Multiplayer::~Multiplayer() {
@@ -34,10 +49,13 @@ Multiplayer::~Multiplayer() {
 
     if(socket)
         SDLNet_TCP_Close(socket);
+
+    if(listen_socket)
+        SDLNet_TCP_Close(listen_socket);
 }
 
 void Multiplayer::update() {    
-    if(!socket)
+    if(!socket && !listen_socket)
         return;
 
     int num_ready = SDLNet_CheckSockets(sock_set, 0);
@@ -47,7 +65,19 @@ void Multiplayer::update() {
         return;
     }
 
-    if(!num_ready)
+    if(listen_socket && SDLNet_SocketReady(listen_socket)) {
+        // new connection
+        socket = SDLNet_TCP_Accept(listen_socket);
+        if(socket) {
+            auto remote_addr = SDLNet_TCP_GetPeerAddress(socket);
+            auto ip = SDL_SwapBE32(remote_addr->host);
+            std::cout << (ip >> 24) << "." << ((ip >> 16) & 0xFF) << "." << ((ip >> 8) & 0xFF) << "." << (ip & 0xFF) << " connected" << std::endl;
+
+            SDLNet_TCP_AddSocket(sock_set, socket);
+        }
+    }
+
+    if(!socket || !SDLNet_SocketReady(socket))
         return;
 
     if(!recv_buf) {
