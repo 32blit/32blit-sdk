@@ -6,21 +6,25 @@
 
 using namespace blit;
 
-Multiplayer::Multiplayer() {
+Multiplayer::Multiplayer(Mode mode, const std::string &address) {
     // TODO: move connect later?
     IPaddress ip;
 
     // TODO: allow setting address somehow
     const uint16_t port = 0x32B1;
-    if(SDLNet_ResolveHost(&ip, "localhost", port) == -1) {
-        std::cerr << "Failed to resolve host: " << SDLNet_GetError() << std::endl;
-        return;
+
+    // try connecting first for auto
+    if(mode != Mode::Listen) {
+        if(SDLNet_ResolveHost(&ip, address.c_str(), port) == -1) {
+            std::cerr << "Failed to resolve host: " << SDLNet_GetError() << std::endl;
+            return;
+        }
     }
 
     socket = SDLNet_TCP_Open(&ip);
 
-    if(!socket) {
-        // try hosting instead
+    if(!socket && mode != Mode::Connect) {
+        // try hosting instead unless connecting was specified
         if(SDLNet_ResolveHost(&ip, nullptr, port) == -1) {
             std::cerr << "Failed to resolve host: " << SDLNet_GetError() << std::endl;
             return;

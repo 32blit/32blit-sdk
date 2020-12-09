@@ -168,9 +168,23 @@ int main(int argc, char *argv[]) {
 		SDL_GameControllerOpen(n);
 	}
 
+	auto mp_mode = Multiplayer::Mode::Auto;
+	std::string mp_address = "localhost";
+
+	for(int i = 1; i < argc; i++) {
+		std::string arg_str(argv[i]);
+		if(arg_str == "--connect" && i + 1 < argc) {
+			mp_mode = Multiplayer::Mode::Connect;
+			mp_address = std::string(argv[i + 1]);
+			i++;
+		}
+		else if(arg_str == "--listen")
+			mp_mode == Multiplayer::Mode::Listen;
+	}
+
 	blit_system = new System();
 	blit_input = new Input(window, blit_system);
-	blit_multiplayer = new Multiplayer();
+	blit_multiplayer = new Multiplayer(mp_mode, mp_address);
 	blit_renderer = new Renderer(window, System::width, System::height);
 	blit_audio = new Audio();
 

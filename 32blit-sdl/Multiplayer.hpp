@@ -1,11 +1,18 @@
 #pragma once
 #include <cstdint>
+#include <string>
 
 #include "SDL_net.h"
 
 class Multiplayer final {
     public:
-        Multiplayer();
+        enum class Mode {
+            Auto,
+            Listen,
+            Connect
+        };
+
+        Multiplayer(Mode mode, const std::string &address);
         ~Multiplayer();
 
         void update();
