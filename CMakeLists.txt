@@ -12,6 +12,7 @@ add_subdirectory(examples)
 if(${CMAKE_SYSTEM_NAME} STREQUAL Generic)
     add_subdirectory(32blit-stm32)
     add_subdirectory(firmware)
+    add_subdirectory(fw-flash)
 endif()
 
 if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL Generic AND NOT EMSCRIPTEN)
