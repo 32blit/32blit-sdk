@@ -98,11 +98,13 @@ namespace display {
     // set the transform type (clear bits 17..16 of control register)
     DMA2D->CR &= 0xfcff;
     // set target pixel format (clear bits 3..0 of foreground format register)
-    DMA2D->FGPFCCR &= 0xfff0;
+    DMA2D->FGPFCCR &= 0xfff0; 
+    DMA2D->FGPFCCR |= 0x0001; // 0001 is for RGB888
     // set source buffer address
     DMA2D->FGMAR = (uintptr_t)source.data; 
     // set target pixel format (clear bits 3..0 of output format register)
     DMA2D->OPFCCR &= 0xfff0;
+    DMA2D->OPFCCR |= 0x0001; // 0001 is for RGB888
     // set target buffer address
     DMA2D->OMAR = (uintptr_t)&__ltdc_start;
     // set the number of pixels per line and number of lines    
@@ -119,7 +121,47 @@ namespace display {
       // never gets here!
     }
   }
+  
+  void dma2d_hires_pal_flip(const Surface &source) {
 
+    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 1); 
+    
+    // set the transform type (clear bits 17..16 of control register)
+    DMA2D->CR &= 0xfcff;
+    // set target pixel format (clear bits 3..0 of foreground format register)
+    DMA2D->FGPFCCR &= 0xfff0;//work as 32bit type to save some bandwidth
+    
+    // set source buffer address
+    DMA2D->FGMAR = (uintptr_t)source.data; 
+    // set target pixel format (clear bits 3..0 of output format register)
+    DMA2D->OPFCCR &= 0xfff0;//work as 32bit type to save some bandwidth
+    
+    // set target buffer address
+    DMA2D->OMAR = (uintptr_t)((uint32_t)&__ltdc_start + 320 * 240 * 2);
+    // set the number of pixels per line and number of lines    
+    DMA2D->NLR = (80 << 16) | (240); //work as 32bit type to save some bandwidth
+    // set the source offset
+    DMA2D->FGOR = 0;
+    // set the output offset
+    DMA2D->OOR = 0;
+    // trigger start of dma2d transfer
+    DMA2D->CR |= DMA2D_CR_START;
+
+// update pal next, dma2d could work at same time
+    if(palette_needs_update && palette_update_delay-- == 0) {
+        for(int i = 0; i < palette_needs_update; i++) {
+            LTDC_Layer1->CLUTWR = (i << 24) | (palette[i].b << 16) | (palette[i].g << 8) | palette[i].r;
+            }
+
+        LTDC->SRCR = LTDC_SRCR_IMR;
+        palette_needs_update = 0;
+    }	
+
+    // wait for transfer to complete
+    while(DMA2D->CR & DMA2D_CR_START) {      
+      // never gets here!
+    }
+}
   void dma2d_lores_flip(const Surface &source) {
     // this does not work... yet!
     /*SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 3); 
@@ -223,6 +265,8 @@ namespace display {
 
       
     } else {
+      dma2d_hires_pal_flip(source);
+      /*
         // paletted
         if(palette_needs_update && palette_update_delay-- == 0) {
           for(int i = 0; i < palette_needs_update; i++) {
@@ -239,6 +283,7 @@ namespace display {
         while(c--) {
           *d++ = *s++;
         }
+        */
     }
 
     // since the ltdc hardware pulls frame data directly over the memory bus
