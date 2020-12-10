@@ -96,15 +96,15 @@ namespace display {
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 3); 
 
     // set the transform type (clear bits 17..16 of control register)
-    DMA2D->CR &= 0xfcff;
+    DMA2D->CR &= 0xfffcffff;
     // set target pixel format (clear bits 3..0 of foreground format register)
-    DMA2D->FGPFCCR &= 0xfff0; 
-    DMA2D->FGPFCCR |= 0x0001; // 0001 is for RGB888
+    DMA2D->FGPFCCR &= 0xfffffff0; 
+    DMA2D->FGPFCCR |= 0x00000001; // 0001 is for RGB888
     // set source buffer address
     DMA2D->FGMAR = (uintptr_t)source.data; 
     // set target pixel format (clear bits 3..0 of output format register)
-    DMA2D->OPFCCR &= 0xfff0;
-    DMA2D->OPFCCR |= 0x0001; // 0001 is for RGB888
+    DMA2D->OPFCCR &= 0xfffffff0;
+    DMA2D->OPFCCR |= 0x00000001; // 0001 is for RGB888
     // set target buffer address
     DMA2D->OMAR = (uintptr_t)&__ltdc_start;
     // set the number of pixels per line and number of lines    
@@ -127,14 +127,14 @@ namespace display {
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 1); 
     
     // set the transform type (clear bits 17..16 of control register)
-    DMA2D->CR &= 0xfcff;
+    DMA2D->CR &= 0xfffcffff;
     // set target pixel format (clear bits 3..0 of foreground format register)
-    DMA2D->FGPFCCR &= 0xfff0;//work as 32bit type to save some bandwidth
+    DMA2D->FGPFCCR &= 0xfffffff0;//work as 32bit type to save some bandwidth
     
     // set source buffer address
     DMA2D->FGMAR = (uintptr_t)source.data; 
     // set target pixel format (clear bits 3..0 of output format register)
-    DMA2D->OPFCCR &= 0xfff0;//work as 32bit type to save some bandwidth
+    DMA2D->OPFCCR &= 0xfffffff0;//work as 32bit type to save some bandwidth
     
     // set target buffer address
     DMA2D->OMAR = (uintptr_t)((uint32_t)&__ltdc_start + 320 * 240 * 2);
