@@ -99,7 +99,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX=`pwd` ${{matrix.cmake-args}}
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCPACK_PACKAGE_FILE_NAME=${{env.RELEASE_FILE}} ${{matrix.cmake-args}}
 
     # Problem matching
     - if: runner.os != 'Windows'
@@ -127,9 +127,7 @@ jobs:
       shell: bash
       working-directory: ${{runner.workspace}}/build
       run: |
-        cmake --build . --target install
-        tar -zcf ${RELEASE_FILE}.tar.gz bin/
-        7z a ${RELEASE_FILE}.zip bin/*
+        cmake --build . --target package
 
     - name: Upload tar
       if: github.event_name == 'release' && matrix.release-suffix != ''

@@ -17,3 +17,8 @@ endif()
 if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL Generic AND NOT EMSCRIPTEN)
     add_subdirectory(tools/src)
 endif()
+
+# setup release packages
+set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
+set(CPACK_GENERATOR "ZIP" "TGZ")
+include(CPack)
