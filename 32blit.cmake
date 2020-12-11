@@ -29,11 +29,6 @@ if (NOT DEFINED BLIT_ONCE)
 		add_definitions("-DWIN32")
 	endif()
 
-	install(DIRECTORY
-		${CMAKE_CURRENT_LIST_DIR}/dist/
-		DESTINATION bin
-	)
-
 	add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/32blit 32blit)
 
 	function (blit_assets_yaml TARGET FILE)
