@@ -147,21 +147,22 @@ namespace display {
     // trigger start of dma2d transfer
     DMA2D->CR |= DMA2D_CR_START;
 
-// update pal next, dma2d could work at same time
+    // update pal next, dma2d could work at same time
     if(palette_needs_update && palette_update_delay-- == 0) {
-        for(int i = 0; i < palette_needs_update; i++) {
-            LTDC_Layer1->CLUTWR = (i << 24) | (palette[i].b << 16) | (palette[i].g << 8) | palette[i].r;
-            }
+      for(int i = 0; i < palette_needs_update; i++) {
+        LTDC_Layer1->CLUTWR = (i << 24) | (palette[i].b << 16) | (palette[i].g << 8) | palette[i].r;
+      }
 
-        LTDC->SRCR = LTDC_SRCR_IMR;
-        palette_needs_update = 0;
+      LTDC->SRCR = LTDC_SRCR_IMR;
+      palette_needs_update = 0;
     }	
 
     // wait for transfer to complete
     while(DMA2D->CR & DMA2D_CR_START) {      
       // never gets here!
     }
-}
+  }
+
   void dma2d_lores_flip(const Surface &source) {
     // this does not work... yet!
     /*SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 3); 
