@@ -116,6 +116,7 @@ if(DEFINED VIDEO_CAPTURE AND VIDEO_CAPTURE)
 endif()
 
 function(blit_executable NAME SOURCES)
+	message(STATUS "Processing ${NAME}")
 	add_executable(${NAME} MACOSX_BUNDLE ${SOURCES} ${ARGN})
 
 	install(TARGETS ${NAME}

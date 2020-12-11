@@ -44,11 +44,24 @@ set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g -Og")
 set(CMAKE_EXE_LINKER_FLAGS_INIT "-specs=nosys.specs -Wl,--gc-sections,--no-wchar-size-warning")
 
 # stdlibs
+set(STDLIB_HASHTYPE "SHA256")
 set(STDLIB_PATH ${CMAKE_CURRENT_LIST_DIR}/stdlib)
 set(STDLIB_URL https://get.pimoroni.com/stdlibs.zip)
-set(STDLIB_HASH "SHA256=867eb82d2329c962a5aa389f3b5a4a2efd6d75e5c7d464c92ed7b595f76eb90f")
+set(STDLIB_HASH "${STDLIB_HASHTYPE}=867eb82d2329c962a5aa389f3b5a4a2efd6d75e5c7d464c92ed7b595f76eb90f")
 
-message("Downloading stdlibs...")
+find_program(UNZIP NAMES unzip)
+if(NOT UNZIP)
+    message(FATAL_ERROR "Failed to find required program: \"unzip\"\n(maybe you need to \"apt install unzip\")\n")
+endif()
+
+# file() is great, but it doesn't tell the user what it's downloading
+if(EXISTS ${STDLIB_PATH}/stdlibs.zip)
+    file(${STDLIB_HASHTYPE} ${STDLIB_PATH}/stdlibs.zip FOUND_HASH)
+endif()
+if(NOT EXISTS ${STDLIB_PATH}/stdlibs.zip OR NOT STDLIB_HASH STREQUAL "${STDLIB_HASHTYPE}=${FOUND_HASH}")
+    message("Downloading stdlibs...")
+endif()
+
 file(DOWNLOAD ${STDLIB_URL} ${STDLIB_PATH}/stdlibs.zip EXPECTED_HASH ${STDLIB_HASH} SHOW_PROGRESS STATUS DOWNLOAD_STATUS)
 
 list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
@@ -65,7 +78,7 @@ if(NOT EXISTS ${STDLIB_PATH}/pic)
     # CMake 3.18
     #file(ARCHIVE_EXTRACT INPUT ${STDLIB_PATH}/stdlibs.zip DESTINATION ${STDLIB_PATH})
 
-    execute_process(COMMAND unzip -u ${STDLIB_PATH}/stdlibs.zip -d ${STDLIB_PATH} RESULT_VARIABLE UNZIP_STATUS)
+    execute_process(COMMAND ${UNZIP} -u ${STDLIB_PATH}/stdlibs.zip -d ${STDLIB_PATH} RESULT_VARIABLE UNZIP_STATUS)
 
     if(NOT ${UNZIP_STATUS} EQUAL 0)
         message(FATAL_ERROR "Failed to extract stdlibs: ${UNZIP_STATUS}\n")
