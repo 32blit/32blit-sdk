@@ -1,0 +1,22 @@
+# 32blit Firmware & Examples
+
+32blit is a retro-inspired handheld console with open-source firmware, examples, games and tooling.
+
+Learn more at https://32blit.com/
+
+This package contains examples & games written by Pimoroni and contributed by users.
+
+It's available in for:
+
+* 32blit - Contains firmware and examples
+* Windows - Examples only
+* Linux - Examples only
+* macOS - Examples only
+
+Grab the latest release from https://github.com/pimoroni/32blit-beta/releases
+
+Try the examples online at https://pimoroni.github.io/32blit-beta/examples/
+
+Find the source code at https://github.com/pimoroni/32blit-beta/
+
+Report bugs at https://github.com/pimoroni/32blit-beta/issues
