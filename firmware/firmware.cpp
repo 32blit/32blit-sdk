@@ -360,6 +360,7 @@ void render(uint32_t time) {
   if(!game_list.empty()) {
     const int size_x = 115;
 
+    screen.clip = Rect(10, 0, 90, 240);
     for(auto &file : game_list) {
       if(i++ == persist.selected_menu_item)
         screen.pen = Pen(235, 245, 255);
@@ -369,6 +370,7 @@ void render(uint32_t time) {
       screen.text(file.title, minimal_font, Rect(file_list_scroll_offset.x, y, 100 - 20, text_align_height), true, TextAlign::center_v);
       y += ROW_HEIGHT;
     }
+    screen.clip = Rect(Point(0, 0), screen.bounds);
 
     // action icons
     // delete
