@@ -393,12 +393,7 @@ void render(uint32_t time) {
     screen.text(wrapped_desc, minimal_font, desc_rect);
 
     screen.text(selected_game_metadata.author, minimal_font, Point(172, 208));
-
-    int num_blocks = calc_num_blocks(game_list[persist.selected_menu_item].size);
-    char buf[20];
-    snprintf(buf, 20, "%i block%s", num_blocks, num_blocks == 1 ? "" : "s");
-    screen.text(buf, minimal_font, Point(172, 216));
-
+    screen.text(selected_game_metadata.version, minimal_font, Point(172, 224));
   }
   else {
     screen.pen = Pen(235, 245, 255);
@@ -441,8 +436,8 @@ void update(uint32_t time) {
     bool button_down = buttons.pressed & Button::DPAD_DOWN;
 
     if(time - lastRepeat > 150 || button_up || button_down) {
-      button_up = buttons & Button::DPAD_UP;
-      button_down = buttons & Button::DPAD_DOWN;
+      button_up = buttons & Button::DPAD_UP || joystick.y < -0.5;
+      button_down = buttons & Button::DPAD_DOWN || joystick.y > 0.5;
       lastRepeat = time;
     }
 
