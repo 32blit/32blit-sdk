@@ -433,20 +433,52 @@ void update(uint32_t time) {
   
   if(state == stFlashFile)
   {
-    static uint32_t lastRepeat = 0;
-
     bool button_a = buttons.released & Button::A;
     bool button_x = buttons.pressed & Button::X;
     bool button_y = buttons.pressed & Button::Y;
 
-    bool button_up = buttons.pressed & Button::DPAD_UP;
-    bool button_down = buttons.pressed & Button::DPAD_DOWN;
+    static uint16_t button_repeat = 150;
+    static uint32_t last_repeat = 0;
+    static uint32_t hold_time = 0;
 
-    if(time - lastRepeat > 150 || button_up || button_down) {
-      button_up = buttons & Button::DPAD_UP || joystick.y < -0.5;
-      button_down = buttons & Button::DPAD_DOWN || joystick.y > 0.5;
-      lastRepeat = time;
+    static bool last_button_up = false;
+    static bool last_button_down = false;
+    static bool last_button_left = false;
+    static bool last_button_right = false;
+
+    bool current_button_up = (buttons.state & Button::DPAD_UP) || joystick.y < -0.2f;
+    bool current_button_down = (buttons.state & Button::DPAD_DOWN) || joystick.y > 0.2f;
+    bool current_button_left = (buttons.state & Button::DPAD_LEFT) || joystick.x < -0.5f;
+    bool current_button_right = (buttons.state & Button::DPAD_RIGHT) || joystick.x > 0.5f;
+
+    bool button_up = current_button_up & !last_button_up;
+    bool button_down = current_button_down & !last_button_down;
+    bool button_left  = current_button_left & !last_button_left;
+    bool button_right = current_button_right & !last_button_right;
+
+    last_button_up = current_button_up;
+    last_button_down = current_button_down;
+
+    // Tight ramping auto-repeat for up/down on joystick or d-pad
+    if (current_button_up || current_button_down) {
+      hold_time++;
+      // if(button_repeat > 10) button_repeat--; // Ramping
+      if(hold_time > 50) button_repeat = 10; // Jump to fast mode when held
+      if(hold_time - last_repeat > button_repeat) {
+        last_button_up = false;
+        last_button_down = false;
+        last_repeat = hold_time;
+      }
+    } else {
+      hold_time = 0;
+      last_repeat = 0;
+      button_repeat = 150;
     }
+
+    last_button_left = current_button_left;
+    last_button_right = current_button_right;
+
+
 
     if(button_home)
     {
@@ -479,21 +511,21 @@ void update(uint32_t time) {
     }
 
     // switch between flash and SD lists
-    if(buttons.pressed & Button::DPAD_LEFT) {
+    if(button_left) {
       if(current_directory == directory_list.begin())
         current_directory = --directory_list.end();
       else
         --current_directory;
     }
 
-    if(buttons.pressed & Button::DPAD_RIGHT) {
+    if(button_right) {
       current_directory++;
       if(current_directory == directory_list.end()) {
         current_directory = directory_list.begin();
       }
     }
 
-    if(buttons.pressed & (Button::DPAD_LEFT | Button::DPAD_RIGHT)) {
+    if(button_left || button_right) {
       load_file_list(current_directory->name);
 
       persist.selected_menu_item = 0;
