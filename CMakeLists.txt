@@ -15,6 +15,8 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Generic)
     add_subdirectory(firmware-update)
 endif()
 
+add_subdirectory(launcher)
+
 if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL Generic AND NOT EMSCRIPTEN)
     add_subdirectory(tools/src)
 endif()

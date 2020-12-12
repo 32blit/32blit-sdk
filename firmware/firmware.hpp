@@ -4,21 +4,12 @@
 #include "fatfs.h"
 #include "persistence.h"
 
-#include "assets.hpp"
-
 #define BUFFER_SIZE (256)
-#define ROW_HEIGHT 10
-#define ROW(x) Point(0,x * ROW_HEIGHT)
 #define MAX_FILENAME 256+1
 #define MAX_FILELEN 16+1
 #define PAGE_SIZE 256
 
 using namespace blit;
-
-enum class SortBy {
-  name,
-  size
-};
 
 // progress bar
 struct {
