@@ -397,6 +397,11 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
 
 
 void cdc_flash_list() {
+  bool mapped = is_qspi_memorymapped();
+
+  if(mapped)
+    qspi_disable_memorymapped_mode();
+
   // scan through flash and send offset, size and metadata
   for(uint32_t offset = 0; offset < qspi_flash_size;) {
     BlitGameHeader header;
@@ -445,6 +450,9 @@ void cdc_flash_list() {
   // end marker
   uint32_t end = 0xFFFFFFFF;
   while(CDC_Transmit_HS((uint8_t *)&end, 4) == USBD_BUSY){}
+
+  if(mapped)
+    qspi_enable_memorymapped_mode();
 }
 
 // erase command handler
