@@ -66,6 +66,7 @@ static bool (*do_tick)(uint32_t time) = blit::tick;
 // pointers to user code
 static bool (*user_tick)(uint32_t time) = nullptr;
 static void (*user_render)(uint32_t time) = nullptr;
+static bool user_code_disabled = false;
 
 void DFUBoot(void)
 {
@@ -593,7 +594,7 @@ void blit_menu_update(uint32_t time) {
 
 void blit_menu_render(uint32_t time) {
 
-  if(user_render)
+  if(user_render && !user_code_disabled)
     user_render(time);
   else
     ::render(time);
@@ -674,7 +675,7 @@ void blit_menu_render(uint32_t time) {
 
 void blit_menu() {
   if(blit::update == blit_menu_update && do_tick == blit::tick) {
-    if (user_tick) {
+    if (user_tick && !user_code_disabled) {
       // user code was running
       do_tick = user_tick;
       blit::render = user_render;
@@ -1007,9 +1008,14 @@ extern void blit_enable_user_code() {
 
   do_tick = user_tick;
   blit::render = user_render;
+  user_code_disabled = false;
 }
 
 extern void blit_disable_user_code() {
+  if(!user_tick)
+    return;
+
   do_tick = blit::tick;
   blit::render = ::render;
+  user_code_disabled = true;
 }
