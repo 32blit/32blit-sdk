@@ -181,6 +181,14 @@ bool launch_game_from_sd(const char *path) {
   return false;
 }
 
+static void start_launcher() {
+  if(launcher_offset != 0xFFFFFFFF)
+    launch_game(launcher_offset);
+  // no launcher flashed, try to find one on the SD card
+  else if(::file_exists("launcher.blit"))
+    launch_game_from_sd("launcher.blit");
+}
+
 void init() {
   api.launch = launch_game_from_sd;
 
@@ -210,19 +218,27 @@ void init() {
       if(yes)
         launch_game(persist.last_game_offset);
       else if(launcher_offset != 0xFFFFFFFF)
-        launch_game(launcher_offset);
+        start_launcher();
 
       persist.reset_error = false;
     });
-  } else if(launcher_offset != 0xFFFFFFFF) {
-    launch_game(launcher_offset);
-  } else {
-    screen.pen = Pen(255, 0, 0);
-    screen.clear();
-  }
+  } else 
+    start_launcher();
 }
 
 void render(uint32_t time) {
+
+  if(launcher_offset == 0xFFFFFFFF) {
+    screen.pen = Pen(0, 0, 0);
+    screen.clear();
+
+    screen.pen = Pen(255, 255, 255);
+    screen.text(
+      "No launcher found!\n\nFlash one with 32blit flash\n or place launcher.blit on your SD card.",
+      minimal_font, Point(screen.bounds.w / 2, screen.bounds.h / 2), true, TextAlign::center_center
+    );
+  }
+
   progress.draw();
   dialog.draw();
 }
