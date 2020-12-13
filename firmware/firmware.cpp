@@ -490,6 +490,12 @@ bool FlashLoader::StreamInit(CDCFourCC uCommand)
       state = stFlashCDC;
       m_parseState = stFilename;
       m_uParseIndex = 0;
+
+      flash_mapped = is_qspi_memorymapped();
+      if(flash_mapped) {
+        blit_disable_user_code();
+        qspi_disable_memorymapped_mode();
+      }
     break;
 
     case CDCCommandHandler::CDCFourCCMake<'S', 'A', 'V', 'E'>::value:
@@ -504,6 +510,7 @@ bool FlashLoader::StreamInit(CDCFourCC uCommand)
     break;
 
   }
+
   return bNeedStream;
 }
 
@@ -748,7 +755,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                         }
                       }
 
-                      launch_game(flash_start_offset);
+                      blit_switch_execution(flash_start_offset, true);
                     }
                     else
                       state = stFlashFile;
@@ -773,6 +780,11 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
   if(result == srError) {
     state = stFlashFile;
     progress.hide();
+    if(flash_mapped) {
+      qspi_enable_memorymapped_mode();
+      blit_enable_user_code();
+      flash_mapped = false;
+    }
   }
 
   return result;

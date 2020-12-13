@@ -128,4 +128,5 @@ private:
 
   uint32_t num_relocs = 0, cur_reloc = 0;
   std::vector<uint32_t> relocation_offsets;
+  bool flash_mapped = false;
 };
