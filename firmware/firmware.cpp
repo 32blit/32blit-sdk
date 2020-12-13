@@ -480,13 +480,8 @@ void update(uint32_t time) {
 
 
 
-    if(button_home)
-    {
-      // switch to mass media
-      g_usbManager.SetType(USBManager::usbtMSC);
+    if(g_usbManager.GetType() == USBManager::usbtMSC)
       state = stMassStorage;
-
-    }
 
     auto total_items = game_list.size();
 
@@ -592,13 +587,10 @@ void update(uint32_t time) {
   }
   else if(state == stMassStorage)
   {
-    bool switch_back = g_usbManager.GetState() == USBManager::usbsMSCUnmounted;
+    if(g_usbManager.GetType() == USBManager::usbtCDC)
+      state = stFlashFile;
 
-    // allow switching back manually if it was never mounted
-    if(button_home && g_usbManager.GetState() == USBManager::usbsMSCInititalising)
-      switch_back = true;
-
-    if(switch_back)
+    if(g_usbManager.GetState() == USBManager::usbsMSCUnmounted)
     {
       // Switch back to CDC
       g_usbManager.SetType(USBManager::usbtCDC);

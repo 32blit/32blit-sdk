@@ -23,6 +23,7 @@
 #include "fatfs.h"
 #include "quadspi.h"
 #include "usbd_core.h"
+#include "USBManager.h"
 
 #include "32blit.hpp"
 #include "engine/api_private.hpp"
@@ -38,7 +39,9 @@ extern char __fb_start;
 extern char itcm_text_start;
 extern char itcm_text_end;
 extern char itcm_data;
+
 extern USBD_HandleTypeDef hUsbDeviceHS;
+extern USBManager g_usbManager;
 
 #define ADC_BUFFER_SIZE 32
 
@@ -451,6 +454,7 @@ enum MenuItem {
     DFU,
     SHIPPING,
     SWITCH_EXE,
+    STORAGE,
     LAST_COUNT // leave me last pls
 };
 
@@ -559,6 +563,15 @@ protected:
       case SWITCH_EXE:
         blit_switch_execution(persist.last_game_offset);
         break;
+      case STORAGE:
+        // switch back manually if not mounted
+        if(g_usbManager.GetState() == USBManager::usbsMSCInititalising)
+          g_usbManager.SetType(USBManager::usbtCDC);
+        else
+          g_usbManager.SetType(USBManager::usbtMSC);
+
+        blit_menu(); // close the menu
+        break;
     }
   }
 
@@ -571,7 +584,8 @@ static Menu::Item firmware_menu_items[]{
   {SCREENSHOT, "Take Screenshot"},
   {DFU, "DFU Mode"},
   {SHIPPING, "Power Off"},
-  {SWITCH_EXE, ""} // label depends on if a game is running
+  {SWITCH_EXE, ""}, // label depends on if a game is running
+  {STORAGE, "Storage Mode"},
 };
 
 FirmwareMenu firmware_menu("System Menu", firmware_menu_items, MenuItem::LAST_COUNT);
