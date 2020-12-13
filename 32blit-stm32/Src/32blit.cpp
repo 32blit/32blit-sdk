@@ -35,12 +35,6 @@
 #include "stdarg.h"
 using namespace blit;
 
-extern char __ltdc_start;
-extern char __fb_start;
-extern char itcm_text_start;
-extern char itcm_text_end;
-extern char itcm_data;
-
 extern USBD_HandleTypeDef hUsbDeviceHS;
 extern USBManager g_usbManager;
 
@@ -53,11 +47,9 @@ FATFS filesystem;
 extern Disk_drvTypeDef disk;
 static bool fs_mounted = false;
 
-bool needs_render = true;
 bool exit_game = false;
 bool take_screenshot = false;
-uint32_t flip_cycle_count = 0;
-float volume_log_base = 2.0f;
+const float volume_log_base = 2.0f;
 RunningAverage<float> battery_average(8);
 float battery = 0.0f;
 uint8_t battery_status = 0;
@@ -817,11 +809,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   }
 }
 
-#define ACCEL_OVER_SAMPLE 16
-
-uint8_t tilt_sample_offset = 0;
-int16_t acceleration_data_buffer[3 * ACCEL_OVER_SAMPLE] = {0};
-
 void blit_disable_ADC()
 {
   // TODO: Flesh this out if it's still necessary in interrupt-driven ADC mode
@@ -883,55 +870,6 @@ void blit_process_input() {
 
   battery = battery_average.average();
 }
-
-char *get_fr_err_text(FRESULT err){
-  switch(err){
-    case FR_OK:
-      return "OK";
-    case FR_DISK_ERR:
-      return "DISK_ERR";
-    case FR_INT_ERR:
-      return "INT_ERR";
-    case FR_NOT_READY:
-      return "NOT_READY";
-    case FR_NO_FILE:
-      return "NO_FILE";
-    case FR_NO_PATH:
-      return "NO_PATH";
-    case FR_INVALID_NAME:
-      return "INVALID_NAME";
-    case FR_DENIED:
-      return "DENIED";
-    case FR_EXIST:
-      return "EXIST";
-    case FR_INVALID_OBJECT:
-      return "INVALID_OBJECT";
-    case FR_WRITE_PROTECTED:
-      return "WRITE_PROTECTED";
-    case FR_INVALID_DRIVE:
-      return "INVALID_DRIVE";
-    case FR_NOT_ENABLED:
-      return "NOT_ENABLED";
-    case FR_NO_FILESYSTEM:
-      return "NO_FILESYSTEM";
-    case FR_MKFS_ABORTED:
-      return "MKFS_ABORTED";
-    case FR_TIMEOUT:
-      return "TIMEOUT";
-    case FR_LOCKED:
-      return "LOCKED";
-    case FR_NOT_ENOUGH_CORE:
-      return "NOT_ENOUGH_CORE";
-    case FR_TOO_MANY_OPEN_FILES:
-      return "TOO_MANY_OPEN_FILES";
-    case FR_INVALID_PARAMETER:
-      return "INVALID_PARAMETER";
-    default:
-      return "INVALID_ERR_CODE";
-  }
-}
-
-
 
 // blit_switch_execution
 //
