@@ -76,7 +76,7 @@ public:
 
 		// can't be mounted if there's no usb connection
 		// maybe show some kind of warning if previously mounted?
-		if(hUsbDeviceHS.dev_state != USBD_STATE_CONFIGURED)
+		if(m_type == usbtMSC && hUsbDeviceHS.dev_state != USBD_STATE_CONFIGURED)
 		{
 			m_state = usbsMSCInititalising;
 			m_bHasHadSomeActivity = false;
