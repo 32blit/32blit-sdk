@@ -28,6 +28,8 @@ namespace blit {
     uint32_t size;
   };
 
+  bool is_storage_available();
+
   std::vector<FileInfo> list_files(const std::string &path);
   bool file_exists(const std::string &path);
   bool directory_exists(const std::string &path);

@@ -195,3 +195,7 @@ const char *get_save_path() {
 
   return save_path.c_str();
 }
+
+bool is_storage_available() {
+  return true;
+}

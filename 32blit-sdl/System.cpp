@@ -152,6 +152,7 @@ void System::run() {
 	blit::api.rename_file = ::rename_file;
 	blit::api.remove_file = ::remove_file;
 	blit::api.get_save_path = ::get_save_path;
+	blit::api.is_storage_available = ::is_storage_available;
 
 	blit::api.enable_us_timer = ::enable_us_timer;
 	blit::api.get_us_timer = ::get_us_timer;
