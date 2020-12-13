@@ -74,7 +74,7 @@ namespace blit {
      *
      * \param a `float` angle of rotation (radians)
      */
-    void   rotate(const float &a);
+    void   rotate(float a);
 
     /**
      * Get the angle between two vectors

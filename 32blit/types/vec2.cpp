@@ -7,7 +7,7 @@
 
 namespace blit {
 
-  void Vec2::rotate(const float &a) {
+  void Vec2::rotate(float a) {
     float c = cosf(a);
     float s = sinf(a);
     float rx = this->x * c - this->y * s;

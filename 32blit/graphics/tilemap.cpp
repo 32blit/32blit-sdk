@@ -46,7 +46,7 @@ namespace blit {
    * \param[in] x
    * \param[in] y
    */
-  int32_t TileMap::offset(const int16_t &x, const int16_t &y) {
+  int32_t TileMap::offset(int16_t x, int16_t y) {
     int32_t cx = ((uint16_t)x) & (bounds.w - 1);
     int32_t cy = ((uint16_t)y) & (bounds.h - 1);
 

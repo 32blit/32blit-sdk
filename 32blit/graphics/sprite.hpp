@@ -35,7 +35,7 @@ namespace blit {
     static SpriteSheet *load(const packed_image *image, uint8_t *buffer = nullptr);
     static SpriteSheet *load(const std::string& filename, uint8_t* buffer = nullptr);
 
-    Rect sprite_bounds(const uint16_t &index);          
+    Rect sprite_bounds(uint16_t index);          
     Rect sprite_bounds(const Point &p);
     Rect sprite_bounds(const Rect &r);
   };
