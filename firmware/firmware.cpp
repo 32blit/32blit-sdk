@@ -510,6 +510,7 @@ bool FlashLoader::StreamInit(CDCFourCC uCommand)
       state = stSaveFile;
       m_parseState = stFilename;
       m_uParseIndex = 0;
+      blit_disable_user_code();
     break;
 
     case CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value:
@@ -712,6 +713,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                       result = srFinish;
 
                     progress.hide();
+                    blit_enable_user_code();
                   }
                 break;
 
@@ -788,11 +790,13 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
   if(result == srError) {
     state = stFlashFile;
     progress.hide();
+
     if(flash_mapped) {
       qspi_enable_memorymapped_mode();
-      blit_enable_user_code();
       flash_mapped = false;
     }
+
+    blit_enable_user_code();
   }
 
   return result;
