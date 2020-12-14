@@ -465,6 +465,12 @@ CDCCommandHandler::StreamResult CDCEraseHandler::StreamData(CDCDataStream &dataS
   if(offset & (qspi_flash_sector_size - 1))
     return srFinish;
 
+  bool flash_mapped = is_qspi_memorymapped();
+  if(flash_mapped) {
+    blit_disable_user_code();
+    qspi_disable_memorymapped_mode();
+  }
+
   // attempt to get size, falling back to a single sector
   int erase_size = 1;
   BlitGameHeader header;
@@ -475,6 +481,11 @@ CDCCommandHandler::StreamResult CDCEraseHandler::StreamData(CDCDataStream &dataS
 
   // rescan
   scan_flash();
+
+  if(flash_mapped) {
+    qspi_enable_memorymapped_mode();
+    blit_enable_user_code();
+  }
 
   return srFinish;
 }
