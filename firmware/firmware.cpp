@@ -252,32 +252,6 @@ void launch_game(uint32_t address) {
   blit_switch_execution(address);
 }
 
-void mass_storage_overlay(uint32_t time)
-{
-  static uint8_t uActivityAnim = 0;
-
-  screen.pen = Pen(0, 0, 0, 200);
-  screen.clear();
-
-  screen.pen = Pen(255, 255, 255);
-  char buffer[128];
-  snprintf(buffer, 128, "Mass Storage mode (%s)", g_usbManager.GetStateName());
-  screen.text(buffer, minimal_font, Rect(Point(0), screen.bounds), true, TextAlign::center_center);
-
-  if(uActivityAnim)
-  {
-    screen.pen = Pen(0, 255, 0, uActivityAnim);
-    screen.circle(Point(320-6, 6), 6);
-    uActivityAnim = uActivityAnim>>1;
-
-  }
-  else
-  {
-    if(g_usbManager.HasHadActivity())
-      uActivityAnim = 255;
-  }
-}
-
 void init_lists() {
   load_directory_list("/");
   current_directory = directory_list.begin();
@@ -410,10 +384,6 @@ void render(uint32_t time) {
     else
       screen.text("No Games Found.", minimal_font, Point(60, screen.bounds.h / 2), true, TextAlign::center_center);
   }
-
-  // overlays
-  if(state == stMassStorage)
-    mass_storage_overlay(time);
 
   progress.draw();
   dialog.draw();

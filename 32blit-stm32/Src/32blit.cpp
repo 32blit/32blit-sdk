@@ -523,6 +523,18 @@ protected:
       case VOLUME:
         draw_slider(Point(bar_x, y + bar_margin), bar_width, persist.volume, foreground_colour);
         break;
+      case STORAGE:
+        screen.pen = foreground_colour;
+        const char *label;
+        if(num_open_files)
+          label = "Files Open";
+        else if(g_usbManager.GetType() == USBManager::usbtMSC)
+          label = g_usbManager.GetStateName() + 4; // trim the "MSC "
+        else
+          label = "Disabled";
+        
+        screen.text(label, minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);
+        break;
       default:
         screen.pen = foreground_colour;
         screen.text("Press A", minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);
@@ -569,8 +581,6 @@ protected:
           g_usbManager.SetType(USBManager::usbtCDC);
         else if(num_open_files == 0)
           g_usbManager.SetType(USBManager::usbtMSC);
-
-        blit_menu(); // close the menu
         break;
     }
   }
