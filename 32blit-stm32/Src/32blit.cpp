@@ -204,7 +204,7 @@ bool blit_sd_detected() {
 }
 
 bool blit_sd_mounted() {
-  return fs_mounted;
+  return fs_mounted && g_usbManager.GetType() != USBManager::usbtMSC;
 }
 
 void hook_render(uint32_t time) {
@@ -567,7 +567,7 @@ protected:
         // switch back manually if not mounted
         if(g_usbManager.GetState() == USBManager::usbsMSCInititalising)
           g_usbManager.SetType(USBManager::usbtCDC);
-        else
+        else if(num_open_files == 0)
           g_usbManager.SetType(USBManager::usbtMSC);
 
         blit_menu(); // close the menu

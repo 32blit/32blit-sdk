@@ -8,10 +8,16 @@
 #include "file.hpp"
 #include "32blit.h"
 #include "executable.hpp"
+#include "USBManager.h"
+
+extern USBManager g_usbManager;
 
 int num_open_files = 0;
 
 void *open_file(const std::string &file, int mode) {
+  if(g_usbManager.GetType() == USBManager::usbtMSC)
+    return nullptr;
+
   FIL *f = new FIL();
 
   BYTE ff_mode = 0;
