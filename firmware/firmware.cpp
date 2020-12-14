@@ -852,12 +852,12 @@ bool FlashLoader::StreamInit(CDCFourCC uCommand)
 
 // FlashData() Flash data to the QSPI flash
 // Note: currently qspi_write_buffer only works for sizes of 256 max
-bool FlashData(uint32_t uOffset, uint8_t *pBuffer, uint32_t uLen)
+bool FlashData(uint32_t start, uint32_t uOffset, uint8_t *pBuffer, uint32_t uLen)
 {
   bool bResult = false;
-  if(QSPI_OK == qspi_write_buffer(uOffset, pBuffer, uLen))
+  if(QSPI_OK == qspi_write_buffer(start + uOffset, pBuffer, uLen))
   {
-    if(QSPI_OK == qspi_read_buffer(uOffset, verify_buffer, uLen))
+    if(QSPI_OK == qspi_read_buffer(start + uOffset, verify_buffer, uLen))
     {
       // compare buffers
       bResult = true;
@@ -1081,7 +1081,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   }
 
                   // save data
-                  if(!FlashData(flash_start_offset + uPage*PAGE_SIZE, buffer, uWriteLen))
+                  if(!FlashData(flash_start_offset, uPage*PAGE_SIZE, buffer, uWriteLen))
                   {
                     printf("Failed to write to flash\n\r");
                     result = srError;
