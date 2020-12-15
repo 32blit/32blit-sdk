@@ -94,6 +94,9 @@ uint32_t get_file_length(void *fh)
 }
 
 void list_files(const std::string &path, std::function<void(blit::FileInfo &)> callback) {
+  if(g_usbManager.GetType() == USBManager::usbtMSC)
+    return;
+
   auto dir = new DIR();
 
   if(f_opendir(dir, path.c_str()) != FR_OK)
