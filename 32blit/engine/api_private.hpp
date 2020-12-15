@@ -39,8 +39,7 @@ namespace blit {
     void (*exit)(bool is_error);
 
     // serial debug
-    void (*debug)(std::string message);
-    int  (*debugf)(const char * psFormatString, va_list args);
+    void (*debug)(const char *message);
 
     // files
     void *(*open_file)(const std::string &file, int mode);
@@ -48,13 +47,14 @@ namespace blit {
     int32_t (*write_file)(void *fh, uint32_t offset, uint32_t length, const char* buffer);
     int32_t (*close_file)(void *fh);
     uint32_t (*get_file_length)(void *fh);
-    std::vector<FileInfo> (*list_files) (const std::string &path);
+    void (*list_files) (const std::string &path, std::function<void(FileInfo &)> callback);
     bool (*file_exists) (const std::string &path);
     bool (*directory_exists) (const std::string &path);
     bool (*create_directory) (const std::string &path);
     bool (*rename_file) (const std::string &old_name, const std::string &new_name);
     bool (*remove_file) (const std::string &path);
-    std::string (*get_save_path)();
+    const char *(*get_save_path)();
+    bool (*is_storage_available)();
 
     // profiler
     void (*enable_us_timer)();
@@ -63,7 +63,7 @@ namespace blit {
 
     // jepg
     JPEGImage (*decode_jpeg_buffer)(const uint8_t *ptr, uint32_t len, AllocateCallback alloc);
-    JPEGImage (*decode_jpeg_file)(std::string filename, AllocateCallback alloc);
+    JPEGImage (*decode_jpeg_file)(const std::string &filename, AllocateCallback alloc);
 
   };
   #pragma pack(pop)

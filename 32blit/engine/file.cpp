@@ -14,6 +14,15 @@ namespace blit {
   static std::map<std::string, BufferFile> buf_files;
 
   /**
+   * Check if it is possible to read/write files, for SDL this is always true.
+   *
+   * \return true if an SD card is inserted and usable, false otherwise
+   */
+  bool is_storage_available() {
+    return api.is_storage_available();
+  }
+
+  /**
    * Lists files on the SD card (device), the game directory (SDL) or in memory.
    *
    * \param path Path to list files at, relative to the root of the SD card or game directory (SDL).
@@ -21,7 +30,10 @@ namespace blit {
    * \return Vector of files/directories
    */
   std::vector<FileInfo> list_files(const std::string &path) {
-    auto ret = api.list_files(path);
+    std::vector<FileInfo> ret;
+    api.list_files(path, [&ret](FileInfo &file){
+      ret.push_back(file);
+    });
 
     for(auto &buf_file : buf_files) {
       auto slash_pos = buf_file.first.find_last_of('/');

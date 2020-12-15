@@ -121,7 +121,7 @@ void sort_file_list() {
 void load_directory_list(std::string directory) {
   directory_list.clear();
 
-  for(auto &folder : ::list_files(directory)) {
+  for(auto &folder : blit::list_files(directory)) {
     if(folder.flags & blit::FileFlags::directory) {
       if(folder.name.compare("System Volume Information") == 0 || folder.name[0] == '.') continue;
       directory_list.push_back({folder.name, 0, 0});
@@ -151,7 +151,7 @@ void load_file_list(std::string directory) {
 
   game_list.clear();
 
-  for(auto &file : ::list_files(directory)) {
+  for(auto &file : blit::list_files(directory)) {
     if(file.flags & blit::FileFlags::directory)
       continue;
 

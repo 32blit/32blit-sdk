@@ -13,5 +13,5 @@ namespace blit {
   };
 
   JPEGImage decode_jpeg_buffer(const uint8_t *ptr, uint32_t len);
-  JPEGImage decode_jpeg_file(std::string filename);
+  JPEGImage decode_jpeg_file(const std::string &filename);
 }

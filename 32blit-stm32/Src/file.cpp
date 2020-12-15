@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <cstring>
+#include <functional>
 #include <map>
 
 #include "fatfs.h"
@@ -81,13 +82,11 @@ uint32_t get_file_length(void *fh)
   return f_size((FIL *)fh);
 }
 
-std::vector<blit::FileInfo> list_files(const std::string &path) {
-  std::vector<blit::FileInfo> ret;
-
+void list_files(const std::string &path, std::function<void(blit::FileInfo &)> callback) {
   auto dir = new DIR();
 
   if(f_opendir(dir, path.c_str()) != FR_OK)
-    return ret;
+    return;
 
   FILINFO ent;
 
@@ -101,12 +100,10 @@ std::vector<blit::FileInfo> list_files(const std::string &path) {
     if(ent.fattrib & AM_DIR)
       info.flags |= blit::FileFlags::directory;
 
-    ret.push_back(info);
+    callback(info);
   }
 
   f_closedir(dir);
-
-  return ret;
 }
 
 bool file_exists(const std::string &path) {
@@ -139,7 +136,9 @@ bool remove_file(const std::string &path) {
   return f_unlink(path.c_str()) == FR_OK;
 }
 
-std::string get_save_path() {
+static char save_path[32]; // max game title length is 24 + ".blit/" + "/"
+
+const char *get_save_path() {
   std::string app_name;
 
   if(!directory_exists(".blit"))
@@ -167,9 +166,12 @@ std::string get_save_path() {
     }
   }
 
-  // make sure it exists
-  if(!directory_exists(".blit/" + app_name))
-    create_directory(".blit/" + app_name);
+  snprintf(save_path, sizeof(save_path), ".blit/%s/", app_name.c_str());
 
-  return ".blit/" + app_name + "/";
+  // make sure it exists
+  if(!directory_exists(save_path))
+    create_directory(save_path);
+
+
+  return save_path;
 }
