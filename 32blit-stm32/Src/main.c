@@ -65,6 +65,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+extern USBManager g_usbManager;
 extern CDCCommandStream g_commandStream;
 CDCResetHandler g_resetHandler;
 CDCInfoHandler g_infoHandler;
@@ -178,6 +179,9 @@ int main(void)
 
     blit_tick();
     //HAL_Delay(1000);
+    // USB
+    g_usbManager.Update();
+  
     // handle CDC input
     g_commandStream.Stream();
 

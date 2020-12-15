@@ -88,7 +88,7 @@ namespace blit {
         repeat_start_time = time;
       }
 
-      if(buttons.pressed & Button::A)
+      if(buttons.released & Button::A)
         item_activated(items[current_item]);
 
       // scrolling

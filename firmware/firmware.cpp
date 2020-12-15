@@ -252,32 +252,6 @@ void launch_game(uint32_t address) {
   blit_switch_execution(address);
 }
 
-void mass_storage_overlay(uint32_t time)
-{
-  static uint8_t uActivityAnim = 0;
-
-  screen.pen = Pen(0, 0, 0, 200);
-  screen.clear();
-
-  screen.pen = Pen(255, 255, 255);
-  char buffer[128];
-  snprintf(buffer, 128, "Mass Storage mode (%s)", g_usbManager.GetStateName());
-  screen.text(buffer, minimal_font, Rect(Point(0), screen.bounds), true, TextAlign::center_center);
-
-  if(uActivityAnim)
-  {
-    screen.pen = Pen(0, 255, 0, uActivityAnim);
-    screen.circle(Point(320-6, 6), 6);
-    uActivityAnim = uActivityAnim>>1;
-
-  }
-  else
-  {
-    if(g_usbManager.HasHadActivity())
-      uActivityAnim = 255;
-  }
-}
-
 void init_lists() {
   load_directory_list("/");
   current_directory = directory_list.begin();
@@ -411,10 +385,6 @@ void render(uint32_t time) {
       screen.text("No Games Found.", minimal_font, Point(60, screen.bounds.h / 2), true, TextAlign::center_center);
   }
 
-  // overlays
-  if(state == stMassStorage)
-    mass_storage_overlay(time);
-
   progress.draw();
   dialog.draw();
 }
@@ -480,13 +450,8 @@ void update(uint32_t time) {
 
 
 
-    if(button_home)
-    {
-      // switch to mass media
-      g_usbManager.SetType(USBManager::usbtMSC);
+    if(g_usbManager.GetType() == USBManager::usbtMSC)
       state = stMassStorage;
-
-    }
 
     auto total_items = game_list.size();
 
@@ -592,19 +557,8 @@ void update(uint32_t time) {
   }
   else if(state == stMassStorage)
   {
-    bool switch_back = g_usbManager.GetState() == USBManager::usbsMSCUnmounted;
-
-    // allow switching back manually if it was never mounted
-    if(button_home && g_usbManager.GetState() == USBManager::usbsMSCInititalising)
-      switch_back = true;
-
-    if(switch_back)
-    {
-      // Switch back to CDC
-      g_usbManager.SetType(USBManager::usbtCDC);
-      load_file_list(current_directory->name);
+    if(g_usbManager.GetType() == USBManager::usbtCDC)
       state = stFlashFile;
-    }
   }
 }
 

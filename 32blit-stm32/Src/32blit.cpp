@@ -23,6 +23,7 @@
 #include "fatfs.h"
 #include "quadspi.h"
 #include "usbd_core.h"
+#include "USBManager.h"
 
 #include "32blit.hpp"
 #include "engine/api_private.hpp"
@@ -38,7 +39,9 @@ extern char __fb_start;
 extern char itcm_text_start;
 extern char itcm_text_end;
 extern char itcm_data;
+
 extern USBD_HandleTypeDef hUsbDeviceHS;
+extern USBManager g_usbManager;
 
 #define ADC_BUFFER_SIZE 32
 
@@ -201,7 +204,7 @@ bool blit_sd_detected() {
 }
 
 bool blit_sd_mounted() {
-  return fs_mounted;
+  return fs_mounted && g_usbManager.GetType() != USBManager::usbtMSC;
 }
 
 void hook_render(uint32_t time) {
@@ -451,6 +454,7 @@ enum MenuItem {
     DFU,
     SHIPPING,
     SWITCH_EXE,
+    STORAGE,
     LAST_COUNT // leave me last pls
 };
 
@@ -519,6 +523,18 @@ protected:
       case VOLUME:
         draw_slider(Point(bar_x, y + bar_margin), bar_width, persist.volume, foreground_colour);
         break;
+      case STORAGE:
+        screen.pen = foreground_colour;
+        const char *label;
+        if(num_open_files)
+          label = "Files Open";
+        else if(g_usbManager.GetType() == USBManager::usbtMSC)
+          label = g_usbManager.GetStateName() + 4; // trim the "MSC "
+        else
+          label = "Disabled";
+        
+        screen.text(label, minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);
+        break;
       default:
         screen.pen = foreground_colour;
         screen.text("Press A", minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);
@@ -559,6 +575,13 @@ protected:
       case SWITCH_EXE:
         blit_switch_execution(persist.last_game_offset);
         break;
+      case STORAGE:
+        // switch back manually if not mounted
+        if(g_usbManager.GetState() == USBManager::usbsMSCInititalising)
+          g_usbManager.SetType(USBManager::usbtCDC);
+        else if(num_open_files == 0)
+          g_usbManager.SetType(USBManager::usbtMSC);
+        break;
     }
   }
 
@@ -571,7 +594,8 @@ static Menu::Item firmware_menu_items[]{
   {SCREENSHOT, "Take Screenshot"},
   {DFU, "DFU Mode"},
   {SHIPPING, "Power Off"},
-  {SWITCH_EXE, ""} // label depends on if a game is running
+  {SWITCH_EXE, ""}, // label depends on if a game is running
+  {STORAGE, "Storage Mode"},
 };
 
 FirmwareMenu firmware_menu("System Menu", firmware_menu_items, MenuItem::LAST_COUNT);

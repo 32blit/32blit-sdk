@@ -8,8 +8,16 @@
 #include "file.hpp"
 #include "32blit.h"
 #include "executable.hpp"
+#include "USBManager.h"
+
+extern USBManager g_usbManager;
+
+int num_open_files = 0;
 
 void *open_file(const std::string &file, int mode) {
+  if(g_usbManager.GetType() == USBManager::usbtMSC)
+    return nullptr;
+
   FIL *f = new FIL();
 
   BYTE ff_mode = 0;
@@ -25,8 +33,10 @@ void *open_file(const std::string &file, int mode) {
 
   FRESULT r = f_open(f, file.c_str(), ff_mode);
 
-  if(r == FR_OK)
+  if(r == FR_OK) {
+    num_open_files++;
     return f;
+  }
   
   delete f;
   return nullptr;
@@ -73,6 +83,7 @@ int32_t close_file(void *fh) {
 
   r = f_close((FIL *)fh);
 
+  num_open_files--;
   delete (FIL *)fh;
   return r == FR_OK ? 0 : -1;
 }
@@ -83,6 +94,9 @@ uint32_t get_file_length(void *fh)
 }
 
 void list_files(const std::string &path, std::function<void(blit::FileInfo &)> callback) {
+  if(g_usbManager.GetType() == USBManager::usbtMSC)
+    return;
+
   auto dir = new DIR();
 
   if(f_opendir(dir, path.c_str()) != FR_OK)

@@ -64,6 +64,9 @@ public:
 				m_unmountStartTime = HAL_GetTick();
 			break;
 
+			case usbsMSCUnmounted:
+				SetType(usbtCDC);
+
 			default:
 			break;
 		}
@@ -71,38 +74,6 @@ public:
 
 	State GetState(void)
 	{
-		// On linux we seem to get many start/stops so use a timer to set mount status.
-		const uint32_t uMountUnmountTime = 500;
-
-		// can't be mounted if there's no usb connection
-		// maybe show some kind of warning if previously mounted?
-		if(hUsbDeviceHS.dev_state != USBD_STATE_CONFIGURED)
-		{
-			m_state = usbsMSCInititalising;
-			m_bHasHadSomeActivity = false;
-		}
-
-		switch(m_state)
-		{
-			case usbsMSCInititalising:
-				if(m_bHasHadSomeActivity)
-					m_state = usbsMSCMounting; // for windows as we don;t ever get a scsi start message
-			break;
-
-			case usbsMSCMounting :
-				if(HAL_GetTick() > m_mountStartTime  + uMountUnmountTime)
-					m_state = usbsMSCMounted;
-			break;
-
-			case usbsMSCUnmounting :
-				if(HAL_GetTick() > m_unmountStartTime  + uMountUnmountTime)
-					m_state = usbsMSCUnmounted;
-			break;
-
-			default:
-			break;
-		}
-
 		return m_state;
 	}
 
@@ -127,6 +98,41 @@ public:
 	{
 		m_bHasActivity = true;
 		m_bHasHadSomeActivity = true;
+	}
+
+	void Update()
+	{
+		// On linux we seem to get many start/stops so use a timer to set mount status.
+		const uint32_t uMountUnmountTime = 500;
+
+		// can't be mounted if there's no usb connection
+		// maybe show some kind of warning if previously mounted?
+		if(m_type == usbtMSC && hUsbDeviceHS.dev_state != USBD_STATE_CONFIGURED)
+		{
+			m_state = usbsMSCInititalising;
+			m_bHasHadSomeActivity = false;
+		}
+
+		switch(m_state)
+		{
+			case usbsMSCInititalising:
+				if(m_bHasHadSomeActivity)
+					m_state = usbsMSCMounting; // for windows as we don;t ever get a scsi start message
+			break;
+
+			case usbsMSCMounting :
+				if(HAL_GetTick() > m_mountStartTime  + uMountUnmountTime)
+					m_state = usbsMSCMounted;
+			break;
+
+			case usbsMSCUnmounting :
+				if(HAL_GetTick() > m_unmountStartTime  + uMountUnmountTime)
+					SetState(usbsMSCUnmounted);
+			break;
+
+			default:
+			break;
+		}
 	}
 
 private:
