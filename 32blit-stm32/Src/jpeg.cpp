@@ -8,7 +8,7 @@ extern "C" {
 }
 
 #include "jpeg.hpp"
-#include "engine/file.hpp"
+#include "file.hpp"
 
 static bool jpeg_tables_initialised = false;
 
@@ -19,7 +19,7 @@ static uint8_t jpeg_dec_block[jpeg_max_block_len];
 static const uint8_t *jpeg_in_buf = nullptr;
 static uint8_t *jpeg_out_buf = nullptr;
 static uint32_t jpeg_in_len = 0, jpeg_in_off = 0;
-static blit::File *jpeg_in_file = nullptr;
+static void *jpeg_in_file = nullptr;
 static uint32_t jpeg_out_block = 0;
 static JPEG_YCbCrToRGB_Convert_Function jpeg_conv_func = nullptr;
 
@@ -40,7 +40,7 @@ void HAL_JPEG_GetDataCallback(JPEG_HandleTypeDef *hjpeg, uint32_t NbDecodedData)
   jpeg_in_off += NbDecodedData;
 
   if(jpeg_in_file) {
-    jpeg_in_len = jpeg_in_file->read(jpeg_in_off, 1024, (char *)jpeg_in_buf);
+    jpeg_in_len = read_file(jpeg_in_file, jpeg_in_off, 1024, (char *)jpeg_in_buf);
     HAL_JPEG_ConfigInputBuffer(&jpeg_handle, (uint8_t *)jpeg_in_buf, jpeg_in_len);
   } else if(jpeg_in_off < jpeg_in_len)
     HAL_JPEG_ConfigInputBuffer(&jpeg_handle, (uint8_t *)jpeg_in_buf + jpeg_in_off, jpeg_in_len - jpeg_in_off);
@@ -80,12 +80,12 @@ blit::JPEGImage blit_decode_jpeg_buffer(const uint8_t *ptr, uint32_t len, blit::
 }
 
 blit::JPEGImage blit_decode_jpeg_file(std::string filename, blit::AllocateCallback alloc) {
-  blit::File file(filename);
+  auto file = open_file(filename, blit::OpenMode::read);
 
-  if(!file.is_open())
+  if(!file)
     return {};
 
-  jpeg_in_file = &file;
+  jpeg_in_file = file;
 
   if(!jpeg_tables_initialised) {
     JPEG_InitColorTables();
@@ -94,7 +94,7 @@ blit::JPEGImage blit_decode_jpeg_file(std::string filename, blit::AllocateCallba
 
   jpeg_alloc = alloc;
   jpeg_in_buf = new uint8_t[1024];
-  jpeg_in_len = file.read(0, 1024, (char *)jpeg_in_buf);
+  jpeg_in_len = read_file(file, 0, 1024, (char *)jpeg_in_buf);
   jpeg_in_off = 0;
   
   jpeg_out_block = 0;
@@ -110,6 +110,8 @@ blit::JPEGImage blit_decode_jpeg_file(std::string filename, blit::AllocateCallba
   HAL_JPEG_DeInit(&jpeg_handle);
 
   delete[] jpeg_in_buf;
+
+  close_file(file);
 
   return {blit::Size(conf.ImageWidth, conf.ImageHeight), jpeg_out_buf};
 }
