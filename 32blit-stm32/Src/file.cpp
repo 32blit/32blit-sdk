@@ -9,6 +9,8 @@
 #include "32blit.h"
 #include "executable.hpp"
 
+int num_open_files = 0;
+
 void *open_file(const std::string &file, int mode) {
   FIL *f = new FIL();
 
@@ -25,8 +27,10 @@ void *open_file(const std::string &file, int mode) {
 
   FRESULT r = f_open(f, file.c_str(), ff_mode);
 
-  if(r == FR_OK)
+  if(r == FR_OK) {
+    num_open_files++;
     return f;
+  }
   
   delete f;
   return nullptr;
@@ -73,6 +77,7 @@ int32_t close_file(void *fh) {
 
   r = f_close((FIL *)fh);
 
+  num_open_files--;
   delete (FIL *)fh;
   return r == FR_OK ? 0 : -1;
 }

@@ -6,6 +6,8 @@
 
 #include "engine/file.hpp"
 
+extern int num_open_files;
+
 void *open_file(const std::string &file, int mode);
 int32_t read_file(void *fh, uint32_t offset, uint32_t length, char *buffer);
 int32_t write_file(void *fh, uint32_t offset, uint32_t length, const char *buffer);
