@@ -20,13 +20,8 @@ blit::Surface __fb_lores((uint8_t *)framebuffer, blit::PixelFormat::RGB, blit::S
 static blit::Pen palette[256];
 
 // blit debug callback
-void debug(std::string message) {
-	std::cout << message << std::endl;
-}
-
-int blit_debugf(const char * psFormatString, va_list args)
-{
-	return vprintf(psFormatString, args);
+void blit_debug(const char *message) {
+	std::cout << message;
 }
 
 // blit screenmode callback
@@ -137,8 +132,7 @@ void System::run() {
 
 	blit::api.now = ::now;
 	blit::api.random = ::blit_random;
-	blit::api.debug = ::debug;
-	blit::api.debugf = ::blit_debugf;
+	blit::api.debug = ::blit_debug;
 	blit::api.set_screen_mode = ::set_screen_mode;
 	blit::api.set_screen_palette = ::set_screen_palette;
 	blit::update = ::update;

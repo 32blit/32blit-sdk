@@ -96,15 +96,8 @@ static void init_api_shared() {
   api.LED = Pen();
 }
 
-int blit_debugf(const char * psFormatString, va_list args)
-{
-	return vprintf(psFormatString, args);
-}
-
-void blit_debug(std::string message) {
-	printf(message.c_str());
-  screen.pen = Pen(255, 255, 255);
-  screen.text(message, minimal_font, Point(0, 0));
+void blit_debug(const char *message) {
+	printf("%s", message);
 }
 
 void blit_exit(bool is_error) {
@@ -407,7 +400,6 @@ void blit_init() {
     }
     bq24295_init(&hi2c4);
     blit::api.debug = blit_debug;
-    blit::api.debugf = blit_debugf;
     blit::api.now = HAL_GetTick;
     blit::api.random = HAL_GetRandom;
     blit::api.exit = blit_exit;

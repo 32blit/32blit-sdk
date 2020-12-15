@@ -39,8 +39,7 @@ namespace blit {
     void (*exit)(bool is_error);
 
     // serial debug
-    void (*debug)(std::string message);
-    int  (*debugf)(const char * psFormatString, va_list args);
+    void (*debug)(const char *message);
 
     // files
     void *(*open_file)(const std::string &file, int mode);
