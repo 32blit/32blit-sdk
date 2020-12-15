@@ -139,7 +139,9 @@ bool remove_file(const std::string &path) {
   return f_unlink(path.c_str()) == FR_OK;
 }
 
-std::string get_save_path() {
+static char save_path[32]; // max game title length is 24 + ".blit/" + "/"
+
+const char *get_save_path() {
   std::string app_name;
 
   if(!directory_exists(".blit"))
@@ -167,9 +169,12 @@ std::string get_save_path() {
     }
   }
 
-  // make sure it exists
-  if(!directory_exists(".blit/" + app_name))
-    create_directory(".blit/" + app_name);
+  snprintf(save_path, sizeof(save_path), ".blit/%s/", app_name.c_str());
 
-  return ".blit/" + app_name + "/";
+  // make sure it exists
+  if(!directory_exists(save_path))
+    create_directory(save_path);
+
+
+  return save_path;
 }

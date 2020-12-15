@@ -40,7 +40,7 @@ void *open_file(const std::string &name, int mode) {
 
   if(!file) {
     // check if the path is under the save path
-    auto save_path = get_save_path();
+    std::string save_path = get_save_path();
     if(name.compare(0, save_path.length(), save_path) == 0)
       file = SDL_RWFromFile(name.c_str(), str_mode);
   }
@@ -189,11 +189,13 @@ bool remove_file(const std::string &path) {
   return remove((basePath + path).c_str()) == 0;
 }
 
-std::string get_save_path() {
+static std::string save_path;
+
+const char *get_save_path() {
   auto tmp = SDL_GetPrefPath(metadata_author, metadata_title);
-  std::string ret(tmp);
+  save_path = std::string(tmp);
 
   SDL_free(tmp);
 
-  return ret;
+  return save_path.c_str();
 }
