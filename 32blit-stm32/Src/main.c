@@ -30,6 +30,7 @@
 #include "rng.h"
 #include "spi.h"
 #include "tim.h"
+#include "usart.h"
 #include "usb_device.h"
 
 #include "gpio.hpp"
@@ -142,11 +143,16 @@ int main(void)
   MX_SPI4_Init();
   //MX_TIM6_Init();
   MX_TIM15_Init();
-  MX_TIM16_Init();
+  //MX_TIM16_Init();
   MX_FATFS_Init();  
   MX_RNG_Init();
   MX_USB_DEVICE_Init();
   MX_JPEG_Init();
+
+  // System RGB LED USART
+  MX_UART5_Init();
+  MX_UART8_Init();
+
   /* USER CODE BEGIN 2 */
 
   //NVIC_SetPriority(SysTick_IRQn, 0x0);
@@ -171,6 +177,10 @@ int main(void)
   while (1)
   {
     uint32_t t_start = blit::now();
+
+    uint8_t buffer[8] = {0xf0, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8};
+    HAL_UART_Transmit_IT(&huart8, buffer, sizeof(buffer));
+    HAL_UART_Transmit_IT(&huart5, buffer, sizeof(buffer));
 
 //    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
 //    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;

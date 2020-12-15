@@ -4,6 +4,7 @@
 
 #include "32blit.h"
 #include "main.h"
+#include "usart.h"
 
 #include "sound.hpp"
 #include "display.hpp"
@@ -778,6 +779,25 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
     SCB_InvalidateDCache_by_Addr((uint32_t *) &adc3data[ADC_BUFFER_SIZE / 2], ADC_BUFFER_SIZE / 2);
   }
 }
+
+/*void HAL_UART_TxHalfCpltCallback(UART_HandleTypeDef *huart) {
+  uint8_t buffer[1] = {0xf0};
+  if(huart == &huart5) {
+    HAL_UART_Transmit_IT(&huart5, buffer, sizeof(buffer));
+  } else if (huart == &huart8) {
+    bool swap = (huart8.Instance->CR2 >> 15) & 0b1;
+    swap = !swap;
+    if(swap){
+      SET_BIT(huart8.Instance->CR2, USART_CR2_SWAP);
+    }
+    else
+    {
+      CLEAR_BIT(huart8.Instance->CR2, USART_CR2_SWAP);
+    }
+    HAL_UART_Transmit_IT(&huart8, buffer, sizeof(buffer));
+
+  }
+}*/
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   if(htim == &htim2) {

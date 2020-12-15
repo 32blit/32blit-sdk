@@ -38,6 +38,8 @@ list(APPEND SOURCES
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd_ex.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_jpeg.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_usb.c
+	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_uart.c
+	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_uart_ex.c
 	Middlewares/Third_Party/FatFs/src/diskio.c
 	Middlewares/Third_Party/FatFs/src/ff.c
 	Middlewares/Third_Party/FatFs/src/ff_gen_drv.c
@@ -48,9 +50,9 @@ list(APPEND SOURCES
 	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c
 	Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c
 	Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc.c
-  Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_bot.c
-  Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_data.c 
-  Src/usbd_msc_scsi.c
+	Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_bot.c
+	Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_data.c 
+	Src/usbd_msc_scsi.c
 	Src/system_stm32h7xx.c
 	Src/user_diskio.c
 	Src/fatfs.c
@@ -71,6 +73,7 @@ list(APPEND SOURCES
 	Src/debug.c
 	Src/dma.c
 	Src/hrtim.c
+	Src/usart.c
 	Src/i2c.c
 	Src/i2c-msa301.c
 	Src/i2c-lis3dh.c
