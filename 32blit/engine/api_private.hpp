@@ -62,7 +62,7 @@ namespace blit {
 
     // jepg
     JPEGImage (*decode_jpeg_buffer)(const uint8_t *ptr, uint32_t len, AllocateCallback alloc);
-    JPEGImage (*decode_jpeg_file)(std::string filename, AllocateCallback alloc);
+    JPEGImage (*decode_jpeg_file)(const std::string &filename, AllocateCallback alloc);
 
   };
   #pragma pack(pop)

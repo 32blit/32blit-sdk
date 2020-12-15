@@ -27,7 +27,7 @@ namespace blit {
    *
    * \return Decoded image.
    */
-  JPEGImage decode_jpeg_file(std::string filename) {
+  JPEGImage decode_jpeg_file(const std::string &filename) {
     return api.decode_jpeg_file(filename, alloc_func);
   }
 }
