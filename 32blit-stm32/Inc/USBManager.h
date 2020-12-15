@@ -74,6 +74,34 @@ public:
 
 	State GetState(void)
 	{
+		return m_state;
+	}
+
+	const char *GetStateName(void)
+	{
+		return m_stateNames[GetState()];
+	}
+
+	bool IsMSCReady(void)
+	{
+		 return m_state == usbsMSCInititalising || m_state == usbsMSCMounting || m_state == usbsMSCMounted;
+	}
+
+	bool HasHadActivity(void)
+	{
+		bool bHasActivity = m_bHasActivity;
+		m_bHasActivity = false;
+		return bHasActivity;
+	}
+
+	void LogActivity(void)
+	{
+		m_bHasActivity = true;
+		m_bHasHadSomeActivity = true;
+	}
+
+	void Update()
+	{
 		// On linux we seem to get many start/stops so use a timer to set mount status.
 		const uint32_t uMountUnmountTime = 500;
 
@@ -105,31 +133,6 @@ public:
 			default:
 			break;
 		}
-
-		return m_state;
-	}
-
-	const char *GetStateName(void)
-	{
-		return m_stateNames[GetState()];
-	}
-
-	bool IsMSCReady(void)
-	{
-		 return m_state == usbsMSCInititalising || m_state == usbsMSCMounting || m_state == usbsMSCMounted;
-	}
-
-	bool HasHadActivity(void)
-	{
-		bool bHasActivity = m_bHasActivity;
-		m_bHasActivity = false;
-		return bHasActivity;
-	}
-
-	void LogActivity(void)
-	{
-		m_bHasActivity = true;
-		m_bHasHadSomeActivity = true;
 	}
 
 private:
