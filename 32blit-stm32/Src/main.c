@@ -178,9 +178,25 @@ int main(void)
   {
     uint32_t t_start = blit::now();
 
-    uint8_t buffer[8] = {0xf0, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8};
-    HAL_UART_Transmit_IT(&huart8, buffer, sizeof(buffer));
-    HAL_UART_Transmit_IT(&huart5, buffer, sizeof(buffer));
+    uint8_t buffer[4] = {0xf0, 0xf8, 0xf8, 0xf8};
+    //HAL_UART_Transmit_IT(&huart8, buffer, sizeof(buffer));
+    //HAL_UART_Transmit_IT(&huart5, buffer, sizeof(buffer));
+
+    // Green and Blue channels
+    
+    __HAL_UART_DISABLE(&huart8);
+    MODIFY_REG((&huart8)->Instance->CR2, USART_CR2_SWAP, UART_ADVFEATURE_SWAP_DISABLE);
+    __HAL_UART_ENABLE(&huart8);
+    
+    HAL_UART_Transmit(&huart8, buffer, sizeof(buffer), HAL_MAX_DELAY);
+
+    __HAL_UART_DISABLE(&huart8);
+    MODIFY_REG((&huart8)->Instance->CR2, USART_CR2_SWAP, UART_ADVFEATURE_SWAP_ENABLE);
+    __HAL_UART_ENABLE(&huart8);
+    HAL_UART_Transmit(&huart8, buffer, sizeof(buffer), HAL_MAX_DELAY);
+
+    // Red channel
+    HAL_UART_Transmit(&huart5, buffer, sizeof(buffer), HAL_MAX_DELAY);
 
 //    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
 //    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;

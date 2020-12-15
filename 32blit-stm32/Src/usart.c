@@ -78,7 +78,7 @@ void MX_UART8_Init(void)
   huart8.Init.ClockPrescaler = UART_PRESCALER_DIV1;
   huart8.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_SWAP_INIT|UART_ADVFEATURE_RXOVERRUNDISABLE_INIT
                               |UART_ADVFEATURE_DMADISABLEONERROR_INIT;
-  huart8.AdvancedInit.Swap = UART_ADVFEATURE_SWAP_DISABLE;
+  huart8.AdvancedInit.Swap = UART_ADVFEATURE_SWAP_ENABLE;
   huart8.AdvancedInit.OverrunDisable = UART_ADVFEATURE_OVERRUN_DISABLE;
   huart8.AdvancedInit.DMADisableonRxError = UART_ADVFEATURE_DMA_DISABLEONRXERROR;
   if (HAL_UART_Init(&huart8) != HAL_OK)
@@ -112,7 +112,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     /* UART5 clock enable */
     __HAL_RCC_UART5_CLK_ENABLE();
     //__HAL_UART_ENABLE_IT(uartHandle, UART_IT_TXFNF);
-    __HAL_UART_ENABLE_IT(uartHandle, UART_IT_TXFT);
+    //__HAL_UART_ENABLE_IT(uartHandle, UART_IT_TXFT);
     //__HAL_UART_ENABLE_IT(uartHandle, UART_IT_TXFE);
     __HAL_RCC_GPIOC_CLK_ENABLE();
     /**UART5 GPIO Configuration    
@@ -141,7 +141,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     /* UART8 clock enable */
     __HAL_RCC_UART8_CLK_ENABLE();
     //__HAL_UART_ENABLE_IT(uartHandle, UART_IT_TXFNF);
-    __HAL_UART_ENABLE_IT(uartHandle, UART_IT_TXFT);
+    //__HAL_UART_ENABLE_IT(uartHandle, UART_IT_TXFT);
     //__HAL_UART_ENABLE_IT(uartHandle, UART_IT_TXFE);
     __HAL_RCC_GPIOE_CLK_ENABLE();
     /**UART8 GPIO Configuration    
