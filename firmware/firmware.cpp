@@ -589,14 +589,6 @@ void update(uint32_t time) {
   {
     if(g_usbManager.GetType() == USBManager::usbtCDC)
       state = stFlashFile;
-
-    if(g_usbManager.GetState() == USBManager::usbsMSCUnmounted)
-    {
-      // Switch back to CDC
-      g_usbManager.SetType(USBManager::usbtCDC);
-      load_file_list(current_directory->name);
-      state = stFlashFile;
-    }
   }
 }
 

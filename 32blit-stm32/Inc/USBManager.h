@@ -64,6 +64,9 @@ public:
 				m_unmountStartTime = HAL_GetTick();
 			break;
 
+			case usbsMSCUnmounted:
+				SetType(usbtCDC);
+
 			default:
 			break;
 		}
@@ -96,7 +99,7 @@ public:
 
 			case usbsMSCUnmounting :
 				if(HAL_GetTick() > m_unmountStartTime  + uMountUnmountTime)
-					m_state = usbsMSCUnmounted;
+					SetState(usbsMSCUnmounted);
 			break;
 
 			default:
