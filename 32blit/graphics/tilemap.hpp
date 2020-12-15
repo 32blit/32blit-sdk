@@ -29,7 +29,7 @@ namespace blit {
     TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, SpriteSheet *sprites);
 
     inline int32_t offset(const Point &p); // __attribute__((always_inline));
-    int32_t offset(const int16_t &x, const int16_t &y); // __attribute__((always_inline));
+    int32_t offset(int16_t x, int16_t y); // __attribute__((always_inline));
     uint8_t tile_at(const Point &p); // __attribute__((always_inline));
     uint8_t transform_at(const Point &p); // __attribute__((always_inline));
 

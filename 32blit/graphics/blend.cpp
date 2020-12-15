@@ -14,19 +14,19 @@
 
 namespace blit {
 
-  __attribute__((always_inline)) inline uint32_t alpha(const uint32_t &a1, const uint32_t &a2) {
+  __attribute__((always_inline)) inline uint32_t alpha(uint32_t a1, uint32_t a2) {
     return ((a1 + 1) * (a2 + 1)) >> 8;
   }
 
-  __attribute__((always_inline)) inline uint32_t alpha(const uint32_t &a1, const uint32_t &a2, const uint32_t &a3) {
+  __attribute__((always_inline)) inline uint32_t alpha(uint32_t a1, uint32_t a2, uint32_t a3) {
     return ((a1 + 1) * (a2 + 1) * (a3 + 1)) >> 16;
   }
 
-  __attribute__((always_inline)) inline uint8_t blend(const uint8_t &s, const uint8_t &d, const uint8_t &a) {
+  __attribute__((always_inline)) inline uint8_t blend(uint8_t s, uint8_t d, uint8_t a) {
     return d + ((a * (s - d) + 127) >> 8);    
   }
 
-  __attribute__((always_inline)) inline void blend_rgba_rgb(const Pen *s, uint8_t *d, const uint8_t &a, uint32_t c) {      
+  __attribute__((always_inline)) inline void blend_rgba_rgb(const Pen *s, uint8_t *d, uint8_t a, uint32_t c) {      
     if (c == 1) { 
       // fast case for single pixel draw
       *d = blend(s->r, *d, a); d++;
