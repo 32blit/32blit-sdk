@@ -21,7 +21,10 @@ namespace blit {
    * \return Vector of files/directories
    */
   std::vector<FileInfo> list_files(const std::string &path) {
-    auto ret = api.list_files(path);
+    std::vector<FileInfo> ret;
+    api.list_files(path, [&ret](FileInfo &file){
+      ret.push_back(file);
+    });
 
     for(auto &buf_file : buf_files) {
       auto slash_pos = buf_file.first.find_last_of('/');

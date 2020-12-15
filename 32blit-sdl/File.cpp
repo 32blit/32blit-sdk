@@ -86,16 +86,14 @@ uint32_t get_file_length(void *fh)
   return (uint32_t)SDL_RWtell(file);
 }
 
-std::vector<blit::FileInfo> list_files(const std::string &path) {
-  std::vector<blit::FileInfo> ret;
-
+void list_files(const std::string &path, std::function<void(blit::FileInfo &)> callback) {
 #ifdef WIN32
   HANDLE file;
   WIN32_FIND_DATAA findData;
   file = FindFirstFileA((basePath + path + "\\*").c_str(), &findData);
 
   if(file == INVALID_HANDLE_VALUE)
-    return ret;
+    return;
 
   do
   {
@@ -111,7 +109,7 @@ std::vector<blit::FileInfo> list_files(const std::string &path) {
     if(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
       info.flags |= blit::FileFlags::directory;
 
-    ret.push_back(info);
+    callback(info);
   }
   while(FindNextFileA(file, &findData) != 0);
 
@@ -121,7 +119,7 @@ std::vector<blit::FileInfo> list_files(const std::string &path) {
   auto dir = opendir((basePath + path).c_str());
 
   if(!dir)
-    return ret;
+    return;
 
   struct dirent *ent;
 
@@ -144,13 +142,11 @@ std::vector<blit::FileInfo> list_files(const std::string &path) {
     if(S_ISDIR(stat_buf.st_mode))
       info.flags |= blit::FileFlags::directory;
 
-    ret.push_back(info);
+    callback(info);
   }
 
   closedir(dir);
 #endif
-
-  return ret;
 }
 
 bool file_exists(const std::string &path) {
