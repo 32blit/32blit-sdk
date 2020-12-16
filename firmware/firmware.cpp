@@ -167,7 +167,7 @@ void load_file_list(std::string directory) {
       
       // check for metadata
       BlitGameMetadata meta;
-      if(parse_file_metadata(file.name, meta)) {
+      if(parse_file_metadata(game.filename, meta)) {
         game.title = meta.title;
         game.checksum = meta.crc32;
       }
