@@ -590,21 +590,16 @@ void update(uint32_t time) {
 }
 
 // returns address to flash file to
-uint32_t get_flash_offset_for_file(BlitGameHeader &bin_header) {
+uint32_t get_flash_offset_for_file(uint32_t file_size) {
 
-  int file_blocks = calc_num_blocks(bin_header.end - bin_header.start);
+  int file_blocks = calc_num_blocks(file_size);
 
-  if(bin_header.magic == blit_game_magic) {
-
-    for(auto space : free_space) {
-      if(std::get<1>(space) <= file_blocks)
-        return std::get<0>(space) * qspi_flash_sector_size;
-    }
-
-    // TODO: handle flash full
-    return 0;
+  for(auto space : free_space) {
+    if(std::get<1>(space) <= file_blocks)
+      return std::get<0>(space) * qspi_flash_sector_size;
   }
 
+  // TODO: handle flash full
   return 0;
 }
 
@@ -686,7 +681,7 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
   }
 
   if(flash_offset == 0xFFFFFFFF)
-    flash_offset = get_flash_offset_for_file(header);
+    flash_offset = get_flash_offset_for_file(bytes_total);
 
   // erase the sectors needed to write the image
   erase_qspi_flash(flash_offset / qspi_flash_sector_size, bytes_total);
@@ -1066,7 +1061,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   uint32_t uPage = (m_uParseIndex / PAGE_SIZE);
                   // first page, check header
                   if(uPage == 0) {
-                    flash_start_offset = get_flash_offset_for_file(*reinterpret_cast<BlitGameHeader *>(buffer));
+                    flash_start_offset = get_flash_offset_for_file(m_uFilelen);
 
                     // erase
                     erase_qspi_flash(flash_start_offset / qspi_flash_sector_size, m_uFilelen);
