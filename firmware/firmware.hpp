@@ -73,6 +73,27 @@ struct {
     return true;
   }
 
+  void button_icon(const Point &pos, int button) {
+    Pen active_col(0xff, 0xff, 0xff);
+    Pen col(0x50, 0x64, 0x78);
+    Rect r(pos.x, pos.y + 3, 2, 2);
+
+    screen.pen = button == Button::Y ? active_col : col;
+    screen.rectangle(r);
+
+    screen.pen = button == Button::B ? active_col : col;
+    r.x += 6;
+    screen.rectangle(r);
+
+    screen.pen = button == Button::X ? active_col : col;
+    r.x -= 3; r.y = pos.y;
+    screen.rectangle(r);
+
+    if(button == Button::A) screen.pen = active_col;
+    r.y += 6;
+    screen.rectangle(r);
+  }
+
   void draw() {
     if(title.empty())
       return;
@@ -92,9 +113,9 @@ struct {
     screen.text(message, minimal_font, Rect(dialog_rect.x + 6, dialog_rect.y + header_height + 5, dialog_rect.w - 12, 45));
 
     screen.text("No      Yes    ", minimal_font, Rect(dialog_rect.x + 1, dialog_rect.y + dialog_rect.h - 17, dialog_rect.w - 2, 16 + minimal_font.spacing_y), true, TextAlign::center_right);
-  
-    screen.sprite(0, Point(dialog_rect.x + 185, dialog_rect.y + 71), SpriteTransform::R180);
-    screen.sprite(0, Point(dialog_rect.x + 218, dialog_rect.y + 71), SpriteTransform::R90);
+
+    button_icon(Point(dialog_rect.x + 185, dialog_rect.y + 71), Button::B);
+    button_icon(Point(dialog_rect.x + 218, dialog_rect.y + 71), Button::A);
   }
 
 } dialog;
