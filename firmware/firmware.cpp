@@ -34,7 +34,7 @@ CDCEraseHandler cdc_erase_handler;
 extern USBManager g_usbManager;
 
 struct GameInfo {
-  std::string title;
+  std::string title, author;
   uint32_t size, checksum = 0;
 
   std::string filename; // if on SD
@@ -214,6 +214,7 @@ void scan_flash() {
     BlitGameMetadata meta;
     if(parse_flash_metadata(offset, meta)) {
       game.title = meta.title;
+      game.author = meta.author;
       game.size += meta.length + 10;
       game.checksum = meta.crc32;
     }
@@ -579,6 +580,9 @@ uint32_t get_flash_offset_for_file(BlitGameHeader &bin_header) {
 // Flash(): Flash a file from the SDCard to external flash
 uint32_t flash_from_sd_to_qspi_flash(const char *filename)
 {
+  BlitGameMetadata meta;
+  bool has_meta = parse_file_metadata(filename, meta);
+
   FIL file;
   FRESULT res = f_open(&file, filename, FA_READ);
   if(res != FR_OK)
@@ -631,7 +635,27 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
   }
   f_lseek(&file, off);
 
-  uint32_t flash_offset = has_relocs ? get_flash_offset_for_file(header) : 0;
+  uint32_t flash_offset = 0xFFFFFFFF;
+
+  if(!has_relocs)
+    flash_offset = 0;
+  // check for other versions of the same thing
+  else if(has_meta) {
+    for(auto &game : game_list) {
+      if(game.title == meta.title && game.author == meta.author) {
+        if(calc_num_blocks(game.size) <= calc_num_blocks(bytes_total)) {
+          flash_offset = game.offset;
+          break;
+        } else {
+          // new version is bigger, erase old one
+          erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
+        }
+      }
+    }
+  }
+
+  if(flash_offset == 0xFFFFFFFF)
+    flash_offset = get_flash_offset_for_file(header);
 
   // erase the sectors needed to write the image
   erase_qspi_flash(flash_offset / qspi_flash_sector_size, bytes_total);
