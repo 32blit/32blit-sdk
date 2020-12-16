@@ -197,6 +197,9 @@ bool read_flash_game_header(uint32_t offset, BlitGameHeader &header) {
 void scan_flash() {
   game_list.clear();
 
+  BlitGameMetadata meta;
+  GameInfo game;
+
   for(uint32_t offset = 0; offset < qspi_flash_size;) {
     BlitGameHeader header;
 
@@ -205,18 +208,19 @@ void scan_flash() {
       continue;
     }
 
-    GameInfo game;
     game.offset = offset;
     game.size = header.end - qspi_flash_address;
-    game.title = "game @" + std::to_string(game.offset / qspi_flash_sector_size);
 
     // check for valid metadata
-    BlitGameMetadata meta;
     if(parse_flash_metadata(offset, meta)) {
       game.title = meta.title;
       game.author = meta.author;
       game.size += meta.length + 10;
       game.checksum = meta.crc32;
+    } else {
+      // fallback "title"
+      game.title.resize(20);
+      snprintf(game.title.data(), 20, "game@%i", int(game.offset / qspi_flash_sector_size));
     }
 
     game_list.push_back(game);
