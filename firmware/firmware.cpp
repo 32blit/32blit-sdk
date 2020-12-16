@@ -1067,6 +1067,17 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                     if(result != srError)
                     {
                       result = srFinish;
+
+                      // clean up old version(s)
+                      BlitGameMetadata meta;
+                      if(parse_flash_metadata(flash_start_offset, meta)) {
+                        scan_flash();
+                        for(auto &game : game_list) {
+                          if(game.title == meta.title && game.author == meta.author && game.offset != flash_start_offset)
+                            erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
+                        }
+                      }
+
                       launch_game(flash_start_offset);
                     }
                     else
