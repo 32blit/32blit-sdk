@@ -50,7 +50,7 @@ std::vector<GameInfo> game_list;
 std::list<DirectoryInfo> directory_list;
 std::list<DirectoryInfo>::iterator current_directory;
 
-uint32_t last_game_end_address = 0;
+std::list<std::tuple<uint16_t, uint16_t>> free_space; // block start, count
 
 bool display_flash = true;
 
@@ -196,16 +196,31 @@ bool read_flash_game_header(uint32_t offset, BlitGameHeader &header) {
 
 void scan_flash() {
   game_list.clear();
+  free_space.clear();
 
   BlitGameMetadata meta;
   GameInfo game;
+  uint32_t free_start = 0xFFFFFFFF;
 
   for(uint32_t offset = 0; offset < qspi_flash_size;) {
     BlitGameHeader header;
 
     if(!read_flash_game_header(offset, header)) {
+      if(free_start == 0xFFFFFFFF)
+        free_start = offset;
+
       offset += qspi_flash_sector_size;
       continue;
+    }
+
+    // add free space to list
+    if(free_start != 0xFFFFFFFF) {
+      auto start_block = free_start / qspi_flash_sector_size;
+      auto end_block = offset / qspi_flash_sector_size;
+
+      free_space.emplace_back(start_block, end_block - start_block);
+
+      free_start = 0xFFFFFFFF;
     }
 
     game.offset = offset;
@@ -226,9 +241,16 @@ void scan_flash() {
     game_list.push_back(game);
 
     offset += calc_num_blocks(game.size) * qspi_flash_sector_size;
-
-    last_game_end_address = offset;
   }
+
+  // final free
+  if(free_start != 0xFFFFFFFF) {
+    auto start_block = free_start / qspi_flash_sector_size;
+    auto end_block = qspi_flash_size / qspi_flash_sector_size;
+
+    free_space.emplace_back(start_block, end_block - start_block);
+  }
+
   sort_file_list();
 }
 
@@ -570,12 +592,17 @@ void update(uint32_t time) {
 // returns address to flash file to
 uint32_t get_flash_offset_for_file(BlitGameHeader &bin_header) {
 
-  if(bin_header.magic == blit_game_magic) {
-    // TODO: handle full
-    if(last_game_end_address + (bin_header.end - bin_header.start) >= qspi_flash_size)
-      return 0;
+  int file_blocks = calc_num_blocks(bin_header.end - bin_header.start);
 
-    return last_game_end_address;
+  if(bin_header.magic == blit_game_magic) {
+
+    for(auto space : free_space) {
+      if(std::get<1>(space) <= file_blocks)
+        return std::get<0>(space) * qspi_flash_sector_size;
+    }
+
+    // TODO: handle flash full
+    return 0;
   }
 
   return 0;
