@@ -95,6 +95,7 @@ void load_directory_list(std::string directory) {
   directory_list.sort([](const auto &a, const auto &b) { return a.name > b.name; });
 
   directory_list.push_front({"/", 0, 0});
+  directory_list.push_front({"flash:", 0, 0});
 
   // measure positions
   int x = 0;
@@ -171,12 +172,41 @@ void init_lists() {
   load_current_game_metadata();
 }
 
+void scan_flash() {
+#ifdef TARGET_32BLIT_HW
+  const uint32_t qspi_flash_sector_size = 64 * 1024;
+  const uint32_t qspi_flash_size = 32768 * 1024;
+  const uint32_t qspi_flash_address = 0x90000000;
+
+  for(uint32_t offset = 0; offset < qspi_flash_size;) {
+    auto header = *(BlitGameHeader *)(qspi_flash_address + offset);
+
+    if(header.magic != blit_game_magic) {
+      offset += qspi_flash_sector_size;
+      continue;
+    }
+
+    uint32_t size = header.end - qspi_flash_address;
+
+    // tiny bit of metadata parsing just to get the size
+    auto buf = (char *)(qspi_flash_address + offset + size);
+    if(memcmp(buf, "BLITMETA", 8) == 0)
+      size += *(uint16_t *)(buf + 8) + 10;
+
+    File::add_buffer_file("flash:/" + std::to_string(offset / qspi_flash_sector_size) + ".blit", (uint8_t *)(qspi_flash_address + offset), size);
+
+    offset += calc_num_blocks(size) * qspi_flash_sector_size;
+  }
+#endif
+}
+
 void init() {
   set_screen_mode(ScreenMode::hires);
   screen.clear();
 
   spritesheet = SpriteSheet::load(sprites);
 
+  scan_flash();
   init_lists();
 
   // error reset handling
