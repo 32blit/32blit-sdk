@@ -160,11 +160,15 @@ function(blit_executable_int_flash NAME SOURCES)
 endfunction()
 
 function(blit_metadata TARGET FILE)
+	if(NOT EXISTS ${FILE})
+		set(FILE ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
+	endif()
+
 	# cause cmake to reconfigure whenever the asset list changes
-	set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
+	set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${FILE})
 
 	# parse the metadata to variables
-	execute_process(COMMAND ${PYTHON_EXECUTABLE} -m ttblit cmake --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --cmake ${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
+	execute_process(COMMAND ${PYTHON_EXECUTABLE} -m ttblit cmake --config ${FILE} --cmake ${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
 	include(${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
 
 	if(APPLE)
@@ -181,8 +185,8 @@ function(blit_metadata TARGET FILE)
 
 		add_custom_command(
 			OUTPUT ${ICON}
-			COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit metadata --force --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --icns ${ICON}
-			DEPENDS ${METADATA_DEPENDS} ${CMAKE_CURRENT_SOURCE_DIR}/${FILE}
+			COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit metadata --force --config ${FILE} --icns ${ICON}
+			DEPENDS ${METADATA_DEPENDS} ${FILE}
 		)
 
 		target_sources(${TARGET} PRIVATE ${ICON})
