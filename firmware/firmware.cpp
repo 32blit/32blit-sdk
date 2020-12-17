@@ -148,6 +148,12 @@ void launch_game(uint32_t address) {
 }
 
 bool launch_game_from_sd(const char *path) {
+
+  if(strncmp(path, "flash:/", 7) == 0) {
+    blit_switch_execution(atoi(path + 7), true);
+    return true;
+  }
+
   if(is_qspi_memorymapped()) {
     qspi_disable_memorymapped_mode();
     blit_disable_user_code(); // assume user running
