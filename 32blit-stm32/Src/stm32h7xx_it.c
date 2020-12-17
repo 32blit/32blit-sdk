@@ -72,7 +72,6 @@ extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
 extern DMA_HandleTypeDef hdma_dac1_ch2;
 extern TIM_HandleTypeDef htim2;
 extern I2C_HandleTypeDef hi2c4;
-extern TIM_HandleTypeDef htim16;
 
 /* USER CODE BEGIN EV */
 
@@ -109,20 +108,6 @@ void HardFault_Handler(void)
     /* USER CODE BEGIN W1_HardFault_IRQn 0 */
     /* USER CODE END W1_HardFault_IRQn 0 */
   }
-}
-
-/**
-  * @brief This function handles TIM16 update interrupt.
-  */
-void TIM16_IRQHandler(void)
-{
-  /* USER CODE BEGIN TIM16_UP_IRQn 0 */
-
-  /* USER CODE END TIM16_UP_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim16);
-  /* USER CODE BEGIN TIM16_UP_IRQn 1 */
-
-  /* USER CODE END TIM16_UP_IRQn 1 */
 }
 
 /**

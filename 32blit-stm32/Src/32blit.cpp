@@ -375,8 +375,6 @@ void blit_init() {
 
     blit_update_volume();
 
-    HAL_TIM_Base_Start_IT(&htim16);
-
     // enable cycle counting
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     DWT->CYCCNT = 0;
@@ -783,7 +781,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     }
     HAL_TIM_Base_Stop(&htim2);
     HAL_TIM_Base_Stop_IT(&htim2);
-  } else if(htim == &htim16) {
   }
 }
 
@@ -1011,7 +1008,6 @@ void blit_switch_execution(uint32_t address)
 
   // Stop system button timer
   HAL_TIM_Base_Stop_IT(&htim2);
-  HAL_TIM_Base_Stop_IT(&htim16);
 
   // stop USB
   USBD_Stop(&hUsbDeviceHS);
