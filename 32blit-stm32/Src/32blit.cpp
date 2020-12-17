@@ -63,10 +63,6 @@ uint8_t battery_status = 0;
 uint8_t battery_fault = 0;
 uint16_t accel_address = LIS3DH_DEVICE_ADDRESS;
 
-uint16_t charge_led_counter = 0;
-uint8_t charge_led_r = 0;
-uint8_t charge_led_g = 0;
-uint8_t charge_led_b = 0;
 
 const uint32_t long_press_exit_time = 1000;
 
@@ -738,24 +734,24 @@ void blit_update_led() {
     // TODO we don't want to do this too often!
     switch((battery_status >> 4) & 0b11){
       case 0b00: // Not charging
-        charge_led_r = 128;
+        charge_led_r = 1;
         charge_led_b = 0;
         charge_led_g = 0;
         break;
       case 0b01: // Pre-charge
-        charge_led_r = 128;
-        charge_led_b = 128;
+        charge_led_r = 1;
+        charge_led_b = 1;
         charge_led_g = 0;
         break;
       case 0b10: // Fast Charging
         charge_led_r = 0;
-        charge_led_b = 128;
+        charge_led_b = 1;
         charge_led_g = 0;
         break;
       case 0b11: // Charge Done
         charge_led_r = 0;
         charge_led_b = 0;
-        charge_led_g = 128;
+        charge_led_g = 1;
         break;
     }
 }
@@ -788,11 +784,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     HAL_TIM_Base_Stop(&htim2);
     HAL_TIM_Base_Stop_IT(&htim2);
   } else if(htim == &htim16) {
-    charge_led_counter += 1;
-    charge_led_counter &= 0x3ff;
-    HAL_GPIO_WritePin(LED_CHG_RED_Port, LED_CHG_RED_Pin, charge_led_r > charge_led_counter ? GPIO_PIN_RESET : GPIO_PIN_SET);
-    HAL_GPIO_WritePin(LED_CHG_GREEN_Port, LED_CHG_GREEN_Pin, charge_led_g > charge_led_counter ? GPIO_PIN_RESET : GPIO_PIN_SET);
-    HAL_GPIO_WritePin(LED_CHG_BLUE_Port, LED_CHG_BLUE_Pin, charge_led_b > charge_led_counter ? GPIO_PIN_RESET : GPIO_PIN_SET);
   }
 }
 

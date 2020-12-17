@@ -54,6 +54,12 @@ extern "C" {
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
+
+extern uint8_t charge_led_counter;
+extern uint8_t charge_led_r;
+extern uint8_t charge_led_g;
+extern uint8_t charge_led_b;
+
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

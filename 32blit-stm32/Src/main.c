@@ -72,6 +72,10 @@ CDCInfoHandler g_infoHandler;
 bool is_beta_unit = false;
 
 
+uint8_t charge_led_counter = 0;
+uint8_t charge_led_r = 0;
+uint8_t charge_led_g = 0;
+uint8_t charge_led_b = 0;
 
 /* USER CODE END PV */
 
@@ -142,7 +146,7 @@ int main(void)
   MX_SPI4_Init();
   //MX_TIM6_Init();
   MX_TIM15_Init();
-  MX_TIM16_Init();
+  //MX_TIM16_Init();
   MX_FATFS_Init();  
   MX_RNG_Init();
   MX_USB_DEVICE_Init();

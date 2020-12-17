@@ -22,6 +22,7 @@
 #include "main.h"
 #include "stm32h7xx_it.h"
 #include "fatfs.h"
+#include "gpio_defs.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -218,7 +219,11 @@ void SysTick_Handler(void)
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
+  uint32_t currentCycle = HAL_GetTick() & 0x0000000f;
 
+  HAL_GPIO_WritePin(LED_CHG_RED_Port, LED_CHG_RED_Pin, charge_led_r > currentCycle ? GPIO_PIN_RESET : GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LED_CHG_GREEN_Port, LED_CHG_GREEN_Pin, charge_led_g > currentCycle ? GPIO_PIN_RESET : GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LED_CHG_BLUE_Port, LED_CHG_BLUE_Pin, charge_led_b > currentCycle ? GPIO_PIN_RESET : GPIO_PIN_SET);
   /* USER CODE END SysTick_IRQn 1 */
 }
 
