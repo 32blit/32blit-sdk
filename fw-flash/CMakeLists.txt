@@ -10,5 +10,16 @@ add_custom_command(
 
 blit_executable(magic fw-flash.cpp firmware.hpp)
 
+# generate metadata with version
+if(DEFINED ENV{TRAVIS_TAG})
+    set(FIRMWARE_VERSION $ENV{TRAVIS_TAG})
+    set_target_properties(magic PROPERTIES OUTPUT_NAME magic-${FIRMWARE_VERSION})
+else()
+	set(FIRMWARE_VERSION "DEV")
+endif()
+configure_file(metadata.yml.in metadata.yml)
+
+blit_metadata(magic ${CMAKE_CURRENT_BINARY_DIR}/metadata.yml)
+
 add_dependencies(magic firmware)
 target_include_directories(magic PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
