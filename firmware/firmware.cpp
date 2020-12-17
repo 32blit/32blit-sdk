@@ -34,7 +34,7 @@ CDCEraseHandler cdc_erase_handler;
 extern USBManager g_usbManager;
 
 struct GameInfo {
-  std::string title;
+  std::string title, author;
   uint32_t size, checksum = 0;
 
   std::string filename; // if on SD
@@ -50,7 +50,7 @@ std::vector<GameInfo> game_list;
 std::list<DirectoryInfo> directory_list;
 std::list<DirectoryInfo>::iterator current_directory;
 
-uint32_t last_game_end_address = 0;
+std::list<std::tuple<uint16_t, uint16_t>> free_space; // block start, count
 
 bool display_flash = true;
 
@@ -167,7 +167,7 @@ void load_file_list(std::string directory) {
       
       // check for metadata
       BlitGameMetadata meta;
-      if(parse_file_metadata(file.name, meta)) {
+      if(parse_file_metadata(game.filename, meta)) {
         game.title = meta.title;
         game.checksum = meta.crc32;
       }
@@ -196,34 +196,61 @@ bool read_flash_game_header(uint32_t offset, BlitGameHeader &header) {
 
 void scan_flash() {
   game_list.clear();
+  free_space.clear();
+
+  BlitGameMetadata meta;
+  GameInfo game;
+  uint32_t free_start = 0xFFFFFFFF;
 
   for(uint32_t offset = 0; offset < qspi_flash_size;) {
     BlitGameHeader header;
 
     if(!read_flash_game_header(offset, header)) {
+      if(free_start == 0xFFFFFFFF)
+        free_start = offset;
+
       offset += qspi_flash_sector_size;
       continue;
     }
 
-    GameInfo game;
+    // add free space to list
+    if(free_start != 0xFFFFFFFF) {
+      auto start_block = free_start / qspi_flash_sector_size;
+      auto end_block = offset / qspi_flash_sector_size;
+
+      free_space.emplace_back(start_block, end_block - start_block);
+
+      free_start = 0xFFFFFFFF;
+    }
+
     game.offset = offset;
     game.size = header.end - qspi_flash_address;
-    game.title = "game @" + std::to_string(game.offset / qspi_flash_sector_size);
 
     // check for valid metadata
-    BlitGameMetadata meta;
     if(parse_flash_metadata(offset, meta)) {
       game.title = meta.title;
+      game.author = meta.author;
       game.size += meta.length + 10;
       game.checksum = meta.crc32;
+    } else {
+      // fallback "title"
+      game.title.resize(20);
+      snprintf(game.title.data(), 20, "game@%i", int(game.offset / qspi_flash_sector_size));
     }
 
     game_list.push_back(game);
 
     offset += calc_num_blocks(game.size) * qspi_flash_sector_size;
-
-    last_game_end_address = offset;
   }
+
+  // final free
+  if(free_start != 0xFFFFFFFF) {
+    auto start_block = free_start / qspi_flash_sector_size;
+    auto end_block = qspi_flash_size / qspi_flash_sector_size;
+
+    free_space.emplace_back(start_block, end_block - start_block);
+  }
+
   sort_file_list();
 }
 
@@ -563,22 +590,25 @@ void update(uint32_t time) {
 }
 
 // returns address to flash file to
-uint32_t get_flash_offset_for_file(BlitGameHeader &bin_header) {
+uint32_t get_flash_offset_for_file(uint32_t file_size) {
 
-  if(bin_header.magic == blit_game_magic) {
-    // TODO: handle full
-    if(last_game_end_address + (bin_header.end - bin_header.start) >= qspi_flash_size)
-      return 0;
+  int file_blocks = calc_num_blocks(file_size);
 
-    return last_game_end_address;
+  for(auto space : free_space) {
+    if(std::get<1>(space) <= file_blocks)
+      return std::get<0>(space) * qspi_flash_sector_size;
   }
 
+  // TODO: handle flash full
   return 0;
 }
 
 // Flash(): Flash a file from the SDCard to external flash
 uint32_t flash_from_sd_to_qspi_flash(const char *filename)
 {
+  BlitGameMetadata meta;
+  bool has_meta = parse_file_metadata(filename, meta);
+
   FIL file;
   FRESULT res = f_open(&file, filename, FA_READ);
   if(res != FR_OK)
@@ -631,7 +661,27 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
   }
   f_lseek(&file, off);
 
-  uint32_t flash_offset = has_relocs ? get_flash_offset_for_file(header) : 0;
+  uint32_t flash_offset = 0xFFFFFFFF;
+
+  if(!has_relocs)
+    flash_offset = 0;
+  // check for other versions of the same thing
+  else if(has_meta) {
+    for(auto &game : game_list) {
+      if(game.title == meta.title && game.author == meta.author) {
+        if(calc_num_blocks(game.size) <= calc_num_blocks(bytes_total)) {
+          flash_offset = game.offset;
+          break;
+        } else {
+          // new version is bigger, erase old one
+          erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
+        }
+      }
+    }
+  }
+
+  if(flash_offset == 0xFFFFFFFF)
+    flash_offset = get_flash_offset_for_file(bytes_total);
 
   // erase the sectors needed to write the image
   erase_qspi_flash(flash_offset / qspi_flash_sector_size, bytes_total);
@@ -1011,7 +1061,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   uint32_t uPage = (m_uParseIndex / PAGE_SIZE);
                   // first page, check header
                   if(uPage == 0) {
-                    flash_start_offset = get_flash_offset_for_file(*reinterpret_cast<BlitGameHeader *>(buffer));
+                    flash_start_offset = get_flash_offset_for_file(m_uFilelen);
 
                     // erase
                     erase_qspi_flash(flash_start_offset / qspi_flash_sector_size, m_uFilelen);
@@ -1043,6 +1093,17 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                     if(result != srError)
                     {
                       result = srFinish;
+
+                      // clean up old version(s)
+                      BlitGameMetadata meta;
+                      if(parse_flash_metadata(flash_start_offset, meta)) {
+                        scan_flash();
+                        for(auto &game : game_list) {
+                          if(game.title == meta.title && game.author == meta.author && game.offset != flash_start_offset)
+                            erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
+                        }
+                      }
+
                       launch_game(flash_start_offset);
                     }
                     else
