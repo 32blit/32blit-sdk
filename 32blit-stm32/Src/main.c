@@ -72,7 +72,6 @@ CDCInfoHandler g_infoHandler;
 bool is_beta_unit = false;
 
 
-uint8_t charge_led_counter = 0;
 uint8_t charge_led_r = 0;
 uint8_t charge_led_g = 0;
 uint8_t charge_led_b = 0;
