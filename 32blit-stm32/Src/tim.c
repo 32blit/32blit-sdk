@@ -31,26 +31,7 @@ TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 
 TIM_HandleTypeDef htim15;
-TIM_HandleTypeDef htim16;
 
-
-/* TIM16 init function */
-void MX_TIM16_Init(void)
-{
-
-  htim16.Instance = TIM16;
-  htim16.Init.Prescaler = 2000;
-  htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim16.Init.Period = 1;
-  htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV4;
-  htim16.Init.RepetitionCounter = 0;
-  htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim16) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-}
 
 /* TIM2 init function */
 void MX_TIM2_Init(void)
