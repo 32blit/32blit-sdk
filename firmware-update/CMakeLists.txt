@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project (fw-flash)
+project (firmware-update)
 include (../32blit.cmake)
 
 # embed the built firmware
@@ -8,18 +8,18 @@ add_custom_command(
     OUTPUT firmware.hpp
 )
 
-blit_executable(magic fw-flash.cpp firmware.hpp)
+blit_executable(firmware-update firmware-update.cpp firmware.hpp)
 
 # generate metadata with version
 if(DEFINED ENV{TRAVIS_TAG})
     set(FIRMWARE_VERSION $ENV{TRAVIS_TAG})
-    set_target_properties(magic PROPERTIES OUTPUT_NAME magic-${FIRMWARE_VERSION})
+    set_target_properties(firmware-update PROPERTIES OUTPUT_NAME firmware-update-${FIRMWARE_VERSION})
 else()
 	set(FIRMWARE_VERSION "DEV")
 endif()
 configure_file(metadata.yml.in metadata.yml)
 
-blit_metadata(magic ${CMAKE_CURRENT_BINARY_DIR}/metadata.yml)
+blit_metadata(firmware-update ${CMAKE_CURRENT_BINARY_DIR}/metadata.yml)
 
-add_dependencies(magic firmware)
-target_include_directories(magic PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+add_dependencies(firmware-update firmware)
+target_include_directories(firmware-update PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

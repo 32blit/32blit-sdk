@@ -1,6 +1,6 @@
 #include <string>
 
-#include "fw-flash.hpp"
+#include "firmware-update.hpp"
 #include "firmware.hpp"
 
 using namespace blit;
