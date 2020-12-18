@@ -30,6 +30,7 @@
 #include "graphics/color.hpp"
 #include "engine/running_average.hpp"
 #include "engine/menu.hpp"
+#include "engine/version.hpp"
 
 #include "stdarg.h"
 using namespace blit;
@@ -635,6 +636,8 @@ void blit_menu_render(uint32_t time) {
     battery_vbus_status(),
     int(battery), int((battery - int(battery)) * 10.0f));
   screen.text(buf, minimal_font, Point(5, screen_height - 11));
+
+  screen.text(get_version_string(), minimal_font, Point(screen_width - 5, screen_height - 11), true, TextAlign::top_right);
 
   /*
   // Raw register values can be displayed with a fixed-width font using std::bitset<8> for debugging
