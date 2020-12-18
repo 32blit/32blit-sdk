@@ -52,7 +52,7 @@ namespace blit {
    * \return `Surface` containing loaded data or `nullptr` if the image was invalid
    */
   Surface *Surface::load(const packed_image *image) {
-    if(memcmp(image->type, "SPRITEPK", 8) != 0 && memcmp(image->type, "SPRITERW", 8) != 0)
+    if(memcmp(image->type, "SPRITEPK", 8) != 0 && memcmp(image->type, "SPRITERW", 8) != 0 && memcmp(image->type, "SPRITERL", 8) != 0)
       return nullptr;
 
     if(image->format > (uint8_t)PixelFormat::M)
@@ -569,6 +569,7 @@ namespace blit {
       palette_entry_count = 256;
 
     bool is_raw = image.type[6] == 'R' && image.type[7] == 'W'; // SPRITE[RW]
+    bool is_rle = image.type[6] == 'R' && image.type[7] == 'L';
 
     bounds = Size(image.width, image.height);
 
@@ -612,16 +613,61 @@ namespace blit {
       // load paletted
       uint8_t *pdest = (uint8_t *)data;
 
-      for (auto bytes = image_data; bytes < end; ++bytes) {
-        uint8_t b = *bytes;
-        for (auto j = 0; j < 8; j++) {
-          col <<= 1;
-          col |= ((0b10000000 >> j) & b) ? 1 : 0;
+      if(is_rle) {
+        auto bytes = image_data;
+        int parse_state = 0;
+        uint8_t count = 0;
 
-          bit++;
-          if (bit == bit_depth) {
-            *pdest++ = col;
-            bit = 0; col = 0;
+        for (auto bytes = image_data; bytes < end; ++bytes) {
+          uint8_t b = *bytes;
+
+          for (auto j = 0; j < 8; j++) {
+            switch (parse_state) {
+              case 0: // flag
+                if(b & (0b10000000 >> j))
+                  parse_state = 1;
+                else
+                  parse_state = 2;
+                break;
+              case 1: // repeat count
+                count <<= 1;
+                count |= ((0b10000000 >> j) & b) ? 1 : 0;
+                if (++bit == 8) {
+                  parse_state = 2;
+                  bit = 0;
+                }
+                break;
+
+              case 2: // value
+                col <<= 1;
+                col |= ((0b10000000 >> j) & b) ? 1 : 0;
+
+                if (++bit == bit_depth) {
+                  for (int c = 0; c <= count; c++)
+                    *pdest++ = col;
+
+                  bit = 0; col = 0;
+                  parse_state = 0;
+                  count = 0;
+                }
+                break;
+            }
+
+          }
+        }
+
+      } else {
+        for (auto bytes = image_data; bytes < end; ++bytes) {
+          uint8_t b = *bytes;
+          for (auto j = 0; j < 8; j++) {
+            col <<= 1;
+            col |= ((0b10000000 >> j) & b) ? 1 : 0;
+
+            bit++;
+            if (bit == bit_depth) {
+              *pdest++ = col;
+              bit = 0; col = 0;
+            }
           }
         }
       }
