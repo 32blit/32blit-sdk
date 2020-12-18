@@ -279,13 +279,12 @@ struct Player {
     screen.sprite(si - 16, sp, flip);
 
 
+    /*
     Rect bb = aabb();
     screen.pen = Pen(0, 255, 0);
     screen.line(world_to_screen(bb.tl()), world_to_screen(bb.tr()));
     screen.line(world_to_screen(bb.bl()), world_to_screen(bb.br()));
 
-
-    /*
     // Collission Debug
     map.tiles_in_rect(bb, [&bb](Point tile_pt) -> void {
       Point sp = world_to_screen(tile_pt * 8);
