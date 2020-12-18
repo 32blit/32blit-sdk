@@ -50,13 +50,19 @@ float clamp(float v, float min, float max) {
 struct Player {
   Vec2 vel;
   Vec2 pos;
+  Size size;
   bool flip = false;
 
-  enum {
+  enum State {
     STILL,
     WALKING,
-    JUMPING
+    JUMPING,
+    SWIMMING,
+    CLIMBING
   };
+
+  State state = STILL;
+
   std::map<uint8_t, std::vector<uint8_t>> animations;
   float animation_frame = 0.0f;
 
@@ -64,13 +70,20 @@ struct Player {
     animations[STILL] = { 208, 208, 208, 208, 208, 208, 209, 208, 208, 208, 208, 208, 208, 208 };
     animations[WALKING] = { 208, 209, 210, 211, 212 };
     animations[JUMPING] = { 217 };
+    animations[SWIMMING] = { 217 };
+    animations[CLIMBING] = { 217 };
 
     vel = Vec2(0, 0);
     pos = Vec2(100, 32);
+    size = Size(6, 14);
   }
 
   Rect aabb() {
-    return Rect(pos.x - 4, pos.y - 12, 7, 11);
+    return Rect(pos.x, pos.y - size.h, size.w, size.h);
+  }
+
+  Rect feet() {
+    return Rect(pos.x, pos.y - size.h / 2, size.w, size.h / 2);
   }
 
   uint8_t animation_sprite_index(uint8_t animation) {
@@ -79,7 +92,7 @@ struct Player {
   }
 
   Point current_tile() {
-    return Point(pos.x / 8, pos.y / 8);
+    return Point((pos.x + (size.w / 2)) / 8, (pos.y - 8) / 8);
   }
 
   bool tile_under_solid() {
@@ -89,14 +102,20 @@ struct Player {
 
   bool tile_under_ladder() {
     Point p = current_tile();
-    return map.tile_index(p) == 7;
+    return map.has_flag(p, TileFlags::LADDER);
+  }
+
+  bool tile_under_water() {
+    Point p = current_tile();
+    return map.has_flag(p, TileFlags::WATER);
   }
 
   bool on_ground() {
-    if (vel.y < 0) return false;
+    return state == STILL || state == WALKING || state == SWIMMING || state == CLIMBING;
+    /*if (vel.y < 0) return false;
 
     Point p = current_tile();
-    return map.has_flag(Point(p.x, p.y + 1), TileFlags::SOLID) && ((int32_t(pos.y) % 8) == 7);
+    return map.has_flag(Point(p.x, p.y + 1), TileFlags::SOLID) && ((int32_t(pos.y) % 8) == 0);*/
   }
 
   bool in_water() {
@@ -125,40 +144,121 @@ struct Player {
   }
 
   void update() {
-    static float max_speed_x = 2.0f;
     static float ground_acceleration_x = 0.5f;
     static float air_acceleration_x = 0.2f;
+    static float ground_drag_x = 0.70f;
+    static float air_drag_x = 0.8f;
     static float duration = 0.01f;
-    static Vec2 gravity(0, 9.8f * 5.0f);   // normal gravity is boring!
+    static float jump_velocity = 4.0f;
+    static Vec2 gravity(0, 0.98f / 10.0f);
 
-    if (pressed(Button::DPAD_LEFT)) {
-      vel.x = vel.x - (on_ground() ? ground_acceleration_x : air_acceleration_x);
+    bool is_on_ground = on_ground();
+    state == STILL;
+
+    vel.x *= is_on_ground ? ground_drag_x : air_drag_x;
+    if(!tile_under_ladder()) vel += gravity;
+    if(tile_under_water()) {
+      vel.y *= 0.80f;
     }
-
-    if (pressed(Button::DPAD_RIGHT)) {
-      vel.x = vel.x + (on_ground() ? ground_acceleration_x : air_acceleration_x);
+    else {
+      vel.y *= tile_under_ladder() ? 0.80f : 0.95f;
     }
+  
 
-    vel.x = clamp(vel.x, -max_speed_x, max_speed_x);
-    //player.vel = player.vel + (gravity * duration);
+    // Handle Left/Right collission
+    pos.x += vel.x;
+    Rect bounds_lr = feet();
 
-    Vec2 future_player_pos = pos + vel;
-    Rect future_bb = Rect(future_player_pos.x - 4, future_player_pos.y - 12, 7, 11);
-
-    bool collision = false;
-    map.tiles_in_rect(future_bb, [&collision](Point tile_pt) -> void {
+    map.tiles_in_rect(bounds_lr, [this, bounds_lr](Point tile_pt) -> void {
       if (map.has_flag(tile_pt, TileFlags::SOLID)) {
-        collision = true;
+        Rect rb(tile_pt.x * 8, tile_pt.y * 8, 8, 8);
+        uint32_t player_bottom = bounds_lr.y + bounds_lr.h;
+        uint32_t player_top = bounds_lr.y;
+        uint32_t player_left = bounds_lr.x;
+        uint32_t player_right = bounds_lr.x + bounds_lr.w;
+        uint32_t tile_bottom = rb.y + rb.h;
+        uint32_t tile_top = rb.y;
+        uint32_t tile_left = rb.x;
+        uint32_t tile_right = rb.x + rb.w;
+        if(((player_bottom > tile_top) && (player_bottom < tile_bottom))
+        || ((player_top > tile_top) && player_top < tile_bottom)){
+            // Collide the left-hand side of the tile right of player
+            if(player_right > tile_left && (player_left < tile_left)){
+                pos.x = float(tile_left - bounds_lr.w);
+                vel.x = 0.0f;
+            }
+            // Collide the right-hand side of the tile left of player
+            if((player_left < tile_right) && (player_right > tile_right)) {
+                pos.x = float(tile_right);
+                vel.x = 0.0f;
+            }
+        }
       }
     });
 
-    if (!collision) {
-      pos = future_player_pos;
+    // Handle Up/Down collission
+    pos.y += vel.y;
+    Rect bounds_ud = feet();
+
+    map.tiles_in_rect(bounds_ud, [this, bounds_ud](Point tile_pt) -> void {
+      if (map.has_flag(tile_pt, TileFlags::SOLID)) {
+        Rect rb(tile_pt.x * 8, tile_pt.y * 8, 8, 8);
+        uint32_t player_bottom = bounds_ud.y + bounds_ud.h;
+        uint32_t player_top = bounds_ud.y;
+        uint32_t player_left = bounds_ud.x;
+        uint32_t player_right = bounds_ud.x + bounds_ud.w;
+        uint32_t tile_bottom = rb.y + rb.h;
+        uint32_t tile_top = rb.y;
+        uint32_t tile_left = rb.x;
+        uint32_t tile_right = rb.x + rb.w;
+        if((player_right > tile_left) && (player_left < tile_right)){
+          // Collide bottom side of tile above player
+          if(player_top < tile_bottom && player_bottom > tile_bottom){
+              pos.y = float(tile_bottom + bounds_ud.h);
+              vel.y = 0;
+          }
+          // Collide the top side of the tile below player
+          if((player_bottom > tile_top) && (player_top < tile_top)){
+              pos.y = tile_top;
+              vel.y = 0;
+              state = STILL;
+          }
+        }
+      }
+    });
+
+    if (buttons.state & Button::DPAD_LEFT) {
+      vel.x -= is_on_ground ? ground_acceleration_x : air_acceleration_x;
+      flip = true;
+      if(is_on_ground) {
+        state = WALKING;
+      }
     }
-    else {
-      vel.x = 0.0f;
-      vel.y = 0.0f;
+
+    if (buttons.state & Button::DPAD_RIGHT) {
+      vel.x += is_on_ground ? ground_acceleration_x : air_acceleration_x;
+      flip = false;
+      if(is_on_ground) {
+        state = WALKING;
+      }
     }
+
+    if (is_on_ground && buttons.pressed & Button::A) {
+      vel.y += -jump_velocity;
+      state = JUMPING;
+    }
+
+    if(tile_under_ladder() || tile_under_water()) {
+      if (buttons.state & Button::DPAD_UP) {
+        vel.y -= 0.2;
+      }
+      if (buttons.state & Button::DPAD_DOWN) {
+        vel.y += 0.2;
+      }
+      state = tile_under_water() ? SWIMMING : CLIMBING;
+    }
+
+
   }
 
   void render() {
@@ -173,7 +273,7 @@ struct Player {
 
     uint8_t si = animation_sprite_index(animation);
 
-    Point sp = world_to_screen(Point(pos.x - 4, pos.y - 7));
+    Point sp = world_to_screen(Point(pos.x, pos.y - 8));
     screen.sprite(si, sp, flip);
     sp.y -= 8;
     screen.sprite(si - 16, sp, flip);
@@ -184,6 +284,9 @@ struct Player {
     screen.line(world_to_screen(bb.tl()), world_to_screen(bb.tr()));
     screen.line(world_to_screen(bb.bl()), world_to_screen(bb.br()));
 
+
+    /*
+    // Collission Debug
     map.tiles_in_rect(bb, [&bb](Point tile_pt) -> void {
       Point sp = world_to_screen(tile_pt * 8);
       Rect rb(sp.x, sp.y, 8, 8);
@@ -195,6 +298,7 @@ struct Player {
 
       screen.rectangle(rb);
     });
+    */
 
     //map.tiles_in_rect(bb)
   }
@@ -410,102 +514,8 @@ void render(uint32_t time) {
   one tile is considered to be 1 metre
 */
 void update(uint32_t time) {
-  float duration = 0.01f;     // == 10ms as a float
-
-
-  static float jump_velocity = 15.0f;
-  static Vec2 gravity(0, 9.8f * 5.0f);   // normal gravity is boring!
-
-  static bool jumping = false;
-
-
   player.update();
 
-  /*
-  // player is on the ground and not moving left or right, friction!
-  if (player.in_water()) {
-    if ((pressed(button::A) | pressed(button::DPAD_UP))) {
-      player.vel.y = 0;
-    }
-
-    if ((pressed(button::A) | pressed(button::DPAD_LEFT))) {
-      player.vel.x = 0;
-    }
-
-    if ((pressed(button::A) | pressed(button::DPAD_RIGHT))) {
-      player.vel.x = 0;
-    }
-
-  }
-  else {
-    if (pressed(button::DPAD_LEFT)) {
-      player.vel.x = player.vel.x - (player.on_ground() ? ground_acceleration_x : air_acceleration_x);
-      player.vel.x = std::max(-max_speed_x, player.vel.x);
-      player.flip = true;
-    }
-
-    if (pressed(button::DPAD_RIGHT)) {
-      player.vel.x = player.vel.x + (player.on_ground() ? ground_acceleration_x : air_acceleration_x);
-      player.vel.x = std::min(max_speed_x, player.vel.x);
-      player.flip = false;
-    }
-
-    if (player.on_ground()) {
-      jumping = false;
-
-      if (!pressed(button::DPAD_RIGHT) && !pressed(button::DPAD_LEFT)) {
-        player.vel.x = player.vel.x * 0.90;
-      }
-
-      if ((pressed(button::A) | pressed(button::DPAD_UP)) && !jumping) {
-        player.vel.y = -jump_velocity;
-        jumping = true;
-      }
-    }
-  }
-
-
-  //if player_on_ground() and math.abs(last_noise_x - player.pos.x) > 5 then
-  //  step_noise()
-  //  last_noise_x = player.pos.x
-  //end
-
-  point old_tile = tile(player_origin());
-
-
-  float water = player.in_water() ? 0.2f : 1.0f;
-  player.vel = player.vel + (gravity * duration * water);
-
-  point new_tile = tile(player_origin());
-
-
-  // collision detection and correction
-
-  // falling    
-  if (player.tile_under_solid() && old_tile.y < new_tile.y) {
-//      player.pos.y = old_tile.y * 8 + 7;
-    player.vel.y = 0;
-  }
-
-  // moving left/right
-  if (!map.has_flag(old_tile, TileFlags::SOLID) && map.has_flag(new_tile, TileFlags::SOLID) && ((old_tile.x > new_tile.x) || (old_tile.x < new_tile.x))) {
-    player.pos.x = old_tile.x * 8 + 4;
-    player.vel.x = 0;
-  }
-
-
-  player.animation_frame += 0.1;
-  if (player.on_ground()) {
-
-    player.pos.y = floor(player.pos.y);
-
-    if (player.vel.y > 0) {
-      player.vel.y = 0;
-    }
-  }
-  else {
-    player_animation_frame = 2;
-  }
   /*
   if (tick_seed % 3 == 0) {
     for (uint8_t y = 0; y < 16; y++) {
@@ -516,7 +526,8 @@ void update(uint32_t time) {
         }
       }
     }
-  }*/
+  }
+  */
 
 }
 
