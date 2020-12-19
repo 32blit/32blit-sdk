@@ -51,6 +51,7 @@ namespace blit {
       if(match) {
         FileInfo info = {};
         info.name = buf_file.first.substr(slash_pos == std::string::npos ? 0 : slash_pos + 1);
+        info.size = buf_file.second.length;
         ret.push_back(info);
       }
     }
