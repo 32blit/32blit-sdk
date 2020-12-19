@@ -60,6 +60,8 @@ namespace multiplayer {
 
   CDCUserHandler cdc_user_handler;
 
+  bool enabled = false;
+
   void init() {
     g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'U', 'S', 'E', 'R'>::value, &cdc_user_handler);
   }
@@ -92,7 +94,33 @@ namespace multiplayer {
   }
 
   void set_enabled(bool enabled) {
-    //TODO
+
+    // if in device mode, disable/enable VBUS sensing
+    // TODO: this will fail if we switch to host and back
+    if(!USB_GetMode(USB_OTG_HS)) {
+      uint32_t USBx_BASE = (uint32_t)USB_OTG_HS; // this is for USBx_DEVICE...
+      USBx_DEVICE->DCTL |= USB_OTG_DCTL_SDIS;
+
+      if(enabled) {
+        USB_OTG_HS->GINTMSK &= ~(USB_OTG_GINTMSK_SRQIM | USB_OTG_GINTMSK_OTGINT);
+
+        USB_OTG_HS->GCCFG &= ~USB_OTG_GCCFG_VBDEN;
+
+        USB_OTG_HS->GOTGCTL |= USB_OTG_GOTGCTL_BVALOEN;
+        USB_OTG_HS->GOTGCTL |= USB_OTG_GOTGCTL_BVALOVAL;
+      } else {
+        USB_OTG_HS->GOTGCTL &= ~USB_OTG_GOTGCTL_BVALOEN;
+        USB_OTG_HS->GOTGCTL &= ~USB_OTG_GOTGCTL_BVALOVAL;
+
+        USB_OTG_HS->GCCFG |= USB_OTG_GCCFG_VBDEN;
+
+        USB_OTG_HS->GINTMSK |= USB_OTG_GINTMSK_SRQIM | USB_OTG_GINTMSK_OTGINT;
+      }
+
+      USBx_DEVICE->DCTL &= ~USB_OTG_DCTL_SDIS;
+    }
+
+    multiplayer::enabled = enabled;
   }
 
   void send_message(const uint8_t *data, uint16_t length) {
