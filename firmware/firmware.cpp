@@ -235,7 +235,7 @@ void scan_flash() {
     } else {
       // fallback "title"
       game.title.resize(20);
-      snprintf(game.title.data(), 20, "game@%i", int(game.offset / qspi_flash_sector_size));
+      game.title.resize(snprintf(game.title.data(), 20, "game@%i", int(game.offset / qspi_flash_sector_size)));
     }
 
     game_list.push_back(game);
