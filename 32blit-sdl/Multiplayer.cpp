@@ -6,45 +6,9 @@
 
 using namespace blit;
 
-Multiplayer::Multiplayer(Mode mode, const std::string &address) {
-    // TODO: move connect later?
-    IPaddress ip;
-
-    // TODO: allow setting address somehow
-    const uint16_t port = 0x32B1;
-
-    // try connecting first for auto
-    if(mode != Mode::Listen) {
-        if(SDLNet_ResolveHost(&ip, address.c_str(), port) == -1) {
-            std::cerr << "Failed to resolve host: " << SDLNet_GetError() << std::endl;
-            return;
-        }
-    }
-
-    socket = SDLNet_TCP_Open(&ip);
-
-    if(!socket && mode != Mode::Connect) {
-        // try hosting instead unless connecting was specified
-        if(SDLNet_ResolveHost(&ip, nullptr, port) == -1) {
-            std::cerr << "Failed to resolve host: " << SDLNet_GetError() << std::endl;
-            return;
-        }
-
-        listen_socket = SDLNet_TCP_Open(&ip);
-    }
-
-    if(!socket && !listen_socket) {
-        std::cerr << "Failed to open socket: " << SDLNet_GetError() << std::endl;
-        return;
-    }
-
+Multiplayer::Multiplayer(Mode mode, const std::string &address) : mode(mode), address(address) {
     // shouldn't fail unless we ran out of memory
     sock_set = SDLNet_AllocSocketSet(2);
-
-    if(listen_socket)
-        SDLNet_TCP_AddSocket(sock_set, listen_socket);
-    else
-        SDLNet_TCP_AddSocket(sock_set, socket);
 }
 
 Multiplayer::~Multiplayer() {
@@ -60,7 +24,7 @@ Multiplayer::~Multiplayer() {
 
 void Multiplayer::update() {    
     if(!socket && !listen_socket)
-        return;
+        return; // TODO: re-attempt connection if mode == Connect
 
     int num_ready = SDLNet_CheckSockets(sock_set, 0);
 
@@ -123,7 +87,18 @@ bool Multiplayer::is_connected() const {
 }
 
 void Multiplayer::set_enabled(bool enabled) {
-    //TODO
+    if(enabled) {
+        setup();
+    } else {
+        disconnect();
+
+        if(listen_socket) {
+            SDLNet_TCP_DelSocket(sock_set, listen_socket);
+            SDLNet_TCP_Close(listen_socket);
+        }
+    }
+
+    this->enabled = enabled;
 }
 
 void Multiplayer::send_message(const uint8_t *data, uint16_t length) {
@@ -148,6 +123,42 @@ void Multiplayer::send_message(const uint8_t *data, uint16_t length) {
         // failed
         disconnect();
     }
+}
+
+void Multiplayer::setup() {
+    IPaddress ip;
+
+    const uint16_t port = 0x32B1;
+
+    // try connecting first for auto
+    if(mode != Mode::Listen) {
+        if(SDLNet_ResolveHost(&ip, address.c_str(), port) == -1) {
+            std::cerr << "Failed to resolve host: " << SDLNet_GetError() << std::endl;
+            return;
+        }
+    }
+
+    socket = SDLNet_TCP_Open(&ip);
+
+    if(!socket && mode != Mode::Connect) {
+        // try hosting instead unless connecting was specified
+        if(SDLNet_ResolveHost(&ip, nullptr, port) == -1) {
+            std::cerr << "Failed to resolve host: " << SDLNet_GetError() << std::endl;
+            return;
+        }
+
+        listen_socket = SDLNet_TCP_Open(&ip);
+    }
+
+    if(!socket && !listen_socket) {
+        std::cerr << "Failed to open socket: " << SDLNet_GetError() << std::endl;
+        return;
+    }
+
+    if(listen_socket)
+        SDLNet_TCP_AddSocket(sock_set, listen_socket);
+    else
+        SDLNet_TCP_AddSocket(sock_set, socket);
 }
 
 void Multiplayer::disconnect() {

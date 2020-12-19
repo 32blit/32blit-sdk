@@ -23,7 +23,12 @@ class Multiplayer final {
         void send_message(const uint8_t *data, uint16_t length);
 
     private:
+        void setup();
         void disconnect();
+
+        Mode mode;
+        std::string address;
+        bool enabled = false;
 
         TCPsocket socket = nullptr, listen_socket = nullptr;
         SDLNet_SocketSet sock_set = nullptr;
