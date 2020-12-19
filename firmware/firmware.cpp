@@ -235,7 +235,7 @@ void scan_flash() {
     } else {
       // fallback "title"
       game.title.resize(20);
-      snprintf(game.title.data(), 20, "game@%i", int(game.offset / qspi_flash_sector_size));
+      game.title.resize(snprintf(game.title.data(), 20, "game@%i", int(game.offset / qspi_flash_sector_size)));
     }
 
     game_list.push_back(game);
@@ -595,7 +595,7 @@ uint32_t get_flash_offset_for_file(uint32_t file_size) {
   int file_blocks = calc_num_blocks(file_size);
 
   for(auto space : free_space) {
-    if(std::get<1>(space) <= file_blocks)
+    if(std::get<1>(space) >= file_blocks)
       return std::get<0>(space) * qspi_flash_sector_size;
   }
 
