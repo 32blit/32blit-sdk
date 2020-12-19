@@ -30,7 +30,10 @@ void render(uint32_t time_ms) {
   screen.text("Multiplayer Example", minimal_font, Point(5, 4));
 
   screen.pen = Pen(64, 64, 64);
-  screen.text("Press A to send message.", minimal_font, Point(20, 16));
+  if(is_multiplayer_connected())
+    screen.text("Press A to send message.", minimal_font, Point(screen.bounds.w / 2, 16), true, TextAlign::top_center);
+  else
+    screen.text("Not connected!", minimal_font, Point(screen.bounds.w / 2, 16), true, TextAlign::top_center);
 
   int y = 30;
   for(auto &msg : messages) {
@@ -44,7 +47,7 @@ void update(uint32_t time_ms) {
 
   bool button_pressed = (buttons & Button::A) && !(last_buttons & Button::A);
 
-  if(button_pressed) {
+  if(button_pressed && is_multiplayer_connected()) {
     auto msg = "This is a message!";
     send_message((uint8_t *)msg, strlen(msg));
   }
