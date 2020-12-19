@@ -99,6 +99,10 @@ bool blit_is_multiplayer_connected() {
 	return blit_multiplayer->is_connected();
 }
 
+void blit_set_multiplayer_enabled(bool enabled) {
+	blit_multiplayer->set_enabled(enabled);
+}
+
 void blit_send_message(const uint8_t *data, uint16_t length) {
 	blit_multiplayer->send_message(data, length);
 }
@@ -178,6 +182,7 @@ void System::run() {
   blit::api.get_launch_path = ::get_launch_path;
 
 	blit::api.is_multiplayer_connected = blit_is_multiplayer_connected;
+	blit::api.set_multiplayer_enabled = blit_set_multiplayer_enabled;
 	blit::api.send_message = blit_send_message;
 
 	::set_screen_mode(blit::lores);

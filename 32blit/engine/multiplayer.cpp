@@ -6,6 +6,14 @@ namespace blit {
     return api.is_multiplayer_connected();
   }
 
+  void enable_multiplayer() {
+    api.set_multiplayer_enabled(true);
+  }
+
+  void disable_multiplayer() {
+    api.set_multiplayer_enabled(false);
+  }
+
   void send_message(const uint8_t *data, uint16_t len) {
     api.send_message(data, len);
   }

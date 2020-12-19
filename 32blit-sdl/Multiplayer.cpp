@@ -122,6 +122,10 @@ bool Multiplayer::is_connected() const {
     return socket != nullptr;
 }
 
+void Multiplayer::set_enabled(bool enabled) {
+    //TODO
+}
+
 void Multiplayer::send_message(const uint8_t *data, uint16_t length) {
     if(!socket)
         return;

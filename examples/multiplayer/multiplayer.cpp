@@ -16,6 +16,7 @@ void on_message(const uint8_t *data, uint16_t len) {
 void init() {
 
   message_received = on_message;
+  enable_multiplayer();
 }
 
 void render(uint32_t time_ms) {
