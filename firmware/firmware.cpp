@@ -8,6 +8,7 @@
 #include "file.hpp"
 #include "executable.hpp"
 #include "metadata.hpp"
+#include "dialog.hpp"
 #include "engine/api_private.hpp"
 
 #include <cstring>
@@ -50,8 +51,88 @@ State		state = stFlashFile;
 
 FIL file;
 
+Dialog dialog;
+
 void scan_flash();
 uint32_t flash_from_sd_to_qspi_flash(const char *filename);
+
+// metadata
+
+bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata, bool unpack_images = false) {
+
+  BlitGameHeader header;
+
+  if(qspi_read_buffer(offset, reinterpret_cast<uint8_t *>(&header), sizeof(header)) != QSPI_OK)
+    return false;
+
+  offset += header.end - 0x90000000;
+
+  // out of bounds
+  if(offset >= 0x2000000)
+    return false;
+
+  uint8_t buf[10];
+  if(qspi_read_buffer(offset, buf, 10) != QSPI_OK)
+    return false;
+
+  if(memcmp(buf, "BLITMETA", 8) != 0)
+    return false;
+
+  auto metadata_len = *reinterpret_cast<uint16_t *>(buf + 8);
+  uint8_t metadata_buf[0xFFFF];
+  if(qspi_read_buffer(offset + 10, metadata_buf, metadata_len) != QSPI_OK) {
+    return false;
+  }
+
+  parse_metadata(reinterpret_cast<char *>(metadata_buf), metadata_len, metadata, unpack_images);
+
+  return true;
+}
+
+bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata, bool unpack_images = false) {
+  FIL fh;
+  f_open(&fh, filename.c_str(), FA_READ);
+
+  BlitGameHeader header;
+  UINT bytes_read;
+  f_read(&fh, &header, sizeof(header), &bytes_read);
+
+  // skip relocation data
+  int off = 0;
+  if(header.magic == 0x4F4C4552 /* RELO */) {
+    f_lseek(&fh, 4);
+    uint32_t num_relocs;
+    f_read(&fh, (void *)&num_relocs, 4, &bytes_read);
+
+    off = num_relocs * 4 + 8;
+    f_lseek(&fh, off);
+
+    // re-read header
+    f_read(&fh, &header, sizeof(header), &bytes_read);
+  }
+
+  if(header.magic == blit_game_magic) {
+    uint8_t buf[10];
+    f_lseek(&fh, (header.end - 0x90000000) + off);
+    auto res = f_read(&fh, buf, 10, &bytes_read);
+
+    if(bytes_read == 10 && memcmp(buf, "BLITMETA", 8) == 0) {
+      // don't bother reading the whole thing if we don't want the images
+      auto metadata_len = unpack_images ? *reinterpret_cast<uint16_t *>(buf + 8) : sizeof(RawMetadata);
+
+      uint8_t metadata_buf[0xFFFF];
+      f_read(&fh, metadata_buf, metadata_len, &bytes_read);
+
+      parse_metadata(reinterpret_cast<char *>(metadata_buf), metadata_len, metadata, unpack_images);
+
+      f_close(&fh);
+      return true;
+    }
+  }
+
+  f_close(&fh);
+  return false;
+}
 
 int calc_num_blocks(uint32_t size) {
   return (size - 1) / qspi_flash_sector_size + 1;

@@ -11,6 +11,9 @@
 
 #include "executable.hpp"
 #include "metadata.hpp"
+#include "dialog.hpp"
+
+Dialog dialog;
 
 struct Persist {
   unsigned int selected_menu_item = 0;
@@ -105,6 +108,45 @@ void load_directory_list(std::string directory) {
 
     x += dir.w + 10;
   }
+}
+
+bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata, bool unpack_images = false) {
+  blit::File f(filename);
+  uint32_t offset = 0;
+
+  BlitGameHeader header;
+  auto read = f.read(offset, sizeof(header), (char *)&header);
+
+  // skip relocation data
+  if(header.magic == 0x4F4C4552 /* RELO */) {
+    uint32_t num_relocs;
+    f.read(4, 4, (char *)&num_relocs);
+
+    offset = num_relocs * 4 + 8;
+    // re-read header
+    f.read(offset, sizeof(header), (char *)&header);
+  }
+
+  if(header.magic == blit_game_magic) {
+    uint8_t buf[10];
+
+    offset += (header.end & 0x1FFFFFF);
+    auto bytes_read = f.read(offset, 10, (char *)buf);
+
+    if(bytes_read == 10 && memcmp(buf, "BLITMETA", 8) == 0) {
+      // don't bother reading the whole thing if we don't want the images
+      auto metadata_len = unpack_images ? *reinterpret_cast<uint16_t *>(buf + 8) : sizeof(RawMetadata);
+
+      uint8_t metadata_buf[0xFFFF];
+      f.read(offset + 10, metadata_len, (char *)metadata_buf);
+
+      parse_metadata(reinterpret_cast<char *>(metadata_buf), metadata_len, metadata, unpack_images);
+
+      return true;
+    }
+  }
+
+  return false;
 }
 
 void load_file_list(std::string directory) {
