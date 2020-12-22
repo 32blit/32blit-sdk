@@ -21,11 +21,6 @@ namespace blit {
 
   struct ButtonState {
     ButtonState &operator=(uint32_t v) {
-      uint32_t changed = state ^ v;
-
-      pressed |= changed & v;
-      released |= changed & state;
-
       state = v;
 
       return *this;
@@ -37,6 +32,7 @@ namespace blit {
 
     uint32_t state;
     uint32_t pressed, released; // state change since last update
+    uint32_t last_state = 0;
   };
 
   extern bool pressed(uint32_t button);
