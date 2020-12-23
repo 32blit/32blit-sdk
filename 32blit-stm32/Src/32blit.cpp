@@ -547,9 +547,9 @@ protected:
         persist.volume += 0.25f;
       } else if (blit::buttons.released & blit::Button::B) {
         persist.volume -= 0.25f;
-      } else if (blit::buttons.released & blit::Button::X) {
-        persist.volume = 0.0f;
       } else if (blit::buttons.released & blit::Button::Y) {
+        persist.volume = 0.0f;
+      } else if (blit::buttons.released & blit::Button::X) {
         persist.volume = 1.0f;
       }
       persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
