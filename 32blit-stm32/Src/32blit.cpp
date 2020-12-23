@@ -543,6 +543,14 @@ protected:
         persist.volume -= 1.0f / 256.0f;
       } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
         persist.volume += 1.0f / 256.0f;
+      } else if (blit::buttons & blit::Button::A) {
+        persist.volume += 0.25f;
+      } else if (blit::buttons & blit::Button::B) {
+        persist.volume -= 0.25f;
+      } else if (blit::buttons & blit::Button::X) {
+        persist.volume = 0.0f;
+      } else if (blit::buttons & blit::Button::Y) {
+        persist.volume = 1.0f;
       }
       persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
       blit_update_volume();
