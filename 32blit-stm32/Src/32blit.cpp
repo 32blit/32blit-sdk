@@ -532,24 +532,24 @@ protected:
 
   void update_item(const Item &item) override {
     if(item.id == BACKLIGHT) {
-      if (blit::buttons & blit::Button::DPAD_LEFT) {
+      if (blit::buttons.pressed & blit::Button::DPAD_LEFT) {
         persist.backlight -= 1.0f / 256.0f;
-      } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
+      } else if (blit::buttons.pressed & blit::Button::DPAD_RIGHT) {
         persist.backlight += 1.0f / 256.0f;
       }
       persist.backlight = std::fmin(1.0f, std::fmax(0.0f, persist.backlight));
     } else if(item.id == VOLUME) {
-      if (blit::buttons & blit::Button::DPAD_LEFT) {
+      if (blit::buttons.pressed & blit::Button::DPAD_LEFT) {
         persist.volume -= 1.0f / 256.0f;
-      } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
+      } else if (blit::buttons.pressed & blit::Button::DPAD_RIGHT) {
         persist.volume += 1.0f / 256.0f;
-      } else if (blit::buttons & blit::Button::A) {
+      } else if (blit::buttons.released & blit::Button::A) {
         persist.volume += 0.25f;
-      } else if (blit::buttons & blit::Button::B) {
+      } else if (blit::buttons.released & blit::Button::B) {
         persist.volume -= 0.25f;
-      } else if (blit::buttons & blit::Button::X) {
+      } else if (blit::buttons.released & blit::Button::X) {
         persist.volume = 0.0f;
-      } else if (blit::buttons & blit::Button::Y) {
+      } else if (blit::buttons.released & blit::Button::Y) {
         persist.volume = 1.0f;
       }
       persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
