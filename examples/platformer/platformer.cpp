@@ -153,7 +153,6 @@ struct Player {
     static Vec2 gravity(0, 0.98f / 10.0f);
 
     bool is_on_ground = on_ground();
-    state == STILL;
 
     vel.x *= is_on_ground ? ground_drag_x : air_drag_x;
     if(!tile_under_ladder()) vel += gravity;
@@ -250,10 +249,10 @@ struct Player {
 
     if(tile_under_ladder() || tile_under_water()) {
       if (buttons.state & Button::DPAD_UP) {
-        vel.y -= 0.2;
+        vel.y -= 0.2f;
       }
       if (buttons.state & Button::DPAD_DOWN) {
-        vel.y += 0.2;
+        vel.y += 0.2f;
       }
       state = tile_under_water() ? SWIMMING : CLIMBING;
     }
