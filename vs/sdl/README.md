@@ -1,8 +1,11 @@
 # SDL2 Binaries for Visual Studio Builds
 
-Download the SDL2 development libraries from the [SDL homepage](https://www.libsdl.org/download-2.0.php). You should find the latest version of the VC development libraries (at the time of writing these are SDL2-devel-2.0.10-VC.zip).
+You will need SDL2 development libraries and the SDL2_image library. 
 
-Also, Download the SDL2_image development libraries from the [SDL_image homepage](https://www.libsdl.org/projects/SDL_image/). (At the time of writing the latest version is SDL2_image-devel-2.0.5-VC.zip).
+* Download SDL2 development libraries from the [SDL homepage](https://www.libsdl.org/download-2.0.php). Here find the latest version of the VC development libraries (at the time of this writing *SDL2-devel-2.0.14-VC.zip*). 
+* Download SDL2_image from [here](https://www.libsdl.org/projects/SDL_image/) (*SDL2_image-devel-2.0.5-VC.zip*).
+
+Extract both into this folder. You will need to merge the include/lib directories.
 
 Once extracted you should ensure the SDL "include" and "lib" directories are directly in `vs/sdl`. The tree should look like:
 

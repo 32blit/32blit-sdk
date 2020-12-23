@@ -8,7 +8,7 @@ See [Building & Running On 32Blit](32blit.md) if you want to compile examples/pr
 - [Option 1: Use the solution file](#option-1-use-the-solution-file)
   - [Get started with your own game](#get-started-with-your-own-game)
 - [Option 2: Use Visual Studio's built-in CMake support](#option-2-use-visual-studios-built-in-cmake-support)
-  - [Building your own game](#building-with-your-own-game)
+  - [Building your own game](#building-your-own-game)
 - [Troubleshooting](#troubleshooting)
 
 ## Requirements
@@ -17,7 +17,10 @@ You will need Visual Studio 2019 (preferably version 16.4).
 
 Make sure you install C++ desktop development support.
 
-You will also need to download SDL2 development libraries from the [SDL homepage](https://www.libsdl.org/download-2.0.php). Here find the latest version of the VC development libraries (at the time of this writing SDL2-devel-2.0.10-VC.zip). Additionally, download SDL2_image from [here](https://www.libsdl.org/projects/SDL_image/) (SDL2_image-devel-2.0.5-VC.zip).
+You will also need SDL2 development libraries and the SDL2_image library. 
+
+* Download SDL2 development libraries from the [SDL homepage](https://www.libsdl.org/download-2.0.php). Here find the latest version of the VC development libraries (at the time of this writing *SDL2-devel-2.0.14-VC.zip*). 
+* Download SDL2_image from [here](https://www.libsdl.org/projects/SDL_image/) (*SDL2_image-devel-2.0.5-VC.zip*).
 
 Place these in the `vs\sdl\` folder. You will need to merge the include/lib directories.
 
