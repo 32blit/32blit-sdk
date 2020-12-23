@@ -56,7 +56,6 @@ uint8_t battery_status = 0;
 uint8_t battery_fault = 0;
 uint16_t accel_address = LIS3DH_DEVICE_ADDRESS;
 
-
 const uint32_t long_press_exit_time = 1000;
 
 __attribute__((section(".persist"))) Persist persist;
@@ -530,33 +529,45 @@ protected:
     }
   }
 
+  /*
+   * For values that are changed using sliders, in addition to DPAD_LEFT and DPAD_RIGHT smooth 
+   * changing, we support Y to set to 0, X to set to full and A and B to set set in 1/4 steps.
+   * 
+   * The function gets a pointer to the value that is to be changed.
+   */
+  void update_slider_item_value(float * value) {
+      if (blit::buttons & blit::Button::DPAD_LEFT) {
+        *value -= 1.0f / 256.0f;
+      } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
+        *value += 1.0f / 256.0f;
+      } else if (blit::buttons.released & blit::Button::A) {
+        *value += 0.25f;
+      } else if (blit::buttons.released & blit::Button::B) {
+        *value -= 0.25f;
+      } else if (blit::buttons.released & blit::Button::Y) {
+        *value = 0.0f;
+      } else if (blit::buttons.released & blit::Button::X) {
+        *value = 1.0f;
+      }
+  }
+
+  /*
+   * update backlight and volume by checking some keys
+   */
   void update_item(const Item &item) override {
     if(item.id == BACKLIGHT) {
-      if (blit::buttons & blit::Button::DPAD_LEFT) {
-        persist.backlight -= 1.0f / 256.0f;
-      } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
-        persist.backlight += 1.0f / 256.0f;
-      }
+      update_slider_item_value(&persist.backlight);
       persist.backlight = std::fmin(1.0f, std::fmax(0.0f, persist.backlight));
     } else if(item.id == VOLUME) {
-      if (blit::buttons & blit::Button::DPAD_LEFT) {
-        persist.volume -= 1.0f / 256.0f;
-      } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
-        persist.volume += 1.0f / 256.0f;
-      } else if (blit::buttons.released & blit::Button::A) {
-        persist.volume += 0.25f;
-      } else if (blit::buttons.released & blit::Button::B) {
-        persist.volume -= 0.25f;
-      } else if (blit::buttons.released & blit::Button::Y) {
-        persist.volume = 0.0f;
-      } else if (blit::buttons.released & blit::Button::X) {
-        persist.volume = 1.0f;
-      }
+      update_slider_item_value(&persist.volume);
       persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
       blit_update_volume();
     }
   }
 
+  /*
+   * for non-slider items pressing A will activate the item and this function gets called
+   */
   void item_activated(const Item &item) override {
     switch(item.id) {
       case SCREENSHOT:
