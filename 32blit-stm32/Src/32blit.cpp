@@ -771,7 +771,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   if(htim == &htim2) {
     bool pressed = !HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port, BUTTON_MENU_Pin);
-    if(pressed) {
+    if(pressed && blit_user_code_running()) { // if button was pressed and we are inside a game, queue a quit event
       exit_game = true;
     }
     HAL_TIM_Base_Stop(&htim2);
