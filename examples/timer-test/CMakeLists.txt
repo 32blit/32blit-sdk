@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.9)
 project (timer-test)
 include (../../32blit.cmake)
 blit_executable (timer-test timer-test.cpp)

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.9)
 project (mp3)
 include (../../32blit.cmake)
 blit_executable (mp3 mp3.cpp)
