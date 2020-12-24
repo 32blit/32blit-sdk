@@ -157,6 +157,37 @@ void erase_qspi_flash(uint32_t start_sector, uint32_t size_bytes) {
   progress.hide();
 }
 
+void erase_flash_game(uint32_t offset) {
+  // reject unaligned
+  if(offset & (qspi_flash_sector_size - 1))
+    return;
+
+  // attempt to get size, falling back to a single sector
+  int erase_size = 1;
+  for(auto &game : game_list) {
+    if(game.offset == offset) {
+      erase_size = calc_num_blocks(game.size);
+      break;
+    }
+  }
+
+  bool flash_mapped = is_qspi_memorymapped();
+  if(flash_mapped) {
+    blit_disable_user_code();
+    qspi_disable_memorymapped_mode();
+  }
+
+  erase_qspi_flash(offset / qspi_flash_sector_size, erase_size * qspi_flash_sector_size);
+
+  // rescan
+  scan_flash();
+
+  if(flash_mapped) {
+    qspi_enable_memorymapped_mode();
+    blit_enable_user_code();
+  }
+}
+
 // returns true is there is a valid header here
 bool read_flash_game_header(uint32_t offset, BlitGameHeader &header) {
   if(qspi_read_buffer(offset, reinterpret_cast<uint8_t *>(&header), sizeof(header)) != QSPI_OK)
@@ -552,34 +583,7 @@ CDCCommandHandler::StreamResult CDCEraseHandler::StreamData(CDCDataStream &dataS
   if(!dataStream.Get(offset))
     return srNeedData;
 
-  // reject unaligned
-  if(offset & (qspi_flash_sector_size - 1))
-    return srFinish;
-
-  bool flash_mapped = is_qspi_memorymapped();
-  if(flash_mapped) {
-    blit_disable_user_code();
-    qspi_disable_memorymapped_mode();
-  }
-
-  // attempt to get size, falling back to a single sector
-  int erase_size = 1;
-  for(auto &game : game_list) {
-    if(game.offset == offset) {
-      erase_size = calc_num_blocks(game.size);
-      break;
-    }
-  }
-
-  erase_qspi_flash(offset / qspi_flash_sector_size, erase_size * qspi_flash_sector_size);
-
-  // rescan
-  scan_flash();
-
-  if(flash_mapped) {
-    qspi_enable_memorymapped_mode();
-    blit_enable_user_code();
-  }
+  erase_flash_game(offset);
 
   return srFinish;
 }
