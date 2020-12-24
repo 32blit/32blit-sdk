@@ -313,6 +313,7 @@ static void start_launcher() {
 
 void init() {
   api.launch = launch_game_from_sd;
+  api.erase_game = erase_flash_game;
 
   set_screen_mode(ScreenMode::hires);
   screen.clear();

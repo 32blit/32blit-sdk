@@ -478,6 +478,9 @@ void update(uint32_t time) {
     dialog.show("Confirm", "Really delete " + game.title + "?", [](bool yes){
       if(yes) {
         auto &game = game_list[persist.selected_menu_item];
+        if(game.filename.compare(0, 7, "flash:/") == 0)
+          api.erase_game(std::stoi(game.filename.substr(7)) * qspi_flash_sector_size);
+        
         ::remove_file(game.filename);
 
         load_file_list(current_directory->name);
