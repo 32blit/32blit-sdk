@@ -83,6 +83,7 @@ target_link_libraries(BlitHalSDL PUBLIC BlitEngine ${SDL2_LIBRARIES} ${SDL2_IMAG
 # copy SDL2.dll to build/install dir for windows users
 if(SDL2_DLL)
 	install(FILES ${SDL2_DLL} DESTINATION bin)
+	set(SDL2_DLL ${SDL2_DLL} PARENT_SCOPE)
 endif()
 
 if(SDL2_IMAGE_DLL)
