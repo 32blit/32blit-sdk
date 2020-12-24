@@ -78,13 +78,15 @@ bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata) {
   if(memcmp(buf, "BLITMETA", 8) != 0)
     return false;
 
-  const auto metadata_len = sizeof(RawMetadata);
-  uint8_t metadata_buf[metadata_len];
-  if(qspi_read_buffer(offset + 10, metadata_buf, metadata_len) != QSPI_OK) {
+  RawMetadata raw_meta;
+  if(qspi_read_buffer(offset + 10, reinterpret_cast<uint8_t *>(&raw_meta), sizeof(RawMetadata)) != QSPI_OK) {
     return false;
   }
 
-  parse_metadata(reinterpret_cast<char *>(metadata_buf), metadata_len, metadata, false);
+  metadata.length = *reinterpret_cast<uint16_t *>(buf + 8);
+  metadata.crc32 = raw_meta.crc32;
+  metadata.title = raw_meta.title;
+  metadata.author = raw_meta.author;
 
   return true;
 }
@@ -120,10 +122,13 @@ bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata
       // don't bother reading the whole thing since we don't want the images
       const auto metadata_len = sizeof(RawMetadata);
 
-      uint8_t metadata_buf[metadata_len];
-      f_read(&fh, metadata_buf, metadata_len, &bytes_read);
+      RawMetadata raw_meta;
+      f_read(&fh, &raw_meta, sizeof(RawMetadata), &bytes_read);
 
-      parse_metadata(reinterpret_cast<char *>(metadata_buf), metadata_len, metadata, false);
+      metadata.length = *reinterpret_cast<uint16_t *>(buf + 8);
+      metadata.crc32 = raw_meta.crc32;
+      metadata.title = raw_meta.title;
+      metadata.author = raw_meta.author;
 
       f_close(&fh);
       return true;
