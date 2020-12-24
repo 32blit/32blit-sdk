@@ -564,9 +564,12 @@ CDCCommandHandler::StreamResult CDCEraseHandler::StreamData(CDCDataStream &dataS
 
   // attempt to get size, falling back to a single sector
   int erase_size = 1;
-  BlitGameHeader header;
-  if(read_flash_game_header(offset, header))
-    erase_size = calc_num_blocks(header.end - qspi_flash_address); // TODO: this does not include metadata, may result in some leftover junk
+  for(auto &game : game_list) {
+    if(game.offset == offset) {
+      erase_size = calc_num_blocks(game.size);
+      break;
+    }
+  }
 
   erase_qspi_flash(offset / qspi_flash_sector_size, erase_size * qspi_flash_sector_size);
 
