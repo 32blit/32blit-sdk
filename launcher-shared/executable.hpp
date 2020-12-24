@@ -3,9 +3,15 @@
 
 constexpr uint32_t blit_game_magic = 0x54494C42; // "BLIT"
 
+#ifdef TARGET_32BLIT_HW
 using BlitRenderFunction = void(*)(uint32_t);
 using BlitTickFunction = bool(*)(uint32_t);
 using BlitInitFunction = bool(*)(uint32_t);
+#else
+using BlitRenderFunction = uint32_t;
+using BlitTickFunction = uint32_t;
+using BlitInitFunction = uint32_t;
+#endif
 
 // should match the layout in startup_user.s
 struct BlitGameHeader {

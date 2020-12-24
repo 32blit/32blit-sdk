@@ -66,6 +66,7 @@ static bool (*do_tick)(uint32_t time) = blit::tick;
 // pointers to user code
 static bool (*user_tick)(uint32_t time) = nullptr;
 static void (*user_render)(uint32_t time) = nullptr;
+static bool user_code_disabled = false;
 
 void DFUBoot(void)
 {
@@ -96,7 +97,7 @@ void blit_exit(bool is_error) {
   if(is_error)
     blit_reset_with_error(); // likely an abort
   else
-    blit_switch_execution(0); // switch back to firmware
+    blit_switch_execution(0, false); // switch back to firmware
 }
 
 void enable_us_timer()
@@ -164,7 +165,7 @@ void blit_tick() {
   if(exit_game) {
     if(blit_user_code_running()) {
       blit::LED.r = 0;
-      blit_switch_execution(0);
+      blit_switch_execution(0, false);
     }
   }
 
@@ -560,7 +561,7 @@ protected:
         bq24295_enable_shipping_mode(&hi2c4);
         break;
       case SWITCH_EXE:
-        blit_switch_execution(persist.last_game_offset);
+        blit_switch_execution(persist.last_game_offset, false);
         break;
       case STORAGE:
         // switch back manually if not mounted
@@ -593,7 +594,7 @@ void blit_menu_update(uint32_t time) {
 
 void blit_menu_render(uint32_t time) {
 
-  if(user_render)
+  if(user_render && !user_code_disabled)
     user_render(time);
   else
     ::render(time);
@@ -674,7 +675,7 @@ void blit_menu_render(uint32_t time) {
 
 void blit_menu() {
   if(blit::update == blit_menu_update && do_tick == blit::tick) {
-    if (user_tick) {
+    if (user_tick && !user_code_disabled) {
       // user code was running
       do_tick = user_tick;
       blit::render = user_render;
@@ -879,9 +880,9 @@ void blit_process_input() {
 typedef  void (*pFunction)(void);
 pFunction JumpToApplication;
 
-void blit_switch_execution(uint32_t address)
+void blit_switch_execution(uint32_t address, bool force_game)
 {
-  if(blit_user_code_running())
+  if(blit_user_code_running() && !force_game)
     persist.reset_target = prtFirmware;
   else
     persist.reset_target = prtGame;
@@ -890,6 +891,10 @@ void blit_switch_execution(uint32_t address)
 
   // returning from game running on top of the firmware
   if(user_tick) {
+    // TODO? should be able to avoid the reset for `force_game` / game -> game by waiting for user code to return before switching
+    if(force_game)
+      persist.last_game_offset = address;
+
     user_tick = nullptr;
     user_render = nullptr;
     blit::render = ::render;
@@ -999,4 +1004,22 @@ void blit_reset_with_error() {
   persist.reset_error = true;
   SCB_CleanDCache();
   NVIC_SystemReset();
+}
+
+extern void blit_enable_user_code() {
+  if(!user_tick)
+    return;
+
+  do_tick = user_tick;
+  blit::render = user_render;
+  user_code_disabled = false;
+}
+
+extern void blit_disable_user_code() {
+  if(!user_tick)
+    return;
+
+  do_tick = blit::tick;
+  blit::render = ::render;
+  user_code_disabled = true;
 }

@@ -56,7 +56,7 @@ namespace display {
     ltdc_init();
     screen_init();
 
-    enable_vblank_interrupt();
+    needs_render = true; 
   }
   
   void enable_vblank_interrupt() {
