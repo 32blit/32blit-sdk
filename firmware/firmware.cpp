@@ -240,7 +240,6 @@ bool launch_game_from_sd(const char *path) {
     blit_disable_user_code(); // assume user running
   }
 
-  scan_flash();
   uint32_t offset = 0xFFFFFFFF;
 
   BlitGameMetadata meta;
@@ -856,7 +855,6 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                       // clean up old version(s)
                       BlitGameMetadata meta;
                       if(parse_flash_metadata(flash_start_offset, meta)) {
-                        scan_flash();
                         for(auto &game : game_list) {
                           if(game.title == meta.title && game.author == meta.author && game.offset != flash_start_offset)
                             erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
