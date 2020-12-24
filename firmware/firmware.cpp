@@ -58,7 +58,7 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename);
 
 // metadata
 
-bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata, bool unpack_images = false) {
+bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata) {
 
   BlitGameHeader header;
 
@@ -78,18 +78,18 @@ bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata, bool unpa
   if(memcmp(buf, "BLITMETA", 8) != 0)
     return false;
 
-  auto metadata_len = *reinterpret_cast<uint16_t *>(buf + 8);
-  uint8_t metadata_buf[0xFFFF];
+  const auto metadata_len = sizeof(RawMetadata);
+  uint8_t metadata_buf[metadata_len];
   if(qspi_read_buffer(offset + 10, metadata_buf, metadata_len) != QSPI_OK) {
     return false;
   }
 
-  parse_metadata(reinterpret_cast<char *>(metadata_buf), metadata_len, metadata, unpack_images);
+  parse_metadata(reinterpret_cast<char *>(metadata_buf), metadata_len, metadata, false);
 
   return true;
 }
 
-bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata, bool unpack_images = false) {
+bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata) {
   FIL fh;
   f_open(&fh, filename.c_str(), FA_READ);
 
@@ -117,13 +117,13 @@ bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata
     auto res = f_read(&fh, buf, 10, &bytes_read);
 
     if(bytes_read == 10 && memcmp(buf, "BLITMETA", 8) == 0) {
-      // don't bother reading the whole thing if we don't want the images
-      auto metadata_len = unpack_images ? *reinterpret_cast<uint16_t *>(buf + 8) : sizeof(RawMetadata);
+      // don't bother reading the whole thing since we don't want the images
+      const auto metadata_len = sizeof(RawMetadata);
 
-      uint8_t metadata_buf[0xFFFF];
+      uint8_t metadata_buf[metadata_len];
       f_read(&fh, metadata_buf, metadata_len, &bytes_read);
 
-      parse_metadata(reinterpret_cast<char *>(metadata_buf), metadata_len, metadata, unpack_images);
+      parse_metadata(reinterpret_cast<char *>(metadata_buf), metadata_len, metadata, false);
 
       f_close(&fh);
       return true;
