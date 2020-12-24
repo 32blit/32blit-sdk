@@ -112,6 +112,11 @@ namespace blit {
    * \return true if file removed successfully
    */
   bool remove_file(const std::string &path) {
+    auto it = buf_files.find(path);
+    if(it != buf_files.end()) {
+      buf_files.erase(it);
+      return true;
+    }
     return api.remove_file(path);
   }
 
