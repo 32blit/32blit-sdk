@@ -67,9 +67,9 @@ sudo mkdir -p /opt/local/
 Grab and install the SDL2 mingw development package:
 
 ```shell
-wget https://libsdl.org/release/SDL2-devel-2.0.10-mingw.tar.gz
-tar xzf SDL2-devel-2.0.10-mingw.tar.gz
-sudo cp -r SDL2-2.0.10/x86_64-w64-mingw32 /opt/local/
+wget https://libsdl.org/release/SDL2-devel-2.0.14-mingw.tar.gz
+tar xzf SDL2-devel-2.0.14-mingw.tar.gz
+sudo cp -r SDL2-2.0.14/x86_64-w64-mingw32 /opt/local/
 ```
 
 #### SDL2_image
