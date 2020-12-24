@@ -37,7 +37,7 @@ struct Dialog {
     screen.pen = button == Button::Y ? active_col : col;
     screen.rectangle(r);
 
-    screen.pen = button == Button::B ? active_col : col;
+    screen.pen = button == Button::A ? active_col : col;
     r.x += 6;
     screen.rectangle(r);
 
@@ -45,7 +45,7 @@ struct Dialog {
     r.x -= 3; r.y = pos.y;
     screen.rectangle(r);
 
-    if(button == Button::A) screen.pen = active_col;
+    if(button == Button::B) screen.pen = active_col;
     r.y += 6;
     screen.rectangle(r);
   }

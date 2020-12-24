@@ -58,7 +58,7 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename);
 
 // metadata
 
-bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata, bool unpack_images = false) {
+bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata) {
 
   BlitGameHeader header;
 
@@ -78,18 +78,20 @@ bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata, bool unpa
   if(memcmp(buf, "BLITMETA", 8) != 0)
     return false;
 
-  auto metadata_len = *reinterpret_cast<uint16_t *>(buf + 8);
-  uint8_t metadata_buf[0xFFFF];
-  if(qspi_read_buffer(offset + 10, metadata_buf, metadata_len) != QSPI_OK) {
+  RawMetadata raw_meta;
+  if(qspi_read_buffer(offset + 10, reinterpret_cast<uint8_t *>(&raw_meta), sizeof(RawMetadata)) != QSPI_OK) {
     return false;
   }
 
-  parse_metadata(reinterpret_cast<char *>(metadata_buf), metadata_len, metadata, unpack_images);
+  metadata.length = *reinterpret_cast<uint16_t *>(buf + 8);
+  metadata.crc32 = raw_meta.crc32;
+  metadata.title = raw_meta.title;
+  metadata.author = raw_meta.author;
 
   return true;
 }
 
-bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata, bool unpack_images = false) {
+bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata) {
   FIL fh;
   f_open(&fh, filename.c_str(), FA_READ);
 
@@ -117,13 +119,16 @@ bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata
     auto res = f_read(&fh, buf, 10, &bytes_read);
 
     if(bytes_read == 10 && memcmp(buf, "BLITMETA", 8) == 0) {
-      // don't bother reading the whole thing if we don't want the images
-      auto metadata_len = unpack_images ? *reinterpret_cast<uint16_t *>(buf + 8) : sizeof(RawMetadata);
+      // don't bother reading the whole thing since we don't want the images
+      const auto metadata_len = sizeof(RawMetadata);
 
-      uint8_t metadata_buf[0xFFFF];
-      f_read(&fh, metadata_buf, metadata_len, &bytes_read);
+      RawMetadata raw_meta;
+      f_read(&fh, &raw_meta, sizeof(RawMetadata), &bytes_read);
 
-      parse_metadata(reinterpret_cast<char *>(metadata_buf), metadata_len, metadata, unpack_images);
+      metadata.length = *reinterpret_cast<uint16_t *>(buf + 8);
+      metadata.crc32 = raw_meta.crc32;
+      metadata.title = raw_meta.title;
+      metadata.author = raw_meta.author;
 
       f_close(&fh);
       return true;
@@ -150,6 +155,37 @@ void erase_qspi_flash(uint32_t start_sector, uint32_t size_bytes) {
   }
 
   progress.hide();
+}
+
+void erase_flash_game(uint32_t offset) {
+  // reject unaligned
+  if(offset & (qspi_flash_sector_size - 1))
+    return;
+
+  // attempt to get size, falling back to a single sector
+  int erase_size = 1;
+  for(auto &game : game_list) {
+    if(game.offset == offset) {
+      erase_size = calc_num_blocks(game.size);
+      break;
+    }
+  }
+
+  bool flash_mapped = is_qspi_memorymapped();
+  if(flash_mapped) {
+    blit_disable_user_code();
+    qspi_disable_memorymapped_mode();
+  }
+
+  erase_qspi_flash(offset / qspi_flash_sector_size, erase_size * qspi_flash_sector_size);
+
+  // rescan
+  scan_flash();
+
+  if(flash_mapped) {
+    qspi_enable_memorymapped_mode();
+    blit_enable_user_code();
+  }
 }
 
 // returns true is there is a valid header here
@@ -240,7 +276,6 @@ bool launch_game_from_sd(const char *path) {
     blit_disable_user_code(); // assume user running
   }
 
-  scan_flash();
   uint32_t offset = 0xFFFFFFFF;
 
   BlitGameMetadata meta;
@@ -278,6 +313,7 @@ static void start_launcher() {
 
 void init() {
   api.launch = launch_game_from_sd;
+  api.erase_game = erase_flash_game;
 
   set_screen_mode(ScreenMode::hires);
   screen.clear();
@@ -548,31 +584,7 @@ CDCCommandHandler::StreamResult CDCEraseHandler::StreamData(CDCDataStream &dataS
   if(!dataStream.Get(offset))
     return srNeedData;
 
-  // reject unaligned
-  if(offset & (qspi_flash_sector_size - 1))
-    return srFinish;
-
-  bool flash_mapped = is_qspi_memorymapped();
-  if(flash_mapped) {
-    blit_disable_user_code();
-    qspi_disable_memorymapped_mode();
-  }
-
-  // attempt to get size, falling back to a single sector
-  int erase_size = 1;
-  BlitGameHeader header;
-  if(read_flash_game_header(offset, header))
-    erase_size = calc_num_blocks(header.end - qspi_flash_address); // TODO: this does not include metadata, may result in some leftover junk
-
-  erase_qspi_flash(offset / qspi_flash_sector_size, erase_size * qspi_flash_sector_size);
-
-  // rescan
-  scan_flash();
-
-  if(flash_mapped) {
-    qspi_enable_memorymapped_mode();
-    blit_enable_user_code();
-  }
+  erase_flash_game(offset);
 
   return srFinish;
 }
@@ -856,7 +868,6 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                       // clean up old version(s)
                       BlitGameMetadata meta;
                       if(parse_flash_metadata(flash_start_offset, meta)) {
-                        scan_flash();
                         for(auto &game : game_list) {
                           if(game.title == meta.title && game.author == meta.author && game.offset != flash_start_offset)
                             erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);

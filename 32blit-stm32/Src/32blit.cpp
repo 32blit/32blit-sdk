@@ -1006,7 +1006,7 @@ void blit_reset_with_error() {
   NVIC_SystemReset();
 }
 
-extern void blit_enable_user_code() {
+void blit_enable_user_code() {
   if(!user_tick)
     return;
 
@@ -1015,11 +1015,28 @@ extern void blit_enable_user_code() {
   user_code_disabled = false;
 }
 
-extern void blit_disable_user_code() {
+void blit_disable_user_code() {
   if(!user_tick)
     return;
 
   do_tick = blit::tick;
   blit::render = ::render;
   user_code_disabled = true;
+}
+
+RawMetadata *blit_get_running_game_metadata() {
+  if(!blit_user_code_running())
+    return nullptr;
+
+  auto game_ptr = reinterpret_cast<uint8_t *>(0x90000000 + persist.last_game_offset);
+
+  auto header = reinterpret_cast<BlitGameHeader *>(game_ptr);
+
+  if(header->magic == blit_game_magic) {
+    auto end_ptr = game_ptr + (header->end - 0x90000000);
+    if(memcmp(end_ptr, "BLITMETA", 8) == 0)
+      return reinterpret_cast<RawMetadata *>(end_ptr + 10);
+  }
+
+  return nullptr;
 }

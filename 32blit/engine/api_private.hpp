@@ -65,7 +65,9 @@ namespace blit {
     JPEGImage (*decode_jpeg_buffer)(const uint8_t *ptr, uint32_t len, AllocateCallback alloc);
     JPEGImage (*decode_jpeg_file)(const std::string &filename, AllocateCallback alloc);
 
+    // launcher APIs - only intended for use by launchers and only available on device
     bool (*launch)(const char *filename);
+    void (*erase_game)(uint32_t offset);
   };
   #pragma pack(pop)
 
