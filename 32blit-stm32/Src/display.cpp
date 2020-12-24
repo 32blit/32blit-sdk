@@ -95,17 +95,13 @@ namespace display {
 
   void dma2d_hires_flip(const Surface &source) {
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 3); 
-
     // set the transform type (clear bits 17..16 of control register)
-    //DMA2D->CR &= (DMA2D->CR & ~DMA2D_CR_MODE) | (1 << DMA2D_CR_MODE_Pos);//M2M with PFC
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M_PFC);
     // set source pixel format (clear bits 3..0 of foreground format register)
-    //DMA2D->FGPFCCR = (DMA2D->FGPFCCR & ~DMA2D_FGPFCCR_CM) | 1 /*RGB888*/;
     MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB888);
     // set source buffer address
     DMA2D->FGMAR = (uintptr_t)source.data; 
     // set target pixel format (clear bits 3..0 of output format register)
-    //DMA2D->OPFCCR = (DMA2D->OPFCCR & ~DMA2D_OPFCCR_CM) | 2 /*RGB565*/;
     MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_RGB565);
     // set target buffer address
     DMA2D->OMAR = (uintptr_t)&__ltdc_start;
@@ -127,19 +123,14 @@ namespace display {
   void dma2d_hires_pal_flip(const Surface &source) {
     // copy RGBA at quarter width
     // work as 32bit type to save some bandwidth
-
-    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 1); 
-    
+    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 1);  
     // set the transform type (clear bits 17..16 of control register)
-    //DMA2D->CR &= (DMA2D->CR & ~DMA2D_CR_MODE) | (0 << DMA2D_CR_MODE_Pos);//M2M 
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
     // set source pixel format (clear bits 3..0 of foreground format register)
-    //DMA2D->FGPFCCR = (DMA2D->FGPFCCR & ~DMA2D_FGPFCCR_CM) | 0 ;/*RGBA8888*/
     MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_ARGB8888);
     // set source buffer address
     DMA2D->FGMAR = (uintptr_t)source.data; 
     // set target pixel format (clear bits 3..0 of output format register)
-    //DMA2D->OPFCCR = (DMA2D->OPFCCR & ~DMA2D_OPFCCR_CM) | 0 ;/*RGBA8888*/
     MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_ARGB8888);
     // set target buffer address
     DMA2D->OMAR = (uintptr_t)((uint32_t)&__ltdc_start + 320 * 240 * 1);
@@ -151,7 +142,6 @@ namespace display {
     DMA2D->OOR = 0;
     // trigger start of dma2d transfer
     DMA2D->CR |= DMA2D_CR_START;
-
     // update pal next, dma2d could work at same time
     if(palette_needs_update && palette_update_delay-- == 0) {
       for(int i = 0; i < palette_needs_update; i++) {
@@ -169,7 +159,6 @@ namespace display {
   }
 
   void dma2d_lores_flip(const Surface &source) {
-    
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 160 * 120 * 3); 
     //Step 1.
     // set the transform type (clear bits 17..16 of control register)
@@ -245,11 +234,11 @@ namespace display {
     }  
     //step 4.
     // set source pixel format (clear bits 3..0 of foreground format register)
-    //MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_ARGB8888);
+    //MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_ARGB8888);//same as step 3, skip it
     // set source buffer address
     DMA2D->FGMAR = ((uintptr_t)&__ltdc_start); 
     // set target pixel format (clear bits 3..0 of output format register)
-    //MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_ARGB8888);
+    //MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_ARGB8888);//same as step 3, skip it
     // set target buffer address
     DMA2D->OMAR =  ((uintptr_t)&__ltdc_start)+320*2;
     // set the number of pixels per line and number of lines    
@@ -276,96 +265,13 @@ namespace display {
       need_ltdc_mode_update = false;
     }
 
-    // TODO: both flip implementations can we done via DMA2D which will save
-    // a heap of CPU time.
-
-    //uint32_t ltdc_buffer_size = 320 * 240 * 2;
-
-    if(mode == ScreenMode::lores) {
-      //uint32_t flip_start = DWT->CYCCNT;  
+    if(mode == ScreenMode::lores) {  
       dma2d_lores_flip(source);
-      //screen.text(std::to_string(flip_time), minimal_font, Point(100,40));
-/*
-      uint8_t *s = (uint8_t *)source.data;
-      uint8_t *d = (uint8_t *)(&__ltdc_start);
-
-      // pixel double the framebuffer to the ltdc buffer
-      for(uint8_t y = 0; y < 120; y++) {
-        // pixel double the current row horizontally
-        for(uint8_t x = 0; x < 160; x++) {
-          *d++ = *(s + 0);
-          *d++ = *(s + 1);
-          *d++ = *(s + 2);
-          *d++ = *(s + 0);
-          *d++ = *(s + 1);
-          *d++ = *(s + 2);
-
-          s += 3;
-        }
-
-        // copy the previous row to pixel double vertically
-        uint32_t *cd = (uint32_t *)d;
-        uint32_t *cs = (uint32_t *)(d - (320 * 3));
-        while(cs < (uint32_t *)d) {
-          *cd++ = *cs++;
-        }        
-        d += 320 * 3;
-      }
-*/
-      //uint32_t flip_end = DWT->CYCCNT;
-      //flip_time = ((flip_end - flip_start) / 1000) * 1000;
-
-    } else if(mode == ScreenMode::hires) {
-            
-      //screen.text(std::to_string(flip_time), minimal_font, Point(140,40));
-      //uint32_t flip_start = DWT->CYCCNT;
-
-      // perform flip with dma2d transfer
+    } else if(mode == ScreenMode::hires) {      
       dma2d_hires_flip(source);
-
-      /*
-        // alternative soft implementation
-        // copy the framebuffer data into the ltdc buffer, originally this
-        // was done via memcpy but implementing it as a 32-bit copy loop
-        // was much faster.  
-        uint32_t *s = (uint32_t *)source.data;
-        uint32_t *d = (uint32_t *)(&__ltdc_start);
-        uint32_t c = ltdc_buffer_size >> 2;
-        while(c--) {
-          *d++ = *s++;
-        }
-      */
-
-      //uint32_t flip_end = DWT->CYCCNT;
-      //flip_time = ((flip_end - flip_start) / 1000) * 1000;
-
-      
     } else {
       dma2d_hires_pal_flip(source);
-      /*
-        // paletted
-        if(palette_needs_update && palette_update_delay-- == 0) {
-          for(int i = 0; i < palette_needs_update; i++) {
-            LTDC_Layer1->CLUTWR = (i << 24) | (palette[i].b << 16) | (palette[i].g << 8) | palette[i].r;
-          }
-          LTDC->SRCR = LTDC_SRCR_IMR;
-          palette_needs_update = 0;
-        }
-        uint32_t *s = (uint32_t *)source.data;
-        uint32_t *d = (uint32_t *)(&__ltdc_start + 320 * 240 * 2);
-        uint32_t c = (320 * 240) >> 2;
-        while(c--) {
-          *d++ = *s++;
-        }
-        */
     }
-
-    // since the ltdc hardware pulls frame data directly over the memory bus
-    // without passing through the mcu's cache layer we must invalidate the
-    // affected area to ensure that all data has been committed into ram
-
-    //After DMA2d, no cache clean necessary!
-    //SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(&__ltdc_start), ltdc_buffer_size);   
 
     // set new mode after displaying last frame in the old one
     if(mode != requested_mode) {
