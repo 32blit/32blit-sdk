@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.9)
 project (doom-fire)
 include (../../32blit.cmake)
 blit_executable (doom-fire doom-fire.cpp)
