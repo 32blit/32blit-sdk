@@ -60,9 +60,15 @@ function(blit_metadata TARGET FILE)
 	execute_process(COMMAND ${PYTHON_EXECUTABLE} -m ttblit cmake --config ${FILE} --cmake ${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
 	include(${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
 
+	if(${CMAKE_VERSION} VERSION_LESS "3.15.0")
+		set(BLIT_FILENAME ${TARGET}.blit)
+	else()
+		set(BLIT_FILENAME $<TARGET_FILE_BASE_NAME:${TARGET}>.blit)
+	endif()
+
 	add_custom_command(
 		TARGET ${TARGET} POST_BUILD
-		COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit metadata --config ${FILE} --file ${CMAKE_CURRENT_BINARY_DIR}/$<TARGET_FILE_BASE_NAME:${TARGET}>.blit
+		COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit metadata --config ${FILE} --file ${CMAKE_CURRENT_BINARY_DIR}/${BLIT_FILENAME}
 	)
 
 	# force relink on change so that the post-build commands are rerun

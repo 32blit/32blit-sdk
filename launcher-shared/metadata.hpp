@@ -28,5 +28,4 @@ struct BlitGameMetadata {
   }
 };
 
-bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata, bool unpack_images = false);
-bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata, bool unpack_images = false);
+void parse_metadata(char *data, uint16_t metadata_len, BlitGameMetadata &metadata, bool unpack_images);

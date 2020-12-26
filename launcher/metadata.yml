@@ -1,0 +1,8 @@
+title: Launcher
+description: Launches things.
+author: pimoroni
+splash:
+  file: ../examples/no-image.png
+icon:
+  file: ../examples/no-icon.png
+version: v1.0.0

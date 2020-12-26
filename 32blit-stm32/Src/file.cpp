@@ -161,20 +161,11 @@ const char *get_save_path() {
   if(!blit_user_code_running())
     app_name = "_firmware";
   else {
-    // TODO: this probably can be used for other things
-    auto game_ptr = reinterpret_cast<uint8_t *>(0x90000000 + persist.last_game_offset);
+    auto meta = blit_get_running_game_metadata();
 
-    auto header = reinterpret_cast<BlitGameHeader *>(game_ptr);
-
-    if(header->magic == blit_game_magic) {
-      auto end_ptr = game_ptr + (header->end - 0x90000000);
-      if(memcmp(end_ptr, "BLITMETA", 8) == 0) {
-        auto meta = reinterpret_cast<RawMetadata *>(end_ptr + 10);
-        app_name = meta->title;
-      }
-    }
-
-    if(app_name.empty()) {
+    if(meta)
+      app_name = meta->title;
+    else {
       // fallback to offset
       app_name = std::to_string(persist.last_game_offset);
     }

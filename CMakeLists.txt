@@ -1,5 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
-cmake_policy(SET CMP0069 NEW)
+cmake_minimum_required(VERSION 3.9)
 project(32blit)
 
 if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
@@ -9,11 +8,15 @@ endif()
 include(32blit.cmake)
 add_subdirectory(examples)
 
+add_subdirectory(launcher-shared)
+
 if(${CMAKE_SYSTEM_NAME} STREQUAL Generic)
     add_subdirectory(32blit-stm32)
     add_subdirectory(firmware)
     add_subdirectory(firmware-update)
 endif()
+
+add_subdirectory(launcher)
 
 if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL Generic AND NOT EMSCRIPTEN)
     add_subdirectory(tools/src)

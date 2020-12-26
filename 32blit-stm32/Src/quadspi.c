@@ -443,6 +443,17 @@ HAL_StatusTypeDef qspi_enable_memorymapped_mode(void)
     return QSPI_OK;
 }
 
+int is_qspi_memorymapped()
+{
+    return hqspi.State == HAL_QSPI_STATE_BUSY_MEM_MAPPED;
+}
+
+void qspi_disable_memorymapped_mode(void)
+{
+    HAL_QSPI_Abort(&hqspi);
+    qspi_init();
+}
+
 static HAL_StatusTypeDef qspi_enable_4byte_addr(QSPI_HandleTypeDef *hqspi)
 {
     QSPI_CommandTypeDef s_command = {0};

@@ -5,6 +5,7 @@
 #include "32blit.hpp"
 
 #include "display.hpp"
+#include "stm32h7xx_ll_dma2d.h"
 
 extern char __ltdc_start, __ltdc_end;
 extern char __fb_start, __fb_end;
@@ -56,7 +57,7 @@ namespace display {
     ltdc_init();
     screen_init();
 
-    enable_vblank_interrupt();
+    needs_render = true; 
   }
   
   void enable_vblank_interrupt() {
@@ -94,15 +95,14 @@ namespace display {
 
   void dma2d_hires_flip(const Surface &source) {
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 3); 
-
     // set the transform type (clear bits 17..16 of control register)
-    DMA2D->CR &= (DMA2D->CR & ~DMA2D_CR_MODE) | (4 << DMA2D_CR_MODE_Pos);
+    MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M_PFC);
     // set source pixel format (clear bits 3..0 of foreground format register)
-    DMA2D->FGPFCCR = (DMA2D->FGPFCCR & ~DMA2D_FGPFCCR_CM) | 1 /*RGB888*/;
+    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB888);
     // set source buffer address
     DMA2D->FGMAR = (uintptr_t)source.data; 
     // set target pixel format (clear bits 3..0 of output format register)
-    DMA2D->OPFCCR = (DMA2D->OPFCCR & ~DMA2D_OPFCCR_CM) | 1 /*RGB888*/;
+    MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_RGB565);
     // set target buffer address
     DMA2D->OMAR = (uintptr_t)&__ltdc_start;
     // set the number of pixels per line and number of lines    
@@ -123,21 +123,17 @@ namespace display {
   void dma2d_hires_pal_flip(const Surface &source) {
     // copy RGBA at quarter width
     // work as 32bit type to save some bandwidth
-
-    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 1); 
-    
+    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 1);  
     // set the transform type (clear bits 17..16 of control register)
-    DMA2D->CR &= (DMA2D->CR & ~DMA2D_CR_MODE) | (4 << DMA2D_CR_MODE_Pos);
+    MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
     // set source pixel format (clear bits 3..0 of foreground format register)
-    DMA2D->FGPFCCR = (DMA2D->FGPFCCR & ~DMA2D_FGPFCCR_CM) | 0 /*RGBA8888*/;
-    
+    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_ARGB8888);
     // set source buffer address
     DMA2D->FGMAR = (uintptr_t)source.data; 
     // set target pixel format (clear bits 3..0 of output format register)
-    DMA2D->OPFCCR = (DMA2D->OPFCCR & ~DMA2D_OPFCCR_CM) | 0 /*RGBA8888*/;
-    
+    MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_ARGB8888);
     // set target buffer address
-    DMA2D->OMAR = (uintptr_t)((uint32_t)&__ltdc_start + 320 * 240 * 2);
+    DMA2D->OMAR = (uintptr_t)((uint32_t)&__ltdc_start + 320 * 240 * 1);
     // set the number of pixels per line and number of lines    
     DMA2D->NLR = (80 << 16) | (240);
     // set the source offset
@@ -146,7 +142,6 @@ namespace display {
     DMA2D->OOR = 0;
     // trigger start of dma2d transfer
     DMA2D->CR |= DMA2D_CR_START;
-
     // update pal next, dma2d could work at same time
     if(palette_needs_update && palette_update_delay-- == 0) {
       for(int i = 0; i < palette_needs_update; i++) {
@@ -164,21 +159,44 @@ namespace display {
   }
 
   void dma2d_lores_flip(const Surface &source) {
-    // this does not work... yet!
-    /*SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 3); 
-
+    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 160 * 120 * 3); 
+    //Step 1.
     // set the transform type (clear bits 17..16 of control register)
-    DMA2D->CR &= 0xfcff;
-    // set target pixel format (clear bits 3..0 of foreground format register)
-    DMA2D->FGPFCCR &= 0xfff0;
+    MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M_PFC);
+    // set source pixel format (clear bits 3..0 of foreground format register)
+    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB888);
     // set source buffer address
-    DMA2D->FGMAR = source.data; 
+    DMA2D->FGMAR = (uintptr_t)source.data; 
     // set target pixel format (clear bits 3..0 of output format register)
-    DMA2D->OPFCCR &= 0xfff0;
+    MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_RGB565);
     // set target buffer address
-    DMA2D->OMAR = (&__ltdc_start) + (320 * 120 * 3) + 3; // halfway point
+    DMA2D->OMAR = ((uintptr_t)&__ltdc_start)+320*120*2;
     // set the number of pixels per line and number of lines    
-    DMA2D->NLR = (1 << 16) | (320 * 240 * 2);
+    DMA2D->NLR = (1 << 16) | (160*120);
+    // set the source offset
+    DMA2D->FGOR = 0;
+    // set the output offset
+    DMA2D->OOR = 1;
+    // trigger start of dma2d transfer
+    DMA2D->CR |= DMA2D_CR_START;
+
+    // wait for transfer to complete
+    while(DMA2D->CR & DMA2D_CR_START) {      
+      // never gets here!
+    }  
+    //Step 2.  
+    // set the transform type (clear bits 17..16 of control register)
+    MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
+    // set source pixel format (clear bits 3..0 of foreground format register)
+    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB565);
+    // set source buffer address
+    DMA2D->FGMAR = ((uintptr_t)&__ltdc_start)+320*120*2; 
+    // set target pixel format (clear bits 3..0 of output format register)
+    MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_RGB565);
+    // set target buffer address
+    DMA2D->OMAR =  ((uintptr_t)&__ltdc_start)+320*120*2 + 2;
+    // set the number of pixels per line and number of lines    
+    DMA2D->NLR = (1 << 16) | (160*120);
     // set the source offset
     DMA2D->FGOR = 1;
     // set the output offset
@@ -189,7 +207,55 @@ namespace display {
     // wait for transfer to complete
     while(DMA2D->CR & DMA2D_CR_START) {      
       // never gets here!
-    }*/
+    }  
+    //step 3.
+    // set the transform type (clear bits 17..16 of control register)
+    MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
+    // set source pixel format (clear bits 3..0 of foreground format register)
+    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_ARGB8888);
+    // set source buffer address
+    DMA2D->FGMAR = ((uintptr_t)&__ltdc_start)+320*120*2; 
+    // set target pixel format (clear bits 3..0 of output format register)
+    MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_ARGB8888);
+    // set target buffer address
+    DMA2D->OMAR =  ((uintptr_t)&__ltdc_start);
+    // set the number of pixels per line and number of lines    
+    DMA2D->NLR = (160 << 16) | (120);
+    // set the source offset
+    DMA2D->FGOR = 0;
+    // set the output offset
+    DMA2D->OOR = 160;
+    // trigger start of dma2d transfer
+    DMA2D->CR |= DMA2D_CR_START;
+
+    // wait for transfer to complete
+    while(DMA2D->CR & DMA2D_CR_START) {      
+      // never gets here!
+    }  
+    //step 4.
+    // set the transform type (clear bits 17..16 of control register)
+    MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
+    // set source pixel format (clear bits 3..0 of foreground format register)
+    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_ARGB8888);//same as step 3, skip it
+    // set source buffer address
+    DMA2D->FGMAR = ((uintptr_t)&__ltdc_start); 
+    // set target pixel format (clear bits 3..0 of output format register)
+    MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_ARGB8888);//same as step 3, skip it
+    // set target buffer address
+    DMA2D->OMAR =  ((uintptr_t)&__ltdc_start)+320*2;
+    // set the number of pixels per line and number of lines    
+    DMA2D->NLR = (160 << 16) | (120);
+    // set the source offset
+    DMA2D->FGOR = 160;
+    // set the output offset
+    DMA2D->OOR = 160;
+    // trigger start of dma2d transfer
+    DMA2D->CR |= DMA2D_CR_START;
+
+    // wait for transfer to complete
+    while(DMA2D->CR & DMA2D_CR_START) {      
+      // never gets here!
+    }  
   }
 
   void flip(const Surface &source) {        
@@ -201,96 +267,13 @@ namespace display {
       need_ltdc_mode_update = false;
     }
 
-    // TODO: both flip implementations can we done via DMA2D which will save
-    // a heap of CPU time.
-
-    uint32_t ltdc_buffer_size = 320 * 240 * 3;
-
-    if(mode == ScreenMode::lores) {
-      //dma2d_lores_flip(source);
-      //screen.text(std::to_string(flip_time), minimal_font, Point(100,40));
-
-      uint32_t flip_start = DWT->CYCCNT;
-
-      uint8_t *s = (uint8_t *)source.data;
-      uint8_t *d = (uint8_t *)(&__ltdc_start);
-
-      // pixel double the framebuffer to the ltdc buffer
-      for(uint8_t y = 0; y < 120; y++) {
-        // pixel double the current row horizontally
-        for(uint8_t x = 0; x < 160; x++) {
-          *d++ = *(s + 0);
-          *d++ = *(s + 1);
-          *d++ = *(s + 2);
-          *d++ = *(s + 0);
-          *d++ = *(s + 1);
-          *d++ = *(s + 2);
-
-          s += 3;
-        }
-
-        // copy the previous row to pixel double vertically
-        uint32_t *cd = (uint32_t *)d;
-        uint32_t *cs = (uint32_t *)(d - (320 * 3));
-        while(cs < (uint32_t *)d) {
-          *cd++ = *cs++;
-        }        
-        d += 320 * 3;
-      }
-      
-      uint32_t flip_end = DWT->CYCCNT;
-      flip_time = ((flip_end - flip_start) / 1000) * 1000;
-    } else if(mode == ScreenMode::hires) {
-            
-      //screen.text(std::to_string(flip_time), minimal_font, Point(140,40));
-      //uint32_t flip_start = DWT->CYCCNT;
-
-      // perform flip with dma2d transfer
+    if(mode == ScreenMode::lores) {  
+      dma2d_lores_flip(source);
+    } else if(mode == ScreenMode::hires) {      
       dma2d_hires_flip(source);
-
-      /*
-        // alternative soft implementation
-        // copy the framebuffer data into the ltdc buffer, originally this
-        // was done via memcpy but implementing it as a 32-bit copy loop
-        // was much faster.  
-        uint32_t *s = (uint32_t *)source.data;
-        uint32_t *d = (uint32_t *)(&__ltdc_start);
-        uint32_t c = ltdc_buffer_size >> 2;
-        while(c--) {
-          *d++ = *s++;
-        }
-      */
-
-      //uint32_t flip_end = DWT->CYCCNT;
-      //flip_time = ((flip_end - flip_start) / 1000) * 1000;
-
-      
     } else {
       dma2d_hires_pal_flip(source);
-      /*
-        // paletted
-        if(palette_needs_update && palette_update_delay-- == 0) {
-          for(int i = 0; i < palette_needs_update; i++) {
-            LTDC_Layer1->CLUTWR = (i << 24) | (palette[i].b << 16) | (palette[i].g << 8) | palette[i].r;
-          }
-
-          LTDC->SRCR = LTDC_SRCR_IMR;
-          palette_needs_update = 0;
-        }
-
-        uint32_t *s = (uint32_t *)source.data;
-        uint32_t *d = (uint32_t *)(&__ltdc_start + 320 * 240 * 2);
-        uint32_t c = (320 * 240) >> 2;
-        while(c--) {
-          *d++ = *s++;
-        }
-        */
     }
-
-    // since the ltdc hardware pulls frame data directly over the memory bus
-    // without passing through the mcu's cache layer we must invalidate the
-    // affected area to ensure that all data has been committed into ram
-    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(&__ltdc_start), ltdc_buffer_size);   
 
     // set new mode after displaying last frame in the old one
     if(mode != requested_mode) {
@@ -326,10 +309,10 @@ namespace display {
     LTDC_Layer1->WHPCR = ((1 + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> 16U) + 1U) | ((321 + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> 16U)) << 16U));
     LTDC_Layer1->WVPCR &= ~(LTDC_LxWVPCR_WVSTPOS | LTDC_LxWVPCR_WVSPPOS);
     LTDC_Layer1->WVPCR  = ((0 + (LTDC->BPCR & LTDC_BPCR_AVBP) + 1U) | ((241 + (LTDC->BPCR & LTDC_BPCR_AVBP)) << 16U));  
-    LTDC_Layer1->PFCR   = LTDC_PIXEL_FORMAT_RGB888;  
+    LTDC_Layer1->PFCR   = LTDC_PIXEL_FORMAT_RGB565;  
     LTDC_Layer1->DCCR   = 0xff000000;     // layer default color (back, 100% alpha)
     LTDC_Layer1->CFBAR  = (uint32_t)&__ltdc_start;  // frame buffer start address
-    LTDC_Layer1->CFBLR  = ((320 * 3) << LTDC_LxCFBLR_CFBP_Pos) | (((320 * 3) + 2) << LTDC_LxCFBLR_CFBLL_Pos);  // frame buffer line length and pitch
+    LTDC_Layer1->CFBLR  = ((320 * 2) << LTDC_LxCFBLR_CFBP_Pos) | (((320 * 2) + 7) << LTDC_LxCFBLR_CFBLL_Pos);  // frame buffer line length and pitch
     LTDC_Layer1->CFBLNR = 240;            // line count
     LTDC_Layer1->CACR   = 255;            // alpha
     LTDC_Layer1->CR    |= LTDC_LxCR_LEN;  // enable layer
@@ -344,11 +327,13 @@ namespace display {
   void update_ltdc_for_mode() {
     if(mode == ScreenMode::hires_palette) {
       LTDC_Layer1->PFCR = LTDC_PIXEL_FORMAT_L8;
-      LTDC_Layer1->CFBAR  = (uint32_t)&__ltdc_start + 320 * 240 * 2;  // frame buffer start address
+      LTDC_Layer1->CFBAR  = (uint32_t)&__ltdc_start + 320 * 240 * 1;  // frame buffer start address
+      LTDC_Layer1->CFBLR  = ((320 * 1) << LTDC_LxCFBLR_CFBP_Pos) | (((320 * 1) + 7) << LTDC_LxCFBLR_CFBLL_Pos);  // frame buffer line length and pitch
       LTDC_Layer1->CR |= LTDC_LxCR_CLUTEN;
     } else {
-      LTDC_Layer1->PFCR = LTDC_PIXEL_FORMAT_RGB888;
+      LTDC_Layer1->PFCR = LTDC_PIXEL_FORMAT_RGB565;
       LTDC_Layer1->CFBAR  = (uint32_t)&__ltdc_start;  // frame buffer start address
+      LTDC_Layer1->CFBLR  = ((320 * 2) << LTDC_LxCFBLR_CFBP_Pos) | (((320 * 2) + 7) << LTDC_LxCFBLR_CFBLL_Pos);  // frame buffer line length and pitch
       LTDC_Layer1->CR &= ~LTDC_LxCR_CLUTEN;
     }
 

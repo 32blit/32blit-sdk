@@ -4,6 +4,7 @@
 #include "32blit.hpp"
 #include "fatfs.h"
 #include "persistence.h"
+#include "executable.hpp"
 
 extern bool is_beta_unit;
 
@@ -31,9 +32,12 @@ extern void blit_i2c_tick();
 
 // Switching execution.
 // Address is relative to the start of flash, ignored if switching to firmware
-extern void blit_switch_execution(uint32_t address);
+extern void blit_switch_execution(uint32_t address, bool force_game);
 extern bool blit_user_code_running();
 extern "C" void blit_reset_with_error();
+extern void blit_enable_user_code();
+extern void blit_disable_user_code();
+extern RawMetadata *blit_get_running_game_metadata();
 
 void blit_menu_update(uint32_t time);
 void blit_menu_render(uint32_t time);
