@@ -233,12 +233,14 @@ namespace display {
       // never gets here!
     }  
     //step 4.
+    // set the transform type (clear bits 17..16 of control register)
+    MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
     // set source pixel format (clear bits 3..0 of foreground format register)
-    //MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_ARGB8888);//same as step 3, skip it
+    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_ARGB8888);//same as step 3, skip it
     // set source buffer address
     DMA2D->FGMAR = ((uintptr_t)&__ltdc_start); 
     // set target pixel format (clear bits 3..0 of output format register)
-    //MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_ARGB8888);//same as step 3, skip it
+    MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_ARGB8888);//same as step 3, skip it
     // set target buffer address
     DMA2D->OMAR =  ((uintptr_t)&__ltdc_start)+320*2;
     // set the number of pixels per line and number of lines    
@@ -331,6 +333,7 @@ namespace display {
     } else {
       LTDC_Layer1->PFCR = LTDC_PIXEL_FORMAT_RGB565;
       LTDC_Layer1->CFBAR  = (uint32_t)&__ltdc_start;  // frame buffer start address
+      LTDC_Layer1->CFBLR  = ((320 * 2) << LTDC_LxCFBLR_CFBP_Pos) | (((320 * 2) + 7) << LTDC_LxCFBLR_CFBLL_Pos);  // frame buffer line length and pitch
       LTDC_Layer1->CR &= ~LTDC_LxCR_CLUTEN;
     }
 
