@@ -113,6 +113,7 @@ namespace blit {
    * \param[in] transform to apply
    */
   void Surface::sprite(uint16_t sprite, const Point &position, uint8_t transform) {
+    if(sprites == nullptr) return;
     blit_sprite(
       sprites->sprite_bounds(sprite), 
       position, 
@@ -127,6 +128,7 @@ namespace blit {
    * \param[in] transform to apply
    */
   void Surface::sprite(const Point &sprite, const Point &position, uint8_t transform) {
+    if(sprites == nullptr) return;
     blit_sprite(
       sprites->sprite_bounds(sprite),
       position,
@@ -140,7 +142,8 @@ namespace blit {
    * \param[in] position `point` at which to place the sprite in the target surface
    * \param[in] transform to apply
    */
-  void Surface::sprite(const Rect &sprite, const Point &position, uint8_t transform) {        
+  void Surface::sprite(const Rect &sprite, const Point &position, uint8_t transform) {       
+    if(sprites == nullptr) return; 
     blit_sprite(
       sprites->sprite_bounds(sprite),
       position,
@@ -197,6 +200,8 @@ namespace blit {
    * \param[in] transform to apply
    */
   void Surface::sprite(uint16_t sprite, const Point &position, const Point &origin, const Vec2 &scale, uint8_t transform) {
+    if(sprites == nullptr) return;
+
     Rect dest_rect(
       roundf(position.x - float(origin.x * scale.x)),
       roundf(position.y - float(origin.y * scale.y)),
@@ -220,6 +225,8 @@ namespace blit {
    * \param[in] transform to apply
    */
   void Surface::sprite(const Point &sprite, const Point &position, const Point &origin, const Vec2 &scale, uint8_t transform) {
+    if(sprites == nullptr) return;
+
     Rect dest_rect(
       roundf(position.x - float(origin.x * scale.x)),
       roundf(position.y - float(origin.y * scale.y)),
@@ -243,6 +250,8 @@ namespace blit {
    * \param[in] transform to apply
    */
   void Surface::sprite(const Rect &sprite, const Point &position, const Point &origin, const Vec2 &scale, uint8_t transform) {
+    if(sprites == nullptr) return;
+
     Rect dest_rect(
       roundf(position.x - float(origin.x * scale.x)),
       roundf(position.y - float(origin.y * scale.y)),
