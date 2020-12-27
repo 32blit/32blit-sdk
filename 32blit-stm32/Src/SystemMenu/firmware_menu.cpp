@@ -1,4 +1,4 @@
-/* FirmwareMenu.cpp
+/* firmware_menu.cpp
  * source file for Firmware menu
  *
  * The firmware menu is the main menu displayed when the user presses the MENU button.

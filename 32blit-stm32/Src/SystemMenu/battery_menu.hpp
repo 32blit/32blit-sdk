@@ -1,4 +1,4 @@
-/* BatteryMenu.hpp
+/* battery_menu.hpp
  * header file for Battery menu
  *
  * The battery menu is a sub menu to show battery information
@@ -7,7 +7,6 @@
 #pragma once
 
 #include "engine/menu.hpp"
-
 class BatteryMenu final : public blit::Menu {
 public:
   using blit::Menu::Menu;

@@ -1,4 +1,4 @@
-/* FirmwareMenu.hpp
+/* firmware_menu.hpp
  * header file for Firmware menu
  *
  * The firmware menu is the main menu displayed when the user presses the MENU button.
@@ -13,42 +13,33 @@
 
 class FirmwareMenu final : public blit::Menu {
 public:
-    using blit::Menu::Menu;
+  using blit::Menu::Menu;
 
-    //
-    // Prepare to show the firmware menu
-    //
-    void prepare();
+  // Prepare to show the firmware menu
+  void prepare();
 
-    void draw_slider(Point pos, int width, float value, Pen colour) const;
+  void draw_slider(Point pos, int width, float value, Pen colour) const;
 
-    void render_footer(int x, int y, int w) override;
+  void render_footer(int x, int y, int w) override;
 
 protected:
-    void render_item(const Item &item, int y, int index) const override;
+  void render_item(const Item &item, int y, int index) const override;
 
-    //
-    // Update menu items -- update backlight and volume by checking some keys
-    //
-    void update_item(const Item &item) override;
+  // Update menu items -- update backlight and volume by checking some keys
+  void update_item(const Item &item) override;
 
-    void update_menu(uint32_t time) override;
+  // Update entire menu
+  void update_menu(uint32_t time) override;
 
-    /*
-     * The 'A' button was clicked on a menu item
-     */
-    void item_activated(const Item &item) override;
-private:
-    /*
-    * For values that are changed using sliders, in addition to DPAD_LEFT and DPAD_RIGHT smooth
-    * changing, we support Y to set to 0, X to set to full and A and B to set set in 1/4 steps.
-    *
-    * The function gets a pointer to the value that is to be changed.
-    */
-    void update_slider_item_value(float &value);
+  // The 'A' button was clicked on a menu item
+  void item_activated(const Item &item) override;
 
 private:
-    Pen bar_background_color;
+  // handle updating slider values
+  void update_slider_item_value(float &value);
+
+private:
+  Pen bar_background_color;
 };
 
 extern FirmwareMenu firmware_menu;

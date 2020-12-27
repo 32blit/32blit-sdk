@@ -20,16 +20,14 @@ using namespace blit;
 //
 // Initialize the system menu controller
 //
-SystemMenuController::SystemMenuController()
-{
+SystemMenuController::SystemMenuController() {
   current_menu = SystemMenus::Firmware;
 }
 
 //
 // Preapre to show the system menus
 //
-void SystemMenuController::prepare()
-{
+void SystemMenuController::prepare() {
   set_menu(SystemMenus::Firmware);
 
   firmware_menu.prepare();
@@ -39,10 +37,8 @@ void SystemMenuController::prepare()
 //
 // Call update on the currently selected menu
 //
-void SystemMenuController::update(uint32_t time)
-{
-  switch (current_menu)
-  {
+void SystemMenuController::update(uint32_t time) {
+  switch (current_menu) {
   case SystemMenus::Firmware:
     firmware_menu.update(time);
     break;
@@ -55,10 +51,8 @@ void SystemMenuController::update(uint32_t time)
 //
 // Render the currently selected menu
 //
-void SystemMenuController::render(uint32_t time)
-{
-  switch (current_menu)
-  {
+void SystemMenuController::render(uint32_t time) {
+  switch (current_menu) {
   case SystemMenus::Firmware:
     firmware_menu.render();
     break;
@@ -74,8 +68,7 @@ void SystemMenuController::render(uint32_t time)
 //
 // Render the battery bar
 //
-void SystemMenuController::render_header_battery_status(uint32_t time)
-{
+void SystemMenuController::render_header_battery_status(uint32_t time) {
   const int screen_width = blit::screen.bounds.w;
   const int screen_height = blit::screen.bounds.h;
 
@@ -92,8 +85,7 @@ void SystemMenuController::render_header_battery_status(uint32_t time)
   screen.pen = bar_background_color;
   screen.rectangle(Rect(screen_width - 60, 5, 55, 5));
 
-  switch (bat.battery_status >> 6)
-  {
+  switch (bat.battery_status >> 6) {
   case 0b00: // Unknown
     screen.pen = get_menu_colour(5);
     break;
@@ -109,8 +101,7 @@ void SystemMenuController::render_header_battery_status(uint32_t time)
   }
   screen.rectangle(Rect(screen_width - 60, 5, battery_meter_width, 5));
   uint8_t battery_charge_status = (bat.battery_status >> 4) & 0b11;
-  if (battery_charge_status == 0b01 || battery_charge_status == 0b10)
-  {
+  if (battery_charge_status == 0b01 || battery_charge_status == 0b10) {
     int battery_fill_width = (time / 500) % battery_meter_width;
     battery_fill_width = std::min(battery_meter_width, battery_fill_width);
     screen.pen = get_menu_colour(8);
@@ -122,8 +113,7 @@ void SystemMenuController::render_header_battery_status(uint32_t time)
 // Render the footer for the menu
 // The current menu can override this if needed
 //
-void SystemMenuController::render_footer_version(uint32_t time)
-{
+void SystemMenuController::render_footer_version(uint32_t time) {
   const int screen_width = blit::screen.bounds.w;
   const int screen_height = blit::screen.bounds.h;
 
@@ -136,8 +126,7 @@ void SystemMenuController::render_footer_version(uint32_t time)
 //
 // Change which menu to display
 //
-void SystemMenuController::set_menu(SystemMenus menu)
-{
+void SystemMenuController::set_menu(SystemMenus menu) {
   current_menu = menu;
 }
 
