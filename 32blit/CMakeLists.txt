@@ -46,7 +46,10 @@ if(DEFINED ENV{TRAVIS_TAG})
 	# travis release
 	set(BUILD_VER $ENV{TRAVIS_TAG})
 else()
-	set(BUILD_VER "DEV") # TODO: could parse something from git here
+  execute_process(COMMAND git describe --tags OUTPUT_VARIABLE BUILD_VER OUTPUT_STRIP_TRAILING_WHITESPACE RESULT_VARIABLE GIT_STATUS)
+  if(NOT ${GIT_STATUS} EQUAL 0)
+    set(BUILD_VER "DEV")
+  endif()
 endif()
 
 configure_file(version_defs.hpp.in version_defs.hpp)
