@@ -89,7 +89,12 @@ void FirmwareMenu::render_item(const Item &item, int y, int index) const {
         draw_slider(Point(bar_x, y + bar_margin), bar_width, persist.backlight, foreground_colour);
         break;
       case VOLUME:
-        draw_slider(Point(bar_x, y + bar_margin), bar_width, persist.volume, foreground_colour);
+        if ( persist.is_muted ) {
+          screen.text("Muted", minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);
+        }
+        else {
+          draw_slider(Point(bar_x, y + bar_margin), bar_width, persist.volume, foreground_colour);
+        }
         break;
       case STORAGE:
         screen.pen = foreground_colour;
@@ -144,6 +149,12 @@ void FirmwareMenu::update_item(const Item &item) {
       persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
       blit_update_volume();
     }
+
+    if(blit::buttons & blit::Button::X) {
+        persist.is_muted = !persist.is_muted;
+        blit_update_volume();
+    }
+
 }
 
 //

@@ -319,7 +319,8 @@ void blit_i2c_tick() {
 }
 
 void blit_update_volume() {
-    blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * persist.volume) / log(volume_log_base));
+    float volume = persist.is_muted ? 0.0f : persist.volume;
+    blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * volume) / log(volume_log_base));
 }
 
 static void save_screenshot() {
