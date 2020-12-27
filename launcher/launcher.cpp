@@ -181,6 +181,10 @@ void load_file_list(std::string directory) {
     }
   }
 
+  auto total_items = game_list.size();
+  if(persist.selected_menu_item >= total_items)
+    persist.selected_menu_item = total_items - 1;
+
   sort_file_list();
 }
 
@@ -209,10 +213,6 @@ void init_lists() {
   current_directory = directory_list.begin();
 
   load_file_list(current_directory->name);
-
-  auto total_items = game_list.size();
-  if(persist.selected_menu_item >= total_items)
-    persist.selected_menu_item = total_items - 1;
 
   load_current_game_metadata();
 }
