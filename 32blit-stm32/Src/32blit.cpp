@@ -360,8 +360,8 @@ void blit_init() {
     }
 
 #if (INITIALISE_QSPI==1)
-    // don't switch to game if it crashed, or menu is held
-    if(persist.reset_target == prtGame && (!HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port,  BUTTON_MENU_Pin) || persist.reset_error))
+    // don't switch to game if it crashed, or home is held
+    if(persist.reset_target == prtGame && (HAL_GPIO_ReadPin(BUTTON_HOME_GPIO_Port,  BUTTON_HOME_Pin) || persist.reset_error))
       persist.reset_target = prtFirmware;
 #endif
 
@@ -771,7 +771,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   if(htim == &htim2) {
-    bool pressed = !HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port, BUTTON_MENU_Pin);
+    bool pressed = HAL_GPIO_ReadPin(BUTTON_HOME_GPIO_Port, BUTTON_HOME_Pin);
     if(pressed && blit_user_code_running()) { // if button was pressed and we are inside a game, queue the game exit
       exit_game = true;
     }
@@ -781,7 +781,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-  bool pressed = !HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port, BUTTON_MENU_Pin);
+  bool pressed = HAL_GPIO_ReadPin(BUTTON_HOME_GPIO_Port, BUTTON_HOME_Pin);
   if(pressed) {
     /*
     The timer will generate a spurious interrupt as soon as it's enabled- apparently to load the compare value.
