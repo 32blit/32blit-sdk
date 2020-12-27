@@ -40,6 +40,7 @@ private:
 
 private:
   Pen bar_background_color;
+  Pen bar_highlight_color;
 };
 
 extern FirmwareMenu firmware_menu;
