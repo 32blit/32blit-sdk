@@ -150,11 +150,10 @@ void FirmwareMenu::update_item(const Item &item) {
       blit_update_volume();
     }
 
-    if(blit::buttons & blit::Button::X) {
+    if(blit::buttons.released & blit::Button::X) {
         persist.is_muted = !persist.is_muted;
         blit_update_volume();
     }
-
 }
 
 //

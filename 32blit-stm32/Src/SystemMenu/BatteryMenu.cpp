@@ -1,10 +1,7 @@
 /* BatteryMenu.cpp
  * source file for Battery menu
  * 
- * The firmware menu is the main menu displayed when the user presses the MENU button. 
- * It is rendered on top of the current content that is shown on the screen. 
- * It can be used to adjust various system settings or to show information
- * about the battery.
+ * The battery menu is a sub menu to show battery information
  */
 
 #include "32blit.h"
@@ -94,18 +91,10 @@ void BatteryMenu::render_footer() {
 // Update backlight and volume by checking if keys were pressed
 //
 void BatteryMenu::update_item(const Item &item) {
-    // if(item.id == BACKLIGHT) {
-    //   update_slider_item_value(persist.backlight);
-    //   persist.backlight = std::fmin(1.0f, std::fmax(0.0f, persist.backlight));
-    // } else if(item.id == VOLUME) {
-    //   update_slider_item_value(persist.volume);
-    //   persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
-    //   blit_update_volume();
-    // }
-    if(blit::buttons & blit::Button::DPAD_LEFT) {
+    if(blit::buttons.released & blit::Button::DPAD_LEFT) {
         system_menu.set_menu(SystemMenus::Firmware);
     }
-    if(blit::buttons & blit::Button::B) {
+    if(blit::buttons.released & blit::Button::B) {
         system_menu.set_menu(SystemMenus::Firmware);
     }
 }
@@ -114,27 +103,7 @@ void BatteryMenu::update_item(const Item &item) {
 // The 'A' button was clicked on a menu item
 //
 void BatteryMenu::item_activated(const Item &item) {
-    // switch(item.id) {
-    //   case SCREENSHOT:
-    //     take_screenshot = true;
-    //     break;
-    //   case DFU:
-    //     DFUBoot();
-    //     break;
-    //   case SHIPPING:
-    //     bq24295_enable_shipping_mode(&hi2c4);
-    //     break;
-    //   case SWITCH_EXE:
-    //     blit_switch_execution(persist.last_game_offset, false);
-    //     break;
-    //   case STORAGE:
-    //     // switch back manually if not mounted
-    //     if(g_usbManager.GetState() == USBManager::usbsMSCInititalising)
-    //       g_usbManager.SetType(USBManager::usbtCDC);
-    //     else if(num_open_files == 0)
-    //       g_usbManager.SetType(USBManager::usbtMSC);
-    //     break;
-    // }
+    // Nothing to do in this menu
 }
 
 //
