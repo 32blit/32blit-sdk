@@ -49,7 +49,7 @@ list(APPEND SOURCES
 	Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c
 	Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc.c
   Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_bot.c
-  Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_data.c 
+  Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_data.c
   Src/usbd_msc_scsi.c
 	Src/system_stm32h7xx.c
 	Src/user_diskio.c
@@ -60,7 +60,7 @@ list(APPEND SOURCES
 	Src/usbd_conf.c
 	Src/usbd_desc.c
 	Src/usbd_cdc_if.c
-	Src/usbd_storage_if.c	
+	Src/usbd_storage_if.c
 	Src/display.cpp
 	Src/gpio.cpp
 	Src/jpeg.c
@@ -81,16 +81,16 @@ list(APPEND SOURCES
 	Src/sys.c
 	Src/tim.c
 	Src/rng.c
-	Src/SystemMenu/FirmwareMenu.cpp
-	Src/SystemMenu/SystemMenuController.cpp
-	Src/SystemMenu/BatteryMenu.cpp
+	Src/SystemMenu/firmware_menu.cpp
+	Src/SystemMenu/system_menu_controller.cpp
+	Src/SystemMenu/battery_menu.cpp
 	Src/32blit.cpp
 	Src/CDCLogging.c
-	Src/CDCDataStream.cpp 
-	Src/CDCCommandStream.cpp 
-	Src/CDCCommandHandler.cpp 
+	Src/CDCDataStream.cpp
+	Src/CDCCommandStream.cpp
+	Src/CDCCommandHandler.cpp
 	Src/CDCResetHandler.cpp
-	Src/CDCInfoHandler.cpp 
+	Src/CDCInfoHandler.cpp
 	Src/USBManager.cpp
 	Utilities/JPEG/jpeg_utils.c
 )
@@ -105,13 +105,13 @@ set_source_files_properties(
 	Src/usbd_cdc_if.c
 	Src/usbd_storage_if.c
 	Src/CDCLogging.c
-	
+
 	PROPERTIES LANGUAGE CXX
 )
 
 add_library(BlitHalSTM32 OBJECT ${SOURCES})
 
-set(INCLUDE_DIRS 
+set(INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/Inc
 	${CMAKE_CURRENT_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Inc
 	${CMAKE_CURRENT_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Inc/Legacy

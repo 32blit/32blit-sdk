@@ -12,9 +12,9 @@
 
 using namespace blit;
 
-#include "SystemMenuController.hpp"
-#include "FirmwareMenu.hpp"
-#include "BatteryMenu.hpp"
+#include "system_menu_controller.hpp"
+#include "firmware_menu.hpp"
+#include "battery_menu.hpp"
 #include "engine/version.hpp"
 
 //

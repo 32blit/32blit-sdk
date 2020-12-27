@@ -32,7 +32,7 @@
 #include "engine/menu.hpp"
 #include "engine/version.hpp"
 
-#include "SystemMenu/SystemMenuController.hpp"
+#include "SystemMenu/system_menu_controller.hpp"
 
 #include "stdarg.h"
 using namespace blit;

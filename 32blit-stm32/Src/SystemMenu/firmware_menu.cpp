@@ -15,8 +15,8 @@
 
 using namespace blit;
 
-#include "FirmwareMenu.hpp"
-#include "SystemMenuController.hpp"
+#include "firmware_menu.hpp"
+#include "system_menu_controller.hpp"
 
 //
 // Some declarations from 32blit.cpp that we need to do system things
