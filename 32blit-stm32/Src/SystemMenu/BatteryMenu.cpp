@@ -82,6 +82,8 @@ void BatteryMenu::render_item(const Item &item, int y, int index) const {
 // Render the footer for the menu
 //
 void BatteryMenu::render_footer(int x, int y, int w) {
+    Menu::render_footer(x,y,w);
+    screen.pen = get_menu_colour(10);
     screen.text("B: Back", minimal_font, Point(x + 5, y + 5));
 }
 
