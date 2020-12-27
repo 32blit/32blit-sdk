@@ -84,6 +84,7 @@ list(APPEND SOURCES
 	Src/SystemMenu/firmware_menu.cpp
 	Src/SystemMenu/system_menu_controller.cpp
 	Src/SystemMenu/battery_menu.cpp
+	Src/SystemMenu/about_menu.cpp
 	Src/32blit.cpp
 	Src/CDCLogging.c
 	Src/CDCDataStream.cpp

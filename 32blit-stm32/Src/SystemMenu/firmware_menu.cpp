@@ -39,10 +39,13 @@ enum MenuItem {
   VOLUME,
   SCREENSHOT,
   DFU,
-  BATTERY_INFO,
   SHIPPING,
   SWITCH_EXE,
   STORAGE,
+  SEPARATOR1,
+  BATTERY_INFO,
+  SEPARATOR2,
+  ABOUT,
   LAST_COUNT // leave me last pls
 };
 
@@ -161,6 +164,12 @@ void FirmwareMenu::update_item(const Item &item) {
       system_menu.set_menu(SystemMenus::Battery);
     }
   }
+  else if (item.id == ABOUT) {
+    if (blit::buttons.released & blit::Button::DPAD_RIGHT)
+    {
+      system_menu.set_menu(SystemMenus::About);
+    }
+  }
 }
 
 //
@@ -190,6 +199,9 @@ void FirmwareMenu::item_activated(const Item &item) {
   case BATTERY_INFO:
     system_menu.set_menu(SystemMenus::Battery);
     break;
+  case ABOUT:
+    system_menu.set_menu(SystemMenus::About);
+    break;
   case SWITCH_EXE:
     blit_switch_execution(persist.last_game_offset, false);
     break;
@@ -211,10 +223,13 @@ static Menu::Item firmware_menu_items[] {
     {VOLUME, "Volume"},
     {SCREENSHOT, "Take Screenshot"},
     {DFU, "DFU Mode"},
-    {BATTERY_INFO, "Battery info >"},
     {SHIPPING, "Power Off"},
     {SWITCH_EXE, ""}, // label depends on if a game is running
     {STORAGE, "Storage Mode"},
+    {SEPARATOR1,"---"},
+    {BATTERY_INFO, "Battery info >"},
+    {SEPARATOR2,"---"},
+    {ABOUT,"About 32blit >"},
 };
 
 //

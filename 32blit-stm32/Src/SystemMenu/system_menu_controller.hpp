@@ -7,6 +7,7 @@ Pen get_menu_colour(int index);
 enum SystemMenus {
   Firmware,
   Battery,
+  About,
 };
 
 class SystemMenuController {
