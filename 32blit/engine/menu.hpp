@@ -176,9 +176,9 @@ namespace blit {
     // Derived classes should call base, as this clears the rectangle as well
     //
     virtual void render_footer(int x, int y, int w) {
-        screen.pen = header_background;
-        Rect footer_rect(x, y, w, footer_h);
-        screen.rectangle(footer_rect);
+      screen.pen = header_background;
+      Rect footer_rect(x, y, w, footer_h);
+      screen.rectangle(footer_rect);
     }
 
     const Item *items;
@@ -208,6 +208,4 @@ namespace blit {
     Pen header_background = Pen(235, 245, 255);
     Pen header_foreground = Pen(3, 5, 7);
   };
-
-
 }
