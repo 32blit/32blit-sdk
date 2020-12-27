@@ -151,6 +151,10 @@ void FirmwareMenu::update_item(const Item &item) {
       update_slider_item_value(persist.volume);
       persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
       blit_update_volume();
+    } else if(item.id == BATTERY_INFO) {
+      if (blit::buttons.released & blit::Button::DPAD_RIGHT) {
+        system_menu.set_menu(SystemMenus::Battery);
+      }
     }
 }
 
