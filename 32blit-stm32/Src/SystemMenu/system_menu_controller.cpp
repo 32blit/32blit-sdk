@@ -72,11 +72,12 @@ void SystemMenuController::render_header_battery_status(uint32_t time) {
   const int screen_width = blit::screen.bounds.w;
   const int screen_height = blit::screen.bounds.h;
 
-  //   const Pen foreground_colour = get_menu_colour(10);
+  const Pen foreground_colour = get_menu_colour(10);
   const Pen bar_background_color = get_menu_colour(3);
 
   BatteryInformation bat = blit_get_battery_info();
 
+  screen.pen = foreground_colour;
   screen.text("bat", minimal_font, Point(screen_width - 80, 4));
   int battery_meter_width = 55;
   battery_meter_width = float(battery_meter_width) * (bat.voltage - 3.0f) / 1.1f;
