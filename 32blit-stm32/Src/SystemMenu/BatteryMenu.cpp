@@ -1,6 +1,6 @@
 /* BatteryMenu.cpp
  * source file for Battery menu
- * 
+ *
  * The battery menu is a sub menu to show battery information
  */
 
@@ -54,7 +54,7 @@ void BatteryMenu::render_item(const Item &item, int y, int index) const {
     const int bar_height = item_h - bar_margin * 2;
     const int bar_width = 75;
     int bar_x = screen_width - bar_width - item_padding_x;
-  
+
     BatteryInformation bat = blit_get_battery_info();
 
     switch(item.id) {
@@ -74,36 +74,27 @@ void BatteryMenu::render_item(const Item &item, int y, int index) const {
       default:
         screen.pen = foreground_colour;
         screen.text("Press A", minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);
-        break;  
+        break;
     }
 }
 
 //
 // Render the footer for the menu
 //
-void BatteryMenu::render_footer() {
-    const int screen_width = blit::screen.bounds.w;
-    const int screen_height = blit::screen.bounds.h;
-    screen.text("B: Back", minimal_font, Point(5, screen_height - 11));
+void BatteryMenu::render_footer(int x, int y, int w) {
+    screen.text("B: Back", minimal_font, Point(x + 5, y + 5));
 }
 
 //
 // Update backlight and volume by checking if keys were pressed
 //
-void BatteryMenu::update_item(const Item &item) {
+void BatteryMenu::update_menu(uint32_t time) {
     if(blit::buttons.released & blit::Button::DPAD_LEFT) {
         system_menu.set_menu(SystemMenus::Firmware);
     }
     if(blit::buttons.released & blit::Button::B) {
         system_menu.set_menu(SystemMenus::Firmware);
     }
-}
-
-//
-// The 'A' button was clicked on a menu item
-//
-void BatteryMenu::item_activated(const Item &item) {
-    // Nothing to do in this menu
 }
 
 //

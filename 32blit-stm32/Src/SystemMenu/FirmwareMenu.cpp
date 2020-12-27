@@ -1,8 +1,8 @@
 /* FirmwareMenu.cpp
  * source file for Firmware menu
- * 
- * The firmware menu is the main menu displayed when the user presses the MENU button. 
- * It is rendered on top of the current content that is shown on the screen. 
+ *
+ * The firmware menu is the main menu displayed when the user presses the MENU button.
+ * It is rendered on top of the current content that is shown on the screen.
  * It can be used to adjust various system settings or to show information
  * about the battery.
  */
@@ -23,7 +23,7 @@ using namespace blit;
 //
 extern USBManager g_usbManager;
 extern bool take_screenshot;
-void DFUBoot(void); 
+void DFUBoot(void);
 void blit_update_volume();
 
 //
@@ -83,14 +83,17 @@ void FirmwareMenu::render_item(const Item &item, int y, int index) const {
     const int bar_height = item_h - bar_margin * 2;
     const int bar_width = 75;
     int bar_x = screen_width - bar_width - item_padding_x;
-  
+
     switch(item.id) {
       case BACKLIGHT:
         draw_slider(Point(bar_x, y + bar_margin), bar_width, persist.backlight, foreground_colour);
         break;
       case VOLUME:
         if ( persist.is_muted ) {
+          auto prev_pen = screen.pen;
+          screen.pen = get_menu_colour(11);
           screen.text("Muted", minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);
+          screen.pen = prev_pen;
         }
         else {
           draw_slider(Point(bar_x, y + bar_margin), bar_width, persist.volume, foreground_colour);
@@ -105,27 +108,25 @@ void FirmwareMenu::render_item(const Item &item, int y, int index) const {
           label = g_usbManager.GetStateName() + 4; // trim the "MSC "
         else
           label = "Disabled";
-        
+
         screen.text(label, minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);
         break;
       default:
         screen.pen = foreground_colour;
         screen.text("Press A", minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);
-        break;  
+        break;
     }
 }
 
 //
 // Render the footer for the menu
 //
-void FirmwareMenu::render_footer() {
-    const int screen_width = blit::screen.bounds.w;
-    const int screen_height = blit::screen.bounds.h;
-    screen.text("X: Mute", minimal_font, Point(5, screen_height - 11));
+void FirmwareMenu::render_footer(int x, int y, int w) {
+    screen.text("X: Mute", minimal_font, Point(x + 5, y + 5));
 }
 
 //
-// For values that are changed using sliders, in addition to DPAD_LEFT and DPAD_RIGHT smooth 
+// For values that are changed using sliders, in addition to DPAD_LEFT and DPAD_RIGHT smooth
 // changing, we support Y to set to 0, X to set to full and A and B to set set in 1/4 steps.
 // The function gets a pointer to the value that is to be changed.
 //
@@ -134,7 +135,7 @@ void FirmwareMenu::update_slider_item_value(float & value) {
         value -= 1.0f / 12.0f;
       } else if (blit::buttons.released & blit::Button::DPAD_RIGHT) {
         value += 1.0f / 12.0f;
-      } 
+      }
 }
 
 //
@@ -149,11 +150,16 @@ void FirmwareMenu::update_item(const Item &item) {
       persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
       blit_update_volume();
     }
+}
 
-    if(blit::buttons.released & blit::Button::X) {
-        persist.is_muted = !persist.is_muted;
-        blit_update_volume();
-    }
+//
+// Update the entire menu
+//
+void FirmwareMenu::update_menu(uint32_t time) {
+  if (blit::buttons.released & blit::Button::X) {
+    persist.is_muted = !persist.is_muted;
+    blit_update_volume();
+  }
 }
 
 //
@@ -194,7 +200,7 @@ static Menu::Item firmware_menu_items[]{
   {VOLUME, "Volume"},
   {SCREENSHOT, "Take Screenshot"},
   {DFU, "DFU Mode"},
-  {BATTERY_INFO, "Battery info >"}, 
+  {BATTERY_INFO, "Battery info >"},
   {SHIPPING, "Power Off"},
   {SWITCH_EXE, ""}, // label depends on if a game is running
   {STORAGE, "Storage Mode"},

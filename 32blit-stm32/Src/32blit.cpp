@@ -343,13 +343,13 @@ void blit_init() {
     // enable backup sram
     __HAL_RCC_RTC_ENABLE();
     __HAL_RCC_BKPRAM_CLK_ENABLE();
-    HAL_PWR_EnableBkUpAccess(); 
+    HAL_PWR_EnableBkUpAccess();
     HAL_PWREx_EnableBkUpReg();
 
     // need to wit for sram, I tried a few things I found on the net to wait
     // based on PWR flags but none seemed to work, a simple delay does work!
     HAL_Delay(5);
-      
+
     if(persist.magic_word != persistence_magic_word) {
       // Set persistent defaults if the magic word does not match
       persist.magic_word = persistence_magic_word;
@@ -426,7 +426,7 @@ void blit_init() {
 
 
   display::init();
-  
+
   blit::init();
 
 }
@@ -435,7 +435,7 @@ void blit_init() {
 // SYSTEM MENU CODE
 // ==============================
 static const Pen menu_colours[]{
-  {0}, 
+  {0},
   { 30,  30,  50, 200}, // background
   {255, 255, 255}, // foreground
   { 40,  40,  60}, // bar background
@@ -446,6 +446,7 @@ static const Pen menu_colours[]{
   {100, 100, 255}, // battery charging
   {235, 245, 255}, // header/footer bg
   {  3,   5,   7}, // header/footer fg
+  {245, 235,   0}, // header/footer fg warning
 };
 
 static constexpr int num_menu_colours = sizeof(menu_colours) / sizeof(Pen);
@@ -477,7 +478,7 @@ void blit_menu_render(uint32_t time) {
     // restore game colours
     if(screen.format == PixelFormat::P)
       set_screen_palette(menu_saved_colours, num_menu_colours);
-  
+
     save_screenshot();
     take_screenshot = false;
 
@@ -555,7 +556,7 @@ void blit_update_led() {
     // GREEN Led
     float compare_g = (blit::LED.g * 10000) / 255;
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_4, compare_g);
-  
+
     // BLUE Led
     float compare_b = (blit::LED.b * 10000) / 255;
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2, compare_b);
@@ -625,7 +626,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     /*
     The timer will generate a spurious interrupt as soon as it's enabled- apparently to load the compare value.
     We disable interrupts and clear this early interrupt flag before re-enabling them so that the *real*
-    interrupt can fire. 
+    interrupt can fire.
     */
     if(!((&htim2)->Instance->CR1 & TIM_CR1_CEN)){
       HAL_NVIC_DisableIRQ(TIM2_IRQn);
@@ -768,7 +769,7 @@ void blit_switch_execution(uint32_t address, bool force_game)
         NVIC_SystemReset();
         return;
       }
-  
+
       persist.last_game_offset = address;
 
       blit::render = user_render;
@@ -796,7 +797,7 @@ void blit_switch_execution(uint32_t address, bool force_game)
 
   // stop USB
   USBD_Stop(&hUsbDeviceHS);
-  
+
   // Disable all the interrupts... just to be sure
   HAL_NVIC_DisableIRQ(LTDC_IRQn);
   HAL_NVIC_DisableIRQ(ADC_IRQn);
