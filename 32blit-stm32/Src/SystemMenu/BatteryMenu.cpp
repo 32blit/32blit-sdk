@@ -105,6 +105,9 @@ void BatteryMenu::update_item(const Item &item) {
     if(blit::buttons & blit::Button::DPAD_LEFT) {
         system_menu.set_menu(SystemMenus::Firmware);
     }
+    if(blit::buttons & blit::Button::B) {
+        system_menu.set_menu(SystemMenus::Firmware);
+    }
 }
 
 //
