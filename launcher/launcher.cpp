@@ -160,6 +160,9 @@ void load_file_list(std::string directory) {
     if(file.name.length() < 6) // minimum length for single-letter game (a.blit)
       continue;
 
+    if (file.name[0] == '.') // hidden file
+      continue;
+
     if(file.name.compare(file.name.length() - 5, 5, ".blit") == 0 || file.name.compare(file.name.length() - 5, 5, ".BLIT") == 0) {
 
       GameInfo game;
@@ -463,7 +466,7 @@ void update(uint32_t time) {
   if(persist.selected_menu_item != old_menu_item)
     load_current_game_metadata();
 
-  if(button_a)
+  if(button_a && !game_list.empty())
   {
     uint32_t offset = 0xFFFFFFFF;
     auto game = game_list[persist.selected_menu_item];
@@ -472,7 +475,7 @@ void update(uint32_t time) {
   }
 
   // delete current game
-  if (button_x) {
+  if (button_x && !game_list.empty()) {
     auto &game = game_list[persist.selected_menu_item];
 
     dialog.show("Confirm", "Really delete " + game.title + "?", [](bool yes){
