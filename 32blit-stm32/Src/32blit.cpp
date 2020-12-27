@@ -48,6 +48,7 @@ extern Disk_drvTypeDef disk;
 static bool fs_mounted = false;
 
 bool exit_game = false;
+bool toggle_menu = false;
 bool take_screenshot = false;
 const float volume_log_base = 2.0f;
 RunningAverage<float> battery_average(8);
@@ -167,6 +168,10 @@ void blit_tick() {
       blit::LED.r = 0;
       blit_switch_execution(0, false);
     }
+  }
+
+  if(toggle_menu) {
+    blit_menu();
   }
 
   do_render();
@@ -674,6 +679,7 @@ void blit_menu_render(uint32_t time) {
 }
 
 void blit_menu() {
+  toggle_menu = false;
   if(blit::update == blit_menu_update && do_tick == blit::tick) {
     if (user_tick && !user_code_disabled) {
       // user code was running
@@ -800,9 +806,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 
   } else {
     if(__HAL_TIM_GetCounter(&htim2) > 200){ // 20ms debounce time
-      // TODO is it a good idea to swap out the render/update functions potentially in the middle of a loop?
-      // We were more or less doing this before by handling the menu update between render/update so perhaps it's mostly fine.
-      blit_menu();
+      toggle_menu = true;
       HAL_TIM_Base_Stop(&htim2);
       HAL_TIM_Base_Stop_IT(&htim2);
       __HAL_TIM_SetCounter(&htim2, 0);
