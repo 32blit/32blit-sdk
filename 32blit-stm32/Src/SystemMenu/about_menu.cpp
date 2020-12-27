@@ -152,4 +152,4 @@ static Menu::Item about_menu_items[]{
 //
 // The actual firmware menu
 //
-AboutMenu about_menu("Battery Menu", about_menu_items, 0);
+AboutMenu about_menu("About 32blit", about_menu_items, 0);
