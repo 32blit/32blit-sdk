@@ -38,10 +38,10 @@ else()
 
 	# If SDL2 was built using CMake, the generated configuration files define SDL2::* targets instead of the SDL2_* variables
 	if(TARGET SDL2::SDL2)
-		set(SDL2_LIBRARIES SDL2::SDL2 SDL2::SDL2main)
+		set(SDL2_LIBRARIES SDL2::SDL2main SDL2::SDL2)
 	# handle SDL2 built with only a static library
 	elseif(TARGET SDL2::SDL2-static)
-		set(SDL2_LIBRARIES SDL2::SDL2-static SDL2::SDL2main)
+		set(SDL2_LIBRARIES SDL2::SDL2main SDL2::SDL2-static)
 	else()
 		target_include_directories(BlitHalSDL
 			PRIVATE	${SDL2_INCLUDE_DIRS}
