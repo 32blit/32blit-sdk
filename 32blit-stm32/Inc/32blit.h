@@ -1,3 +1,5 @@
+#pragma once
+
 #undef UNUSED
 #define UNUSED(x) ((void)(__typeof__(x))(x)) // suppress "UNUSED" warnings
 
@@ -7,6 +9,18 @@
 #include "executable.hpp"
 
 extern bool is_beta_unit;
+
+
+struct BatteryInformation {
+    const char * status_text;
+    const char * vbus_text;
+    float voltage;
+
+    // low level status info
+    uint8_t battery_status;
+
+    uint8_t battery_fault;
+};
 
 // Functions defined by user code files
 extern void init();
@@ -29,6 +43,9 @@ extern void blit_update_vibration();
 extern void blit_update_led();
 extern void blit_process_input();
 extern void blit_i2c_tick();
+
+// Battery information
+BatteryInformation blit_get_battery_info();
 
 // Switching execution.
 // Address is relative to the start of flash, ignored if switching to firmware

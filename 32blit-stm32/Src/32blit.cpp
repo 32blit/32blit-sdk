@@ -32,6 +32,8 @@
 #include "engine/menu.hpp"
 #include "engine/version.hpp"
 
+#include "SystemMenu/system_menu_controller.hpp"
+
 #include "stdarg.h"
 using namespace blit;
 
@@ -56,7 +58,6 @@ float battery = 0.0f;
 uint8_t battery_status = 0;
 uint8_t battery_fault = 0;
 uint16_t accel_address = LIS3DH_DEVICE_ADDRESS;
-
 
 const uint32_t long_press_exit_time = 1000;
 
@@ -323,7 +324,8 @@ void blit_i2c_tick() {
 }
 
 void blit_update_volume() {
-    blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * persist.volume) / log(volume_log_base));
+    float volume = persist.is_muted ? 0.0f : persist.volume;
+    blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * volume) / log(volume_log_base));
 }
 
 static void save_screenshot() {
@@ -346,13 +348,13 @@ void blit_init() {
     // enable backup sram
     __HAL_RCC_RTC_ENABLE();
     __HAL_RCC_BKPRAM_CLK_ENABLE();
-    HAL_PWR_EnableBkUpAccess(); 
+    HAL_PWR_EnableBkUpAccess();
     HAL_PWREx_EnableBkUpReg();
 
     // need to wit for sram, I tried a few things I found on the net to wait
     // based on PWR flags but none seemed to work, a simple delay does work!
     HAL_Delay(5);
-      
+
     if(persist.magic_word != persistence_magic_word) {
       // Set persistent defaults if the magic word does not match
       persist.magic_word = persistence_magic_word;
@@ -429,30 +431,16 @@ void blit_init() {
 
 
   display::init();
-  
+
   blit::init();
 
 }
 
-/*
-
-    Menu Items
-
-*/
-
-enum MenuItem {
-    BACKLIGHT,
-    VOLUME,
-    SCREENSHOT,
-    DFU,
-    SHIPPING,
-    SWITCH_EXE,
-    STORAGE,
-    LAST_COUNT // leave me last pls
-};
-
+// ==============================
+// SYSTEM MENU CODE
+// ==============================
 static const Pen menu_colours[]{
-  {0}, 
+  {0},
   { 30,  30,  50, 200}, // background
   {255, 255, 255}, // foreground
   { 40,  40,  60}, // bar background
@@ -463,140 +451,26 @@ static const Pen menu_colours[]{
   {100, 100, 255}, // battery charging
   {235, 245, 255}, // header/footer bg
   {  3,   5,   7}, // header/footer fg
+  {245, 235,   0}, // header/footer fg warning
 };
+
 static constexpr int num_menu_colours = sizeof(menu_colours) / sizeof(Pen);
 static Pen menu_saved_colours[num_menu_colours];
 
-static Pen get_menu_colour(int index){return screen.format == PixelFormat::P ? Pen(index) : menu_colours[index];};
-
-class FirmwareMenu final : public Menu {
-public:
-  using Menu::Menu;
-
-  void prepare() {
-    // slightly nasty dynamic label
-    const_cast<Item *>(items)[SWITCH_EXE].label = blit_user_code_running() ? "Exit Game" :  "Launch Game";
-
-    background_colour = get_menu_colour(1);
-    foreground_colour = get_menu_colour(2);
-    bar_background_color = get_menu_colour(3);
-    selected_item_background = get_menu_colour(4);
-    header_background = get_menu_colour(9);
-    header_foreground = get_menu_colour(10);
-
-    display_rect.w = screen.bounds.w;
-    display_rect.h = screen.bounds.h;
-  }
-
-  void draw_slider(Point pos, int width, float value, Pen colour) const {
-    const int bar_margin = 2;
-    const int bar_height = item_h - bar_margin * 2;
-
-    screen.pen = bar_background_color;
-    screen.rectangle(Rect(pos, Size(width, bar_height)));
-    screen.pen = colour;
-    screen.rectangle(Rect(pos, Size(width * value, bar_height)));
-  }
-
-protected:
-  void render_item(const Item &item, int y, int index) const override {
-    Menu::render_item(item, y, index);
-
-    const auto screen_width = screen.bounds.w;
-
-    const int bar_margin = 2;
-    const int bar_height = item_h - bar_margin * 2;
-    const int bar_width = 75;
-    int bar_x = screen_width - bar_width - item_padding_x;
-  
-    switch(item.id) {
-      case BACKLIGHT:
-        draw_slider(Point(bar_x, y + bar_margin), bar_width, persist.backlight, foreground_colour);
-        break;
-      case VOLUME:
-        draw_slider(Point(bar_x, y + bar_margin), bar_width, persist.volume, foreground_colour);
-        break;
-      case STORAGE:
-        screen.pen = foreground_colour;
-        const char *label;
-        if(num_open_files)
-          label = "Files Open";
-        else if(g_usbManager.GetType() == USBManager::usbtMSC)
-          label = g_usbManager.GetStateName() + 4; // trim the "MSC "
-        else
-          label = "Disabled";
-        
-        screen.text(label, minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);
-        break;
-      default:
-        screen.pen = foreground_colour;
-        screen.text("Press A", minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);
-        break;  
-    }
-  }
-
-  void update_item(const Item &item) override {
-    if(item.id == BACKLIGHT) {
-      if (blit::buttons & blit::Button::DPAD_LEFT) {
-        persist.backlight -= 1.0f / 256.0f;
-      } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
-        persist.backlight += 1.0f / 256.0f;
-      }
-      persist.backlight = std::fmin(1.0f, std::fmax(0.0f, persist.backlight));
-    } else if(item.id == VOLUME) {
-      if (blit::buttons & blit::Button::DPAD_LEFT) {
-        persist.volume -= 1.0f / 256.0f;
-      } else if (blit::buttons & blit::Button::DPAD_RIGHT) {
-        persist.volume += 1.0f / 256.0f;
-      }
-      persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
-      blit_update_volume();
-    }
-  }
-
-  void item_activated(const Item &item) override {
-    switch(item.id) {
-      case SCREENSHOT:
-        take_screenshot = true;
-        break;
-      case DFU:
-        DFUBoot();
-        break;
-      case SHIPPING:
-        bq24295_enable_shipping_mode(&hi2c4);
-        break;
-      case SWITCH_EXE:
-        blit_switch_execution(persist.last_game_offset, false);
-        break;
-      case STORAGE:
-        // switch back manually if not mounted
-        if(g_usbManager.GetState() == USBManager::usbsMSCInititalising)
-          g_usbManager.SetType(USBManager::usbtCDC);
-        else if(num_open_files == 0)
-          g_usbManager.SetType(USBManager::usbtMSC);
-        break;
-    }
-  }
-
-  Pen bar_background_color;
+Pen get_menu_colour(int index) {
+    return screen.format == PixelFormat::P ? Pen(index) : menu_colours[index];
 };
 
-static Menu::Item firmware_menu_items[]{
-  {BACKLIGHT, "Backlight"},
-  {VOLUME, "Volume"},
-  {SCREENSHOT, "Take Screenshot"},
-  {DFU, "DFU Mode"},
-  {SHIPPING, "Power Off"},
-  {SWITCH_EXE, ""}, // label depends on if a game is running
-  {STORAGE, "Storage Mode"},
-};
-
-FirmwareMenu firmware_menu("System Menu", firmware_menu_items, MenuItem::LAST_COUNT);
-
+//
+// Update the system menu
+//
 void blit_menu_update(uint32_t time) {
-  firmware_menu.update(time);
+  system_menu.update(time);
 }
 
+//
+// Render the system menu
+//
 void blit_menu_render(uint32_t time) {
 
   if(user_render && !user_code_disabled)
@@ -609,7 +483,7 @@ void blit_menu_render(uint32_t time) {
     // restore game colours
     if(screen.format == PixelFormat::P)
       set_screen_palette(menu_saved_colours, num_menu_colours);
-  
+
     save_screenshot();
     take_screenshot = false;
 
@@ -617,67 +491,28 @@ void blit_menu_render(uint32_t time) {
       set_screen_palette(menu_colours, num_menu_colours);
   }
 
-  firmware_menu.render();
-
-  const int screen_width = blit::screen.bounds.w;
-  const int screen_height = blit::screen.bounds.h;
-
-  const Pen foreground_colour = get_menu_colour(10);
-  const Pen bar_background_color = get_menu_colour(3);
-
-  screen.pen = foreground_colour;
-
-  // footer content
-  char buf[100];
-  snprintf(buf, 100, "Charge: %s   VBus: %s   Voltage: %i.%iv",
-    battery_charge_status(),
-    battery_vbus_status(),
-    int(battery), int((battery - int(battery)) * 10.0f));
-  screen.text(buf, minimal_font, Point(5, screen_height - 11));
-
-  screen.text(get_version_string(), minimal_font, Point(screen_width - 5, screen_height - 11), true, TextAlign::top_right);
-
-  /*
-  // Raw register values can be displayed with a fixed-width font using std::bitset<8> for debugging
-  screen.text(
-    "Fault: " + std::bitset<8>(battery_fault).to_string() +
-    " Status: " + std::bitset<8>(battery_status).to_string(),
-    minimal_font, Point(0, screen_height - 10), false);
-  */
-
-  // add battery info to header
-  screen.text("bat", minimal_font, Point(screen_width - 80, 4));
-  int battery_meter_width = 55;
-  battery_meter_width = float(battery_meter_width) * (battery - 3.0f) / 1.1f;
-  battery_meter_width = std::max(0, std::min(55, battery_meter_width));
-
-  screen.pen = bar_background_color;
-  screen.rectangle(Rect(screen_width - 60, 5, 55, 5));
-
-  switch(battery_status >> 6){
-    case 0b00: // Unknown
-        screen.pen = get_menu_colour(5);
-        break;
-    case 0b01: // USB Host
-        screen.pen = get_menu_colour(6);
-        break;
-    case 0b10: // Adapter Port
-        screen.pen = get_menu_colour(6);
-        break;
-    case 0b11: // OTG
-        screen.pen = get_menu_colour(7);
-        break;
-  }
-  screen.rectangle(Rect(screen_width - 60, 5, battery_meter_width, 5));
-  uint8_t battery_charge_status = (battery_status >> 4) & 0b11;
-  if(battery_charge_status == 0b01 || battery_charge_status == 0b10){
-    int battery_fill_width = (time / 500) % battery_meter_width;
-    battery_fill_width = std::min(battery_meter_width, battery_fill_width);
-    screen.pen = get_menu_colour(8);
-    screen.rectangle(Rect(screen_width - 60, 5, battery_fill_width, 5));
-  }
+  system_menu.render(time);
 }
 
+//
+// Return information about the battery
+//
+BatteryInformation blit_get_battery_info() {
+  BatteryInformation info;
+
+  info.status_text = battery_charge_status();
+  info.vbus_text = battery_vbus_status();
+  info.voltage = battery;
+
+  info.battery_status = battery_status;
+  info.battery_fault = battery_fault;
+
+  return info;
+}
+
+//
+// Setup the system menu to be shown over the current content / user content
+//
 void blit_menu() {
   toggle_menu = false;
   if(blit::update == blit_menu_update && do_tick == blit::tick) {
@@ -691,13 +526,13 @@ void blit_menu() {
     }
 
     // restore game colours
-    if(screen.format == PixelFormat::P)
+    if(screen.format == PixelFormat::P) {
       set_screen_palette(menu_saved_colours, num_menu_colours);
-
+    }
   }
   else
   {
-    firmware_menu.prepare();
+    system_menu.prepare();
 
     blit::update = blit_menu_update;
     blit::render = blit_menu_render;
@@ -709,6 +544,11 @@ void blit_menu() {
     }
   }
 }
+
+// ==============================
+// SYSTEM MENU CODE ENDS HERE
+// ==============================
+
 
 void blit_update_vibration() {
     __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, blit::vibration * 2000.0f);
@@ -722,7 +562,7 @@ void blit_update_led() {
     // GREEN Led
     float compare_g = (blit::LED.g * 10000) / 255;
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_4, compare_g);
-  
+
     // BLUE Led
     float compare_b = (blit::LED.b * 10000) / 255;
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2, compare_b);
@@ -792,7 +632,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     /*
     The timer will generate a spurious interrupt as soon as it's enabled- apparently to load the compare value.
     We disable interrupts and clear this early interrupt flag before re-enabling them so that the *real*
-    interrupt can fire. 
+    interrupt can fire.
     */
     if(!((&htim2)->Instance->CR1 & TIM_CR1_CEN)){
       HAL_NVIC_DisableIRQ(TIM2_IRQn);
@@ -933,7 +773,7 @@ void blit_switch_execution(uint32_t address, bool force_game)
         NVIC_SystemReset();
         return;
       }
-  
+
       persist.last_game_offset = address;
 
       blit::render = user_render;
@@ -961,7 +801,7 @@ void blit_switch_execution(uint32_t address, bool force_game)
 
   // stop USB
   USBD_Stop(&hUsbDeviceHS);
-  
+
   // Disable all the interrupts... just to be sure
   HAL_NVIC_DisableIRQ(LTDC_IRQn);
   HAL_NVIC_DisableIRQ(ADC_IRQn);

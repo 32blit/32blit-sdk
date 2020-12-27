@@ -7,6 +7,10 @@
 #include "graphics/surface.hpp"
 
 namespace blit {
+
+  //
+  // A class that represents a menu. It can render a set of menu items.
+  //
   class Menu {
   public:
     struct Item {
@@ -15,10 +19,13 @@ namespace blit {
     };
 
     Menu(std::string_view title, const Item *items = nullptr, int num_items = 0, const Font &font = minimal_font)
-      : title(title), items(items), num_items(num_items), display_rect(0, 0, 0, 0), font(font) {
-    }
+      : title(title), items(items), num_items(num_items), display_rect(0, 0, 0, 0), font(font) {}
+
     virtual ~Menu() {}
 
+    //
+    // Render the menu to the screen
+    //
     void render() {
       screen.pen = background_colour;
       screen.rectangle(display_rect);
@@ -28,14 +35,7 @@ namespace blit {
       int w = display_rect.w;
 
       // header
-      screen.pen = header_background;
-      Rect header_rect(x, y, w, header_h);
-      screen.rectangle(header_rect);
-
-      screen.pen = header_foreground;
-      header_rect.x += item_padding_x;
-      header_rect.h += font.spacing_y; // adjust for alignment
-      screen.text(title, font, header_rect, true, TextAlign::center_left);
+      render_header(x, y, w);
 
       // y region to clip to
       y += header_h;
@@ -43,9 +43,7 @@ namespace blit {
 
       // footer
       if(footer_h) {
-        screen.pen = header_background;
-        Rect footer_rect(x, y + display_height, w, footer_h);
-        screen.rectangle(footer_rect);
+        render_footer(x, y + display_height, w);
       }
 
       auto old_clip = screen.clip;
@@ -64,6 +62,9 @@ namespace blit {
       screen.clip = old_clip;
     }
 
+    //
+    // Update method of the menu
+    //
     void update(uint32_t time) {
       // default size
       if(display_rect.w == 0 && display_rect.h == 0) {
@@ -88,13 +89,14 @@ namespace blit {
         repeat_start_time = time;
       }
 
-      if(buttons.released & Button::A)
+      if (buttons.released & Button::A) {
         item_activated(items[current_item]);
+      }
 
       // scrolling
       int total_height = num_items * (item_h + item_spacing);
       int display_height = display_rect.h - (header_h + footer_h + margin_y * 2);
-  
+
       int current_y = current_item * (item_h + item_spacing);
       int target_scroll = display_height / 2 - current_y;
 
@@ -102,6 +104,8 @@ namespace blit {
       target_scroll = std::min(0, std::max(-(total_height - display_height), target_scroll));
 
       scroll_offset += (target_scroll - scroll_offset) * 0.2f;
+
+      update_menu(time);
 
       update_item(items[current_item]);
     }
@@ -127,7 +131,7 @@ namespace blit {
         screen.pen = selected_item_background;
         screen.rectangle(item_rect);
       }
-      
+
       screen.pen = foreground_colour;
       item_rect.x += item_padding_x;
       item_rect.y += item_adjust_y;
@@ -135,10 +139,46 @@ namespace blit {
       screen.text(item.label, font, item_rect, true, TextAlign::center_left);
     }
 
+    //
+    // Can be used in a derived class for global updates to the entire menu
+    //
+    virtual void update_menu(uint32_t time) {}
+
+    //
+    // Called in the update phase for the selected item
+    //
     virtual void update_item(const Item &item) {
     }
 
+    //
+    // The A button was pressed on an item
+    //
     virtual void item_activated(const Item &item) {
+    }
+
+    //
+    // Called when the header should be rendered
+    // Derived classes should call base, as this clears the rectangle as well
+    //
+    virtual void render_header(int x, int y, int w) {
+      screen.pen = header_background;
+      Rect header_rect(x, y, w, header_h);
+      screen.rectangle(header_rect);
+
+      screen.pen = header_foreground;
+      header_rect.x += item_padding_x;
+      header_rect.h += font.spacing_y; // adjust for alignment
+      screen.text(title, font, header_rect, true, TextAlign::center_left);
+    }
+
+    //
+    // Called when the footer should be rendered
+    // Derived classes should call base, as this clears the rectangle as well
+    //
+    virtual void render_footer(int x, int y, int w) {
+      screen.pen = header_background;
+      Rect footer_rect(x, y, w, footer_h);
+      screen.rectangle(footer_rect);
     }
 
     const Item *items;
