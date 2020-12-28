@@ -13,117 +13,100 @@
 
 using namespace blit;
 
-//
-// Return information about the battery
-//
-BatteryInformation BatteryState::get_battery_info() {
-  BatteryInformation info;
+namespace battery {
 
-  info.charge_status = get_battery_charge_status();
-  info.charge_text = get_charge_status_string();
+  // forward declare functions
+  const char * get_vbus_status_string();
+  const char * get_charge_status_string();
 
-  info.vbus_status = get_battery_vbus_status();
-  info.vbus_text = get_vbus_status_string();
+  // local variables
+  static blit::RunningAverage<float> battery_average(8);
+  static float battery = 0.0f;
+  static uint8_t battery_status = 0;
+  static uint8_t battery_fault = 0;
 
-  info.voltage = battery;
+  //
+  // Return information about the battery
+  //
+  BatteryInformation get_battery_info() {
+    BatteryInformation info;
 
-  return info;
-}
+    info.charge_status = get_battery_charge_status();
+    info.charge_text = get_charge_status_string();
 
-//
-// Update battery status and fault (read using I2C)
-//
-void BatteryState::update_battery_status ( uint8_t status, uint8_t fault ) {
-  battery_status = status;
-  battery_fault = fault;
-}
+    info.vbus_status = get_battery_vbus_status();
+    info.vbus_text = get_vbus_status_string();
 
-//
-// Update the charge value
-//
-void BatteryState::update_battery_charge ( float charge_value ) {
-  battery_average.add(charge_value);
-  battery = battery_average.average();
-}
+    info.voltage = battery;
 
-//
-// Return the current battery status
-//
-BatteryChargeStatus BatteryState::get_battery_charge_status() {
-  auto status = (battery_status >> 4) & 0b11;
-  switch(status){
-    case 0b00: // Not charging
-      return BatteryChargeStatus::NotCharging;
-    case 0b01: // Pre-charge
-      return BatteryChargeStatus::PreCharging;
-    case 0b10: // Fast Charging
-      return BatteryChargeStatus::FastCharging;
-    case 0b11: // Charge Done
-      return BatteryChargeStatus::ChargingComplete;
+    return info;
   }
 
-  // Unreachable
-  return (BatteryChargeStatus)0;
-}
-
-//
-// Convert charge status to text representation
-//
-const char *BatteryState::get_charge_status_string() {
-  switch((battery_status >> 4) & 0b11){
-    case 0b00: // Not Charging
-      return "Nope";
-    case 0b01: // Pre-charge
-      return "Pre";
-    case 0b10: // Fast Charging
-      return "Fast";
-    case 0b11: // Charge Done
-      return "Done";
+  //
+  // Update battery status and fault (read using I2C)
+  //
+  void update_battery_status ( uint8_t status, uint8_t fault ) {
+    battery_status = status;
+    battery_fault = fault;
   }
 
-  // unreachable
-  return "";
-}
-
-//
-// Return the current VBUS status
-//
-BatteryVbusStatus BatteryState::get_battery_vbus_status() {
-  switch(battery_status >> 6){
-    case 0b00:
-      return BatteryVbusStatus::VbusUnknown;
-    case 0b01:
-      return BatteryVbusStatus::USBHost;
-    case 0b10:
-      return BatteryVbusStatus::AdapterPort;
-    case 0b11:
-      return BatteryVbusStatus::OnTheGo;
+  //
+  // Update the charge value
+  //
+  void update_battery_charge ( float charge_value ) {
+    battery_average.add(charge_value);
+    battery = battery_average.average();
   }
 
-  // unreachable
-  return (BatteryVbusStatus)0;
-}
-
-//
-// Convert VBUS status to text representation
-//
-const char *BatteryState::get_vbus_status_string() {
-  switch(battery_status >> 6){
-    case 0b00: // Unknown
-      return "Unknown";
-    case 0b01: // USB Host
-      return "USB Host";
-    case 0b10: // Adapter Port
-      return "Adapter";
-    case 0b11: // OTG
-      return "OTG";
+  //
+  // Return the current battery status
+  //
+  BatteryChargeStatus get_battery_charge_status() {
+    return (BatteryChargeStatus) ((battery_status >> 4) & 0b11);
   }
 
-  // unreachable
-  return "";
-}
+  //
+  // Convert charge status to text representation
+  //
+  const char *get_charge_status_string() {
+    switch(get_battery_charge_status()){
+      case BatteryChargeStatus::NotCharging:
+        return "Nope";
+      case BatteryChargeStatus::PreCharging:
+        return "Pre";
+      case BatteryChargeStatus::FastCharging:
+        return "Fast";
+      case BatteryChargeStatus::ChargingComplete:
+        return "Done";
+    }
 
-//
-// The state object for the battery
-//
-BatteryState battery;
+    // unreachable
+    return "";
+  }
+
+  //
+  // Return the current VBUS status
+  //
+  BatteryVbusStatus get_battery_vbus_status() {
+    return (BatteryVbusStatus)(battery_status >> 6);
+  }
+
+  //
+  // Convert VBUS status to text representation
+  //
+  const char *get_vbus_status_string() {
+    switch(get_battery_vbus_status()){
+      case BatteryVbusStatus::VbusUnknown:
+        return "Unknown";
+      case BatteryVbusStatus::USBHost:
+        return "USB Host";
+      case BatteryVbusStatus::AdapterPort:
+        return "Adapter";
+      case BatteryVbusStatus::OnTheGo:
+        return "OTG";
+    }
+
+    // unreachable
+    return "";
+  }
+}

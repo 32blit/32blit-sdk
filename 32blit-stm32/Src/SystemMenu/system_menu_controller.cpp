@@ -12,6 +12,9 @@
 #include <algorithm>
 
 using namespace blit;
+using battery::BatteryInformation;
+using battery::BatteryChargeStatus;
+using battery::BatteryVbusStatus;
 
 #include "system_menu_controller.hpp"
 #include "firmware_menu.hpp"
@@ -76,7 +79,7 @@ void SystemMenuController::render_header_battery_status(uint32_t time) {
   const Pen foreground_colour = get_menu_colour(10);
   const Pen bar_background_color = get_menu_colour(3);
 
-  BatteryInformation bat = battery.get_battery_info();
+  BatteryInformation bat = battery::get_battery_info();
 
   screen.pen = foreground_colour;
   screen.text("bat", minimal_font, Point(screen_width - 80, 4));

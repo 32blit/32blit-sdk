@@ -12,6 +12,9 @@
 #include "i2c-bq24295.h"
 
 using namespace blit;
+using battery::BatteryInformation;
+using battery::BatteryChargeStatus;
+using battery::BatteryVbusStatus;
 
 #include "battery_menu.hpp"
 #include "system_menu_controller.hpp"
@@ -54,7 +57,7 @@ void BatteryMenu::render_item(const Item &item, int y, int index) const {
   const int bar_width = 75;
   int bar_x = screen_width - bar_width - item_padding_x;
 
-  BatteryInformation bat = battery.get_battery_info();
+  BatteryInformation bat = battery::get_battery_info();
 
   switch (item.id) {
   case CHARGE:

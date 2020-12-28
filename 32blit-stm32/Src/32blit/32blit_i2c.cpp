@@ -142,7 +142,7 @@ void blit_i2c_tick() {
       i2c_state = PROC_BAT;
       break;
     case PROC_BAT:
-      battery.update_battery_status( i2c_buffer[0], i2c_buffer[1] );
+      battery::update_battery_status( i2c_buffer[0], i2c_buffer[1] );
       blit_i2c_delay(16, SEND_ACL);
       break;
   }
