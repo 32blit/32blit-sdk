@@ -30,7 +30,6 @@ extern void blit_init();
 extern void blit_update_vibration();
 extern void blit_update_led();
 extern void blit_process_input();
-extern void blit_i2c_tick();
 
 // Switching execution.
 // Address is relative to the start of flash, ignored if switching to firmware
