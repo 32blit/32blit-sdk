@@ -5,6 +5,7 @@
 #include <list>
 
 #include "launcher.hpp"
+#include "assets.hpp"
 
 #include "engine/api_private.hpp"
 #include "graphics/color.hpp"
