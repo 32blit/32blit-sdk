@@ -49,6 +49,20 @@ enum MenuItem {
   LAST_COUNT // leave me last pls
 };
 
+static Menu::Item firmware_menu_items[] {
+    {BACKLIGHT, "Backlight"},
+    {VOLUME, "Volume"},
+    {SCREENSHOT, "Take Screenshot"},
+    {DFU, "DFU Mode"},
+    {SHIPPING, "Power Off"},
+    {SWITCH_EXE, ""}, // label depends on if a game is running
+    {STORAGE, "Storage Mode"},
+    {SEPARATOR1,nullptr},
+    {BATTERY_INFO, "Battery info >"},
+    {SEPARATOR2,nullptr},
+    {ABOUT,"About 32blit >"},
+};
+
 //
 // Prepare to show the firmware menu
 //
@@ -214,23 +228,6 @@ void FirmwareMenu::item_activated(const Item &item) {
     break;
   }
 }
-
-//
-// Menu items in the firmware menu
-//
-static Menu::Item firmware_menu_items[] {
-    {BACKLIGHT, "Backlight"},
-    {VOLUME, "Volume"},
-    {SCREENSHOT, "Take Screenshot"},
-    {DFU, "DFU Mode"},
-    {SHIPPING, "Power Off"},
-    {SWITCH_EXE, ""}, // label depends on if a game is running
-    {STORAGE, "Storage Mode"},
-    {SEPARATOR1,"---"},
-    {BATTERY_INFO, "Battery info >"},
-    {SEPARATOR2,"---"},
-    {ABOUT,"About 32blit >"},
-};
 
 //
 // The actual firmware menu

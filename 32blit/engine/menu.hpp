@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <cstring>
 
 #include "engine/api.hpp"
 #include "engine/engine.hpp"
@@ -59,7 +58,7 @@ protected:
       for(int i = 0; i < num_items; i++) {
         auto &item = items[i];
 
-        if ( std::strncmp(item.label, "---", 3) != 0 ) {
+        if ( item.label != nullptr ) {
           render_item(item, y, i);
         }
 
@@ -91,13 +90,13 @@ public:
             if(--current_item < 0) {
               current_item += num_items;
             }
-          } while(std::strncmp(items[current_item].label, "---", 3) == 0 );
+          } while(items[current_item].label == nullptr );
         } else if(buttons & Button::DPAD_DOWN) {
           do {
             if(++current_item == num_items) {
               current_item = 0;
             }
-          } while(std::strncmp(items[current_item].label, "---", 3) == 0 );
+          } while(items[current_item].label == nullptr );
         }
 
         repeat_start_time = time;

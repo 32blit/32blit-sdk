@@ -28,6 +28,12 @@ enum MenuItem {
   LAST_COUNT // leave me last pls
 };
 
+static Menu::Item battery_menu_items[]{
+  {CHARGE, "Charge status"},
+  {VBUS, "VBUS"},
+  {VOLTAGE, "Voltage"},
+};
+
 //
 // Prepare to show the battery menu
 //
@@ -96,15 +102,6 @@ void BatteryMenu::update_menu(uint32_t time) {
     system_menu.set_menu(SystemMenus::Firmware);
   }
 }
-
-//
-// Menu items in the firmware menu
-//
-static Menu::Item battery_menu_items[]{
-  {CHARGE, "Charge status"},
-  {VBUS, "VBUS"},
-  {VOLTAGE, "Voltage"},
-};
 
 //
 // The actual firmware menu

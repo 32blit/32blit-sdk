@@ -146,7 +146,8 @@ void AboutMenu::update(uint32_t time) {
 //
 // Menu items in the firmware menu
 //
-static Menu::Item about_menu_items[]{
+static Menu::Item about_menu_items[] {
+  {0, nullptr}
 };
 
 //
