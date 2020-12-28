@@ -7,21 +7,28 @@
 
 #include "engine/running_average.hpp"
 
-struct BatteryInformation {
-    const char * status_text;
-    const char * vbus_text;
-    float voltage;
-
-    // low level status info
-    uint8_t battery_status;
-    uint8_t battery_fault;
+enum BatteryVbusStatus {
+  VbusUnknown,
+  USBHost,
+  AdapterPort,
+  OnTheGo,
 };
 
-enum BatteryStatus {
+enum BatteryChargeStatus {
   NotCharging,
   PreCharging,
   FastCharging,
-  ChargingComplete
+  ChargingComplete,
+};
+
+struct BatteryInformation {
+    BatteryChargeStatus charge_status;
+    const char * charge_text;
+
+    BatteryVbusStatus vbus_status;
+    const char * vbus_text;
+
+    float voltage;
 };
 
 class BatteryState final {
@@ -33,7 +40,10 @@ class BatteryState final {
     BatteryInformation get_battery_info();
 
     // Return the current battery status
-    BatteryStatus get_battery_status();
+    BatteryChargeStatus get_battery_charge_status();
+
+    // Return the current battery vbus status
+    BatteryVbusStatus get_battery_vbus_status();
 
   public:
     // Update the battery status (called only from i2c processing)
@@ -43,8 +53,8 @@ class BatteryState final {
     void update_battery_charge ( float charge_value );
 
   private:
-    const char * vbus_status_string();
-    const char * charge_status_string();
+    const char * get_vbus_status_string();
+    const char * get_charge_status_string();
 
   private:
     blit::RunningAverage<float> battery_average;

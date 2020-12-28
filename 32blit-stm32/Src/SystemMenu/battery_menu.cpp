@@ -58,7 +58,7 @@ void BatteryMenu::render_item(const Item &item, int y, int index) const {
 
   switch (item.id) {
   case CHARGE:
-    screen.text(bat.status_text, minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);
+    screen.text(bat.charge_text, minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);
     break;
   case VBUS:
     screen.text(bat.vbus_text, minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);

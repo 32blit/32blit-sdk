@@ -521,23 +521,23 @@ void blit_update_led() {
     __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 962 - (962 * persist.backlight));
 
     // TODO we don't want to do this too often!
-    switch(battery.get_battery_status()){
-      case BatteryStatus::NotCharging:
+    switch(battery.get_battery_charge_status()){
+      case BatteryChargeStatus::NotCharging:
         charge_led_r = 1;
         charge_led_b = 0;
         charge_led_g = 0;
         break;
-      case BatteryStatus::PreCharging:
+      case BatteryChargeStatus::PreCharging:
         charge_led_r = 1;
         charge_led_b = 1;
         charge_led_g = 0;
         break;
-      case BatteryStatus::FastCharging:
+      case BatteryChargeStatus::FastCharging:
         charge_led_r = 0;
         charge_led_b = 1;
         charge_led_g = 0;
         break;
-      case BatteryStatus::ChargingComplete:
+      case BatteryChargeStatus::ChargingComplete:
         charge_led_r = 0;
         charge_led_b = 0;
         charge_led_g = 1;
