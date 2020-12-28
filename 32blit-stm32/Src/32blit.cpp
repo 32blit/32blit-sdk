@@ -3,6 +3,8 @@
 #include <bitset>
 
 #include "32blit.h"
+#include "32blit_battery.h"
+#include "32blit_i2c.h"
 #include "main.h"
 
 #include "sound.hpp"
@@ -53,10 +55,7 @@ bool exit_game = false;
 bool toggle_menu = false;
 bool take_screenshot = false;
 const float volume_log_base = 2.0f;
-RunningAverage<float> battery_average(8);
-float battery = 0.0f;
-uint8_t battery_status = 0;
-uint8_t battery_fault = 0;
+
 uint16_t accel_address = LIS3DH_DEVICE_ADDRESS;
 
 const uint32_t long_press_exit_time = 1000;
@@ -118,38 +117,6 @@ uint32_t get_max_us_timer()
 {
 	uint32_t uTicksPerUs = SystemCoreClock / 1000000;
 	return UINT32_MAX / uTicksPerUs;
-}
-
-const char *battery_vbus_status() {
-  switch(battery_status >> 6){
-    case 0b00: // Unknown
-      return "Unknown";
-    case 0b01: // USB Host
-      return "USB Host";
-    case 0b10: // Adapter Port
-      return "Adapter";
-    case 0b11: // OTG
-      return "OTG";
-  }
-
-  // unreachable
-  return "";
-}
-
-const char *battery_charge_status() {
-  switch((battery_status >> 4) & 0b11){
-    case 0b00: // Not Charging
-      return "Nope";
-    case 0b01: // Pre-charge
-      return "Pre";
-    case 0b10: // Fast Charging
-      return "Fast";
-    case 0b11: // Charge Done
-      return "Done";
-  }
-
-  // unreachable
-  return "";
 }
 
 static void do_render() {
@@ -316,8 +283,7 @@ void blit_i2c_tick() {
       i2c_state = PROC_BAT;
       break;
     case PROC_BAT:
-      battery_status = i2c_buffer[0];
-      battery_fault = i2c_buffer[1];
+      battery.update_battery_status( i2c_buffer[0], i2c_buffer[1] );
       blit_i2c_delay(16, SEND_ACL);
       break;
   }
@@ -495,22 +461,6 @@ void blit_menu_render(uint32_t time) {
 }
 
 //
-// Return information about the battery
-//
-BatteryInformation blit_get_battery_info() {
-  BatteryInformation info;
-
-  info.status_text = battery_charge_status();
-  info.vbus_text = battery_vbus_status();
-  info.voltage = battery;
-
-  info.battery_status = battery_status;
-  info.battery_fault = battery_fault;
-
-  return info;
-}
-
-//
 // Setup the system menu to be shown over the current content / user content
 //
 void blit_menu() {
@@ -570,25 +520,24 @@ void blit_update_led() {
     // Backlight
     __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 962 - (962 * persist.backlight));
 
-
     // TODO we don't want to do this too often!
-    switch((battery_status >> 4) & 0b11){
-      case 0b00: // Not charging
+    switch(battery.get_battery_status()){
+      case BatteryStatus::NotCharging:
         charge_led_r = 1;
         charge_led_b = 0;
         charge_led_g = 0;
         break;
-      case 0b01: // Pre-charge
+      case BatteryStatus::PreCharging:
         charge_led_r = 1;
         charge_led_b = 1;
         charge_led_g = 0;
         break;
-      case 0b10: // Fast Charging
+      case BatteryStatus::FastCharging:
         charge_led_r = 0;
         charge_led_b = 1;
         charge_led_g = 0;
         break;
-      case 0b11: // Charge Done
+      case BatteryStatus::ChargingComplete:
         charge_led_r = 0;
         charge_led_b = 0;
         charge_led_g = 1;
@@ -711,9 +660,7 @@ void blit_process_input() {
   blit::hack_left = (adc3data[0] >> 1) / 32768.0f;
   blit::hack_right = (adc3data[1] >> 1)  / 32768.0f;
 
-  battery_average.add(6.6f * adc3data[2] / 65535.0f);
-
-  battery = battery_average.average();
+  battery.update_battery_charge(6.6f * adc3data[2] / 65535.0f);
 }
 
 // blit_switch_execution

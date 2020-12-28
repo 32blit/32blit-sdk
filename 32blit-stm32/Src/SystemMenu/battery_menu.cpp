@@ -5,6 +5,7 @@
  */
 
 #include "32blit.h"
+#include "32blit_battery.h"
 #include "32blit.hpp"
 #include "file.hpp"
 #include "USBManager.h"
@@ -53,7 +54,7 @@ void BatteryMenu::render_item(const Item &item, int y, int index) const {
   const int bar_width = 75;
   int bar_x = screen_width - bar_width - item_padding_x;
 
-  BatteryInformation bat = blit_get_battery_info();
+  BatteryInformation bat = battery.get_battery_info();
 
   switch (item.id) {
   case CHARGE:
