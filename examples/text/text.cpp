@@ -1,9 +1,11 @@
 #include "text.hpp"
+#include "font_asset.hpp"
 
 using namespace blit;
 
 bool variable_width = true;
 TextAlign alignment = TextAlign::top_left;
+const Font custom_font(press_start_font);
 
 std::string alignment_to_string(TextAlign alignment) {
   switch (alignment) {
@@ -50,7 +52,6 @@ void render(uint32_t time) {
   screen.pen = Pen(64, 64, 64);
   screen.rectangle(text_rect);
 
-  screen.pen = Pen(255, 255, 255);
   std::string text = "This is some aligned text!\nUse the dpad to change the alignment\nand A to toggle variable-width.";
   text = screen.wrap_text(text, text_rect.w, minimal_font, variable_width);
 
@@ -75,6 +76,33 @@ void render(uint32_t time) {
   screen.pen = Pen(0xFF, 0xFF, 0xFF);
   screen.clip = clip;
   screen.text(text, minimal_font, text_rect, variable_width, TextAlign::center_center);
+  screen.clip = Rect(Point(0, 0), screen.bounds); // Reset the clip!
+
+  // Using a custom font
+  text_rect.x -= 160;
+  text_rect.y += 120;
+
+  screen.pen = Pen(64, 64, 64);
+  screen.rectangle(text_rect);
+
+  text = "This text uses\nan imported\nTrueType font.";
+  text = screen.wrap_text(text, text_rect.w, minimal_font, variable_width);
+
+  screen.pen = Pen(0xFF, 0xFF, 0xFF);
+  screen.text(text, custom_font, text_rect, variable_width, alignment);
+
+  // Alignment around a Point rather than a Rect
+  Point text_point(240,180);
+
+  screen.pen = Pen(64, 64, 64);
+  screen.line(text_point - Point(20,0), text_point + (Point(20,0)));
+  screen.line(text_point - Point(0,20), text_point + (Point(0,20)));
+
+  text = "This text is\naligned to a\nPoint instead\nof a Rect.";
+  text = screen.wrap_text(text, text_rect.w, minimal_font, variable_width);
+
+  screen.pen = Pen(0xFF, 0xFF, 0xFF);
+  screen.text(text, minimal_font, text_point, variable_width, alignment);
 }
 
 void update(uint32_t time) {
