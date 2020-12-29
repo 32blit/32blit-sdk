@@ -4,7 +4,7 @@
 
 #include "engine/menu.hpp"
 
-class SystemSubMenu : public blit::Menu {
+class SystemMenu : public blit::Menu {
 public:
   using blit::Menu::Menu;
 
@@ -20,7 +20,15 @@ public:
     display_rect.h = blit::screen.bounds.h;
   }
 
-  void update(uint32_t time) override {
+protected:
+  Pen bar_background_color;
+};
+
+class SystemSubMenu : public SystemMenu {
+public:
+  using SystemMenu::SystemMenu;
+
+  void update_menu(uint32_t time) override {
     if (blit::buttons.released & blit::Button::DPAD_LEFT) {
       system_menu.set_menu(SystemMenus::Firmware);
     }
@@ -35,7 +43,4 @@ protected:
     screen.pen = get_menu_colour(10);
     screen.text("B: Back", minimal_font, Point(x + 5, y + 5));
   }
-
-protected:
-  Pen bar_background_color;
 };

@@ -7,6 +7,7 @@
  * about the battery.
  */
 
+#include <array>
 #include "32blit.h"
 #include "32blit.hpp"
 #include "file.hpp"
@@ -21,9 +22,7 @@ using namespace blit;
 //
 // Some declarations from 32blit.cpp that we need to do system things
 //
-extern USBManager g_usbManager;
 extern bool take_screenshot;
-void DFUBoot(void);
 void blit_update_volume();
 
 //
@@ -38,29 +37,25 @@ enum MenuItem {
   BACKLIGHT,
   VOLUME,
   SCREENSHOT,
-  DFU,
-  SHIPPING,
-  SWITCH_EXE,
-  STORAGE,
-  SEPARATOR1,
+  CONNECTIVITY,
   BATTERY_INFO,
-  SEPARATOR2,
   ABOUT,
-  LAST_COUNT // leave me last pls
+  POWER_OFF,
+  SWITCH_EXE,
 };
 
 static Menu::Item firmware_menu_items[] {
     {BACKLIGHT, "Backlight"},
     {VOLUME, "Volume"},
     {SCREENSHOT, "Take Screenshot"},
-    {DFU, "DFU Mode"},
-    {SHIPPING, "Power Off"},
-    {SWITCH_EXE, ""}, // label depends on if a game is running
-    {STORAGE, "Storage Mode"},
-    {SEPARATOR1,nullptr},
+    {Menu::Separator,nullptr},
+    {CONNECTIVITY, "Connectivity >"},
+    {Menu::Separator,nullptr},
     {BATTERY_INFO, "Battery info >"},
-    {SEPARATOR2,nullptr},
+    {Menu::Separator,nullptr},
     {ABOUT,"About 32blit >"},
+    {POWER_OFF, "Power Off"},
+    {SWITCH_EXE, ""}, // label depends on if a game is running
 };
 
 //
@@ -68,18 +63,17 @@ static Menu::Item firmware_menu_items[] {
 //
 void FirmwareMenu::prepare() {
   // slightly nasty dynamic label
-  const_cast<Item *>(items)[SWITCH_EXE].label = blit_user_code_running() ? "Exit Game" : "Launch Game";
+  for(int i = 0; i < num_items; ++i ) {
+    auto &item = const_cast<Item *>(items)[i];
+    if(item.id == SWITCH_EXE) {
+      item.label = blit_user_code_running() ? "Exit Game" : "Launch Game";
+      break;
+    }
+  }
 
-  background_colour = get_menu_colour(1);
-  foreground_colour = get_menu_colour(2);
-  bar_background_color = get_menu_colour(3);
-  selected_item_background = get_menu_colour(4);
-  header_background = get_menu_colour(9);
-  header_foreground = get_menu_colour(10);
+  SystemMenu::prepare();
+
   bar_highlight_color = get_menu_colour(11);
-
-  display_rect.w = screen.bounds.w;
-  display_rect.h = screen.bounds.h;
 }
 
 void FirmwareMenu::draw_slider(Point pos, int width, float value, Pen colour) const {
@@ -116,18 +110,6 @@ void FirmwareMenu::render_item(const Item &item, int y, int index) const {
     {
       draw_slider(Point(bar_x, y + bar_margin), bar_width, persist.volume, foreground_colour);
     }
-    break;
-  case STORAGE:
-    screen.pen = foreground_colour;
-    const char *label;
-    if (num_open_files)
-      label = "Files Open";
-    else if (g_usbManager.GetType() == USBManager::usbtMSC)
-      label = g_usbManager.GetStateName() + 4; // trim the "MSC "
-    else
-      label = "Disabled";
-
-    screen.text(label, minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);
     break;
   default:
     screen.pen = foreground_colour;
@@ -172,6 +154,12 @@ void FirmwareMenu::update_item(const Item &item) {
     persist.volume = std::fmin(1.0f, std::fmax(0.0f, persist.volume));
     blit_update_volume();
   }
+  else if (item.id == CONNECTIVITY) {
+    if (blit::buttons.released & blit::Button::DPAD_RIGHT)
+    {
+      system_menu.set_menu(SystemMenus::Connectivity);
+    }
+  }
   else if (item.id == BATTERY_INFO) {
     if (blit::buttons.released & blit::Button::DPAD_RIGHT)
     {
@@ -204,14 +192,14 @@ void FirmwareMenu::item_activated(const Item &item) {
   case SCREENSHOT:
     take_screenshot = true;
     break;
-  case DFU:
-    DFUBoot();
-    break;
-  case SHIPPING:
+  case POWER_OFF:
     bq24295_enable_shipping_mode(&hi2c4);
     break;
   case BATTERY_INFO:
     system_menu.set_menu(SystemMenus::Battery);
+    break;
+  case CONNECTIVITY:
+    system_menu.set_menu(SystemMenus::Connectivity);
     break;
   case ABOUT:
     system_menu.set_menu(SystemMenus::About);
@@ -219,17 +207,10 @@ void FirmwareMenu::item_activated(const Item &item) {
   case SWITCH_EXE:
     blit_switch_execution(persist.last_game_offset, false);
     break;
-  case STORAGE:
-    // switch back manually if not mounted
-    if (g_usbManager.GetState() == USBManager::usbsMSCInititalising)
-      g_usbManager.SetType(USBManager::usbtCDC);
-    else if (num_open_files == 0)
-      g_usbManager.SetType(USBManager::usbtMSC);
-    break;
   }
 }
 
 //
 // The actual firmware menu
 //
-FirmwareMenu firmware_menu("System Menu", firmware_menu_items, MenuItem::LAST_COUNT);
+FirmwareMenu firmware_menu("System Menu", firmware_menu_items, std::size(firmware_menu_items));

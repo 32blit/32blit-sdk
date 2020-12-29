@@ -9,14 +9,14 @@
 
 #pragma once
 
-#include "engine/menu.hpp"
+#include "SystemMenu/system_menu.hpp"
 
-class FirmwareMenu final : public blit::Menu {
+class FirmwareMenu final : public SystemMenu {
 public:
-  using blit::Menu::Menu;
+  using SystemMenu::SystemMenu;
 
   // Prepare to show the firmware menu
-  void prepare();
+  void prepare() override;
 
   void draw_slider(Point pos, int width, float value, Pen colour) const;
 
@@ -39,7 +39,6 @@ private:
   void update_slider_item_value(float &value);
 
 private:
-  Pen bar_background_color;
   Pen bar_highlight_color;
 };
 

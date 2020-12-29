@@ -15,6 +15,7 @@ using namespace blit;
 #include "SystemMenu/system_menu_controller.hpp"
 #include "SystemMenu/firmware_menu.hpp"
 #include "SystemMenu/battery_menu.hpp"
+#include "SystemMenu/connectivity_menu.hpp"
 #include "SystemMenu/about_menu.hpp"
 #include "engine/version.hpp"
 
@@ -33,6 +34,7 @@ void SystemMenuController::prepare() {
 
   firmware_menu.prepare();
   battery_menu.prepare();
+  connectivity_menu.prepare();
   about_menu.prepare();
 }
 
@@ -46,6 +48,9 @@ void SystemMenuController::update(uint32_t time) {
     break;
   case SystemMenus::Battery:
     battery_menu.update(time);
+    break;
+  case SystemMenus::Connectivity:
+    connectivity_menu.update(time);
     break;
   case SystemMenus::About:
     about_menu.update(time);
@@ -63,6 +68,9 @@ void SystemMenuController::render(uint32_t time) {
     break;
   case SystemMenus::Battery:
     battery_menu.render();
+    break;
+  case SystemMenus::Connectivity:
+    connectivity_menu.render();
     break;
   case SystemMenus::About:
     about_menu.render();

@@ -6,25 +6,13 @@
 
 #pragma once
 
-#include "engine/menu.hpp"
-class BatteryMenu final : public blit::Menu {
+#include "system_menu.hpp"
+class BatteryMenu final : public SystemSubMenu {
 public:
-  using blit::Menu::Menu;
-
-  //
-  // Prepare to show the battery menu
-  //
-  void prepare();
-
-  void render_footer(int x, int y, int w) override;
+  using SystemSubMenu::SystemSubMenu;
 
 protected:
   void render_item(const Item &item, int y, int index) const override;
-
-  void update_menu(uint32_t time) override;
-
-private:
-  Pen bar_background_color;
 };
 
 extern BatteryMenu battery_menu;
