@@ -33,17 +33,17 @@ namespace battery {
   };
 
   // Battery information
-  BatteryInformation get_battery_info();
+  BatteryInformation get_info();
 
   // Return the current battery status
-  BatteryChargeStatus get_battery_charge_status();
+  BatteryChargeStatus get_charge_status();
 
   // Return the current battery vbus status
-  BatteryVbusStatus get_battery_vbus_status();
+  BatteryVbusStatus get_vbus_status();
 
   // Update the battery status (called only from i2c processing)
-  void update_battery_status ( uint8_t status, uint8_t fault );
+  void update_status ( uint8_t status, uint8_t fault );
 
   // Update the battery charge value
-  void update_battery_charge ( float charge_value );
+  void update_charge ( float charge_value );
 }

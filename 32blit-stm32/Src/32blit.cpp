@@ -412,7 +412,7 @@ void blit_update_led() {
     __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, 962 - (962 * persist.backlight));
 
     // TODO we don't want to do this too often!
-    switch(battery::get_battery_charge_status()){
+    switch(battery::get_charge_status()){
       case BatteryChargeStatus::NotCharging:
         charge_led_r = 1;
         charge_led_b = 0;
@@ -551,7 +551,7 @@ void blit_process_input() {
   blit::hack_left = (adc3data[0] >> 1) / 32768.0f;
   blit::hack_right = (adc3data[1] >> 1)  / 32768.0f;
 
-  battery::update_battery_charge(6.6f * adc3data[2] / 65535.0f);
+  battery::update_charge(6.6f * adc3data[2] / 65535.0f);
 }
 
 // blit_switch_execution

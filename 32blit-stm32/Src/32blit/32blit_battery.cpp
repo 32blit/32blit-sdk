@@ -28,13 +28,13 @@ namespace battery {
   //
   // Return information about the battery
   //
-  BatteryInformation get_battery_info() {
+  BatteryInformation get_info() {
     BatteryInformation info;
 
-    info.charge_status = get_battery_charge_status();
+    info.charge_status = get_charge_status();
     info.charge_text = get_charge_status_string();
 
-    info.vbus_status = get_battery_vbus_status();
+    info.vbus_status = get_vbus_status();
     info.vbus_text = get_vbus_status_string();
 
     info.voltage = battery;
@@ -45,7 +45,7 @@ namespace battery {
   //
   // Update battery status and fault (read using I2C)
   //
-  void update_battery_status ( uint8_t status, uint8_t fault ) {
+  void update_status ( uint8_t status, uint8_t fault ) {
     battery_status = status;
     battery_fault = fault;
   }
@@ -53,7 +53,7 @@ namespace battery {
   //
   // Update the charge value
   //
-  void update_battery_charge ( float charge_value ) {
+  void update_charge ( float charge_value ) {
     battery_average.add(charge_value);
     battery = battery_average.average();
   }
@@ -61,7 +61,7 @@ namespace battery {
   //
   // Return the current battery status
   //
-  BatteryChargeStatus get_battery_charge_status() {
+  BatteryChargeStatus get_charge_status() {
     return (BatteryChargeStatus) ((battery_status >> 4) & 0b11);
   }
 
@@ -69,7 +69,7 @@ namespace battery {
   // Convert charge status to text representation
   //
   const char *get_charge_status_string() {
-    switch(get_battery_charge_status()){
+    switch(get_charge_status()){
       case BatteryChargeStatus::NotCharging:
         return "Nope";
       case BatteryChargeStatus::PreCharging:
@@ -87,7 +87,7 @@ namespace battery {
   //
   // Return the current VBUS status
   //
-  BatteryVbusStatus get_battery_vbus_status() {
+  BatteryVbusStatus get_vbus_status() {
     return (BatteryVbusStatus)(battery_status >> 6);
   }
 
@@ -95,7 +95,7 @@ namespace battery {
   // Convert VBUS status to text representation
   //
   const char *get_vbus_status_string() {
-    switch(get_battery_vbus_status()){
+    switch(get_vbus_status()){
       case BatteryVbusStatus::VbusUnknown:
         return "Unknown";
       case BatteryVbusStatus::USBHost:
