@@ -10,7 +10,7 @@ namespace blit {
    * 
    * \param[in] tiles
    * \param[in] transforms
-   * \param[in] bounds
+   * \param[in] bounds Map bounds, must be a power of two
    * \param[in] sprites
    */
   TileMap::TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, SpriteSheet *sprites) : bounds(bounds), tiles(tiles), transforms(transforms), sprites(sprites) {
