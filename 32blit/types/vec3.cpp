@@ -14,8 +14,6 @@ extern "C" {
 
 namespace blit {
 
-  Vec3::Vec3(const float x, const float y, const float z) : x(x), y(y), z(z) {}
-
   void Vec3::transform(const Mat4 &m) {
     float w = m.v30 * this->x + m.v31 * this->y + m.v32 * -this->z + m.v33;
     float tx = x; float ty = y; float tz = z;

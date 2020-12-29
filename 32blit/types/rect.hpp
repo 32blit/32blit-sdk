@@ -13,9 +13,9 @@ namespace blit {
     int32_t x = 0, y = 0, w = 0, h = 0;
 
     Rect() = default;
-    Rect(Point tl, Point br) : x(tl.x), y(tl.y), w(br.x - tl.x), h(br.y - tl.y) {}
-    Rect(Point tl, Size s) : x(tl.x), y(tl.y), w(s.w), h(s.h) {}
-    Rect(int32_t x, int32_t y, int32_t w, int32_t h) : x(x), y(y), w(w), h(h) {}
+    constexpr Rect(Point tl, Point br) : x(tl.x), y(tl.y), w(br.x - tl.x), h(br.y - tl.y) {}
+    constexpr Rect(Point tl, Size s) : x(tl.x), y(tl.y), w(s.w), h(s.h) {}
+    constexpr Rect(int32_t x, int32_t y, int32_t w, int32_t h) : x(x), y(y), w(w), h(h) {}
 
     inline Rect& operator*= (const float a) { x = static_cast<int32_t>(x * a); y = static_cast<int32_t>(y * a); w = static_cast<int32_t>(w * a); h = static_cast<int32_t>(h * a); return *this; }
 
