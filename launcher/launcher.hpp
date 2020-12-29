@@ -1,6 +1,6 @@
-#include "32blit.hpp"
+#pragma once
 
-#include "assets.hpp"
+#include "32blit.hpp"
 
 #define ROW_HEIGHT 10
 
