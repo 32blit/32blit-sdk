@@ -12,8 +12,8 @@
 
 using namespace blit;
 
-#include "battery_menu.hpp"
-#include "system_menu_controller.hpp"
+#include "SystemMenu/battery_menu.hpp"
+#include "SystemMenu/system_menu_controller.hpp"
 
 // To use the Item class without specifier
 using blit::Menu;

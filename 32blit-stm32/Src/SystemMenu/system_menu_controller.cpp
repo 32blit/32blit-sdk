@@ -12,10 +12,10 @@
 
 using namespace blit;
 
-#include "system_menu_controller.hpp"
-#include "firmware_menu.hpp"
-#include "battery_menu.hpp"
-#include "about_menu.hpp"
+#include "SystemMenu/system_menu_controller.hpp"
+#include "SystemMenu/firmware_menu.hpp"
+#include "SystemMenu/battery_menu.hpp"
+#include "SystemMenu/about_menu.hpp"
 #include "engine/version.hpp"
 
 //
@@ -137,9 +137,6 @@ void SystemMenuController::render_footer_version(uint32_t time) {
 //
 void SystemMenuController::set_menu(SystemMenus menu) {
   current_menu = menu;
-  if ( menu == SystemMenus::About ) {
-    about_menu.reset_scrolling();
-  }
 }
 
 //

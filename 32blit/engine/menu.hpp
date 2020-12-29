@@ -13,6 +13,9 @@ namespace blit {
   //
   class Menu {
   public:
+    static const uint16_t Separator = 65535;
+    static const uint16_t AnyId = 65534;
+
     struct Item {
       uint16_t id;
       const char *label;
