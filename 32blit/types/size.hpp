@@ -11,7 +11,7 @@ namespace blit {
     int32_t w = 0, h = 0;
 
     Size() = default;
-    Size(int32_t w, int32_t h) : w(w), h(h) {}
+    constexpr Size(int32_t w, int32_t h) : w(w), h(h) {}
 
     inline Size& operator*= (const float a) { w = static_cast<int32_t>(w * a); h = static_cast<int32_t>(h * a); return *this; }
 

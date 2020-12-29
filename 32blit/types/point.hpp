@@ -10,8 +10,8 @@ namespace blit {
 
     Point() = default;
     Point(const Point &p) = default;
-    Point(int32_t x, int32_t y) : x(x), y(y) {}
-    Point(Vec2 v) : x(int32_t(v.x)), y(int32_t(v.y)) {}
+    constexpr Point(int32_t x, int32_t y) : x(x), y(y) {}
+    constexpr Point(Vec2 v) : x(int32_t(v.x)), y(int32_t(v.y)) {}
 
     inline Point& operator-= (const Point &a) { x -= a.x; y -= a.y; return *this; }
     inline Point& operator+= (const Point &a) { x += a.x; y += a.y; return *this; }
