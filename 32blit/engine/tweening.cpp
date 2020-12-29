@@ -36,6 +36,7 @@ namespace blit {
     this->started = blit::now();
     this->loop_count = 0;
     this->state = RUNNING;
+    this->value = this->from;
   }
 
   /**
