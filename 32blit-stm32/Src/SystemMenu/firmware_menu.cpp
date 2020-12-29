@@ -124,7 +124,7 @@ void FirmwareMenu::render_item(const Item &item, int y, int index) const {
 void FirmwareMenu::render_footer(int x, int y, int w) {
   Menu::render_footer(x, y, w);
   screen.pen = get_menu_colour(10);
-  screen.text("X: Mute", minimal_font, Point(x + 5, y + 5));
+  screen.text((persist.is_muted ? "X: Unmute" : "X: Mute"), minimal_font, Point(x + 5, y + 5));
 }
 
 //
