@@ -13,6 +13,9 @@ namespace blit {
   //
   class Menu {
   public:
+    static const uint16_t Separator = 65535;
+    static const uint16_t AnyId = 65534;
+
     struct Item {
       uint16_t id;
       const char *label;
@@ -29,7 +32,11 @@ namespace blit {
     void render() {
       screen.pen = background_colour;
       screen.rectangle(display_rect);
+      render_menu();
+    }
 
+protected:
+    virtual void render_menu() {
       int x = display_rect.x;
       int y = display_rect.y;
       int w = display_rect.w;
@@ -54,7 +61,9 @@ namespace blit {
       for(int i = 0; i < num_items; i++) {
         auto &item = items[i];
 
-        render_item(item, y, i);
+        if ( item.label != nullptr ) {
+          render_item(item, y, i);
+        }
 
         y += item_h + item_spacing;
       }
@@ -62,10 +71,11 @@ namespace blit {
       screen.clip = old_clip;
     }
 
+public:
     //
     // Update method of the menu
     //
-    void update(uint32_t time) {
+    virtual void update(uint32_t time) {
       // default size
       if(display_rect.w == 0 && display_rect.h == 0) {
         display_rect.w = screen.bounds.w;
@@ -79,11 +89,17 @@ namespace blit {
 
       if((time - repeat_start_time) >= repeat_ms) {
         if(buttons & Button::DPAD_UP) {
-          if(--current_item < 0)
-            current_item += num_items;
+          do {
+            if(--current_item < 0) {
+              current_item += num_items;
+            }
+          } while(items[current_item].label == nullptr );
         } else if(buttons & Button::DPAD_DOWN) {
-          if(++current_item == num_items)
-            current_item = 0;
+          do {
+            if(++current_item == num_items) {
+              current_item = 0;
+            }
+          } while(items[current_item].label == nullptr );
         }
 
         repeat_start_time = time;

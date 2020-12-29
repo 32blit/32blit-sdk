@@ -4,9 +4,11 @@
 
 Pen get_menu_colour(int index);
 
-enum SystemMenus {
+enum class SystemMenus {
   Firmware,
   Battery,
+  Connectivity,
+  About,
 };
 
 class SystemMenuController {
