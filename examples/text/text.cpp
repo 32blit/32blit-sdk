@@ -5,6 +5,7 @@ using namespace blit;
 
 bool variable_width = true;
 TextAlign alignment = TextAlign::top_left;
+const Font custom_font(press_start_font);
 
 std::string alignment_to_string(TextAlign alignment) {
   switch (alignment) {
@@ -88,7 +89,7 @@ void render(uint32_t time) {
   text = screen.wrap_text(text, text_rect.w, minimal_font, variable_width);
 
   screen.pen = Pen(0xFF, 0xFF, 0xFF);
-  screen.text(text, press_start_font, text_rect, variable_width, alignment);
+  screen.text(text, custom_font, text_rect, variable_width, alignment);
 
   // Alignment around a Point rather than a Rect
   Point text_point(240,180);
