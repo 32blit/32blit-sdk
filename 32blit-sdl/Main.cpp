@@ -138,7 +138,8 @@ void em_loop() {
 
 int main(int argc, char *argv[]) {
 
-	std::cout << "Hello World" << std::endl;
+  std::cout << "32Blit SDL2 runtime" << std::endl;
+  std::cout << "(c) Pimoroni et.al. 2019-2020" << std::endl;
 
 	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER|SDL_INIT_AUDIO) < 0) {
 		fprintf(stderr, "could not initialize SDL2: %s\n", SDL_GetError());
