@@ -1,0 +1,8 @@
+# This file defines assets used by the example; the standard 32Blit
+# pipeline will compile and link these assets into your code.
+
+font_asset.cpp:
+  PressStart2P-Regular.ttf:
+    name: press_start_font
+    height: 8
+

@@ -30,13 +30,13 @@ void init() {
 
 void render(uint32_t time) {
   screen.pen = Pen(0, 0, 0);
-	screen.clear();
+  screen.clear();
 
-	screen.alpha = 255;
-	screen.pen = Pen(255, 255, 255);
-	screen.rectangle(Rect(0, 0, 320, 14));
-	screen.pen = Pen(0, 0, 0);
-	screen.text("MP3 Playback", minimal_font, Point(5, 4));
+  screen.alpha = 255;
+  screen.pen = Pen(255, 255, 255);
+  screen.rectangle(Rect(0, 0, 320, 14));
+  screen.pen = Pen(0, 0, 0);
+  screen.text("MP3 Playback", minimal_font, Point(5, 4));
 
   int play_time = (stream.get_current_sample() * 1000) / 22050;
 
