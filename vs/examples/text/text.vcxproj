@@ -175,7 +175,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\examples\text\text.cpp" />
-    <ClInclude Include="font_asset.cpp" />
+    <ClCompile Include="font_asset.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
