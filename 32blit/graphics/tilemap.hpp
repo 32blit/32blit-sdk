@@ -33,7 +33,7 @@ namespace blit {
     uint8_t tile_at(const Point &p); // __attribute__((always_inline));
     uint8_t transform_at(const Point &p); // __attribute__((always_inline));
 
-    void draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback);
+    void draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback = nullptr);
 
   //  void mipmap_texture_span(surface *dest, point s, uint16_t c, vec2 swc, vec2 ewc);
     void texture_span(Surface *dest, Point s, uint16_t c, Vec2 swc, Vec2 ewc);
