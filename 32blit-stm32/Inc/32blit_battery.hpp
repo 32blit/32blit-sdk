@@ -1,4 +1,4 @@
-// 32blit_battery.h
+// 32blit_battery.hpp
 //
 // 32Blit Firmware Battery features
 //

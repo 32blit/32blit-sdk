@@ -9,7 +9,7 @@
 //
 
 #include "32blit.h"
-#include "32blit_battery.h"
+#include "32blit_battery.hpp"
 
 using namespace blit;
 

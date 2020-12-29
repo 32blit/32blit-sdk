@@ -3,8 +3,8 @@
 #include <bitset>
 
 #include "32blit.h"
-#include "32blit_battery.h"
-#include "32blit_i2c.h"
+#include "32blit_battery.hpp"
+#include "32blit_i2c.hpp"
 #include "main.h"
 
 #include "sound.hpp"

@@ -7,7 +7,7 @@
  */
 
 #include "32blit.h"
-#include "32blit_battery.h"
+#include "32blit_battery.hpp"
 #include "32blit.hpp"
 #include <algorithm>
 
