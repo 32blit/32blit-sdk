@@ -54,12 +54,12 @@ void DMA2D_IRQHandler(void){
 
 
 namespace display {
+	void update_ltdc_for_mode();
 	
-	__IO uint32_t dma2d_stepCount = 0;
+  __IO uint32_t dma2d_stepCount = 0;
   __IO bool frameBuffOccupied = false;
   __IO bool dma2dOccupied = false;
-  void update_ltdc_for_mode();
-
+  
   // lo and hi res screen back buffers
   Surface __fb_hires((uint8_t *)&__fb_start, PixelFormat::RGB, Size(320, 240));
   Surface __fb_hires_pal((uint8_t *)&__fb_start, PixelFormat::P, Size(320, 240));
@@ -147,7 +147,7 @@ namespace display {
 		//set DMA2d steps //set occupied
     dma2d_stepCount = 0;
     set_dma2d_state(true);
-    set_framebuff_state(true);
+    set_frameBuff_state(true);
 		//MODIFY_REG(renderReg,DMA2DOccupiedState,DMA2DIsOccupied);
 		//MODIFY_REG(renderReg,FrameBuffOccupiedState,FrameBuffIsOccupied);
 		//MODIFY_REG(renderReg,DMA2DStepState,0<<DMA2DStepPos);
@@ -184,7 +184,7 @@ namespace display {
 		//MODIFY_REG(renderReg,DMA2DStepState,0<<DMA2DStepPos);
     dma2d_stepCount = 0;
     set_dma2d_state(true);
-    set_framebuff_state(true);
+    set_frameBuff_state(true);
     // trigger start of dma2d transfer
     DMA2D->CR |= DMA2D_CR_START;
     // update pal next, dma2d could work at same time
@@ -223,7 +223,7 @@ namespace display {
 		//set DMA2d steps //set occupied
     dma2d_stepCount = 3;
     set_dma2d_state(true);
-    set_framebuff_state(true);
+    set_frameBuff_state(true);
 		//MODIFY_REG(renderReg,DMA2DOccupiedState,DMA2DIsOccupied);
 		//MODIFY_REG(renderReg,FrameBuffOccupiedState,FrameBuffIsOccupied);
 		//MODIFY_REG(renderReg,DMA2DStepState,3<<DMA2DStepPos);
