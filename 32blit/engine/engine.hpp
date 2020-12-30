@@ -27,6 +27,5 @@ namespace blit {
   bool tick(uint32_t time);
   void fast_tick(uint32_t time);
 
-  // hal methods: read_file, reset
-
+  const char *get_launch_path();
 }

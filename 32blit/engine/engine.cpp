@@ -38,7 +38,7 @@ namespace blit {
   int debugf(const char * psFormatString, ...) {
     va_list args;
     va_start(args, psFormatString);
-    
+
     // get length
     va_list tmp_args;
     va_copy(tmp_args, args);
@@ -86,6 +86,10 @@ namespace blit {
     last_tick_time = time;
 
     return true;
+  }
+
+  const char *get_launch_path() {
+    return api.get_launch_path();
   }
 
 }

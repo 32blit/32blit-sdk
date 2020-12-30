@@ -318,6 +318,7 @@ bool launch_game_from_sd(const char *path) {
   }
 
   uint32_t offset = 0xFFFFFFFF;
+  persist.launch_path[0] = 0;
 
   BlitGameMetadata meta;
 
@@ -338,6 +339,9 @@ bool launch_game_from_sd(const char *path) {
 
     if(offset == 0xFFFFFFFF)
       return false;
+
+    // set the path to the file to launch
+    strncpy(persist.launch_path, path, sizeof(persist.launch_path));
 
   } else if(parse_file_metadata(path, meta)) {
     for(auto &flash_game : game_list) {

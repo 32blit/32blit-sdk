@@ -118,6 +118,13 @@ uint32_t get_max_us_timer()
 	return UINT32_MAX / uTicksPerUs;
 }
 
+static const char *get_launch_path() {
+  if(!persist.launch_path[0])
+    return nullptr;
+
+  return persist.launch_path;
+}
+
 static void do_render() {
   if(display::needs_render) {
     while (display::is_frameBuff_occupied()){
@@ -231,6 +238,7 @@ void blit_init() {
       persist.reset_target = prtFirmware;
       persist.reset_error = false;
       persist.last_game_offset = 0;
+      memset(persist.launch_path, 0, sizeof(persist.launch_path));
     }
 
 #if (INITIALISE_QSPI==1)
@@ -292,6 +300,7 @@ void blit_init() {
     blit::api.decode_jpeg_buffer = blit_decode_jpeg_buffer;
     blit::api.decode_jpeg_file = blit_decode_jpeg_file;
 
+    blit::api.get_launch_path = ::get_launch_path;
 
   display::init();
 
