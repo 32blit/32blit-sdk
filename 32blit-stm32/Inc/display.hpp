@@ -35,6 +35,10 @@ namespace display {
 	uint32_t get_dma2d_count(void);
 	void set_dma2d_state(bool occupied);
 	void set_frameBuff_state(bool occupied);
+  
+  void dma2d_lores_flip_Step2(void);
+  void dma2d_lores_flip_Step3(void);
+  void dma2d_lores_flip_Step4(void);
 }
 
 
