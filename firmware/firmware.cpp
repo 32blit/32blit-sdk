@@ -343,6 +343,15 @@ bool launch_game_from_sd(const char *path) {
   return false;
 }
 
+static void *get_type_handler_metadata(const char *filetype) {
+  for(auto &handler : handlers) {
+    if(strncmp(filetype, handler.type, 4) == 0)
+      return (void *)(qspi_flash_address + handler.meta_offset);
+  }
+
+  return nullptr;
+}
+
 static void start_launcher() {
   if(launcher_offset != 0xFFFFFFFF)
     launch_game(launcher_offset);
@@ -354,6 +363,7 @@ static void start_launcher() {
 void init() {
   api.launch = launch_game_from_sd;
   api.erase_game = erase_flash_game;
+  api.get_type_handler_metadata = get_type_handler_metadata;
 
   set_screen_mode(ScreenMode::hires);
   screen.clear();
@@ -385,7 +395,7 @@ void init() {
 
       persist.reset_error = false;
     });
-  } else 
+  } else
     start_launcher();
 }
 
