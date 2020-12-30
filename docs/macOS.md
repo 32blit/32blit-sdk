@@ -1,4 +1,19 @@
-# Building & Running on macOS
+# Building & Running on macOS <!-- omit in toc -->
+
+These instructions cover building 32blit on macOS.
+
+- [Prerequisites](#prerequisites)
+- [Python3](#python3)
+  - [Installing python3](#installing-python3)
+  - [Installing pip3 dependecies](#installing-pip3-dependecies)
+  - [Verifying install](#verifying-install)
+- [Installing `gcc-arm-none-eabi`](#installing-gcc-arm-none-eabi)
+- [Building & Running on 32Blit](#building--running-on-32blit)
+- [Building & Running Locally](#building--running-locally)
+  - [Build Everything](#build-everything)
+- [Troubleshooting](#troubleshooting)
+
+## Prerequisites
 
 You will need build tools and CMake. Assuming you have [homebrew](https://docs.brew.sh/Installation) installed:
 
@@ -17,9 +32,14 @@ Installing `python3` can be done with homebrew with a simple `brew install pytho
 
 ###  Installing pip3 dependecies
 
+```
+pip3 install 32blit
+```
+
 TODO: Document install of `construct` and `bitstring` for Python 3 (probably need a requirements.txt for the tools directory)
 
 ###  Verifying install
+
 ``` shell
 python3 --version
 ```
@@ -52,17 +72,10 @@ If you want to run code on 32Blit, you should now refer to [Building & Running O
 
 ## Building & Running Locally
 
-You'll need to build and install SDL2:
+You'll need to install `SDL2` and `SDL2 Image`
 
 ``` shell
-curl https://www.libsdl.org/release/SDL2-2.0.10.zip -o SDL2-2.0.10.zip
-unzip SDL2-2.0.10.zip
-cd SDL2-2.0.10
-mkdir build
-cd build
-../configure
-make
-sudo make install
+brew install sdl2 sdl2_image
 ```
 
 Then, set up the 32Blit Makefile from the root of the repository with the following commands:
@@ -70,7 +83,7 @@ Then, set up the 32Blit Makefile from the root of the repository with the follow
 ```shell
 mkdir build
 cd build
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../darwin.toolchain
+cmake ..
 ```
 
 Now to make any example, type:

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>32blit examples</title>
+        <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        #example-list {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: stretch;
+            margin: 1em auto;
+            max-width: 1280px;
+
+        }
+
+        #example-list button {
+            border: none;
+            background: #222;
+            color: #f7f7f7;
+
+            padding: 1em;
+            margin: 0.2em;
+            flex: 1 0;
+            white-space: nowrap;
+        }
+
+        iframe {
+            border: 0;
+            margin: auto;
+            display: block;
+            width: 640px;
+            height: 480px;
+        }
+        </style>
+    </head>
+    <body>
+        <section id="example-list"></section>
+        <iframe id="example-frame" src="shell.html?app=logo"></iframe>
+        <script type="text/javascript">
+            const examples = [
+                "audio-test", "audio-wave", "doom-fire", "fizzlefade", "flight", "geometry", "hardware-test", "logo", 
+                "matrix-test", "mp3", "palette-cycle", "palette-swap", "particle", "platformer", "profiler-test", "raycaster", 
+                "rotozoom", "saves", "scrolly-tile", "serial-debug", "shmup", "sprite-test", "text", "tilemap-test",
+                "tilt", "timer-test", "tunnel", "tween-demo", "tween-test", "voxel"
+            ];
+
+            const listEl = document.getElementById("example-list");
+            const frameEl = document.getElementById("example-frame");
+
+            frameEl.addEventListener("load", e => {
+                // hack to give iframe keyboard
+                const frame = e.target;
+                const canvas = frame.contentDocument.getElementById("canvas");
+                canvas.addEventListener("mousedown", () => frame.contentWindow.focus());
+            });
+
+            for(const example of examples)
+            {
+                const el = document.createElement("button");
+                el.innerText = example;
+                el.addEventListener("click", e => {
+                    frameEl.src = `shell.html?app=${example}`
+                    frameEl.contentWindow.focus();
+                });
+
+                listEl.appendChild(el);
+            }
+        </script>
+    </body>
+</html>

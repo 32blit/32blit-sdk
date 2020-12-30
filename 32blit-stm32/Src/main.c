@@ -25,7 +25,7 @@
 #include "fatfs.h"
 #include "hrtim.h"
 #include "i2c.h"
-
+#include "jpeg.h"
 #include "quadspi.h"
 #include "rng.h"
 #include "spi.h"
@@ -44,6 +44,7 @@
 #include "CDCResetHandler.h"
 #include "CDCInfoHandler.h"
 #include "CDCCommandStream.h"
+#include "USBManager.h"
 
 /* USER CODE END Includes */
 
@@ -64,9 +65,16 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+extern USBManager g_usbManager;
 extern CDCCommandStream g_commandStream;
 CDCResetHandler g_resetHandler;
 CDCInfoHandler g_infoHandler;
+bool is_beta_unit = false;
+
+
+uint8_t charge_led_r = 0;
+uint8_t charge_led_g = 0;
+uint8_t charge_led_b = 0;
 
 /* USER CODE END PV */
 
@@ -116,9 +124,12 @@ int main(void)
   gpio::init();
   sound::init();
 
+  is_beta_unit = HAL_GPIO_ReadPin(VERSION_GPIO_Port, VERSION_Pin);
+
   //MX_GPIO_Init();
 
   MX_DMA_Init();
+  MX_TIM2_Init();
   MX_TIM4_Init();
   MX_TIM3_Init();
   //MX_DAC1_Init();
@@ -134,12 +145,12 @@ int main(void)
   MX_SPI4_Init();
   //MX_TIM6_Init();
   MX_TIM15_Init();
-  MX_FATFS_Init();
-  //MX_DMA2D_Init();
+  //MX_TIM16_Init();
+  MX_FATFS_Init();  
   MX_RNG_Init();
   MX_USB_DEVICE_Init();
+  MX_JPEG_Init();
   /* USER CODE BEGIN 2 */
-
 
   //NVIC_SetPriority(SysTick_IRQn, 0x0);
 
@@ -149,8 +160,9 @@ int main(void)
 
   blit_init();
 
-  // add CDC handler to reset device on receiving "_RST"
+  // add CDC handler to reset device on receiving "_RST" and "SWIT"
 	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', 'R', 'S', 'T'>::value, &g_resetHandler);
+	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'S', 'W', 'I', 'T'>::value, &g_resetHandler);
 
   // add CDC handler to log info device on receiving "INFO"
 	g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'I', 'N', 'F', 'O'>::value, &g_infoHandler);
@@ -170,6 +182,9 @@ int main(void)
 
     blit_tick();
     //HAL_Delay(1000);
+    // USB
+    g_usbManager.Update();
+  
     // handle CDC input
     g_commandStream.Stream();
 
@@ -288,6 +303,9 @@ void SystemClock_Config(void)
   RCC_CRSInitStruct.HSI48CalibrationValue = 32;
 
   HAL_RCCEx_CRSConfig(&RCC_CRSInitStruct);
+
+  __HAL_RCC_DMA2D_CLK_ENABLE();
+
   /** Enable USB Voltage detector 
   */
   HAL_PWREx_EnableUSBVoltageDetector();

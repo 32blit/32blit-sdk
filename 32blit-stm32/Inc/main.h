@@ -29,6 +29,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32h7xx_hal.h"
+#include "stm32h7xx.h"  // Added to help Eclipse indexer
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -52,6 +53,11 @@ extern "C" {
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
+
+
+extern uint8_t charge_led_r;
+extern uint8_t charge_led_g;
+extern uint8_t charge_led_b;
 
 /* USER CODE BEGIN EFP */
 

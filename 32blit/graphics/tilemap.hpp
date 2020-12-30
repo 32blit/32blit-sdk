@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "../32blit.hpp"
 #include "../types/size.hpp"
@@ -29,11 +29,11 @@ namespace blit {
     TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, SpriteSheet *sprites);
 
     inline int32_t offset(const Point &p); // __attribute__((always_inline));
-    int32_t offset(const int16_t &x, const int16_t &y); // __attribute__((always_inline));
+    int32_t offset(int16_t x, int16_t y); // __attribute__((always_inline));
     uint8_t tile_at(const Point &p); // __attribute__((always_inline));
     uint8_t transform_at(const Point &p); // __attribute__((always_inline));
 
-    void draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback);
+    void draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback = nullptr);
 
   //  void mipmap_texture_span(surface *dest, point s, uint16_t c, vec2 swc, vec2 ewc);
     void texture_span(Surface *dest, Point s, uint16_t c, Vec2 swc, Vec2 ewc);

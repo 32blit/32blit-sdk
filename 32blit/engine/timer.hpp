@@ -1,12 +1,12 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <vector>
 
 namespace blit {
 
   struct Timer {
-    typedef void (*TimerCallback)(Timer &timer);
+    using TimerCallback = void (*)(Timer &timer);
 
     // uint32_t callback;                      // reference to Lua callback function (can be obtained via `ref = _G['function_name']`)
     
@@ -23,7 +23,7 @@ namespace blit {
     };
     uint8_t state = STOPPED;
 
-    void init(TimerCallback callback, uint32_t duration, int32_t loops);
+    void init(TimerCallback callback, uint32_t duration, int32_t loops = -1);
     void start();
     void stop();
 

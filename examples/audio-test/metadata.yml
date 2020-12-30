@@ -1,0 +1,8 @@
+title: Audio Test
+description: A basic audio test.
+author: pimoroni
+splash:
+  file: ../no-image.png
+icon:
+  file: ../no-icon.png
+version: v1.0.0

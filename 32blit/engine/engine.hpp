@@ -1,28 +1,28 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 
 #include "../graphics/surface.hpp"
 
 namespace blit {
 
-  enum   ScreenMode  { lores, hires };
+  enum   ScreenMode  { lores, hires, hires_palette };
   extern Surface      &screen;
-  extern bool         halted;
 
 
   extern void     (*init)             ();
   extern void     (*update)           (uint32_t time);
   extern void     (*render)           (uint32_t time);
-  extern void     (*set_screen_mode)  (ScreenMode new_mode);
-  extern uint32_t (*now)              ();
-  extern uint32_t (*random)           ();
-  extern void     (*debug)            (std::string message);
-  extern int      (*debugf)           (const char * psFormatString, ...);
-  extern void     (*reset)            ();
-  extern void     (*reset)            ();
-  extern void			(*switch_execution) ();
+
+  void set_screen_mode(ScreenMode new_mode);
+  void set_screen_palette(const Pen *colours, int num_cols);
+
+  uint32_t now();
+  uint32_t random();
+
+  void debug(std::string message);
+  int debugf(const char * psFormatString, ...);
 
   bool tick(uint32_t time);
   void fast_tick(uint32_t time);

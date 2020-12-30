@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.9)
 project (geometry)
 include (../../32blit.cmake)
 blit_executable (geometry geometry.cpp)
+blit_metadata (geometry metadata.yml)

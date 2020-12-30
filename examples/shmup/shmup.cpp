@@ -1,4 +1,5 @@
 #include "shmup.hpp"
+#include "assets.hpp"
 
 using namespace blit;
 

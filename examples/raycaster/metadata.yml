@@ -1,0 +1,8 @@
+title: Ray Caster
+description: Bug spray your way through abandoned ruins as the titular Ray Caster, international man of mistery.
+author: Pimoroni
+splash:
+  file: raycaster.png
+icon:
+  file: raycaster-icon.png
+version: v1.0.0

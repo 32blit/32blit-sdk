@@ -6,10 +6,18 @@
  */
 
 #include "CDCResetHandler.h"
+#include "32blit.h"
 
 bool CDCResetHandler::StreamInit(CDCFourCC uCommand)
 {
-	NVIC_SystemReset();
+#if EXTERNAL_LOAD_ADDRESS == 0x90000000
+  if(uCommand == CDCCommandHandler::CDCFourCCMake<'S', 'W', 'I', 'T'>::value || blit_user_code_running())
+    blit_switch_execution(0, false); 
+  else
+	  NVIC_SystemReset();
+#else
+  blit_switch_execution(0); 
+#endif  
 
 	return false;
 }

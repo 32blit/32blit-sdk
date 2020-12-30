@@ -1,0 +1,8 @@
+title: Another World
+description: This action adventure needs no introduction.
+author: pimoroni
+splash:
+  file: another-world.png
+icon:
+  file: another-world-icon.png
+version: v1.0.0

@@ -1,0 +1,8 @@
+title: Serial Debug
+description: Fire serial data into the void.
+author: pimoroni
+splash:
+  file: serial-debug.png
+icon:
+  file: serial-debug-icon.png
+version: v1.0.0

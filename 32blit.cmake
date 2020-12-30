@@ -1,8 +1,25 @@
 if (NOT DEFINED BLIT_ONCE)
 	set(BLIT_ONCE TRUE)
 
-	set(CMAKE_CXX_STANDARD 14)
+	set(CMAKE_CXX_STANDARD 17)
 	set(CMAKE_CXX_EXTENSIONS OFF)
+	set(BLIT_MINIMUM_TOOLS_VERSION "0.2.0")
+
+	find_package(PythonInterp 3.6 REQUIRED)
+
+	# make sure that the tools are installed
+	execute_process(COMMAND ${PYTHON_EXECUTABLE} -m ttblit version RESULT_VARIABLE VERSION_STATUS OUTPUT_VARIABLE TOOLS_VERSION ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+	# get just the python command to output to the user
+	get_filename_component(PYTHON_USER_EXECUTABLE "${PYTHON_EXECUTABLE}" NAME)
+
+	if(${VERSION_STATUS})
+		message(FATAL_ERROR "32Blit tools not found!\nInstall with: ${PYTHON_USER_EXECUTABLE} -m pip install 32blit\n")
+	endif()
+
+	if("${TOOLS_VERSION}" VERSION_LESS "${BLIT_MINIMUM_TOOLS_VERSION}")
+		message(FATAL_ERROR "32Blit tools out of date!\nYou have ${TOOLS_VERSION}, we need >= ${BLIT_MINIMUM_TOOLS_VERSION}\nUpdate with: ${PYTHON_USER_EXECUTABLE} -m pip install --upgrade 32blit\n")
+	endif()
 
 	if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 		set(CMAKE_BUILD_TYPE "Release")
@@ -13,36 +30,6 @@ if (NOT DEFINED BLIT_ONCE)
 	endif()
 
 	add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/32blit 32blit)
-
-	find_package(PythonInterp 3 REQUIRED)
-
-	# tool paths
-	set(ASSET_PACKER ${CMAKE_CURRENT_LIST_DIR}/tools/asset-packer)
-	set(SPRITE_BUILDER ${CMAKE_CURRENT_LIST_DIR}/tools/sprite-builder)
-	set(MAP_BUILDER ${CMAKE_CURRENT_LIST_DIR}/tools/map-builder)
-
-	function(pack_sprites FILENAME TYPE OUT_PATH)
-		# TODO: this will break if someone passes the same name in different subdirs
-		get_filename_component(BASE_NAME ${FILENAME} NAME)
-		add_custom_command(
-			OUTPUT ${BASE_NAME}.blit
-			COMMAND ${PYTHON_EXECUTABLE} ${SPRITE_BUILDER} --out ${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}.blit ${TYPE} ${FILENAME}
-			DEPENDS ${FILENAME} ${SPRITE_BUILDER}
-		)
-
-		set(${OUT_PATH} ${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}.blit PARENT_SCOPE)
-	endfunction()
-
-	function(pack_map FILENAME TYPE OUT_PATH)
-		get_filename_component(BASE_NAME ${FILENAME} NAME)
-		add_custom_command(
-			OUTPUT ${BASE_NAME}.blit
-			COMMAND ${PYTHON_EXECUTABLE} ${MAP_BUILDER} ${TYPE} --force --out ${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}.blit ${FILENAME}
-			DEPENDS ${FILENAME} ${MAP_BUILDER} ${TOOL_TILED}
-		)
-
-		set(${OUT_PATH} ${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}.blit PARENT_SCOPE)
-	endfunction()
 
 	function (blit_assets_yaml TARGET FILE)
 		# cause cmake to reconfigure whenever the asset list changes
@@ -64,81 +51,10 @@ if (NOT DEFINED BLIT_ONCE)
 		target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 	endfunction()
 
-	function (blit_assets TARGET)
-		set(ASSET_TYPE "")
-		set(ASSET_FILES)
-
-		foreach(ARG IN LISTS ARGN)
-			# set asset type
-			if(ARG STREQUAL "RAW" OR ARG STREQUAL "SPRITE_PACKED" OR ARG STREQUAL "SPRITE_RAW" OR ARG STREQUAL "MAP_TILED2BIN")
-				set(ASSET_TYPE ${ARG})
-				continue()
-			elseif(ASSET_TYPE STREQUAL "")
-				message(FATAL_ERROR "No asset type specified")
-			endif()
-
-			set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/${ARG})
-
-			if(ASSET_TYPE STREQUAL "SPRITE_PACKED")
-				pack_sprites(${ASSET_PATH} packed ASSET_PATH)
-			elseif(ASSET_TYPE STREQUAL "SPRITE_RAW")
-				pack_sprites(${ASSET_PATH} raw ASSET_PATH)
-			elseif(ASSET_TYPE STREQUAL "MAP_TILED2BIN")
-				pack_map(${ASSET_PATH} tiled2bin ASSET_PATH)
-			endif()
-
-			list(APPEND ASSET_FILES ${ASSET_PATH})
-		endforeach()
-
-		set(PACKER_ARGS)
-		set(PACKER_OUTPUTS assets.bin assets.cpp assets.hpp)
-
-		if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-			set(PACKER_ARGS --inline-data)
-			set(PACKER_OUTPUTS assets.cpp assets.hpp)
-		endif()
-
-		add_custom_command(
-			OUTPUT ${PACKER_OUTPUTS}
-			COMMAND ${PYTHON_EXECUTABLE} ${ASSET_PACKER} --base-path ${CMAKE_CURRENT_SOURCE_DIR} --base-path ${CMAKE_CURRENT_BINARY_DIR} ${PACKER_ARGS} ${ASSET_FILES}
-			DEPENDS ${ASSET_FILES} ${ASSET_PACKER}
-		)
-
-		target_sources(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/assets.cpp)
-		target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-
-		if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-			add_custom_command(
-				COMMAND ${CMAKE_LINKER} -r -b binary -o assets.bin.o assets.bin
-				COMMAND ${CMAKE_OBJCOPY} --rename-section .data=.rodata,alloc,load,readonly,data,contents assets.bin.o assets.bin.o
-				OUTPUT assets.bin.o
-				DEPENDS assets.bin
-			)
-
-			target_sources(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/assets.bin.o)
-		endif()
-	endfunction()
-
 	if (${CMAKE_SYSTEM_NAME} STREQUAL Generic)
 		set(FLASH_PORT "AUTO" CACHE STRING "Port to use for flash")
 
-		# attempt to find the upload tool
-		find_program(32BLIT_TOOL 32Blit PATHS
-			${CMAKE_CURRENT_BINARY_DIR}/../build/tools/src/
-		)
-
-		if(NOT 32BLIT_TOOL)
-			message(WARNING "32Blit tool not found. Looking for 32Blit.exe instead")
-			find_program(32BLIT_TOOL 32Blit.exe PATHS
-				${CMAKE_CURRENT_BINARY_DIR}/../build.mingw/tools/src/
-			)
-		endif()
-
-		if(NOT 32BLIT_TOOL)
-			message(WARNING "32Blit tool not found")
-		endif()
-
-		add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/32blit-stm32 32blit-stm32)
+		include(${CMAKE_CURRENT_LIST_DIR}/32blit-stm32/executable.cmake)
 	else()
 		add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/32blit-sdl 32blit-sdl)
 	endif()

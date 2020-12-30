@@ -1,11 +1,27 @@
-# Building & Running On 32Blit
+# Building & Running On 32Blit <!-- omit in toc -->
 
 These instructions assume a basic familiarity with the Linux command-line and with compiling software from source.
+
+- [Prerequisites](#prerequisites)
+  - [Examples](#examples)
+    - [Building An Example](#building-an-example)
+    - [Uploading An Example](#uploading-an-example)
+      - [Via mass-storage mode](#via-mass-storage-mode)
+      - [With make](#with-make)
+      - [With the 32blit tool](#with-the-32blit-tool)
+  - [Your Own Projects](#your-own-projects)
+  - [Running games](#running-games)
+    - [Launching](#launching)
+    - [Exiting](#exiting)
+- [Troubleshooting](#troubleshooting)
+    - [Flasher Can't Find 32Blit Port](#flasher-cant-find-32blit-port)
+    - [CMake Errors](#cmake-errors)
+
+# Prerequisites
 
 Make sure you've prepared your 32Blit by following the instructions in:
 
 * [Building & Flashing The 32Blit Firmware](32Blit-Firmware.md#building--flashing-the-32blit-firmware)
-* [Building The 32Blit Loader Tool](32Blit-Loader.md#building-the-32blit-loader-tool)
 
 You should also make sure you have a cross-compile environment set up on your computer, refer to the relevant documentation below:
 
@@ -30,15 +46,25 @@ cmake .. -DCMAKE_TOOLCHAIN_FILE=../32blit.toolchain
 
 And then run `make examplename` to build an example.
 
-The result of the build will be a `.bin`, `.hex` and `.elf` file in the relevant example directory.
+The result of the build will be a `.blit`, `.bin`, `.hex` and `.elf` file in the relevant example directory.
 
-For example you might type `make raycaster` which will give you `examples/raycaster/raycaster.bin`.
+For example you might type `make raycaster` which will give you `examples/raycaster/raycaster.blitn`.
 
 ### Uploading An Example
 
-This requires the [flash loader tool](32Blit-Loader.md) to be in your PATH or built in an adjacent `build` or `build.mingw` directory from a local build (Run the build for your platform in the top level).
+#### Via mass-storage mode
 
-With the tool available, and your device out of DFU mode, you can now run:
+If your 32blit is connected to your computer with a USB cable, you can switch into mass-storage mode and copy files over as if it were a USB storage device.
+
+![press the Home button](resources/enter-mass-storage-mode.png)
+
+A "USB Drive" device should pop up, and the text "Mass Storage Mode (MSC Mounted)" will show on your 32blit's screen.
+
+Once you're done copying files, eject the drive and your 32blit should resume.
+
+#### With make
+
+With your device out of DFU mode (displaying the game list), you can now run:
 
 ```
 make [example-name].flash
@@ -52,6 +78,21 @@ make logo.flash
 
 To build, flash and run the `logo` example.
 
+#### With the 32blit tool
+
+Alternatively, you can use the tool directly:
+```
+32blit flash flash --file=[filename].blit
+```
+
+Or, to save to the SD card:
+```
+32blit flash save --file=[filename].blit
+```
+
+(If `32blit` is not found you can use `python3 -m ttblit` instead)
+
+
 ## Your Own Projects
 
 You can build a project based on the template by running:
@@ -63,14 +104,26 @@ cmake .. -D32BLIT_PATH="/path/to/32blit/repo" -DCMAKE_TOOLCHAIN_FILE=/path/to/32
 make
 ```
 
+## Running games
+
+### Launching
+
+Just select the game you want to launch from the menu screen and press A.
+
+### Exiting
+
+You can either press Menu and select "Exit Game" or long-press Menu to exit.
+
+![long press menu to exit a game](resources/exit-game.png)
+
 # Troubleshooting
 
 ### Flasher Can't Find 32Blit Port
 
-If `make example.flash` fails to find the correct port, re-run `cmake` with `-DFLASH_PORT=[PORT PATH]`.  
+If `make example.flash` fails with `Unable to find 32Blit`, re-run `cmake` with `-DFLASH_PORT=[PORT PATH]`.  
 
 Port-detection does not work if your device is in DFU mode. Either reset it to get it out, or it it's stuck in DFU mode (or just boots into a black screen), you may need to reflash the firmware.
 
-### Cmake Errors
+### CMake Errors
 
 If you see `cannot create target because another target with the same name already exists` you've probably run `cmake ..` in the wrong directory (the project directory rather than the build directory), you should remove all but your project files and `cmake ..` again from the build directory.

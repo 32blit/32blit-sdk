@@ -1,0 +1,8 @@
+title: Tilt
+description: A simple accelerometer demo, tilt to play with the sand grains.
+author: pimoroni
+splash:
+  file: tilt.png
+icon:
+  file: tilt-icon.png
+version: v1.0.0

@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.9)
 project (particle)
 include (../../32blit.cmake)
 blit_executable (particle particle.cpp)
+blit_metadata (particle metadata.yml)

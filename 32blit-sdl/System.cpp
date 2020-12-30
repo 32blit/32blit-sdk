@@ -7,37 +7,44 @@
 #include "System.hpp"
 #include "32blit.hpp"
 #include "UserCode.hpp"
+#include "JPEG.hpp"
 
+#include "engine/api_private.hpp"
 
 // blit framebuffer memory
 uint8_t framebuffer[320 * 240 * 3];
 blit::Surface __fb_hires((uint8_t *)framebuffer, blit::PixelFormat::RGB, blit::Size(320, 240));
+blit::Surface __fb_hires_pal((uint8_t *)framebuffer, blit::PixelFormat::P, blit::Size(320, 240));
 blit::Surface __fb_lores((uint8_t *)framebuffer, blit::PixelFormat::RGB, blit::Size(160, 120));
 
-// blit debug callback
-void debug(std::string message) {
-	std::cout << message << std::endl;
-}
+static blit::Pen palette[256];
 
-int blit_debugf(const char * psFormatString, ...)
-{
-	va_list args;
-	va_start(args, psFormatString);
-	int ret = vprintf(psFormatString, args);
-	va_end(args);
-	return ret;
+// blit debug callback
+void blit_debug(const char *message) {
+	std::cout << message;
 }
 
 // blit screenmode callback
 blit::ScreenMode _mode = blit::ScreenMode::lores;
-void set_screen_mode(blit::ScreenMode new_mode) {
+blit::Surface &set_screen_mode(blit::ScreenMode new_mode) {
 	_mode = new_mode;
-	if (_mode == blit::ScreenMode::hires) {
-		blit::screen = __fb_hires;
-	}
-	else {
-		blit::screen = __fb_lores;
-	}
+    switch(_mode) {
+      case blit::ScreenMode::lores:
+        blit::screen = __fb_lores;
+        break;
+      case blit::ScreenMode::hires:
+        blit::screen = __fb_hires;
+        break;
+      case blit::ScreenMode::hires_palette:
+        blit::screen = __fb_hires_pal;
+        break;
+    }
+
+	return blit::screen;
+}
+
+static void set_screen_palette(const blit::Pen *colours, int num_cols) {
+	memcpy(palette, colours, num_cols * sizeof(blit::Pen));
 }
 
 // blit timer callback
@@ -59,6 +66,27 @@ std::mt19937 random_generator(random_device());
 std::uniform_int_distribution<uint32_t> random_distribution;
 uint32_t blit_random() {
 	return random_distribution(random_generator);
+}
+
+
+// us timer used by profiler
+
+void enable_us_timer()
+{
+	// Enable/initialise timer
+}
+
+uint32_t get_us_timer()
+{
+	// get current time in us
+	uint64_t ticksPerUs = SDL_GetPerformanceFrequency() / 1000000;
+	return SDL_GetPerformanceCounter() / ticksPerUs;
+}
+
+uint32_t get_max_us_timer()
+{
+	// largest us value timer can produce for wrapping
+	return UINT32_MAX;
 }
 
 // SDL events
@@ -85,6 +113,8 @@ System::System() {
 	s_loop_update = SDL_CreateSemaphore(0);
 	s_loop_redraw = SDL_CreateSemaphore(0);
 	s_loop_ended = SDL_CreateSemaphore(0);
+
+	__fb_hires_pal.palette = palette;
 }
 
 System::~System() {
@@ -100,21 +130,36 @@ void System::run() {
 
 	start = std::chrono::steady_clock::now();
 
-	blit::now = ::now;
-	blit::random = ::blit_random;
-	blit::debug = ::debug;
-	blit::debugf = ::blit_debugf;
-	blit::set_screen_mode = ::set_screen_mode;
+	blit::api.now = ::now;
+	blit::api.random = ::blit_random;
+	blit::api.debug = ::blit_debug;
+	blit::api.set_screen_mode = ::set_screen_mode;
+	blit::api.set_screen_palette = ::set_screen_palette;
 	blit::update = ::update;
 	blit::render = ::render;
 
 	setup_base_path();
 
-	blit::open_file = ::open_file;
-	blit::read_file = ::read_file;
-	blit::close_file = ::close_file;
-	blit::get_file_length = ::get_file_length;
-	blit::list_files = ::list_files;
+	blit::api.open_file = ::open_file;
+	blit::api.read_file = ::read_file;
+	blit::api.write_file = ::write_file;
+	blit::api.close_file = ::close_file;
+	blit::api.get_file_length = ::get_file_length;
+	blit::api.list_files = ::list_files;
+	blit::api.file_exists = ::file_exists;
+	blit::api.directory_exists = ::directory_exists;
+	blit::api.create_directory = ::create_directory;
+	blit::api.rename_file = ::rename_file;
+	blit::api.remove_file = ::remove_file;
+	blit::api.get_save_path = ::get_save_path;
+	blit::api.is_storage_available = ::is_storage_available;
+
+	blit::api.enable_us_timer = ::enable_us_timer;
+	blit::api.get_us_timer = ::get_us_timer;
+	blit::api.get_max_us_timer = ::get_max_us_timer;
+
+	blit::api.decode_jpeg_buffer = blit_decode_jpeg_buffer;
+	blit::api.decode_jpeg_file = blit_decode_jpeg_file;
 
 	::set_screen_mode(blit::lores);
 
@@ -192,11 +237,23 @@ Uint32 System::mode() {
 void System::update_texture(SDL_Texture *texture) {
 	blit::render(::now());
 	if (_mode == blit::ScreenMode::lores) {
-		SDL_UpdateTexture(texture, NULL, __fb_lores.data, 160 * 3);
+		SDL_UpdateTexture(texture, nullptr, __fb_lores.data, 160 * 3);
 	}
-	else
-	{
-		SDL_UpdateTexture(texture, NULL, __fb_hires.data, 320 * 3);
+	else if(_mode == blit::ScreenMode::hires) {
+		SDL_UpdateTexture(texture, nullptr, __fb_hires.data, 320 * 3);
+	} else {
+		uint8_t col_fb[320 * 240 * 3];
+
+		auto in = __fb_hires_pal.data, out = col_fb;
+
+		for(int i = 0; i < 320 * 240; i++) {
+			uint8_t index = *(in++);
+			(*out++) = palette[index].r;
+			(*out++) = palette[index].g;
+			(*out++) = palette[index].b;
+		}
+
+		SDL_UpdateTexture(texture, nullptr, col_fb, 320 * 3);
 	}
 }
 
@@ -243,26 +300,4 @@ void System::stop() {
 
 	SDL_SemPost(s_timer_stop);
 	SDL_WaitThread(t_system_timer, &returnValue);
-}
-
-
-// us timer used by profiler
-// need code here for non stm32 based builds
-
-void EnableUsTimer(void)
-{
-	// Enable/initialise timer
-}
-
-uint32_t GetUsTimer(void)
-{
-	// get current time in us
-	uint64_t ticksPerUs = SDL_GetPerformanceFrequency() / 1000000;
-	return SDL_GetPerformanceCounter() / ticksPerUs;
-}
-
-uint32_t GetMaxUsTimer(void)
-{
-	// largest us value timer can produce for wrapping
-	return UINT32_MAX;
 }

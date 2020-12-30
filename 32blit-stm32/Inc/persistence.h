@@ -9,12 +9,24 @@ This storage will not survive a loss of power.
 */
 #pragma once
 
+typedef enum {prtFirmware, prtGame} PersistResetTarget;
+
 struct Persist {
   uint32_t magic_word;
+
+  // set to true if the volume is muted
+  bool is_muted;
+
+  // the current volume level -- muting does not affect this
   float volume;
+
+  // the current backlight level
   float backlight;
   uint32_t selected_menu_item;
-  uint32_t reset_target;
+
+  PersistResetTarget reset_target;
+  bool reset_error; // last reset was caused by an error
+  uint32_t last_game_offset;
 };
 
 extern Persist persist;

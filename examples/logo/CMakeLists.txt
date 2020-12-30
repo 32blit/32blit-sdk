@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.9)
 project (logo)
 include (../../32blit.cmake)
 blit_executable (logo logo.cpp)
+blit_metadata (logo metadata.yml)

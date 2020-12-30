@@ -1,0 +1,5 @@
+assets.cpp:
+  ../../assets/s4m_ur4i-platformer.png:
+    name: asset_platformer
+  ../../assets/platformer.tmx:
+    name: asset_tilemap

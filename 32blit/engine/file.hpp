@@ -1,33 +1,53 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 #include <vector>
 
+/** 32blit namespace */
 namespace blit {
 
+  enum OpenMode {
+    /// Open file for reading
+    read  = 1 << 0,
+    /// Open file for writing
+    write = 1 << 1
+  };
+
   enum FileFlags {
+    /// Is a directory
     directory = 1
   };
 
   struct FileInfo {
+    /// Name of the file
     std::string name;
+    /// Flags (see ::FileFlags)
     int flags;
+    /// Size of the file
+    uint32_t size;
   };
 
-  extern int32_t  (*open_file)               (std::string file);
-  extern int32_t  (*read_file)               (uint32_t fh, uint32_t offset, uint32_t length, char* buffer);
-  extern int32_t  (*close_file)              (uint32_t fh);
-  extern uint32_t (*get_file_length)         (uint32_t fh);
+  bool is_storage_available();
 
-  extern std::vector<FileInfo> (*list_files) (std::string path);
+  std::vector<FileInfo> list_files(const std::string &path);
+  bool file_exists(const std::string &path);
+  bool directory_exists(const std::string &path);
+
+  bool create_directory(const std::string &path);
+
+  bool rename_file(const std::string &old_name, const std::string &new_name);
+  bool remove_file(const std::string &path);
   
+  /**
+   * Class for accessing files on the SD card (device), the game directory (SDL) or in memory. 
+   */
   class File final {
   public:
-    File() {}
-    File(std::string filename) {open(filename);}
+    File() = default;
+    File(const std::string &filename, int mode = OpenMode::read) {open(filename, mode);}
     File(const File &) = delete;
-    File(File &&other) {
+    File(File &&other) noexcept {
       *this = std::move(other);
     }
 
@@ -37,41 +57,40 @@ namespace blit {
 
     File &operator=(const File &) = delete;
 
-    File &operator=(File &&other) {
+    File &operator=(File &&other) noexcept {
       if (this != &other) {
         close();
         std::swap(fh, other.fh);
+        std::swap(buf, other.buf);
+        std::swap(buf_len, other.buf_len);
       }
       return *this;
     }
 
-    bool open(std::string file) {
-      close();
-      fh = open_file(file);
-      return fh != -1;
-    }
+    bool open(const std::string &file, int mode = OpenMode::read);
+    bool open(const uint8_t *buf, uint32_t buf_len);
+    int32_t read(uint32_t offset, uint32_t length, char *buffer);
+    int32_t write(uint32_t offset, uint32_t length, const char *buffer);
+    void close();
+    uint32_t get_length();
 
-    int32_t read(uint32_t offset, uint32_t length, char *buffer) {
-      return read_file(fh, offset, length, buffer);
-    }
-
-    void close() {
-      if(fh == -1)
-        return;
-
-      close_file(fh);
-      fh = -1;
-    }
-
-    uint32_t get_length() {
-      return get_file_length(fh);
-    }
-
+    /** \returns `true` if file is open */
     bool is_open() const {
-      return fh != -1;
+      return buf != nullptr || fh != nullptr;
     }
+
+    /** \returns pointer to data for in-memory files */
+    const uint8_t *get_ptr() const {
+      return buf;
+    }
+
+    static void add_buffer_file(std::string path, const uint8_t *ptr, uint32_t len);
 
   private:
-    int32_t fh = -1;
+      void *fh = nullptr;
+
+      // buffer "files"
+      const uint8_t *buf = nullptr;
+      uint32_t buf_len;
   };
 }

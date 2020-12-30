@@ -1,15 +1,10 @@
 #include "palette-swap.hpp"
+#include "assets.hpp"
 
 #define NUM_PALETTES 4
 #define SWATCH_SIZE 29
 
 using namespace blit;
-
-Size boar_ship_size(boar_ship[10], boar_ship[12]);
-
-/*uint8_t __ss[64 * 64];
-surface ss((uint8_t *)__ss, boar_ship_size, pixel_format::P);
-spritesheet ss_boar_ship(ss, 8, 8);*/
 
 Pen alternate_palettes[NUM_PALETTES][5] = {
     {
@@ -52,7 +47,6 @@ Point position[NUM_PALETTES] = {
 void init() {
   set_screen_mode(ScreenMode::hires);
 
-  //ss_boar_ship.s.load_from_packed(boar_ship);
   screen.sprites = SpriteSheet::load(boar_ship);
 }
 
@@ -73,12 +67,12 @@ void all_ships_at_once_demo(uint32_t time) {
 
     Point pos = position[p];
 
-    pos.x += sin(time / 5000.0 + p) * 20;
-    pos.y += sin(time / 500.0 + p) * 10;
+    pos.x += sinf(time / 5000.0f + p) * 20.0f;
+    pos.y += sinf(time / 500.0f + p) * 10.0f;
 
     screen.stretch_blit(screen.sprites,
-        Rect(0, 0, boar_ship_size.w, boar_ship_size.h),
-        Rect(pos.x, pos.y, boar_ship_size.w * 2, boar_ship_size.h * 2)
+        Rect(0, 0, screen.sprites->bounds.w, screen.sprites->bounds.h),
+        Rect(pos.x, pos.y, screen.sprites->bounds.w * 2, screen.sprites->bounds.h * 2)
     );
   }
 
@@ -102,11 +96,11 @@ void single_ship_cycling_demo(uint32_t time) {
   }
 
   screen.stretch_blit(screen.sprites,
-    Rect(0, 0, boar_ship_size.w, boar_ship_size.h),
+    Rect(0, 0, screen.sprites->bounds.w, screen.sprites->bounds.h),
     Rect(
-        (screen.bounds.w - boar_ship_size.w * 4) / 2,
-        5 + (screen.bounds.h - ((SWATCH_SIZE + 10) * 2) - boar_ship_size.h * 4) / 2,
-        boar_ship_size.w * 4, boar_ship_size.h * 4
+        (screen.bounds.w - screen.sprites->bounds.w * 4) / 2,
+        5 + (screen.bounds.h - ((SWATCH_SIZE + 10) * 2) - screen.sprites->bounds.h * 4) / 2,
+        screen.sprites->bounds.w * 4, screen.sprites->bounds.h * 4
     )
   );
 

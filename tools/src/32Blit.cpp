@@ -1,9 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstdint>
 #include <string>
-#include <string.h>
-#include <time.h>
+#include <cstring>
+#include <ctime>
 
 #if defined(WIN32) || defined(__MINGW32__)
 #include <windows.h>
@@ -11,7 +11,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <termios.h>
-#include <errno.h>
+#include <cerrno>
 #include <dirent.h>
 
 #ifdef __APPLE__
@@ -29,7 +29,7 @@ struct FourCCMake
 
 bool Get32BlitInfo(uint32_t &uAck);
 
-void usage(void)
+void usage()
 {
   printf("Usage: 32blit <process> <comport> <binfile> <options>\n");
   printf("  <process> : Either _RST, SAVE or PROG\n");
@@ -42,10 +42,10 @@ void usage(void)
 const char *getFileName(const char *pszPath)
 {
   const char *pszFilename = strrchr(pszPath, '\\');
-  if (pszFilename == NULL)
+  if (pszFilename == nullptr)
     pszFilename = strrchr(pszPath, '/');
 
-  if (pszFilename == NULL)
+  if (pszFilename ==nullptr)
     pszFilename = pszPath;
   else
     pszFilename++;
@@ -63,14 +63,14 @@ typedef long ssize_t;
 HANDLE hComm = INVALID_HANDLE_VALUE;
 OVERLAPPED osRX = { 0 };
 OVERLAPPED osTX = { 0 };
-DWORD dwWritten = 0; // should be in WriteCom() but doesn't work on stack, windows guy needs to look at this
 bool bWaitingOnRx = false;
 
-void CloseCom(void)
+void CloseCom()
 {
   CloseHandle(osRX.hEvent);
   CloseHandle(osTX.hEvent);
   CloseHandle(hComm);
+  hComm = INVALID_HANDLE_VALUE;
 }
 
 bool OpenComPort(const char *pszComPort, bool bTestConnection = false)
@@ -92,11 +92,10 @@ bool OpenComPort(const char *pszComPort, bool bTestConnection = false)
 
 uint32_t WriteCom(char *pBuffer, uint32_t uLen)
 {
-  if (!WriteFile(hComm, pBuffer, uLen, &dwWritten, &osTX))
-  {
-    GetOverlappedResult(hComm, &osTX, &dwWritten, TRUE);
-  }
-  return dwWritten;
+    DWORD dwWritten = 0;
+    if (!WriteFile(hComm, pBuffer, uLen, NULL, &osTX) && GetLastError() == ERROR_IO_PENDING)
+        GetOverlappedResult(hComm, &osTX, &dwWritten, TRUE);
+    return dwWritten;
 }
 
 bool GetRXByte(char &rxByte)
@@ -125,7 +124,7 @@ bool GetRXByte(char &rxByte)
   return bResult;
 }
 
-bool HandleRX(void)
+bool HandleRX()
 {
   bool bResult = true;
 
@@ -210,7 +209,7 @@ bool GetRXByte(char &rxByte)
   return read(fdCom, &rxByte, 1) == 1;
 }
 
-bool HandleRX(void)
+bool HandleRX()
 {
   bool bResult = true;
 
@@ -225,7 +224,7 @@ bool HandleRX(void)
   return bResult;
 }
 
-void CloseCom(void)
+void CloseCom()
 {
   close(fdCom);
   fdCom = -1;
@@ -345,7 +344,7 @@ std::string GuessPortName()
 
 #endif
 
-bool WaitForHeader(void)
+bool WaitForHeader()
 {
   bool    bHeaderFound = false;
   bool    bTimedOut = false;
@@ -484,8 +483,8 @@ int main(int argc, char *argv[])
 
   const char *pszProcess = argv[1];
   std::string sComPort = argv[2];
-  const char *pszBinPath = NULL;
-  const char *pszBinFile = NULL;
+  const char *pszBinPath = nullptr;
+  const char *pszBinFile = nullptr;
   bool bShouldReconnect = false;
 
   if (argc >= 4)
@@ -589,7 +588,7 @@ int main(int argc, char *argv[])
   while (!bAlive)
   {
     uint32_t uAck;
-    if (Get32BlitInfo(uAck))
+    if ((Get32BlitInfo(uAck)) && (uAck == FourCCMake<'_', 'I', 'N', 'T'>::value))
       bAlive = true;
     else
     {

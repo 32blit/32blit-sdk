@@ -13,6 +13,8 @@
 #define MSA301_CONTROL2_POWR_MODE_LOW       ( 0b01 << 6)
 #define MSA301_CONTROL2_POWR_MODE_SUSPEND   ( 0b10 << 6)
 
+#define MSA301_SWAP_REGISTER        0x12
+
 #define MSA301_CONTROL1_REGISTER    0x10
 #define MSA301_CONTROL1_ODR_1000HZ  0b1010
 #define MSA301_CONTROL1_ODR_500HZ   0b1001
@@ -30,19 +32,15 @@
 
 #define MSA301_Z_ACCEL_RESISTER   0x06
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void msa301_init(I2C_HandleTypeDef *i2c_port, uint8_t power_mode , uint8_t low_power_bandwidth , uint8_t update_rate);
 
-void msa301_get_accel( I2C_HandleTypeDef *i2c_port, int16_t *data_buffer); //pass in reference to accerometer data buffer/store of int16[3] type 
-
-int16_t twos_comp( uint16_t value , uint8_t bits);
-
-int16_t _i2c_receive_s14(I2C_HandleTypeDef *i2c_port,  uint16_t address, uint8_t reg);
-
-uint16_t _i2c_receive_16(I2C_HandleTypeDef *i2c_port,  uint16_t address, uint8_t reg );
-
-void _i2c_send_8(I2C_HandleTypeDef *i2c_port, uint16_t address, uint8_t reg, uint8_t data);
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 /*****************************END OF FILE****/

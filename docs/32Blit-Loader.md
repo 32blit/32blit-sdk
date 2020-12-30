@@ -1,6 +1,12 @@
-# 32Blit Loader Tool
+# 32Blit Loader Tool <!-- omit in toc -->
 
 The 32Blit loader is a tool for saving 32Blit games to your SD card over USB, or flashing them directly to the 32Blit's external flash for quick and easy testing.
+
+- [Building The 32Blit Loader Tool](#building-the-32blit-loader-tool)
+  - [macOS & Linux](#macos--linux)
+  - [Windows - Visual Studio](#windows---visual-studio)
+  - [Windows - WSL](#windows---wsl)
+- [Usage](#usage)
 
 ## Building The 32Blit Loader Tool
 
@@ -57,16 +63,16 @@ Options:
 
 * `--reconnect` - Reconnect after `PROG` to show debug output
 
-You can run `32Blit.exe` (Windows) or `32Blit` (Linux) manually to copy a bin file to either QSPI Flash or the SD Card on your device.
+You can run `32Blit.exe` (Windows) or `32Blit` (Linux) manually to copy a `.blit` file to either QSPI Flash or the SD Card on your device.
 
 For example to program to QSPI Flash from Windows:
 
 ```
-32Blit.exe PROG COM8 examples/raycaster/raycaster.bin
+32Blit.exe PROG COM8 examples/raycaster/raycaster.blit
 ```
 
 Or copy to the inserted SD card:
 
 ```
-32Blit.exe SAVE COM8 examples/raycaster/raycaster.bin
+32Blit.exe SAVE COM8 examples/raycaster/raycaster.blit
 ```

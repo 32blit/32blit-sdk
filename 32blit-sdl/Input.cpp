@@ -21,7 +21,12 @@ std::map<int, int> Input::keys = {
 	{SDLK_z,       blit::Button::A},
 	{SDLK_x,       blit::Button::B},
 	{SDLK_c,       blit::Button::X},
-	{SDLK_y,       blit::Button::Y},
+	{SDLK_v,       blit::Button::Y},
+
+	{SDLK_u,       blit::Button::A},
+	{SDLK_i,       blit::Button::B},
+	{SDLK_o,       blit::Button::X},
+	{SDLK_p,       blit::Button::Y},
 
 	// system buttons
 	{SDLK_1,       blit::Button::HOME},
@@ -109,7 +114,7 @@ bool Input::handle_controller_button(int button, bool state) {
 }
 
 bool Input::handle_controller_motion(int axis, int value) {
-	float fvalue = value / 32768.0;
+	float fvalue = value / 32768.0f;
 	switch(axis) {
 		case SDL_CONTROLLER_AXIS_LEFTX:
 			target->set_joystick(0, fvalue);
@@ -130,10 +135,10 @@ bool Input::handle_controller_motion(int axis, int value) {
 }
 
 void Input::_virtual_tilt(int x, int y) {
-	int z = 80;
+	float z = 80.0f;
 	x = x - (win_width / 2);
 	y = y - (win_height / 2);
-	Vec3 shadow_tilt = Vec3(x, y, z);
+	blit::Vec3 shadow_tilt(x, y, z);
 	shadow_tilt.normalize();
 	target->set_tilt(0, shadow_tilt.x);
 	target->set_tilt(1, shadow_tilt.y);

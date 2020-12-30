@@ -6,8 +6,7 @@
 namespace blit {
   std::vector<Timer *> timers;
 
-  Timer::Timer() {
-  }
+  Timer::Timer() = default;
 
   /**
    * Initialize the timer.
@@ -16,7 +15,7 @@ namespace blit {
    * @param duration Duration of the timer in milliseconds.
    * @param loops Number of times the timer should repeat, -1 = forever.
    */
-  void Timer::init(TimerCallback callback, uint32_t duration, int32_t loops = -1) {
+  void Timer::init(TimerCallback callback, uint32_t duration, int32_t loops) {
     this->callback = callback;
     this->duration = duration;
     this->loops = loops;

@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.9)
 project (voxel)
 include (../../32blit.cmake)
 blit_executable (voxel voxel.cpp)
+blit_metadata (voxel metadata.yml)

@@ -41,19 +41,26 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-DTCMRAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 128K
-RAM_D1 (xrw)        : ORIGIN = 0x24000000, LENGTH = 362K
+DTCMRAM (xrw)       : ORIGIN = DEFINED(FLASH_TARGET_INT) ? 0x20000000 : 0x20000400,
+                      LENGTH = DEFINED(FLASH_TARGET_INT) ? 1K : 127K
+/*RAM_D1 (xrw)        : ORIGIN = 0x24000000, LENGTH = 287K*/
 LTDC (rw)           : ORIGIN = 0x2405A800, LENGTH = 150K
-RAM_D2 (xrw)        : ORIGIN = 0x30000000, LENGTH = 63K
+/*RAM_D2 (xrw)        : ORIGIN = 0x30000000, LENGTH =  63K*/
 FRAMEBUFFER (rw)    : ORIGIN = 0x3000FC00, LENGTH = 225K
-RAM_D3 (xrw)        : ORIGIN = 0x38000000, LENGTH = 63K
-PERSIST (rw)        : ORIGIN = 0x3800FC00, LENGTH = 1K
-ITCMISR (xrw)       : ORIGIN = 0x00000000, LENGTH = 4K
-ITCMRAM (xrw)       : ORIGIN = 0x00001000, LENGTH = 60K
+RAM_D3 (xrw)        : ORIGIN = 0x38000000, LENGTH =  64K
+PERSIST (rw)        : ORIGIN = 0x38800000, LENGTH =   4K
+ITCMISR (xrw)       : ORIGIN = 0x00000000, LENGTH =   4K
+ITCMRAM (xrw)       : ORIGIN = 0x00001000, LENGTH =  58K
+
+MAIN_RAM (xrw)      : ORIGIN = DEFINED(FLASH_TARGET_INT) ? 0x30000000 : 0x24000000,
+                      LENGTH = DEFINED(FLASH_TARGET_INT) ? 63K : 362K
+
+API (rw)            : ORIGIN = 0x0000f800, LENGTH = 2K
+
 /* Flash location depends on whether we are building for internal or external flash. */
 /* This defaults to external and can be overridden on the linker command line. */
 FLASH (rx)          : ORIGIN = DEFINED(FLASH_TARGET_INT) ? 0x08000000 : 0x90000000,
-                      LENGTH = DEFINED(FLASH_TARGET_INT) ? 0x128K : 32768K
+                      LENGTH = DEFINED(FLASH_TARGET_INT) ? 128K : 32768K
 }
 
 /* Define output sections */
@@ -62,10 +69,19 @@ SECTIONS
   /* The startup code goes first into FLASH */
   .isr_vector :
   {
+    flash_start = .;
     . = ALIGN(4);
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
   } >FLASH
+
+  .got :
+  {
+    . = ALIGN(4);
+    _gotstart = .;
+    *(.got*)
+    _gotend = .;
+  } > FLASH
 
   /* The program code and other data goes into FLASH */
   .text :
@@ -136,6 +152,10 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
   } >DTCMRAM AT> FLASH
 
+  .flash_end :
+  {
+    _flash_end = .;
+  } > FLASH
 
   /* Uninitialized data section */
   . = ALIGN(4);
@@ -151,7 +171,7 @@ SECTIONS
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
-  } >RAM_D1
+  } >MAIN_RAM
 
   /* User_heap_stack section, used to check that there is enough RAM left */
   ._user_heap_stack :
@@ -162,7 +182,7 @@ SECTIONS
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
-  } >RAM_D1
+  } >MAIN_RAM
 
   itcm_data = LOADADDR(.itcm);
   .itcm :
@@ -181,6 +201,14 @@ SECTIONS
     KEEP(*(.ltdc))         /* LTDC buffer section */
     __ltdc_end = .;
   } >LTDC
+
+  .api (NOLOAD):
+  {
+    . = ALIGN(4);
+    __api_start = .;
+    KEEP(*(.api))         /* api data section */
+    __api_end = .;
+  } >API
 
   .persist (NOLOAD):
   {

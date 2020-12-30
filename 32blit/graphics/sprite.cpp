@@ -1,8 +1,12 @@
 /*! \file sprite.cpp
     \brief Functions for drawing sprites.
 */
+#include <cstring>
+
 #include "surface.hpp"
 #include "sprite.hpp"
+
+#include "../engine/file.hpp"
 
 using namespace blit;
 
@@ -20,16 +24,43 @@ namespace blit {
     cols = bounds.w / 8;
   }
 
+  SpriteSheet::SpriteSheet(uint8_t *data, PixelFormat format, File &image) : Surface(data, format, image) {  
+    rows = bounds.h / 8;
+    cols = bounds.w / 8;
+  }
+
   SpriteSheet *SpriteSheet::load(const uint8_t *data, uint8_t *buffer) {
     return load((packed_image *)data, buffer);
   }
 
   SpriteSheet *SpriteSheet::load(const packed_image *image, uint8_t *buffer) {
+    if(memcmp(image->type, "SPRITEPK", 8) != 0 && memcmp(image->type, "SPRITERW", 8) != 0 && memcmp(image->type, "SPRITERL", 8) != 0)
+      return nullptr;
+
+    if(image->format > (uint8_t)PixelFormat::M)
+      return nullptr;
+
     if (buffer == nullptr) {
       buffer = new uint8_t[pixel_format_stride[image->format] * image->width * image->height];
     }
     
     return new SpriteSheet(buffer, (PixelFormat)image->format, image);
+  }
+
+  SpriteSheet *SpriteSheet::load(const std::string& filename, uint8_t* buffer) {
+    File file;
+
+    if (!file.open(filename, OpenMode::read))
+      return nullptr;
+
+    packed_image image;
+    file.read(0, sizeof(packed_image), (char *)&image);
+
+    if (buffer == nullptr) {
+      buffer = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
+    }
+
+    return new SpriteSheet(buffer, (PixelFormat)image.format, file);
   }
 
   /**
@@ -41,7 +72,7 @@ namespace blit {
    * \param[in] index Index of the sprite in the sheet
    * \return `rect` sprite x/y location (always a multiple of 8) and size (always 8x8)
    */
-  Rect SpriteSheet::sprite_bounds(const uint16_t &index) {
+  Rect SpriteSheet::sprite_bounds(uint16_t index) {
     return Rect((index % cols) * 8, (index / cols) * 8, 8, 8);    
   }
 
@@ -81,7 +112,8 @@ namespace blit {
    * \param[in] position `point` at which to place the sprite in the target surface
    * \param[in] transform to apply
    */
-  void Surface::sprite(const uint16_t &sprite, const Point &position, const uint8_t &transform) {
+  void Surface::sprite(uint16_t sprite, const Point &position, uint8_t transform) {
+    if(sprites == nullptr) return;
     blit_sprite(
       sprites->sprite_bounds(sprite), 
       position, 
@@ -95,7 +127,8 @@ namespace blit {
    * \param[in] position `point` at which to place the sprite in the target surface
    * \param[in] transform to apply
    */
-  void Surface::sprite(const Point &sprite, const Point &position, const uint8_t &transform) {
+  void Surface::sprite(const Point &sprite, const Point &position, uint8_t transform) {
+    if(sprites == nullptr) return;
     blit_sprite(
       sprites->sprite_bounds(sprite),
       position,
@@ -109,7 +142,8 @@ namespace blit {
    * \param[in] position `point` at which to place the sprite in the target surface
    * \param[in] transform to apply
    */
-  void Surface::sprite(const Rect &sprite, const Point &position, const uint8_t &transform) {        
+  void Surface::sprite(const Rect &sprite, const Point &position, uint8_t transform) {       
+    if(sprites == nullptr) return; 
     blit_sprite(
       sprites->sprite_bounds(sprite),
       position,
@@ -126,7 +160,7 @@ namespace blit {
    * \param[in] origin `point` around which to transform the sprite
    * \param[in] transform to apply
    */
-  void Surface::sprite(const uint16_t &sprite, const Point &position, const Point &origin, const uint8_t &transform) {
+  void Surface::sprite(uint16_t sprite, const Point &position, const Point &origin, uint8_t transform) {
     Surface::sprite(sprite, position - origin, transform);
   }
 
@@ -138,7 +172,7 @@ namespace blit {
    * \param[in] origin `point` around which to transform the sprite
    * \param[in] transform to apply
    */
-  void Surface::sprite(const Point &sprite, const Point &position, const Point &origin, const uint8_t &transform) {
+  void Surface::sprite(const Point &sprite, const Point &position, const Point &origin, uint8_t transform) {
     Surface::sprite(sprite, position - origin, transform);
   }
 
@@ -150,7 +184,7 @@ namespace blit {
    * \param[in] origin `point` around which to transform the sprite
    * \param[in] transform to apply
    */
-  void Surface::sprite(const Rect &sprite, const Point &position, const Point &origin, const uint8_t &transform) {
+  void Surface::sprite(const Rect &sprite, const Point &position, const Point &origin, uint8_t transform) {
     Surface::sprite(sprite, position - origin, transform);
   }
 
@@ -165,12 +199,14 @@ namespace blit {
    * \param[in] scale `vec2` x/y scale factor
    * \param[in] transform to apply
    */
-  void Surface::sprite(const uint16_t &sprite, const Point &position, const Point &origin, const Vec2 &scale, const uint8_t &transform) {
+  void Surface::sprite(uint16_t sprite, const Point &position, const Point &origin, const Vec2 &scale, uint8_t transform) {
+    if(sprites == nullptr) return;
+
     Rect dest_rect(
-      round(position.x - float(origin.x * scale.x)),
-      round(position.y - float(origin.y * scale.y)),
-      round(8.0f * scale.x),
-      round(8.0f * scale.y)
+      roundf(position.x - float(origin.x * scale.x)),
+      roundf(position.y - float(origin.y * scale.y)),
+      roundf(8.0f * scale.x),
+      roundf(8.0f * scale.y)
     );
 
     stretch_blit_sprite(
@@ -188,12 +224,14 @@ namespace blit {
    * \param[in] scale `vec2` x/y scale factor
    * \param[in] transform to apply
    */
-  void Surface::sprite(const Point &sprite, const Point &position, const Point &origin, const Vec2 &scale, const uint8_t &transform) {
+  void Surface::sprite(const Point &sprite, const Point &position, const Point &origin, const Vec2 &scale, uint8_t transform) {
+    if(sprites == nullptr) return;
+
     Rect dest_rect(
-      round(position.x - float(origin.x * scale.x)),
-      round(position.y - float(origin.y * scale.y)),
-      round(8.0f * scale.x),
-      round(8.0f * scale.y)
+      roundf(position.x - float(origin.x * scale.x)),
+      roundf(position.y - float(origin.y * scale.y)),
+      roundf(8.0f * scale.x),
+      roundf(8.0f * scale.y)
     );
 
     stretch_blit_sprite(
@@ -211,12 +249,14 @@ namespace blit {
    * \param[in] scale `vec2` x/y scale factor
    * \param[in] transform to apply
    */
-  void Surface::sprite(const Rect &sprite, const Point &position, const Point &origin, const Vec2 &scale, const uint8_t &transform) {
+  void Surface::sprite(const Rect &sprite, const Point &position, const Point &origin, const Vec2 &scale, uint8_t transform) {
+    if(sprites == nullptr) return;
+
     Rect dest_rect(
-      round(position.x - float(origin.x * scale.x)),
-      round(position.y - float(origin.y * scale.y)),
-      round(sprite.w * 8.0f * scale.x),
-      round(sprite.h * 8.0f * scale.y)
+      roundf(position.x - float(origin.x * scale.x)),
+      roundf(position.y - float(origin.y * scale.y)),
+      roundf(sprite.w * 8.0f * scale.x),
+      roundf(sprite.h * 8.0f * scale.y)
     );
 
     stretch_blit_sprite(
@@ -234,7 +274,7 @@ namespace blit {
    * \param[in] scale `float` x/y scale factor
    * \param[in] transform to apply
    */
-  void Surface::sprite(const uint16_t &sprite, const Point &position, const Point &origin, const float &scale, const uint8_t &transform) {
+  void Surface::sprite(uint16_t sprite, const Point &position, const Point &origin, float scale, uint8_t transform) {
     Surface::sprite(sprite, position, origin, Vec2(scale, scale), transform);
   }
 
@@ -247,7 +287,7 @@ namespace blit {
    * \param[in] scale `float` x/y scale factor
    * \param[in] transform to apply
    */
-  void Surface::sprite(const Point &sprite, const Point &position, const Point &origin, const float &scale, const uint8_t &transform) {
+  void Surface::sprite(const Point &sprite, const Point &position, const Point &origin, float scale, uint8_t transform) {
     Surface::sprite(sprite, position, origin, Vec2(scale, scale), transform);
   }
 
@@ -260,18 +300,18 @@ namespace blit {
    * \param[in] scale `float` x/y scale factor
    * \param[in] transform to apply
    */
-  void Surface::sprite(const Rect &sprite, const Point &position, const Point &origin, const float &scale, const uint8_t &transform) {
+  void Surface::sprite(const Rect &sprite, const Point &position, const Point &origin, float scale, uint8_t transform) {
     Surface::sprite(sprite, position, origin, Vec2(scale, scale), transform);
   }
 
 
   // unscaled sprites with origin and scale - optional transform (mirror/rotate)
-  //void surface::sprite(const rect &source, const point &position, const point &origin, const float &scale, const uint8_t &transform = 0);
-  //void surface::sprite(const point &source, const point &position, const point &origin, const float &scale, const uint8_t &transform = 0);
+  //void surface::sprite(const rect &source, const point &position, const point &origin, float scale, uint8_t transform = 0);
+  //void surface::sprite(const point &source, const point &position, const point &origin, float scale, uint8_t transform = 0);
 
   // unscaled sprites with origin and scale (x/y) - optional transform (mirror/rotate)
-  //void surface::sprite(const rect &source, const point &position, const point &origin, const vec2 &scale, const uint8_t &transform = 0);
-  //void surface::sprite(const point &source, const point &position, const point &origin, const vec2 &scale, const uint8_t &transform = 0);
+  //void surface::sprite(const rect &source, const point &position, const point &origin, const vec2 &scale, uint8_t transform = 0);
+  //void surface::sprite(const point &source, const point &position, const point &origin, const vec2 &scale, uint8_t transform = 0);
 
   /*
   void surface::sprite(const spritesheet &ss, const rect &sprite, const point &position, const sprite_p &properties) {

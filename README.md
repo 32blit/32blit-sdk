@@ -14,9 +14,9 @@ While the 32blit API is not finalised, this repository represents an overview of
 2. `gcc` or Visual Studio for compiling test builds
 3. `gcc-arm-none-eabi` for compiling STM32 builds
 4. `cmake` and `make` for building 32blit libraries and examples
-5. A DFU upload tool, on Windows it's easiest to just use "DfuSe Demonstration" (available from [st.com](https://www.st.com/en/development-tools/stsw-stm32080.html))
+5. _Python3_ installed, along with _pip3_ (`sudo apt install python3 python3-pip` on Ubuntu/WSL) and the [32blit tools](https://github.com/pimoroni/32blit-tools) `pip3 install 32blit`
 6. Ubuntu on Windows 10 WSL (_Windows Subsystem for Linux_), or a Linux VM if you prefer.
-7. If you intend on building DFU files (for the device itself), on Ubuntu (or in WSL) you will also need _Python3_ installed, along with _pip3_ (`sudo apt install python3 python3-pip`) and install the following Python modules: `pip3 install construct bitstring` 
+7. If you intend on building/uploading the device firmware, you will need a DFU upload tool, on Windows it's easiest to just use "DfuSe Demonstration" (available from [st.com](https://www.st.com/en/development-tools/stsw-stm32080.html)) and the following Python modules: `pip3 install construct bitstring` 
 
 For more information about how to build on the various systems, refer to the platform specific docs in the `docs` folder!
 

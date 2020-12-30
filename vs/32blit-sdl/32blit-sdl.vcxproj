@@ -91,21 +91,21 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>..\sdl\include;..\..\32blit</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>SDL2.lib</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2_image.lib</AdditionalDependencies>
     </Lib>
     <Lib>
       <AdditionalLibraryDirectories>..\sdl\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
     </Lib>
     <PostBuildEvent>
-      <Command>xcopy /y /d $(ProjectDir)..\sdl\lib\$(PlatformTarget)\SDL2.dll $(Outdir)</Command>
-      <Message>Copy SDL2.dll into output directory</Message>
+      <Command>xcopy /y /d "$(ProjectDir)..\sdl\lib\$(PlatformTarget)\*.dll" "$(Outdir)"</Command>
+      <Message>Copy SDL DLLs into output directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -116,7 +116,7 @@
       <PreprocessorDefinitions>_DEBUG;_LIB;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>..\sdl\include;..\..\32blit</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -124,16 +124,16 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>SDL2.lib</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2_image.lib</AdditionalDependencies>
     </Lib>
     <Lib>
       <AdditionalLibraryDirectories>..\sdl\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
     </Lib>
     <PostBuildEvent>
-      <Command>xcopy /y /d $(ProjectDir)..\sdl\lib\$(PlatformTarget)\SDL2.dll $(Outdir)</Command>
+      <Command>xcopy /y /d "$(ProjectDir)..\sdl\lib\$(PlatformTarget)\*.dll" "$(Outdir)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copy SDL2.dll into output directory</Message>
+      <Message>Copy SDL DLLs into output directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -146,7 +146,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>..\sdl\include;..\..\32blit</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -156,16 +156,16 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>SDL2.lib</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2_image.lib</AdditionalDependencies>
     </Lib>
     <Lib>
       <AdditionalLibraryDirectories>..\sdl\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
     </Lib>
     <PostBuildEvent>
-      <Command>xcopy /y /d $(ProjectDir)..\sdl\lib\$(PlatformTarget)\SDL2.dll $(Outdir)</Command>
+      <Command>xcopy /y /d "$(ProjectDir)..\sdl\lib\$(PlatformTarget)\*.dll" "$(Outdir)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copy SDL2.dll into output directory</Message>
+      <Message>Copy SDL DLLs into output directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -178,7 +178,7 @@
       <PreprocessorDefinitions>NDEBUG;_LIB;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>..\sdl\include;..\..\32blit</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -188,16 +188,16 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>SDL2.lib</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2_image.lib</AdditionalDependencies>
     </Lib>
     <Lib>
       <AdditionalLibraryDirectories>..\sdl\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
     </Lib>
     <PostBuildEvent>
-      <Command>xcopy /y /d $(ProjectDir)..\sdl\lib\$(PlatformTarget)\SDL2.dll $(Outdir)</Command>
+      <Command>xcopy /y /d "$(ProjectDir)..\sdl\lib\$(PlatformTarget)\*.dll" "$(Outdir)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copy SDL2.dll into output directory</Message>
+      <Message>Copy SDL DLLs into output directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -210,8 +210,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\32blit-sdl\Audio.cpp" />
+    <ClCompile Include="..\..\32blit-sdl\DefaultMetadata.cpp" />
     <ClCompile Include="..\..\32blit-sdl\File.cpp" />
     <ClCompile Include="..\..\32blit-sdl\Input.cpp" />
+    <ClCompile Include="..\..\32blit-sdl\JPEG.cpp" />
     <ClCompile Include="..\..\32blit-sdl\Main.cpp" />
     <ClCompile Include="..\..\32blit-sdl\Renderer.cpp" />
     <ClCompile Include="..\..\32blit-sdl\System.cpp" />

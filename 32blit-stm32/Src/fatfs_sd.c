@@ -2,6 +2,8 @@
 #define FALSE 0
 
 #include "stm32h7xx_hal.h"
+#include <stdbool.h>
+#include <string.h>
 #include "diskio.h"
 #include "fatfs_sd.h"
 
@@ -27,11 +29,43 @@ static void DESELECT(void)
 	HAL_GPIO_WritePin(SD_CS_PORT, SD_CS_PIN, GPIO_PIN_SET);
 }
 
+static void SPI_Start(SPI_TypeDef *spi, uint16_t len)
+{
+	spi->CR2 = len;
+
+	uint32_t cr1 = spi->CR1 | SPI_CR1_SPE;
+
+	spi->CR1 = cr1; // enable
+	spi->CR1 = cr1 | SPI_CR1_CSTART; // start
+}
+
+static void SPI_End(SPI_TypeDef *spi)
+{
+	// clear EOT/TXTF
+	spi->IFCR |= SPI_IFCR_EOTC | SPI_IFCR_TXTFC;
+
+	spi->CR1 &= ~SPI_CR1_SPE; // disable
+}
+
 /* SPI transmit a byte */
 static void SPI_TxByte(uint8_t data)
 {
-	while(!__HAL_SPI_GET_FLAG(HSPI_SDCARD, SPI_FLAG_TXE));
-	HAL_SPI_Transmit(HSPI_SDCARD, &data, 1, SPI_TIMEOUT);
+  uint32_t start = HAL_GetTick();
+
+  SPI_TypeDef *spi = (HSPI_SDCARD)->Instance;
+
+  SPI_Start(spi, 1);
+
+  // wait for tx space
+  while(!(spi->SR & SPI_FLAG_TXP));
+
+  *((__IO uint8_t *)&spi->TXDR) = data;
+
+  // wait for end
+  while(!(spi->SR & SPI_FLAG_EOT) && HAL_GetTick() - start < SPI_TIMEOUT);
+
+  // end
+  SPI_End(spi);
 }
 
 /* SPI transmit buffer */
@@ -44,13 +78,30 @@ static void SPI_TxBuffer(uint8_t *buffer, uint16_t len)
 /* SPI receive a byte */
 static uint8_t SPI_RxByte(void)
 {
-	uint8_t dummy, data;
-	dummy = 0xFF;
+  uint8_t data;
 
-	while(!__HAL_SPI_GET_FLAG(HSPI_SDCARD, SPI_FLAG_TXE));
-	HAL_SPI_TransmitReceive(HSPI_SDCARD, &dummy, &data, 1, SPI_TIMEOUT);
+  uint32_t start = HAL_GetTick();
 
-	return data;
+  SPI_TypeDef *spi = (HSPI_SDCARD)->Instance;
+
+  SPI_Start(spi, 1);
+
+  while(!(spi->SR & SPI_FLAG_TXP));
+
+  *((__IO uint8_t *)&spi->TXDR) = 0xFF;
+
+  // wait for a byte
+  while(!(spi->SR & (SPI_FLAG_RXWNE | SPI_FLAG_FRLVL)) && HAL_GetTick() - start < SPI_TIMEOUT);
+
+  data = *((__IO uint8_t *)&spi->RXDR);
+
+  // wait for end
+  while(!(spi->SR & SPI_FLAG_EOT) && HAL_GetTick() - start < SPI_TIMEOUT);
+
+  // end
+  SPI_End(spi);
+
+  return data;
 }
 
 /* SPI receive a byte via pointer */
@@ -130,7 +181,7 @@ static uint8_t SD_CheckPower(void)
 }
 
 /* receive data block */
-static bool SD_RxDataBlock(BYTE *buff, UINT len)
+static bool SD_RxDataBlock(BYTE *buff, uint16_t len)
 {
 	uint8_t token;
 
@@ -145,15 +196,54 @@ static bool SD_RxDataBlock(BYTE *buff, UINT len)
 	/* invalid response */
 	if(token != 0xFE) return FALSE;
 
-
 	/* receive data */
-	while(len--)
-		SPI_RxBytePtr(buff++);
+	if(len > 16)
+	{
+		Timer1 = SPI_TIMEOUT;
 
-	/* discard CRC */
-	SPI_RxByte();
-	SPI_RxByte();
+		// manual txrx
+		SPI_Start((HSPI_SDCARD)->Instance, len + 2);
 
+		// the only length that will be used here is 512
+		uint32_t *buff32 = (uint32_t *)buff;
+		const uint32_t *end = buff32 + len / 4;
+
+		// fill the 16 byte fifo
+		for(int i = 0; i < 4; i++)
+			*((__IO uint32_t *)&(HSPI_SDCARD)->Instance->TXDR) = 0xFFFFFFFF;
+
+		while(Timer1)
+		{
+			if(((HSPI_SDCARD)->Instance->SR & SPI_FLAG_RXWNE))
+			{
+				*(buff32++) = *((__IO uint32_t *)&(HSPI_SDCARD)->Instance->RXDR);
+
+				if(buff32 != end)
+					*((__IO uint32_t *)&(HSPI_SDCARD)->Instance->TXDR) = 0xFFFFFFFF; // refill tx
+				else
+					break;
+			}
+		}
+
+		// get CRC
+		*((__IO uint16_t *)&(HSPI_SDCARD)->Instance->TXDR) = 0xFFFF;
+		while(!((HSPI_SDCARD)->Instance->SR & SPI_SR_RXPLVL_1) && Timer1);
+		uint16_t crc = *((__IO uint16_t *)&(HSPI_SDCARD)->Instance->RXDR);
+
+		while(!((HSPI_SDCARD)->Instance->SR & SPI_FLAG_EOT) && Timer1); // wait for end
+		
+		// end
+		SPI_End((HSPI_SDCARD)->Instance);
+	}
+	else
+	{
+		while(len--)
+			SPI_RxBytePtr(buff++);
+
+		/* discard CRC */
+		SPI_RxByte();
+		SPI_RxByte();
+	}
 	return TRUE;
 }
 
@@ -192,6 +282,8 @@ static bool SD_TxDataBlock(const uint8_t *buff, BYTE token)
 		/* recv buffer clear */
 		while (SPI_RxByte() == 0);
 	}
+	else
+		return TRUE;
 
 	/* transmit 0x05 accepted */
 	if ((resp & 0x1F) == 0x05) return TRUE;

@@ -1,8 +1,10 @@
+#include <cerrno>
 #include <string>
 #include <map>
 
 #ifdef WIN32
-#include "shlobj.h"
+#include <direct.h>
+#include <shlobj.h>
 #else
 #include <dirent.h>
 #include <sys/stat.h>
@@ -11,10 +13,9 @@
 #include "SDL.h"
 
 #include "File.hpp"
+#include "UserCode.hpp"
 
 static std::string basePath;
-static std::map<uint32_t, SDL_RWops *> open_files;
-static uint32_t current_file_handle = 0;
 
 void setup_base_path()
 {
@@ -23,53 +24,76 @@ void setup_base_path()
   SDL_free(basePathPtr);
 }
 
-int32_t open_file(std::string name) {
-  auto file = SDL_RWFromFile((basePath + name).c_str(), "rb");
+void *open_file(const std::string &name, int mode) {
+  const char *str_mode;
 
-  if(file) {
-    current_file_handle++;
-    open_files[current_file_handle] = file;
-    return current_file_handle;
+  if(mode == blit::OpenMode::read)
+    str_mode = "rb";
+  else if(mode == blit::OpenMode::write)
+    str_mode = "wb";
+  else if(mode == (blit::OpenMode::read | blit::OpenMode::write))
+    str_mode = "r+";
+  else
+    return nullptr;
+
+  auto file = SDL_RWFromFile((basePath + name).c_str(), str_mode);
+
+  if(!file) {
+    // check if the path is under the save path
+    std::string save_path = get_save_path();
+    if(name.compare(0, save_path.length(), save_path) == 0)
+      file = SDL_RWFromFile(name.c_str(), str_mode);
   }
 
-  return -1;
+  return file;
 }
 
-int32_t read_file(uint32_t fh, uint32_t offset, uint32_t length, char *buffer) {
-  auto file = open_files[fh];
+int32_t read_file(void *fh, uint32_t offset, uint32_t length, char *buffer) {
+  auto file = (SDL_RWops *)fh;
 
   if(file && SDL_RWseek(file, offset, RW_SEEK_SET) != -1) {
     size_t bytes_read = SDL_RWread(file, buffer, 1, length);
 
     if(bytes_read > 0)
-      return bytes_read;
+      return (int32_t)bytes_read;
   }
 
   return -1;
 }
 
-int32_t close_file(uint32_t fh) {
-  return SDL_RWclose(open_files[fh]) == 0 ? 0 : -1;
+int32_t write_file(void *fh, uint32_t offset, uint32_t length, const char *buffer) {
+  auto file = (SDL_RWops *)fh;
+
+  if(file && SDL_RWseek(file, offset, RW_SEEK_SET) != -1) {
+    size_t bytes_written = SDL_RWwrite(file, buffer, 1, length);
+
+    if(bytes_written > 0)
+      return (int32_t)bytes_written;
+  }
+
+  return -1;
 }
 
-uint32_t get_file_length(uint32_t fh)
+int32_t close_file(void *fh) {
+  return SDL_RWclose((SDL_RWops *)fh) == 0 ? 0 : -1;
+}
+
+uint32_t get_file_length(void *fh)
 {
-  auto file = open_files[fh];
+  auto file = (SDL_RWops *)fh;
   SDL_RWseek(file, 0, RW_SEEK_END);
 
-  return SDL_RWtell(file);
+  return (uint32_t)SDL_RWtell(file);
 }
 
-std::vector<blit::FileInfo> list_files(std::string path) {
-  std::vector<blit::FileInfo> ret;
-
+void list_files(const std::string &path, std::function<void(blit::FileInfo &)> callback) {
 #ifdef WIN32
   HANDLE file;
   WIN32_FIND_DATAA findData;
   file = FindFirstFileA((basePath + path + "\\*").c_str(), &findData);
 
   if(file == INVALID_HANDLE_VALUE)
-    return ret;
+    return;
 
   do
   {
@@ -80,11 +104,12 @@ std::vector<blit::FileInfo> list_files(std::string path) {
       continue;
 
     info.flags = 0;
+    info.size = findData.nFileSizeLow;
 
     if(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
       info.flags |= blit::FileFlags::directory;
 
-    ret.push_back(info);
+    callback(info);
   }
   while(FindNextFileA(file, &findData) != 0);
 
@@ -94,7 +119,7 @@ std::vector<blit::FileInfo> list_files(std::string path) {
   auto dir = opendir((basePath + path).c_str());
 
   if(!dir)
-    return ret;
+    return;
 
   struct dirent *ent;
 
@@ -106,22 +131,71 @@ std::vector<blit::FileInfo> list_files(std::string path) {
     if(info.name == "." || info.name == "..")
       continue;
 
-    info.flags = 0;
+    struct stat stat_buf;
 
-    if(ent->d_type == DT_LNK) {
-      // lookup link target
-      struct stat stat_buf;
-  
-      if(stat((basePath + path + "/" + info.name).c_str(), &stat_buf) >= 0 && S_ISDIR(stat_buf.st_mode))
-        info.flags |= blit::FileFlags::directory;
-    } else if(ent->d_type == DT_DIR)
+    if(stat((basePath + path + "/" + info.name).c_str(), &stat_buf) < 0)
+      continue;
+
+    info.flags = 0;
+    info.size = stat_buf.st_size;
+
+    if(S_ISDIR(stat_buf.st_mode))
       info.flags |= blit::FileFlags::directory;
 
-    ret.push_back(info);
+    callback(info);
   }
 
   closedir(dir);
 #endif
+}
 
-  return ret;
+bool file_exists(const std::string &path) {
+#ifdef WIN32
+	DWORD attribs = GetFileAttributesA((basePath + path).c_str());
+	return (attribs != INVALID_FILE_ATTRIBUTES && !(attribs & FILE_ATTRIBUTE_DIRECTORY));
+#else
+  struct stat stat_buf;
+  return (stat((basePath + path).c_str(), &stat_buf) == 0 && S_ISREG(stat_buf.st_mode));
+#endif
+}
+
+bool directory_exists(const std::string &path) {
+#ifdef WIN32
+	DWORD attribs = GetFileAttributesA((basePath + path).c_str());
+	return (attribs != INVALID_FILE_ATTRIBUTES && (attribs & FILE_ATTRIBUTE_DIRECTORY));
+#else
+  struct stat stat_buf;
+  return (stat((basePath + path).c_str(), &stat_buf) == 0 && S_ISDIR(stat_buf.st_mode));
+#endif
+}
+
+bool create_directory(const std::string &path) {
+#ifdef WIN32
+  return _mkdir((basePath + path).c_str()) == 0 || errno == EEXIST;
+#else
+  return mkdir((basePath + path).c_str(), 0755) == 0 || errno == EEXIST;
+#endif
+}
+
+bool rename_file(const std::string &old_name, const std::string &new_name) {
+  return rename((basePath + old_name).c_str(), (basePath + new_name).c_str()) == 0;
+}
+
+bool remove_file(const std::string &path) {
+  return remove((basePath + path).c_str()) == 0;
+}
+
+static std::string save_path;
+
+const char *get_save_path() {
+  auto tmp = SDL_GetPrefPath(metadata_author, metadata_title);
+  save_path = std::string(tmp);
+
+  SDL_free(tmp);
+
+  return save_path.c_str();
+}
+
+bool is_storage_available() {
+  return true;
 }

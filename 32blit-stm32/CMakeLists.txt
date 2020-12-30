@@ -1,4 +1,5 @@
 list(APPEND SOURCES
+	startup_stm32h750xx.s
 	Src/main.c
 	Src/stm32h7xx_it.c
 	Src/stm32h7xx_hal_msp.c
@@ -35,6 +36,7 @@ list(APPEND SOURCES
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rng.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd_ex.c
+	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_jpeg.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_usb.c
 	Middlewares/Third_Party/FatFs/src/diskio.c
 	Middlewares/Third_Party/FatFs/src/ff.c
@@ -45,6 +47,10 @@ list(APPEND SOURCES
 	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c
 	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c
 	Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c
+	Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc.c
+  Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_bot.c
+  Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_data.c
+  Src/usbd_msc_scsi.c
 	Src/system_stm32h7xx.c
 	Src/user_diskio.c
 	Src/fatfs.c
@@ -54,16 +60,20 @@ list(APPEND SOURCES
 	Src/usbd_conf.c
 	Src/usbd_desc.c
 	Src/usbd_cdc_if.c
+	Src/usbd_storage_if.c
 	Src/display.cpp
 	Src/gpio.cpp
+	Src/jpeg.c
 	Src/sound.cpp
 	Src/file.cpp
+	Src/jpeg.cpp
 	Src/adc.c
 	Src/debug.c
 	Src/dma.c
 	Src/hrtim.c
 	Src/i2c.c
 	Src/i2c-msa301.c
+	Src/i2c-lis3dh.c
 	Src/i2c-bq24295.c
 	Src/quadspi.c
 	Src/spi.c
@@ -71,21 +81,39 @@ list(APPEND SOURCES
 	Src/sys.c
 	Src/tim.c
 	Src/rng.c
-	Src/32blit.c
+	Src/SystemMenu/firmware_menu.cpp
+	Src/SystemMenu/system_menu_controller.cpp
+	Src/SystemMenu/battery_menu.cpp
+	Src/SystemMenu/connectivity_menu.cpp
+	Src/SystemMenu/about_menu.cpp
+	Src/32blit.cpp
 	Src/CDCLogging.c
-	startup_stm32h750xx.s
-	Src/CDCDataStream.cpp 
-	Src/CDCCommandStream.cpp 
-	Src/CDCCommandHandler.cpp 
+	Src/CDCDataStream.cpp
+	Src/CDCCommandStream.cpp
+	Src/CDCCommandHandler.cpp
 	Src/CDCResetHandler.cpp
-	Src/CDCInfoHandler.cpp 
+	Src/CDCInfoHandler.cpp
+	Src/USBManager.cpp
+	Utilities/JPEG/jpeg_utils.c
 )
 
-set_source_files_properties( ${SOURCES} PROPERTIES LANGUAGE CXX )
+set_source_files_properties(
+	startup_stm32h750xx.s
+
+	Src/main.c
+  	Src/usbd_msc_scsi.c
+	Src/usb_device.c
+	Src/usbd_desc.c
+	Src/usbd_cdc_if.c
+	Src/usbd_storage_if.c
+	Src/CDCLogging.c
+
+	PROPERTIES LANGUAGE CXX
+)
 
 add_library(BlitHalSTM32 OBJECT ${SOURCES})
 
-set(INCLUDE_DIRS 
+set(INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/Inc
 	${CMAKE_CURRENT_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Inc
 	${CMAKE_CURRENT_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Inc/Legacy
@@ -95,7 +123,10 @@ set(INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/FatFs/src
 	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/ST/STM32_USB_Device_Library/Core/Inc
 	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
+	${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Inc
+	${CMAKE_CURRENT_SOURCE_DIR}/Utilities
 	${CMAKE_CURRENT_SOURCE_DIR}/../32blit
+	${CMAKE_CURRENT_SOURCE_DIR}/../launcher-shared
 )
 set(HAL_INCLUDE_DIRS ${INCLUDE_DIRS} PARENT_SCOPE)
 
@@ -103,7 +134,7 @@ set(DEFINITIONS
 	-DUSE_HAL_DRIVER
 	-DUSE_USB_HS
 	-DSTM32H750xx
-	-DCDC_FIFO_BUFFERS=${CDC_FIFO_BUFFERS}
+	-DMSC_MEDIA_PACKET=4096
 )
 set(HAL_DEFINITIONS ${DEFINITIONS} PARENT_SCOPE)
 
@@ -120,69 +151,11 @@ target_compile_definitions(BlitHalSTM32
 		-DAPPLICATION_VTOR=${APPLICATION_VTOR}
 		-DEXTERNAL_LOAD_ADDRESS=${EXTERNAL_LOAD_ADDRESS}
 		-DINITIALISE_QSPI=${INITIALISE_QSPI}
+    -DCDC_FIFO_BUFFERS=${CDC_FIFO_BUFFERS}
 )
 
-target_compile_options(BlitHalSTM32
-	PRIVATE
-		-fpermissive
-)
 target_compile_options(BlitHalSTM32 PUBLIC "$<$<CONFIG:RELEASE>:-Os>")
-
-# 2nd build for external flash
-add_library(BlitHalSTM32Ext OBJECT ${SOURCES})
-
-target_include_directories(BlitHalSTM32Ext
-	PRIVATE
-		${INCLUDE_DIRS}
-)
-
-target_compile_definitions(BlitHalSTM32Ext
-	PRIVATE
-		${DEFINITIONS}
-		-DAPPLICATION_VTOR=${APPLICATION_VTOR_EXT}
-		-DEXTERNAL_LOAD_ADDRESS=${EXTERNAL_LOAD_ADDRESS_EXT}
-		-DINITIALISE_QSPI=${INITIALISE_QSPI_EXT}
-)
-
-target_compile_options(BlitHalSTM32Ext
-	PRIVATE
-		-fpermissive
-)
-
-set(MCU_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}")
-set(MCU_LINKER_SCRIPT "${MCU_LINKER_SCRIPT}" PARENT_SCOPE)
-set(MCU_LINKER_SCRIPT_EXT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT_EXT}" PARENT_SCOPE)
-
-find_package(PythonInterp 3 REQUIRED)
-
-function(blit_executable_common NAME)
-	target_link_libraries(${NAME} BlitEngine)
-	set_property(TARGET ${NAME} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Map=${NAME}.map,--cref")
-	add_custom_command(TARGET ${NAME} POST_BUILD
-		COMMENT "Building ${NAME}.bin"
-		COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${NAME}> ${NAME}.hex
-		COMMAND ${CMAKE_OBJCOPY} -O binary -S $<TARGET_FILE:${NAME}> ${NAME}.bin
-		COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${NAME}>
-		COMMAND ${CMAKE_READELF} -S $<TARGET_FILE:${NAME}>
-	)
-endfunction()
-
-function(blit_executable NAME SOURCES)
-	add_executable(${NAME} $<TARGET_OBJECTS:BlitHalSTM32Ext> ${SOURCES} ${ARGN})
-
-	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.bin
-		DESTINATION bin
-	)
-
-	set_target_properties(${NAME} PROPERTIES LINK_FLAGS "-specs=nano.specs -T ${MCU_LINKER_SCRIPT} ${MCU_LINKER_FLAGS_EXT}")
-	set_target_properties(${NAME} PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT} SUFFIX ".elf")
-
-	blit_executable_common(${NAME})
-
-	if(32BLIT_TOOL)
-		add_custom_target(${NAME}.flash DEPENDS ${NAME} COMMAND ${32BLIT_TOOL} PROG ${FLASH_PORT} ${NAME}.bin)
-	endif()
-endfunction()
+set_target_properties(BlitHalSTM32 PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 function(blit_executable_int_flash NAME SOURCES)
 	add_executable(${NAME} $<TARGET_OBJECTS:BlitHalSTM32> ${SOURCES} ${ARGN})
@@ -195,9 +168,11 @@ function(blit_executable_int_flash NAME SOURCES)
 	set_target_properties(${NAME} PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT} SUFFIX ".elf")
 
 	blit_executable_common(${NAME})
+	target_link_libraries(${NAME} ${NOPIC_STDLIBS})
 
 	target_include_directories(${NAME} PRIVATE ${HAL_INCLUDE_DIRS})
 	target_compile_definitions(${NAME} PRIVATE ${HAL_DEFINITIONS})
+	target_compile_options(${NAME} PUBLIC "$<$<CONFIG:RELEASE>:-Os>") # always optimise for size if targetting internal flash
 
 	add_custom_command(TARGET ${NAME} POST_BUILD
 		COMMENT "Building ${NAME}.dfu"

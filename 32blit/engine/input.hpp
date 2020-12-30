@@ -2,10 +2,9 @@
 
 #include "../types/vec2.hpp"
 #include "../types/vec3.hpp"
-#include <stdint.h>
+#include <cstdint>
 
 namespace blit {
-
   enum Button : unsigned int {
     DPAD_LEFT = 1,
     DPAD_RIGHT = 2,
@@ -20,17 +19,25 @@ namespace blit {
     JOYSTICK = 1024
   };
 
-  extern uint32_t buttons;
-  extern Vec2 joystick;
-  extern Vec3 tilt;
-  extern float hack_left;
-  extern float hack_right;
-  extern float battery;
-  extern uint8_t battery_vbus_status;
-  extern uint8_t battery_charge_status;
-  extern uint8_t battery_fault;
-  
+  struct ButtonState {
+    ButtonState &operator=(uint32_t v) {
+      uint32_t changed = state ^ v;
+
+      pressed |= changed & v;
+      released |= changed & state;
+
+      state = v;
+
+      return *this;
+    }
+
+    operator uint32_t() const {
+      return state;
+    }
+
+    uint32_t state;
+    uint32_t pressed, released; // state change since last update
+  };
 
   extern bool pressed(uint32_t button);
- 
 }

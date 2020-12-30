@@ -1,6 +1,6 @@
 
 #include <string>
-#include <string.h>
+#include <cstring>
 #include <memory>
 #include <cstdlib>
 
@@ -35,13 +35,10 @@ uint8_t mask_buffer[320 * 240];
 Surface hires_mask(mask_buffer, PixelFormat::M, Size(320, 240));
 Surface lores_mask(mask_buffer, PixelFormat::M, Size(160, 120));
 Surface mask = hires_mask;
-SpriteSheet *ss;
+
 /* setup */
 void init() {
   set_screen_mode(hires);
-
-  ss = SpriteSheet::load(packed_data);
-  screen.sprites = ss;
 }
 
 void rotozoom(uint32_t time_ms) {
@@ -49,8 +46,8 @@ void rotozoom(uint32_t time_ms) {
 
   static Pen palette[] = { Pen(0, 0, 0), Pen(255, 255, 255), Pen(0, 255, 0) };
 
-  int32_t c = cos(angle * M_PI / 180.0f) * 1024;
-  int32_t s = sin(angle * M_PI / 180.0f) * 1024;
+  int32_t c = cosf(angle * pi / 180.0f) * 1024;
+  int32_t s = sinf(angle * pi / 180.0f) * 1024;
 
   angle += 0.25f;
   angle = angle >= 360.0f ? 0.0f : angle;
@@ -95,7 +92,7 @@ void render(uint32_t time_ms) {
   mask.pen = Pen(50);
   mask.clear();
   mask.pen = Pen(255);
-  Point centre = Point(160 + sin(time_ms / 200.0f) * 40, 120 + cos(time_ms / 200.0f) * 40);
+  Point centre = Point(160 + sinf(time_ms / 200.0f) * 40, 120 + cosf(time_ms / 200.0f) * 40);
   mask.circle(centre, 100);
 
   //screen.mask = &mask;
@@ -138,12 +135,10 @@ void update(uint32_t time) {
     if ((buttons & DPAD_UP)) {
       set_screen_mode(lores);
       mask = lores_mask;
-      screen.sprites = ss;
     }
     else {
       set_screen_mode(hires);
       mask = hires_mask;
-      screen.sprites = ss;
     }
   }
 

@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.9)
 project (tilemap-test)
 include (../../32blit.cmake)
 blit_executable (tilemap-test tilemap-test.cpp)
+blit_assets_yaml (tilemap-test assets.yml)
+blit_metadata (tilemap-test metadata.yml)

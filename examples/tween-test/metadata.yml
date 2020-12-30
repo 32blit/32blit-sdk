@@ -1,0 +1,8 @@
+title: Tween Test
+description: A simple test of tween functions.
+author: pimoroni
+splash:
+  file: ../no-image.png
+icon:
+  file: ../no-icon.png
+version: v1.0.0

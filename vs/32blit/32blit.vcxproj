@@ -71,15 +71,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -87,7 +91,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -100,7 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -115,7 +119,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -132,7 +136,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -144,13 +148,17 @@
   <ItemGroup>
     <ClInclude Include="..\..\32blit\32blit.hpp" />
     <ClInclude Include="..\..\32blit\audio\audio.hpp" />
+    <ClInclude Include="..\..\32blit\engine\api.hpp" />
+    <ClInclude Include="..\..\32blit\engine\api_private.hpp" />
     <ClInclude Include="..\..\32blit\engine\engine.hpp" />
     <ClInclude Include="..\..\32blit\engine\file.hpp" />
     <ClInclude Include="..\..\32blit\engine\input.hpp" />
     <ClInclude Include="..\..\32blit\engine\output.hpp" />
     <ClInclude Include="..\..\32blit\engine\particle.hpp" />
+    <ClInclude Include="..\..\32blit\engine\save.hpp" />
     <ClInclude Include="..\..\32blit\engine\timer.hpp" />
     <ClInclude Include="..\..\32blit\engine\tweening.hpp" />
+    <ClInclude Include="..\..\32blit\engine\version.hpp" />
     <ClInclude Include="..\..\32blit\graphics\blend.hpp" />
     <ClInclude Include="..\..\32blit\graphics\color.hpp" />
     <ClInclude Include="..\..\32blit\graphics\font.hpp" />
@@ -172,17 +180,21 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\32blit\audio\audio.cpp" />
+    <ClCompile Include="..\..\32blit\engine\api.cpp" />
     <ClCompile Include="..\..\32blit\engine\engine.cpp" />
     <ClCompile Include="..\..\32blit\engine\file.cpp" />
     <ClCompile Include="..\..\32blit\engine\input.cpp" />
     <ClCompile Include="..\..\32blit\engine\output.cpp" />
     <ClCompile Include="..\..\32blit\engine\particle.cpp" />
+    <ClCompile Include="..\..\32blit\engine\save.cpp" />
     <ClCompile Include="..\..\32blit\engine\timer.cpp" />
     <ClCompile Include="..\..\32blit\engine\tweening.cpp" />
+    <ClCompile Include="..\..\32blit\engine\version.cpp" />
     <ClCompile Include="..\..\32blit\graphics\blend.cpp" />
     <ClCompile Include="..\..\32blit\graphics\color.cpp" />
     <ClCompile Include="..\..\32blit\graphics\filter.cpp" />
     <ClCompile Include="..\..\32blit\graphics\font.cpp" />
+    <ClCompile Include="..\..\32blit\graphics\jpeg.cpp" />
     <ClCompile Include="..\..\32blit\graphics\mask.cpp" />
     <ClCompile Include="..\..\32blit\graphics\mode7.cpp" />
     <ClCompile Include="..\..\32blit\graphics\primitive.cpp" />

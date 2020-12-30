@@ -1,0 +1,4 @@
+assets.cpp:
+  example.mp3:
+    name: asset_mp3
+    type: raw/binary

@@ -5,8 +5,13 @@
 
 #include "Audio.hpp"
 #include "audio/audio.hpp"
+#include "engine/api_private.hpp"
+
+blit::AudioChannel channels[CHANNEL_COUNT];
 
 Audio::Audio() {
+    blit::api.channels = channels;
+
     SDL_AudioSpec desired = {}, audio_spec = {};
 
     desired.freq = _sample_rate;
@@ -16,7 +21,7 @@ Audio::Audio() {
     desired.samples = 256;
     desired.callback = _audio_callback;
 
-    audio_device = SDL_OpenAudioDevice(NULL, 0, &desired, &audio_spec, 0);
+    audio_device = SDL_OpenAudioDevice(nullptr, 0, &desired, &audio_spec, 0);
 
     if(audio_device == 0){
         std::cout << "Audio Init Failed: " << SDL_GetError() << std::endl;
@@ -36,7 +41,7 @@ void _audio_bufferfill(short *buffer, int buffer_size){
     memset(buffer, 0, buffer_size);
 
     for(auto sample = 0; sample < buffer_size; sample++){
-        buffer[sample] = (int)blit::get_audio_frame() - 0x7fff;
+        buffer[sample] = (int)blit::get_audio_frame() - 0x8000;
     }
 }
 

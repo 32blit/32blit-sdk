@@ -1,8 +1,11 @@
 #include <stdint.h>
+#include <cstring>
 
 #include "spi-st7272a.h"
+#include "32blit.hpp"
 
 #include "display.hpp"
+#include "stm32h7xx_ll_dma2d.h"
 
 extern char __ltdc_start, __ltdc_end;
 extern char __fb_start, __fb_end;
@@ -23,24 +26,38 @@ void LTDC_IRQHandler() {
   }
 }
 
-namespace display {  
+namespace display {
+
+  void update_ltdc_for_mode();
 
   // lo and hi res screen back buffers
   Surface __fb_hires((uint8_t *)&__fb_start, PixelFormat::RGB, Size(320, 240));
+  Surface __fb_hires_pal((uint8_t *)&__fb_start, PixelFormat::P, Size(320, 240));
   Surface __fb_lores((uint8_t *)&__fb_start, PixelFormat::RGB, Size(160, 120));
 
+  Pen palette[256];
+
   ScreenMode mode = ScreenMode::lores;
+  ScreenMode requested_mode = ScreenMode::lores;
+
   bool needs_render = false;
+  int palette_needs_update = 0;
+  uint8_t palette_update_delay = 0;
+
+  bool need_ltdc_mode_update = false;
 
   void init() {
+    __fb_hires_pal.palette = palette;
+
     // TODO: replace interrupt setup with non HAL method
     HAL_NVIC_SetPriority(LTDC_IRQn, 4, 4);
     HAL_NVIC_EnableIRQ(LTDC_IRQn);
 
+
     ltdc_init();
     screen_init();
 
-    enable_vblank_interrupt();
+    needs_render = true; 
   }
   
   void enable_vblank_interrupt() {
@@ -53,48 +70,221 @@ namespace display {
     display::needs_render = false;
   }
 
-  void set_screen_mode(ScreenMode new_mode) {
-    mode = new_mode;
-    screen = mode == ScreenMode::hires ? __fb_hires : __fb_lores;
-  }
-
-  void flip(const Surface &source) {
-    uint8_t *s = (uint8_t *)source.data;
-    uint32_t *d = (uint32_t *)(&__ltdc_start);
-
-    if(mode == ScreenMode::lores) {
-      // pixel double the framebuffer to the ltdc buffer
-      for(uint8_t y = 0; y < 120; y++) {
-        // pixel double the current row while converting from RGB to RGB565
-        for(uint8_t x = 0; x < 160; x++) {
-          uint16_t c = ((*s++ & 0b11111000) << 8) | ((*s++ & 0b11111100) << 3) | ((*s++ & 0b11111000) >> 3);        
-          *(d) = c | (c << 16); *(d + 160) = c | (c << 16);
-          d++;
-        }
-        d += 160; // skip the doubled row
-      }
-    }else{
-      // copy the framebuffer data into the ltdc buffer, originally this
-      // was done via memcpy but implementing it as a 32-bit copy loop
-      // was much faster. additionall unrolling this loop gained us about 10%
-      // extra performance
-      uint32_t c = (320 * 240) >> 1;
-      while(c--) {
-        uint16_t c1 = ((*s++ & 0b11111000) << 8) | ((*s++ & 0b11111100) << 3) | ((*s++ & 0b11111000) >> 3);
-        uint16_t c2 = ((*s++ & 0b11111000) << 8) | ((*s++ & 0b11111100) << 3) | ((*s++ & 0b11111000) >> 3);
-        *d++ = c2 << 16 | c1;
-      }
+  Surface &set_screen_mode(ScreenMode new_mode) {
+    requested_mode = new_mode;
+    switch(new_mode) {
+      case ScreenMode::lores:
+        screen = __fb_lores;
+        break;
+      case ScreenMode::hires:
+        screen = __fb_hires;
+        break;
+      case ScreenMode::hires_palette:
+        screen = __fb_hires_pal;
+        break;
     }
 
-    // since the ltdc hardware pulls frame data directly over the memory bus
-    // without passing through the mcu's cache layer we must invalidate the
-    // affected area to ensure that all data has been committed into ram
-    SCB_CleanInvalidateDCache_by_Addr(d, 320 * 240 * 2);    
+    return screen;
+  }
+
+  void set_screen_palette(const Pen *colours, int num_cols) {
+    memcpy(palette, colours, num_cols * sizeof(blit::Pen));
+    palette_update_delay = 1;
+    palette_needs_update = num_cols;
+  }
+
+  void dma2d_hires_flip(const Surface &source) {
+    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 3); 
+    // set the transform type (clear bits 17..16 of control register)
+    MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M_PFC);
+    // set source pixel format (clear bits 3..0 of foreground format register)
+    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB888);
+    // set source buffer address
+    DMA2D->FGMAR = (uintptr_t)source.data; 
+    // set target pixel format (clear bits 3..0 of output format register)
+    MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_RGB565);
+    // set target buffer address
+    DMA2D->OMAR = (uintptr_t)&__ltdc_start;
+    // set the number of pixels per line and number of lines    
+    DMA2D->NLR = (320 << 16) | (240);
+    // set the source offset
+    DMA2D->FGOR = 0;
+    // set the output offset
+    DMA2D->OOR = 0;
+    // trigger start of dma2d transfer
+    DMA2D->CR |= DMA2D_CR_START;
+
+    // wait for transfer to complete
+    while(DMA2D->CR & DMA2D_CR_START) {      
+      // never gets here!
+    }
+  }
+  
+  void dma2d_hires_pal_flip(const Surface &source) {
+    // copy RGBA at quarter width
+    // work as 32bit type to save some bandwidth
+    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 1);  
+    // set the transform type (clear bits 17..16 of control register)
+    MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
+    // set source pixel format (clear bits 3..0 of foreground format register)
+    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_ARGB8888);
+    // set source buffer address
+    DMA2D->FGMAR = (uintptr_t)source.data; 
+    // set target pixel format (clear bits 3..0 of output format register)
+    MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_ARGB8888);
+    // set target buffer address
+    DMA2D->OMAR = (uintptr_t)((uint32_t)&__ltdc_start + 320 * 240 * 1);
+    // set the number of pixels per line and number of lines    
+    DMA2D->NLR = (80 << 16) | (240);
+    // set the source offset
+    DMA2D->FGOR = 0;
+    // set the output offset
+    DMA2D->OOR = 0;
+    // trigger start of dma2d transfer
+    DMA2D->CR |= DMA2D_CR_START;
+    // update pal next, dma2d could work at same time
+    if(palette_needs_update && palette_update_delay-- == 0) {
+      for(int i = 0; i < palette_needs_update; i++) {
+        LTDC_Layer1->CLUTWR = (i << 24) | (palette[i].b << 16) | (palette[i].g << 8) | palette[i].r;
+      }
+
+      LTDC->SRCR = LTDC_SRCR_IMR;
+      palette_needs_update = 0;
+    }	
+
+    // wait for transfer to complete
+    while(DMA2D->CR & DMA2D_CR_START) {      
+      // never gets here!
+    }
+  }
+
+  void dma2d_lores_flip(const Surface &source) {
+    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 160 * 120 * 3); 
+    //Step 1.
+    // set the transform type (clear bits 17..16 of control register)
+    MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M_PFC);
+    // set source pixel format (clear bits 3..0 of foreground format register)
+    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB888);
+    // set source buffer address
+    DMA2D->FGMAR = (uintptr_t)source.data; 
+    // set target pixel format (clear bits 3..0 of output format register)
+    MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_RGB565);
+    // set target buffer address
+    DMA2D->OMAR = ((uintptr_t)&__ltdc_start)+320*120*2;
+    // set the number of pixels per line and number of lines    
+    DMA2D->NLR = (1 << 16) | (160*120);
+    // set the source offset
+    DMA2D->FGOR = 0;
+    // set the output offset
+    DMA2D->OOR = 1;
+    // trigger start of dma2d transfer
+    DMA2D->CR |= DMA2D_CR_START;
+
+    // wait for transfer to complete
+    while(DMA2D->CR & DMA2D_CR_START) {      
+      // never gets here!
+    }  
+    //Step 2.  
+    // set the transform type (clear bits 17..16 of control register)
+    MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
+    // set source pixel format (clear bits 3..0 of foreground format register)
+    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB565);
+    // set source buffer address
+    DMA2D->FGMAR = ((uintptr_t)&__ltdc_start)+320*120*2; 
+    // set target pixel format (clear bits 3..0 of output format register)
+    MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_RGB565);
+    // set target buffer address
+    DMA2D->OMAR =  ((uintptr_t)&__ltdc_start)+320*120*2 + 2;
+    // set the number of pixels per line and number of lines    
+    DMA2D->NLR = (1 << 16) | (160*120);
+    // set the source offset
+    DMA2D->FGOR = 1;
+    // set the output offset
+    DMA2D->OOR = 1;
+    // trigger start of dma2d transfer
+    DMA2D->CR |= DMA2D_CR_START;
+
+    // wait for transfer to complete
+    while(DMA2D->CR & DMA2D_CR_START) {      
+      // never gets here!
+    }  
+    //step 3.
+    // set the transform type (clear bits 17..16 of control register)
+    MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
+    // set source pixel format (clear bits 3..0 of foreground format register)
+    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_ARGB8888);
+    // set source buffer address
+    DMA2D->FGMAR = ((uintptr_t)&__ltdc_start)+320*120*2; 
+    // set target pixel format (clear bits 3..0 of output format register)
+    MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_ARGB8888);
+    // set target buffer address
+    DMA2D->OMAR =  ((uintptr_t)&__ltdc_start);
+    // set the number of pixels per line and number of lines    
+    DMA2D->NLR = (160 << 16) | (120);
+    // set the source offset
+    DMA2D->FGOR = 0;
+    // set the output offset
+    DMA2D->OOR = 160;
+    // trigger start of dma2d transfer
+    DMA2D->CR |= DMA2D_CR_START;
+
+    // wait for transfer to complete
+    while(DMA2D->CR & DMA2D_CR_START) {      
+      // never gets here!
+    }  
+    //step 4.
+    // set the transform type (clear bits 17..16 of control register)
+    MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
+    // set source pixel format (clear bits 3..0 of foreground format register)
+    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_ARGB8888);//same as step 3, skip it
+    // set source buffer address
+    DMA2D->FGMAR = ((uintptr_t)&__ltdc_start); 
+    // set target pixel format (clear bits 3..0 of output format register)
+    MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_ARGB8888);//same as step 3, skip it
+    // set target buffer address
+    DMA2D->OMAR =  ((uintptr_t)&__ltdc_start)+320*2;
+    // set the number of pixels per line and number of lines    
+    DMA2D->NLR = (160 << 16) | (120);
+    // set the source offset
+    DMA2D->FGOR = 160;
+    // set the output offset
+    DMA2D->OOR = 160;
+    // trigger start of dma2d transfer
+    DMA2D->CR |= DMA2D_CR_START;
+
+    // wait for transfer to complete
+    while(DMA2D->CR & DMA2D_CR_START) {      
+      // never gets here!
+    }  
+  }
+
+  void flip(const Surface &source) {        
+    static uint32_t flip_time = 0;
+
+    // switch colour mode if needed
+    if(need_ltdc_mode_update) {
+      update_ltdc_for_mode();
+      need_ltdc_mode_update = false;
+    }
+
+    if(mode == ScreenMode::lores) {  
+      dma2d_lores_flip(source);
+    } else if(mode == ScreenMode::hires) {      
+      dma2d_hires_flip(source);
+    } else {
+      dma2d_hires_pal_flip(source);
+    }
+
+    // set new mode after displaying last frame in the old one
+    if(mode != requested_mode) {
+      mode = requested_mode;
+      need_ltdc_mode_update = true;
+    }
   }
 
   void screen_init() {
     ST7272A_RESET();
-    st7272a_set_bgr();
+   // st7272a_set_bgr();
   }
 
   // configure ltdc peripheral setting up the clocks, pin states, panel
@@ -122,7 +312,7 @@ namespace display {
     LTDC_Layer1->PFCR   = LTDC_PIXEL_FORMAT_RGB565;  
     LTDC_Layer1->DCCR   = 0xff000000;     // layer default color (back, 100% alpha)
     LTDC_Layer1->CFBAR  = (uint32_t)&__ltdc_start;  // frame buffer start address
-    LTDC_Layer1->CFBLR  = ((320 * 2) << LTDC_LxCFBLR_CFBP_Pos) | (((320 * 2) + 2) << LTDC_LxCFBLR_CFBLL_Pos);  // frame buffer line length and pitch
+    LTDC_Layer1->CFBLR  = ((320 * 2) << LTDC_LxCFBLR_CFBP_Pos) | (((320 * 2) + 7) << LTDC_LxCFBLR_CFBLL_Pos);  // frame buffer line length and pitch
     LTDC_Layer1->CFBLNR = 240;            // line count
     LTDC_Layer1->CACR   = 255;            // alpha
     LTDC_Layer1->CR    |= LTDC_LxCR_LEN;  // enable layer
@@ -132,5 +322,21 @@ namespace display {
 
     // enable LTDC      
     LTDC->GCR |= LTDC_GCR_LTDCEN;   
+  }
+
+  void update_ltdc_for_mode() {
+    if(mode == ScreenMode::hires_palette) {
+      LTDC_Layer1->PFCR = LTDC_PIXEL_FORMAT_L8;
+      LTDC_Layer1->CFBAR  = (uint32_t)&__ltdc_start + 320 * 240 * 1;  // frame buffer start address
+      LTDC_Layer1->CFBLR  = ((320 * 1) << LTDC_LxCFBLR_CFBP_Pos) | (((320 * 1) + 7) << LTDC_LxCFBLR_CFBLL_Pos);  // frame buffer line length and pitch
+      LTDC_Layer1->CR |= LTDC_LxCR_CLUTEN;
+    } else {
+      LTDC_Layer1->PFCR = LTDC_PIXEL_FORMAT_RGB565;
+      LTDC_Layer1->CFBAR  = (uint32_t)&__ltdc_start;  // frame buffer start address
+      LTDC_Layer1->CFBLR  = ((320 * 2) << LTDC_LxCFBLR_CFBP_Pos) | (((320 * 2) + 7) << LTDC_LxCFBLR_CFBLL_Pos);  // frame buffer line length and pitch
+      LTDC_Layer1->CR &= ~LTDC_LxCR_CLUTEN;
+    }
+
+    LTDC->SRCR = LTDC_SRCR_IMR;
   }
 }

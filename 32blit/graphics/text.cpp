@@ -11,35 +11,32 @@ using namespace blit;
 namespace blit {
 
   /**
-   * TODO: Document this function
+   * Draw text to surface using the specified font and the current pen.
    *
-   * \param message
-   * \param font
-   * \param p
-   * \param variable
+   * \param message Text to draw
+   * \param font Font to use
+   * \param p Point to align text to
+   * \param variable Draw text using variable character widths
+   * \param align Alignment
    */
-  void Surface::text(std::string message, const Font &font, const Point &p, bool variable, TextAlign align, Rect clip) {
-    text(message, font, Rect(p.x, p.y, 0, 0), variable, align, clip);
+  void Surface::text(std::string_view message, const Font &font, const Point &p, bool variable, TextAlign align) {
+    text(message, font, Rect(p.x, p.y, 0, 0), variable, align);
   }
 
   /**
-   * TODO: Document this function
+   * Draw text to surface using the specified font and the current pen.
    *
-   * \param message
-   * \param font
-   * \param r
-   * \param variable
+   * \param message Text to draw
+   * \param font Font to use
+   * \param r Rect to align text to
+   * \param variable Draw text using variable character widths
+   * \param align Alignment
    */
-  void Surface::text(std::string message, const Font &font, const Rect &r, bool variable, TextAlign align, Rect clip) {
+  void Surface::text(std::string_view message, const Font &font, const Rect &r, bool variable, TextAlign align) {
     Point c(r.x, r.y); // caret position
 
-    // default clip rect to rect if passed in
-    if(r.w > 0 && clip.w == 1000)
-      clip = r;
-
-    // clamp clip rect to screen
-    clip.w = std::min(clip.w, bounds.w - clip.x);
-    clip.h = std::min(clip.h, bounds.h - clip.y);
+    if(!clip.intersects(r))
+      return;
 
     // check vertical alignment
     if ((align & 0b11) != TextAlign::top) {
@@ -65,7 +62,8 @@ namespace blit {
     const int char_size = font.char_w * height_bytes;
 
     size_t char_off = 0;
-    for (char &chr : message) {
+
+    for (char chr : message) {
       // draw character
 
       uint8_t chr_idx = chr & 0x7F;
@@ -75,7 +73,19 @@ namespace blit {
 
       const uint8_t* font_chr = &font.data[chr_idx * char_size];
 
+      // If this is a narrow character in fixed-width, center it in the render box
+      if (!variable) {
+        uint8_t fix_width = (font.char_w - font.char_w_variable[chr_idx]) / 2;
+        c.x += fix_width;
+        char_width = font.char_w - fix_width;
+      } else {
+        char_width = font.char_w_variable[chr_idx];
+      }
+
       for (uint8_t y = 0; y < font.char_h; y++) {
+        if (c.y + y < 0)
+          continue;
+
         uint32_t po = offset(Point(c.x, c.y + y));
 
         for (uint8_t x = 0; x < font.char_w; x++) {
@@ -88,11 +98,6 @@ namespace blit {
           po++;
         }
       }
-
-      if (!variable)
-        char_width = font.char_w;
-      else
-        char_width = font.char_w_variable[chr_idx];
 
       // increment the cursor
       c.x += char_width;
@@ -129,7 +134,16 @@ namespace blit {
     return font.char_w_variable[chr_idx];
   }
 
-  Size Surface::measure_text(std::string message, const Font &font, bool variable) {
+  /**
+   * Calculate the size that text would take up using the specified font
+   *
+   * \param message Text to measure
+   * \param font Font to use for measurement
+   * \param variable Use variable character widths
+   * 
+   * \returns Measured Size of text
+   */
+  Size Surface::measure_text(std::string_view message, const Font &font, bool variable) {
     const int line_height = font.char_h + font.spacing_y;
 
     Size bounds(0, 0);
@@ -156,7 +170,7 @@ namespace blit {
         if (end == std::string::npos)
           end = message.length();
 
-        line_len = (end - char_off) * font.char_w;
+        line_len = int(end - char_off) * font.char_w;
         char_off = end;
       }
     }
@@ -171,7 +185,18 @@ namespace blit {
   }
 }
 
-std::string Surface::wrap_text(std::string message, int32_t width, const Font &font, bool variable, bool words) {
+/**
+ * Wrap text to fit the specified width
+ *
+ * \param message Text to wrap
+ * \param width Maximum width of a line of text
+ * \param font Font to use for measurement
+ * \param variable Use variable character widths
+ * \param words Attempt to break lines between words if `true`
+ * 
+ * \returns Wrapped text
+ */
+std::string Surface::wrap_text(std::string_view message, int32_t width, const Font &font, bool variable, bool words) {
   std::string ret;
 
   int current_x = 0;
@@ -196,12 +221,14 @@ std::string Surface::wrap_text(std::string message, int32_t width, const Font &f
     if (current_x > width) {
       if(!words || last_space == std::string::npos) {
         // no space to break at or we're not breaking on words
-        ret += message.substr(copied_off, i - copied_off - 1) + "\n";
+        ret += message.substr(copied_off, i - copied_off - 1);
+        ret += "\n";
         copied_off = i - 1;
         current_x = char_width;
       } else {
         // break at last space
-        ret += message.substr(copied_off, last_space - copied_off) + "\n";
+        ret += message.substr(copied_off, last_space - copied_off);
+        ret += "\n";
         copied_off = last_space + 1; // don't copy the space
         last_space = std::string::npos;
         current_x = measure_text(message.substr(copied_off, i - copied_off + 1), font, variable).w;

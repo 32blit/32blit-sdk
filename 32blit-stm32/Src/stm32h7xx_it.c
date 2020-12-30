@@ -22,12 +22,15 @@
 #include "main.h"
 #include "stm32h7xx_it.h"
 #include "fatfs.h"
+#include "gpio_defs.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
 //FIL fil;
 //uint32_t total_samples;
 //__attribute__((section(".dac_data"))) uint16_t sine_wave_array[32];
+
+extern void blit_reset_with_error();
 
 //uint8_t dac_ready;
 /* Private typedef -----------------------------------------------------------*/
@@ -67,6 +70,8 @@ extern ADC_HandleTypeDef hadc1;
 extern ADC_HandleTypeDef hadc3;
 extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
 extern DMA_HandleTypeDef hdma_dac1_ch2;
+extern TIM_HandleTypeDef htim2;
+extern I2C_HandleTypeDef hi2c4;
 
 /* USER CODE BEGIN EV */
 
@@ -94,7 +99,9 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-
+#ifdef NDEBUG
+  blit_reset_with_error();
+#endif
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
@@ -197,7 +204,11 @@ void SysTick_Handler(void)
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
+  uint32_t currentCycle = HAL_GetTick() & 0x0000000f;
 
+  HAL_GPIO_WritePin(LED_CHG_RED_Port, LED_CHG_RED_Pin, charge_led_r > currentCycle ? GPIO_PIN_RESET : GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LED_CHG_GREEN_Port, LED_CHG_GREEN_Pin, charge_led_g > currentCycle ? GPIO_PIN_RESET : GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LED_CHG_BLUE_Port, LED_CHG_BLUE_Pin, charge_led_b > currentCycle ? GPIO_PIN_RESET : GPIO_PIN_SET);
   /* USER CODE END SysTick_IRQn 1 */
 }
 
@@ -287,10 +298,24 @@ void DMAMUX1_OVR_IRQHandler(void)
 
   /* USER CODE END DMAMUX1_OVR_IRQn 0 */
   // Handle DMA1_Stream0
-  HAL_DMAEx_MUX_IRQHandler(&hdma_dac1_ch2);
+  //HAL_DMAEx_MUX_IRQHandler(&hdma_dac1_ch2);
   /* USER CODE BEGIN DMAMUX1_OVR_IRQn 1 */
 
   /* USER CODE END DMAMUX1_OVR_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM2 global interrupt.
+  */
+void TIM2_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM2_IRQn 0 */
+
+  /* USER CODE END TIM2_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim2);
+  /* USER CODE BEGIN TIM2_IRQn 1 */
+
+  /* USER CODE END TIM2_IRQn 1 */
 }
 
 /**
@@ -307,6 +332,47 @@ void ADC3_IRQHandler(void)
   /* USER CODE END ADC3_IRQn 1 */
 }
 
+/**
+  * @brief This function handles EXTI line[9:5] interrupts.
+  */
+void EXTI9_5_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI9_5_IRQn 0 */
+
+  /* USER CODE END EXTI9_5_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_7);
+  /* USER CODE BEGIN EXTI9_5_IRQn 1 */
+
+  /* USER CODE END EXTI9_5_IRQn 1 */
+}
+
+/**
+  * @brief This function handles I2C4 event interrupt.
+  */
+void I2C4_EV_IRQHandler(void)
+{
+  /* USER CODE BEGIN I2C4_EV_IRQn 0 */
+
+  /* USER CODE END I2C4_EV_IRQn 0 */
+  HAL_I2C_EV_IRQHandler(&hi2c4);
+  /* USER CODE BEGIN I2C4_EV_IRQn 1 */
+
+  /* USER CODE END I2C4_EV_IRQn 1 */
+}
+
+/**
+  * @brief This function handles I2C4 error interrupt.
+  */
+void I2C4_ER_IRQHandler(void)
+{
+  /* USER CODE BEGIN I2C4_ER_IRQn 0 */
+
+  /* USER CODE END I2C4_ER_IRQn 0 */
+  HAL_I2C_ER_IRQHandler(&hi2c4);
+  /* USER CODE BEGIN I2C4_ER_IRQn 1 */
+
+  /* USER CODE END I2C4_ER_IRQn 1 */
+}
 
 /* USER CODE BEGIN 1 */
 

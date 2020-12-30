@@ -13,18 +13,15 @@
 #include "System.hpp"
 #include "Renderer.hpp"
 #include "Audio.hpp"
+#include "UserCode.hpp"
 
 #ifdef VIDEO_CAPTURE
 #include "VideoCapture.hpp"
 #endif
 
-#ifndef WINDOW_TITLE
-#define WINDOW_TITLE "32blit development (SDL)"
-#endif
-
 static bool running = true;
 
-SDL_Window* window = NULL;
+SDL_Window* window = nullptr;
 
 System *blit_system;
 Input *blit_input;
@@ -63,16 +60,16 @@ void handle_event(SDL_Event &event) {
 		case SDL_KEYDOWN: // fall-though
 		case SDL_KEYUP:
 			if (!blit_input->handle_keyboard(event.key.keysym.sym, event.type == SDL_KEYDOWN)) {
-				switch (event.key.keysym.sym) {
 #ifdef VIDEO_CAPTURE
+				switch (event.key.keysym.sym) {
 				case SDLK_r:
 					if (event.type == SDL_KEYDOWN && SDL_GetTicks() - last_record_startstop > 1000) {
 						if (blit_capture->recording()) blit_capture->stop();
 						else blit_capture->start();
 						last_record_startstop = SDL_GetTicks();
 					}
-#endif
 				}
+#endif
 			}
 			break;
 
@@ -112,13 +109,13 @@ void handle_event(SDL_Event &event) {
 			} else if (event.type == System::timer_event) {
 				switch(event.user.code) {
 					case 0:
-						SDL_SetWindowTitle(window, WINDOW_TITLE);
+						SDL_SetWindowTitle(window, metadata_title);
 						break;
 					case 1:
-						SDL_SetWindowTitle(window, WINDOW_TITLE " [SLOW]");
+						SDL_SetWindowTitle(window, (std::string(metadata_title) + " [SLOW]").c_str());
 						break;
 					case 2:
-						SDL_SetWindowTitle(window, WINDOW_TITLE " [FROZEN]");
+						SDL_SetWindowTitle(window, (std::string(metadata_title) + " [FROZEN]").c_str());
 						break;
 				}
 			}
@@ -141,7 +138,8 @@ void em_loop() {
 
 int main(int argc, char *argv[]) {
 
-	std::cout << "Hello World" << std::endl;
+  std::cout << "32Blit SDL2 runtime" << std::endl;
+  std::cout << "(c) Pimoroni et.al. 2019-2020" << std::endl;
 
 	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER|SDL_INIT_AUDIO) < 0) {
 		fprintf(stderr, "could not initialize SDL2: %s\n", SDL_GetError());
@@ -149,13 +147,13 @@ int main(int argc, char *argv[]) {
 	}
 
 	window = SDL_CreateWindow(
-		WINDOW_TITLE,
+		metadata_title,
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		System::width*2, System::height*2,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
 	);
 
-	if (window == NULL) {
+	if (window == nullptr) {
 		fprintf(stderr, "could not create window: %s\n", SDL_GetError());
 		return 1;
 	}

@@ -2,10 +2,3 @@
     \brief Output handlers
 */
 #include "output.hpp"
-
-namespace blit {
-
-  Pen LED;
-  float vibration;
-
-}

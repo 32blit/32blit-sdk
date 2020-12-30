@@ -1,5 +1,8 @@
 #include "stm32h7xx_hal.h"
 
+#include "32blit.hpp"
+#include "engine/api_private.hpp"
+#include "gpio.hpp"
 #include "sound.hpp"
 
 TIM_HandleTypeDef htim6;
@@ -13,17 +16,27 @@ void TIM6_DAC_IRQHandler(void) {
     {
       __HAL_TIM_CLEAR_IT(&htim6, TIM_IT_UPDATE);
 
+      static bool was_amp_enabled = true;
+      bool enable_amp = is_audio_playing();
+
+      if(enable_amp != was_amp_enabled) {
+        HAL_GPIO_WritePin(AMP_SHUTDOWN_GPIO_Port, AMP_SHUTDOWN_Pin, enable_amp ? GPIO_PIN_SET : GPIO_PIN_RESET);
+        was_amp_enabled = enable_amp;
+      }
+
       // timer period elapsed, update audio sample
       hdac1.Instance->DHR12R2 = blit::get_audio_frame() >> 4;
     }
   }
-
-  //HAL_TIM_IRQHandler(&htim6);
 }
 
 namespace sound {
 
+  AudioChannel channels[CHANNEL_COUNT];
+
   void init() {
+    blit::api.channels = channels;
+
     // setup the 22,010Hz audio timer    
     HAL_NVIC_EnableIRQ(TIM6_DAC_IRQn);
     __TIM6_CLK_ENABLE();
@@ -31,9 +44,9 @@ namespace sound {
     TIM_MasterConfigTypeDef sMasterConfig = {0};
 
     htim6.Instance = TIM6;
-    htim6.Init.Prescaler = 128;
+    htim6.Init.Prescaler = 310;
     htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
-    htim6.Init.Period = 85;
+    htim6.Init.Period = 34;
 
     if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
     {

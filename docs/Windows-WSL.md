@@ -1,10 +1,23 @@
-# Building & Running on Win32 (WSL and MinGW)
+# Building & Running on Win32 (WSL and MinGW) <!-- omit in toc -->
 
-These instructions cover setting up Windows Subsystem for Linux so that you can cross-compile Windows-compatible binaries with MinGW.
+These instructions cover setting up Windows Subsystem for Linux so that you can cross-compile Windows-compatible binaries with MinGW. This approach is included for completeness but not recommended, since MinGW binaries are statically linked and much larger than the Visual Studio output.
 
-They assume a basic knowledge of the Linux command-line, installing tools and compiling code from source.
+A basic knowledge of the Linux command-line, installing tools and compiling code from source is assumed.
 
 If you're more familiar with Visual Studio then you should [follow the instructions in Windows-VisualStudio.md](Windows-VisualStudio.md)
+
+- [Setting Up](#setting-up)
+  - [Windows Subsystem for Linux (WSL)](#windows-subsystem-for-linux-wsl)
+  - [Installing requirements inside WSL](#installing-requirements-inside-wsl)
+- [Building & Running on 32Blit](#building--running-on-32blit)
+- [Building & Running Locally](#building--running-locally)
+  - [Installing SDL2 & SDL2_image](#installing-sdl2--sdl2_image)
+    - [SDL2](#sdl2)
+    - [SDL2_image](#sdl2_image)
+  - [Building](#building)
+    - [Single Example](#single-example)
+    - [Build Everything](#build-everything)
+  - [Troubleshooting](#troubleshooting)
 
 ## Setting Up
 
@@ -19,8 +32,12 @@ After that, proceed to the Microsoft Store to download Ubuntu for WSL.
 The following requirements enable cross-compile to 32Blit via ARM GCC and to Windows via MinGW:
 
 ```shell
+# Ubuntu 18.04's gcc-arm-none-eabi is too old, this repo backports the one from 19.10
+sudo add-apt-repository ppa:daft-freak/arm-gcc
+sudo apt update
+
 sudo apt install gcc gcc-arm-none-eabi gcc-mingw-w64 g++-mingw-w64 unzip cmake make python3 python3-pip
-pip3 install construct bitstring
+pip3 install 32blit construct bitstring
 ```
 
 ## Building & Running on 32Blit
@@ -31,27 +48,41 @@ If you want to run code on 32Blit, you should now refer to [Building & Running O
 
 You can use WSL on Windows to cross-compile your project (or any 32Blit example) into a Windows .exe for testing locally.
 
-First you'll need to cross-compile SDL2 for MinGW and install it.
+You will need to cross-compile SDL2 for MinGW and install both it, and SDL2-image.
 
-Grab the SDL2 source code and unzip it with the following commands:
+### Installing SDL2 & SDL2_image
 
-```shell
-wget https://www.libsdl.org/release/SDL2-2.0.10.zip
-unzip SDL2-2.0.10.zip
-cd SDL2-2.0.10
-```
+This will install the SDL2 64bit mingw development headers and libraries into `/opt/local/x86_64-w64-mingw32/`.
 
-Then build and install it:
+Note: the `lib/cmake/SDL2/sdl2-config.cmake` shipped with these libraries expects them to be in `/opt/local`, if you change the install path you will have to modify this file.
+
+First, make sure the `/opt/local/` directory exists:
 
 ```shell
-mkdir build.mingw
-cd build.mingw
-../configure --target=x86_64-w64-mingw32 --host=x86_64-w64-mingw32 --build=x86_64--linux --prefix=/usr/local/cross-tools/x86_64-w64-mingw32/
-make
-sudo make install
+sudo mkdir -p /opt/local/
 ```
 
-This will install the SDL2 development headers and libraries into `/usr/local/cross-tools/x86_64-w64-mingw32/` if you use a different directory then you will have to supply the SDL2 dir to the `cmake` command below using `-DSDL2_DIR=/usr/local/cross-tools/x86_64-w64-mingw32/lib/cmake/SDL2`
+#### SDL2
+
+Grab and install the SDL2 mingw development package:
+
+```shell
+wget https://libsdl.org/release/SDL2-devel-2.0.10-mingw.tar.gz
+tar xzf SDL2-devel-2.0.10-mingw.tar.gz
+sudo cp -r SDL2-2.0.10/x86_64-w64-mingw32 /opt/local/
+```
+
+#### SDL2_image
+
+Grab and install the SDL2_image mingw development package:
+
+```shell
+wget https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.0.5-mingw.tar.gz
+tar xzf SDL2_image-devel-2.0.5-mingw.tar.gz
+sudo cp -r SDL2_image-2.0.5/x86_64-w64-mingw32 /opt/local/
+```
+
+### Building
 
 Finally, set up the 32Blit Makefile from the root of the repository with the following commands:
 
@@ -60,6 +91,8 @@ mkdir build.mingw
 cd build.mingw
 cmake .. -DCMAKE_TOOLCHAIN_FILE=../mingw.toolchain
 ```
+
+#### Single Example
 
 Now to make any example, type:
 
@@ -83,7 +116,7 @@ WSL will launch the example in Windows, using the required `SDL2.dll` that will 
 
 Don't forget to include `SDL2.dll` this if you want to redistribute a game/example.
 
-### Build Everything
+#### Build Everything
 
 Alternatively you can build everything by just typing:
 

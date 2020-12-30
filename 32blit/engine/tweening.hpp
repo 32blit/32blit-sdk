@@ -1,18 +1,13 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <string>
-
-#ifndef M_PI
-  #define M_PI           3.14159265358979323846f  /* pi */
-#endif
-
 
 namespace blit {
   const uint32_t LINEAR = 1UL << 0;
 
   struct Tween {
-    typedef float (*TweenFunction)(uint32_t t, float b, float c, uint32_t d);
+    using TweenFunction = float (*)(uint32_t t, float b, float c, uint32_t d);
     TweenFunction function = nullptr;
 
     float from = 0.0f;
@@ -32,7 +27,7 @@ namespace blit {
     };
     uint8_t state = STOPPED;
 
-    void init(TweenFunction function, float start, float end, uint32_t duration, int32_t loops);
+    void init(TweenFunction function, float start, float end, uint32_t duration, int32_t loops = -1);
     void start();
     void stop();
 

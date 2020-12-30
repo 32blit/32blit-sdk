@@ -1,9 +1,25 @@
-# Building & Running on Linux
+# Building & Running on Linux <!-- omit in toc -->
+
+These instructions cover building 32blit on Linux.
+
+- [Prerequisites](#prerequisites)
+  - [Building & Running on 32Blit](#building--running-on-32blit)
+  - [Building & Running Locally](#building--running-locally)
+    - [Build Everything](#build-everything)
+
+# Prerequisites
 
 First install the required tools:
 
 ```
-sudo apt install git gcc g++ gcc-arm-none-eabi cmake make python3 python3-pip libsdl2-dev
+sudo apt install git gcc g++ gcc-arm-none-eabi cmake make python3 python3-pip libsdl2-dev libsdl2-image-dev unzip
+
+pip3 install 32blit
+```
+
+Optionally, for building the firmware as a .DFU file (usually not needed on Linux):
+
+```
 pip3 install construct bitstring
 ```
 

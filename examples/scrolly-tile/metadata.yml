@@ -1,0 +1,8 @@
+title: Rainbow Ascent
+description: The Dark Souls of procedurally generated vertical jumping puzzles. Good luck.
+author: pimoroni
+splash:
+  file: rainbow-ascent.png
+icon:
+  file: rainbow-ascent-icon.png
+version: v1.0.0 

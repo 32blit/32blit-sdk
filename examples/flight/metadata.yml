@@ -1,0 +1,8 @@
+title: Flight
+description: A mode7 Flight simulator demo.
+author: pimoroni
+splash:
+  file: ../no-image.png
+icon:
+  file: ../no-icon.png
+version: v1.0.0

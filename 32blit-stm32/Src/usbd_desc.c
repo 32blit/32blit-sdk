@@ -25,6 +25,9 @@
 #include "usbd_conf.h"
 
 /* USER CODE BEGIN INCLUDE */
+#include "USBManager.h"
+
+extern USBManager g_usbManager;
 
 /* USER CODE END INCLUDE */
 
@@ -66,10 +69,16 @@
 #define USBD_VID     1155
 #define USBD_LANGID_STRING     1033
 #define USBD_MANUFACTURER_STRING     "STMicroelectronics"
-#define USBD_PID_HS     22336
-#define USBD_PRODUCT_STRING_HS     "32Blit CDC"
-#define USBD_CONFIGURATION_STRING_HS     "CDC Config"
-#define USBD_INTERFACE_STRING_HS     "CDC Interface"
+
+#define USBD_MSC_PID_HS     22314
+#define USBD_MSC_PRODUCT_STRING_HS     "32Blit Mass Storage"
+#define USBD_MSC_CONFIGURATION_STRING_HS     "MSC Config"
+#define USBD_MSC_INTERFACE_STRING_HS     "MSC Interface"
+
+#define USBD_CDC_PID_HS     22336
+#define USBD_CDC_PRODUCT_STRING_HS     "32Blit CDC"
+#define USBD_CDC_CONFIGURATION_STRING_HS     "CDC Config"
+#define USBD_CDC_INTERFACE_STRING_HS     "CDC Interface"
 
 /* USER CODE BEGIN PRIVATE_DEFINES */
 
@@ -146,7 +155,30 @@ USBD_DescriptorsTypeDef HS_Desc =
   #pragma data_alignment=4
 #endif /* defined ( __ICCARM__ ) */
 /** USB standard device descriptor. */
-__ALIGN_BEGIN uint8_t USBD_HS_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END =
+__ALIGN_BEGIN uint8_t USBD_MSC_HS_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END =
+{
+  0x12,                       /*bLength */
+  USB_DESC_TYPE_DEVICE,       /*bDescriptorType*/
+  0x00,                       /*bcdUSB */
+
+  0x02,
+  0x00,                       /*bDeviceClass*/
+  0x00,                       /*bDeviceSubClass*/
+  0x00,                       /*bDeviceProtocol*/
+  USB_MAX_EP0_SIZE,           /*bMaxPacketSize*/
+  LOBYTE(USBD_VID),           /*idVendor*/
+  HIBYTE(USBD_VID),           /*idVendor*/
+  LOBYTE(USBD_MSC_PID_HS),    /*idProduct*/
+  HIBYTE(USBD_MSC_PID_HS),    /*idProduct*/
+  0x00,                       /*bcdDevice rel. 2.00*/
+  0x02,
+  USBD_IDX_MFC_STR,           /*Index of manufacturer  string*/
+  USBD_IDX_PRODUCT_STR,       /*Index of product string*/
+  USBD_IDX_SERIAL_STR,        /*Index of serial number string*/
+  USBD_MAX_NUM_CONFIGURATION  /*bNumConfigurations*/
+};
+
+__ALIGN_BEGIN uint8_t USBD_CDC_HS_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END =
 {
   0x12,                       /*bLength */
   USB_DESC_TYPE_DEVICE,       /*bDescriptorType*/
@@ -159,8 +191,8 @@ __ALIGN_BEGIN uint8_t USBD_HS_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END =
   USB_MAX_EP0_SIZE,           /*bMaxPacketSize*/
   LOBYTE(USBD_VID),           /*idVendor*/
   HIBYTE(USBD_VID),           /*idVendor*/
-  LOBYTE(USBD_PID_HS),        /*idProduct*/
-  HIBYTE(USBD_PID_HS),        /*idProduct*/
+  LOBYTE(USBD_CDC_PID_HS),    /*idProduct*/
+  HIBYTE(USBD_CDC_PID_HS),    /*idProduct*/
   0x00,                       /*bcdDevice rel. 2.00*/
   0x02,
   USBD_IDX_MFC_STR,           /*Index of manufacturer  string*/
@@ -223,8 +255,17 @@ __ALIGN_BEGIN uint8_t USBD_StringSerial[USB_SIZ_STRING_SERIAL] __ALIGN_END = {
 uint8_t * USBD_HS_DeviceDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 {
   UNUSED(speed);
-  *length = sizeof(USBD_HS_DeviceDesc);
-  return USBD_HS_DeviceDesc;
+  if(g_usbManager.GetType() == USBManager::usbtMSC)
+  {
+  	*length = sizeof(USBD_MSC_HS_DeviceDesc);
+  	return USBD_MSC_HS_DeviceDesc;
+  }
+  else
+	{
+		*length = sizeof(USBD_CDC_HS_DeviceDesc);
+		return USBD_CDC_HS_DeviceDesc;
+	}
+
 }
 
 /**
@@ -248,13 +289,13 @@ uint8_t * USBD_HS_LangIDStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
   */
 uint8_t * USBD_HS_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 {
-  if(speed == 0)
+  if(g_usbManager.GetType() == USBManager::usbtMSC)
   {
-    USBD_GetString((uint8_t *)USBD_PRODUCT_STRING_HS, USBD_StrDesc, length);
+    USBD_GetString((uint8_t *)USBD_MSC_PRODUCT_STRING_HS, USBD_StrDesc, length);
   }
   else
   {
-    USBD_GetString((uint8_t *)USBD_PRODUCT_STRING_HS, USBD_StrDesc, length);
+    USBD_GetString((uint8_t *)USBD_CDC_PRODUCT_STRING_HS, USBD_StrDesc, length);
   }
   return USBD_StrDesc;
 }
@@ -301,13 +342,13 @@ uint8_t * USBD_HS_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
   */
 uint8_t * USBD_HS_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 {
-  if(speed == USBD_SPEED_HIGH)
+  if(g_usbManager.GetType() == USBManager::usbtMSC)
   {
-    USBD_GetString((uint8_t *)USBD_CONFIGURATION_STRING_HS, USBD_StrDesc, length);
+    USBD_GetString((uint8_t *)USBD_MSC_CONFIGURATION_STRING_HS, USBD_StrDesc, length);
   }
   else
   {
-    USBD_GetString((uint8_t *)USBD_CONFIGURATION_STRING_HS, USBD_StrDesc, length);
+    USBD_GetString((uint8_t *)USBD_CDC_CONFIGURATION_STRING_HS, USBD_StrDesc, length);
   }
   return USBD_StrDesc;
 }
@@ -320,13 +361,13 @@ uint8_t * USBD_HS_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
   */
 uint8_t * USBD_HS_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 {
-  if(speed == 0)
+  if(g_usbManager.GetType() == USBManager::usbtMSC)
   {
-    USBD_GetString((uint8_t *)USBD_INTERFACE_STRING_HS, USBD_StrDesc, length);
+    USBD_GetString((uint8_t *)USBD_MSC_INTERFACE_STRING_HS, USBD_StrDesc, length);
   }
   else
   {
-    USBD_GetString((uint8_t *)USBD_INTERFACE_STRING_HS, USBD_StrDesc, length);
+    USBD_GetString((uint8_t *)USBD_CDC_INTERFACE_STRING_HS, USBD_StrDesc, length);
   }
   return USBD_StrDesc;
 }

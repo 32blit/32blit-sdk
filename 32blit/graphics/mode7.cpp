@@ -3,7 +3,6 @@
 
     Functions to emulate the mode7 graphics effect from classic consoles.
 */
-#include "math.h"
 #include <cmath>
 #include <cfloat>
 
@@ -40,16 +39,16 @@ namespace blit {
     float wd = (w - pos).length();
     float dot = f.dot(v);
     float det = f.x * v.y - f.y * v.x;
-    float theta = atan2(det, dot);
-    float costheta = cos(theta);
+    float theta = atan2f(det, dot);
+    float costheta = cosf(theta);
     float ctd = wd * costheta;
 
-    float pd = ctd / cos(hfov);
+    float pd = ctd / cosf(hfov);
 
     float theta_sign = std::copysign(1.0f, theta);
     
-    float hsl = sqrt((pd * pd) - (ctd * ctd));
-    float so = hsl + (sqrt((wd * wd) - (ctd * ctd)) * theta_sign);
+    float hsl = sqrtf((pd * pd) - (ctd * ctd));
+    float so = hsl + (sqrtf((wd * wd) - (ctd * ctd)) * theta_sign);
     float r = so / (hsl * 2.0f);
 
     Vec2 s(

@@ -1,4 +1,6 @@
 #include "stm32h7xx_hal.h"
+#include <stdbool.h>
+
 #ifndef __BQ24295_H__
 #define __BQ24295_H__
 
@@ -17,12 +19,25 @@
 #define BQ24295_SYS_FAULT_REGISTER    0x09
 #define BQ24295_ID_REGISTER           0x0A
 
-void _i2c_send_8(I2C_HandleTypeDef *i2c_port, uint8_t address, uint8_t reg, uint8_t data);
-uint8_t _i2c_recv_8(I2C_HandleTypeDef *i2c_port, uint8_t address, uint8_t reg);
+#define BQ24295_BFAULT_WATCHDOG       0b10000000
+#define BQ24295_BFAULT_OTG            0b01000000
+#define BQ24295_BFAULT_CHARGE         0b00110000
+#define BQ24295_BFAULT_BAT            0b00001000
+#define BQ24295_BFAULT_NTC            0b00000011
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern bool bq24295_init(I2C_HandleTypeDef *i2c_port);
+extern uint16_t bq24295_get_statusfault(I2C_HandleTypeDef *i2c_port);
 extern uint8_t bq24295_get_status(I2C_HandleTypeDef *i2c_port);
 extern uint8_t bq24295_get_fault(I2C_HandleTypeDef *i2c_port);
 extern void bq24295_enable_shipping_mode(I2C_HandleTypeDef *i2c_port);
+extern void bq24295_disable_battery_fault_int(I2C_HandleTypeDef *i2c_port);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

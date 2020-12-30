@@ -17,7 +17,7 @@ using namespace blit;
 #define POLYGON_COUNT (unsigned int)10
 
 
-typedef struct player {
+struct player {
     Vec2 velocity;
     Vec2 position;
     float rotation = 0;
@@ -29,16 +29,16 @@ typedef struct player {
     unsigned int t_shot_fired = 0;
     Vec2 shot_origin;
     Vec2 shot_target;
-} player;
+};
 
-typedef struct polygon {
+struct polygon {
     float colour_offset;
     Vec2 velocity;
     float rotational_velocity = 0;
     Vec2 origin;
     std::vector<Vec2> points;
     bool prune = false;
-} polygon;
+};
 
 std::vector<polygon> polygons;
 
@@ -149,7 +149,7 @@ std::vector<Vec2> random_convex_polygon(Vec2 origin, float radius) {
     origin += Vec2(radius, radius);
     std::vector<float> angles;
     for (auto a = 0u; a < count; a++) {
-        angles.push_back(float(rand() % 360) * M_PI / (float)180);
+        angles.push_back(float(rand() % 360) * pi / (float)180);
     }
     std::sort(angles.begin(), angles.end());
     std::vector<Vec2> points;
@@ -221,7 +221,7 @@ void init() {
 
 void render(uint32_t time) {
     uint32_t ms_start = now();
-    float h = time / (M_PI * 2) / 100.0f;
+    float h = time / (pi * 2) / 100.0f;
 
     screen.pen = Pen(0, 0, 0);
     screen.clear();
@@ -233,7 +233,7 @@ void render(uint32_t time) {
     draw_polygon(player1_shape);
 
     for(auto &p: polygons){
-        Pen c = hsv_to_rgba(h / (M_PI * 2) + p.colour_offset, 1.0, 1.0);
+        Pen c = hsv_to_rgba(h / (pi * 2) + p.colour_offset, 1.0, 1.0);
         screen.pen = c;
         draw_polygon(p.points);
         //screen.pixel(p.origin);
@@ -272,12 +272,12 @@ void update(uint32_t time) {
 
     Vec2 movement(0, 0);
 
-    if (pressed(Button::DPAD_LEFT))  { player1.rotational_velocity += M_PI / 720; }
-    if (pressed(Button::DPAD_RIGHT)) { player1.rotational_velocity -= M_PI / 720; }
+    if (pressed(Button::DPAD_LEFT))  { player1.rotational_velocity += pi / 720; }
+    if (pressed(Button::DPAD_RIGHT)) { player1.rotational_velocity -= pi / 720; }
     if (pressed(Button::DPAD_UP))    { movement.y -= 0.03f; }
     if (pressed(Button::DPAD_DOWN))  { movement.y += 0.03f; }
 
-    player1.rotational_velocity -= joystick.x * M_PI / 720;
+    player1.rotational_velocity -= joystick.x * pi / 720;
     movement.y += joystick.y / 10.0f;
 
     if (pressed(Button::A) && time - player1.t_shot_fired > 500) {
@@ -340,12 +340,12 @@ void update(uint32_t time) {
             if(p.x > screen.bounds.w - 1) {
                 offset.x = std::min(offset.x, screen.bounds.w - p.x);
             } else if (p.x < 0) {
-                offset.x = std::max(offset.x, abs(p.x));
+                offset.x = std::max(offset.x, std::abs(p.x));
             }
             if(p.y > screen.bounds.h - 1) {
                 offset.y = std::min(offset.y, screen.bounds.h - p.y);
             } else if (p.y < 0) {
-                offset.y = std::max(offset.y, abs(p.y));
+                offset.y = std::max(offset.y, std::abs(p.y));
             }
         }
 
@@ -371,12 +371,12 @@ void update(uint32_t time) {
         if(p.x > screen.bounds.w - 1) {
             offset.x = std::min(offset.x, screen.bounds.w - p.x);
         } else if (p.x < 0) {
-            offset.x = std::max(offset.x, abs(p.x));
+            offset.x = std::max(offset.x, std::abs(p.x));
         }
         if(p.y > screen.bounds.h - 1) {
             offset.y = std::min(offset.y, screen.bounds.h - p.y);
         } else if (p.y < 0) {
-            offset.y = std::max(offset.y, abs(p.y));
+            offset.y = std::max(offset.y, std::abs(p.y));
         }
     }
 

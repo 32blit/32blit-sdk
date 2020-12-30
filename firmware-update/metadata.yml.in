@@ -1,0 +1,8 @@
+title: Firmware Updater
+description: Updates firmware to ${FIRMWARE_VERSION}
+author: pimoroni
+splash:
+  file: ../examples/no-image.png
+icon:
+  file: ../examples/no-icon.png
+version: ${FIRMWARE_VERSION}

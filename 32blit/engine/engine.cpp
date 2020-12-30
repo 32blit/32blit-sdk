@@ -1,6 +1,9 @@
 /*! \file engine.cpp
 */
+#include <cstdarg>
+
 #include "engine.hpp"
+#include "api_private.hpp"
 #include "timer.hpp"
 #include "tweening.hpp"
 
@@ -9,12 +12,47 @@ namespace blit {
   void (*init)()                                    = nullptr;
   void (*update)(uint32_t time)                     = nullptr;
   void (*render)(uint32_t time)                     = nullptr;
-  void (*set_screen_mode)(ScreenMode new_mode)      = nullptr;
-  uint32_t (*now)()                                 = nullptr;
-  uint32_t (*random)()                              = nullptr;
-  void (*debug)(std::string message)                = nullptr;
-  int  (*debugf)(const char * psFormatString, ...) 	= nullptr;
-  void (*switch_execution)()												= nullptr;
+
+  void set_screen_mode(ScreenMode new_mode) {
+    auto &new_screen = api.set_screen_mode(new_mode);
+    screen = Surface(new_screen.data, new_screen.format, new_screen.bounds);
+    screen.palette = new_screen.palette;
+  }
+
+  void set_screen_palette(const Pen *colours, int num_cols) {
+    api.set_screen_palette(colours, num_cols);
+  }
+
+  uint32_t now() {
+    return api.now();
+  }
+
+  uint32_t random() {
+    return api.random();
+  }
+
+  void debug(std::string message) {
+    api.debug(message.c_str());
+  }
+
+  int debugf(const char * psFormatString, ...) {
+    va_list args;
+    va_start(args, psFormatString);
+    
+    // get length
+    va_list tmp_args;
+    va_copy(tmp_args, args);
+    int len = vsnprintf(nullptr, 0, psFormatString, tmp_args) + 1;
+    va_end(tmp_args);
+
+    auto buf = new char[len];
+    int ret = vsnprintf(buf, len, psFormatString, args);
+    api.debug(buf);
+    va_end(args);
+
+    delete[] buf;
+    return ret;
+  }
 
   Surface null_surface(nullptr, PixelFormat::M, Size(0, 0));
   Surface &screen = null_surface;
@@ -28,8 +66,6 @@ namespace blit {
   uint32_t last_tick_time = 0;
 
   bool tick(uint32_t time) {
-    bool has_rendered = false;
-
     if (last_tick_time == 0) {
       last_tick_time = time;
     }
@@ -43,6 +79,8 @@ namespace blit {
     while (pending_update_time >= update_rate_ms) {
       update(time - pending_update_time); // create fake timestamp that would have been accurate for the update event
       pending_update_time -= update_rate_ms;
+
+      api.buttons.pressed = api.buttons.released = 0;
     }
 
     last_tick_time = time;

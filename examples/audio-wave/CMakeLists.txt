@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.9)
 project (audio-wave)
 include (../../32blit.cmake)
 blit_executable (audio-wave audio-wave.cpp)
+blit_assets_yaml (audio-wave assets.yml)
+blit_metadata (audio-wave metadata.yml)

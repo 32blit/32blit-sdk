@@ -5,8 +5,7 @@
 #include "engine.hpp"
 #include "tweening.hpp"
 
-#undef M_PI
-#define M_PI           3.14159265358979323846f  /* pi */
+#include "../math/constants.hpp"
 
 namespace blit {
   std::vector<Tween *> tweens;
@@ -20,7 +19,7 @@ namespace blit {
    * @param duration Duration of the tween in milliseconds.
    * @param loops Number of times the tween should repeat, -1 = forever.
    */
-  void Tween::init(TweenFunction function, float from, float to, uint32_t duration, int32_t loops = -1) {
+  void Tween::init(TweenFunction function, float from, float to, uint32_t duration, int32_t loops) {
     this->loops = loops;
     this->function = function;
     this->from = from;
@@ -37,6 +36,7 @@ namespace blit {
     this->started = blit::now();
     this->loop_count = 0;
     this->state = RUNNING;
+    this->value = this->from;
   }
 
   /**
@@ -47,28 +47,28 @@ namespace blit {
   }
 
   float tween_sine(uint32_t t, float b, float c, uint32_t d) {
-    return b + (sin((float(t) / float(d) * M_PI * 2.0f) + (M_PI / 2.0f)) + 1.0f) / 2.0f * (c - b);
+    return b + (sinf((float(t) / float(d) * pi * 2.0f) + (pi / 2.0f)) + 1.0f) / 2.0f * (c - b);
   }
 
   float tween_linear(uint32_t t, float b, float c, uint32_t d) {
-    return c * t / d + b;
+    return (c - b) * t / d + b;
   }
 
   float tween_ease_in_quad(uint32_t t, float b, float c, uint32_t d) {
     float ft = float(t) / float(d);
-    return -c * ft * (ft - 2) + b;
+    return -(c - b) * ft * (ft - 2) + b;
   }
 
   float tween_ease_out_quad(uint32_t t, float b, float c, uint32_t d) {
     float ft = float(t) / float(d);
-    return c * ft * ft + b;
+    return (c - b) * ft * ft + b;
   }
 
   float tween_ease_in_out_quad(uint32_t t, float b, float c, uint32_t d) {
-    float ft = (float)t / d / 2.0f;
-    if (ft < 1) return c / 2 * ft * ft + b;
+    float ft = (float)t / d * 2.0f;
+    if (ft < 1) return (c - b) / 2 * ft * ft + b;
     ft--;
-    return -c / 2 * (ft*(ft - 2) - 1) + b;
+    return -(c - b) / 2 * (ft*(ft - 2) - 1) + b;
   }
 
   /**

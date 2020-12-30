@@ -1,0 +1,8 @@
+title: SHMUP
+description: A classic side scrolling shoot 'em up
+author: pimoroni
+splash:
+  file: shmup.png
+icon:
+  file: shmup-icon.png
+version: v1.0.0

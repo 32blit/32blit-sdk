@@ -293,7 +293,7 @@ HAL_StatusTypeDef qspi_sector_erase(uint32_t BlockAddress)
     s_command.Instruction       = SECTOR_ERASE_CMD;
     s_command.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
     s_command.AddressMode       = QSPI_ADDRESS_1_LINE;
-    s_command.AddressSize       = QSPI_ADDRESS_24_BITS;
+    s_command.AddressSize       = QSPI_ADDRESS_32_BITS;
     s_command.Address           = BlockAddress;
     s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
     s_command.DataMode          = QSPI_DATA_NONE;
@@ -315,8 +315,6 @@ HAL_StatusTypeDef qspi_sector_erase(uint32_t BlockAddress)
 
 HAL_StatusTypeDef qspi_write_buffer(size_t offset, const uint8_t* buffer, size_t length)
 {
-    QSPI_WriteEnable(&hqspi);
-
     QSPI_CommandTypeDef s_command = {0};
     HAL_StatusTypeDef status = QSPI_OK;
 
@@ -329,17 +327,32 @@ HAL_StatusTypeDef qspi_write_buffer(size_t offset, const uint8_t* buffer, size_t
     s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
     s_command.AddressMode = QSPI_ADDRESS_1_LINE;
     s_command.DataMode    = QSPI_DATA_4_LINES;
-    s_command.AddressSize = QSPI_ADDRESS_24_BITS;
+    s_command.AddressSize = QSPI_ADDRESS_32_BITS;
 
-    s_command.Address     = offset;
-    s_command.NbData      = length;
-
-    if ((status = HAL_QSPI_Command(&hqspi, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)) == HAL_OK)
+	// qspi can only be written a page (256 bytes) at a time so we need to break it into chunks
+	while(length > 0)
     {
-    	if ((status = HAL_QSPI_Transmit(&hqspi, (uint8_t *)buffer, HAL_QPSI_TIMEOUT_DEFAULT_VALUE )) == HAL_OK)
-    	{
-        status = QSPI_AutoPollingMemReady(&hqspi, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
-    	}
+		uint32_t bytes_to_write = length < 256 ? length : 256;
+
+		s_command.Address = offset;
+		s_command.NbData = bytes_to_write;
+
+        QSPI_WriteEnable(&hqspi);
+
+        if((status = HAL_QSPI_Command(&hqspi, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)) == HAL_OK)
+        {
+            if((status = HAL_QSPI_Transmit(&hqspi, (uint8_t *)buffer, HAL_QPSI_TIMEOUT_DEFAULT_VALUE )) == HAL_OK)
+            {
+                status = QSPI_AutoPollingMemReady(&hqspi, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
+
+                if(status != HAL_OK)
+					return status;
+            }
+        }
+
+        offset += bytes_to_write;
+		buffer += bytes_to_write;
+		length -= bytes_to_write;
     }
 
     return status;
@@ -360,7 +373,7 @@ HAL_StatusTypeDef qspi_read_buffer(size_t address, const uint8_t* buffer, size_t
     s_command.DummyCycles = DUMMY_CLOCK_CYCLES_READ_QUAD;
     s_command.AddressMode = QSPI_ADDRESS_1_LINE;
     s_command.DataMode    = QSPI_DATA_4_LINES;
-    s_command.AddressSize = QSPI_ADDRESS_24_BITS;
+    s_command.AddressSize = QSPI_ADDRESS_32_BITS;
 
     s_command.Address     = address;
     s_command.NbData      = length;
@@ -408,7 +421,7 @@ HAL_StatusTypeDef qspi_enable_memorymapped_mode(void)
 
     s_command.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
     s_command.AddressMode       = QSPI_ADDRESS_1_LINE;
-    s_command.AddressSize       = QSPI_ADDRESS_24_BITS;
+    s_command.AddressSize       = QSPI_ADDRESS_32_BITS;
     s_command.DataMode          = QSPI_DATA_4_LINES;
     s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
     s_command.DummyCycles       = 6;
@@ -430,6 +443,39 @@ HAL_StatusTypeDef qspi_enable_memorymapped_mode(void)
     return QSPI_OK;
 }
 
+int is_qspi_memorymapped()
+{
+    return hqspi.State == HAL_QSPI_STATE_BUSY_MEM_MAPPED;
+}
+
+void qspi_disable_memorymapped_mode(void)
+{
+    HAL_QSPI_Abort(&hqspi);
+    qspi_init();
+}
+
+static HAL_StatusTypeDef qspi_enable_4byte_addr(QSPI_HandleTypeDef *hqspi)
+{
+    QSPI_CommandTypeDef s_command = {0};
+
+    s_command.Instruction = ENTER_4_BYTE_ADDR_MODE_CMD;
+    s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+    s_command.AddressMode = QSPI_ADDRESS_NONE;
+    s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+    s_command.DataMode = QSPI_DATA_NONE;
+    s_command.DummyCycles = 0;
+    s_command.DdrMode = QSPI_DDR_MODE_DISABLE;
+    s_command.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+    s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+
+    if (HAL_QSPI_Command(hqspi, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    return QSPI_OK;
+}
+
 // for some godforsaken reason if this is optimised in any way when returning from the function
 // it jumps off into the normal SPI code!
 #pragma GCC push_options
@@ -437,6 +483,7 @@ HAL_StatusTypeDef qspi_enable_memorymapped_mode(void)
 int qspi_init(void) {
   qspi_reset(&hqspi);
   qspi_enable_quad(&hqspi);
+  qspi_enable_4byte_addr(&hqspi);
   return(0);
 }
 #pragma GCC pop_options
