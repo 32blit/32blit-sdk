@@ -5,9 +5,13 @@
  */
 
 #include "32blit.h"
+#include "32blit_battery.hpp"
 #include "32blit.hpp"
 
 using namespace blit;
+using battery::BatteryInformation;
+using battery::BatteryChargeStatus;
+using battery::BatteryVbusStatus;
 
 #include "SystemMenu/battery_menu.hpp"
 #include "SystemMenu/system_menu_controller.hpp"
@@ -37,11 +41,11 @@ void BatteryMenu::render_item(const Item &item, int y, int index) const {
   const int bar_width = 75;
   int bar_x = screen_width - bar_width - item_padding_x;
 
-  BatteryInformation bat = blit_get_battery_info();
+  BatteryInformation bat = battery::get_info();
 
   switch (item.id) {
   case CHARGE:
-    screen.text(bat.status_text, minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);
+    screen.text(bat.charge_text, minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);
     break;
   case VBUS:
     screen.text(bat.vbus_text, minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);
