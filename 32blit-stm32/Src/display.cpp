@@ -26,8 +26,48 @@ void LTDC_IRQHandler() {
   }
 }
 
-namespace display {
+void DMA2D_IRQHandler(void){
+  //clear the flag
+	
+  DMA2D->IFCR = (uint32_t)(0x1F);
+	uint32_t count = display::get_dma2d_count();
+	switch(count){
+		case 3:
+			display::set_frameBuff_state(false);
+			display::dma2d_lores_flip_Step2();
+			break;
+		case 2:
+			display::dma2d_lores_flip_Step3();
+			break;
+		case 1:
+			display::dma2d_lores_flip_Step4();
+			break;
+		case 0:   //highres, pal mode goto case 0 directly
+			CLEAR_BIT(DMA2D->CR, DMA2D_CR_TCIE|DMA2D_CR_TEIE|DMA2D_CR_CEIE);//disable the DMA2D interrupt
+			//set occupied to free
+			display::set_frameBuff_state(false);
+			display::set_dma2d_state(false);
+	
+	}
+	
+}
 
+
+namespace display {
+	__IO uint32_t renderReg = 0;
+	#define DMA2DOccupiedPos  (0x0UL)
+	#define DMA2DOccupiedState    ( 0x1UL<<DMA2DOccupiedPos )
+	#define DMA2DIsOccupied       ( 0x1UL<<DMA2DOccupiedPos )
+	#define DMA2DIsFree           ( 0x0UL<<DMA2DOccupiedPos )
+
+	#define FrameBuffOccupiedPos      (0x1UL)
+	#define FrameBuffOccupiedState    ( 0x1UL<<FrameBuffOccupiedPos )
+	#define FrameBuffIsOccupied       ( 0x1UL<<FrameBuffOccupiedPos )
+	#define FrameBuffIsFree           ( 0x0UL<<FrameBuffOccupiedPos )
+
+	#define DMA2DStepPos            (24UL)
+	#define DMA2DStepState         (0xffUL<<DMA2DStepPos)
+	
   void update_ltdc_for_mode();
 
   // lo and hi res screen back buffers
@@ -52,7 +92,8 @@ namespace display {
     // TODO: replace interrupt setup with non HAL method
     HAL_NVIC_SetPriority(LTDC_IRQn, 4, 4);
     HAL_NVIC_EnableIRQ(LTDC_IRQn);
-
+		HAL_NVIC_SetPriority(DMA2D_IRQn,4,4 );//priority may be check again!
+		HAL_NVIC_EnableIRQ(DMA2D_IRQn);
 
     ltdc_init();
     screen_init();
@@ -111,13 +152,15 @@ namespace display {
     DMA2D->FGOR = 0;
     // set the output offset
     DMA2D->OOR = 0;
+		//enable the DMA2D interrupt
+		SET_BIT(DMA2D->CR, DMA2D_CR_TCIE|DMA2D_CR_TEIE|DMA2D_CR_CEIE);
+		//set DMA2d steps //set occupied
+		MODIFY_REG(renderReg,DMA2DOccupiedState,DMA2DIsOccupied);
+		MODIFY_REG(renderReg,FrameBuffOccupiedState,FrameBuffIsOccupied);
+		MODIFY_REG(renderReg,DMA2DStepState,0<<DMA2DStepPos);
     // trigger start of dma2d transfer
     DMA2D->CR |= DMA2D_CR_START;
 
-    // wait for transfer to complete
-    while(DMA2D->CR & DMA2D_CR_START) {      
-      // never gets here!
-    }
   }
   
   void dma2d_hires_pal_flip(const Surface &source) {
@@ -140,6 +183,12 @@ namespace display {
     DMA2D->FGOR = 0;
     // set the output offset
     DMA2D->OOR = 0;
+    //enable the DMA2D interrupt
+		SET_BIT(DMA2D->CR, DMA2D_CR_TCIE|DMA2D_CR_TEIE|DMA2D_CR_CEIE);
+		//set DMA2d steps //set occupied
+		MODIFY_REG(renderReg,DMA2DOccupiedState,DMA2DIsOccupied);
+		MODIFY_REG(renderReg,FrameBuffOccupiedState,FrameBuffIsOccupied);
+		MODIFY_REG(renderReg,DMA2DStepState,0<<DMA2DStepPos);
     // trigger start of dma2d transfer
     DMA2D->CR |= DMA2D_CR_START;
     // update pal next, dma2d could work at same time
@@ -152,10 +201,7 @@ namespace display {
       palette_needs_update = 0;
     }	
 
-    // wait for transfer to complete
-    while(DMA2D->CR & DMA2D_CR_START) {      
-      // never gets here!
-    }
+
   }
 
   void dma2d_lores_flip(const Surface &source) {
@@ -177,39 +223,46 @@ namespace display {
     DMA2D->FGOR = 0;
     // set the output offset
     DMA2D->OOR = 1;
+		SET_BIT(DMA2D->CR, DMA2D_CR_TCIE|DMA2D_CR_TEIE|DMA2D_CR_CEIE);//enable the DMA2D interrupt
+		//set DMA2d steps //set occupied
+		MODIFY_REG(renderReg,DMA2DOccupiedState,DMA2DIsOccupied);
+		MODIFY_REG(renderReg,FrameBuffOccupiedState,FrameBuffIsOccupied);
+		MODIFY_REG(renderReg,DMA2DStepState,3<<DMA2DStepPos);
     // trigger start of dma2d transfer
     DMA2D->CR |= DMA2D_CR_START;
 
-    // wait for transfer to complete
-    while(DMA2D->CR & DMA2D_CR_START) {      
-      // never gets here!
-    }  
-    //Step 2.  
-    // set the transform type (clear bits 17..16 of control register)
-    MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
-    // set source pixel format (clear bits 3..0 of foreground format register)
-    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB565);
-    // set source buffer address
-    DMA2D->FGMAR = ((uintptr_t)&__ltdc_start)+320*120*2; 
-    // set target pixel format (clear bits 3..0 of output format register)
-    MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_RGB565);
-    // set target buffer address
-    DMA2D->OMAR =  ((uintptr_t)&__ltdc_start)+320*120*2 + 2;
-    // set the number of pixels per line and number of lines    
-    DMA2D->NLR = (1 << 16) | (160*120);
-    // set the source offset
-    DMA2D->FGOR = 1;
-    // set the output offset
-    DMA2D->OOR = 1;
-    // trigger start of dma2d transfer
-    DMA2D->CR |= DMA2D_CR_START;
+  }
+	
+	
+	void dma2d_lores_flip_Step2(void){
+		//Step 2.  
+			// set the transform type (clear bits 17..16 of control register)
+		MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
+			// set source pixel format (clear bits 3..0 of foreground format register)
+		MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB565);
+			// set source buffer address
+		DMA2D->FGMAR = ((uintptr_t)&__ltdc_start)+320*120*2; 
+			// set target pixel format (clear bits 3..0 of output format register)
+		MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_RGB565);
+			// set target buffer address
+		DMA2D->OMAR =  ((uintptr_t)&__ltdc_start)+320*120*2 + 2;
+			// set the number of pixels per line and number of lines    
+		DMA2D->NLR = (1 << 16) | (160*120);
+			// set the source offset
+		DMA2D->FGOR = 1;
+			// set the output offset
+		DMA2D->OOR = 1;
+				// trigger start of dma2d transfer
+		MODIFY_REG(renderReg,DMA2DStepState,2<<DMA2DStepPos);
+		DMA2D->CR |= DMA2D_CR_START;
+	}
 
-    // wait for transfer to complete
-    while(DMA2D->CR & DMA2D_CR_START) {      
-      // never gets here!
-    }  
-    //step 3.
-    // set the transform type (clear bits 17..16 of control register)
+
+
+
+	void dma2d_lores_flip_Step3(void){
+		//step 3.
+		// set the transform type (clear bits 17..16 of control register)
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
     // set source pixel format (clear bits 3..0 of foreground format register)
     MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_ARGB8888);
@@ -225,15 +278,14 @@ namespace display {
     DMA2D->FGOR = 0;
     // set the output offset
     DMA2D->OOR = 160;
-    // trigger start of dma2d transfer
-    DMA2D->CR |= DMA2D_CR_START;
+		MODIFY_REG(renderReg,DMA2DStepState,1<<DMA2DStepPos);
+			// trigger start of dma2d transfer
+		DMA2D->CR |= DMA2D_CR_START;
 
-    // wait for transfer to complete
-    while(DMA2D->CR & DMA2D_CR_START) {      
-      // never gets here!
-    }  
-    //step 4.
-    // set the transform type (clear bits 17..16 of control register)
+	}
+
+	void dma2d_lores_flip_Step4(void){
+		// set the transform type (clear bits 17..16 of control register)
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
     // set source pixel format (clear bits 3..0 of foreground format register)
     MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_ARGB8888);//same as step 3, skip it
@@ -249,14 +301,11 @@ namespace display {
     DMA2D->FGOR = 160;
     // set the output offset
     DMA2D->OOR = 160;
-    // trigger start of dma2d transfer
-    DMA2D->CR |= DMA2D_CR_START;
+		MODIFY_REG(renderReg,DMA2DStepState,0<<DMA2DStepPos);
+			// trigger start of dma2d transfer
+		DMA2D->CR |= DMA2D_CR_START;
 
-    // wait for transfer to complete
-    while(DMA2D->CR & DMA2D_CR_START) {      
-      // never gets here!
-    }  
-  }
+	}
 
   void flip(const Surface &source) {        
     static uint32_t flip_time = 0;
@@ -339,4 +388,41 @@ namespace display {
 
     LTDC->SRCR = LTDC_SRCR_IMR;
   }
+	
+	
+	bool is_frameBuff_occupied(void){
+		if (renderReg & FrameBuffIsOccupied){
+			return true;
+		}else{
+			return false;
+		}
+	}
+	
+	void set_frameBuff_state(bool occupied){
+		if (occupied){	
+			MODIFY_REG(renderReg,FrameBuffOccupiedState,FrameBuffIsOccupied);
+		}else{
+			MODIFY_REG(renderReg,FrameBuffOccupiedState,FrameBuffIsFree);
+		}
+	}
+	
+	bool is_dma2d_occupied(void){
+		if (renderReg & DMA2DIsOccupied){
+			return true;
+		}else{
+			return false;
+		}
+	}
+	
+	void set_dma2d_state(bool occupied){
+		if (occupied){	
+			MODIFY_REG(renderReg,DMA2DOccupiedState,DMA2DIsOccupied);
+		}else{
+			MODIFY_REG(renderReg,DMA2DOccupiedState,DMA2DIsFree);
+		}
+	}
+	
+	uint32_t get_dma2d_count(void){
+		return (renderReg>>24);
+	}
 }
