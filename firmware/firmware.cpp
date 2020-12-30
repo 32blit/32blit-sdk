@@ -44,7 +44,8 @@ struct HandlerInfo {
 };
 
 std::vector<GameInfo> game_list;
-std::vector<HandlerInfo> handlers; // flashed games that can "launch" files
+
+std::list<HandlerInfo> handlers; // flashed games that can "launch" files
 
 std::list<std::tuple<uint16_t, uint16_t>> free_space; // block start, count
 
