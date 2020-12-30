@@ -46,8 +46,6 @@ namespace blit {
     for (auto t: timers) {
       if (t->state == Timer::RUNNING){
         if (time > (t->started + t->duration)) { // timer triggered
-          t->callback(*t);
-
           if(t->loops == -1){
             t->started = time; // reset the start time correcting for any error
           }
@@ -59,6 +57,7 @@ namespace blit {
               t->state = Timer::FINISHED;
             }
           }
+          t->callback(*t);
         }
       }
     }
