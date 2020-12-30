@@ -23,6 +23,17 @@ void parse_metadata(char *data, uint16_t metadata_len, BlitGameMetadata &metadat
   if(unpack_images && metadata.icon)
     metadata.free_surfaces();
 
+  if(offset != metadata_len && memcmp(data + offset, "BLITTYPE", 8) == 0) {
+    auto type_meta = reinterpret_cast<RawTypeMetadata *>(data + offset + 8);
+    offset += sizeof(RawTypeMetadata) + 8 + type_meta->num_filetypes * 5;
+
+    metadata.category = type_meta->category;
+
+    metadata.filetypes.resize(type_meta->num_filetypes);
+    for(int i = 0; i < type_meta->num_filetypes; i++)
+      metadata.filetypes[i] = type_meta->filetypes[i];
+  }
+
   if(offset != metadata_len && unpack_images) {
     // icon/splash
     auto image = reinterpret_cast<packed_image *>(data + offset);
