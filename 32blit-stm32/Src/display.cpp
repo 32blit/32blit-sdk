@@ -54,20 +54,10 @@ void DMA2D_IRQHandler(void){
 
 
 namespace display {
-	__IO uint32_t renderReg = 0;
-	#define DMA2DOccupiedPos  (0x0UL)
-	#define DMA2DOccupiedState    ( 0x1UL<<DMA2DOccupiedPos )
-	#define DMA2DIsOccupied       ( 0x1UL<<DMA2DOccupiedPos )
-	#define DMA2DIsFree           ( 0x0UL<<DMA2DOccupiedPos )
-
-	#define FrameBuffOccupiedPos      (0x1UL)
-	#define FrameBuffOccupiedState    ( 0x1UL<<FrameBuffOccupiedPos )
-	#define FrameBuffIsOccupied       ( 0x1UL<<FrameBuffOccupiedPos )
-	#define FrameBuffIsFree           ( 0x0UL<<FrameBuffOccupiedPos )
-
-	#define DMA2DStepPos            (24UL)
-	#define DMA2DStepState         (0xffUL<<DMA2DStepPos)
 	
+	__IO uint32_t dma2d_stepCount = 0;
+  __IO bool frameBuffOccupied = false;
+  __IO bool dma2dOccupied = false;
   void update_ltdc_for_mode();
 
   // lo and hi res screen back buffers
@@ -155,9 +145,12 @@ namespace display {
 		//enable the DMA2D interrupt
 		SET_BIT(DMA2D->CR, DMA2D_CR_TCIE|DMA2D_CR_TEIE|DMA2D_CR_CEIE);
 		//set DMA2d steps //set occupied
-		MODIFY_REG(renderReg,DMA2DOccupiedState,DMA2DIsOccupied);
-		MODIFY_REG(renderReg,FrameBuffOccupiedState,FrameBuffIsOccupied);
-		MODIFY_REG(renderReg,DMA2DStepState,0<<DMA2DStepPos);
+    dma2d_stepCount = 0;
+    set_dma2d_state(true);
+    set_framebuff_state(true);
+		//MODIFY_REG(renderReg,DMA2DOccupiedState,DMA2DIsOccupied);
+		//MODIFY_REG(renderReg,FrameBuffOccupiedState,FrameBuffIsOccupied);
+		//MODIFY_REG(renderReg,DMA2DStepState,0<<DMA2DStepPos);
     // trigger start of dma2d transfer
     DMA2D->CR |= DMA2D_CR_START;
 
@@ -186,9 +179,12 @@ namespace display {
     //enable the DMA2D interrupt
 		SET_BIT(DMA2D->CR, DMA2D_CR_TCIE|DMA2D_CR_TEIE|DMA2D_CR_CEIE);
 		//set DMA2d steps //set occupied
-		MODIFY_REG(renderReg,DMA2DOccupiedState,DMA2DIsOccupied);
-		MODIFY_REG(renderReg,FrameBuffOccupiedState,FrameBuffIsOccupied);
-		MODIFY_REG(renderReg,DMA2DStepState,0<<DMA2DStepPos);
+		//MODIFY_REG(renderReg,DMA2DOccupiedState,DMA2DIsOccupied);
+		//MODIFY_REG(renderReg,FrameBuffOccupiedState,FrameBuffIsOccupied);
+		//MODIFY_REG(renderReg,DMA2DStepState,0<<DMA2DStepPos);
+    dma2d_stepCount = 0;
+    set_dma2d_state(true);
+    set_framebuff_state(true);
     // trigger start of dma2d transfer
     DMA2D->CR |= DMA2D_CR_START;
     // update pal next, dma2d could work at same time
@@ -225,9 +221,12 @@ namespace display {
     DMA2D->OOR = 1;
 		SET_BIT(DMA2D->CR, DMA2D_CR_TCIE|DMA2D_CR_TEIE|DMA2D_CR_CEIE);//enable the DMA2D interrupt
 		//set DMA2d steps //set occupied
-		MODIFY_REG(renderReg,DMA2DOccupiedState,DMA2DIsOccupied);
-		MODIFY_REG(renderReg,FrameBuffOccupiedState,FrameBuffIsOccupied);
-		MODIFY_REG(renderReg,DMA2DStepState,3<<DMA2DStepPos);
+    dma2d_stepCount = 3;
+    set_dma2d_state(true);
+    set_framebuff_state(true);
+		//MODIFY_REG(renderReg,DMA2DOccupiedState,DMA2DIsOccupied);
+		//MODIFY_REG(renderReg,FrameBuffOccupiedState,FrameBuffIsOccupied);
+		//MODIFY_REG(renderReg,DMA2DStepState,3<<DMA2DStepPos);
     // trigger start of dma2d transfer
     DMA2D->CR |= DMA2D_CR_START;
 
@@ -253,7 +252,7 @@ namespace display {
 			// set the output offset
 		DMA2D->OOR = 1;
 				// trigger start of dma2d transfer
-		MODIFY_REG(renderReg,DMA2DStepState,2<<DMA2DStepPos);
+		dma2d_stepCount = 2;
 		DMA2D->CR |= DMA2D_CR_START;
 	}
 
@@ -278,7 +277,7 @@ namespace display {
     DMA2D->FGOR = 0;
     // set the output offset
     DMA2D->OOR = 160;
-		MODIFY_REG(renderReg,DMA2DStepState,1<<DMA2DStepPos);
+		dma2d_stepCount = 1;
 			// trigger start of dma2d transfer
 		DMA2D->CR |= DMA2D_CR_START;
 
@@ -301,7 +300,7 @@ namespace display {
     DMA2D->FGOR = 160;
     // set the output offset
     DMA2D->OOR = 160;
-		MODIFY_REG(renderReg,DMA2DStepState,0<<DMA2DStepPos);
+		dma2d_stepCount = 0;
 			// trigger start of dma2d transfer
 		DMA2D->CR |= DMA2D_CR_START;
 
@@ -391,38 +390,22 @@ namespace display {
 	
 	
 	bool is_frameBuff_occupied(void){
-		if (renderReg & FrameBuffIsOccupied){
-			return true;
-		}else{
-			return false;
-		}
+    return frameBuffOccupied;
 	}
 	
 	void set_frameBuff_state(bool occupied){
-		if (occupied){	
-			MODIFY_REG(renderReg,FrameBuffOccupiedState,FrameBuffIsOccupied);
-		}else{
-			MODIFY_REG(renderReg,FrameBuffOccupiedState,FrameBuffIsFree);
-		}
+		frameBuffOccupied = occupied;
 	}
 	
 	bool is_dma2d_occupied(void){
-		if (renderReg & DMA2DIsOccupied){
-			return true;
-		}else{
-			return false;
-		}
+		return dma2dOccupied;
 	}
 	
 	void set_dma2d_state(bool occupied){
-		if (occupied){	
-			MODIFY_REG(renderReg,DMA2DOccupiedState,DMA2DIsOccupied);
-		}else{
-			MODIFY_REG(renderReg,DMA2DOccupiedState,DMA2DIsFree);
-		}
+		dma2dOccupied = occupied;
 	}
 	
 	uint32_t get_dma2d_count(void){
-		return (renderReg>>24);
+		return dma2d_stepCount;
 	}
 }
