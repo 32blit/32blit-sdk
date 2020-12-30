@@ -164,13 +164,24 @@ void load_file_list(std::string directory) {
     if (file.name[0] == '.') // hidden file
       continue;
 
-    if(file.name.compare(file.name.length() - 5, 5, ".blit") == 0 || file.name.compare(file.name.length() - 5, 5, ".BLIT") == 0) {
+    auto last_dot = file.name.find_last_of('.');
+
+    // no extension
+    if(last_dot == std::string::npos)
+      continue;
+
+    auto ext = file.name.substr(file.name.find_last_of('.') + 1);
+
+    for(auto &c : ext)
+      c = tolower(c);
+
+    if(ext == "blit") {
 
       GameInfo game;
       game.title = file.name.substr(0, file.name.length() - 5);
       game.filename = directory == "/" ? file.name : directory + "/" + file.name;
       game.size = file.size;
-      
+
       // check for metadata
       BlitGameMetadata meta;
       if(parse_file_metadata(game.filename, meta)) {
