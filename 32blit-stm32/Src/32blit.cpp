@@ -154,7 +154,13 @@ const char *battery_charge_status() {
 
 static void do_render() {
   if(display::needs_render) {
+    while (display::is_frameBuff_occupied()){
+      //if framebuff still occupied by last dma2d flip
+    }
     blit::render(blit::now());
+    while (display::is_dma2d_occupied()){
+      //if framebuff still occupied by last dma2d flip
+    }
     display::enable_vblank_interrupt();
   }
 }
