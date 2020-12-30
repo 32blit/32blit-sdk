@@ -321,7 +321,25 @@ bool launch_game_from_sd(const char *path) {
 
   BlitGameMetadata meta;
 
-  if(parse_file_metadata(path, meta)) {
+  // get the extension (assume there is one)
+  std::string_view sv(path);
+  auto ext = std::string(sv.substr(sv.find_last_of('.') + 1));
+  for(auto &c : ext)
+    c = tolower(c);
+
+  if(ext != "blit") {
+    // find the handler
+    for(auto &handler : handlers) {
+      if(handler.type == ext) {
+        offset = handler.offset;
+        break;
+      }
+    }
+
+    if(offset == 0xFFFFFFFF)
+      return false;
+
+  } else if(parse_file_metadata(path, meta)) {
     for(auto &flash_game : game_list) {
       // if a game with the same name/crc is already installed, launch that one instead of flashing it again
       if(flash_game.checksum == meta.crc32 && flash_game.title == meta.title) {
