@@ -124,9 +124,10 @@ static void do_render() {
       //if framebuff still occupied by last dma2d flip
     }
     blit::render(blit::now());
-    while (display::is_dma2d_occupied()){
-      //if framebuff still occupied by last dma2d flip
-    }
+    //while (display::is_dma2d_occupied()){
+      //Even in the lowest render work load, we still don't need to check the dma2d statement
+      //Because the dma2d will always finished much earlier than next vblank interrupt
+    //}
     display::enable_vblank_interrupt();
   }
 }
