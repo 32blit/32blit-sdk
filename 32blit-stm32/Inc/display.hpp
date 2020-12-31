@@ -1,4 +1,3 @@
-  
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
@@ -30,11 +29,7 @@ namespace display {
   void screen_init();
   void ltdc_init();
 	
-	bool is_dma2d_occupied(void);
-	bool is_frameBuff_occupied(void);
-	uint32_t get_dma2d_count(void);
-	void set_dma2d_state(bool occupied);
-	void set_frameBuff_state(bool occupied);
+  uint32_t get_dma2d_count(void);
   
   void dma2d_lores_flip_Step2(void);
   void dma2d_lores_flip_Step3(void);
