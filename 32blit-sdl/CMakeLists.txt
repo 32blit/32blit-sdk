@@ -23,12 +23,12 @@ else()
 	# attempt to find the framework (find_package won't work as there's no config file)
 	if(APPLE)
 		find_library(SDL2_LIBRARIES NAMES SDL2)
-		
+
 		find_path(SDL2_INCLUDE_DIRS NAMES SDL.h
 			PATHS ~/Library/Frameworks /Library/Frameworks
 		)
 	endif()
-	
+
 	# fallback guess for SDL location on Windows
 	if(WIN32 AND NOT SDL2_DIR AND 32BLIT_PATH)
 		set(SDL2_DIR "${32BLIT_PATH}/vs/sdl")
@@ -112,7 +112,6 @@ if(SDL2_IMAGE_DLL)
 endif()
 
 if(SDL2_NET_DLL)
-	configure_file(${SDL2_NET_DLL} ${CMAKE_BINARY_DIR}/SDL2_net.dll COPYONLY)
 	install(FILES ${SDL2_NET_DLL} DESTINATION bin)
 endif()
 
@@ -166,7 +165,11 @@ function(blit_executable NAME SOURCES)
 
     if(SDL2_IMAGE_DLL)
         configure_file(${SDL2_IMAGE_DLL} ${CMAKE_CURRENT_BINARY_DIR}/SDL2_image.dll COPYONLY)
-    endif()
+	endif()
+
+	if(SDL2_NET_DLL)
+		configure_file(${SDL2_NET_DLL} ${CMAKE_CURRENT_BINARY_DIR}/SDL2_net.dll COPYONLY)
+	endif()
 
 	if(EMSCRIPTEN)
 		set_target_properties(${NAME} PROPERTIES
