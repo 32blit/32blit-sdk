@@ -38,6 +38,7 @@ struct RawMetadata {
 // "BLITTYPE"
 struct RawTypeMetadata {
   char category[17];
+  char url[129];
   uint8_t num_filetypes;
   char filetypes[][5];
 };
