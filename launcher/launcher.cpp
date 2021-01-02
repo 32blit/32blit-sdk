@@ -18,11 +18,6 @@
 
 Dialog dialog;
 
-struct Persist {
-  unsigned int selected_menu_item = 0;
-};
-Persist persist;
-
 using namespace blit;
 
 constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
@@ -30,20 +25,8 @@ constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 bool sd_detected = true;
 Vec2 file_list_scroll_offset(10.0f, 0.0f);
 Point game_info_offset(120, 20);
-Point game_actions_offset(game_info_offset.x + 128 + 8, 30);
+Point game_actions_offset(game_info_offset.x + 128 + 8, 28);
 float directory_list_scroll_offset = 0.0f;
-
-struct GameInfo {
-  std::string title;
-  uint32_t size, checksum = 0;
-
-  std::string filename, ext;
-};
-
-struct DirectoryInfo {
-  std::string name;
-  int x, w;
-};
 
 std::vector<GameInfo> game_list;
 std::list<DirectoryInfo> directory_list;
@@ -212,9 +195,9 @@ void load_file_list(std::string directory) {
     }
   }
 
-  auto total_items = game_list.size();
-  if(persist.selected_menu_item >= total_items)
-    persist.selected_menu_item = total_items - 1;
+  int total_items = (int)game_list.size();
+  if(selected_menu_item >= total_items)
+    selected_menu_item = total_items - 1;
 
   sort_file_list();
 }
@@ -223,7 +206,7 @@ void load_current_game_metadata() {
   bool loaded = false;
 
   if(!game_list.empty()) {
-    auto &game = game_list[persist.selected_menu_item];
+    auto &game = game_list[selected_menu_item];
 
     if(!game.ext.empty()) {
       // not a .blit
@@ -248,8 +231,9 @@ void load_current_game_metadata() {
   }
 }
 
-bool launch_game_from_sd(const char *path) {
-  return api.launch(path);
+bool launch_current_game() {
+  GameInfo game = game_list[selected_menu_item];
+  return api.launch(game.filename.c_str());
 }
 
 void init_lists() {
@@ -289,9 +273,28 @@ void scan_flash() {
 #endif
 }
 
+void delete_current_game() {
+  auto &game = game_list[selected_menu_item];
+
+  dialog.show("Confirm", "Really delete " + game.title + "?", [](bool yes){
+    if(yes) {
+      auto &game = game_list[selected_menu_item];
+      if(game.filename.compare(0, 7, "flash:/") == 0)
+        api.erase_game(std::stoi(game.filename.substr(7)) * qspi_flash_sector_size);
+
+      ::remove_file(game.filename);
+
+      load_file_list(current_directory->name);
+      load_current_game_metadata();
+    }
+  });
+}
+
 void init() {
   set_screen_mode(ScreenMode::hires);
   screen.clear();
+
+  selected_menu_item = 0;
 
   init_theme();
 
@@ -328,18 +331,16 @@ void render(uint32_t time) {
   }
 
   int y = 115 - file_list_scroll_offset.y;
-  uint32_t i = 0;
+  int i = 0;
 
   // list games
   if(!game_list.empty()) {
     screen.pen = theme.color_overlay;
-    screen.rectangle(Rect(0, 0, 110, 240));
+    screen.rectangle(Rect(0, 0, game_info_offset.x - 10, screen.bounds.h));
 
-    const int size_x = 115;
-
-    screen.clip = Rect(0, 0, 100, 240);
+    screen.clip = Rect(0, 0, game_info_offset.x - 20, screen.bounds.h);
     for(auto &file : game_list) {
-      if(i++ == persist.selected_menu_item)
+      if(i++ == selected_menu_item)
         screen.pen = theme.color_accent;
       else
         screen.pen = theme.color_text;
@@ -376,7 +377,7 @@ void render(uint32_t time) {
     screen.text(selected_game_metadata.author, minimal_font, Point(game_info_offset.x, screen.bounds.h - 32));
     screen.text(selected_game_metadata.version, minimal_font, Point(game_info_offset.x, screen.bounds.h - 24));
 
-    int num_blocks = calc_num_blocks(game_list[persist.selected_menu_item].size);
+    int num_blocks = calc_num_blocks(game_list[selected_menu_item].size);
     char buf[20];
     snprintf(buf, 20, "%i block%s", num_blocks, num_blocks == 1 ? "" : "s");
     screen.text(buf, minimal_font, Point(game_info_offset.x, screen.bounds.h - 16));
@@ -449,26 +450,23 @@ void update(uint32_t time) {
   last_button_left = current_button_left;
   last_button_right = current_button_right;
 
+  int total_items = (int)game_list.size();
 
-  auto total_items = game_list.size();
-
-  auto old_menu_item = persist.selected_menu_item;
+  auto old_menu_item = selected_menu_item;
 
   if(button_up)
   {
-    if(persist.selected_menu_item > 0) {
-      persist.selected_menu_item--;
-    } else {
-      persist.selected_menu_item = total_items - 1;
+    selected_menu_item--;
+    if(selected_menu_item < 0) {
+      selected_menu_item = total_items - 1;
     }
   }
 
   if(button_down)
   {
-    if(persist.selected_menu_item < (total_items - 1)) {
-      persist.selected_menu_item++;
-    } else {
-      persist.selected_menu_item = 0;
+    selected_menu_item++;
+    if(selected_menu_item > total_items - 1) {
+      selected_menu_item = 0;
     }
   }
 
@@ -490,43 +488,28 @@ void update(uint32_t time) {
   if(button_left || button_right) {
     load_file_list(current_directory->name);
 
-    persist.selected_menu_item = 0;
+    selected_menu_item = 0;
     load_current_game_metadata();
   }
 
   // scroll list towards selected item
-  file_list_scroll_offset.y += ((persist.selected_menu_item * 10) - file_list_scroll_offset.y) / 5.0f;
+  file_list_scroll_offset.y += ((selected_menu_item * 10) - file_list_scroll_offset.y) / 5.0f;
 
   directory_list_scroll_offset += (current_directory->x + current_directory->w / 2 - directory_list_scroll_offset) / 5.0f;
 
   // load metadata for selected item
-  if(persist.selected_menu_item != old_menu_item)
+  if(selected_menu_item != old_menu_item) {
     load_current_game_metadata();
+  }
 
   if(button_a && !game_list.empty())
   {
-    uint32_t offset = 0xFFFFFFFF;
-    auto game = game_list[persist.selected_menu_item];
-
-    launch_game_from_sd(game.filename.c_str());
+    launch_current_game();
   }
 
   // delete current game
   if (button_x && !game_list.empty()) {
-    auto &game = game_list[persist.selected_menu_item];
-
-    dialog.show("Confirm", "Really delete " + game.title + "?", [](bool yes){
-      if(yes) {
-        auto &game = game_list[persist.selected_menu_item];
-        if(game.filename.compare(0, 7, "flash:/") == 0)
-          api.erase_game(std::stoi(game.filename.substr(7)) * qspi_flash_sector_size);
-
-        ::remove_file(game.filename);
-
-        load_file_list(current_directory->name);
-        load_current_game_metadata();
-      }
-    });
+    delete_current_game();
   }
 
   if (button_y) {
