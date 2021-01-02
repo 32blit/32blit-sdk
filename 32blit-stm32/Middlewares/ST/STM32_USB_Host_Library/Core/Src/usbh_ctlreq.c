@@ -697,6 +697,7 @@ static USBH_StatusTypeDef USBH_HandleControl(USBH_HandleTypeDef *phost)
     case CTRL_DATA_IN:
       /* Issue an IN token */
       phost->Control.timer = (uint16_t)phost->Timer;
+      phost->NakTimer = phost->Timer;
       USBH_CtlReceiveData(phost, phost->Control.buff, phost->Control.length,
                           phost->Control.pipe_in);
 
@@ -719,6 +720,19 @@ static USBH_StatusTypeDef USBH_HandleControl(USBH_HandleTypeDef *phost)
 #else
         (void)osMessageQueuePut(phost->os_event, &phost->os_msg, 0U, NULL);
 #endif
+#endif
+      }
+      else if (URB_Status == USBH_URB_NAK_WAIT)
+      {
+        phost->Control.state = CTRL_DATA_IN_WAIT;
+
+        if ((phost->Timer - phost->NakTimer) > phost->NakTimeout)
+        {
+          phost->NakTimer = phost->Timer;
+          USBH_ActivatePipe(phost, phost->Control.pipe_in);
+        }
+#if (USBH_USE_OS == 1)
+      osMessagePut (phost->os_event, USBH_CONTROL_EVENT, 0);
 #endif
       }
 
@@ -839,6 +853,7 @@ static USBH_StatusTypeDef USBH_HandleControl(USBH_HandleTypeDef *phost)
       USBH_CtlReceiveData(phost, 0U, 0U, phost->Control.pipe_in);
 
       phost->Control.timer = (uint16_t)phost->Timer;
+      phost->NakTimer = phost->Timer;
       phost->Control.state = CTRL_STATUS_IN_WAIT;
 
       break;
@@ -860,6 +875,19 @@ static USBH_StatusTypeDef USBH_HandleControl(USBH_HandleTypeDef *phost)
 #else
         (void)osMessageQueuePut(phost->os_event, &phost->os_msg, 0U, NULL);
 #endif
+#endif
+      }
+      else if (URB_Status == USBH_URB_NAK_WAIT)
+      {
+        phost->Control.state = CTRL_STATUS_IN_WAIT;
+
+        if ((phost->Timer - phost->NakTimer) > phost->NakTimeout)
+        {
+          phost->NakTimer = phost->Timer;
+          USBH_ActivatePipe(phost, phost->Control.pipe_in);
+        }
+#if (USBH_USE_OS == 1)
+      osMessagePut (phost->os_event, USBH_CONTROL_EVENT, 0);
 #endif
       }
       else if (URB_Status == USBH_URB_ERROR)
@@ -969,6 +997,8 @@ static USBH_StatusTypeDef USBH_HandleControl(USBH_HandleTypeDef *phost)
         phost->Control.errorcount = 0U;
         USBH_ErrLog("Control error: Device not responding");
         phost->gState = HOST_IDLE;
+        USBH_FreePipe(phost, phost->Control.pipe_out);
+        USBH_FreePipe(phost, phost->Control.pipe_in);
         status = USBH_FAIL;
       }
       break;

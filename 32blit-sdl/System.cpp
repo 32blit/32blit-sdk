@@ -8,6 +8,7 @@
 #include "32blit.hpp"
 #include "UserCode.hpp"
 #include "JPEG.hpp"
+#include "Multiplayer.hpp"
 
 #include "engine/api_private.hpp"
 
@@ -93,6 +94,19 @@ static const char *get_launch_path() {
   return nullptr; // TODO: argv[1]
 }
 
+extern Multiplayer *blit_multiplayer;
+bool blit_is_multiplayer_connected() {
+	return blit_multiplayer->is_connected();
+}
+
+void blit_set_multiplayer_enabled(bool enabled) {
+	blit_multiplayer->set_enabled(enabled);
+}
+
+void blit_send_message(const uint8_t *data, uint16_t length) {
+	blit_multiplayer->send_message(data, length);
+}
+
 // SDL events
 const Uint32 System::timer_event = SDL_RegisterEvents(2);
 const Uint32 System::loop_event = System::timer_event + 1;
@@ -166,6 +180,10 @@ void System::run() {
 	blit::api.decode_jpeg_file = blit_decode_jpeg_file;
 
   blit::api.get_launch_path = ::get_launch_path;
+
+	blit::api.is_multiplayer_connected = blit_is_multiplayer_connected;
+	blit::api.set_multiplayer_enabled = blit_set_multiplayer_enabled;
+	blit::api.send_message = blit_send_message;
 
 	::set_screen_mode(blit::lores);
 

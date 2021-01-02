@@ -79,6 +79,7 @@ void MX_USB_DEVICE_Init(void)
     Error_Handler();
   }
 
+  USB_SetCurrentMode(USB_OTG_HS, USB_DRD_MODE); // switch to dual role
 
   if(g_usbManager.GetType() == USBManager::usbtMSC)
   {

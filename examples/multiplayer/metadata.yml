@@ -1,0 +1,8 @@
+title: Multiplayer
+description: Demo of multiplayer send/receive
+author: daft_freak
+splash:
+  file: multiplayer.png
+icon:
+  file: multiplayer-icon.png
+version: v1.0.0

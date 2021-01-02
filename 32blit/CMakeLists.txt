@@ -5,6 +5,7 @@ set(SOURCES
 	engine/file.cpp
 	engine/api.cpp
 	engine/input.cpp
+	engine/multiplayer.cpp
 	engine/output.cpp
 	engine/particle.cpp
 	engine/profiler.cpp

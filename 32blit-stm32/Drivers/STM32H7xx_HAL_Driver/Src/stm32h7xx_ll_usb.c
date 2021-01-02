@@ -1856,6 +1856,31 @@ HAL_StatusTypeDef USB_HC_Halt(USB_OTG_GlobalTypeDef *USBx, uint8_t hc_num)
 }
 
 /**
+  * @brief  Halt a host channel
+  * @param  USBx  Selected device
+  * @param  hc_num  Host Channel number
+  *         This parameter can be a value from 1 to 15
+  * @retval HAL state
+  */
+HAL_StatusTypeDef USB_HC_Activate(USB_OTG_GlobalTypeDef *USBx, uint8_t hc_num)
+{
+  __IO uint32_t tmpreg;
+  uint32_t USBx_BASE = (uint32_t)USBx;
+  uint32_t hcnum = (uint32_t)hc_num;
+
+  if ((USBx->GAHBCFG & USB_OTG_GAHBCFG_DMAEN) != USB_OTG_GAHBCFG_DMAEN)
+  {
+    /* activate the channel  */
+    tmpreg = USBx_HC(hcnum)->HCCHAR;
+    tmpreg &= ~USB_OTG_HCCHAR_CHDIS;
+    tmpreg |= USB_OTG_HCCHAR_CHENA;
+    USBx_HC(hcnum)->HCCHAR = tmpreg;
+  }
+
+  return HAL_OK;
+}
+
+/**
   * @brief  Initiate Do Ping protocol
   * @param  USBx  Selected device
   * @param  hc_num  Host Channel number

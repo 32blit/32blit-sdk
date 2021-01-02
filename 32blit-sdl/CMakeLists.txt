@@ -4,6 +4,7 @@ add_library(BlitHalSDL STATIC
 	Input.cpp
 	JPEG.cpp
 	Main.cpp
+	Multiplayer.cpp
 	Renderer.cpp
 	Audio.cpp
 	System.cpp
@@ -12,11 +13,12 @@ add_library(BlitHalSDL STATIC
 if(EMSCRIPTEN)
 	target_compile_options(BlitHalSDL
 		PRIVATE
-			"-s;USE_SDL=2;-s ;USE_SDL_IMAGE=2"
+			"-s;USE_SDL=2;-s ;USE_SDL_IMAGE=2;-s  ;USE_SDL_NET=2"
 	)
 
 	set(SDL2_LIBRARIES "-s USE_SDL=2")
 	set(SDL2_IMAGE_LIBRARY "-s USE_SDL_IMAGE=2")
+	set(SDL2_NET_LIBRARY "-s USE_SDL_NET=2")
 else()
 	# attempt to find the framework (find_package won't work as there's no config file)
 	if(APPLE)
@@ -54,9 +56,6 @@ else()
 		HINTS ${SDL2_DIR} ${SDL2_DIR}../../../
 		PATH_SUFFIXES SDL2 include/SDL2 include
 	)
-	target_include_directories(BlitHalSDL
-		PRIVATE	${SDL2_IMAGE_INCLUDE_DIR}
-	)
 
 	# vs
 	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -76,11 +75,33 @@ else()
 		HINTS ${SDL2_DIR} ${SDL2_DIR}../../../
 		PATH_SUFFIXES bin ${VC_LIB_PATH_SUFFIX}
 	)
+
+	#SDL_net
+	find_path(SDL2_NET_INCLUDE_DIR SDL_net.h
+		HINTS ${SDL2_DIR} ${SDL2_DIR}../../../
+		PATH_SUFFIXES SDL2 include/SDL2 include
+	)
+
+	find_library(SDL2_NET_LIBRARY
+		NAMES SDL2_net
+		HINTS ${SDL2_DIR} ${SDL2_DIR}../../../
+		PATH_SUFFIXES lib ${VC_LIB_PATH_SUFFIX}
+	)
+
+	# dlls
+	find_file(SDL2_NET_DLL SDL2_net.dll
+		HINTS ${SDL2_DIR} ${SDL2_DIR}../../../
+		PATH_SUFFIXES bin ${VC_LIB_PATH_SUFFIX}
+	)
+
+	target_include_directories(BlitHalSDL
+		PRIVATE	${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_NET_INCLUDE_DIR}
+	)
 endif()
 
-target_link_libraries(BlitHalSDL PUBLIC BlitEngine ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARY})
+target_link_libraries(BlitHalSDL PUBLIC BlitEngine ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARY} ${SDL2_NET_LIBRARY})
 
-# copy SDL2.dll to build/install dir for windows users
+# copy SDL2 dlls to build/install dir for windows users
 if(SDL2_DLL)
 	install(FILES ${SDL2_DLL} DESTINATION bin)
 	set(SDL2_DLL ${SDL2_DLL} PARENT_SCOPE)
@@ -88,6 +109,11 @@ endif()
 
 if(SDL2_IMAGE_DLL)
 	install(FILES ${SDL2_IMAGE_DLL} DESTINATION bin)
+endif()
+
+if(SDL2_NET_DLL)
+	configure_file(${SDL2_NET_DLL} ${CMAKE_BINARY_DIR}/SDL2_net.dll COPYONLY)
+	install(FILES ${SDL2_NET_DLL} DESTINATION bin)
 endif()
 
 if(DEFINED VIDEO_CAPTURE AND VIDEO_CAPTURE)

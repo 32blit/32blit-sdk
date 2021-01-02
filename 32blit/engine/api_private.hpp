@@ -71,6 +71,12 @@ namespace blit {
     void *(*get_type_handler_metadata)(const char *filetype);
 
     const char *(*get_launch_path)();
+
+    // multiplayer
+    bool (*is_multiplayer_connected)();
+    void (*set_multiplayer_enabled)(bool enabled);
+    void (*send_message)(const uint8_t *data, uint16_t len);
+    void (*message_received)(const uint8_t *data, uint16_t len); // set by user
   };
   #pragma pack(pop)
 

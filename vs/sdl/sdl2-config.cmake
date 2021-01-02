@@ -38,6 +38,13 @@ if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/include)
         137f86474691f4e12e76e07d58d5920c8d844d5b
     )
 
+    fetch_sdl2_library(
+        SDL2_net-2.0.1
+        https://www.libsdl.org/projects/SDL_net/release/
+        SDL2_net-devel-2.0.1-VC.zip
+        90adcf4d0d17aed26c1e56ade159d90db4b98b54
+    )
+
 endif()
 
 set(SDL2_INCLUDE_DIRS "${SDL2_DIR}/include")

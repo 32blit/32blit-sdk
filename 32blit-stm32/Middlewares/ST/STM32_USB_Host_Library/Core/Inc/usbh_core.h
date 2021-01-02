@@ -135,6 +135,9 @@ USBH_StatusTypeDef   USBH_LL_OpenPipe(USBH_HandleTypeDef *phost,
 USBH_StatusTypeDef   USBH_LL_ClosePipe(USBH_HandleTypeDef *phost,
                                        uint8_t pipe);
 
+USBH_StatusTypeDef   USBH_LL_ActivatePipe (USBH_HandleTypeDef *phost,
+                                           uint8_t);
+
 USBH_StatusTypeDef   USBH_LL_SubmitURB(USBH_HandleTypeDef *phost,
                                        uint8_t pipe,
                                        uint8_t direction,

@@ -6,7 +6,10 @@
  */
 #include "32blit.h"
 #include "usbd_cdc_if.h"
+#include "usbh_cdc.h"
+
 extern USBD_HandleTypeDef hUsbDeviceHS;
+extern USBH_HandleTypeDef hUsbHostHS;
 
 #include "CDCCommandStream.h"
 
@@ -42,8 +45,15 @@ void CDCCommandStream::Stream(void)
       ReleaseFifoReadElement();
     }
     m_bNeedsUSBResume = false;
-    USBD_CDC_SetRxBuffer(&hUsbDeviceHS, GetFifoWriteBuffer());
-    USBD_CDC_ReceivePacket(&hUsbDeviceHS);
+	if(USB_GetMode(USB_OTG_HS))
+	{
+		USBH_CDC_Receive(&hUsbHostHS, GetFifoWriteBuffer(), 64);
+	}
+	else
+	{
+		USBD_CDC_SetRxBuffer(&hUsbDeviceHS, GetFifoWriteBuffer());
+		USBD_CDC_ReceivePacket(&hUsbDeviceHS);
+	}
     uLastResumeTime = HAL_GetTick();
   }
   else
@@ -230,3 +240,19 @@ void CDCCommandStream::ReleaseFifoReadElement(void)
 	m_uFifoUsedCount--;
 }
 
+// usb host glue
+extern CDCCommandStream g_commandStream;
+
+void USBH_CDC_ReceiveCallback(USBH_HandleTypeDef *phost)
+{
+  	g_commandStream.ReleaseFifoWriteBuffer(USBH_CDC_GetLastReceivedDataSize(phost));
+
+	// If a new writebuffer is available, set RxBuffer and requext next USB packet
+	if(uint8_t *pBuffer = g_commandStream.GetFifoWriteBuffer())
+    	USBH_CDC_Receive(phost, pBuffer, 64);
+}
+
+extern "C" void usb_host_ready(USBH_HandleTypeDef *phost) {
+	if(uint8_t *pBuffer = g_commandStream.GetFifoWriteBuffer())
+    	USBH_CDC_Receive(phost, pBuffer, 64);
+}

@@ -10,6 +10,7 @@
 #include <iostream>
 
 #include "Input.hpp"
+#include "Multiplayer.hpp"
 #include "System.hpp"
 #include "Renderer.hpp"
 #include "Audio.hpp"
@@ -25,6 +26,7 @@ SDL_Window* window = nullptr;
 
 System *blit_system;
 Input *blit_input;
+Multiplayer *blit_multiplayer;
 Renderer *blit_renderer;
 Audio *blit_audio;
 
@@ -100,6 +102,7 @@ void handle_event(SDL_Event &event) {
 
 		default:
 			if(event.type == System::loop_event) {
+				blit_multiplayer->update();
 				blit_renderer->update(blit_system);
 				blit_system->notify_redraw();
 				blit_renderer->present();
@@ -130,6 +133,7 @@ void em_loop() {
 		handle_event(event);
 	}
 
+	blit_multiplayer->update();
 	blit_system->loop();
 	blit_renderer->update(blit_system);
 	blit_renderer->present();
@@ -164,8 +168,23 @@ int main(int argc, char *argv[]) {
 		SDL_GameControllerOpen(n);
 	}
 
+	auto mp_mode = Multiplayer::Mode::Auto;
+	std::string mp_address = "localhost";
+
+	for(int i = 1; i < argc; i++) {
+		std::string arg_str(argv[i]);
+		if(arg_str == "--connect" && i + 1 < argc) {
+			mp_mode = Multiplayer::Mode::Connect;
+			mp_address = std::string(argv[i + 1]);
+			i++;
+		}
+		else if(arg_str == "--listen")
+			mp_mode == Multiplayer::Mode::Listen;
+	}
+
 	blit_system = new System();
 	blit_input = new Input(window, blit_system);
+	blit_multiplayer = new Multiplayer(mp_mode, mp_address);
 	blit_renderer = new Renderer(window, System::width, System::height);
 	blit_audio = new Audio();
 
@@ -197,6 +216,7 @@ int main(int argc, char *argv[]) {
 
 	blit_system->stop();
 	delete blit_system;
+	delete blit_multiplayer;
 	delete blit_renderer;
 
 	SDL_DestroyWindow(window);

@@ -126,6 +126,11 @@ public:
 		return GetDataOfLength(&uValue, 4);
 	}
 
+	bool Get(uint16_t &uValue)
+	{
+		return GetDataOfLength(&uValue, 2);
+	}
+
 	bool Get(uint8_t &uValue)
 	{
 		return GetDataOfLength(&uValue, 1);

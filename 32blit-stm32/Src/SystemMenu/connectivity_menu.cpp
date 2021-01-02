@@ -8,6 +8,7 @@
 #include "32blit.hpp"
 #include "file.hpp"
 #include "USBManager.h"
+#include "multiplayer.hpp"
 
 using namespace blit;
 
@@ -72,7 +73,7 @@ void ConnectivityMenu::item_activated(const Item &item) {
     // switch back manually if not mounted
     if (g_usbManager.GetState() == USBManager::usbsMSCInititalising)
       g_usbManager.SetType(USBManager::usbtCDC);
-    else if (num_open_files == 0)
+    else if (num_open_files == 0 && !multiplayer::enabled)
       g_usbManager.SetType(USBManager::usbtMSC);
     break;
   }

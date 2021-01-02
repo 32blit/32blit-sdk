@@ -182,9 +182,13 @@ int main(void)
 
     blit_tick();
     //HAL_Delay(1000);
+
     // USB
     g_usbManager.Update();
-  
+
+    if(USB_GetMode(USB_OTG_HS))
+      MX_USB_HOST_Process();
+
     // handle CDC input
     g_commandStream.Stream();
 

@@ -106,6 +106,19 @@ USBH_StatusTypeDef USBH_ClosePipe(USBH_HandleTypeDef *phost, uint8_t pipe_num)
   return USBH_OK;
 }
 
+/**
+  * @brief  USBH_ActivatePipe
+  *         Activate a pipe
+  * @param  phost: Host Handle
+  * @param  pipe_num: Pipe Number
+  * @retval USBH Status
+  */
+USBH_StatusTypeDef USBH_ActivatePipe(USBH_HandleTypeDef *phost, uint8_t pipe_num)
+{
+  USBH_LL_ActivatePipe(phost, pipe_num);
+
+  return USBH_OK;
+}
 
 /**
   * @brief  USBH_Alloc_Pipe

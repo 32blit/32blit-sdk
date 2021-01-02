@@ -13,6 +13,7 @@
 #include "file.hpp"
 #include "jpeg.hpp"
 #include "executable.hpp"
+#include "multiplayer.hpp"
 
 #include "adc.h"
 #include "tim.h"
@@ -87,6 +88,8 @@ static void init_api_shared() {
   // reset shared outputs
   api.vibration = 0.0f;
   api.LED = Pen();
+
+  api.message_received = nullptr;
 }
 
 void blit_debug(const char *message) {
@@ -296,10 +299,15 @@ void blit_init() {
 
     blit::api.get_launch_path = ::get_launch_path;
 
+    blit::api.is_multiplayer_connected = multiplayer::is_connected;
+    blit::api.set_multiplayer_enabled = multiplayer::set_enabled;
+    blit::api.send_message = multiplayer::send_message;
+
   display::init();
 
-  blit::init();
+  multiplayer::init();
 
+  blit::init();
 }
 
 // ==============================
