@@ -16,6 +16,20 @@
 
 Dialog dialog;
 
+struct Theme {
+  Pen color_background;
+  Pen color_overlay;
+  Pen color_text;
+  Pen color_accent;
+};
+
+Theme theme = {
+  .color_background = Pen(0, 0, 0, 255),
+  .color_overlay = Pen(255, 255, 255, 10),
+  .color_text = Pen(180, 180, 220, 255),
+  .color_accent = Pen(0, 255, 0, 255)
+};
+
 struct Persist {
   unsigned int selected_menu_item = 0;
 };
@@ -26,7 +40,9 @@ using namespace blit;
 constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 
 bool sd_detected = true;
-Vec2 file_list_scroll_offset(20.0f, 0.0f);
+Vec2 file_list_scroll_offset(10.0f, 0.0f);
+Point game_info_offset(120, 20);
+Point game_actions_offset(game_info_offset.x + 128 + 8, 30);
 float directory_list_scroll_offset = 0.0f;
 
 struct GameInfo {
@@ -287,6 +303,10 @@ void init() {
   set_screen_mode(ScreenMode::hires);
   screen.clear();
 
+  if(!read_save(theme)) {
+    write_save(theme);
+  }
+
   spritesheet = SpriteSheet::load(sprites);
 
   scan_flash();
@@ -307,11 +327,8 @@ void init() {
 void render(uint32_t time) {
   screen.sprites = spritesheet;
 
-  screen.pen = Pen(5, 8, 12);
+  screen.pen = theme.color_background;
   screen.clear();
-
-  screen.pen = Pen(0, 0, 0, 100);
-  screen.rectangle(Rect(10, 0, 100, 240));
 
   // adjust alignment rect for vertical spacing
   const int text_align_height = ROW_HEIGHT + minimal_font.spacing_y;
@@ -322,9 +339,9 @@ void render(uint32_t time) {
 
     for(auto &directory : directory_list) {
       if(directory.name == current_directory->name)
-        screen.pen = Pen(235, 245, 255);
+        screen.pen = theme.color_accent;
       else
-        screen.pen = Pen(80, 100, 120);
+        screen.pen = theme.color_text;
 
       int x = 120 + 95 + directory.x - directory_list_scroll_offset;
       screen.text(directory.name == "/" ? "ROOT" : directory.name, minimal_font, Rect(x, 5, 190, text_align_height), true, TextAlign::center_v);
@@ -338,57 +355,62 @@ void render(uint32_t time) {
 
   // list games
   if(!game_list.empty()) {
+    screen.pen = theme.color_overlay;
+    screen.rectangle(Rect(0, 0, 110, 240));
+
     const int size_x = 115;
 
-    screen.clip = Rect(10, 0, 90, 240);
+    screen.clip = Rect(0, 0, 100, 240);
     for(auto &file : game_list) {
       if(i++ == persist.selected_menu_item)
-        screen.pen = Pen(235, 245, 255);
+        screen.pen = theme.color_accent;
       else
-        screen.pen = Pen(80, 100, 120);
+        screen.pen = theme.color_text;
 
-      screen.text(file.title, minimal_font, Rect(file_list_scroll_offset.x, y, 100 - 20, text_align_height), true, TextAlign::center_v);
+      screen.text(file.title, minimal_font, Rect(file_list_scroll_offset.x, y, 90, text_align_height), true, TextAlign::center_v);
       y += ROW_HEIGHT;
     }
     screen.clip = Rect(Point(0, 0), screen.bounds);
 
-    // action icons
     // delete
-    screen.sprite(2, Point(120, 20));
-    screen.sprite(0, Point(130, 20));
+    screen.sprite(2, Point(game_actions_offset.x, game_actions_offset.y));
+    screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y));
 
     // run
-    screen.sprite(1, Point(120, 32));
-    screen.sprite(0, Point(130, 32), SpriteTransform::R90);
+    screen.sprite(1, Point(game_actions_offset.x, game_actions_offset.y + 12));
+    screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R90);
 
     // game info
     if(selected_game_metadata.splash)
-      screen.blit(selected_game_metadata.splash, Rect(Point(0, 0), selected_game_metadata.splash->bounds), Point(172, 20));
+      screen.blit(selected_game_metadata.splash, Rect(Point(0, 0), selected_game_metadata.splash->bounds), game_info_offset);
 
-    screen.pen = Pen(235, 245, 255);
-    screen.text(selected_game_metadata.title, minimal_font, Point(172, 124));
+    screen.pen = theme.color_accent;
+    std::string wrapped_title = screen.wrap_text(selected_game_metadata.title, screen.bounds.w - game_info_offset.x - 10, minimal_font, false, true);
 
-    Rect desc_rect(172, 138, 128, 64);
+    Size title_size = screen.measure_text(wrapped_title, minimal_font, false);
+    screen.text(wrapped_title, minimal_font, Point(game_info_offset.x, game_info_offset.y + 104));
 
-    screen.pen = Pen(80, 100, 120);
+    Rect desc_rect(game_info_offset.x, game_info_offset.y + 104 + title_size.h, screen.bounds.w - game_info_offset.x - 10, 64);
+
+    screen.pen = theme.color_text;
     std::string wrapped_desc = screen.wrap_text(selected_game_metadata.description, desc_rect.w, minimal_font);
     screen.text(wrapped_desc, minimal_font, desc_rect);
 
-    screen.text(selected_game_metadata.author, minimal_font, Point(172, 200));
-    screen.text(selected_game_metadata.version, minimal_font, Point(172, 212));
+    screen.text(selected_game_metadata.author, minimal_font, Point(game_info_offset.x, screen.bounds.h - 32));
+    screen.text(selected_game_metadata.version, minimal_font, Point(game_info_offset.x, screen.bounds.h - 24));
 
     int num_blocks = calc_num_blocks(game_list[persist.selected_menu_item].size);
     char buf[20];
     snprintf(buf, 20, "%i block%s", num_blocks, num_blocks == 1 ? "" : "s");
-    screen.text(buf, minimal_font, Point(172, 224));
+    screen.text(buf, minimal_font, Point(game_info_offset.x, screen.bounds.h - 16));
   }
   else {
-    screen.pen = Pen(235, 245, 255);
+    screen.pen = theme.color_text;
 
     if(/*current_directory->name != "FLASH" &&*/ !blit::is_storage_available())
-      screen.text("No SD Card\nDetected.", minimal_font, Point(60, screen.bounds.h / 2), true, TextAlign::center_center);
+      screen.text("No SD Card\nDetected.", minimal_font, Point(screen.bounds.w / 2, screen.bounds.h / 2), true, TextAlign::center_center);
     else
-      screen.text("No Games Found.", minimal_font, Point(60, screen.bounds.h / 2), true, TextAlign::center_center);
+      screen.text("No Games Found.", minimal_font, Point(screen.bounds.w / 2, screen.bounds.h / 2), true, TextAlign::center_center);
   }
 
   //progress.draw();
