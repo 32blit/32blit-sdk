@@ -6,3 +6,5 @@ splash:
 icon:
   file: geometry-icon.png
 version: v1.0.0
+url: https://github.com/pimoroni/32blit-beta
+category: game
