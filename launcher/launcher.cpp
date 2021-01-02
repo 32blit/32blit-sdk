@@ -24,10 +24,10 @@ struct Theme {
 };
 
 Theme theme = {
-  .color_background = Pen(0, 0, 0, 255),
-  .color_overlay = Pen(255, 255, 255, 10),
-  .color_text = Pen(180, 180, 220, 255),
-  .color_accent = Pen(0, 255, 0, 255)
+  Pen(0, 0, 0, 255),
+  Pen(255, 255, 255, 10),
+  Pen(180, 180, 220, 255),
+  Pen(0, 255, 0, 255)
 };
 
 struct Persist {
