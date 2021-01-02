@@ -64,6 +64,7 @@ namespace blit {
   uint32_t pending_render_time = 0;
 
   uint32_t last_tick_time = 0;
+  uint32_t last_state = 0;
 
   bool tick(uint32_t time) {
     if (last_tick_time == 0) {
@@ -78,11 +79,11 @@ namespace blit {
     pending_update_time += (time - last_tick_time);
     while (pending_update_time >= update_rate_ms) {
       // button state changes
-      uint32_t changed = api.buttons.state ^ api.buttons.last_state;
+      uint32_t changed = api.buttons.state ^ last_state;
 
       api.buttons.pressed = changed & api.buttons.state;
-      api.buttons.released = changed & api.buttons.last_state;
-      api.buttons.last_state = api.buttons.state;
+      api.buttons.released = changed & last_state;
+      last_state = api.buttons.state;
 
       update(time - pending_update_time); // create fake timestamp that would have been accurate for the update event
       pending_update_time -= update_rate_ms;

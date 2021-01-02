@@ -32,7 +32,6 @@ namespace blit {
 
     uint32_t state;
     uint32_t pressed, released; // state change since last update
-    uint32_t last_state = 0;
   };
 
   extern bool pressed(uint32_t button);
