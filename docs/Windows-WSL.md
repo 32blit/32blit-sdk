@@ -11,9 +11,10 @@ A basic knowledge of the Linux command-line, installing tools and compiling code
 - [Building & Running on 32Blit](#building--running-on-32blit)
 - [Building & Running Locally](#building--running-locally)
   - [Installing the MinGW compiler/tools](#installing-the-mingw-compiler-tools)
-  - [Installing SDL2 & SDL2_image](#installing-sdl2--sdl2_image)
+  - [Installing SDL2, SDL2_image and SDL2_net](#installing-sdl2-sdl2_image-and-sdl2_net)
     - [SDL2](#sdl2)
     - [SDL2_image](#sdl2_image)
+    - [SDL2_net](#sdl2_net)
   - [Building](#building)
     - [Single Example](#single-example)
     - [Build Everything](#build-everything)
@@ -65,7 +66,7 @@ sudo apt install gcc-mingw-w64 g++-mingw-w64
 ```
 
 
-### Installing SDL2 & SDL2_image
+### Installing SDL2, SDL2_image and SDL2_net
 
 This will install the SDL2 64bit mingw development headers and libraries into `/opt/local/x86_64-w64-mingw32/`.
 
@@ -95,6 +96,16 @@ Grab and install the SDL2_image mingw development package:
 wget https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.0.5-mingw.tar.gz
 tar xzf SDL2_image-devel-2.0.5-mingw.tar.gz
 sudo cp -r SDL2_image-2.0.5/x86_64-w64-mingw32 /opt/local/
+```
+
+#### SDL2_net
+
+Grab and install the SDL2_net mingw development package:
+
+```shell
+wget https://www.libsdl.org/projects/SDL_net/release/SDL2_net-devel-2.0.1-mingw.tar.gz
+tar xzf SDL2_net-devel-2.0.1-mingw.tar.gz
+sudo cp -r SDL2_net-2.0.1/x86_64-w64-mingw32 /opt/local/
 ```
 
 ### Building

@@ -13,13 +13,14 @@ See [Building & Running On 32Blit](32blit.md) if you want to compile examples/pr
 
 ## Requirements
 
-You will need Visual Studio 2019 (preferably version 16.4). 
+You will need Visual Studio 2019 (preferably version 16.4).
 
 Make sure you install C++ desktop development support.
 
-You will also need to download SDL2 development libraries from the [SDL homepage](https://www.libsdl.org/download-2.0.php). Here find the latest version of the VC development libraries (at the time of this writing SDL2-devel-2.0.10-VC.zip). Additionally, download SDL2_image from [here](https://www.libsdl.org/projects/SDL_image/) (SDL2_image-devel-2.0.5-VC.zip).
+You will also need to download SDL2 development libraries from the [SDL homepage](https://www.libsdl.org/download-2.0.php). Here find the latest version of the VC development libraries (at the time of this writing SDL2-devel-2.0.10-VC.zip). Additionally, download SDL2_image from [here](https://www.libsdl.org/projects/SDL_image/) (SDL2_image-devel-2.0.5-VC.zip) and SDL2_net from [here](https://www.libsdl.org/projects/SDL_net/) (SDL2_net-devel-2.0.1-VC.zip).
 
-Place these in the `vs\sdl\` folder. You will need to merge the include/lib directories.
+Place these in the `vs\sdl\` folder. You will need to merge the include/lib directories. If you are using CMake/Open Folder, these are downloaded automatically.
+
 
 There are two methods of building with Visual Studio:
 
@@ -29,7 +30,7 @@ This should be the most familiar option for existing Visual Studio users.
 
 The solutions and projects are made to use toolset version c142.
 
-The solution file is located at `vs\32blit.sln`. It contains two static linked libraries, _32blit_ and _32blit-sdl_ and all the examples that will compile to .EXE. 
+The solution file is located at `vs\32blit.sln`. It contains two static linked libraries, _32blit_ and _32blit-sdl_ and all the examples that will compile to .EXE.
 
 ### Get started with your own game
 
