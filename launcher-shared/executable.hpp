@@ -34,3 +34,11 @@ struct RawMetadata {
   char version[17];
   char author[17];
 };
+
+// "BLITTYPE"
+struct RawTypeMetadata {
+  char category[17];
+  char url[129];
+  uint8_t num_filetypes;
+  char filetypes[][5];
+};

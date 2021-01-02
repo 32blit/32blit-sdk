@@ -38,7 +38,14 @@ struct GameInfo {
   uint32_t offset;
 };
 
+struct HandlerInfo {
+  uint32_t offset, meta_offset;
+  char type[5];
+};
+
 std::vector<GameInfo> game_list;
+
+std::list<HandlerInfo> handlers; // flashed games that can "launch" files
 
 std::list<std::tuple<uint16_t, uint16_t>> free_space; // block start, count
 
@@ -87,6 +94,29 @@ bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata) {
   metadata.crc32 = raw_meta.crc32;
   metadata.title = raw_meta.title;
   metadata.author = raw_meta.author;
+
+  offset += sizeof(RawMetadata) + 10;
+
+  if(qspi_read_buffer(offset, buf, 8) != QSPI_OK)
+    return true;
+
+  if(memcmp(buf, "BLITTYPE", 8) != 0)
+    return true;
+
+  // type chunk
+  RawTypeMetadata type_meta;
+  if(qspi_read_buffer(offset + 8, reinterpret_cast<uint8_t *>(&type_meta), sizeof(RawTypeMetadata)) != QSPI_OK)
+    return false;
+
+  metadata.category = type_meta.category;
+
+  offset += 8 + sizeof(RawTypeMetadata);
+  metadata.filetypes.resize(type_meta.num_filetypes);
+  for(int i = 0; i < type_meta.num_filetypes; i++) {
+    qspi_read_buffer(offset, buf, 5);
+    offset += 5;
+    metadata.filetypes[i] = (char *)buf;
+  }
 
   return true;
 }
@@ -206,6 +236,7 @@ bool read_flash_game_header(uint32_t offset, BlitGameHeader &header) {
 void scan_flash() {
   game_list.clear();
   free_space.clear();
+  handlers.clear();
 
   BlitGameMetadata meta;
   GameInfo game;
@@ -244,6 +275,16 @@ void scan_flash() {
 
       if(meta.title == "Launcher")
         launcher_offset = offset;
+
+      // add to handler list
+      HandlerInfo handler;
+      handler.offset = offset;
+      handler.meta_offset = offset + header.end - qspi_flash_address;
+      handler.type[4] = 0;
+      for(auto &type : meta.filetypes) {
+        strncpy(handler.type, type.c_str(), 4);
+        handlers.push_back(handler);
+      }
     }
 
     game_list.push_back(game);
@@ -277,10 +318,32 @@ bool launch_game_from_sd(const char *path) {
   }
 
   uint32_t offset = 0xFFFFFFFF;
+  persist.launch_path[0] = 0;
 
   BlitGameMetadata meta;
 
-  if(parse_file_metadata(path, meta)) {
+  // get the extension (assume there is one)
+  std::string_view sv(path);
+  auto ext = std::string(sv.substr(sv.find_last_of('.') + 1));
+  for(auto &c : ext)
+    c = tolower(c);
+
+  if(ext != "blit") {
+    // find the handler
+    for(auto &handler : handlers) {
+      if(handler.type == ext) {
+        offset = handler.offset;
+        break;
+      }
+    }
+
+    if(offset == 0xFFFFFFFF)
+      return false;
+
+    // set the path to the file to launch
+    strncpy(persist.launch_path, path, sizeof(persist.launch_path));
+
+  } else if(parse_file_metadata(path, meta)) {
     for(auto &flash_game : game_list) {
       // if a game with the same name/crc is already installed, launch that one instead of flashing it again
       if(flash_game.checksum == meta.crc32 && flash_game.title == meta.title) {
@@ -303,6 +366,15 @@ bool launch_game_from_sd(const char *path) {
   return false;
 }
 
+static void *get_type_handler_metadata(const char *filetype) {
+  for(auto &handler : handlers) {
+    if(strncmp(filetype, handler.type, 4) == 0)
+      return (void *)(qspi_flash_address + handler.meta_offset);
+  }
+
+  return nullptr;
+}
+
 static void start_launcher() {
   if(launcher_offset != 0xFFFFFFFF)
     launch_game(launcher_offset);
@@ -314,6 +386,7 @@ static void start_launcher() {
 void init() {
   api.launch = launch_game_from_sd;
   api.erase_game = erase_flash_game;
+  api.get_type_handler_metadata = get_type_handler_metadata;
 
   set_screen_mode(ScreenMode::hires);
   screen.clear();
@@ -345,7 +418,7 @@ void init() {
 
       persist.reset_error = false;
     });
-  } else 
+  } else
     start_launcher();
 }
 

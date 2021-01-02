@@ -33,7 +33,7 @@ struct GameInfo {
   std::string title;
   uint32_t size, checksum = 0;
 
-  std::string filename; // if on SD
+  std::string filename, ext;
 };
 
 struct DirectoryInfo {
@@ -164,19 +164,45 @@ void load_file_list(std::string directory) {
     if (file.name[0] == '.') // hidden file
       continue;
 
-    if(file.name.compare(file.name.length() - 5, 5, ".blit") == 0 || file.name.compare(file.name.length() - 5, 5, ".BLIT") == 0) {
+    auto last_dot = file.name.find_last_of('.');
+
+    // no extension
+    if(last_dot == std::string::npos)
+      continue;
+
+    auto ext = file.name.substr(file.name.find_last_of('.') + 1);
+
+    for(auto &c : ext)
+      c = tolower(c);
+
+    if(ext == "blit") {
 
       GameInfo game;
       game.title = file.name.substr(0, file.name.length() - 5);
       game.filename = directory == "/" ? file.name : directory + "/" + file.name;
       game.size = file.size;
-      
+
       // check for metadata
       BlitGameMetadata meta;
       if(parse_file_metadata(game.filename, meta)) {
         game.title = meta.title;
         game.checksum = meta.crc32;
       }
+
+      game_list.push_back(game);
+      continue;
+    }
+
+    if(!api.get_type_handler_metadata) continue;
+
+    auto handler_meta = api.get_type_handler_metadata(ext.c_str());
+
+    if(handler_meta) {
+      GameInfo game;
+      game.title = file.name;
+      game.filename = directory == "/" ? file.name : directory + "/" + file.name;
+      game.ext = ext;
+      game.size = file.size;
 
       game_list.push_back(game);
     }
@@ -195,7 +221,18 @@ void load_current_game_metadata() {
   if(!game_list.empty()) {
     auto &game = game_list[persist.selected_menu_item];
 
-    loaded = parse_file_metadata(game.filename, selected_game_metadata, true);
+    if(!game.ext.empty()) {
+      // not a .blit
+      auto handler_meta = (char *)api.get_type_handler_metadata(game.ext.c_str());
+      auto len = *reinterpret_cast<uint16_t *>(handler_meta + 8);
+
+      parse_metadata(handler_meta + 10, len, selected_game_metadata, true);
+
+      selected_game_metadata.description = "Launches with: " + selected_game_metadata.title;
+      selected_game_metadata.title = game.title;
+      loaded = true;
+    } else
+      loaded = parse_file_metadata(game.filename, selected_game_metadata, true);
   }
 
   // no valid metadata, reset
@@ -458,7 +495,7 @@ void update(uint32_t time) {
     load_current_game_metadata();
   }
 
-  // scroll list towards selected item  
+  // scroll list towards selected item
   file_list_scroll_offset.y += ((persist.selected_menu_item * 10) - file_list_scroll_offset.y) / 5.0f;
 
   directory_list_scroll_offset += (current_directory->x + current_directory->w / 2 - directory_list_scroll_offset) / 5.0f;
@@ -484,7 +521,7 @@ void update(uint32_t time) {
         auto &game = game_list[persist.selected_menu_item];
         if(game.filename.compare(0, 7, "flash:/") == 0)
           api.erase_game(std::stoi(game.filename.substr(7)) * qspi_flash_sector_size);
-        
+
         ::remove_file(game.filename);
 
         load_file_list(current_directory->name);

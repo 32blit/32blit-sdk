@@ -68,6 +68,9 @@ namespace blit {
     // launcher APIs - only intended for use by launchers and only available on device
     bool (*launch)(const char *filename);
     void (*erase_game)(uint32_t offset);
+    void *(*get_type_handler_metadata)(const char *filetype);
+
+    const char *(*get_launch_path)();
   };
   #pragma pack(pop)
 

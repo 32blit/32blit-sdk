@@ -89,6 +89,10 @@ uint32_t get_max_us_timer()
 	return UINT32_MAX;
 }
 
+static const char *get_launch_path() {
+  return nullptr; // TODO: argv[1]
+}
+
 // SDL events
 const Uint32 System::timer_event = SDL_RegisterEvents(2);
 const Uint32 System::loop_event = System::timer_event + 1;
@@ -160,6 +164,8 @@ void System::run() {
 
 	blit::api.decode_jpeg_buffer = blit_decode_jpeg_buffer;
 	blit::api.decode_jpeg_file = blit_decode_jpeg_file;
+
+  blit::api.get_launch_path = ::get_launch_path;
 
 	::set_screen_mode(blit::lores);
 
