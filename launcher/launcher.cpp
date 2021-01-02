@@ -246,6 +246,8 @@ void load_current_game_metadata() {
 
       selected_game_metadata.description = "Launches with: " + selected_game_metadata.title;
       selected_game_metadata.title = game.title;
+      selected_game_metadata.author = "";
+      selected_game_metadata.version = "";
       loaded = true;
     } else
       loaded = parse_file_metadata(game.filename, selected_game_metadata, true);
