@@ -179,6 +179,7 @@ function(blit_executable NAME SOURCES)
 	    # install the SDL frameworks
 		install(DIRECTORY ${SDL2_LIBRARIES} DESTINATION "bin/$<TARGET_FILE_NAME:${NAME}>.app/Contents/Frameworks")
 		install(DIRECTORY ${SDL2_IMAGE_LIBRARY} DESTINATION "bin/$<TARGET_FILE_NAME:${NAME}>.app/Contents/Frameworks")
+		install(DIRECTORY ${SDL2_NET_LIBRARY} DESTINATION "bin/$<TARGET_FILE_NAME:${NAME}>.app/Contents/Frameworks")
 	endif()
 endfunction()
 
