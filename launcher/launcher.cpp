@@ -313,17 +313,6 @@ void init() {
 
   scan_flash();
   init_lists();
-
-  // error reset handling
-  /*if(persist.reset_error) {
-    dialog.show("Oops!", "Restart game?", [](bool yes){
-
-      if(yes)
-        launch_game(persist.last_game_offset);
-
-      persist.reset_error = false;
-    });
-  }*/
 }
 
 void render(uint32_t time) {
