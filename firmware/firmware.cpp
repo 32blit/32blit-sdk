@@ -65,37 +65,28 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename);
 
 // metadata
 
-bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata) {
-
-  BlitGameHeader header;
-
-  if(qspi_read_buffer(offset, reinterpret_cast<uint8_t *>(&header), sizeof(header)) != QSPI_OK)
-    return false;
-
-  offset += header.end - 0x90000000;
-
-  // out of bounds
-  if(offset >= 0x2000000)
-    return false;
+bool parse_flash_metadata(uint32_t offset, GameInfo &info) {
+  auto meta_offset = offset + info.size;
+  auto game_offset = offset;
 
   uint8_t buf[10];
-  if(qspi_read_buffer(offset, buf, 10) != QSPI_OK)
+  if(qspi_read_buffer(meta_offset, buf, 10) != QSPI_OK)
     return false;
 
   if(memcmp(buf, "BLITMETA", 8) != 0)
     return false;
 
   RawMetadata raw_meta;
-  if(qspi_read_buffer(offset + 10, reinterpret_cast<uint8_t *>(&raw_meta), sizeof(RawMetadata)) != QSPI_OK) {
+  if(qspi_read_buffer(meta_offset + 10, reinterpret_cast<uint8_t *>(&raw_meta), sizeof(RawMetadata)) != QSPI_OK) {
     return false;
   }
 
-  metadata.length = *reinterpret_cast<uint16_t *>(buf + 8);
-  metadata.crc32 = raw_meta.crc32;
-  metadata.title = raw_meta.title;
-  metadata.author = raw_meta.author;
+  info.size += *reinterpret_cast<uint16_t *>(buf + 8) + 10;
+  info.checksum = raw_meta.crc32;
+  info.title = raw_meta.title;
+  info.author = raw_meta.author;
 
-  offset += sizeof(RawMetadata) + 10;
+  offset = meta_offset + sizeof(RawMetadata) + 10;
 
   if(qspi_read_buffer(offset, buf, 8) != QSPI_OK)
     return true;
@@ -108,14 +99,18 @@ bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata) {
   if(qspi_read_buffer(offset + 8, reinterpret_cast<uint8_t *>(&type_meta), sizeof(RawTypeMetadata)) != QSPI_OK)
     return false;
 
-  metadata.category = type_meta.category;
-
   offset += 8 + sizeof(RawTypeMetadata);
-  metadata.filetypes.resize(type_meta.num_filetypes);
+
+  // register handler
+  HandlerInfo handler;
+  handler.offset = game_offset;
+  handler.meta_offset = meta_offset;
+  handler.type[4] = 0;
+
   for(int i = 0; i < type_meta.num_filetypes; i++) {
-    qspi_read_buffer(offset, buf, 5);
+    qspi_read_buffer(offset, (uint8_t *)handler.type, 5);
     offset += 5;
-    metadata.filetypes[i] = (char *)buf;
+    handlers.push_back(handler);
   }
 
   return true;
@@ -238,7 +233,6 @@ void scan_flash() {
   free_space.clear();
   handlers.clear();
 
-  BlitGameMetadata meta;
   GameInfo game;
   uint32_t free_start = 0xFFFFFFFF;
 
@@ -267,24 +261,9 @@ void scan_flash() {
     game.size = header.end - qspi_flash_address;
 
     // check for valid metadata
-    if(parse_flash_metadata(offset, meta)) {
-      game.title = meta.title;
-      game.author = meta.author;
-      game.size += meta.length + 10;
-      game.checksum = meta.crc32;
-
-      if(meta.title == "Launcher")
+    if(parse_flash_metadata(offset, game)) {
+      if(game.title == "Launcher")
         launcher_offset = offset;
-
-      // add to handler list
-      HandlerInfo handler;
-      handler.offset = offset;
-      handler.meta_offset = offset + header.end - qspi_flash_address;
-      handler.type[4] = 0;
-      for(auto &type : meta.filetypes) {
-        strncpy(handler.type, type.c_str(), 4);
-        handlers.push_back(handler);
-      }
     }
 
     game_list.push_back(game);
@@ -939,7 +918,11 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                       result = srFinish;
 
                       // clean up old version(s)
-                      BlitGameMetadata meta;
+                      BlitGameHeader header;
+                      read_flash_game_header(flash_start_offset, header);
+
+                      GameInfo meta;
+                      meta.size = header.end - qspi_flash_address;
                       if(parse_flash_metadata(flash_start_offset, meta)) {
                         for(auto &game : game_list) {
                           if(game.title == meta.title && game.author == meta.author && game.offset != flash_start_offset)
