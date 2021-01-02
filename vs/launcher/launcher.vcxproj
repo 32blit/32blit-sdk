@@ -167,10 +167,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\launcher\launcher.hpp" />
+    <ClInclude Include="..\..\launcher\theme.hpp" />
     <ClInclude Include="assets.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\launcher\launcher.cpp" />
+    <ClCompile Include="..\..\launcher\theme.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -14,21 +14,9 @@
 #include "metadata.hpp"
 #include "dialog.hpp"
 
+#include "theme.hpp"
+
 Dialog dialog;
-
-struct Theme {
-  Pen color_background;
-  Pen color_overlay;
-  Pen color_text;
-  Pen color_accent;
-};
-
-Theme theme = {
-  Pen(0, 0, 0, 255),
-  Pen(255, 255, 255, 10),
-  Pen(180, 180, 220, 255),
-  Pen(0, 255, 0, 255)
-};
 
 struct Persist {
   unsigned int selected_menu_item = 0;
@@ -305,9 +293,7 @@ void init() {
   set_screen_mode(ScreenMode::hires);
   screen.clear();
 
-  if(!read_save(theme)) {
-    write_save(theme);
-  }
+  init_theme();
 
   spritesheet = SpriteSheet::load(sprites);
 
