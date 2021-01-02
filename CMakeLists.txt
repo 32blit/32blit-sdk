@@ -18,10 +18,6 @@ endif()
 
 add_subdirectory(launcher)
 
-if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL Generic AND NOT EMSCRIPTEN)
-    add_subdirectory(tools/src)
-endif()
-
 # include dist files in install
 install(DIRECTORY
     ${CMAKE_CURRENT_LIST_DIR}/dist/

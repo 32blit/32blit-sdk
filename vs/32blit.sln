@@ -149,10 +149,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text", "examples\text\text.
 		{85DB89B5-DEA0-4429-B41E-0CAA7DB907BA} = {85DB89B5-DEA0-4429-B41E-0CAA7DB907BA}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "32Blit-loader", "tools\32Blit-loader\32Blit-loader.vcxproj", "{D76C8D59-9C85-4D8A-8B78-7CAEE5DFC314}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{FA5CCE8B-0951-484A-8D0C-AA871780F4A3}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "voxel", "examples\voxel\voxel.vcxproj", "{2B7506AD-B420-4F2B-B002-6AAAF79D1E01}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tween-demo", "examples\tween-demo\tween-demo.vcxproj", "{46D6A7E3-73D9-422A-AD53-94D96380CDD5}"
