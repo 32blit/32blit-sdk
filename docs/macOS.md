@@ -45,11 +45,11 @@ python3 --version
 ```
 (expected output `Python 3.7.x`)
 
-and 
+and
 ``` shell
 pip3 --version
 ```
-(expected output `pip x.x.x from /usr/local/lib/python3.7/site-packages/pip (python 3.7)` or similar)  
+(expected output `pip x.x.x from /usr/local/lib/python3.7/site-packages/pip (python 3.7)` or similar)
 
 <a name="gcc"/></a>
 ## Installing `gcc-arm-none-eabi`
@@ -72,10 +72,10 @@ If you want to run code on 32Blit, you should now refer to [Building & Running O
 
 ## Building & Running Locally
 
-You'll need to install `SDL2` and `SDL2 Image`
+You'll need to install `SDL2`, `SDL2 Image` and `SDL2 Net`
 
 ``` shell
-brew install sdl2 sdl2_image
+brew install sdl2 sdl2_image sdl2_net
 ```
 
 Then, set up the 32Blit Makefile from the root of the repository with the following commands:
