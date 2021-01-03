@@ -43,7 +43,7 @@ struct HandlerInfo {
   char type[5];
 };
 
-std::vector<GameInfo> game_list;
+std::list<GameInfo> game_list;
 
 std::list<HandlerInfo> handlers; // flashed games that can "launch" files
 
