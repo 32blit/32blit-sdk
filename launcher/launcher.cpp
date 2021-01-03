@@ -38,6 +38,11 @@ BlitGameMetadata selected_game_metadata;
 
 SpriteSheet *spritesheet;
 
+AutoRepeat ar_button_up;
+AutoRepeat ar_button_down;
+AutoRepeat ar_button_left(0, 0);
+AutoRepeat ar_button_right(0, 0);
+
 int calc_num_blocks(uint32_t size) {
   return (size - 1) / qspi_flash_sector_size + 1;
 }
@@ -408,47 +413,10 @@ void update(uint32_t time) {
   bool button_a = buttons.released & Button::A;
   bool button_x = buttons.pressed & Button::X;
   bool button_y = buttons.pressed & Button::Y;
-
-  static uint16_t button_repeat = 150;
-  static uint32_t last_repeat = 0;
-  static uint32_t hold_time = 0;
-
-  static bool last_button_up = false;
-  static bool last_button_down = false;
-  static bool last_button_left = false;
-  static bool last_button_right = false;
-
-  bool current_button_up = (buttons.state & Button::DPAD_UP) || joystick.y < -0.2f;
-  bool current_button_down = (buttons.state & Button::DPAD_DOWN) || joystick.y > 0.2f;
-  bool current_button_left = (buttons.state & Button::DPAD_LEFT) || joystick.x < -0.5f;
-  bool current_button_right = (buttons.state & Button::DPAD_RIGHT) || joystick.x > 0.5f;
-
-  bool button_up = current_button_up & !last_button_up;
-  bool button_down = current_button_down & !last_button_down;
-  bool button_left  = current_button_left & !last_button_left;
-  bool button_right = current_button_right & !last_button_right;
-
-  last_button_up = current_button_up;
-  last_button_down = current_button_down;
-
-  // Tight ramping auto-repeat for up/down on joystick or d-pad
-  if (current_button_up || current_button_down) {
-    hold_time++;
-    // if(button_repeat > 10) button_repeat--; // Ramping
-    if(hold_time > 50) button_repeat = 10; // Jump to fast mode when held
-    if(hold_time - last_repeat > button_repeat) {
-      last_button_up = false;
-      last_button_down = false;
-      last_repeat = hold_time;
-    }
-  } else {
-    hold_time = 0;
-    last_repeat = 0;
-    button_repeat = 150;
-  }
-
-  last_button_left = current_button_left;
-  last_button_right = current_button_right;
+  bool button_up = ar_button_up.next(time, buttons.state & Button::DPAD_UP || joystick.y < -0.2f);
+  bool button_down = ar_button_down.next(time, buttons.state & Button::DPAD_DOWN || joystick.y > 0.2f);
+  bool button_left = ar_button_left.next(time, buttons.state & Button::DPAD_LEFT || joystick.x < -0.5f);
+  bool button_right = ar_button_right.next(time, buttons.state & Button::DPAD_RIGHT || joystick.x > 0.5f);
 
   int total_items = (int)game_list.size();
 
