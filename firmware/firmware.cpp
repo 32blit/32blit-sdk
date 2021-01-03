@@ -891,7 +891,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                     erase_qspi_flash(flash_start_offset / qspi_flash_sector_size, m_uFilelen);
 
                     char buf[300];
-                    snprintf(buf, 300, "Saving %s to SD flash...", m_sFilename);
+                    snprintf(buf, 300, "Saving %s to flash...", m_sFilename);
                     progress.show(buf, m_uFilelen);
                   }
 
