@@ -32,10 +32,10 @@ CDCEraseHandler cdc_erase_handler;
 extern USBManager g_usbManager;
 
 struct GameInfo {
-  std::string title, author;
-  uint32_t size, checksum = 0;
+  char title[25], author[17];
+  uint32_t size = 0, checksum = 0;
 
-  uint32_t offset;
+  uint32_t offset = ~0;
 };
 
 struct HandlerInfo {
@@ -43,7 +43,7 @@ struct HandlerInfo {
   char type[5];
 };
 
-std::vector<GameInfo> game_list;
+std::list<GameInfo> game_list;
 
 std::list<HandlerInfo> handlers; // flashed games that can "launch" files
 
@@ -61,41 +61,32 @@ FIL file;
 Dialog dialog;
 
 void scan_flash();
-uint32_t flash_from_sd_to_qspi_flash(const char *filename);
+uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset);
 
 // metadata
 
-bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata) {
-
-  BlitGameHeader header;
-
-  if(qspi_read_buffer(offset, reinterpret_cast<uint8_t *>(&header), sizeof(header)) != QSPI_OK)
-    return false;
-
-  offset += header.end - 0x90000000;
-
-  // out of bounds
-  if(offset >= 0x2000000)
-    return false;
+bool parse_flash_metadata(uint32_t offset, GameInfo &info) {
+  auto meta_offset = offset + info.size;
+  auto game_offset = offset;
 
   uint8_t buf[10];
-  if(qspi_read_buffer(offset, buf, 10) != QSPI_OK)
+  if(qspi_read_buffer(meta_offset, buf, 10) != QSPI_OK)
     return false;
 
   if(memcmp(buf, "BLITMETA", 8) != 0)
     return false;
 
   RawMetadata raw_meta;
-  if(qspi_read_buffer(offset + 10, reinterpret_cast<uint8_t *>(&raw_meta), sizeof(RawMetadata)) != QSPI_OK) {
+  if(qspi_read_buffer(meta_offset + 10, reinterpret_cast<uint8_t *>(&raw_meta), sizeof(RawMetadata)) != QSPI_OK) {
     return false;
   }
 
-  metadata.length = *reinterpret_cast<uint16_t *>(buf + 8);
-  metadata.crc32 = raw_meta.crc32;
-  metadata.title = raw_meta.title;
-  metadata.author = raw_meta.author;
+  info.size += *reinterpret_cast<uint16_t *>(buf + 8) + 10;
+  info.checksum = raw_meta.crc32;
+  memcpy(info.title, raw_meta.title, sizeof(info.title));
+  memcpy(info.author, raw_meta.author, sizeof(info.author));
 
-  offset += sizeof(RawMetadata) + 10;
+  offset = meta_offset + sizeof(RawMetadata) + 10;
 
   if(qspi_read_buffer(offset, buf, 8) != QSPI_OK)
     return true;
@@ -108,25 +99,27 @@ bool parse_flash_metadata(uint32_t offset, BlitGameMetadata &metadata) {
   if(qspi_read_buffer(offset + 8, reinterpret_cast<uint8_t *>(&type_meta), sizeof(RawTypeMetadata)) != QSPI_OK)
     return false;
 
-  metadata.category = type_meta.category;
-
   offset += 8 + sizeof(RawTypeMetadata);
-  metadata.filetypes.resize(type_meta.num_filetypes);
+
+  // register handler
+  HandlerInfo handler;
+  handler.offset = game_offset;
+  handler.meta_offset = meta_offset;
+  handler.type[4] = 0;
+
   for(int i = 0; i < type_meta.num_filetypes; i++) {
-    qspi_read_buffer(offset, buf, 5);
+    qspi_read_buffer(offset, (uint8_t *)handler.type, 5);
     offset += 5;
-    metadata.filetypes[i] = (char *)buf;
+    handlers.push_back(handler);
   }
 
   return true;
 }
 
-bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata) {
-  FIL fh;
-  f_open(&fh, filename.c_str(), FA_READ);
-
+bool parse_file_metadata(FIL &fh, GameInfo &info) {
   BlitGameHeader header;
   UINT bytes_read;
+  f_lseek(&fh, 0);
   f_read(&fh, &header, sizeof(header), &bytes_read);
 
   // skip relocation data
@@ -155,17 +148,15 @@ bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata
       RawMetadata raw_meta;
       f_read(&fh, &raw_meta, sizeof(RawMetadata), &bytes_read);
 
-      metadata.length = *reinterpret_cast<uint16_t *>(buf + 8);
-      metadata.crc32 = raw_meta.crc32;
-      metadata.title = raw_meta.title;
-      metadata.author = raw_meta.author;
+      info.size += *reinterpret_cast<uint16_t *>(buf + 8) + 10;
+      info.checksum = raw_meta.crc32;
+      memcpy(info.title, raw_meta.title, sizeof(info.title));
+      memcpy(info.author, raw_meta.author, sizeof(info.author));
 
-      f_close(&fh);
       return true;
     }
   }
 
-  f_close(&fh);
   return false;
 }
 
@@ -238,7 +229,6 @@ void scan_flash() {
   free_space.clear();
   handlers.clear();
 
-  BlitGameMetadata meta;
   GameInfo game;
   uint32_t free_start = 0xFFFFFFFF;
 
@@ -267,24 +257,9 @@ void scan_flash() {
     game.size = header.end - qspi_flash_address;
 
     // check for valid metadata
-    if(parse_flash_metadata(offset, meta)) {
-      game.title = meta.title;
-      game.author = meta.author;
-      game.size += meta.length + 10;
-      game.checksum = meta.crc32;
-
-      if(meta.title == "Launcher")
+    if(parse_flash_metadata(offset, game)) {
+      if(strcmp(game.title, "Launcher") == 0)
         launcher_offset = offset;
-
-      // add to handler list
-      HandlerInfo handler;
-      handler.offset = offset;
-      handler.meta_offset = offset + header.end - qspi_flash_address;
-      handler.type[4] = 0;
-      for(auto &type : meta.filetypes) {
-        strncpy(handler.type, type.c_str(), 4);
-        handlers.push_back(handler);
-      }
     }
 
     game_list.push_back(game);
@@ -317,10 +292,9 @@ bool launch_game_from_sd(const char *path) {
     blit_disable_user_code(); // assume user running
   }
 
-  uint32_t offset = 0xFFFFFFFF;
+  uint32_t launch_offset = 0xFFFFFFFF;
+  uint32_t flash_offset = launch_offset;
   persist.launch_path[0] = 0;
-
-  BlitGameMetadata meta;
 
   // get the extension (assume there is one)
   std::string_view sv(path);
@@ -332,32 +306,68 @@ bool launch_game_from_sd(const char *path) {
     // find the handler
     for(auto &handler : handlers) {
       if(handler.type == ext) {
-        offset = handler.offset;
+        launch_offset = handler.offset;
         break;
       }
     }
 
-    if(offset == 0xFFFFFFFF)
+    if(launch_offset == 0xFFFFFFFF)
       return false;
 
     // set the path to the file to launch
     strncpy(persist.launch_path, path, sizeof(persist.launch_path));
 
-  } else if(parse_file_metadata(path, meta)) {
+    blit_switch_execution(launch_offset, true);
+    return true;
+
+  }
+
+  // .blit file, install/launch
+
+  FIL file;
+  FRESULT res = f_open(&file, path, FA_READ);
+  if(res != FR_OK)
+    return false;
+
+  // get size
+  // this is a little duplicated...
+  FSIZE_t bytes_total = f_size(&file);
+  char buf[8];
+  UINT read;
+  f_read(&file, buf, 8, &read);
+  if(memcmp(buf, "RELO", 4) == 0) {
+    auto num_relocs = *(uint32_t *)(buf + 4);
+    bytes_total -= num_relocs * 4 + 8;
+  }
+
+  GameInfo meta;
+  if(parse_file_metadata(file, meta)) {
+
     for(auto &flash_game : game_list) {
       // if a game with the same name/crc is already installed, launch that one instead of flashing it again
-      if(flash_game.checksum == meta.crc32 && flash_game.title == meta.title) {
-        offset = flash_game.offset;
+      if(flash_game.checksum == meta.checksum && strcmp(flash_game.title, meta.title) == 0) {
+        launch_offset = flash_game.offset;
         break;
+      } else if(strcmp(flash_game.title, meta.title) == 0 && strcmp(flash_game.author, meta.author) == 0) {
+        // same game, different version
+        if(calc_num_blocks(flash_game.size) <= calc_num_blocks(bytes_total)) {
+          flash_offset = flash_game.offset;
+          break;
+        } else {
+          // new version is bigger, erase old one
+          erase_qspi_flash(flash_game.offset / qspi_flash_sector_size, flash_game.size);
+        }
       }
     }
   }
 
-  if(offset == 0xFFFFFFFF)
-    offset = flash_from_sd_to_qspi_flash(path);
+  if(launch_offset == 0xFFFFFFFF)
+    launch_offset = flash_from_sd_to_qspi_flash(file, flash_offset);
 
-  if(offset != 0xFFFFFFFF) {
-    blit_switch_execution(offset, true);
+  f_close(&file);
+
+  if(launch_offset != 0xFFFFFFFF) {
+    blit_switch_execution(launch_offset, true);
     return true;
   }
 
@@ -458,16 +468,9 @@ uint32_t get_flash_offset_for_file(uint32_t file_size) {
   return 0;
 }
 
-// Flash(): Flash a file from the SDCard to external flash
-uint32_t flash_from_sd_to_qspi_flash(const char *filename)
-{
-  BlitGameMetadata meta;
-  bool has_meta = parse_file_metadata(filename, meta);
-
-  FIL file;
-  FRESULT res = f_open(&file, filename, FA_READ);
-  if(res != FR_OK)
-    return false;
+// Flash a file from the SDCard to external flash
+uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
+  FRESULT res;
 
   // get file length
   FSIZE_t bytes_total = f_size(&file);
@@ -476,14 +479,9 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
 
   size_t offset = 0;
 
-  if(!bytes_total)
-  {
-    f_close(&file);
-    return false;
-  }
-
   // check for prepended relocation info
   char buf[4];
+  f_lseek(&file, 0);
   f_read(&file, buf, 4, &bytes_read);
   std::vector<uint32_t> relocation_offsets;
   size_t cur_reloc = 0;
@@ -510,32 +508,14 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
   // check header
   auto off = f_tell(&file);
   BlitGameHeader header;
-  if(f_read(&file, (void *)&header, sizeof(header), &bytes_read) != FR_OK) {
-    f_close(&file);
+  if(f_read(&file, (void *)&header, sizeof(header), &bytes_read) != FR_OK)
     return false;
-  }
-  f_lseek(&file, off);
 
-  uint32_t flash_offset = 0xFFFFFFFF;
+  f_lseek(&file, off);
 
   if(!has_relocs)
     flash_offset = 0;
-  // check for other versions of the same thing
-  else if(has_meta) {
-    for(auto &game : game_list) {
-      if(game.title == meta.title && game.author == meta.author) {
-        if(calc_num_blocks(game.size) <= calc_num_blocks(bytes_total)) {
-          flash_offset = game.offset;
-          break;
-        } else {
-          // new version is bigger, erase old one
-          erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
-        }
-      }
-    }
-  }
-
-  if(flash_offset == 0xFFFFFFFF)
+  else if(flash_offset == 0xFFFFFFFF)
     flash_offset = get_flash_offset_for_file(bytes_total);
 
   // erase the sectors needed to write the image
@@ -583,8 +563,6 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
 
     progress.update(bytes_flashed);
   }
-
-  f_close(&file);
 
   progress.hide();
 
@@ -672,7 +650,7 @@ CDCCommandHandler::StreamResult CDCEraseHandler::StreamData(CDCDataStream &dataS
 // StreamInit() Initialise state machine
 bool FlashLoader::StreamInit(CDCFourCC uCommand)
 {
-  //printf("streamInit()\n\r");
+  //debugf("streamInit()\n\r");
 
   bool bNeedStream = true;
   switch(uCommand)
@@ -769,7 +747,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
         }
         else
         {
-          printf("Failed to read filename\n\r");
+          debugf("Failed to read filename\n\r");
           result =srError;
         }
       break;
@@ -797,11 +775,13 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                     FRESULT res = f_open(&file, m_sFilename, FA_CREATE_ALWAYS | FA_WRITE);
                     if(res)
                     {
-                      printf("Failed to create file (%s)\n\r", m_sFilename);
+                      debugf("Failed to create file (%s)\n\r", m_sFilename);
                       result = srError;
+                    } else {
+                      char buf[300];
+                      snprintf(buf, 300, "Saving %s to SD card...", m_sFilename);
+                      progress.show(buf, m_uFilelen);
                     }
-                    else
-                      progress.show("Saving " + std::string(m_sFilename) +  " to SD card...", m_uFilelen);
                   }
                   break;
 
@@ -815,7 +795,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
               }
               else
               {
-                printf("Failed to parse filelen\n\r");
+                debugf("Failed to parse filelen\n\r");
                 result =srError;
               }
             }
@@ -823,7 +803,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
         }
         else
         {
-          printf("Failed to read filelen\n\r");
+          debugf("Failed to read filelen\n\r");
           result =srError;
         }
       break;
@@ -837,7 +817,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
         } else {
           while(result == srContinue && dataStream.Get(word)) {
             if(m_uParseIndex == 0 && word != 0x4F4C4552 /*RELO*/) {
-              printf("Missing relocation header\n");
+              debugf("Missing relocation header\n");
               result = srError;
             } else if(m_uParseIndex == 1) {
               num_relocs = word;
@@ -882,7 +862,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   // save data
                   if(!SaveData(buffer, uWriteLen))
                   {
-                    printf("Failed to save to SDCard\n\r");
+                    debugf("Failed to save to SDCard\n\r");
                     result = srError;
                   }
 
@@ -909,7 +889,10 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
 
                     // erase
                     erase_qspi_flash(flash_start_offset / qspi_flash_sector_size, m_uFilelen);
-                    progress.show("Saving " + std::string(m_sFilename) +  " to flash...", m_uFilelen);
+
+                    char buf[300];
+                    snprintf(buf, 300, "Saving %s to flash...", m_sFilename);
+                    progress.show(buf, m_uFilelen);
                   }
 
                   // relocation patching
@@ -927,7 +910,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   // save data
                   if(!FlashData(flash_start_offset, uPage*PAGE_SIZE, buffer, uWriteLen))
                   {
-                    printf("Failed to write to flash\n\r");
+                    debugf("Failed to write to flash\n\r");
                     result = srError;
                   }
 
@@ -939,10 +922,14 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                       result = srFinish;
 
                       // clean up old version(s)
-                      BlitGameMetadata meta;
+                      BlitGameHeader header;
+                      read_flash_game_header(flash_start_offset, header);
+
+                      GameInfo meta;
+                      meta.size = header.end - qspi_flash_address;
                       if(parse_flash_metadata(flash_start_offset, meta)) {
                         for(auto &game : game_list) {
-                          if(game.title == meta.title && game.author == meta.author && game.offset != flash_start_offset)
+                          if(strcmp(game.title, meta.title) == 0 && strcmp(game.author, meta.author) == 0 && game.offset != flash_start_offset)
                             erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
                         }
                       }

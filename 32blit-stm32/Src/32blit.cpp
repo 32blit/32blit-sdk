@@ -27,6 +27,7 @@
 #include "quadspi.h"
 #include "usbd_core.h"
 #include "USBManager.h"
+#include "usbd_cdc_if.h"
 
 #include "32blit.hpp"
 #include "engine/api_private.hpp"
@@ -92,8 +93,25 @@ static void init_api_shared() {
   api.message_received = nullptr;
 }
 
+bool g_bConsumerConnected = true;
 void blit_debug(const char *message) {
-	printf("%s", message);
+  if(g_usbManager.GetType() == USBManager::usbtCDC)
+  {
+    // The mad STM CDC implementation relies on a USB packet being received to set TxState
+    // Also calls to CDC_Transmit_HS do not buffer the data so we have to rely on TxState before sending new data.
+    // So if there is no consumer running at the other end we will hang, so we need to check for this
+    if(g_bConsumerConnected)
+    {
+      uint32_t tickstart = HAL_GetTick();
+      while(g_bConsumerConnected && CDC_Transmit_HS((uint8_t *)message, strlen(message)) == USBD_BUSY)
+        g_bConsumerConnected = !(HAL_GetTick() > (tickstart + 2));
+    }
+    else
+    {
+      USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceHS.pClassData;
+      g_bConsumerConnected = !(hcdc->TxState != 0);
+    }
+  }
 }
 
 void blit_exit(bool is_error) {
