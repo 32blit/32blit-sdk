@@ -33,9 +33,9 @@ extern USBManager g_usbManager;
 
 struct GameInfo {
   char title[25], author[17];
-  uint32_t size, checksum = 0;
+  uint32_t size = 0, checksum = 0;
 
-  uint32_t offset;
+  uint32_t offset = ~0;
 };
 
 struct HandlerInfo {
@@ -116,7 +116,7 @@ bool parse_flash_metadata(uint32_t offset, GameInfo &info) {
   return true;
 }
 
-bool parse_file_metadata(FIL &fh, BlitGameMetadata &metadata) {
+bool parse_file_metadata(FIL &fh, GameInfo &info) {
   BlitGameHeader header;
   UINT bytes_read;
   f_lseek(&fh, 0);
@@ -148,10 +148,10 @@ bool parse_file_metadata(FIL &fh, BlitGameMetadata &metadata) {
       RawMetadata raw_meta;
       f_read(&fh, &raw_meta, sizeof(RawMetadata), &bytes_read);
 
-      metadata.length = *reinterpret_cast<uint16_t *>(buf + 8);
-      metadata.crc32 = raw_meta.crc32;
-      metadata.title = raw_meta.title;
-      metadata.author = raw_meta.author;
+      info.size += *reinterpret_cast<uint16_t *>(buf + 8) + 10;
+      info.checksum = raw_meta.crc32;
+      memcpy(info.title, raw_meta.title, sizeof(info.title));
+      memcpy(info.author, raw_meta.author, sizeof(info.author));
 
       return true;
     }
@@ -296,8 +296,6 @@ bool launch_game_from_sd(const char *path) {
   uint32_t flash_offset = launch_offset;
   persist.launch_path[0] = 0;
 
-  BlitGameMetadata meta;
-
   // get the extension (assume there is one)
   std::string_view sv(path);
   auto ext = std::string(sv.substr(sv.find_last_of('.') + 1));
@@ -342,14 +340,15 @@ bool launch_game_from_sd(const char *path) {
     bytes_total -= num_relocs * 4 + 8;
   }
 
+  GameInfo meta;
   if(parse_file_metadata(file, meta)) {
 
     for(auto &flash_game : game_list) {
       // if a game with the same name/crc is already installed, launch that one instead of flashing it again
-      if(flash_game.checksum == meta.crc32 && flash_game.title == meta.title) {
+      if(flash_game.checksum == meta.checksum && strcmp(flash_game.title, meta.title) == 0) {
         launch_offset = flash_game.offset;
         break;
-      } else if(flash_game.title == meta.title && flash_game.author == meta.author) {
+      } else if(strcmp(flash_game.title, meta.title) == 0 && strcmp(flash_game.author, meta.author) == 0) {
         // same game, different version
         if(calc_num_blocks(flash_game.size) <= calc_num_blocks(bytes_total)) {
           flash_offset = flash_game.offset;
