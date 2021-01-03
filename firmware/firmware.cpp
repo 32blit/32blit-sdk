@@ -61,7 +61,7 @@ FIL file;
 Dialog dialog;
 
 void scan_flash();
-uint32_t flash_from_sd_to_qspi_flash(const char *filename, uint32_t flash_offset);
+uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset);
 
 // metadata
 
@@ -116,12 +116,10 @@ bool parse_flash_metadata(uint32_t offset, GameInfo &info) {
   return true;
 }
 
-bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata) {
-  FIL fh;
-  f_open(&fh, filename.c_str(), FA_READ);
-
+bool parse_file_metadata(FIL &fh, BlitGameMetadata &metadata) {
   BlitGameHeader header;
   UINT bytes_read;
+  f_lseek(&fh, 0);
   f_read(&fh, &header, sizeof(header), &bytes_read);
 
   // skip relocation data
@@ -155,12 +153,10 @@ bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata
       metadata.title = raw_meta.title;
       metadata.author = raw_meta.author;
 
-      f_close(&fh);
       return true;
     }
   }
 
-  f_close(&fh);
   return false;
 }
 
@@ -323,13 +319,30 @@ bool launch_game_from_sd(const char *path) {
     // set the path to the file to launch
     strncpy(persist.launch_path, path, sizeof(persist.launch_path));
 
-  } else if(parse_file_metadata(path, meta)) {
+    blit_switch_execution(launch_offset, true);
+    return true;
 
-    // TODO: dedup
-    FIL file;
-    FRESULT res = f_open(&file, path, FA_READ);
-    FSIZE_t bytes_total = f_size(&file);
-    f_close(&file);
+  }
+
+  // .blit file, install/launch
+
+  FIL file;
+  FRESULT res = f_open(&file, path, FA_READ);
+  if(res != FR_OK)
+    return false;
+
+  // get size
+  // this is a little duplicated...
+  FSIZE_t bytes_total = f_size(&file);
+  char buf[8];
+  UINT read;
+  f_read(&file, buf, 8, &read);
+  if(memcmp(buf, "RELO", 4) == 0) {
+    auto num_relocs = *(uint32_t *)(buf + 4);
+    bytes_total -= num_relocs * 4 + 8;
+  }
+
+  if(parse_file_metadata(file, meta)) {
 
     for(auto &flash_game : game_list) {
       // if a game with the same name/crc is already installed, launch that one instead of flashing it again
@@ -350,7 +363,9 @@ bool launch_game_from_sd(const char *path) {
   }
 
   if(launch_offset == 0xFFFFFFFF)
-    launch_offset = flash_from_sd_to_qspi_flash(path, flash_offset);
+    launch_offset = flash_from_sd_to_qspi_flash(file, flash_offset);
+
+  f_close(&file);
 
   if(launch_offset != 0xFFFFFFFF) {
     blit_switch_execution(launch_offset, true);
@@ -454,12 +469,9 @@ uint32_t get_flash_offset_for_file(uint32_t file_size) {
   return 0;
 }
 
-// Flash(): Flash a file from the SDCard to external flash
-uint32_t flash_from_sd_to_qspi_flash(const char *filename, uint32_t flash_offset) {
-  FIL file;
-  FRESULT res = f_open(&file, filename, FA_READ);
-  if(res != FR_OK)
-    return false;
+// Flash a file from the SDCard to external flash
+uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
+  FRESULT res;
 
   // get file length
   FSIZE_t bytes_total = f_size(&file);
@@ -468,13 +480,9 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename, uint32_t flash_offset
 
   size_t offset = 0;
 
-  if(!bytes_total) {
-    f_close(&file);
-    return false;
-  }
-
   // check for prepended relocation info
   char buf[4];
+  f_lseek(&file, 0);
   f_read(&file, buf, 4, &bytes_read);
   std::vector<uint32_t> relocation_offsets;
   size_t cur_reloc = 0;
@@ -501,10 +509,9 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename, uint32_t flash_offset
   // check header
   auto off = f_tell(&file);
   BlitGameHeader header;
-  if(f_read(&file, (void *)&header, sizeof(header), &bytes_read) != FR_OK) {
-    f_close(&file);
+  if(f_read(&file, (void *)&header, sizeof(header), &bytes_read) != FR_OK)
     return false;
-  }
+
   f_lseek(&file, off);
 
   if(!has_relocs)
@@ -557,8 +564,6 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename, uint32_t flash_offset
 
     progress.update(bytes_flashed);
   }
-
-  f_close(&file);
 
   progress.hide();
 
