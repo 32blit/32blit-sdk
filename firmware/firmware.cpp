@@ -650,7 +650,7 @@ CDCCommandHandler::StreamResult CDCEraseHandler::StreamData(CDCDataStream &dataS
 // StreamInit() Initialise state machine
 bool FlashLoader::StreamInit(CDCFourCC uCommand)
 {
-  //printf("streamInit()\n\r");
+  //debugf("streamInit()\n\r");
 
   bool bNeedStream = true;
   switch(uCommand)
@@ -747,7 +747,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
         }
         else
         {
-          printf("Failed to read filename\n\r");
+          debugf("Failed to read filename\n\r");
           result =srError;
         }
       break;
@@ -775,7 +775,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                     FRESULT res = f_open(&file, m_sFilename, FA_CREATE_ALWAYS | FA_WRITE);
                     if(res)
                     {
-                      printf("Failed to create file (%s)\n\r", m_sFilename);
+                      debugf("Failed to create file (%s)\n\r", m_sFilename);
                       result = srError;
                     }
                     else
@@ -793,7 +793,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
               }
               else
               {
-                printf("Failed to parse filelen\n\r");
+                debugf("Failed to parse filelen\n\r");
                 result =srError;
               }
             }
@@ -801,7 +801,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
         }
         else
         {
-          printf("Failed to read filelen\n\r");
+          debugf("Failed to read filelen\n\r");
           result =srError;
         }
       break;
@@ -815,7 +815,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
         } else {
           while(result == srContinue && dataStream.Get(word)) {
             if(m_uParseIndex == 0 && word != 0x4F4C4552 /*RELO*/) {
-              printf("Missing relocation header\n");
+              debugf("Missing relocation header\n");
               result = srError;
             } else if(m_uParseIndex == 1) {
               num_relocs = word;
@@ -860,7 +860,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   // save data
                   if(!SaveData(buffer, uWriteLen))
                   {
-                    printf("Failed to save to SDCard\n\r");
+                    debugf("Failed to save to SDCard\n\r");
                     result = srError;
                   }
 
@@ -905,7 +905,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   // save data
                   if(!FlashData(flash_start_offset, uPage*PAGE_SIZE, buffer, uWriteLen))
                   {
-                    printf("Failed to write to flash\n\r");
+                    debugf("Failed to write to flash\n\r");
                     result = srError;
                   }
 
