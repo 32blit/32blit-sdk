@@ -98,7 +98,6 @@ list(APPEND SOURCES
 	Src/SystemMenu/connectivity_menu.cpp
 	Src/SystemMenu/about_menu.cpp
 	Src/32blit.cpp
-	Src/CDCLogging.c
 	Src/CDCDataStream.cpp
 	Src/CDCCommandStream.cpp
 	Src/CDCCommandHandler.cpp
@@ -117,7 +116,6 @@ set_source_files_properties(
 	Src/usbd_desc.c
 	Src/usbd_cdc_if.c
 	Src/usbd_storage_if.c
-	Src/CDCLogging.c
 
 	PROPERTIES LANGUAGE CXX
 )
