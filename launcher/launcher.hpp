@@ -16,7 +16,15 @@ enum class Screen {
   credits
 };
 
+enum class GameType {
+  game,
+  file,
+  screenshot
+};
+
 struct GameInfo {
+  GameType type;
+
   std::string title;
   uint32_t size, checksum = 0;
 
