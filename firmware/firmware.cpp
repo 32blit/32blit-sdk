@@ -32,7 +32,7 @@ CDCEraseHandler cdc_erase_handler;
 extern USBManager g_usbManager;
 
 struct GameInfo {
-  std::string title, author;
+  char title[25], author[17];
   uint32_t size, checksum = 0;
 
   uint32_t offset;
@@ -83,8 +83,8 @@ bool parse_flash_metadata(uint32_t offset, GameInfo &info) {
 
   info.size += *reinterpret_cast<uint16_t *>(buf + 8) + 10;
   info.checksum = raw_meta.crc32;
-  info.title = raw_meta.title;
-  info.author = raw_meta.author;
+  memcpy(info.title, raw_meta.title, sizeof(info.title));
+  memcpy(info.author, raw_meta.author, sizeof(info.author));
 
   offset = meta_offset + sizeof(RawMetadata) + 10;
 
@@ -262,7 +262,7 @@ void scan_flash() {
 
     // check for valid metadata
     if(parse_flash_metadata(offset, game)) {
-      if(game.title == "Launcher")
+      if(strcmp(game.title, "Launcher") == 0)
         launcher_offset = offset;
     }
 
@@ -925,7 +925,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                       meta.size = header.end - qspi_flash_address;
                       if(parse_flash_metadata(flash_start_offset, meta)) {
                         for(auto &game : game_list) {
-                          if(game.title == meta.title && game.author == meta.author && game.offset != flash_start_offset)
+                          if(strcmp(game.title, meta.title) == 0 && strcmp(game.author, meta.author) == 0 && game.offset != flash_start_offset)
                             erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
                         }
                       }
