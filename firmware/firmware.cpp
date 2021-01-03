@@ -777,9 +777,11 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                     {
                       debugf("Failed to create file (%s)\n\r", m_sFilename);
                       result = srError;
+                    } else {
+                      char buf[300];
+                      snprintf(buf, 300, "Saving %s to SD card...", m_sFilename);
+                      progress.show(buf, m_uFilelen);
                     }
-                    else
-                      progress.show("Saving " + std::string(m_sFilename) +  " to SD card...", m_uFilelen);
                   }
                   break;
 
@@ -887,7 +889,10 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
 
                     // erase
                     erase_qspi_flash(flash_start_offset / qspi_flash_sector_size, m_uFilelen);
-                    progress.show("Saving " + std::string(m_sFilename) +  " to flash...", m_uFilelen);
+
+                    char buf[300];
+                    snprintf(buf, 300, "Saving %s to SD flash...", m_sFilename);
+                    progress.show(buf, m_uFilelen);
                   }
 
                   // relocation patching
