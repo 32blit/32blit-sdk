@@ -61,7 +61,7 @@ FIL file;
 Dialog dialog;
 
 void scan_flash();
-uint32_t flash_from_sd_to_qspi_flash(const char *filename);
+uint32_t flash_from_sd_to_qspi_flash(const char *filename, uint32_t flash_offset);
 
 // metadata
 
@@ -296,7 +296,8 @@ bool launch_game_from_sd(const char *path) {
     blit_disable_user_code(); // assume user running
   }
 
-  uint32_t offset = 0xFFFFFFFF;
+  uint32_t launch_offset = 0xFFFFFFFF;
+  uint32_t flash_offset = launch_offset;
   persist.launch_path[0] = 0;
 
   BlitGameMetadata meta;
@@ -311,32 +312,48 @@ bool launch_game_from_sd(const char *path) {
     // find the handler
     for(auto &handler : handlers) {
       if(handler.type == ext) {
-        offset = handler.offset;
+        launch_offset = handler.offset;
         break;
       }
     }
 
-    if(offset == 0xFFFFFFFF)
+    if(launch_offset == 0xFFFFFFFF)
       return false;
 
     // set the path to the file to launch
     strncpy(persist.launch_path, path, sizeof(persist.launch_path));
 
   } else if(parse_file_metadata(path, meta)) {
+
+    // TODO: dedup
+    FIL file;
+    FRESULT res = f_open(&file, path, FA_READ);
+    FSIZE_t bytes_total = f_size(&file);
+    f_close(&file);
+
     for(auto &flash_game : game_list) {
       // if a game with the same name/crc is already installed, launch that one instead of flashing it again
       if(flash_game.checksum == meta.crc32 && flash_game.title == meta.title) {
-        offset = flash_game.offset;
+        launch_offset = flash_game.offset;
         break;
+      } else if(flash_game.title == meta.title && flash_game.author == meta.author) {
+        // same game, different version
+        if(calc_num_blocks(flash_game.size) <= calc_num_blocks(bytes_total)) {
+          flash_offset = flash_game.offset;
+          break;
+        } else {
+          // new version is bigger, erase old one
+          erase_qspi_flash(flash_game.offset / qspi_flash_sector_size, flash_game.size);
+        }
       }
     }
   }
 
-  if(offset == 0xFFFFFFFF)
-    offset = flash_from_sd_to_qspi_flash(path);
+  if(launch_offset == 0xFFFFFFFF)
+    launch_offset = flash_from_sd_to_qspi_flash(path, flash_offset);
 
-  if(offset != 0xFFFFFFFF) {
-    blit_switch_execution(offset, true);
+  if(launch_offset != 0xFFFFFFFF) {
+    blit_switch_execution(launch_offset, true);
     return true;
   }
 
@@ -438,11 +455,7 @@ uint32_t get_flash_offset_for_file(uint32_t file_size) {
 }
 
 // Flash(): Flash a file from the SDCard to external flash
-uint32_t flash_from_sd_to_qspi_flash(const char *filename)
-{
-  BlitGameMetadata meta;
-  bool has_meta = parse_file_metadata(filename, meta);
-
+uint32_t flash_from_sd_to_qspi_flash(const char *filename, uint32_t flash_offset) {
   FIL file;
   FRESULT res = f_open(&file, filename, FA_READ);
   if(res != FR_OK)
@@ -455,8 +468,7 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
 
   size_t offset = 0;
 
-  if(!bytes_total)
-  {
+  if(!bytes_total) {
     f_close(&file);
     return false;
   }
@@ -495,26 +507,9 @@ uint32_t flash_from_sd_to_qspi_flash(const char *filename)
   }
   f_lseek(&file, off);
 
-  uint32_t flash_offset = 0xFFFFFFFF;
-
   if(!has_relocs)
     flash_offset = 0;
-  // check for other versions of the same thing
-  else if(has_meta) {
-    for(auto &game : game_list) {
-      if(game.title == meta.title && game.author == meta.author) {
-        if(calc_num_blocks(game.size) <= calc_num_blocks(bytes_total)) {
-          flash_offset = game.offset;
-          break;
-        } else {
-          // new version is bigger, erase old one
-          erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
-        }
-      }
-    }
-  }
-
-  if(flash_offset == 0xFFFFFFFF)
+  else if(flash_offset == 0xFFFFFFFF)
     flash_offset = get_flash_offset_for_file(bytes_total);
 
   // erase the sectors needed to write the image
