@@ -153,7 +153,7 @@ namespace blit {
     head.data_offset = sizeof(head) + palette_size * 4;
 
     head.w = bounds.w;
-    head.h = bounds.h;
+    head.h = -bounds.h;
     head.bpp = pixel_stride * 8;
     head.image_size = data_size;
 
@@ -170,8 +170,7 @@ namespace blit {
     }
 
     for(int y = 0; y < bounds.h; y++) {
-        // flip y
-        auto in_offset = (bounds.h - 1 - y) * row_stride;
+        auto in_offset = y * row_stride;
 
         if(pixel_stride == 1)
           file.write(offset, row_stride, reinterpret_cast<char *>(data + in_offset));
