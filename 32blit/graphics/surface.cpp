@@ -564,7 +564,7 @@ namespace blit {
     file.read(0, sizeof(packed_image), (char *)&image);
 
     int palette_entry_count = image.palette_entry_count;
-    if(palette_entry_count == 0)
+    if(palette_entry_count == 0 && format == PixelFormat::P)
       palette_entry_count = 256;
 
     bool is_raw = image.type[6] == 'R' && image.type[7] == 'W'; // SPRITE[RW]
