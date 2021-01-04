@@ -66,9 +66,9 @@ namespace blit {
 
   /**
    * Loads a packed or raw image asset into a `Surface`
-   * 
+   *
    * \param image
-   * 
+   *
    * \return `Surface` containing loaded data or `nullptr` if the image was invalid
    */
   Surface *Surface::load(const packed_image *image) {
@@ -84,7 +84,7 @@ namespace blit {
 
   /**
    * \overload
-   * 
+   *
    * \param data pointer to an image asset
    */
   Surface *Surface::load(const uint8_t *data) {
@@ -93,7 +93,7 @@ namespace blit {
 
   /**
    * \overload
-   * 
+   *
    * \param filename string filename
    */
   Surface *Surface::load(const std::string &filename) {
@@ -112,11 +112,11 @@ namespace blit {
   /**
    * Similar to @ref load, but the resulting `Surface` points directly at the image data instead of copying it.
    * `data` should not be modified after loading, so no drawing can be done to this surface. If the image is paletted, the palette can still be modified.
-   * 
+   *
    * Only works for non-packed images.
    *
    * \param image
-   * 
+   *
    * \return `Surface` containing loaded data or `nullptr` if the image was invalid
    */
   Surface *Surface::load_read_only(const packed_image *image) {
@@ -131,7 +131,7 @@ namespace blit {
 
   /**
    * \overload
-   * 
+   *
    * \param data pointer to an image asset
    */
   Surface *Surface::load_read_only(const uint8_t *data) {
@@ -232,7 +232,7 @@ namespace blit {
 
     pixel_stride = pixel_format_stride[static_cast<uint8_t>(format)];
     row_stride = pixel_stride * bounds.w;
-    
+
     switch (format) {
     case PixelFormat::RGBA: {
       pbf = RGBA_RGBA;
@@ -263,20 +263,20 @@ namespace blit {
     uint16_t h = bounds.h;
 
     mipmaps.reserve(depth + 1);
-    
+
     Surface *src = this;
     mipmaps.push_back(src);
-    
+
     // offset the data pointer to the end
     uint8_t *mipmap_data = data + (row_stride * bounds.h);
 
     do {
       w /= 2;
-      h /= 2;      
+      h /= 2;
       Surface *dest = new Surface(mipmap_data, PixelFormat::RGBA, Size(w, h));
       mipmaps.push_back(dest);
-      
-      for (int y = 0; y < h; y++) {      
+
+      for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
           // sample the average ARGB values
           Pen *c1, *c2, *c3, *c4;
@@ -296,7 +296,7 @@ namespace blit {
           uint8_t a = (c1->a + c2->a + c3->a + c4->a) / 4;
           uint8_t r = (c1->r + c2->r + c3->r + c4->r) / 4;
           uint8_t g = (c1->g + c2->g + c3->g + c4->g) / 4;
-          uint8_t b = (c1->b + c2->b + c3->b + c4->b) / 4;          
+          uint8_t b = (c1->b + c2->b + c3->b + c4->b) / 4;
           a = 255;
 
           dest->pen = Pen(r, g, b, a);
@@ -304,7 +304,7 @@ namespace blit {
         }
       }
 
-      src = dest;    
+      src = dest;
       mipmap_data += (src->row_stride * src->bounds.h);
     } while (--depth);
   }
@@ -325,8 +325,8 @@ namespace blit {
     uint8_t left = dr.x - p.x;
     uint8_t top = dr.y - p.y;
     uint8_t right = sprite.w - (sprite.w - dr.w) + left - 1;
-    uint8_t bottom = sprite.h - (sprite.h - dr.h) + top - 1;    
-    
+    uint8_t bottom = sprite.h - (sprite.h - dr.h) + top - 1;
+
     if (t & SpriteTransform::VERTICAL) {
       top    = sprite.h - 1 - top;
       bottom = sprite.h - 1 - bottom;
@@ -342,13 +342,13 @@ namespace blit {
 
     if(t & SpriteTransform::XYSWAP)
       x_step *= sprites->bounds.w;
-      
+
     uint32_t dest_offset = offset(dr);
-    uint32_t src_offset;    
-    
+    uint32_t src_offset;
+
     uint8_t y_count = dr.h;
     uint8_t y = top;
-    do {    
+    do {
       uint8_t x_count = dr.w;
       uint8_t x = left;
 
@@ -397,11 +397,11 @@ namespace blit {
 
     float y_step = top < bottom ? scale_y : -scale_y;
     float x_step = left < right ? scale_x : -scale_x;
-    
+
     uint32_t dest_offset = offset(dr);
     uint32_t src_offset;
 
-    uint8_t y_count = dr.h;    
+    uint8_t y_count = dr.h;
     float y = top;
     do {
       uint8_t x_count = dr.w;
@@ -431,16 +431,16 @@ namespace blit {
    * \param p
    * \param hflip `true` to flip the source surface horizontally
    */
-  void Surface::blit(Surface *src, Rect r, Point p, bool hflip) {    
+  void Surface::blit(Surface *src, Rect r, Point p, bool hflip) {
     Rect dr = clip.intersection(Rect(p.x, p.y, r.w, r.h));  // clipped destination rect
 
-    if (dr.empty()) 
+    if (dr.empty())
       return; // after clipping there is nothing to draw
 
-    // offset source rect to accomodate for clipped destination rect    
+    // offset source rect to accomodate for clipped destination rect
     uint8_t l = dr.x - p.x; // top left corner
-    uint8_t t = dr.y - p.y; 
-    r.x += l; r.w -= l; r.y += t; r.h -= t;    
+    uint8_t t = dr.y - p.y;
+    r.x += l; r.w -= l; r.y += t; r.h -= t;
     r.w = dr.w; // clamp width/height
     r.h = dr.h;
 
@@ -453,14 +453,14 @@ namespace blit {
       src_direction = -1;
     }
 
-    
-    
+
+
     int32_t dest_offset = offset(dr);
     for (int32_t y = p.y; y < p.y + r.h; y++) {
       bbf(src, src_offset + src_offset_flip, this, dest_offset, r.w, src_direction);
 
       src_offset += src->bounds.w;
-      dest_offset += bounds.w;      
+      dest_offset += bounds.w;
     }
   }
 
@@ -480,7 +480,7 @@ namespace blit {
     float sx = (sr.w) / float(dr.w);
     float sy = (sr.h) / float(dr.h);
 
-    // offset source rect to accomodate for clipped destination rect    
+    // offset source rect to accomodate for clipped destination rect
     uint8_t l = cdr.x - dr.x; // top left corner
     uint8_t t = cdr.y - dr.y;
 
@@ -497,7 +497,7 @@ namespace blit {
         bbf(src, src->offset(src_x, src_y), this, offset(x, y), 1, 1);
 
         src_x += sx;
-      }      
+      }
       src_y += sy;
     }
   }
@@ -545,9 +545,9 @@ namespace blit {
     Rect dr = clip.intersection(Rect(p.x, p.y, r.w, r.h));  // clipped destination rect
 
     if (dr.empty())
-      return; // after clipping there is nothing to draw 
+      return; // after clipping there is nothing to draw
 
-    // offset source rect to accomodate for clipped destination rect    
+    // offset source rect to accomodate for clipped destination rect
     uint8_t l = dr.x - p.x; // top left corner
     uint8_t t = dr.y - p.y;
     r.x += l; r.w -= l; r.y += t; r.h -= t;
@@ -556,9 +556,9 @@ namespace blit {
 
     uint8_t *psrc = src->ptr(r.x, r.y);
     uint8_t *pdest = ptr(dr.x, dr.y);
-    
+
     for (int32_t y = 0; y < dr.h; y++) {
-      f(psrc, pdest, dr.w);      
+      f(psrc, pdest, dr.w);
 
       psrc += src->bounds.w;
       pdest += bounds.w;
