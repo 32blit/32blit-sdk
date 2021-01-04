@@ -76,7 +76,7 @@ namespace blit {
    * 
    * \param filename string filename
    */
-  Surface *Surface::load(std::string &filename) {
+  Surface *Surface::load(const std::string &filename) {
     File file;
 
     if(!file.open(filename, OpenMode::read))
