@@ -121,49 +121,79 @@ namespace blit {
   bool Surface::save(const std::string &filename) {
     File file;
 
+    auto dot = filename.find_last_of('.');
+    if(dot == std::string::npos)
+      return false;
+
+    auto ext = std::string_view(filename).substr(dot + 1);
+
+    bool is_bmp = ext == "bmp";
+    bool is_spriterw = ext == "spriterw";
+
+    if(!is_bmp && !is_spriterw)
+      return false;
+
     if(!file.open(filename, OpenMode::write))
       return false;
 
     unsigned int data_size = row_stride * bounds.h;
     unsigned int palette_size = format == PixelFormat::P ? 256 : 0;
 
-#pragma pack(push, 2)
-    struct BMPHeader {
-      char header[2]{'B', 'M'};
-      uint32_t file_size;
-      uint16_t reserved[2]{};
-      uint32_t data_offset;
+    uint32_t offset;
 
-      uint32_t info_size = 40; // BITMAPINFOHEADER size
-      int32_t w;
-      int32_t h;
-      uint16_t planes = 1;
-      uint16_t bpp;
-      uint32_t compression = 0;
-      uint32_t image_size;
-      int32_t res_x = 0;
-      int32_t res_y = 0;
-      uint32_t palette_cols = 0; // default
-      uint32_t important_cols = 0;
-    };
+    if(is_bmp) {
+#pragma pack(push, 2)
+      struct BMPHeader {
+        char header[2]{'B', 'M'};
+        uint32_t file_size;
+        uint16_t reserved[2]{};
+        uint32_t data_offset;
+
+        uint32_t info_size = 40; // BITMAPINFOHEADER size
+        int32_t w;
+        int32_t h;
+        uint16_t planes = 1;
+        uint16_t bpp;
+        uint32_t compression = 0;
+        uint32_t image_size;
+        int32_t res_x = 0;
+        int32_t res_y = 0;
+        uint32_t palette_cols = 0; // default
+        uint32_t important_cols = 0;
+      };
 #pragma pack(pop)
 
-    BMPHeader head;
-    head.file_size = sizeof(head) + palette_size * 4 + data_size;
-    head.data_offset = sizeof(head) + palette_size * 4;
+      BMPHeader head;
+      head.file_size = sizeof(head) + palette_size * 4 + data_size;
+      head.data_offset = sizeof(head) + palette_size * 4;
 
-    head.w = bounds.w;
-    head.h = -bounds.h;
-    head.bpp = pixel_stride * 8;
-    head.image_size = data_size;
+      head.w = bounds.w;
+      head.h = -bounds.h;
+      head.bpp = pixel_stride * 8;
+      head.image_size = data_size;
 
-    file.write(0, sizeof(head), reinterpret_cast<char *>(&head));
+      file.write(0, sizeof(head), reinterpret_cast<char *>(&head));
+      offset = sizeof(head);
+    } else {
+      // spriterw
+      packed_image head;
+      memcpy(head.type, "SPRITERW", 8);
+      head.byte_count = sizeof(packed_image) + data_size + palette_size * 4;
+      head.width = bounds.w;
+      head.height = bounds.h;
+      head.format = (uint8_t)format;
+      head.palette_entry_count = 0; // none / 256
 
-    uint32_t offset = sizeof(head);
+      file.write(0, sizeof(head), reinterpret_cast<char *>(&head));
+      offset = sizeof(head);
+    }
 
     if(format == PixelFormat::P) {
       for(auto i = 0u; i < palette_size; i++) {
-        uint8_t col[4]{palette[i].b, palette[i].g, palette[i].r, palette[i].a};
+        uint8_t col[4]{palette[i].r, palette[i].g, palette[i].b, palette[i].a};
+        if(is_bmp) // swap for bmp
+          std::swap(col[0], col[2]);
+
         file.write(offset, 4, reinterpret_cast<char *>(col));
         offset += 4;
       }
@@ -175,16 +205,19 @@ namespace blit {
         if(pixel_stride == 1)
           file.write(offset, row_stride, reinterpret_cast<char *>(data + in_offset));
         else {
-          // r/b swap
+          // RGB(A)
           char pixel[4];
 
           for(int x = 0; x < bounds.w; x++) {
-            pixel[0] = data[in_offset + x * pixel_stride + 2];
+            pixel[0] = data[in_offset + x * pixel_stride + 0];
             pixel[1] = data[in_offset + x * pixel_stride + 1];
-            pixel[2] = data[in_offset + x * pixel_stride + 0];
+            pixel[2] = data[in_offset + x * pixel_stride + 2];
 
             if(pixel_stride == 4)
               pixel[3] = data[in_offset + x * pixel_stride + 3];
+
+            if(is_bmp) // swap for bmp
+              std::swap(pixel[0], pixel[2]);
 
             file.write(offset + x * pixel_stride, pixel_stride, pixel);
           }
