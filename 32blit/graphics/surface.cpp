@@ -27,6 +27,26 @@ static int log2i(unsigned int x) {
 
 namespace blit {
 
+#pragma pack(push, 2)
+  struct BMPHeader {
+    char header[2]{'B', 'M'};
+    uint32_t file_size;
+    uint16_t reserved[2]{};
+    uint32_t data_offset;
+
+    uint32_t info_size = 40; // BITMAPINFOHEADER size
+    int32_t w;
+    int32_t h;
+    uint16_t planes = 1;
+    uint16_t bpp;
+    uint32_t compression = 0;
+    uint32_t image_size;
+    int32_t res_x = 0;
+    int32_t res_y = 0;
+    uint32_t palette_cols = 0; // default
+    uint32_t important_cols = 0;
+  };
+#pragma pack(pop)
 
   Surface::Surface(uint8_t *data, const PixelFormat &format, const Size &bounds) : data(data), bounds(bounds), format(format) {
     init();
@@ -46,9 +66,9 @@ namespace blit {
 
   /**
    * Loads a packed or raw image asset into a `Surface`
-   * 
+   *
    * \param image
-   * 
+   *
    * \return `Surface` containing loaded data or `nullptr` if the image was invalid
    */
   Surface *Surface::load(const packed_image *image) {
@@ -64,7 +84,7 @@ namespace blit {
 
   /**
    * \overload
-   * 
+   *
    * \param data pointer to an image asset
    */
   Surface *Surface::load(const uint8_t *data) {
@@ -73,10 +93,10 @@ namespace blit {
 
   /**
    * \overload
-   * 
+   *
    * \param filename string filename
    */
-  Surface *Surface::load(std::string &filename) {
+  Surface *Surface::load(const std::string &filename) {
     File file;
 
     if(!file.open(filename, OpenMode::read))
@@ -85,6 +105,10 @@ namespace blit {
     packed_image image;
     file.read(0, sizeof(packed_image), (char *)&image);
 
+    // really a bmp
+    if(image.type[0] == 'B' && image.type[1] == 'M')
+      return load_from_bmp(file);
+
     uint8_t *buffer = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
     return new Surface(buffer, (PixelFormat)image.format, file);
   }
@@ -92,11 +116,11 @@ namespace blit {
   /**
    * Similar to @ref load, but the resulting `Surface` points directly at the image data instead of copying it.
    * `data` should not be modified after loading, so no drawing can be done to this surface. If the image is paletted, the palette can still be modified.
-   * 
+   *
    * Only works for non-packed images.
    *
    * \param image
-   * 
+   *
    * \return `Surface` containing loaded data or `nullptr` if the image was invalid
    */
   Surface *Surface::load_read_only(const packed_image *image) {
@@ -111,7 +135,7 @@ namespace blit {
 
   /**
    * \overload
-   * 
+   *
    * \param data pointer to an image asset
    */
   Surface *Surface::load_read_only(const uint8_t *data) {
@@ -121,71 +145,82 @@ namespace blit {
   bool Surface::save(const std::string &filename) {
     File file;
 
+    auto dot = filename.find_last_of('.');
+    if(dot == std::string::npos)
+      return false;
+
+    auto ext = std::string_view(filename).substr(dot + 1);
+
+    bool is_bmp = ext == "bmp";
+    bool is_spriterw = ext == "spriterw";
+
+    if(!is_bmp && !is_spriterw)
+      return false;
+
     if(!file.open(filename, OpenMode::write))
       return false;
 
     unsigned int data_size = row_stride * bounds.h;
     unsigned int palette_size = format == PixelFormat::P ? 256 : 0;
 
-#pragma pack(push, 2)
-    struct BMPHeader {
-      char header[2]{'B', 'M'};
-      uint32_t file_size;
-      uint16_t reserved[2]{};
-      uint32_t data_offset;
+    uint32_t offset;
 
-      uint32_t info_size = 40; // BITMAPINFOHEADER size
-      int32_t w;
-      int32_t h;
-      uint16_t planes = 1;
-      uint16_t bpp;
-      uint32_t compression = 0;
-      uint32_t image_size;
-      int32_t res_x = 0;
-      int32_t res_y = 0;
-      uint32_t palette_cols = 0; // default
-      uint32_t important_cols = 0;
-    };
-#pragma pack(pop)
+    if(is_bmp) {
+      BMPHeader head;
+      head.file_size = sizeof(head) + palette_size * 4 + data_size;
+      head.data_offset = sizeof(head) + palette_size * 4;
 
-    BMPHeader head;
-    head.file_size = sizeof(head) + palette_size * 4 + data_size;
-    head.data_offset = sizeof(head) + palette_size * 4;
+      head.w = bounds.w;
+      head.h = -bounds.h;
+      head.bpp = pixel_stride * 8;
+      head.image_size = data_size;
 
-    head.w = bounds.w;
-    head.h = bounds.h;
-    head.bpp = pixel_stride * 8;
-    head.image_size = data_size;
+      file.write(0, sizeof(head), reinterpret_cast<char *>(&head));
+      offset = sizeof(head);
+    } else {
+      // spriterw
+      packed_image head;
+      memcpy(head.type, "SPRITERW", 8);
+      head.byte_count = sizeof(packed_image) + data_size + palette_size * 4;
+      head.width = bounds.w;
+      head.height = bounds.h;
+      head.format = (uint8_t)format;
+      head.palette_entry_count = 0; // none / 256
 
-    file.write(0, sizeof(head), reinterpret_cast<char *>(&head));
-
-    uint32_t offset = sizeof(head);
+      file.write(0, sizeof(head), reinterpret_cast<char *>(&head));
+      offset = sizeof(head);
+    }
 
     if(format == PixelFormat::P) {
       for(auto i = 0u; i < palette_size; i++) {
-        uint8_t col[4]{palette[i].b, palette[i].g, palette[i].r, palette[i].a};
+        uint8_t col[4]{palette[i].r, palette[i].g, palette[i].b, palette[i].a};
+        if(is_bmp) // swap for bmp
+          std::swap(col[0], col[2]);
+
         file.write(offset, 4, reinterpret_cast<char *>(col));
         offset += 4;
       }
     }
 
     for(int y = 0; y < bounds.h; y++) {
-        // flip y
-        auto in_offset = (bounds.h - 1 - y) * row_stride;
+        auto in_offset = y * row_stride;
 
         if(pixel_stride == 1)
           file.write(offset, row_stride, reinterpret_cast<char *>(data + in_offset));
         else {
-          // r/b swap
+          // RGB(A)
           char pixel[4];
 
           for(int x = 0; x < bounds.w; x++) {
-            pixel[0] = data[in_offset + x * pixel_stride + 2];
+            pixel[0] = data[in_offset + x * pixel_stride + 0];
             pixel[1] = data[in_offset + x * pixel_stride + 1];
-            pixel[2] = data[in_offset + x * pixel_stride + 0];
+            pixel[2] = data[in_offset + x * pixel_stride + 2];
 
             if(pixel_stride == 4)
               pixel[3] = data[in_offset + x * pixel_stride + 3];
+
+            if(is_bmp) // swap for bmp
+              std::swap(pixel[0], pixel[2]);
 
             file.write(offset + x * pixel_stride, pixel_stride, pixel);
           }
@@ -201,7 +236,7 @@ namespace blit {
 
     pixel_stride = pixel_format_stride[static_cast<uint8_t>(format)];
     row_stride = pixel_stride * bounds.w;
-    
+
     switch (format) {
     case PixelFormat::RGBA: {
       pbf = RGBA_RGBA;
@@ -232,20 +267,20 @@ namespace blit {
     uint16_t h = bounds.h;
 
     mipmaps.reserve(depth + 1);
-    
+
     Surface *src = this;
     mipmaps.push_back(src);
-    
+
     // offset the data pointer to the end
     uint8_t *mipmap_data = data + (row_stride * bounds.h);
 
     do {
       w /= 2;
-      h /= 2;      
+      h /= 2;
       Surface *dest = new Surface(mipmap_data, PixelFormat::RGBA, Size(w, h));
       mipmaps.push_back(dest);
-      
-      for (int y = 0; y < h; y++) {      
+
+      for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
           // sample the average ARGB values
           Pen *c1, *c2, *c3, *c4;
@@ -265,7 +300,7 @@ namespace blit {
           uint8_t a = (c1->a + c2->a + c3->a + c4->a) / 4;
           uint8_t r = (c1->r + c2->r + c3->r + c4->r) / 4;
           uint8_t g = (c1->g + c2->g + c3->g + c4->g) / 4;
-          uint8_t b = (c1->b + c2->b + c3->b + c4->b) / 4;          
+          uint8_t b = (c1->b + c2->b + c3->b + c4->b) / 4;
           a = 255;
 
           dest->pen = Pen(r, g, b, a);
@@ -273,7 +308,7 @@ namespace blit {
         }
       }
 
-      src = dest;    
+      src = dest;
       mipmap_data += (src->row_stride * src->bounds.h);
     } while (--depth);
   }
@@ -294,8 +329,8 @@ namespace blit {
     uint8_t left = dr.x - p.x;
     uint8_t top = dr.y - p.y;
     uint8_t right = sprite.w - (sprite.w - dr.w) + left - 1;
-    uint8_t bottom = sprite.h - (sprite.h - dr.h) + top - 1;    
-    
+    uint8_t bottom = sprite.h - (sprite.h - dr.h) + top - 1;
+
     if (t & SpriteTransform::VERTICAL) {
       top    = sprite.h - 1 - top;
       bottom = sprite.h - 1 - bottom;
@@ -311,13 +346,13 @@ namespace blit {
 
     if(t & SpriteTransform::XYSWAP)
       x_step *= sprites->bounds.w;
-      
+
     uint32_t dest_offset = offset(dr);
-    uint32_t src_offset;    
-    
+    uint32_t src_offset;
+
     uint8_t y_count = dr.h;
     uint8_t y = top;
-    do {    
+    do {
       uint8_t x_count = dr.w;
       uint8_t x = left;
 
@@ -366,11 +401,11 @@ namespace blit {
 
     float y_step = top < bottom ? scale_y : -scale_y;
     float x_step = left < right ? scale_x : -scale_x;
-    
+
     uint32_t dest_offset = offset(dr);
     uint32_t src_offset;
 
-    uint8_t y_count = dr.h;    
+    uint8_t y_count = dr.h;
     float y = top;
     do {
       uint8_t x_count = dr.w;
@@ -400,16 +435,16 @@ namespace blit {
    * \param p
    * \param hflip `true` to flip the source surface horizontally
    */
-  void Surface::blit(Surface *src, Rect r, Point p, bool hflip) {    
+  void Surface::blit(Surface *src, Rect r, Point p, bool hflip) {
     Rect dr = clip.intersection(Rect(p.x, p.y, r.w, r.h));  // clipped destination rect
 
-    if (dr.empty()) 
+    if (dr.empty())
       return; // after clipping there is nothing to draw
 
-    // offset source rect to accomodate for clipped destination rect    
+    // offset source rect to accomodate for clipped destination rect
     uint8_t l = dr.x - p.x; // top left corner
-    uint8_t t = dr.y - p.y; 
-    r.x += l; r.w -= l; r.y += t; r.h -= t;    
+    uint8_t t = dr.y - p.y;
+    r.x += l; r.w -= l; r.y += t; r.h -= t;
     r.w = dr.w; // clamp width/height
     r.h = dr.h;
 
@@ -422,14 +457,14 @@ namespace blit {
       src_direction = -1;
     }
 
-    
-    
+
+
     int32_t dest_offset = offset(dr);
     for (int32_t y = p.y; y < p.y + r.h; y++) {
       bbf(src, src_offset + src_offset_flip, this, dest_offset, r.w, src_direction);
 
       src_offset += src->bounds.w;
-      dest_offset += bounds.w;      
+      dest_offset += bounds.w;
     }
   }
 
@@ -449,7 +484,7 @@ namespace blit {
     float sx = (sr.w) / float(dr.w);
     float sy = (sr.h) / float(dr.h);
 
-    // offset source rect to accomodate for clipped destination rect    
+    // offset source rect to accomodate for clipped destination rect
     uint8_t l = cdr.x - dr.x; // top left corner
     uint8_t t = cdr.y - dr.y;
 
@@ -466,7 +501,7 @@ namespace blit {
         bbf(src, src->offset(src_x, src_y), this, offset(x, y), 1, 1);
 
         src_x += sx;
-      }      
+      }
       src_y += sy;
     }
   }
@@ -514,9 +549,9 @@ namespace blit {
     Rect dr = clip.intersection(Rect(p.x, p.y, r.w, r.h));  // clipped destination rect
 
     if (dr.empty())
-      return; // after clipping there is nothing to draw 
+      return; // after clipping there is nothing to draw
 
-    // offset source rect to accomodate for clipped destination rect    
+    // offset source rect to accomodate for clipped destination rect
     uint8_t l = dr.x - p.x; // top left corner
     uint8_t t = dr.y - p.y;
     r.x += l; r.w -= l; r.y += t; r.h -= t;
@@ -525,9 +560,9 @@ namespace blit {
 
     uint8_t *psrc = src->ptr(r.x, r.y);
     uint8_t *pdest = ptr(dr.x, dr.y);
-    
+
     for (int32_t y = 0; y < dr.h; y++) {
-      f(psrc, pdest, dr.w);      
+      f(psrc, pdest, dr.w);
 
       psrc += src->bounds.w;
       pdest += bounds.w;
@@ -565,7 +600,7 @@ namespace blit {
     file.read(0, sizeof(packed_image), (char *)&image);
 
     int palette_entry_count = image.palette_entry_count;
-    if(palette_entry_count == 0)
+    if(palette_entry_count == 0 && format == PixelFormat::P)
       palette_entry_count = 256;
 
     bool is_raw = image.type[6] == 'R' && image.type[7] == 'W'; // SPRITE[RW]
@@ -698,6 +733,66 @@ namespace blit {
     if (!file.get_ptr()) {
       delete[] image_data;
     }
+  }
+
+  Surface *Surface::load_from_bmp(File &file) {
+    BMPHeader header;
+    file.read(0, sizeof(BMPHeader), (char *)&header);
+
+    if(header.compression != 0)
+      return nullptr;
+
+    PixelFormat format;
+
+    switch(header.bpp) {
+      case 8:
+        format = PixelFormat::P;
+        break;
+      case 24:
+        format = PixelFormat::RGB;
+        break;
+      case 32:
+        format = PixelFormat::RGBA;
+        break;
+
+      default:
+        return nullptr;
+    }
+
+    bool top_down = header.h < 0;
+    uint8_t *data = new uint8_t[header.image_size];
+    Size bounds(header.w, top_down ? -header.h : header.h);
+
+    auto ret = new Surface(data, format, bounds);
+
+    if(top_down)
+      file.read(header.data_offset, header.image_size, (char *)data);
+    else {
+      for(int y = 0; y < bounds.h; y++) {
+        int off = (bounds.h - 1 - y) * ret->row_stride;
+        file.read(header.data_offset + y * ret->row_stride, ret->row_stride, (char *)data + off);
+      }
+    }
+
+    if(format == PixelFormat::P) {
+      ret->palette = new Pen[256];
+      int palette_cols = header.palette_cols;
+      if(!palette_cols) palette_cols = 256;
+
+      file.read(header.info_size + 14, palette_cols * 4, (char *)ret->palette);
+
+      // R/B swap
+      for(int i = 0; i < palette_cols; i++)
+        std::swap(ret->palette[i].r, ret->palette[i].b);
+    } else {
+      // R/B swap
+      auto p = data;
+      auto end = data + header.image_size;
+      for(auto p = data; p != end; p += ret->pixel_stride)
+        std::swap(p[0], p[2]);
+    }
+
+    return ret;
   }
 
   /**
