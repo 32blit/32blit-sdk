@@ -45,16 +45,12 @@ GameInfo selected_game;
 BlitGameMetadata selected_game_metadata;
 
 SpriteSheet *spritesheet;
+Surface *screenshot;
 
 AutoRepeat ar_button_up;
 AutoRepeat ar_button_down;
 AutoRepeat ar_button_left(0, 0);
 AutoRepeat ar_button_right(0, 0);
-
-uint8_t screenshot_data[320*240];
-Surface screenshot_rgb(screenshot_data, PixelFormat::RGB, Size(160, 120));
-Surface screenshot_p(screenshot_data, PixelFormat::P, Size(320, 240));
-Pen screenshot_palette[256];
 
 int calc_num_blocks(uint32_t size) {
   return (size - 1) / qspi_flash_sector_size + 1;
@@ -339,28 +335,9 @@ void render(uint32_t time) {
   screen.clear();
 
   if(!game_list.empty() && selected_game.type == GameType::screenshot) {
-    blit::File screenshot(selected_game.filename, OpenMode::read);
-    BMPHeader header;
-    screenshot.read(0, 52, (char *)&header);
-    if (header.w == 160) {
-      screenshot.read(header.data_offset, header.image_size, (char *)screenshot_data);
-      //screen.blit(&screenshot_rgb, Rect(0, 0, 160, 120), Point(80, 60));
-      screen.stretch_blit(&screenshot_rgb, Rect(0, 0, 160, 120), Rect(Point(0, 0), screen.bounds));
-    } else if (header.bpp == 8) {
-      screenshot.read(header.data_offset, header.image_size, (char *)screenshot_data);
+    screenshot = Surface::load(selected_game.filename);
 
-      for(auto i = 0u; i < 256; i++) {
-        uint8_t p[4];
-        screenshot.read(sizeof(header) + i * 4, 4, (char *)p);
-        screenshot_palette[i] = Pen(p[2], p[1], p[0], p[3]);
-      }
-
-      screenshot_p.palette = screenshot_palette;
-      screen.blit(&screenshot_p, Rect(0, 0, 320, 240), Point(0, 0));
-    } else {
-      // Just slam the screenshot directly into the display buffer
-      screenshot.read(header.data_offset, header.image_size, (char *)screen.data);
-    }
+    screen.stretch_blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Rect(Point(0, 0), screen.bounds));
 
     if(hide_ui) return;
 
