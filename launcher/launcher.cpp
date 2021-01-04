@@ -346,8 +346,11 @@ void render(uint32_t time) {
       screenshot = Surface::load(selected_game.filename);
     }
 
-    screen.stretch_blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Rect(Point(0, 0), screen.bounds));
-
+    if(screenshot->bounds.w == screen.bounds.w) {
+      screen.blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Point(0, 0));
+    } else {
+      screen.stretch_blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Rect(Point(0, 0), screen.bounds));
+    }
 
     if(hide_ui) return;
 
