@@ -179,7 +179,7 @@ int main(int argc, char *argv[]) {
 			i++;
 		}
 		else if(arg_str == "--listen")
-			mp_mode == Multiplayer::Mode::Listen;
+			mp_mode = Multiplayer::Mode::Listen;
 	}
 
 	blit_system = new System();
