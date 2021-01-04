@@ -12,12 +12,24 @@
     <ClCompile Include="..\..\launcher\launcher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\launcher\credits.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\launcher\theme.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\launcher\launcher.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="assets.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\launcher\credits.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\launcher\theme.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
