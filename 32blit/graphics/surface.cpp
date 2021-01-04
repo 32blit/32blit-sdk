@@ -27,6 +27,26 @@ static int log2i(unsigned int x) {
 
 namespace blit {
 
+#pragma pack(push, 2)
+  struct BMPHeader {
+    char header[2]{'B', 'M'};
+    uint32_t file_size;
+    uint16_t reserved[2]{};
+    uint32_t data_offset;
+
+    uint32_t info_size = 40; // BITMAPINFOHEADER size
+    int32_t w;
+    int32_t h;
+    uint16_t planes = 1;
+    uint16_t bpp;
+    uint32_t compression = 0;
+    uint32_t image_size;
+    int32_t res_x = 0;
+    int32_t res_y = 0;
+    uint32_t palette_cols = 0; // default
+    uint32_t important_cols = 0;
+  };
+#pragma pack(pop)
 
   Surface::Surface(uint8_t *data, const PixelFormat &format, const Size &bounds) : data(data), bounds(bounds), format(format) {
     init();
@@ -142,27 +162,6 @@ namespace blit {
     uint32_t offset;
 
     if(is_bmp) {
-#pragma pack(push, 2)
-      struct BMPHeader {
-        char header[2]{'B', 'M'};
-        uint32_t file_size;
-        uint16_t reserved[2]{};
-        uint32_t data_offset;
-
-        uint32_t info_size = 40; // BITMAPINFOHEADER size
-        int32_t w;
-        int32_t h;
-        uint16_t planes = 1;
-        uint16_t bpp;
-        uint32_t compression = 0;
-        uint32_t image_size;
-        int32_t res_x = 0;
-        int32_t res_y = 0;
-        uint32_t palette_cols = 0; // default
-        uint32_t important_cols = 0;
-      };
-#pragma pack(pop)
-
       BMPHeader head;
       head.file_size = sizeof(head) + palette_size * 4 + data_size;
       head.data_offset = sizeof(head) + palette_size * 4;
