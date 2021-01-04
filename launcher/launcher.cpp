@@ -329,15 +329,25 @@ void init() {
 }
 
 void render(uint32_t time) {
+  static std::string current_screenshot = "";
   screen.sprites = spritesheet;
 
   screen.pen = theme.color_background;
   screen.clear();
 
   if(!game_list.empty() && selected_game.type == GameType::screenshot) {
-    screenshot = Surface::load(selected_game.filename);
+    if(selected_game.filename != current_screenshot) {
+      if(screenshot) {
+        delete[] screenshot->palette;
+        delete[] screenshot->data;
+        delete screenshot;
+        screenshot = nullptr;
+      }
+      screenshot = Surface::load(selected_game.filename);
+    }
 
     screen.stretch_blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Rect(Point(0, 0), screen.bounds));
+
 
     if(hide_ui) return;
 
