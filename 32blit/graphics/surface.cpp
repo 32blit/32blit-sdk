@@ -105,6 +105,10 @@ namespace blit {
     packed_image image;
     file.read(0, sizeof(packed_image), (char *)&image);
 
+    // really a bmp
+    if(image.type[0] == 'B' && image.type[1] == 'M')
+      return load_from_bmp(file);
+
     uint8_t *buffer = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
     return new Surface(buffer, (PixelFormat)image.format, file);
   }
@@ -729,6 +733,66 @@ namespace blit {
     if (!file.get_ptr()) {
       delete[] image_data;
     }
+  }
+
+  Surface *Surface::load_from_bmp(File &file) {
+    BMPHeader header;
+    file.read(0, sizeof(BMPHeader), (char *)&header);
+
+    if(header.compression != 0)
+      return nullptr;
+
+    PixelFormat format;
+
+    switch(header.bpp) {
+      case 8:
+        format = PixelFormat::P;
+        break;
+      case 24:
+        format = PixelFormat::RGB;
+        break;
+      case 32:
+        format = PixelFormat::RGBA;
+        break;
+
+      default:
+        return nullptr;
+    }
+
+    bool top_down = header.h < 0;
+    uint8_t *data = new uint8_t[header.image_size];
+    Size bounds(header.w, top_down ? -header.h : header.h);
+
+    auto ret = new Surface(data, format, bounds);
+
+    if(top_down)
+      file.read(header.data_offset, header.image_size, (char *)data);
+    else {
+      for(int y = 0; y < bounds.h; y++) {
+        int off = (bounds.h - 1 - y) * ret->row_stride;
+        file.read(header.data_offset + y * ret->row_stride, ret->row_stride, (char *)data + off);
+      }
+    }
+
+    if(format == PixelFormat::P) {
+      ret->palette = new Pen[256];
+      int palette_cols = header.palette_cols;
+      if(!palette_cols) palette_cols = 256;
+
+      file.read(header.info_size + 14, palette_cols * 4, (char *)ret->palette);
+
+      // R/B swap
+      for(int i = 0; i < palette_cols; i++)
+        std::swap(ret->palette[i].r, ret->palette[i].b);
+    } else {
+      // R/B swap
+      auto p = data;
+      auto end = data + header.image_size;
+      for(auto p = data; p != end; p += ret->pixel_stride)
+        std::swap(p[0], p[2]);
+    }
+
+    return ret;
   }
 
   /**

@@ -113,6 +113,8 @@ namespace blit {
     void init();
     void load_from_packed(File &file);
 
+    static Surface *load_from_bmp(File &file);
+
   public:
     Surface(uint8_t *data, const PixelFormat &format, const Size &bounds);
     Surface(uint8_t *data, const PixelFormat &format, const packed_image *image);
