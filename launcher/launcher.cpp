@@ -337,12 +337,14 @@ void render(uint32_t time) {
 
   if(!game_list.empty() && selected_game.type == GameType::screenshot) {
     if(selected_game.filename != current_screenshot) {
+      // Free any old buffers
       if(screenshot) {
         delete[] screenshot->palette;
         delete[] screenshot->data;
         delete screenshot;
         screenshot = nullptr;
       }
+      // Load the new screenshot
       screenshot = Surface::load(selected_game.filename);
     }
 
@@ -354,10 +356,20 @@ void render(uint32_t time) {
 
     if(hide_ui) return;
 
+    // Darken behind the file/directory menus so they're visible
     screen.pen = theme.color_background;
     screen.pen.a = 150;
     screen.rectangle(Rect(game_info_offset.x - 10, 0, screen.bounds.w - game_info_offset.x + 10, 20));
     screen.rectangle(Rect(0, 0, game_info_offset.x - 10, screen.bounds.h));
+  }
+  else {
+    // Not showing a screenshot, free the buffers
+    if(screenshot) {
+      delete[] screenshot->palette;
+      delete[] screenshot->data;
+      delete screenshot;
+      screenshot = nullptr;
+    }
   }
 
   // adjust alignment rect for vertical spacing
