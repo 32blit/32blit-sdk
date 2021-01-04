@@ -11,6 +11,11 @@ enum class SortBy {
   size
 };
 
+enum class Screen {
+  main,
+  credits
+};
+
 struct GameInfo {
   std::string title;
   uint32_t size, checksum = 0;
