@@ -363,6 +363,11 @@ void render(uint32_t time) {
     }
 
     if(hide_ui) return;
+
+    screen.pen = theme.color_background;
+    screen.pen.a = 150;
+    screen.rectangle(Rect(game_info_offset.x - 10, 0, screen.bounds.w - game_info_offset.x + 10, 20));
+    screen.rectangle(Rect(0, 0, game_info_offset.x - 10, screen.bounds.h));
   }
 
   // adjust alignment rect for vertical spacing
