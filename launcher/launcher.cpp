@@ -342,16 +342,16 @@ void render(uint32_t time) {
   screen.pen = theme.color_background;
   screen.clear();
 
-  if(selected_game.type == GameType::screenshot) {
-    File screenshot(selected_game.filename);
-    BMPHeader *header;
-    screenshot.read(0, 52, (char *)header);
-    if (header->w == 160) {
-      screenshot.read(header->data_offset, header->image_size, (char *)screenshot_data);
+  if(!game_list.empty() && selected_game.type == GameType::screenshot) {
+    blit::File screenshot(selected_game.filename, OpenMode::read);
+    BMPHeader header;
+    screenshot.read(0, 52, (char *)&header);
+    if (header.w == 160) {
+      screenshot.read(header.data_offset, header.image_size, (char *)screenshot_data);
       //screen.blit(&screenshot_rgb, Rect(0, 0, 160, 120), Point(80, 60));
       screen.stretch_blit(&screenshot_rgb, Rect(0, 0, 160, 120), Rect(Point(0, 0), screen.bounds));
-    } else if (header->bpp == 8) {
-      screenshot.read(header->data_offset, header->image_size, (char *)screenshot_data);
+    } else if (header.bpp == 8) {
+      screenshot.read(header.data_offset, header.image_size, (char *)screenshot_data);
 
       for(auto i = 0u; i < 256; i++) {
         uint8_t p[4];
@@ -363,7 +363,7 @@ void render(uint32_t time) {
       screen.blit(&screenshot_p, Rect(0, 0, 320, 240), Point(0, 0));
     } else {
       // Just slam the screenshot directly into the display buffer
-      screenshot.read(header->data_offset, header->image_size, (char *)screen.data);
+      screenshot.read(header.data_offset, header.image_size, (char *)screen.data);
     }
   }
 
