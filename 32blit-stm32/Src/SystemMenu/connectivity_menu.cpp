@@ -29,7 +29,7 @@ enum MenuItem {
   STORAGE,
 };
 
-static Menu::Item menu_items[]{
+static const Menu::Item menu_items[]{
   {DFU, "DFU Mode"},
   {STORAGE, "Storage Mode"},
 };

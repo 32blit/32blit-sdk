@@ -25,7 +25,7 @@ enum MenuItem {
   VOLTAGE,
 };
 
-static Menu::Item menu_items[]{
+static const Menu::Item menu_items[]{
   {CHARGE, "Charge status"},
   {VBUS, "VBUS"},
   {VOLTAGE, "Voltage"},
