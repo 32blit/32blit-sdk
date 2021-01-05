@@ -363,7 +363,12 @@ void render(uint32_t time) {
       screen.stretch_blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Rect(Point(0, 0), screen.bounds));
     }
 
-    if(currentScreen == Screen::screenshot) return;
+    if(currentScreen == Screen::screenshot) {
+      // back
+      screen.sprite(5, Point(game_actions_offset.x, game_actions_offset.y + 12));
+      screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R180);
+      return;
+    }
 
     // Darken behind the file/directory menus so they're visible
     screen.pen = theme.color_background;
@@ -421,7 +426,7 @@ void render(uint32_t time) {
 
     if(selected_game.type == GameType::screenshot) {
       // view
-      screen.sprite(1, Point(game_actions_offset.x, game_actions_offset.y + 12));
+      screen.sprite(4, Point(game_actions_offset.x, game_actions_offset.y + 12));
     } else {
       // run
       screen.sprite(1, Point(game_actions_offset.x, game_actions_offset.y + 12));
