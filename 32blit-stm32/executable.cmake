@@ -20,7 +20,7 @@ function(blit_executable NAME SOURCES)
 	add_executable(${NAME} ${USER_STARTUP} ${SOURCES} ${ARGN})
 
 	# Ideally we want the .blit filename to match the .elf, but TARGET_FILE_BASE_NAME isn't always available
-	# (This only affects the firmware updater as it's the only thing setting a custom OUTPUT_NAME) 
+	# (This only affects the firmware updater as it's the only thing setting a custom OUTPUT_NAME)
 	if(${CMAKE_VERSION} VERSION_LESS "3.15.0")
 		set(BLIT_FILENAME ${NAME}.blit)
 	else()
@@ -32,7 +32,7 @@ function(blit_executable NAME SOURCES)
 	)
 
 	set_target_properties(${NAME} PROPERTIES
-		COMPILE_FLAGS "-fPIC -mno-pic-data-is-text-relative -mno-single-pic-base"
+		COMPILE_FLAGS "-fPIC"
 		LINK_FLAGS "-specs=nano.specs -u _printf_float -fPIC -T ${MCU_LINKER_SCRIPT} ${MCU_LINKER_FLAGS_EXT} -Wl,--emit-relocs"
 	)
 	set_target_properties(${NAME} PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT} SUFFIX ".elf")
