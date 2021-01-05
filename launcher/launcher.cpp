@@ -228,6 +228,7 @@ void load_file_list(std::string directory) {
 }
 
 void load_current_game_metadata() {
+  static std::string current_screenshot = "";
   bool loaded = false;
 
   if(!game_list.empty()) {
@@ -247,6 +248,28 @@ void load_current_game_metadata() {
       loaded = true;
     } else
       loaded = parse_file_metadata(selected_game.filename, selected_game_metadata, true);
+  }
+
+  if(selected_game.type == GameType::screenshot) {
+    if(selected_game.filename != current_screenshot) {
+      // Free any old buffers
+      if(screenshot) {
+        delete[] screenshot->palette;
+        delete[] screenshot->data;
+        delete screenshot;
+        screenshot = nullptr;
+      }
+      // Load the new screenshot
+      screenshot = Surface::load(selected_game.filename);
+    }
+  } else {
+    // Not showing a screenshot, free the buffers
+    if(screenshot) {
+      delete[] screenshot->palette;
+      delete[] screenshot->data;
+      delete screenshot;
+      screenshot = nullptr;
+    }
   }
 
   // no valid metadata, reset
@@ -328,25 +351,12 @@ void init() {
 }
 
 void render(uint32_t time) {
-  static std::string current_screenshot = "";
   screen.sprites = spritesheet;
 
   screen.pen = theme.color_background;
   screen.clear();
 
   if(!game_list.empty() && selected_game.type == GameType::screenshot) {
-    if(selected_game.filename != current_screenshot) {
-      // Free any old buffers
-      if(screenshot) {
-        delete[] screenshot->palette;
-        delete[] screenshot->data;
-        delete screenshot;
-        screenshot = nullptr;
-      }
-      // Load the new screenshot
-      screenshot = Surface::load(selected_game.filename);
-    }
-
     if(screenshot->bounds.w == screen.bounds.w) {
       screen.blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Point(0, 0));
     } else {
@@ -360,15 +370,6 @@ void render(uint32_t time) {
     screen.pen.a = 150;
     screen.rectangle(Rect(game_info_offset.x - 10, 0, screen.bounds.w - game_info_offset.x + 10, 20));
     screen.rectangle(Rect(0, 0, game_info_offset.x - 10, screen.bounds.h));
-  }
-  else {
-    // Not showing a screenshot, free the buffers
-    if(screenshot) {
-      delete[] screenshot->palette;
-      delete[] screenshot->data;
-      delete screenshot;
-      screenshot = nullptr;
-    }
   }
 
   // adjust alignment rect for vertical spacing
