@@ -16,11 +16,15 @@
 
 #include "theme.hpp"
 
+#include "credits.hpp"
+
 Dialog dialog;
 
 using namespace blit;
 
 constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
+
+static Screen currentScreen = Screen::main;
 
 bool sd_detected = true;
 Vec2 file_list_scroll_offset(10.0f, 0.0f);
@@ -307,6 +311,8 @@ void init() {
 
   scan_flash();
   init_lists();
+
+  credits::prepare();
 }
 
 void render(uint32_t time) {
@@ -396,6 +402,10 @@ void render(uint32_t time) {
       screen.text("No Games Found.", minimal_font, Point(screen.bounds.w / 2, screen.bounds.h / 2), true, TextAlign::center_center);
   }
 
+  if (currentScreen == Screen::credits) {
+    credits::render();
+  }
+
   //progress.draw();
   dialog.draw();
 }
@@ -407,16 +417,33 @@ void update(uint32_t time) {
     sd_detected = blit::is_storage_available();
   }
 
-  if(dialog.update())
-    return;
-
   bool button_a = buttons.released & Button::A;
   bool button_x = buttons.pressed & Button::X;
   bool button_y = buttons.pressed & Button::Y;
+  bool button_menu = buttons.pressed & Button::MENU;
   bool button_up = ar_button_up.next(time, buttons.state & Button::DPAD_UP || joystick.y < -0.2f);
   bool button_down = ar_button_down.next(time, buttons.state & Button::DPAD_DOWN || joystick.y > 0.2f);
   bool button_left = ar_button_left.next(time, buttons.state & Button::DPAD_LEFT || joystick.x < -0.5f);
   bool button_right = ar_button_right.next(time, buttons.state & Button::DPAD_RIGHT || joystick.x > 0.5f);
+
+  if (currentScreen == Screen::credits) {
+    credits::update(time);
+
+    if (button_menu) {
+      currentScreen = Screen::main;
+    }
+
+    return;
+  }
+  else {
+    if (button_menu) {
+      credits::reset_scrolling();
+      currentScreen = Screen::credits;
+    }
+  }
+
+  if(dialog.update())
+    return;
 
   int total_items = (int)game_list.size();
 

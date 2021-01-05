@@ -166,11 +166,14 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\launcher\contrib.hpp" />
+    <ClInclude Include="..\..\launcher\credits.hpp" />
     <ClInclude Include="..\..\launcher\launcher.hpp" />
     <ClInclude Include="..\..\launcher\theme.hpp" />
     <ClInclude Include="assets.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\launcher\credits.cpp" />
     <ClCompile Include="..\..\launcher\launcher.cpp" />
     <ClCompile Include="..\..\launcher\theme.cpp" />
   </ItemGroup>
