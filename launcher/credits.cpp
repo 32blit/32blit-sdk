@@ -46,6 +46,7 @@ namespace credits {
     "",
     "*Pirate Engineer",
     "Niko",
+    "Rabid-inventor",
     "",
     "*Pixel Wrangler",
     "Sam (@s4m_ur4i)",
