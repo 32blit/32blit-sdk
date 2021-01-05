@@ -2,7 +2,7 @@
 
 #include "32blit.hpp"
 
-#define ROW_HEIGHT 12
+#define ROW_HEIGHT 14
 
 using namespace blit;
 

@@ -20,6 +20,8 @@ Dialog dialog;
 
 using namespace blit;
 
+const Font launcher_font(font8x8);
+
 constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 
 bool sd_detected = true;
@@ -350,7 +352,7 @@ void render(uint32_t time) {
       else
         screen.pen = theme.color_text;
 
-      screen.text(file.title, minimal_font, Rect(file_list_scroll_offset.x, y, 90, text_align_height), true, TextAlign::center_v);
+      screen.text(file.title, launcher_font, Rect(file_list_scroll_offset.x, y, 90, text_align_height), true, TextAlign::center_v);
       y += ROW_HEIGHT;
     }
     screen.clip = Rect(Point(0, 0), screen.bounds);
@@ -368,16 +370,16 @@ void render(uint32_t time) {
       screen.blit(selected_game_metadata.splash, Rect(Point(0, 0), selected_game_metadata.splash->bounds), game_info_offset);
 
     screen.pen = theme.color_accent;
-    std::string wrapped_title = screen.wrap_text(selected_game_metadata.title, screen.bounds.w - game_info_offset.x - 10, minimal_font);
+    std::string wrapped_title = screen.wrap_text(selected_game_metadata.title, screen.bounds.w - game_info_offset.x - 10, launcher_font);
 
     Size title_size = screen.measure_text(wrapped_title, minimal_font);
-    screen.text(wrapped_title, minimal_font, Point(game_info_offset.x, game_info_offset.y + 104));
+    screen.text(wrapped_title, launcher_font, Point(game_info_offset.x, game_info_offset.y + 104));
 
     Rect desc_rect(game_info_offset.x, game_info_offset.y + 108 + title_size.h, screen.bounds.w - game_info_offset.x - 10, 64);
 
     screen.pen = theme.color_text;
-    std::string wrapped_desc = screen.wrap_text(selected_game_metadata.description, desc_rect.w, minimal_font);
-    screen.text(wrapped_desc, minimal_font, desc_rect);
+    std::string wrapped_desc = screen.wrap_text(selected_game_metadata.description, desc_rect.w, launcher_font);
+    screen.text(wrapped_desc, launcher_font, desc_rect);
 
     screen.text(selected_game_metadata.author, minimal_font, Point(game_info_offset.x, screen.bounds.h - 32));
     screen.text(selected_game_metadata.version, minimal_font, Point(game_info_offset.x, screen.bounds.h - 24));
