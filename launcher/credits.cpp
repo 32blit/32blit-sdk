@@ -10,6 +10,7 @@ using namespace blit;
 
 #include "credits.hpp"
 #include "contrib.hpp"
+#include "theme.hpp"
 
 // Speed of scrolling, ms per pixel
 #define SPEED 40
@@ -21,6 +22,7 @@ namespace credits {
   static Rect display_rect(0, 0, 0, 0);
   static Pen background_colour;
   static Pen foreground_colour;
+  static Pen highlight_colour;
   static Pen bar_colour(0,0,0);
   int start_y;
   uint32_t last_start_time;
@@ -61,7 +63,8 @@ namespace credits {
   // Prepare to show the credits
   void prepare() {
     background_colour = Pen(30, 30, 50, 220);
-    foreground_colour = { 255, 255, 255 };
+    foreground_colour = theme.color_text;
+    highlight_colour = theme.color_accent;
 
     display_rect.w = screen.bounds.w;
     display_rect.h = screen.bounds.h;
@@ -81,8 +84,6 @@ namespace credits {
   const int number_of_colours = sizeof(rainbow_colours) / sizeof(Pen);
 
   void render() {
-    Pen highlight = { 0, 255, 0 };
-
     // background
     screen.pen = background_colour;
     screen.rectangle(display_rect);
@@ -101,8 +102,9 @@ namespace credits {
         const char* text_to_render = credits[next_index];
         screen.pen = foreground_colour;
 
+        // handle special codes in the credits
         if (text_to_render[0] == '*') {
-          screen.pen = highlight;
+          screen.pen = highlight_colour;
           text_to_render++;
         }
         else if (text_to_render[0] == '%') {
@@ -113,6 +115,8 @@ namespace credits {
             mode = 1;
           }
         }
+
+        // render
 
         if (mode == 2) { // render contributor
           screen.text(contributors[contrib_index], minimal_font, Point(screen_width / 2, y), true, TextAlign::center_h);
