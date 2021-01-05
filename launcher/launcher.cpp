@@ -46,8 +46,8 @@ BlitGameMetadata selected_game_metadata;
 SpriteSheet *spritesheet;
 Surface *screenshot;
 
-AutoRepeat ar_button_up;
-AutoRepeat ar_button_down;
+AutoRepeat ar_button_up(250, 600);
+AutoRepeat ar_button_down(250, 600);
 AutoRepeat ar_button_left(0, 0);
 AutoRepeat ar_button_right(0, 0);
 
@@ -494,14 +494,6 @@ void update(uint32_t time) {
     return;
   }
 
-  if (currentScreen == Screen::screenshot) {
-    if(button_b) {
-      currentScreen = Screen::main;
-    }
-
-    return;
-  }
-
   if (button_menu) {
     credits::reset_scrolling();
     currentScreen = Screen::credits;
@@ -530,26 +522,38 @@ void update(uint32_t time) {
     }
   }
 
-  // switch between flash and SD lists
-  if(button_left) {
-    if(current_directory == directory_list.begin())
-      current_directory = --directory_list.end();
-    else
-      --current_directory;
-  }
-
-  if(button_right) {
-    current_directory++;
-    if(current_directory == directory_list.end()) {
-      current_directory = directory_list.begin();
+  if(currentScreen == Screen::screenshot) {
+    // b to exit full screen screenshot view
+    if(button_b) {
+      currentScreen = Screen::main;
     }
-  }
+  } else {
+    // switch between flash and SD lists
+    if(button_left) {
+      if(current_directory == directory_list.begin())
+        current_directory = --directory_list.end();
+      else
+        --current_directory;
+    }
 
-  if(button_left || button_right) {
-    load_file_list(current_directory->name);
+    if(button_right) {
+      current_directory++;
+      if(current_directory == directory_list.end()) {
+        current_directory = directory_list.begin();
+      }
+    }
 
-    selected_menu_item = 0;
-    load_current_game_metadata();
+    if(button_left || button_right) {
+      load_file_list(current_directory->name);
+
+      selected_menu_item = 0;
+      load_current_game_metadata();
+    }
+
+    if (button_y) {
+      file_sort = file_sort == SortBy::name ? SortBy::size : SortBy::name;
+      sort_file_list();
+    }
   }
 
   // scroll list towards selected item
@@ -562,23 +566,25 @@ void update(uint32_t time) {
     load_current_game_metadata();
   }
 
-  // delete current game
+  // paranoid bail out if you're browsing screenshots full screen and come across a game
+  if(selected_game.type != GameType::screenshot && currentScreen == Screen::screenshot) {
+    currentScreen = Screen::main;
+  }
+
+  // delete current game / screenshot
   if (button_x && !game_list.empty()) {
     delete_current_game();
   }
 
-  if (button_y) {
-    file_sort = file_sort == SortBy::name ? SortBy::size : SortBy::name;
-    sort_file_list();
-  }
-
-  if(button_a && !game_list.empty())
-  {
-    if(selected_game.type == GameType::screenshot) {
-      currentScreen = Screen::screenshot;
-    }
-    else {
-      launch_current_game();
+  if(!game_list.empty()) {
+    if(button_a)
+    {
+      if(selected_game.type == GameType::screenshot) {
+        currentScreen = Screen::screenshot;
+      }
+      else {
+        launch_current_game();
+      }
     }
   }
 }
