@@ -28,7 +28,6 @@ constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 
 static Screen currentScreen = Screen::main;
 
-bool hide_ui = false;
 bool sd_detected = true;
 Vec2 file_list_scroll_offset(10.0f, 0.0f);
 Point game_info_offset(120, 20);
@@ -354,7 +353,7 @@ void render(uint32_t time) {
       screen.stretch_blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Rect(Point(0, 0), screen.bounds));
     }
 
-    if(hide_ui) return;
+    if(currentScreen == Screen::screenshot) return;
 
     // Darken behind the file/directory menus so they're visible
     screen.pen = theme.color_background;
@@ -416,10 +415,15 @@ void render(uint32_t time) {
     screen.sprite(2, Point(game_actions_offset.x, game_actions_offset.y));
     screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y));
 
-    if(selected_game.type != GameType::screenshot) {
+    // run/view button
+    screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R90);
+
+    if(selected_game.type == GameType::screenshot) {
+      // view
+      screen.sprite(1, Point(game_actions_offset.x, game_actions_offset.y + 12));
+    } else {
       // run
       screen.sprite(1, Point(game_actions_offset.x, game_actions_offset.y + 12));
-      screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R90);
 
       // game info
       if(selected_game_metadata.splash)
@@ -489,11 +493,18 @@ void update(uint32_t time) {
 
     return;
   }
-  else {
-    if (button_menu) {
-      credits::reset_scrolling();
-      currentScreen = Screen::credits;
+
+  if (currentScreen == Screen::screenshot) {
+    if(button_b) {
+      currentScreen = Screen::main;
     }
+
+    return;
+  }
+
+  if (button_menu) {
+    credits::reset_scrolling();
+    currentScreen = Screen::credits;
   }
 
   if(dialog.update())
@@ -502,14 +513,6 @@ void update(uint32_t time) {
   int total_items = (int)game_list.size();
 
   auto old_menu_item = selected_menu_item;
-
-  if(button_b) {
-    hide_ui = false;
-  }
-
-  if(hide_ui) {
-    return;
-  }
 
   if(button_up)
   {
@@ -572,7 +575,7 @@ void update(uint32_t time) {
   if(button_a && !game_list.empty())
   {
     if(selected_game.type == GameType::screenshot) {
-      hide_ui = true;
+      currentScreen = Screen::screenshot;
     }
     else {
       launch_current_game();

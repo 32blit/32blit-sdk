@@ -13,7 +13,8 @@ enum class SortBy {
 
 enum class Screen {
   main,
-  credits
+  credits,
+  screenshot
 };
 
 enum class GameType {
