@@ -33,7 +33,7 @@ set(EXTERNAL_LOAD_ADDRESS_EXT 0x08000000)
 set(INITIALISE_QSPI_EXT 0)
 set(CDC_FIFO_BUFFERS_EXT 4)
 
-set(COMMON_FLAGS "${MCU_FLAGS} -fsingle-precision-constant -Wall -fdata-sections -ffunction-sections -Wattributes -Wdouble-promotion -Werror=double-promotion -Wno-unused-variable -Wno-write-strings")
+set(COMMON_FLAGS "${MCU_FLAGS} -fsingle-precision-constant -Wall -fdata-sections -ffunction-sections -Wattributes -Wdouble-promotion -Werror=double-promotion -Wno-unused-variable -Wno-write-strings -mno-pic-data-is-text-relative -mno-single-pic-base")
 
 set(CMAKE_C_FLAGS_INIT "${COMMON_FLAGS}")
 set(CMAKE_CXX_FLAGS_INIT "${COMMON_FLAGS} -fno-exceptions")
@@ -42,6 +42,8 @@ set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g -Og")
 #set(CMAKE_EXE_LINKER_FLAGS_INIT "-specs=nano.specs -T ${MCU_LINKER_SCRIPT} -Wl,--gc-sections")
 
 set(CMAKE_EXE_LINKER_FLAGS_INIT "-specs=nosys.specs -Wl,--gc-sections,--no-wchar-size-warning")
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # stdlibs
 set(STDLIB_HASHTYPE "SHA256")
@@ -85,8 +87,10 @@ if(NOT EXISTS ${STDLIB_PATH}/pic)
     endif()
 endif()
 
-set(PIC_STDLIBS "-nodefaultlibs -L ${STDLIB_PATH}/pic -lstdc++_nano -lm -Wl,--start-group -lgcc -lc_nano -Wl,--end-group -Wl,--start-group -lgcc -lc_nano -lnosys -Wl,--end-group")
-set(NONPIC_STDLIBS "-nodefaultlibs -L ${STDLIB_PATH}/no-pic -lstdc++_nano -lm -Wl,--start-group -lgcc -lc_nano -Wl,--end-group -Wl,--start-group -lgcc -lc_nano -lnosys -Wl,--end-group")
+set(CMAKE_CXX_STANDARD_LIBRARIES_INIT "-nodefaultlibs -lstdc++_nano -lm -Wl,--start-group -lgcc -lc_nano -Wl,--end-group -Wl,--start-group -lgcc -lc_nano -lnosys -Wl,--end-group")
+
+set(PIC_STDLIBS "-L ${STDLIB_PATH}/pic")
+set(NONPIC_STDLIBS "-L ${STDLIB_PATH}/no-pic")
 
 add_definitions(-DTARGET_32BLIT_HW)
 set(32BLIT_HW 1)
