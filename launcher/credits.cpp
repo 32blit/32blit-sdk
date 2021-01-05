@@ -17,6 +17,12 @@ using namespace blit;
 
 namespace credits {
 
+  enum class CreditRenderMode {
+    Credits,
+    SpecialThanks,
+    Contributors
+  };
+
   const int cinematic_bar_height = 24;
 
   static Rect display_rect(0, 0, 0, 0);
@@ -93,35 +99,34 @@ namespace credits {
     auto next_index = 0;
     auto y = start_y;
 
-    auto mode = 0; // 0 == credits, 1 == special thanks, 2 = contributors
+    auto mode = CreditRenderMode::Credits; 
     auto contrib_index = 0;
     auto special_index = 0;
 
     while (credits[next_index] != nullptr) {
-      if (y >= 0 && y < screen.bounds.h) {
-        const char* text_to_render = credits[next_index];
-        screen.pen = foreground_colour;
+      const char* text_to_render = credits[next_index];
+      screen.pen = foreground_colour;
 
-        // handle special codes in the credits
-        if (text_to_render[0] == '*') {
-          screen.pen = highlight_colour;
-          text_to_render++;
+      // handle special codes in the credits
+      if (credits[next_index][0] == '*') {
+        screen.pen = highlight_colour;
+        text_to_render++;
+      }
+      else if (text_to_render[0] == '%') {
+        if (text_to_render[1] == 'C') {
+          mode = CreditRenderMode::Contributors;
         }
-        else if (text_to_render[0] == '%') {
-          if (text_to_render[1] == 'C') {
-            mode = 2;
-          }
-          else if (text_to_render[1] == 'S') {
-            mode = 1;
-          }
+        else if (text_to_render[1] == 'S') {
+          mode = CreditRenderMode::SpecialThanks;
         }
+      }
 
         // render
-
-        if (mode == 2) { // render contributor
+      if (y >= 0 && y < screen.bounds.h) { // clip to screen
+        if (mode == CreditRenderMode::Contributors && contributors[contrib_index]) {
           screen.text(contributors[contrib_index], minimal_font, Point(screen_width / 2, y), true, TextAlign::center_h);
         }
-        else if (mode == 1) { // render special thanks
+        else if (mode == CreditRenderMode::SpecialThanks && specialthanks[special_index]) {
           screen.pen = rainbow_colours[colour_index];
           colour_index++;
           if (colour_index >= number_of_colours) {
@@ -134,19 +139,20 @@ namespace credits {
         }
       }
 
-      if (mode == 2) {
+      // Step to next text
+      if (mode == CreditRenderMode::Contributors) {
         contrib_index++;
         if (contributors[contrib_index] == nullptr) {
-          mode = 0;
+          mode = CreditRenderMode::Credits;
         }
       }
-      if (mode == 1) {
+      if (mode == CreditRenderMode::SpecialThanks) {
         special_index++;
         if (specialthanks[special_index] == nullptr) {
-          mode = 0;
+          mode = CreditRenderMode::Credits;
         }
       }
-      if (mode == 0) {
+      if (mode == CreditRenderMode::Credits) {
         next_index++;
       }
       y += 10;

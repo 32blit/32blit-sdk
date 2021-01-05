@@ -32,5 +32,8 @@
     <ClInclude Include="..\..\launcher\theme.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\launcher\contrib.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
