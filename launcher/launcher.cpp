@@ -553,7 +553,7 @@ void update(uint32_t time) {
   }
 
   // scroll list towards selected item
-  file_list_scroll_offset.y += ((selected_menu_item * 10) - file_list_scroll_offset.y) / 5.0f;
+  file_list_scroll_offset.y += ((selected_menu_item * ROW_HEIGHT) - file_list_scroll_offset.y) / 5.0f;
 
   directory_list_scroll_offset += (current_directory->x + current_directory->w / 2 - directory_list_scroll_offset) / 5.0f;
 
