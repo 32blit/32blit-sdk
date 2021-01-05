@@ -168,6 +168,7 @@ target_compile_definitions(BlitHalSTM32
 target_compile_options(BlitHalSTM32 PUBLIC "$<$<CONFIG:RELEASE>:-Os>")
 target_compile_options(BlitHalSTM32 PUBLIC "$<$<CONFIG:Debug>:-finline-functions-called-once>") # need at least some inlining, otherwise build is too big
 set_target_properties(BlitHalSTM32 PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+set_target_properties(BlitHalSTM32 PROPERTIES POSITION_INDEPENDENT_CODE OFF)
 
 function(blit_executable_int_flash NAME SOURCES)
 	add_executable(${NAME} $<TARGET_OBJECTS:BlitHalSTM32> ${SOURCES} ${ARGN})
@@ -178,6 +179,7 @@ function(blit_executable_int_flash NAME SOURCES)
 
 	set_target_properties(${NAME} PROPERTIES LINK_FLAGS "-specs=nano.specs -T ${MCU_LINKER_SCRIPT} ${MCU_LINKER_FLAGS_INT}")
 	set_target_properties(${NAME} PROPERTIES LINK_DEPENDS ${MCU_LINKER_SCRIPT} SUFFIX ".elf")
+	set_target_properties(${NAME} PROPERTIES POSITION_INDEPENDENT_CODE OFF)
 
 	blit_executable_common(${NAME})
 	target_link_libraries(${NAME} ${NOPIC_STDLIBS})

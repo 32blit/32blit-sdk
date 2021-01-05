@@ -66,7 +66,3 @@ if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
     -wd4244 # conversions
   )
 endif()
-
-if(${CMAKE_SYSTEM_NAME} STREQUAL Generic)
-	set_target_properties(BlitEngine PROPERTIES COMPILE_FLAGS "-fPIC")
-endif()
