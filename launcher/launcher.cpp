@@ -40,12 +40,14 @@ std::list<DirectoryInfo>::iterator current_directory;
 
 SortBy file_sort = SortBy::name;
 
+GameInfo selected_game;
 BlitGameMetadata selected_game_metadata;
 
 SpriteSheet *spritesheet;
+Surface *screenshot;
 
-AutoRepeat ar_button_up;
-AutoRepeat ar_button_down;
+AutoRepeat ar_button_up(250, 600);
+AutoRepeat ar_button_down(250, 600);
 AutoRepeat ar_button_left(0, 0);
 AutoRepeat ar_button_right(0, 0);
 
@@ -176,6 +178,7 @@ void load_file_list(std::string directory) {
     if(ext == "blit") {
 
       GameInfo game;
+      game.type = GameType::game;
       game.title = file.name.substr(0, file.name.length() - 5);
       game.filename = directory == "/" ? file.name : directory + "/" + file.name;
       game.size = file.size;
@@ -191,12 +194,23 @@ void load_file_list(std::string directory) {
       continue;
     }
 
+    if(ext == "bmp") {
+      GameInfo game;
+      game.type = GameType::screenshot;
+      game.title = file.name.substr(0, file.name.length() - 4);
+      game.filename = directory == "/" ? file.name : directory + "/" + file.name;
+      game.size = file.size;
+      game_list.push_back(game);
+      continue;
+    }
+
     if(!api.get_type_handler_metadata) continue;
 
     auto handler_meta = api.get_type_handler_metadata(ext.c_str());
 
     if(handler_meta) {
       GameInfo game;
+      game.type = GameType::file;
       game.title = file.name;
       game.filename = directory == "/" ? file.name : directory + "/" + file.name;
       game.ext = ext;
@@ -214,25 +228,48 @@ void load_file_list(std::string directory) {
 }
 
 void load_current_game_metadata() {
+  static std::string current_screenshot = "";
   bool loaded = false;
 
   if(!game_list.empty()) {
-    auto &game = game_list[selected_menu_item];
+    selected_game = game_list[selected_menu_item];
 
-    if(!game.ext.empty()) {
+    if(!selected_game.ext.empty()) {
       // not a .blit
-      auto handler_meta = (char *)api.get_type_handler_metadata(game.ext.c_str());
+      auto handler_meta = (char *)api.get_type_handler_metadata(selected_game.ext.c_str());
       auto len = *reinterpret_cast<uint16_t *>(handler_meta + 8);
 
       parse_metadata(handler_meta + 10, len, selected_game_metadata, true);
 
       selected_game_metadata.description = "Launches with: " + selected_game_metadata.title;
-      selected_game_metadata.title = game.title;
+      selected_game_metadata.title = selected_game.title;
       selected_game_metadata.author = "";
       selected_game_metadata.version = "";
       loaded = true;
     } else
-      loaded = parse_file_metadata(game.filename, selected_game_metadata, true);
+      loaded = parse_file_metadata(selected_game.filename, selected_game_metadata, true);
+  }
+
+  if(selected_game.type == GameType::screenshot) {
+    if(selected_game.filename != current_screenshot) {
+      // Free any old buffers
+      if(screenshot) {
+        delete[] screenshot->palette;
+        delete[] screenshot->data;
+        delete screenshot;
+        screenshot = nullptr;
+      }
+      // Load the new screenshot
+      screenshot = Surface::load(selected_game.filename);
+    }
+  } else {
+    // Not showing a screenshot, free the buffers
+    if(screenshot) {
+      delete[] screenshot->palette;
+      delete[] screenshot->data;
+      delete screenshot;
+      screenshot = nullptr;
+    }
   }
 
   // no valid metadata, reset
@@ -243,8 +280,7 @@ void load_current_game_metadata() {
 }
 
 bool launch_current_game() {
-  GameInfo game = game_list[selected_menu_item];
-  return api.launch(game.filename.c_str());
+  return api.launch(selected_game.filename.c_str());
 }
 
 void init_lists() {
@@ -285,15 +321,12 @@ void scan_flash() {
 }
 
 void delete_current_game() {
-  auto &game = game_list[selected_menu_item];
-
-  dialog.show("Confirm", "Really delete " + game.title + "?", [](bool yes){
+  dialog.show("Confirm", "Really delete " + selected_game.title + "?", [](bool yes){
     if(yes) {
-      auto &game = game_list[selected_menu_item];
-      if(game.filename.compare(0, 7, "flash:/") == 0)
-        api.erase_game(std::stoi(game.filename.substr(7)) * qspi_flash_sector_size);
+      if(selected_game.filename.compare(0, 7, "flash:/") == 0)
+        api.erase_game(std::stoi(selected_game.filename.substr(7)) * qspi_flash_sector_size);
 
-      ::remove_file(game.filename);
+      ::remove_file(selected_game.filename);
 
       load_file_list(current_directory->name);
       load_current_game_metadata();
@@ -322,6 +355,27 @@ void render(uint32_t time) {
 
   screen.pen = theme.color_background;
   screen.clear();
+
+  if(!game_list.empty() && selected_game.type == GameType::screenshot) {
+    if(screenshot->bounds.w == screen.bounds.w) {
+      screen.blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Point(0, 0));
+    } else {
+      screen.stretch_blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Rect(Point(0, 0), screen.bounds));
+    }
+
+    if(currentScreen == Screen::screenshot) {
+      // back
+      screen.sprite(5, Point(game_actions_offset.x, game_actions_offset.y + 12));
+      screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R180);
+      return;
+    }
+
+    // Darken behind the file/directory menus so they're visible
+    screen.pen = theme.color_background;
+    screen.pen.a = 150;
+    screen.rectangle(Rect(game_info_offset.x - 10, 0, screen.bounds.w - game_info_offset.x + 10, 20));
+    screen.rectangle(Rect(0, 0, game_info_offset.x - 10, screen.bounds.h));
+  }
 
   // adjust alignment rect for vertical spacing
   const int text_align_height = ROW_HEIGHT + minimal_font.spacing_y;
@@ -367,33 +421,40 @@ void render(uint32_t time) {
     screen.sprite(2, Point(game_actions_offset.x, game_actions_offset.y));
     screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y));
 
-    // run
-    screen.sprite(1, Point(game_actions_offset.x, game_actions_offset.y + 12));
+    // run/view button
     screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R90);
 
-    // game info
-    if(selected_game_metadata.splash)
-      screen.blit(selected_game_metadata.splash, Rect(Point(0, 0), selected_game_metadata.splash->bounds), game_info_offset);
+    if(selected_game.type == GameType::screenshot) {
+      // view
+      screen.sprite(4, Point(game_actions_offset.x, game_actions_offset.y + 12));
+    } else {
+      // run
+      screen.sprite(1, Point(game_actions_offset.x, game_actions_offset.y + 12));
 
-    screen.pen = theme.color_accent;
-    std::string wrapped_title = screen.wrap_text(selected_game_metadata.title, screen.bounds.w - game_info_offset.x - 10, launcher_font);
+      // game info
+      if(selected_game_metadata.splash)
+        screen.blit(selected_game_metadata.splash, Rect(Point(0, 0), selected_game_metadata.splash->bounds), game_info_offset);
 
-    Size title_size = screen.measure_text(wrapped_title, minimal_font);
-    screen.text(wrapped_title, launcher_font, Point(game_info_offset.x, game_info_offset.y + 104));
+      screen.pen = theme.color_accent;
+      std::string wrapped_title = screen.wrap_text(selected_game_metadata.title, screen.bounds.w - game_info_offset.x - 10, minimal_font);
 
-    Rect desc_rect(game_info_offset.x, game_info_offset.y + 108 + title_size.h, screen.bounds.w - game_info_offset.x - 10, 64);
+      Size title_size = screen.measure_text(wrapped_title, launcher_font);
+      screen.text(wrapped_title, launcher_font, Point(game_info_offset.x, game_info_offset.y + 104));
 
-    screen.pen = theme.color_text;
-    std::string wrapped_desc = screen.wrap_text(selected_game_metadata.description, desc_rect.w, launcher_font);
-    screen.text(wrapped_desc, launcher_font, desc_rect);
+      Rect desc_rect(game_info_offset.x, game_info_offset.y + 108 + title_size.h, screen.bounds.w - game_info_offset.x - 10, 64);
 
-    screen.text(selected_game_metadata.author, minimal_font, Point(game_info_offset.x, screen.bounds.h - 32));
-    screen.text(selected_game_metadata.version, minimal_font, Point(game_info_offset.x, screen.bounds.h - 24));
+      screen.pen = theme.color_text;
+      std::string wrapped_desc = screen.wrap_text(selected_game_metadata.description, desc_rect.w, launcher_font);
+      screen.text(wrapped_desc, launcher_font, desc_rect);
 
-    int num_blocks = calc_num_blocks(game_list[selected_menu_item].size);
-    char buf[20];
-    snprintf(buf, 20, "%i block%s", num_blocks, num_blocks == 1 ? "" : "s");
-    screen.text(buf, minimal_font, Point(game_info_offset.x, screen.bounds.h - 16));
+      screen.text(selected_game_metadata.author, minimal_font, Point(game_info_offset.x, screen.bounds.h - 32));
+      screen.text(selected_game_metadata.version, minimal_font, Point(game_info_offset.x, screen.bounds.h - 24));
+
+      int num_blocks = calc_num_blocks(selected_game.size);
+      char buf[20];
+      snprintf(buf, 20, "%i block%s", num_blocks, num_blocks == 1 ? "" : "s");
+      screen.text(buf, minimal_font, Point(game_info_offset.x, screen.bounds.h - 16));
+    }
   }
   else {
     screen.pen = theme.color_text;
@@ -420,6 +481,7 @@ void update(uint32_t time) {
   }
 
   bool button_a = buttons.released & Button::A;
+  bool button_b = buttons.pressed & Button::B;
   bool button_x = buttons.pressed & Button::X;
   bool button_y = buttons.pressed & Button::Y;
   bool button_menu = buttons.pressed & Button::MENU;
@@ -437,11 +499,10 @@ void update(uint32_t time) {
 
     return;
   }
-  else {
-    if (button_menu) {
-      credits::reset_scrolling();
-      currentScreen = Screen::credits;
-    }
+
+  if (button_menu) {
+    credits::reset_scrolling();
+    currentScreen = Screen::credits;
   }
 
   if(dialog.update())
@@ -467,30 +528,42 @@ void update(uint32_t time) {
     }
   }
 
-  // switch between flash and SD lists
-  if(button_left) {
-    if(current_directory == directory_list.begin())
-      current_directory = --directory_list.end();
-    else
-      --current_directory;
-  }
+  if(currentScreen == Screen::screenshot) {
+    // b to exit full screen screenshot view
+    if(button_b) {
+      currentScreen = Screen::main;
+    }
+  } else {
+    // switch between flash and SD lists
+    if(button_left) {
+      if(current_directory == directory_list.begin())
+        current_directory = --directory_list.end();
+      else
+        --current_directory;
+    }
 
-  if(button_right) {
-    current_directory++;
-    if(current_directory == directory_list.end()) {
-      current_directory = directory_list.begin();
+    if(button_right) {
+      current_directory++;
+      if(current_directory == directory_list.end()) {
+        current_directory = directory_list.begin();
+      }
+    }
+
+    if(button_left || button_right) {
+      load_file_list(current_directory->name);
+
+      selected_menu_item = 0;
+      old_menu_item = -1;
+    }
+
+    if (button_y) {
+      file_sort = file_sort == SortBy::name ? SortBy::size : SortBy::name;
+      sort_file_list();
     }
   }
 
-  if(button_left || button_right) {
-    load_file_list(current_directory->name);
-
-    selected_menu_item = 0;
-    load_current_game_metadata();
-  }
-
   // scroll list towards selected item
-  file_list_scroll_offset.y += ((selected_menu_item * 10) - file_list_scroll_offset.y) / 5.0f;
+  file_list_scroll_offset.y += ((selected_menu_item * ROW_HEIGHT) - file_list_scroll_offset.y) / 5.0f;
 
   directory_list_scroll_offset += (current_directory->x + current_directory->w / 2 - directory_list_scroll_offset) / 5.0f;
 
@@ -499,18 +572,25 @@ void update(uint32_t time) {
     load_current_game_metadata();
   }
 
-  if(button_a && !game_list.empty())
-  {
-    launch_current_game();
+  // paranoid bail out if you're browsing screenshots full screen and come across a game
+  if(selected_game.type != GameType::screenshot && currentScreen == Screen::screenshot) {
+    currentScreen = Screen::main;
   }
 
-  // delete current game
+  // delete current game / screenshot
   if (button_x && !game_list.empty()) {
     delete_current_game();
   }
 
-  if (button_y) {
-    file_sort = file_sort == SortBy::name ? SortBy::size : SortBy::name;
-    sort_file_list();
+  if(!game_list.empty()) {
+    if(button_a)
+    {
+      if(selected_game.type == GameType::screenshot) {
+        currentScreen = Screen::screenshot;
+      }
+      else {
+        launch_current_game();
+      }
+    }
   }
 }

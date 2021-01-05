@@ -1,5 +1,5 @@
 assets.hpp:
-  sprites.png: sprites
+  assets/sprites.png: sprites
 
   assets/8x8font.png:
     name: font8x8
