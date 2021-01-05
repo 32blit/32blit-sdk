@@ -547,7 +547,7 @@ void update(uint32_t time) {
       load_file_list(current_directory->name);
 
       selected_menu_item = 0;
-      load_current_game_metadata();
+      old_menu_item = -1;
     }
 
     if (button_y) {
