@@ -87,8 +87,10 @@ if(NOT EXISTS ${STDLIB_PATH}/pic)
     endif()
 endif()
 
-set(PIC_STDLIBS "-nodefaultlibs -L ${STDLIB_PATH}/pic -lstdc++_nano -lm -Wl,--start-group -lgcc -lc_nano -Wl,--end-group -Wl,--start-group -lgcc -lc_nano -lnosys -Wl,--end-group")
-set(NONPIC_STDLIBS "-nodefaultlibs -L ${STDLIB_PATH}/no-pic -lstdc++_nano -lm -Wl,--start-group -lgcc -lc_nano -Wl,--end-group -Wl,--start-group -lgcc -lc_nano -lnosys -Wl,--end-group")
+set(CMAKE_CXX_STANDARD_LIBRARIES_INIT "-nodefaultlibs -lstdc++_nano -lm -Wl,--start-group -lgcc -lc_nano -Wl,--end-group -Wl,--start-group -lgcc -lc_nano -lnosys -Wl,--end-group")
+
+set(PIC_STDLIBS "-L ${STDLIB_PATH}/pic")
+set(NONPIC_STDLIBS "-L ${STDLIB_PATH}/no-pic")
 
 add_definitions(-DTARGET_32BLIT_HW)
 set(32BLIT_HW 1)
