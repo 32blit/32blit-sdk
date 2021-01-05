@@ -45,7 +45,7 @@ contrib_hpp = "// contrib.hpp\n" \
 # Add regular contributors
 contrib_hpp = contrib_hpp + "static const char * contributors[] = {\n"
 
-for c in sorted((regular["login"] for regular in contributors if regular["contributions"] < 100),key=str.casefold):
+for c in sorted((contrib["login"] for contrib in contributors if contrib["contributions"] < 100), key=str.casefold):
     name = checkNickname(c)
     if name in ignore:
         continue
@@ -57,7 +57,7 @@ contrib_hpp = contrib_hpp + "  nullptr\n};\n"
 # Add special contributors
 contrib_hpp = contrib_hpp + "static const char * specialthanks[] = {\n"
 
-for c in sorted((regular["login"] for regular in contributors if regular["contributions"] >= 100),key=str.casefold):
+for c in sorted((contrib["login"] for contrib in contributors if contrib["contributions"] >= 100), key=str.casefold):
     name = checkNickname(c)
     if name in ignore:
         continue
