@@ -55,7 +55,7 @@ namespace credits {
     "",
     "*The contributing crew",
     "(in alphabetical order)",
-    "%C"  // code will render contributors section here, %C is placeholder
+    "%C", // code will render contributors section here, %C is placeholder
     "",
     "*Kickstarted in 2019",
     "",
