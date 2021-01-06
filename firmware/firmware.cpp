@@ -282,6 +282,8 @@ void launch_game(uint32_t address) {
 
 bool launch_game_from_sd(const char *path) {
 
+  persist.launch_path[0] = 0;
+
   if(strncmp(path, "flash:/", 7) == 0) {
     blit_switch_execution(atoi(path + 7) * qspi_flash_sector_size, true);
     return true;
@@ -294,7 +296,6 @@ bool launch_game_from_sd(const char *path) {
 
   uint32_t launch_offset = 0xFFFFFFFF;
   uint32_t flash_offset = launch_offset;
-  persist.launch_path[0] = 0;
 
   // get the extension (assume there is one)
   std::string_view sv(path);
