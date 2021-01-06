@@ -656,6 +656,8 @@ void blit_switch_execution(uint32_t address, bool force_game)
       user_render = (BlitRenderFunction) ((uint8_t *)game_header->render + address);
       user_tick = (BlitTickFunction) ((uint8_t *)game_header->tick + address);
 
+      persist.last_game_offset = address;
+
       if(!init(address)) {
         user_render = nullptr;
         user_tick = nullptr;
@@ -665,8 +667,6 @@ void blit_switch_execution(uint32_t address, bool force_game)
         NVIC_SystemReset();
         return;
       }
-
-      persist.last_game_offset = address;
 
       blit::render = user_render;
       do_tick = user_tick;
