@@ -16,7 +16,7 @@ using namespace blit;
 // Speed of scrolling, ms per pixel
 #define SPEED 40
 
-#define ROW_HEIGHT 10
+#define ROW_HEIGHT 12
 
 // External variables
 
