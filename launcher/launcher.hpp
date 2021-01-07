@@ -86,3 +86,4 @@ class AutoRepeat {
     uint32_t pressed_time = 0;
     uint32_t last_time = 0;
 };
+
