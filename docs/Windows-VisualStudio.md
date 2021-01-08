@@ -8,7 +8,8 @@ See [Building & Running On 32Blit](32blit.md) if you want to compile examples/pr
 - [Option 1: Use the solution file](#option-1-use-the-solution-file)
   - [Get started with your own game](#get-started-with-your-own-game)
 - [Option 2: Use Visual Studio's built-in CMake support](#option-2-use-visual-studios-built-in-cmake-support)
-  - [Building your own game](#building-with-your-own-game)
+  - [Building your own game](#building-your-own-game)
+  - [Building for 32Blit](#building-for-32blit)
 - [Troubleshooting](#troubleshooting)
 
 ## Requirements
@@ -69,6 +70,22 @@ To find the built files use `Project` > `CMake Cache` > `Open in Explorer`.
 9. Build!
 
 [More info about using CMake with Visual Studio](https://docs.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio?view=vs-2019)
+
+### Building for 32Blit
+
+1. Make sure the "Embedded and IoT development tools" component is installed.
+
+2. Open the CMake Settings (see above).
+
+3. Press "Add a new configuration..." and select "IoT-Release".
+
+4. Scroll down to "CMake toolchain file" and browse to `32blit.toolchain`
+
+5. (Optional) Change configuration name to something like "32Blit-Release"
+
+6. Save.
+
+7. Select the new config and build!
 
 ## Troubleshooting
 
