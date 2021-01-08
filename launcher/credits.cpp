@@ -22,6 +22,7 @@ using namespace blit;
 
 namespace credits {
   static const Font launcher_font(font8x8);
+  static const Font launcher_outline_font(outline_font9x10);
 
   enum class CreditRenderMode {
     Credits,
@@ -106,7 +107,7 @@ namespace credits {
     auto next_index = 0;
     auto y = start_y;
 
-    auto mode = CreditRenderMode::Credits; 
+    auto mode = CreditRenderMode::Credits;
     auto contrib_index = 0;
     auto special_index = 0;
 
@@ -133,13 +134,13 @@ namespace credits {
         if (mode == CreditRenderMode::Contributors && contributors[contrib_index]) {
           screen.text(contributors[contrib_index], launcher_font, Point(screen_width / 2, y), true, TextAlign::center_h);
         }
-        else if (mode == CreditRenderMode::SpecialThanks && specialthanks[special_index]) {
+        else if (mode == CreditRenderMode::SpecialThanks && special_thanks[special_index]) {
           screen.pen = rainbow_colours[colour_index];
           colour_index++;
           if (colour_index >= number_of_colours) {
             colour_index = 0;
           }
-          screen.text(specialthanks[special_index], outline_font, Point(screen_width / 2, y), true, TextAlign::center_h);
+          screen.text(special_thanks[special_index], launcher_outline_font, Point(screen_width / 2, y), true, TextAlign::center_h);
         }
         else { // render regular text
           screen.text(text_to_render, launcher_font, Point(screen_width / 2, y), true, TextAlign::center_h);
@@ -155,7 +156,7 @@ namespace credits {
       }
       if (mode == CreditRenderMode::SpecialThanks) {
         special_index++;
-        if (specialthanks[special_index] == nullptr) {
+        if (special_thanks[special_index] == nullptr) {
           mode = CreditRenderMode::Credits;
         }
       }

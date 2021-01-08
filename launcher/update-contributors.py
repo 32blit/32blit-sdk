@@ -12,6 +12,7 @@ ignore = ["Gadgetoid"]
 
 # nickname list, these conversions will be made.
 nicknames = {
+    "Daft-Freak": "Charlie Birks (Daft-Freak)",
     "lenardg": "LenardG"
 }
 
@@ -43,7 +44,7 @@ contrib_hpp = "// contrib.hpp\n" \
   "\n"
 
 # Add regular contributors
-contrib_hpp = contrib_hpp + "static const char * contributors[] = {\n"
+contrib_hpp = contrib_hpp + "static const char *contributors[] = {\n"
 
 for c in sorted((contrib["login"] for contrib in contributors if contrib["contributions"] < 100), key=str.casefold):
     name = checkNickname(c)
@@ -55,7 +56,7 @@ for c in sorted((contrib["login"] for contrib in contributors if contrib["contri
 contrib_hpp = contrib_hpp + "  nullptr\n};\n"
 
 # Add special contributors
-contrib_hpp = contrib_hpp + "static const char * specialthanks[] = {\n"
+contrib_hpp = contrib_hpp + "static const char *special_thanks[] = {\n"
 
 for c in sorted((contrib["login"] for contrib in contributors if contrib["contributions"] >= 100), key=str.casefold):
     name = checkNickname(c)
