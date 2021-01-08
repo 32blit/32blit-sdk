@@ -52,6 +52,7 @@ namespace blit {
     init();
   }
 
+/* Use *one* constructor and favour static initializers for overloads
   Surface::Surface(uint8_t *data, const PixelFormat &format, const packed_image *image) : data(data), format(format) {
     File f_image;
     f_image.open((const uint8_t *)image, image->byte_count);
@@ -63,6 +64,7 @@ namespace blit {
     load_from_packed(image);
     init();
   }
+*/
 
   /**
    * Loads a packed or raw image asset into a `Surface`
@@ -109,8 +111,7 @@ namespace blit {
     if(image.type[0] == 'B' && image.type[1] == 'M')
       return load_from_bmp(file);
 
-    uint8_t *buffer = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
-    return new Surface(buffer, (PixelFormat)image.format, file);
+    return load_from_packed(file);
   }
 
   /**
@@ -595,9 +596,14 @@ namespace blit {
    *
    * \param image
    */
-  void Surface::load_from_packed(File &file) {
+  Surface *Surface::load_from_packed(File &file, bool readonly) {
     packed_image image;
     file.read(0, sizeof(packed_image), (char *)&image);
+
+    PixelFormat format = (PixelFormat)image.format;
+    Size bounds = Size(image.width, image.height);
+
+    auto ret = new Surface(nullptr, format, bounds);
 
     int palette_entry_count = image.palette_entry_count;
     if(palette_entry_count == 0 && format == PixelFormat::P)
@@ -605,8 +611,6 @@ namespace blit {
 
     bool is_raw = image.type[6] == 'R' && image.type[7] == 'W'; // SPRITE[RW]
     bool is_rle = image.type[6] == 'R' && image.type[7] == 'L';
-
-    bounds = Size(image.width, image.height);
 
     uint8_t bit_depth = log2i(std::max(1, palette_entry_count - 1)) + 1;
 
@@ -618,19 +622,23 @@ namespace blit {
 
     if (format == PixelFormat::P || !is_raw) {
       // load palette
-      palette = new Pen[256];
-      file.read(offset, palette_entry_count * 4, (char *)palette);
+      ret->palette = new Pen[256];
+      file.read(offset, palette_entry_count * 4, (char *)ret->palette);
       offset += palette_entry_count * 4;
     }
 
     if (is_raw) {
-      if(data) // just read/copy the data
-        file.read(offset, image.width * image.height * pixel_format_stride[image.format], (char *)data);
-      else // no data pointer, assume load_read_only is being used
-        data = (uint8_t *)file.get_ptr() + offset;
+      if(readonly) // just read/copy the data
+        ret->data = (uint8_t *)file.get_ptr() + offset;
+      else
+        ret->data = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
+        file.read(offset, image.width * image.height * pixel_format_stride[image.format], (char *)ret->data);
 
-      return;
+      return ret;
     }
+
+
+    ret->data = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
 
     // avoid allocating if in flash
     const uint8_t *image_data, *end;
@@ -646,7 +654,7 @@ namespace blit {
 
     if (format == PixelFormat::P) {
       // load paletted
-      uint8_t *pdest = (uint8_t *)data;
+      uint8_t *pdest = (uint8_t *)ret->data;
 
       if(is_rle) {
         auto bytes = image_data;
@@ -708,7 +716,7 @@ namespace blit {
       }
     } else {
       // packed RGBA
-      Pen *pdest = (Pen *)data;
+      Pen *pdest = (Pen *)ret->data;
 
       for (auto bytes = image_data; bytes < end; ++bytes) {
         uint8_t b = *bytes;
@@ -718,7 +726,7 @@ namespace blit {
 
           bit++;
           if (bit == bit_depth) {
-            *pdest++ = palette[col];
+            *pdest++ = ret->palette[col];
 
             bit = 0; col = 0;
           }
@@ -726,13 +734,15 @@ namespace blit {
       }
 
       // unpacked, no longer needed
-      delete[] palette;
-      palette = nullptr;
+      delete[] ret->palette;
+      ret->palette = nullptr;
     }
 
     if (!file.get_ptr()) {
       delete[] image_data;
     }
+
+    return ret;
   }
 
   Surface *Surface::load_from_bmp(File &file) {

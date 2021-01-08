@@ -111,9 +111,9 @@ namespace blit {
 
   private:
     void init();
-    void load_from_packed(File &file);
 
     static Surface *load_from_bmp(File &file);
+    static Surface *load_from_packed(File &file, bool readonly=false);
 
   public:
     Surface(uint8_t *data, const PixelFormat &format, const Size &bounds);
