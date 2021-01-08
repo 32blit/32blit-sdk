@@ -59,7 +59,7 @@ namespace blit {
    *
    * \return `Surface` containing loaded data or `nullptr` if the image was invalid
    */
-  Surface *Surface::load(const packed_image *image) {
+  Surface *Surface::load(const packed_image *image, uint8_t *data) {
     if(memcmp(image->type, "SPRITEPK", 8) != 0 && memcmp(image->type, "SPRITERW", 8) != 0 && memcmp(image->type, "SPRITERL", 8) != 0)
       return nullptr;
 
@@ -67,7 +67,7 @@ namespace blit {
       return nullptr;
 
     File file((const uint8_t *)image, image->byte_count);
-    return load_from_packed(file, true);
+    return load_from_packed(file, data, true);
   }
 
   /**
@@ -75,8 +75,8 @@ namespace blit {
    *
    * \param data pointer to an image asset
    */
-  Surface *Surface::load(const uint8_t *data) {
-    return load((const packed_image *)data);
+  Surface *Surface::load(const uint8_t *image, uint8_t *data) {
+    return load((const packed_image *)image, data);
   }
 
   /**
@@ -84,7 +84,7 @@ namespace blit {
    *
    * \param filename string filename
    */
-  Surface *Surface::load(const std::string &filename) {
+  Surface *Surface::load(const std::string &filename, uint8_t *data) {
     File file;
 
     if(!file.open(filename, OpenMode::read))
@@ -95,9 +95,9 @@ namespace blit {
 
     // really a bmp
     if(image.type[0] == 'B' && image.type[1] == 'M')
-      return load_from_bmp(file);
+      return load_from_bmp(file, data);
 
-    return load_from_packed(file);
+    return load_from_packed(file, data);
   }
 
   /**
@@ -118,7 +118,7 @@ namespace blit {
       return nullptr;
 
     File file((const uint8_t *)image, image->byte_count);
-    return load_from_packed(file, true);
+    return load_from_packed(file, nullptr, true);
   }
 
   /**
@@ -126,8 +126,8 @@ namespace blit {
    *
    * \param data pointer to an image asset
    */
-  Surface *Surface::load_read_only(const uint8_t *data) {
-    return load_read_only((const packed_image *)data);
+  Surface *Surface::load_read_only(const uint8_t *image) {
+    return load_read_only((const packed_image *)image);
   }
 
   bool Surface::save(const std::string &filename) {
@@ -586,14 +586,14 @@ namespace blit {
    *
    * \param image
    */
-  Surface *Surface::load_from_packed(File &file, bool readonly) {
+  Surface *Surface::load_from_packed(File &file, uint8_t *data, bool readonly) {
     packed_image image;
     file.read(0, sizeof(packed_image), (char *)&image);
 
     PixelFormat format = (PixelFormat)image.format;
     Size bounds = Size(image.width, image.height);
 
-    auto ret = new Surface(nullptr, format, bounds);
+    auto ret = new Surface(data, format, bounds);
 
     int palette_entry_count = image.palette_entry_count;
     if(palette_entry_count == 0 && format == PixelFormat::P)
@@ -621,14 +621,15 @@ namespace blit {
       if(readonly) // just read/copy the data
         ret->data = (uint8_t *)file.get_ptr() + offset;
       else
-        ret->data = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
+        if(!ret->data)
+          ret->data = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
         file.read(offset, image.width * image.height * pixel_format_stride[image.format], (char *)ret->data);
 
       return ret;
     }
 
-
-    ret->data = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
+    if(!ret->data)
+      ret->data = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
 
     // avoid allocating if in flash
     const uint8_t *image_data, *end;
@@ -735,7 +736,7 @@ namespace blit {
     return ret;
   }
 
-  Surface *Surface::load_from_bmp(File &file) {
+  Surface *Surface::load_from_bmp(File &file, uint8_t *data) {
     BMPHeader header;
     file.read(0, sizeof(BMPHeader), (char *)&header);
 
@@ -760,7 +761,8 @@ namespace blit {
     }
 
     bool top_down = header.h < 0;
-    uint8_t *data = new uint8_t[header.image_size];
+    if(!data)
+      data = new uint8_t[header.image_size];
     Size bounds(header.w, top_down ? -header.h : header.h);
 
     auto ret = new Surface(data, format, bounds);
