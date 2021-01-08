@@ -12,6 +12,7 @@ ignore = ["Gadgetoid"]
 
 # nickname list, these conversions will be made.
 nicknames = {
+    "Daft-Freak": "Charlie Birks (Daft-Freak)",
     "lenardg": "LenardG"
 }
 
