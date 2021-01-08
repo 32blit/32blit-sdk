@@ -51,9 +51,11 @@ set(STDLIB_PATH ${CMAKE_CURRENT_LIST_DIR}/stdlib)
 set(STDLIB_URL https://github.com/32blit/stdlibs/releases/download/newlib-3.3.0-gcc-9.2.0/stdlibs.zip)
 set(STDLIB_HASH "${STDLIB_HASHTYPE}=0431fa7b3fe5e463424078546560b06490890abf4967745ac85b8b6b430d1941")
 
-find_program(UNZIP NAMES unzip)
-if(NOT UNZIP)
-    message(FATAL_ERROR "Failed to find required program: \"unzip\"\n(maybe you need to \"apt install unzip\")\n")
+if(${CMAKE_VERSION} VERSION_LESS "3.18")
+    find_program(UNZIP NAMES unzip)
+    if(NOT UNZIP)
+        message(FATAL_ERROR "Failed to find required program: \"unzip\"\n(maybe you need to \"apt install unzip\")\n")
+    endif()
 endif()
 
 # file() is great, but it doesn't tell the user what it's downloading
@@ -77,10 +79,12 @@ endif()
 if(NOT EXISTS ${STDLIB_PATH}/pic)
     message("Extracting stdlibs...")
 
-    # CMake 3.18
-    #file(ARCHIVE_EXTRACT INPUT ${STDLIB_PATH}/stdlibs.zip DESTINATION ${STDLIB_PATH})
-
-    execute_process(COMMAND ${UNZIP} -u ${STDLIB_PATH}/stdlibs.zip -d ${STDLIB_PATH} RESULT_VARIABLE UNZIP_STATUS)
+    if(${CMAKE_VERSION} VERSION_LESS "3.18")
+        execute_process(COMMAND ${UNZIP} -u ${STDLIB_PATH}/stdlibs.zip -d ${STDLIB_PATH} RESULT_VARIABLE UNZIP_STATUS)
+    else()
+        file(ARCHIVE_EXTRACT INPUT ${STDLIB_PATH}/stdlibs.zip DESTINATION ${STDLIB_PATH})
+        set(UNZIP_STATUS 0)
+    endif()
 
     if(NOT ${UNZIP_STATUS} EQUAL 0)
         message(FATAL_ERROR "Failed to extract stdlibs: ${UNZIP_STATUS}\n")
