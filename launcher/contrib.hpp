@@ -5,7 +5,7 @@
 //
 #pragma once
 
-static const char * contributors[] = {
+static const char *contributors[] = {
   "a2",
   "ahnlak",
   "ali1234",
@@ -32,7 +32,7 @@ static const char * contributors[] = {
   "zenodante",
   nullptr
 };
-static const char * specialthanks[] = {
+static const char *special_thanks[] = {
   "Daft-Freak",
   nullptr
 };
