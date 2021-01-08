@@ -8,6 +8,7 @@
 
 using namespace blit;
 
+#include "assets.hpp"
 #include "credits.hpp"
 #include "contrib.hpp"
 #include "theme.hpp"
@@ -15,7 +16,12 @@ using namespace blit;
 // Speed of scrolling, ms per pixel
 #define SPEED 40
 
+#define ROW_HEIGHT 12
+
+// External variables
+
 namespace credits {
+  static const Font launcher_font(font8x8);
 
   enum class CreditRenderMode {
     Credits,
@@ -35,7 +41,7 @@ namespace credits {
 
   static const char* credits[] = {
     "*32Blit",
-    "A pimoroni production",
+    "A Pimoroni production",
     "",
     "*Pimoroni Overlords",
     "Jon",
@@ -63,7 +69,7 @@ namespace credits {
     "No parrots were harmed in",
     "the making of this product.",
     "",
-    "*(c) MMXX",
+    "*(c) MMXXI",
     nullptr // credits ends with a nullptr
   };
 
@@ -125,7 +131,7 @@ namespace credits {
         // render
       if (y >= 0 && y < screen.bounds.h) { // clip to screen
         if (mode == CreditRenderMode::Contributors && contributors[contrib_index]) {
-          screen.text(contributors[contrib_index], minimal_font, Point(screen_width / 2, y), true, TextAlign::center_h);
+          screen.text(contributors[contrib_index], launcher_font, Point(screen_width / 2, y), true, TextAlign::center_h);
         }
         else if (mode == CreditRenderMode::SpecialThanks && specialthanks[special_index]) {
           screen.pen = rainbow_colours[colour_index];
@@ -136,7 +142,7 @@ namespace credits {
           screen.text(specialthanks[special_index], outline_font, Point(screen_width / 2, y), true, TextAlign::center_h);
         }
         else { // render regular text
-          screen.text(text_to_render, minimal_font, Point(screen_width / 2, y), true, TextAlign::center_h);
+          screen.text(text_to_render, launcher_font, Point(screen_width / 2, y), true, TextAlign::center_h);
         }
       }
 
@@ -156,7 +162,7 @@ namespace credits {
       if (mode == CreditRenderMode::Credits) {
         next_index++;
       }
-      y += 10;
+      y += ROW_HEIGHT;
     }
 
     screen.pen = bar_colour;
