@@ -51,6 +51,8 @@ AutoRepeat ar_button_down(250, 600);
 AutoRepeat ar_button_left(0, 0);
 AutoRepeat ar_button_right(0, 0);
 
+uint8_t screenshot_buf[320 * 240 * 3];
+
 int calc_num_blocks(uint32_t size) {
   return (size - 1) / qspi_flash_sector_size + 1;
 }
@@ -255,18 +257,16 @@ void load_current_game_metadata() {
       // Free any old buffers
       if(screenshot) {
         delete[] screenshot->palette;
-        delete[] screenshot->data;
         delete screenshot;
         screenshot = nullptr;
       }
       // Load the new screenshot
-      screenshot = Surface::load(selected_game.filename);
+      screenshot = Surface::load(selected_game.filename, screenshot_buf);
     }
   } else {
     // Not showing a screenshot, free the buffers
     if(screenshot) {
       delete[] screenshot->palette;
-      delete[] screenshot->data;
       delete screenshot;
       screenshot = nullptr;
     }
