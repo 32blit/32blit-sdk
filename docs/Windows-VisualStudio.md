@@ -62,9 +62,11 @@ To find the built files use `Project` > `CMake Cache` > `Open in Explorer`.
 
 6. Browse to the folder containing the 32blit repo.
 
-7. Save. It should configure successfully.
+7. To add a release configuration, press "Add a new configuration..." (the plus button under "Configurations"), select "x64-Release" and repeat steps 4-6 on the new configuration.
 
-8. Build!
+8. Save. It should configure successfully.
+
+9. Build!
 
 [More info about using CMake with Visual Studio](https://docs.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio?view=vs-2019)
 
