@@ -7,11 +7,9 @@
 #pragma once
 
 namespace credits {
-
-  extern void reset_scrolling();
-  extern void prepare();
-  extern void render();
-  extern void update(uint32_t time);
-
+  void reset_scrolling();
+  void prepare();
+  void render();
+  void update(uint32_t time);
 };
 
