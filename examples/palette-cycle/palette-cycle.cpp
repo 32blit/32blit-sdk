@@ -27,7 +27,7 @@ Pen fadeColour(Pen a, Pen b, float f) {
 void init() {
     set_screen_mode(ScreenMode::hires);
 
-    screen.sprites = SpriteSheet::load(fire_data);
+    screen.sprites = Surface::load(fire_data);
 
     for(int g = 0; g < 3; g++){
         for(int i = 0; i < 12; i++){

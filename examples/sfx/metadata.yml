@@ -1,8 +1,0 @@
-title: Sound Effects
-description: A demo of sound-effects produced by 32blit's audio engine
-author: pimoroni
-splash:
-  file: ../no-image.png
-icon:
-  file: ../no-icon.png
-version: v1.0.0 

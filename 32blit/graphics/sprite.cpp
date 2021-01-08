@@ -13,57 +13,6 @@ using namespace blit;
 namespace blit {
 
   /**
-   * Create a spritesheet from packaged data.
-   *
-   * \param[in] data
-   * \param[in] format
-   * \param[in] image
-   */
-  SpriteSheet::SpriteSheet(uint8_t *data, PixelFormat format, const packed_image *image) : Surface(data, format, image) {  
-    rows = bounds.h / 8;
-    cols = bounds.w / 8;
-  }
-
-  SpriteSheet::SpriteSheet(uint8_t *data, PixelFormat format, File &image) : Surface(data, format, image) {  
-    rows = bounds.h / 8;
-    cols = bounds.w / 8;
-  }
-
-  SpriteSheet *SpriteSheet::load(const uint8_t *data, uint8_t *buffer) {
-    return load((packed_image *)data, buffer);
-  }
-
-  SpriteSheet *SpriteSheet::load(const packed_image *image, uint8_t *buffer) {
-    if(memcmp(image->type, "SPRITEPK", 8) != 0 && memcmp(image->type, "SPRITERW", 8) != 0 && memcmp(image->type, "SPRITERL", 8) != 0)
-      return nullptr;
-
-    if(image->format > (uint8_t)PixelFormat::M)
-      return nullptr;
-
-    if (buffer == nullptr) {
-      buffer = new uint8_t[pixel_format_stride[image->format] * image->width * image->height];
-    }
-    
-    return new SpriteSheet(buffer, (PixelFormat)image->format, image);
-  }
-
-  SpriteSheet *SpriteSheet::load(const std::string& filename, uint8_t* buffer) {
-    File file;
-
-    if (!file.open(filename, OpenMode::read))
-      return nullptr;
-
-    packed_image image;
-    file.read(0, sizeof(packed_image), (char *)&image);
-
-    if (buffer == nullptr) {
-      buffer = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
-    }
-
-    return new SpriteSheet(buffer, (PixelFormat)image.format, file);
-  }
-
-  /**
    * Return the bounds of a sprite by index
    * 
    * Takes an index offset to the sprite in the spritesheet
@@ -72,8 +21,8 @@ namespace blit {
    * \param[in] index Index of the sprite in the sheet
    * \return `rect` sprite x/y location (always a multiple of 8) and size (always 8x8)
    */
-  Rect SpriteSheet::sprite_bounds(uint16_t index) {
-    return Rect((index % cols) * 8, (index / cols) * 8, 8, 8);    
+  Rect Surface::sprite_bounds(uint16_t index) {
+    return Rect((index % cols) * 8, (index / cols) * 8, 8, 8);
   }
 
  /**
@@ -85,7 +34,7 @@ namespace blit {
    * \param[in] p `point` describing the x/y offset of the sprite in the spritesheet
    * \return `rect` sprite x/y location (always a multiple of 8) and size (always 8x8)
    */
-  Rect SpriteSheet::sprite_bounds(const Point &p) {
+  Rect Surface::sprite_bounds(const Point &p) {
     return Rect(p.x * 8, p.y * 8, 8, 8);
   }
 
@@ -98,7 +47,7 @@ namespace blit {
    * \param[in] r `rect` describing the x/y offset and size of the sprite in sprite tiles
    * \return `rect` sprite x/y location (always a multiple of 8) and size (always 8x8)
    */
-  Rect SpriteSheet::sprite_bounds(const Rect &r) {
+  Rect Surface::sprite_bounds(const Rect &r) {
     return r * 8;
   }
 

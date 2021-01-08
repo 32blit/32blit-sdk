@@ -12,7 +12,7 @@ using namespace blit;
 const uint16_t screen_width = 160;
 const uint16_t screen_height = 120;
 
-SpriteSheet *ss_ship = SpriteSheet::load(packed_data_ship);
+Surface *ss_ship = Surface::load(packed_data_ship);
 
 /* setup */
 void init() {
@@ -21,7 +21,7 @@ void init() {
 	screen.pen = Pen(0, 0, 0, 0);
 	screen.clear();
 
-	screen.sprites = SpriteSheet::load(packed_data);
+	screen.sprites = Surface::load(packed_data);
 }
 
 void tunnel_test(uint32_t time_ms) {

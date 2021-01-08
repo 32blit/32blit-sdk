@@ -16,7 +16,7 @@ namespace blit {
 
     uint8_t      *tiles;
     uint8_t      *transforms;
-    SpriteSheet  *sprites;
+    Surface  *sprites;
     Mat3          transform = Mat3::identity();
 
     enum {
@@ -26,7 +26,7 @@ namespace blit {
     } repeat_mode;        // determines what to do when drawing outside of the layer bounds.
     uint8_t       default_tile_id;
 
-    TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, SpriteSheet *sprites);
+    TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites);
 
     inline int32_t offset(const Point &p); // __attribute__((always_inline));
     int32_t offset(int16_t x, int16_t y); // __attribute__((always_inline));

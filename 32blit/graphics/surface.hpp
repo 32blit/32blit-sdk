@@ -19,7 +19,6 @@
 
 namespace blit {
 
-  struct SpriteSheet;
   struct sprite_p;
 
 #pragma pack(push, 1)
@@ -99,7 +98,7 @@ namespace blit {
     Surface                        *mask = nullptr;           // optional mask
     Pen                            *palette = nullptr;        // palette entries (for paletted images)
 
-    SpriteSheet                    *sprites = nullptr;        // active spritesheet
+    Surface                        *sprites = nullptr;        // active spritesheet
 
     uint8_t                         transparent_index = 0;    // index of transparent colour (for paletted surfaces)
 
@@ -109,6 +108,8 @@ namespace blit {
 
     std::vector<Surface *>          mipmaps;                  // TODO: probably too niche/specific to attach directly to surface
 
+    uint16_t  rows, cols;
+
   private:
     void init();
 
@@ -117,12 +118,11 @@ namespace blit {
 
   public:
     Surface(uint8_t *data, const PixelFormat &format, const Size &bounds);
-    Surface(uint8_t *data, const PixelFormat &format, const packed_image *image);
-    Surface(uint8_t *data, const PixelFormat &format, File &image);
-
+  
+    static Surface *load(const std::string &filename);
+  
     static Surface *load(const packed_image *image);
     static Surface *load(const uint8_t *data);
-    static Surface *load(const std::string &filename);
 
     static Surface *load_read_only(const packed_image *image);
     static Surface *load_read_only(const uint8_t *data);
@@ -175,6 +175,9 @@ namespace blit {
     //void sprite(spritesheet &ss, uint16_t index, point pos, size span = size(1, 1), point origin = point(0, 0), float scale = 1.0f);
     //void sprite(spritesheet &ss, point sprite, point position, sprite_p &properties);
 
+    Rect sprite_bounds(uint16_t index);          
+    Rect sprite_bounds(const Point &p);
+    Rect sprite_bounds(const Rect &r);
 
     void blit_sprite(const Rect &src, const Point &p, uint8_t t = 0);
     void stretch_blit_sprite(const Rect&src, const Rect &r, uint8_t t = 0);

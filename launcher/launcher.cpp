@@ -43,7 +43,7 @@ SortBy file_sort = SortBy::name;
 GameInfo selected_game;
 BlitGameMetadata selected_game_metadata;
 
-SpriteSheet *spritesheet;
+Surface *spritesheet;
 Surface *screenshot;
 
 AutoRepeat ar_button_up(250, 600);
@@ -342,7 +342,7 @@ void init() {
 
   init_theme();
 
-  spritesheet = SpriteSheet::load(sprites);
+  spritesheet = Surface::load(sprites);
 
   scan_flash();
   init_lists();

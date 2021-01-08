@@ -52,20 +52,6 @@ namespace blit {
     init();
   }
 
-/* Use *one* constructor and favour static initializers for overloads
-  Surface::Surface(uint8_t *data, const PixelFormat &format, const packed_image *image) : data(data), format(format) {
-    File f_image;
-    f_image.open((const uint8_t *)image, image->byte_count);
-    load_from_packed(f_image);
-    init();
-  }
-
-  Surface::Surface(uint8_t *data, const PixelFormat &format, File &image) : data(data), format(format) {
-    load_from_packed(image);
-    init();
-  }
-*/
-
   /**
    * Loads a packed or raw image asset into a `Surface`
    *
@@ -80,8 +66,8 @@ namespace blit {
     if(image->format > (uint8_t)PixelFormat::M)
       return nullptr;
 
-    uint8_t *buffer = new uint8_t[pixel_format_stride[image->format] * image->width * image->height];
-    return new Surface(buffer, (PixelFormat)image->format, image);
+    File file((const uint8_t *)image, image->byte_count);
+    return load_from_packed(file, true);
   }
 
   /**
@@ -131,7 +117,8 @@ namespace blit {
     if(image->format > (uint8_t)PixelFormat::M)
       return nullptr;
 
-    return new Surface(nullptr, (PixelFormat)image->format, image);
+    File file((const uint8_t *)image, image->byte_count);
+    return load_from_packed(file, true);
   }
 
   /**
@@ -234,6 +221,9 @@ namespace blit {
 
   void Surface::init() {
     clip = Rect(0, 0, bounds.w, bounds.h);
+
+    rows = bounds.h / 8;
+    cols = bounds.w / 8;
 
     pixel_stride = pixel_format_stride[static_cast<uint8_t>(format)];
     row_stride = pixel_stride * bounds.w;

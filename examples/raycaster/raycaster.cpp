@@ -104,7 +104,7 @@ void init() {
 	//printf("Init: STARTED\n");
 	//engine::render = ::render;
 	//engine::update = ::update;
-	screen.sprites = SpriteSheet::load(asset_raycaster);
+	screen.sprites = Surface::load(asset_raycaster);
 
 	map.add_layer("walls", map_data_walls);
 	map_layer_walls = &map.layers["walls"];

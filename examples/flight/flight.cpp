@@ -22,8 +22,8 @@ uint8_t __sprites[(128 * 128) + (64 * 128 * sizeof(Pen))] __SECTION__(".ss");
 uint8_t __water[64 * 64] __SECTION__(".ss");
 
 /* create surfaces */
-SpriteSheet *sprites;
-SpriteSheet *water;
+Surface *sprites;
+Surface *water;
 
 Map map(Rect(0, 0, 128, 128));
 
@@ -71,10 +71,10 @@ void init() {
   map.layers["ground"].transforms = layer_transforms;
 
   // Load our map sprites into the __sprites space we've reserved
-  sprites = SpriteSheet::load(packed_data, __sprites);
+  sprites = Surface::load(packed_data, __sprites);
   sprites->generate_mipmaps(3);
 
-  water = SpriteSheet::load(water_packed_data, __water);
+  water = Surface::load(water_packed_data, __water);
 
   // extract information about objects from the map data
   Point p;
