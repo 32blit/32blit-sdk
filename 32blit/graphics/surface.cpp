@@ -768,12 +768,15 @@ namespace blit {
 
     auto ret = new Surface(data, format, bounds);
 
-    if(top_down)
+    int bmp_stride = header.w * (header.bpp / 8);
+    bmp_stride = (bmp_stride + 3) & ~3; // round to a multiple of 4;
+
+    if(top_down && bmp_stride == ret->row_stride)
       file.read(header.data_offset, header.image_size, (char *)data);
     else {
       for(int y = 0; y < bounds.h; y++) {
-        int off = (bounds.h - 1 - y) * ret->row_stride;
-        file.read(header.data_offset + y * ret->row_stride, ret->row_stride, (char *)data + off);
+        int off = top_down ? y * ret->row_stride : (bounds.h - 1 - y) * ret->row_stride;
+        file.read(header.data_offset + y * bmp_stride, ret->row_stride, (char *)data + off);
       }
     }
 
