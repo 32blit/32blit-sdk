@@ -620,10 +620,11 @@ namespace blit {
     if (is_raw) {
       if(readonly) // just read/copy the data
         ret->data = (uint8_t *)file.get_ptr() + offset;
-      else
+      else {
         if(!ret->data)
           ret->data = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
         file.read(offset, image.width * image.height * pixel_format_stride[image.format], (char *)ret->data);
+      }
 
       return ret;
     }
