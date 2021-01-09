@@ -356,13 +356,13 @@ void swoosh(uint32_t time, float t1, float t2, float s1, float s2, int t0, int o
     float t_a = (x / s1) + float(time + t0) / t1;
     float t_b = (x / s2) + float(time + t0) / t2;
 
-    int s1 = sinf(t_a) * size;
-    int s2 = sinf(t_b) * size;
+    int y1 = sinf(t_a) * size;
+    int y2 = sinf(t_b) * size;
 
-    int y1 = std::min(s1, s2) + offset_y;
-    int y2 = std::max(s1, s2) + offset_y;
+    if(y1 > y2) std::swap(y1, y2);
 
-    y2 += 2;
+    y1 += offset_y;
+    y2 += offset_y + 2;
 
     int range = y2 - y1;
 
