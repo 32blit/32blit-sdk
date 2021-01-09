@@ -88,6 +88,12 @@ namespace display {
   }
 
   void enable_vblank_interrupt() {
+    // set new mode after rendering first frame in it
+    if(mode != requested_mode) {
+      mode = requested_mode;
+      need_ltdc_mode_update = true;
+    }
+
     // trigger interrupt when screen refresh reaches the 252nd scanline
     LTDC->LIPCR = 252;
 
@@ -292,12 +298,6 @@ namespace display {
       dma2d_hires_flip(source);
     } else {
       dma2d_hires_pal_flip(source);
-    }
-
-    // set new mode after displaying last frame in the old one
-    if(mode != requested_mode) {
-      mode = requested_mode;
-      need_ltdc_mode_update = true;
     }
   }
 
