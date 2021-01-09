@@ -15,7 +15,7 @@ using namespace blit;
   void init() {
     blit::set_screen_mode(ScreenMode::lores);
 
-    screen.sprites = SpriteSheet::load(asset_platformer);
+    screen.sprites = Surface::load(asset_platformer);
     environment = new TileMap((uint8_t*)asset_tilemap, nullptr, Size(64, 64), screen.sprites);
   }
 

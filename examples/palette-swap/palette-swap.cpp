@@ -47,7 +47,7 @@ Point position[NUM_PALETTES] = {
 void init() {
   set_screen_mode(ScreenMode::hires);
 
-  screen.sprites = SpriteSheet::load(boar_ship);
+  screen.sprites = Surface::load(boar_ship);
 }
 
 void all_ships_at_once_demo(uint32_t time) {

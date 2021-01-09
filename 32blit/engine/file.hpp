@@ -46,6 +46,7 @@ namespace blit {
   public:
     File() = default;
     File(const std::string &filename, int mode = OpenMode::read) {open(filename, mode);}
+    File(const uint8_t *buf, uint32_t buf_len) {open(buf, buf_len);}
     File(const File &) = delete;
     File(File &&other) noexcept {
       *this = std::move(other);

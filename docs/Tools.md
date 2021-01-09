@@ -47,7 +47,7 @@ This file will include `sprites_data`, `sprites_data_length`, `level_data`, and 
 You can load sprites like so:
 
 ```c++
-screen.sprites = SpriteSheet::load(sprites_data);
+screen.sprites = Surface::load(sprites_data);
 ```
 
 For your level data you might want to create an in-memory copy of it that you can edit to change your level in game:

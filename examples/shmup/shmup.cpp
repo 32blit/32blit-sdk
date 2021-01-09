@@ -81,14 +81,14 @@ Pen hit_palette[2][5] = {
 
 Size boar_ship_size(32, 32);
 
-SpriteSheet* ships;
-SpriteSheet* background;
+Surface* ships;
+Surface* background;
 
 Tween tween_bob;
 Tween tween_dusk_dawn;
 Tween tween_parallax;
 
-void draw_tilebased_sprite(SpriteSheet* ss, Point origin, const std::vector<uint8_t> ship, bool hflip = false) {
+void draw_tilebased_sprite(Surface* ss, Point origin, const std::vector<uint8_t> ship, bool hflip = false) {
   // We can use uint8_t everywhere here, but this limits us
   // to a spritesheet of 256*256. That's fine!
   uint8_t o_x = ship[0];
@@ -119,8 +119,8 @@ void draw_tilebased_sprite(SpriteSheet* ss, Point origin, const std::vector<uint
 void init() {
   set_screen_mode(ScreenMode::hires);
 
-  ships = SpriteSheet::load(sprites_ships);
-  background = SpriteSheet::load(sprites_background);
+  ships = Surface::load(sprites_ships);
+  background = Surface::load(sprites_background);
   tween_bob.init(tween_sine, 0.0f, 1.0f, 2500, -1);
   tween_bob.start();
 

@@ -60,7 +60,7 @@ struct star {
 	uint8_t brightness;
 };
 
-extern blit::SpriteSheet sprites;
+extern blit::Surface sprites;
 extern blit::Timer timer1;
 
 void edges();

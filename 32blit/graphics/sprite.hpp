@@ -3,6 +3,7 @@
 #include "surface.hpp"
 
 namespace blit {
+  using SpriteSheet [[deprecated]] = Surface;
 
   /** 
    * All sprite mirroring and rotations (90/180/270) can be composed
@@ -23,21 +24,6 @@ namespace blit {
     R90 = 0b101,
     R180 = 0b011,
     R270 = 0b110
-  };
-
-  struct SpriteSheet : Surface {
-    uint16_t  rows, cols;
-
-    SpriteSheet(uint8_t *data, PixelFormat format, const packed_image *image);
-    SpriteSheet(uint8_t *data, PixelFormat format, File &image);
-
-    static SpriteSheet *load(const uint8_t *data, uint8_t *buffer = nullptr);
-    static SpriteSheet *load(const packed_image *image, uint8_t *buffer = nullptr);
-    static SpriteSheet *load(const std::string& filename, uint8_t* buffer = nullptr);
-
-    Rect sprite_bounds(uint16_t index);          
-    Rect sprite_bounds(const Point &p);
-    Rect sprite_bounds(const Rect &r);
   };
 
 } 

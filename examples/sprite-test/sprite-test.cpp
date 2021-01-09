@@ -15,7 +15,7 @@ const uint16_t screen_height = 240;
 void init() {
   // You gotta load those tasty sprites first
   // "asset_dingbads" is the asset name defined in assets.yml
-  screen.sprites = SpriteSheet::load(asset_dingbads);
+  screen.sprites = Surface::load(asset_dingbads);
 }
 
 int tick_count = 0;
