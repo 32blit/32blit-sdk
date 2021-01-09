@@ -350,11 +350,49 @@ void init() {
   credits::prepare();
 }
 
+void swoosh(uint32_t time, float t1, float t2, float s1, float s2, int t0, int offset_y=120, int size=60, int alpha=45) {
+  for(auto x = 0u; x < screen.bounds.w; x++) {
+    if((x + 1) & 0b10) continue; // This is an aesthetic choice, not an optimisation!
+    float t_a = (x / s1) + float(time + t0) / t1;
+    float t_b = (x / s2) + float(time + t0) / t2;
+
+    int y1 = sinf(t_a) * size;
+    int y2 = sinf(t_b) * size;
+
+    if(y1 > y2) std::swap(y1, y2);
+
+    y1 += offset_y;
+    y2 += offset_y + 2;
+
+    int range = y2 - y1;
+
+    for(auto y = 0; y <= range; y++) {
+      if(y > range / 2){
+        screen.pen.a = alpha - (alpha * y / range);
+      }
+      else
+      {
+        screen.pen.a = alpha * y / range;
+      }
+      screen.pixel(Point(x,  y1 + y));
+    }
+  }
+}
+
 void render(uint32_t time) {
   screen.sprites = spritesheet;
 
   screen.pen = theme.color_background;
   screen.clear();
+
+  if(currentScreen != Screen::screenshot) {
+    screen.pen = Pen(255, 255, 255);
+    swoosh(time, 5100.0f, 3900.0f, 1900.0f, 900.0f, 3500);
+    screen.pen = theme.color_accent;
+    swoosh(time, 5000.0f, 3000.0f, 1000.0f, 1000.0f, 0);
+    screen.pen = Pen(~theme.color_accent.r, ~theme.color_accent.g, ~theme.color_accent.b);
+    swoosh(time, 5100.0f, 3900.0f, 900.0f, 1100.0f, 5000);
+  }
 
   if(!game_list.empty() && selected_game.type == GameType::screenshot) {
     if(screenshot->bounds.w == screen.bounds.w) {
