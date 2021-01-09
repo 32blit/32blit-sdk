@@ -394,7 +394,7 @@ void render(uint32_t time) {
     swoosh(time, 5100.0f, 3900.0f, 900.0f, 1100.0f, 5000);
   }
 
-  if(!game_list.empty() && selected_game.type == GameType::screenshot) {
+  if(!game_list.empty() && selected_game.type == GameType::screenshot && screenshot) {
     if(screenshot->bounds.w == screen.bounds.w) {
       screen.blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Point(0, 0));
     } else {
