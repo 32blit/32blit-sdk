@@ -6,33 +6,13 @@
 #pragma once
 
 static const char *contributors[] = {
-  "a2",
-  "ahnlak",
-  "ali1234",
-  "andreban",
-  "AndrewCapon",
-  "drisc",
-  "illbewithee",
-  "johnmccabe",
-  "LenardG",
-  "LordEidi",
-  "lowfatcode",
-  "Loxrie",
-  "lukesadlerhhl",
-  "mikerr",
-  "mylogon341",
-  "ntwyman",
-  "Ozzard",
-  "Pharap",
-  "shane-powell",
-  "tinwhisker",
-  "trollied",
-  "voidberg",
-  "ymauray",
-  "zenodante",
+  "Run the python script",
+  "if you want stuff",
+  "to appear here",
+  "lol",
   nullptr
 };
 static const char *special_thanks[] = {
-  "Daft-Freak",
+  "Some Wizards",
   nullptr
 };
