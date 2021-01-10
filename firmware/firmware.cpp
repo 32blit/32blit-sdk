@@ -243,6 +243,27 @@ void scan_flash() {
       continue;
     }
 
+    game.offset = offset;
+    game.size = header.end - qspi_flash_address;
+
+    // check for valid metadata
+    if(parse_flash_metadata(offset, game)) {
+      // find the launcher
+      if(strcmp(game.title, "Launcher") == 0)
+        launcher_offset = offset;
+
+      // remove old firmware updates
+      if(strcmp(game.title, "Firmware Updater") == 0) {
+        int size_blocks = calc_num_blocks(game.size);
+
+        erase_qspi_flash(offset / qspi_flash_sector_size, size_blocks * qspi_flash_sector_size);
+        offset += size_blocks * qspi_flash_sector_size;
+        continue;
+      }
+    }
+
+    game_list.push_back(game);
+
     // add free space to list
     if(free_start != 0xFFFFFFFF) {
       auto start_block = free_start / qspi_flash_sector_size;
@@ -252,17 +273,6 @@ void scan_flash() {
 
       free_start = 0xFFFFFFFF;
     }
-
-    game.offset = offset;
-    game.size = header.end - qspi_flash_address;
-
-    // check for valid metadata
-    if(parse_flash_metadata(offset, game)) {
-      if(strcmp(game.title, "Launcher") == 0)
-        launcher_offset = offset;
-    }
-
-    game_list.push_back(game);
 
     offset += calc_num_blocks(game.size) * qspi_flash_sector_size;
   }
