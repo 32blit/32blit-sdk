@@ -741,9 +741,6 @@ namespace blit {
     BMPHeader header;
     file.read(0, sizeof(BMPHeader), (char *)&header);
 
-    if(header.compression != 0)
-      return nullptr;
-
     PixelFormat format;
 
     switch(header.bpp) {
@@ -760,6 +757,20 @@ namespace blit {
       default:
         return nullptr;
     }
+
+    // bitfields
+    if(header.compression == 3) {
+      uint32_t masks[4];
+      // these are at the end of start of the V2+ header
+      file.read(40 + 14, header.bpp / 8 * sizeof(uint32_t), (char *)masks);
+
+      // BGRA, byte swapping already handled
+      // TODO: handle any masks?
+      if(header.bpp != 32 || masks[0] != 0x00FF0000 || masks[1] != 0x0000FF00 || masks[2] != 0x000000FF || masks[3] != 0xFF000000)
+        return nullptr;
+    }
+    else if(header.compression != 0)
+      return nullptr;
 
     bool top_down = header.h < 0;
     if(!data)
