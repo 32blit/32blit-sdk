@@ -405,16 +405,22 @@ static void start_launcher() {
 }
 
 // used for updates
-static void launch_and_delete(const char *path) {
+static bool launch_and_delete(const char *path) {
   FIL file;
   f_open(&file, path, FA_READ);
 
-  // TODO: validate?
+  GameInfo info;
+  if(!parse_file_metadata(file, info))
+    return false;
 
   auto offset = flash_from_sd_to_qspi_flash(file, 0xFFFFFFFF);
+
   f_close(&file);
   ::remove_file(path);
+
   launch_game(offset);
+
+  return true;
 }
 
 void init() {
@@ -441,8 +447,8 @@ void init() {
   // check for updates
   if(::file_exists("firmware-update.blit")) {
     // TODO: -vx.x.x?
-    launch_and_delete("firmware-update.blit");
-    return;
+    if(launch_and_delete("firmware-update.blit"))
+      return;
   }
 
   // then launcher updates
@@ -453,8 +459,8 @@ void init() {
         erase_qspi_flash(flash_game.offset / qspi_flash_sector_size, flash_game.size);
     }
 
-    launch_and_delete("launcher.blit");
-    return;
+    if(launch_and_delete("launcher.blit"))
+      return;
   }
 
   // auto-launch
