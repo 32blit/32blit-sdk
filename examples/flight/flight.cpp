@@ -71,10 +71,10 @@ void init() {
   map.layers["ground"].transforms = layer_transforms;
 
   // Load our map sprites into the __sprites space we've reserved
-  sprites = Surface::load(packed_data, __sprites);
+  sprites = Surface::load(packed_data, __sprites, sizeof(__sprites));
   sprites->generate_mipmaps(3);
 
-  water = Surface::load(water_packed_data, __water);
+  water = Surface::load(water_packed_data, __water, sizeof(__water));
 
   // extract information about objects from the map data
   Point p;

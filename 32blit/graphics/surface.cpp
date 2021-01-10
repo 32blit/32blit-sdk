@@ -73,15 +73,6 @@ namespace blit {
   /**
    * \overload
    *
-   * \param data pointer to an image asset
-   */
-  Surface *Surface::load(const uint8_t *image, uint8_t *data, size_t data_size) {
-    return load((const packed_image *)image, data, data_size);
-  }
-
-  /**
-   * \overload
-   *
    * \param filename string filename
    */
   Surface *Surface::load(const std::string &filename, uint8_t *data, size_t data_size) {
@@ -119,15 +110,6 @@ namespace blit {
 
     File file((const uint8_t *)image, image->byte_count);
     return load_from_packed(file, nullptr, 0, true);
-  }
-
-  /**
-   * \overload
-   *
-   * \param data pointer to an image asset
-   */
-  Surface *Surface::load_read_only(const uint8_t *image) {
-    return load_read_only((const packed_image *)image);
   }
 
   bool Surface::save(const std::string &filename) {
@@ -594,7 +576,7 @@ namespace blit {
     Size bounds = Size(image.width, image.height);
 
     auto needed_size = pixel_format_stride[image.format] * image.width * image.height;
-    if(data_size && needed_size > data_size)
+    if(data && needed_size > data_size)
       return nullptr;
 
     auto ret = new Surface(data, format, bounds);
@@ -765,7 +747,7 @@ namespace blit {
     bool top_down = header.h < 0;
     Size bounds(header.w, top_down ? -header.h : header.h);
 
-    if(data_size && header.image_size > data_size)
+    if(data && header.image_size > data_size)
       return nullptr;
 
     // bitfields

@@ -119,13 +119,16 @@ namespace blit {
   public:
     Surface(uint8_t *data, const PixelFormat &format, const Size &bounds);
 
-    static Surface *load(const std::string &filename, uint8_t *data = nullptr, size_t data_size = 0);
+    static Surface *load(const std::string &filename, uint8_t *data, size_t data_size);
+    static Surface *load(const std::string &filename) {return load(filename, nullptr, 0);};
 
-    static Surface *load(const packed_image *image, uint8_t *data = nullptr, size_t data_size = 0);
-    static Surface *load(const uint8_t *image, uint8_t *data = nullptr, size_t data_size = 0);
+    static Surface *load(const packed_image *image, uint8_t *data, size_t data_size);
+    static Surface *load(const packed_image *image) {return load(image, nullptr, 0);};
+    static Surface *load(const uint8_t *image, uint8_t *data, size_t data_size) {return load((packed_image *)image, data, data_size);};
+    static Surface *load(const uint8_t *image) {return load((packed_image *)image, nullptr, 0);};
 
     static Surface *load_read_only(const packed_image *image);
-    static Surface *load_read_only(const uint8_t *image);
+    static Surface *load_read_only(const uint8_t *image) {return load_read_only((packed_image *)image);};
 
     bool save(const std::string &filename);
 
