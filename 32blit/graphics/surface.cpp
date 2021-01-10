@@ -59,7 +59,7 @@ namespace blit {
    *
    * \return `Surface` containing loaded data or `nullptr` if the image was invalid
    */
-  Surface *Surface::load(const packed_image *image, uint8_t *data) {
+  Surface *Surface::load(const packed_image *image, uint8_t *data, size_t data_size) {
     if(memcmp(image->type, "SPRITEPK", 8) != 0 && memcmp(image->type, "SPRITERW", 8) != 0 && memcmp(image->type, "SPRITERL", 8) != 0)
       return nullptr;
 
@@ -67,16 +67,7 @@ namespace blit {
       return nullptr;
 
     File file((const uint8_t *)image, image->byte_count);
-    return load_from_packed(file, data, true);
-  }
-
-  /**
-   * \overload
-   *
-   * \param data pointer to an image asset
-   */
-  Surface *Surface::load(const uint8_t *image, uint8_t *data) {
-    return load((const packed_image *)image, data);
+    return load_from_packed(file, data, data_size, false);
   }
 
   /**
@@ -84,7 +75,7 @@ namespace blit {
    *
    * \param filename string filename
    */
-  Surface *Surface::load(const std::string &filename, uint8_t *data) {
+  Surface *Surface::load(const std::string &filename, uint8_t *data, size_t data_size) {
     File file;
 
     if(!file.open(filename, OpenMode::read))
@@ -95,9 +86,9 @@ namespace blit {
 
     // really a bmp
     if(image.type[0] == 'B' && image.type[1] == 'M')
-      return load_from_bmp(file, data);
+      return load_from_bmp(file, data, data_size);
 
-    return load_from_packed(file, data);
+    return load_from_packed(file, data, data_size, false);
   }
 
   /**
@@ -118,16 +109,7 @@ namespace blit {
       return nullptr;
 
     File file((const uint8_t *)image, image->byte_count);
-    return load_from_packed(file, nullptr, true);
-  }
-
-  /**
-   * \overload
-   *
-   * \param data pointer to an image asset
-   */
-  Surface *Surface::load_read_only(const uint8_t *image) {
-    return load_read_only((const packed_image *)image);
+    return load_from_packed(file, nullptr, 0, true);
   }
 
   bool Surface::save(const std::string &filename) {
@@ -586,12 +568,16 @@ namespace blit {
    *
    * \param image
    */
-  Surface *Surface::load_from_packed(File &file, uint8_t *data, bool readonly) {
+  Surface *Surface::load_from_packed(File &file, uint8_t *data, size_t data_size, bool readonly) {
     packed_image image;
     file.read(0, sizeof(packed_image), (char *)&image);
 
     PixelFormat format = (PixelFormat)image.format;
     Size bounds = Size(image.width, image.height);
+
+    auto needed_size = pixel_format_stride[image.format] * image.width * image.height;
+    if(data && needed_size > data_size)
+      return nullptr;
 
     auto ret = new Surface(data, format, bounds);
 
@@ -620,16 +606,17 @@ namespace blit {
     if (is_raw) {
       if(readonly) // just read/copy the data
         ret->data = (uint8_t *)file.get_ptr() + offset;
-      else
+      else {
         if(!ret->data)
-          ret->data = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
+          ret->data = new uint8_t[needed_size];
         file.read(offset, image.width * image.height * pixel_format_stride[image.format], (char *)ret->data);
+      }
 
       return ret;
     }
 
     if(!ret->data)
-      ret->data = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
+      ret->data = new uint8_t[needed_size];
 
     // avoid allocating if in flash
     const uint8_t *image_data, *end;
@@ -736,12 +723,9 @@ namespace blit {
     return ret;
   }
 
-  Surface *Surface::load_from_bmp(File &file, uint8_t *data) {
+  Surface *Surface::load_from_bmp(File &file, uint8_t *data, size_t data_size) {
     BMPHeader header;
     file.read(0, sizeof(BMPHeader), (char *)&header);
-
-    if(header.compression != 0)
-      return nullptr;
 
     PixelFormat format;
 
@@ -761,18 +745,39 @@ namespace blit {
     }
 
     bool top_down = header.h < 0;
+    Size bounds(header.w, top_down ? -header.h : header.h);
+
+    if(data && header.image_size > data_size)
+      return nullptr;
+
+    // bitfields
+    if(header.compression == 3) {
+      uint32_t masks[4];
+      // these are at the end of start of the V2+ header
+      file.read(40 + 14, header.bpp / 8 * sizeof(uint32_t), (char *)masks);
+
+      // BGRA, byte swapping already handled
+      // TODO: handle any masks?
+      if(header.bpp != 32 || masks[0] != 0x00FF0000 || masks[1] != 0x0000FF00 || masks[2] != 0x000000FF || masks[3] != 0xFF000000)
+        return nullptr;
+    }
+    else if(header.compression != 0)
+      return nullptr;
+
     if(!data)
       data = new uint8_t[header.image_size];
-    Size bounds(header.w, top_down ? -header.h : header.h);
 
     auto ret = new Surface(data, format, bounds);
 
-    if(top_down)
+    int bmp_stride = header.w * (header.bpp / 8);
+    bmp_stride = (bmp_stride + 3) & ~3; // round to a multiple of 4;
+
+    if(top_down && bmp_stride == ret->row_stride)
       file.read(header.data_offset, header.image_size, (char *)data);
     else {
       for(int y = 0; y < bounds.h; y++) {
-        int off = (bounds.h - 1 - y) * ret->row_stride;
-        file.read(header.data_offset + y * ret->row_stride, ret->row_stride, (char *)data + off);
+        int off = top_down ? y * ret->row_stride : (bounds.h - 1 - y) * ret->row_stride;
+        file.read(header.data_offset + y * bmp_stride, ret->row_stride, (char *)data + off);
       }
     }
 
