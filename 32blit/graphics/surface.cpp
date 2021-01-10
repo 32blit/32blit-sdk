@@ -67,7 +67,7 @@ namespace blit {
       return nullptr;
 
     File file((const uint8_t *)image, image->byte_count);
-    return load_from_packed(file, data, true);
+    return load_from_packed(file, data);
   }
 
   /**
