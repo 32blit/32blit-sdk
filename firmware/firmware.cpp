@@ -394,6 +394,19 @@ static void start_launcher() {
     launch_game_from_sd("launcher.blit");
 }
 
+// used for updates
+static void launch_and_delete(const char *path) {
+  FIL file;
+  f_open(&file, path, FA_READ);
+
+  // TODO: validate?
+
+  auto offset = flash_from_sd_to_qspi_flash(file, 0xFFFFFFFF);
+  f_close(&file);
+  ::remove_file(path);
+  launch_game(offset);
+}
+
 void init() {
   api.launch = launch_game_from_sd;
   api.erase_game = erase_flash_game;
@@ -414,6 +427,25 @@ void init() {
   g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value, &flashLoader);
 
   g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'E', 'R', 'S', 'E'>::value, &cdc_erase_handler);
+
+  // check for updates
+  if(::file_exists("firmware-update.blit")) {
+    // TODO: -vx.x.x?
+    launch_and_delete("firmware-update.blit");
+    return;
+  }
+
+  // then launcher updates
+  if(::file_exists("launcher.blit")) {
+    // erase old launcher
+    for(auto &flash_game : game_list) {
+      if(strcmp(flash_game.title, "Launcher") == 0)
+        erase_qspi_flash(flash_game.offset / qspi_flash_sector_size, flash_game.size);
+    }
+
+    launch_and_delete("launcher.blit");
+    return;
+  }
 
   // auto-launch
   if(persist.reset_target == prtGame)
