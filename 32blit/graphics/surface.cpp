@@ -59,7 +59,7 @@ namespace blit {
    *
    * \return `Surface` containing loaded data or `nullptr` if the image was invalid
    */
-  Surface *Surface::load(const packed_image *image, uint8_t *data) {
+  Surface *Surface::load(const packed_image *image, uint8_t *data, size_t data_size) {
     if(memcmp(image->type, "SPRITEPK", 8) != 0 && memcmp(image->type, "SPRITERW", 8) != 0 && memcmp(image->type, "SPRITERL", 8) != 0)
       return nullptr;
 
@@ -67,7 +67,7 @@ namespace blit {
       return nullptr;
 
     File file((const uint8_t *)image, image->byte_count);
-    return load_from_packed(file, data);
+    return load_from_packed(file, data, data_size, false);
   }
 
   /**
@@ -75,8 +75,8 @@ namespace blit {
    *
    * \param data pointer to an image asset
    */
-  Surface *Surface::load(const uint8_t *image, uint8_t *data) {
-    return load((const packed_image *)image, data);
+  Surface *Surface::load(const uint8_t *image, uint8_t *data, size_t data_size) {
+    return load((const packed_image *)image, data, data_size);
   }
 
   /**
@@ -84,7 +84,7 @@ namespace blit {
    *
    * \param filename string filename
    */
-  Surface *Surface::load(const std::string &filename, uint8_t *data) {
+  Surface *Surface::load(const std::string &filename, uint8_t *data, size_t data_size) {
     File file;
 
     if(!file.open(filename, OpenMode::read))
@@ -95,9 +95,9 @@ namespace blit {
 
     // really a bmp
     if(image.type[0] == 'B' && image.type[1] == 'M')
-      return load_from_bmp(file, data);
+      return load_from_bmp(file, data, data_size);
 
-    return load_from_packed(file, data);
+    return load_from_packed(file, data, data_size, false);
   }
 
   /**
@@ -118,7 +118,7 @@ namespace blit {
       return nullptr;
 
     File file((const uint8_t *)image, image->byte_count);
-    return load_from_packed(file, nullptr, true);
+    return load_from_packed(file, nullptr, 0, true);
   }
 
   /**
@@ -586,12 +586,16 @@ namespace blit {
    *
    * \param image
    */
-  Surface *Surface::load_from_packed(File &file, uint8_t *data, bool readonly) {
+  Surface *Surface::load_from_packed(File &file, uint8_t *data, size_t data_size, bool readonly) {
     packed_image image;
     file.read(0, sizeof(packed_image), (char *)&image);
 
     PixelFormat format = (PixelFormat)image.format;
     Size bounds = Size(image.width, image.height);
+
+    auto needed_size = pixel_format_stride[image.format] * image.width * image.height;
+    if(data_size && needed_size > data_size)
+      return nullptr;
 
     auto ret = new Surface(data, format, bounds);
 
@@ -622,7 +626,7 @@ namespace blit {
         ret->data = (uint8_t *)file.get_ptr() + offset;
       else {
         if(!ret->data)
-          ret->data = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
+          ret->data = new uint8_t[needed_size];
         file.read(offset, image.width * image.height * pixel_format_stride[image.format], (char *)ret->data);
       }
 
@@ -630,7 +634,7 @@ namespace blit {
     }
 
     if(!ret->data)
-      ret->data = new uint8_t[pixel_format_stride[image.format] * image.width * image.height];
+      ret->data = new uint8_t[needed_size];
 
     // avoid allocating if in flash
     const uint8_t *image_data, *end;
@@ -737,7 +741,7 @@ namespace blit {
     return ret;
   }
 
-  Surface *Surface::load_from_bmp(File &file, uint8_t *data) {
+  Surface *Surface::load_from_bmp(File &file, uint8_t *data, size_t data_size) {
     BMPHeader header;
     file.read(0, sizeof(BMPHeader), (char *)&header);
 
@@ -758,6 +762,12 @@ namespace blit {
         return nullptr;
     }
 
+    bool top_down = header.h < 0;
+    Size bounds(header.w, top_down ? -header.h : header.h);
+
+    if(data_size && header.image_size > data_size)
+      return nullptr;
+
     // bitfields
     if(header.compression == 3) {
       uint32_t masks[4];
@@ -772,10 +782,8 @@ namespace blit {
     else if(header.compression != 0)
       return nullptr;
 
-    bool top_down = header.h < 0;
     if(!data)
       data = new uint8_t[header.image_size];
-    Size bounds(header.w, top_down ? -header.h : header.h);
 
     auto ret = new Surface(data, format, bounds);
 
