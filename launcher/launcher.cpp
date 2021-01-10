@@ -261,7 +261,7 @@ void load_current_game_metadata() {
         screenshot = nullptr;
       }
       // Load the new screenshot
-      screenshot = Surface::load(selected_game.filename, screenshot_buf);
+      screenshot = Surface::load(selected_game.filename, screenshot_buf, sizeof(screenshot_buf));
     }
   } else {
     // Not showing a screenshot, free the buffers
