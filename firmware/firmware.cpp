@@ -416,7 +416,7 @@ static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
         break;
       } else if(strcmp(flash_game.title, meta.title) == 0 && strcmp(flash_game.author, meta.author) == 0) {
         // same game, different version
-        if(calc_num_blocks(flash_game.size) <= calc_num_blocks(bytes_total)) {
+        if(calc_num_blocks(flash_game.size) >= calc_num_blocks(bytes_total)) {
           flash_offset = flash_game.offset;
           break;
         }
