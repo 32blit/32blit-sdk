@@ -502,7 +502,7 @@ void render(uint32_t time) {
 
     screen.pen = Pen(255, 255, 255);
     screen.text(
-      "No launcher found!\n\nFlash one with 32blit flash\n or place launcher.blit on your SD card.",
+      "Please flash a launcher!\n\nUse \"32blit flash launcher.blit\"\nor place launcher.blit on your SD card.",
       minimal_font, Point(screen.bounds.w / 2, screen.bounds.h / 2), true, TextAlign::center_center
     );
   }
@@ -991,8 +991,13 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                       meta.size = header.end - qspi_flash_address;
                       if(parse_flash_metadata(flash_start_offset, meta)) {
                         for(auto &game : game_list) {
-                          if(strcmp(game.title, meta.title) == 0 && strcmp(game.author, meta.author) == 0 && game.offset != flash_start_offset)
+                          if(strcmp(game.title, meta.title) == 0 && strcmp(game.author, meta.author) == 0 && game.offset != flash_start_offset) {
                             erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
+                          }
+                          else if(strcmp(game.category, "launcher") == 0 && strcmp(meta.category, "launcher") == 0) {
+                            // flashing a launcher, remove previous launchers
+                            erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
+                          }
                         }
                       }
 
