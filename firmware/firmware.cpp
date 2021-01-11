@@ -377,6 +377,15 @@ static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
 
   progress.hide();
 
+  // update free space
+  for(auto &space : free_space) {
+    if(std::get<0>(space) == flash_offset / qspi_flash_sector_size) {
+      auto size = calc_num_blocks(bytes_total);
+      std::get<0>(space) += size;
+      std::get<1>(space) -= size;
+    }
+  }
+
   return bytes_flashed == bytes_total ? flash_offset : 0xFFFFFFFF;
 }
 
