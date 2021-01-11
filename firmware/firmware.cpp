@@ -729,29 +729,6 @@ bool FlashLoader::StreamInit(CDCFourCC uCommand) {
   return false;
 }
 
-
-// FlashData() Flash data to the QSPI flash
-bool FlashData(uint32_t start, uint32_t uOffset, uint8_t *pBuffer, uint32_t uLen) {
-  if(!flash_buffer(start + uOffset, pBuffer, uLen))
-    return false;
-
-  progress.update(uOffset + uLen);
-  return true;
-}
-
-
-// SaveData() Saves date to file on SDCard
-bool SaveData(FIL &file, uint8_t *pBuffer, uint32_t uLen)
-{
-  UINT uWritten;
-  FRESULT res = f_write(&file, pBuffer, uLen, &uWritten);
-
-  progress.update(f_tell(&file));
-
-  return !res && (uWritten == uLen);
-}
-
-
 // StreamData() Handle streamed data
 // State machine has three states:
 // stFilename : Parse filename
@@ -850,68 +827,61 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
       }
 
       case stData:
-          while((result == srContinue) && (m_parseState == stData) && (m_uParseIndex <= m_uFilelen) && dataStream.Get(byte))
-          {
-            uint32_t uByteOffset = m_uParseIndex % PAGE_SIZE;
-            buffer[uByteOffset] = byte;
+        while((result == srContinue) && (m_parseState == stData) && (m_uParseIndex <= m_uFilelen) && dataStream.Get(byte)) {
+          uint32_t uByteOffset = m_uParseIndex % PAGE_SIZE;
+          buffer[uByteOffset] = byte;
 
-            // check buffer needs writing
-            volatile uint32_t uWriteLen = 0;
-            bool bEOS = false;
-            if (m_uParseIndex == m_uFilelen-1)
-            {
-              uWriteLen = uByteOffset+1;
-              bEOS = true;
-            }
-            else
-              if(uByteOffset == PAGE_SIZE-1)
-                uWriteLen = PAGE_SIZE;
-
-            if(uWriteLen)
-            {
-              switch(dest)
-              {
-                case Destination::SD:
-                  // save data
-                  if(!SaveData(file, buffer, uWriteLen))
-                  {
-                    debugf("Failed to save to SDCard\n\r");
-                    result = srError;
-                  }
-                break;
-
-                case Destination::Flash:
-                {
-                  uint32_t offset = (m_uParseIndex / PAGE_SIZE) * PAGE_SIZE;
-
-                  // relocation patching
-                  apply_relocs(offset, flash_start_offset, buffer, uWriteLen, relocation_offsets, cur_reloc);
-
-                  // save data
-                  if(!FlashData(flash_start_offset, offset, buffer, uWriteLen))
-                  {
-                    debugf("Failed to write to flash\n\r");
-                    result = srError;
-                  }
-                }
-                break;
-
-                default:
-                break;
-              }
-
-              if(bEOS) {
-                handle_data_end(result != srError);
-
-                if(result != srError)
-                  result = srFinish;
-                progress.hide();
-              }
-            }
-
+          // check buffer needs writing
+          volatile uint32_t uWriteLen = 0;
+          bool bEOS = false;
+          if (m_uParseIndex == m_uFilelen-1) {
+            // end of file
+            uWriteLen = uByteOffset+1;
+            bEOS = true;
+          } else if(uByteOffset == PAGE_SIZE-1)
+              uWriteLen = PAGE_SIZE; // buffer full
+          else {
+            // keep filling buffer
             m_uParseIndex++;
-            m_uBytesHandled = m_uParseIndex;
+            continue;
           }
+
+          if(dest == Destination::SD) {
+            // save data
+            UINT uWritten;
+            FRESULT res = f_write(&file, buffer, uWriteLen, &uWritten);
+
+            if(res != FR_OK || uWritten != uWriteLen) {
+              debugf("Failed to save to SDCard\n\r");
+              result = srError;
+            }
+          } else {
+            // flash
+            uint32_t offset = (m_uParseIndex / PAGE_SIZE) * PAGE_SIZE;
+
+            // relocation patching
+            apply_relocs(offset, flash_start_offset, buffer, uWriteLen, relocation_offsets, cur_reloc);
+
+            // save data
+            if(!flash_buffer(flash_start_offset + offset, buffer, uWriteLen)) {
+              debugf("Failed to write to flash\n\r");
+              result = srError;
+            }
+          }
+
+          progress.update(m_uParseIndex + 1);
+
+          if(bEOS) {
+            handle_data_end(result != srError);
+
+            if(result != srError)
+              result = srFinish;
+            progress.hide();
+          }
+
+          m_uParseIndex++;
+          m_uBytesHandled = m_uParseIndex;
+        }
       break;
     }
   }
