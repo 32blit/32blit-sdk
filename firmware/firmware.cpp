@@ -860,9 +860,19 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
       case stRelocs: {
         uint32_t word;
         if(m_uParseIndex > 1 && m_uParseIndex == num_relocs + 2) {
-          cur_reloc = 0;
           m_parseState = stData;
           m_uParseIndex = 0;
+
+          // got relocs, prepare to flash
+          cur_reloc = 0;
+          flash_start_offset = get_flash_offset_for_file(m_uFilelen);
+
+          // erase
+          erase_qspi_flash(flash_start_offset, m_uFilelen);
+
+          char buf[300];
+          snprintf(buf, 300, "Saving %s to flash...", m_sFilename);
+          progress.show(buf, m_uFilelen);
         } else {
           while(result == srContinue && dataStream.Get(word)) {
             if(m_uParseIndex == 0 && word != 0x4F4C4552 /*RELO*/) {
@@ -932,17 +942,6 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                 case stFlashCDC:
                 {
                   uint32_t uPage = (m_uParseIndex / PAGE_SIZE);
-                  // first page, check header
-                  if(uPage == 0) {
-                    flash_start_offset = get_flash_offset_for_file(m_uFilelen);
-
-                    // erase
-                    erase_qspi_flash(flash_start_offset, m_uFilelen);
-
-                    char buf[300];
-                    snprintf(buf, 300, "Saving %s to flash...", m_sFilename);
-                    progress.show(buf, m_uFilelen);
-                  }
 
                   // relocation patching
                   if(cur_reloc < relocation_offsets.size()) {
