@@ -303,15 +303,8 @@ void launch_game(uint32_t address) {
   blit_switch_execution(address, false);
 }
 
-bool launch_game_from_sd(const char *path) {
-
-  persist.launch_path[0] = 0;
-
-  if(strncmp(path, "flash:/", 7) == 0) {
-    blit_switch_execution(atoi(path + 7) * qspi_flash_sector_size, true);
-    return true;
-  }
-
+// runs a .blit file, flashing it if required
+static bool launch_game_from_sd(const char *path) {
   if(is_qspi_memorymapped()) {
     qspi_disable_memorymapped_mode();
     blit_disable_user_code(); // assume user running
@@ -319,34 +312,6 @@ bool launch_game_from_sd(const char *path) {
 
   uint32_t launch_offset = 0xFFFFFFFF;
   uint32_t flash_offset = launch_offset;
-
-  // get the extension (assume there is one)
-  std::string_view sv(path);
-  auto ext = std::string(sv.substr(sv.find_last_of('.') + 1));
-  for(auto &c : ext)
-    c = tolower(c);
-
-  if(ext != "blit") {
-    // find the handler
-    for(auto &handler : handlers) {
-      if(handler.type == ext) {
-        launch_offset = handler.offset;
-        break;
-      }
-    }
-
-    if(launch_offset == 0xFFFFFFFF)
-      return false;
-
-    // set the path to the file to launch
-    strncpy(persist.launch_path, path, sizeof(persist.launch_path));
-
-    blit_switch_execution(launch_offset, true);
-    return true;
-
-  }
-
-  // .blit file, install/launch
 
   FIL file;
   FRESULT res = f_open(&file, path, FA_READ);
@@ -403,6 +368,49 @@ bool launch_game_from_sd(const char *path) {
   return false;
 }
 
+// launches a file using the approprite handler
+bool launch_file_from_sd(const char *path) {
+  persist.launch_path[0] = 0;
+
+  if(strncmp(path, "flash:/", 7) == 0) {
+    blit_switch_execution(atoi(path + 7) * qspi_flash_sector_size, true);
+    return true;
+  }
+
+  uint32_t launch_offset = 0xFFFFFFFF;
+
+  // get the extension (assume there is one)
+  std::string_view sv(path);
+  auto ext = std::string(sv.substr(sv.find_last_of('.') + 1));
+  for(auto &c : ext)
+    c = tolower(c);
+
+  if(ext != "blit") {
+    // find the handler
+    for(auto &handler : handlers) {
+      if(handler.type == ext) {
+        launch_offset = handler.offset;
+        break;
+      }
+    }
+
+    if(launch_offset == 0xFFFFFFFF)
+      return false;
+
+    // set the path to the file to launch
+    strncpy(persist.launch_path, path, sizeof(persist.launch_path));
+
+    blit_switch_execution(launch_offset, true);
+    return true;
+  }
+
+  // .blit file, install/launch
+  if(launch_game_from_sd(path))
+    return true;
+
+  return false;
+}
+
 static void *get_type_handler_metadata(const char *filetype) {
   for(auto &handler : handlers) {
     if(strncmp(filetype, handler.type, 4) == 0)
@@ -437,7 +445,7 @@ static bool launch_and_delete(const char *path) {
 }
 
 void init() {
-  api.launch = launch_game_from_sd;
+  api.launch = launch_file_from_sd;
   api.erase_game = erase_flash_game;
   api.get_type_handler_metadata = get_type_handler_metadata;
 
