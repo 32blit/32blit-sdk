@@ -249,10 +249,6 @@ static void scan_flash() {
   }
 }
 
-static void launch_game(uint32_t address) {
-  blit_switch_execution(address, false);
-}
-
 static void cleanup_duplicates(GameInfo &new_game, uint32_t new_game_offset) {
   bool is_launcher = strcmp(new_game.category, "launcher") == 0;
 
@@ -580,20 +576,20 @@ void init() {
 
   // auto-launch
   if(persist.reset_target == prtGame)
-    launch_game(persist.last_game_offset);
+    blit_switch_execution(persist.last_game_offset, false);
   // error reset handling
   else if(persist.reset_error) {
     dialog.show("Oops!", "Restart game?", [](bool yes){
 
       if(yes)
-        launch_game(persist.last_game_offset);
+        blit_switch_execution(persist.last_game_offset, false);
       else if(launcher_offset != 0xFFFFFFFF)
-        launch_game(launcher_offset);
+        blit_switch_execution(launcher_offset, false);
 
       persist.reset_error = false;
     });
   } else if(launcher_offset != 0xFFFFFFFF)
-    launch_game(launcher_offset);
+    blit_switch_execution(launcher_offset, false);
 }
 
 void render(uint32_t time) {
