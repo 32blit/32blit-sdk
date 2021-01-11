@@ -303,6 +303,22 @@ void launch_game(uint32_t address) {
   blit_switch_execution(address, false);
 }
 
+static void cleanup_duplicates(GameInfo &new_game, uint32_t new_game_offset) {
+  bool is_launcher = strcmp(new_game.category, "launcher") == 0;
+
+  for(auto &game : game_list) {
+    if(game.offset == new_game_offset)
+      continue;
+
+    if(strcmp(game.title, new_game.title) == 0 && strcmp(game.author, new_game.author) == 0) {
+      erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
+    } else if(is_launcher && strcmp(game.category, "launcher") == 0) {
+      // flashing a launcher, remove previous launchers
+      erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
+    }
+  }
+}
+
 // runs a .blit file, flashing it if required
 static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
   if(is_qspi_memorymapped()) {
@@ -342,15 +358,13 @@ static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
         if(calc_num_blocks(flash_game.size) <= calc_num_blocks(bytes_total)) {
           flash_offset = flash_game.offset;
           break;
-        } else {
-          // new version is bigger, erase old one
-          erase_qspi_flash(flash_game.offset / qspi_flash_sector_size, flash_game.size);
         }
-      } else if(strcmp(flash_game.category, "launcher") == 0 && strcmp(meta.category, "launcher") == 0) {
-        // flashing a launcher, remove previous launchers
-        erase_qspi_flash(flash_game.offset / qspi_flash_sector_size, flash_game.size);
       }
     }
+
+    // cleanup any other duplicates if we're going to flash
+    if(launch_offset == 0xFFFFFFFF)
+      cleanup_duplicates(meta, launch_offset);
   }
 
   if(launch_offset == 0xFFFFFFFF)
@@ -976,15 +990,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                       GameInfo meta;
                       meta.size = header.end - qspi_flash_address;
                       if(parse_flash_metadata(flash_start_offset, meta)) {
-                        for(auto &game : game_list) {
-                          if(strcmp(game.title, meta.title) == 0 && strcmp(game.author, meta.author) == 0 && game.offset != flash_start_offset) {
-                            erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
-                          }
-                          else if(strcmp(game.category, "launcher") == 0 && strcmp(meta.category, "launcher") == 0) {
-                            // flashing a launcher, remove previous launchers
-                            erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
-                          }
-                        }
+                        cleanup_duplicates(meta, flash_start_offset);
                       }
 
                       blit_switch_execution(flash_start_offset, true);
