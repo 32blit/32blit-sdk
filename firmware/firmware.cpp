@@ -318,8 +318,6 @@ static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
   UINT bytes_read = 0;
   FSIZE_t bytes_flashed = 0;
 
-  size_t offset = 0;
-
   // check for prepended relocation info
   char buf[4];
   f_lseek(&file, 0);
@@ -346,14 +344,6 @@ static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
     f_lseek(&file, 0);
   }
 
-  // check header
-  auto off = f_tell(&file);
-  BlitGameHeader header;
-  if(f_read(&file, (void *)&header, sizeof(header), &bytes_read) != FR_OK)
-    return false;
-
-  f_lseek(&file, off);
-
   if(!has_relocs)
     flash_offset = 0;
   else if(flash_offset == 0xFFFFFFFF)
@@ -375,12 +365,11 @@ static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
       break;
 
     // relocation patching
-    apply_relocs(offset, flash_offset, buffer, bytes_read, relocation_offsets, cur_reloc);
+    apply_relocs(bytes_flashed, flash_offset, buffer, bytes_read, relocation_offsets, cur_reloc);
 
-    if(!flash_buffer(offset + flash_offset, buffer, bytes_read))
+    if(!flash_buffer(bytes_flashed + flash_offset, buffer, bytes_read))
       break;
 
-    offset += bytes_read;
     bytes_flashed += bytes_read;
 
     progress.update(bytes_flashed);
