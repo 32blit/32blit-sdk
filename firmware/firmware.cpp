@@ -437,11 +437,6 @@ static void *get_type_handler_metadata(const char *filetype) {
   return nullptr;
 }
 
-static void start_launcher() {
-  if(launcher_offset != 0xFFFFFFFF)
-    launch_game(launcher_offset);
-}
-
 void init() {
   api.launch = launch_file_from_sd;
   api.erase_game = erase_flash_game;
@@ -486,12 +481,12 @@ void init() {
       if(yes)
         launch_game(persist.last_game_offset);
       else if(launcher_offset != 0xFFFFFFFF)
-        start_launcher();
+        launch_game(launcher_offset);
 
       persist.reset_error = false;
     });
-  } else
-    start_launcher();
+  } else if(launcher_offset != 0xFFFFFFFF)
+    launch_game(launcher_offset);
 }
 
 void render(uint32_t time) {
