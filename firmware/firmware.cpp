@@ -3,7 +3,6 @@
 #include <cmath>
 #include "quadspi.h"
 #include "CDCCommandStream.h"
-#include "USBManager.h"
 #include "usbd_cdc_if.h"
 #include "file.hpp"
 #include "executable.hpp"
@@ -18,8 +17,6 @@
 
 using namespace blit;
 
-enum State {stFlashFile, stSaveFile, stFlashCDC, stMassStorage};
-
 constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 constexpr uint32_t qspi_flash_size = 32768 * 1024;
 constexpr uint32_t qspi_flash_address = 0x90000000;
@@ -28,8 +25,6 @@ extern CDCCommandStream g_commandStream;
 
 FlashLoader flashLoader;
 CDCEraseHandler cdc_erase_handler;
-
-extern USBManager g_usbManager;
 
 struct GameInfo {
   char title[25], author[17];
@@ -51,12 +46,6 @@ std::list<HandlerInfo> handlers; // flashed games that can "launch" files
 std::list<std::tuple<uint16_t, uint16_t>> free_space; // block start, count
 
 uint32_t launcher_offset = ~0;
-
-uint8_t buffer[PAGE_SIZE];
-
-State		state = stFlashFile;
-
-FIL file;
 
 Dialog dialog;
 
@@ -757,7 +746,7 @@ bool FlashData(uint32_t start, uint32_t uOffset, uint8_t *pBuffer, uint32_t uLen
 
 
 // SaveData() Saves date to file on SDCard
-bool SaveData(uint8_t *pBuffer, uint32_t uLen)
+bool SaveData(FIL &file, uint8_t *pBuffer, uint32_t uLen)
 {
   UINT uWritten;
   FRESULT res = f_write(&file, pBuffer, uLen, &uWritten);
@@ -919,7 +908,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
               {
                 case stSaveFile:
                   // save data
-                  if(!SaveData(buffer, uWriteLen))
+                  if(!SaveData(file, buffer, uWriteLen))
                   {
                     debugf("Failed to save to SDCard\n\r");
                     result = srError;

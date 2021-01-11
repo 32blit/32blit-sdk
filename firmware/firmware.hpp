@@ -65,6 +65,13 @@ public:
 private:
   enum ParseState {stFilename, stLength, stRelocs, stData};
 
+  enum State {stFlashFile, stSaveFile, stFlashCDC, stMassStorage};
+
+  State state = stFlashFile;
+
+  FIL file;
+  uint8_t buffer[PAGE_SIZE];
+
   ParseState m_parseState = stFilename;
 
   char m_sFilename[MAX_FILENAME];
