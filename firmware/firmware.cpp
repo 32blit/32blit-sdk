@@ -126,7 +126,7 @@ bool parse_file_metadata(FIL &fh, GameInfo &info) {
 
   if(header.magic == blit_game_magic) {
     uint8_t buf[10];
-    f_lseek(&fh, (header.end - 0x90000000) + off);
+    f_lseek(&fh, (header.end - qspi_flash_address) + off);
     auto res = f_read(&fh, buf, 10, &bytes_read);
 
     if(bytes_read == 10 && memcmp(buf, "BLITMETA", 8) == 0) {
@@ -567,7 +567,7 @@ uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
       uint32_t reloc_offset;
       f_read(&file, (void *)&reloc_offset, 4, &bytes_read);
 
-      relocation_offsets.push_back(reloc_offset - 0x90000000);
+      relocation_offsets.push_back(reloc_offset - qspi_flash_address);
     }
 
     bytes_total -= num_relocs * 4 + 8; // size of relocation data
@@ -814,7 +814,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
               m_uFilelen -= num_relocs * 4 + 8;
               relocation_offsets.reserve(num_relocs);
             } else if(m_uParseIndex)
-              relocation_offsets.push_back(word - 0x90000000);
+              relocation_offsets.push_back(word - qspi_flash_address);
 
             m_uParseIndex++;
 
