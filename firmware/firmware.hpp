@@ -84,7 +84,8 @@ private:
   uint32_t m_uFilelen = 0;
   uint32_t flash_start_offset = 0;
 
-  uint32_t num_relocs = 0, cur_reloc = 0;
+  uint32_t num_relocs = 0;
+  size_t cur_reloc = 0;
   std::vector<uint32_t> relocation_offsets;
   bool flash_mapped = false;
 };

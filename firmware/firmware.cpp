@@ -526,6 +526,19 @@ static bool flash_buffer(uint32_t offset, uint8_t *buffer, size_t size) {
   return verified;
 }
 
+// apply relocations to a chunk of a file
+static void apply_relocs(uint32_t file_offset, uint32_t flash_base_offset, uint8_t *buffer, size_t buf_len, const std::vector<uint32_t> &relocation_offsets, size_t &cur_reloc) {
+  if(cur_reloc >= relocation_offsets.size())
+    return;
+
+  for(auto off = file_offset; off < file_offset + buf_len; off += 4) {
+    if(off == relocation_offsets[cur_reloc]) {
+      *(uint32_t *)(buffer + off - file_offset) += flash_base_offset;
+      cur_reloc++;
+    }
+  }
+}
+
 // Flash a file from the SDCard to external flash
 uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
   FRESULT res;
@@ -592,14 +605,7 @@ uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
       break;
 
     // relocation patching
-    if(cur_reloc < relocation_offsets.size()) {
-      for(auto off = offset; off < offset + bytes_read; off += 4) {
-        if(off == relocation_offsets[cur_reloc]) {
-          *(uint32_t *)(buffer + off - offset) += flash_offset;
-          cur_reloc++;
-        }
-      }
-    }
+    apply_relocs(offset, flash_offset, buffer, bytes_read, relocation_offsets, cur_reloc);
 
     if(!flash_buffer(offset + flash_offset, buffer, bytes_read))
       break;
@@ -876,22 +882,13 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
 
                 case Destination::Flash:
                 {
-                  uint32_t uPage = (m_uParseIndex / PAGE_SIZE);
+                  uint32_t offset = (m_uParseIndex / PAGE_SIZE) * PAGE_SIZE;
 
                   // relocation patching
-                  if(cur_reloc < relocation_offsets.size()) {
-                    auto offset = uPage * PAGE_SIZE;
-
-                    for(auto off = offset; off < offset + uWriteLen; off += 4) {
-                      if(off == relocation_offsets[cur_reloc]) {
-                        *(uint32_t *)(buffer + off - offset) += flash_start_offset;
-                        cur_reloc++;
-                      }
-                    }
-                  }
+                  apply_relocs(offset, flash_start_offset, buffer, uWriteLen, relocation_offsets, cur_reloc);
 
                   // save data
-                  if(!FlashData(flash_start_offset, uPage*PAGE_SIZE, buffer, uWriteLen))
+                  if(!FlashData(flash_start_offset, offset, buffer, uWriteLen))
                   {
                     debugf("Failed to write to flash\n\r");
                     result = srError;
