@@ -33,6 +33,7 @@ extern USBManager g_usbManager;
 
 struct GameInfo {
   char title[25], author[17];
+  char category[17];
   uint32_t size = 0, checksum = 0;
 
   uint32_t offset = ~0;
@@ -98,6 +99,8 @@ bool parse_flash_metadata(uint32_t offset, GameInfo &info) {
   RawTypeMetadata type_meta;
   if(qspi_read_buffer(offset + 8, reinterpret_cast<uint8_t *>(&type_meta), sizeof(RawTypeMetadata)) != QSPI_OK)
     return false;
+
+  memcpy(info.category, type_meta.category, sizeof(info.category));
 
   offset += 8 + sizeof(RawTypeMetadata);
 
@@ -249,7 +252,7 @@ void scan_flash() {
     // check for valid metadata
     if(parse_flash_metadata(offset, game)) {
       // find the launcher
-      if(strcmp(game.title, "Launcher") == 0)
+      if(strcmp(game.category, "launcher") == 0)
         launcher_offset = offset;
 
       // remove old firmware updates
@@ -450,9 +453,9 @@ void init() {
 
   // then launcher updates
   if(::file_exists("launcher.blit")) {
-    // erase old launcher
+    // erase old launcher(s)
     for(auto &flash_game : game_list) {
-      if(strcmp(flash_game.title, "Launcher") == 0)
+      if(strcmp(flash_game.category, "launcher") == 0)
         erase_qspi_flash(flash_game.offset / qspi_flash_sector_size, flash_game.size);
     }
 
