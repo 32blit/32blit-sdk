@@ -177,13 +177,13 @@ int calc_num_blocks(uint32_t size) {
   return (size - 1) / qspi_flash_sector_size + 1;
 }
 
-void erase_qspi_flash(uint32_t start_sector, uint32_t size_bytes) {
+void erase_qspi_flash(uint32_t start_offset, uint32_t size_bytes) {
   uint32_t sector_count = calc_num_blocks(size_bytes);
 
   progress.show("Erasing flash sectors...", sector_count);
 
   for(uint32_t sector = 0; sector < sector_count; sector++) {
-    qspi_sector_erase((start_sector + sector) * qspi_flash_sector_size);
+    qspi_sector_erase(start_offset + sector * qspi_flash_sector_size);
 
     progress.update(sector);
   }
@@ -211,7 +211,7 @@ void erase_flash_game(uint32_t offset) {
     qspi_disable_memorymapped_mode();
   }
 
-  erase_qspi_flash(offset / qspi_flash_sector_size, erase_size * qspi_flash_sector_size);
+  erase_qspi_flash(offset, erase_size * qspi_flash_sector_size);
 
   // rescan
   scan_flash();
@@ -269,7 +269,7 @@ void scan_flash() {
       if(strcmp(game.title, "Firmware Updater") == 0 && persist.reset_target == prtFirmware) {
         int size_blocks = calc_num_blocks(game.size);
 
-        erase_qspi_flash(offset / qspi_flash_sector_size, size_blocks * qspi_flash_sector_size);
+        erase_qspi_flash(offset, size_blocks * qspi_flash_sector_size);
         offset += size_blocks * qspi_flash_sector_size;
         continue;
       }
@@ -311,10 +311,10 @@ static void cleanup_duplicates(GameInfo &new_game, uint32_t new_game_offset) {
       continue;
 
     if(strcmp(game.title, new_game.title) == 0 && strcmp(game.author, new_game.author) == 0) {
-      erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
+      erase_qspi_flash(game.offset, game.size);
     } else if(is_launcher && strcmp(game.category, "launcher") == 0) {
       // flashing a launcher, remove previous launchers
-      erase_qspi_flash(game.offset / qspi_flash_sector_size, game.size);
+      erase_qspi_flash(game.offset, game.size);
     }
   }
 }
@@ -581,7 +581,7 @@ uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
     flash_offset = get_flash_offset_for_file(bytes_total);
 
   // erase the sectors needed to write the image
-  erase_qspi_flash(flash_offset / qspi_flash_sector_size, bytes_total);
+  erase_qspi_flash(flash_offset, bytes_total);
 
   progress.show("Copying from SD card to flash...", bytes_total);
 
@@ -950,7 +950,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                     flash_start_offset = get_flash_offset_for_file(m_uFilelen);
 
                     // erase
-                    erase_qspi_flash(flash_start_offset / qspi_flash_sector_size, m_uFilelen);
+                    erase_qspi_flash(flash_start_offset, m_uFilelen);
 
                     char buf[300];
                     snprintf(buf, 300, "Saving %s to flash...", m_sFilename);
