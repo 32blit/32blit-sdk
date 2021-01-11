@@ -1,19 +1,15 @@
-#include "firmware.hpp"
-#include "graphics/color.hpp"
 #include <cmath>
+#include <cstring>
+#include <list>
+
+#include "firmware.hpp"
 #include "quadspi.h"
 #include "CDCCommandStream.h"
 #include "usbd_cdc_if.h"
 #include "file.hpp"
 #include "executable.hpp"
-#include "metadata.hpp"
 #include "dialog.hpp"
 #include "engine/api_private.hpp"
-
-#include <cstring>
-#include <stdio.h>
-#include <stdlib.h>
-#include <list>
 
 using namespace blit;
 
