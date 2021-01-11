@@ -53,7 +53,6 @@ std::list<std::tuple<uint16_t, uint16_t>> free_space; // block start, count
 uint32_t launcher_offset = ~0;
 
 uint8_t buffer[PAGE_SIZE];
-uint8_t verify_buffer[PAGE_SIZE];
 
 State		state = stFlashFile;
 
@@ -525,6 +524,23 @@ uint32_t get_flash_offset_for_file(uint32_t file_size) {
   return 0;
 }
 
+static bool flash_buffer(uint32_t offset, uint8_t *buffer, size_t size) {
+  uint8_t verify_buffer[SD_BUFFER_SIZE];
+
+  if(qspi_write_buffer(offset, buffer, size) != QSPI_OK)
+    return false;
+
+  if(qspi_read_buffer(offset, verify_buffer, size) != QSPI_OK)
+    return false;
+
+  // compare buffers
+  bool verified = true;
+  for(size_t i = 0; i < size && verified; i++)
+    verified = buffer[i] == verify_buffer[i];
+
+  return verified;
+}
+
 // Flash a file from the SDCard to external flash
 uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
   FRESULT res;
@@ -580,9 +596,8 @@ uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
 
   progress.show("Copying from SD card to flash...", bytes_total);
 
-  const int buffer_size = 4096;
+  const int buffer_size = SD_BUFFER_SIZE;
   uint8_t buffer[buffer_size];
-  uint8_t verify_buffer[buffer_size];
 
   while(bytes_flashed < bytes_total) {
     // limited ram so a bit at a time
@@ -601,18 +616,7 @@ uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
       }
     }
 
-    if(qspi_write_buffer(offset + flash_offset, buffer, bytes_read) != QSPI_OK)
-      break;
-
-    if(qspi_read_buffer(offset + flash_offset, verify_buffer, bytes_read) != QSPI_OK)
-      break;
-
-    // compare buffers
-    bool verified = true;
-    for(uint32_t uB = 0; verified && uB < bytes_read; uB++)
-      verified = buffer[uB] == verify_buffer[uB];
-
-    if(!verified)
+    if(!flash_buffer(offset + flash_offset, buffer, bytes_read))
       break;
 
     offset += bytes_read;
@@ -743,24 +747,12 @@ bool FlashLoader::StreamInit(CDCFourCC uCommand)
 
 
 // FlashData() Flash data to the QSPI flash
-// Note: currently qspi_write_buffer only works for sizes of 256 max
-bool FlashData(uint32_t start, uint32_t uOffset, uint8_t *pBuffer, uint32_t uLen)
-{
-  bool bResult = false;
-  if(QSPI_OK == qspi_write_buffer(start + uOffset, pBuffer, uLen))
-  {
-    if(QSPI_OK == qspi_read_buffer(start + uOffset, verify_buffer, uLen))
-    {
-      // compare buffers
-      bResult = true;
-
-      for(uint32_t uB = 0; bResult && uB < uLen; uB++)
-        bResult = pBuffer[uB] == verify_buffer[uB];
-    }
-  }
+bool FlashData(uint32_t start, uint32_t uOffset, uint8_t *pBuffer, uint32_t uLen) {
+  if(!flash_buffer(start + uOffset, pBuffer, uLen))
+    return false;
 
   progress.update(uOffset + uLen);
-  return bResult;
+  return true;
 }
 
 

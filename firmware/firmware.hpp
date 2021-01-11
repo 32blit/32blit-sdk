@@ -8,6 +8,7 @@
 #define MAX_FILENAME 256+1
 #define MAX_FILELEN 16+1
 #define PAGE_SIZE 256
+#define SD_BUFFER_SIZE 4096 // buffer size for flashing from SD
 
 using namespace blit;
 
@@ -40,7 +41,7 @@ struct {
       screen.rectangle(Rect(0, 215, 320, 25));
       screen.pen = Pen(255, 255, 255);
       screen.text(this->message, minimal_font, Point(5, 220));
-      uint32_t progress_width = ((this->value * 310) / this->total);      
+      uint32_t progress_width = ((this->value * 310) / this->total);
       screen.rectangle(Rect(5, 230, progress_width, 5));
     }
   }
