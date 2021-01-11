@@ -67,6 +67,9 @@ private:
 
   enum class Destination {SD, Flash};
 
+  bool prepare_for_data();
+  void handle_data_end(bool success);
+
   Destination dest = Destination::Flash;
 
   FIL file;

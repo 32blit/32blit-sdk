@@ -694,13 +694,8 @@ CDCCommandHandler::StreamResult CDCEraseHandler::StreamData(CDCDataStream &dataS
 //////////////////////////////////////////////////////////////////////
 
 // StreamInit() Initialise state machine
-bool FlashLoader::StreamInit(CDCFourCC uCommand)
-{
-  //debugf("streamInit()\n\r");
-
-  bool bNeedStream = true;
-  switch(uCommand)
-  {
+bool FlashLoader::StreamInit(CDCFourCC uCommand) {
+  switch(uCommand) {
     case CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value:
       dest = Destination::Flash;
       m_parseState = stFilename;
@@ -711,23 +706,21 @@ bool FlashLoader::StreamInit(CDCFourCC uCommand)
         blit_disable_user_code();
         qspi_disable_memorymapped_mode();
       }
-    break;
+      return true;
 
     case CDCCommandHandler::CDCFourCCMake<'S', 'A', 'V', 'E'>::value:
       dest = Destination::SD;
       m_parseState = stFilename;
       m_uParseIndex = 0;
       blit_disable_user_code();
-    break;
+      return true;
 
     case CDCCommandHandler::CDCFourCCMake<'_', '_', 'L', 'S'>::value:
-      bNeedStream = false;
       cdc_flash_list();
-    break;
-
+      return false;
   }
 
-  return bNeedStream;
+  return false;
 }
 
 
@@ -795,40 +788,12 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
             m_sFilelen[m_uParseIndex++] = byte;
             if (byte == 0)
             {
-              m_parseState = stData;
+              m_parseState = stRelocs;
               m_uParseIndex = 0;
               char *pEndPtr;
               m_uFilelen = strtoul(m_sFilelen, &pEndPtr, 10);
-              if(m_uFilelen)
-              {
-                // init file or flash
-                switch(dest)
-                {
-                  case Destination::SD:
-                  {
-                    FRESULT res = f_open(&file, m_sFilename, FA_CREATE_ALWAYS | FA_WRITE);
-                    if(res)
-                    {
-                      debugf("Failed to create file (%s)\n\r", m_sFilename);
-                      result = srError;
-                    } else {
-                      char buf[300];
-                      snprintf(buf, 300, "Saving %s to SD card...", m_sFilename);
-                      progress.show(buf, m_uFilelen);
-                    }
-                  }
-                  break;
 
-                  case Destination::Flash:
-                    m_parseState = stRelocs;
-                  break;
-
-                  default:
-                  break;
-                }
-              }
-              else
-              {
+              if(!m_uFilelen) {
                 debugf("Failed to parse filelen\n\r");
                 result =srError;
               }
@@ -844,20 +809,18 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
 
       case stRelocs: {
         uint32_t word;
-        if(m_uParseIndex > 1 && m_uParseIndex == num_relocs + 2) {
+        if(dest == Destination::SD) {
+          // writing to SD, pass the relocs through
+          m_parseState = stData;
+          if(!prepare_for_data())
+            result = srError;
+        } else if(m_uParseIndex > 1 && m_uParseIndex == num_relocs + 2) {
           m_parseState = stData;
           m_uParseIndex = 0;
 
           // got relocs, prepare to flash
-          cur_reloc = 0;
-          flash_start_offset = get_flash_offset_for_file(m_uFilelen);
-
-          // erase
-          erase_qspi_flash(flash_start_offset, m_uFilelen);
-
-          char buf[300];
-          snprintf(buf, 300, "Saving %s to flash...", m_sFilename);
-          progress.show(buf, m_uFilelen);
+          if(!prepare_for_data())
+            result = srError;
         } else {
           while(result == srContinue && dataStream.Get(word)) {
             if(m_uParseIndex == 0 && word != 0x4F4C4552 /*RELO*/) {
@@ -909,18 +872,6 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                     debugf("Failed to save to SDCard\n\r");
                     result = srError;
                   }
-
-                  // end of stream close up
-                  if(bEOS)
-                  {
-                    f_close(&file);
-
-                    if(result != srError)
-                      result = srFinish;
-
-                    progress.hide();
-                    blit_enable_user_code();
-                  }
                 break;
 
                 case Destination::Flash:
@@ -945,34 +896,19 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                     debugf("Failed to write to flash\n\r");
                     result = srError;
                   }
-
-                  // end of stream close up
-                  if(bEOS)
-                  {
-                    if(result != srError)
-                    {
-                      result = srFinish;
-
-                      // clean up old version(s)
-                      BlitGameHeader header;
-                      read_flash_game_header(flash_start_offset, header);
-
-                      GameInfo meta;
-                      meta.size = header.end - qspi_flash_address;
-                      if(parse_flash_metadata(flash_start_offset, meta)) {
-                        cleanup_duplicates(meta, flash_start_offset);
-                      }
-
-                      blit_switch_execution(flash_start_offset, true);
-                    }
-
-                    progress.hide();
-                  }
                 }
                 break;
 
                 default:
                 break;
+              }
+
+              if(bEOS) {
+                handle_data_end(result != srError);
+
+                if(result != srError)
+                  result = srFinish;
+                progress.hide();
               }
             }
 
@@ -997,3 +933,54 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
   return result;
 }
 
+bool FlashLoader::prepare_for_data() {
+  // about to start receiving data
+  if(dest == Destination::SD) {
+    FRESULT res = f_open(&file, m_sFilename, FA_CREATE_ALWAYS | FA_WRITE);
+    if(res) {
+      debugf("Failed to create file (%s)\n\r", m_sFilename);
+      return false;
+    } else {
+      char buf[300];
+      snprintf(buf, 300, "Saving %s to SD card...", m_sFilename);
+      progress.show(buf, m_uFilelen);
+    }
+  } else {
+    // flash
+    cur_reloc = 0;
+    flash_start_offset = get_flash_offset_for_file(m_uFilelen);
+
+    // erase
+    erase_qspi_flash(flash_start_offset, m_uFilelen);
+
+    char buf[300];
+    snprintf(buf, 300, "Saving %s to flash...", m_sFilename);
+    progress.show(buf, m_uFilelen);
+  }
+
+  return true;
+}
+
+void FlashLoader::handle_data_end(bool success) {
+  // done recieving data
+  if(dest == Destination::SD) {
+    f_close(&file);
+    blit_enable_user_code();
+  } else {
+    // flash
+    if(success) {
+      // clean up old version(s)
+      BlitGameHeader header;
+      read_flash_game_header(flash_start_offset, header);
+
+      GameInfo meta;
+      meta.size = header.end - qspi_flash_address;
+      if(parse_flash_metadata(flash_start_offset, meta)) {
+        cleanup_duplicates(meta, flash_start_offset);
+      }
+
+      // start it
+      blit_switch_execution(flash_start_offset, true);
+    }
+  }
+}
