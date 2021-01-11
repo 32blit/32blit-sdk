@@ -122,6 +122,7 @@ bool parse_flash_metadata(uint32_t offset, GameInfo &info) {
 bool parse_file_metadata(FIL &fh, GameInfo &info) {
   BlitGameHeader header;
   UINT bytes_read;
+  bool result = false;
   f_lseek(&fh, 0);
   f_read(&fh, &header, sizeof(header), &bytes_read);
 
@@ -156,11 +157,20 @@ bool parse_file_metadata(FIL &fh, GameInfo &info) {
       memcpy(info.title, raw_meta.title, sizeof(info.title));
       memcpy(info.author, raw_meta.author, sizeof(info.author));
 
-      return true;
+      result = true;
     }
+
+    // read category
+    res = f_read(&fh, buf, 8, &bytes_read);
+    if(bytes_read == 8 && memcmp(buf, "BLITTYPE", 8) == 0) {
+      RawTypeMetadata type_meta;
+      f_read(&fh, &type_meta, sizeof(RawTypeMetadata), &bytes_read);
+      memcpy(info.category, type_meta.category, sizeof(info.category));
+    }
+
   }
 
-  return false;
+  return result;
 }
 
 int calc_num_blocks(uint32_t size) {
@@ -371,6 +381,9 @@ bool launch_game_from_sd(const char *path) {
           // new version is bigger, erase old one
           erase_qspi_flash(flash_game.offset / qspi_flash_sector_size, flash_game.size);
         }
+      } else if(strcmp(flash_game.category, "launcher") == 0 && strcmp(meta.category, "launcher") == 0) {
+        // flashing a launcher, remove previous launchers
+        erase_qspi_flash(flash_game.offset / qspi_flash_sector_size, flash_game.size);
       }
     }
   }
