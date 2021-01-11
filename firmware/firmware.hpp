@@ -65,9 +65,9 @@ public:
 private:
   enum ParseState {stFilename, stLength, stRelocs, stData};
 
-  enum State {stFlashFile, stSaveFile, stFlashCDC, stMassStorage};
+  enum class Destination {SD, Flash};
 
-  State state = stFlashFile;
+  Destination dest = Destination::Flash;
 
   FIL file;
   uint8_t buffer[PAGE_SIZE];

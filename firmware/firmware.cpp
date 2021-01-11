@@ -702,7 +702,7 @@ bool FlashLoader::StreamInit(CDCFourCC uCommand)
   switch(uCommand)
   {
     case CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value:
-      state = stFlashCDC;
+      dest = Destination::Flash;
       m_parseState = stFilename;
       m_uParseIndex = 0;
 
@@ -714,7 +714,7 @@ bool FlashLoader::StreamInit(CDCFourCC uCommand)
     break;
 
     case CDCCommandHandler::CDCFourCCMake<'S', 'A', 'V', 'E'>::value:
-      state = stSaveFile;
+      dest = Destination::SD;
       m_parseState = stFilename;
       m_uParseIndex = 0;
       blit_disable_user_code();
@@ -802,9 +802,9 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
               if(m_uFilelen)
               {
                 // init file or flash
-                switch(state)
+                switch(dest)
                 {
-                  case stSaveFile:
+                  case Destination::SD:
                   {
                     FRESULT res = f_open(&file, m_sFilename, FA_CREATE_ALWAYS | FA_WRITE);
                     if(res)
@@ -819,7 +819,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   }
                   break;
 
-                  case stFlashCDC:
+                  case Destination::Flash:
                     m_parseState = stRelocs;
                   break;
 
@@ -900,9 +900,9 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
 
             if(uWriteLen)
             {
-              switch(state)
+              switch(dest)
               {
-                case stSaveFile:
+                case Destination::SD:
                   // save data
                   if(!SaveData(file, buffer, uWriteLen))
                   {
@@ -915,7 +915,6 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   {
                     f_close(&file);
 
-                    state = stFlashFile;
                     if(result != srError)
                       result = srFinish;
 
@@ -924,7 +923,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
                   }
                 break;
 
-                case stFlashCDC:
+                case Destination::Flash:
                 {
                   uint32_t uPage = (m_uParseIndex / PAGE_SIZE);
 
@@ -966,8 +965,6 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
 
                       blit_switch_execution(flash_start_offset, true);
                     }
-                    else
-                      state = stFlashFile;
 
                     progress.hide();
                   }
@@ -987,7 +984,6 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
   }
 
   if(result == srError) {
-    state = stFlashFile;
     progress.hide();
 
     if(flash_mapped) {
