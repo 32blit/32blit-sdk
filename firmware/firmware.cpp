@@ -399,9 +399,6 @@ static void *get_type_handler_metadata(const char *filetype) {
 static void start_launcher() {
   if(launcher_offset != 0xFFFFFFFF)
     launch_game(launcher_offset);
-  // no launcher flashed, try to find one on the SD card
-  else if(::file_exists("launcher.blit"))
-    launch_game_from_sd("launcher.blit");
 }
 
 // used for updates
