@@ -304,7 +304,7 @@ void launch_game(uint32_t address) {
 }
 
 // runs a .blit file, flashing it if required
-static bool launch_game_from_sd(const char *path) {
+static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
   if(is_qspi_memorymapped()) {
     qspi_disable_memorymapped_mode();
     blit_disable_user_code(); // assume user running
@@ -359,6 +359,9 @@ static bool launch_game_from_sd(const char *path) {
   f_close(&file);
 
   if(launch_offset != 0xFFFFFFFF) {
+    if(auto_delete)
+      ::remove_file(path);
+
     blit_switch_execution(launch_offset, true);
     return true;
   }
@@ -425,25 +428,6 @@ static void start_launcher() {
     launch_game(launcher_offset);
 }
 
-// used for updates
-static bool launch_and_delete(const char *path) {
-  FIL file;
-  f_open(&file, path, FA_READ);
-
-  GameInfo info;
-  if(!parse_file_metadata(file, info))
-    return false;
-
-  auto offset = flash_from_sd_to_qspi_flash(file, 0xFFFFFFFF);
-
-  f_close(&file);
-  ::remove_file(path);
-
-  launch_game(offset);
-
-  return true;
-}
-
 void init() {
   api.launch = launch_file_from_sd;
   api.erase_game = erase_flash_game;
@@ -468,19 +452,13 @@ void init() {
   // check for updates
   if(::file_exists("firmware-update.blit")) {
     // TODO: -vx.x.x?
-    if(launch_and_delete("firmware-update.blit"))
+    if(launch_game_from_sd("firmware-update.blit", true))
       return;
   }
 
   // then launcher updates
   if(::file_exists("launcher.blit")) {
-    // erase old launcher(s)
-    for(auto &flash_game : game_list) {
-      if(strcmp(flash_game.category, "launcher") == 0)
-        erase_qspi_flash(flash_game.offset / qspi_flash_sector_size, flash_game.size);
-    }
-
-    if(launch_and_delete("launcher.blit"))
+    if(launch_game_from_sd("launcher.blit", true))
       return;
   }
 
