@@ -74,6 +74,7 @@ namespace blit {
     uint8_t b = 0;
     uint8_t a = 0;
 
+    inline bool operator ==(const Pen rhs) {return r == rhs.r && g == rhs.g && b == rhs.b && a == rhs.a;};
     Pen() = default;
     Pen(int a) : a(a) {}
     Pen(float a) : a((uint8_t)(a * 255.0f)) {}
