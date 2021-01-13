@@ -7,4 +7,4 @@ icon:
   file: ../examples/no-icon.png
 version: ${FIRMWARE_VERSION}
 url: https://github.com/pimoroni/32blit-beta
-category: utility
+category: firmware
