@@ -216,7 +216,7 @@ static void scan_flash() {
         launcher_offset = offset;
 
       // remove old firmware updates
-      if(strcmp(game.title, "Firmware Updater") == 0 && persist.reset_target == prtFirmware) {
+      if(strcmp(game.category, "firmware") == 0 && persist.reset_target == prtFirmware) {
         int size_blocks = calc_num_blocks(game.size);
 
         erase_qspi_flash(offset, size_blocks * qspi_flash_sector_size);
