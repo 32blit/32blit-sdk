@@ -196,10 +196,10 @@ void load_file_list(std::string directory) {
       continue;
     }
 
-    if(ext == "bmp") {
+    if(ext == "bmp" || ext == "spritepk" || ext == "spriterw") {
       GameInfo game;
       game.type = GameType::screenshot;
-      game.title = file.name.substr(0, file.name.length() - 4);
+      game.title = file.name.substr(0, file.name.length() - ext.length() - 1);
       game.filename = directory == "/" ? file.name : directory + "/" + file.name;
       game.size = file.size;
       game_list.push_back(game);
@@ -397,6 +397,10 @@ void render(uint32_t time) {
   if(!game_list.empty() && selected_game.type == GameType::screenshot && screenshot) {
     if(screenshot->bounds.w == screen.bounds.w) {
       screen.blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Point(0, 0));
+    } else if(screenshot->bounds == Size(128, 128)) {
+      screen.pen = Pen(0, 0, 0, 255);
+      screen.rectangle(Rect(game_info_offset, Size(128, 128)));
+      screen.blit(screenshot, Rect(Point(0, 0), screenshot->bounds), game_info_offset);
     } else {
       screen.stretch_blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Rect(Point(0, 0), screen.bounds));
     }
