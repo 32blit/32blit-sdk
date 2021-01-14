@@ -7,8 +7,6 @@
 #include "diskio.h"
 #include "fatfs_sd.h"
 
-uint16_t Timer1, Timer2;					/* 1ms Timer Counter */
-
 static volatile DSTATUS Stat = STA_NOINIT;	/* Disk Status */
 static uint8_t CardType;                    /* Type 0:MMC, 1:SDC, 2:Block addressing */
 static uint8_t PowerFlag = 0;				/* Power flag */
@@ -50,8 +48,6 @@ static void SPI_End(SPI_TypeDef *spi)
 /* SPI transmit a byte */
 static void SPI_TxByte(uint8_t data)
 {
-  uint32_t start = HAL_GetTick();
-
   SPI_TypeDef *spi = (HSPI_SDCARD)->Instance;
 
   SPI_Start(spi, 1);
@@ -62,7 +58,7 @@ static void SPI_TxByte(uint8_t data)
   *((__IO uint8_t *)&spi->TXDR) = data;
 
   // wait for end
-  while(!(spi->SR & SPI_FLAG_EOT) && HAL_GetTick() - start < SPI_TIMEOUT);
+  while(!(spi->SR & SPI_FLAG_EOT));
 
   // end
   SPI_End(spi);
@@ -80,8 +76,6 @@ static uint8_t SPI_RxByte(void)
 {
   uint8_t data;
 
-  uint32_t start = HAL_GetTick();
-
   SPI_TypeDef *spi = (HSPI_SDCARD)->Instance;
 
   SPI_Start(spi, 1);
@@ -91,12 +85,12 @@ static uint8_t SPI_RxByte(void)
   *((__IO uint8_t *)&spi->TXDR) = 0xFF;
 
   // wait for a byte
-  while(!(spi->SR & (SPI_FLAG_RXWNE | SPI_FLAG_FRLVL)) && HAL_GetTick() - start < SPI_TIMEOUT);
+  while(!(spi->SR & (SPI_FLAG_RXWNE | SPI_FLAG_FRLVL)));
 
   data = *((__IO uint8_t *)&spi->RXDR);
 
   // wait for end
-  while(!(spi->SR & SPI_FLAG_EOT) && HAL_GetTick() - start < SPI_TIMEOUT);
+  while(!(spi->SR & SPI_FLAG_EOT));
 
   // end
   SPI_End(spi);
@@ -105,7 +99,7 @@ static uint8_t SPI_RxByte(void)
 }
 
 /* SPI receive a byte via pointer */
-static void SPI_RxBytePtr(uint8_t *buff) 
+static void SPI_RxBytePtr(uint8_t *buff)
 {
 	*buff = SPI_RxByte();
 }
@@ -120,18 +114,18 @@ static uint8_t SD_ReadyWait(void)
 	uint8_t res;
 
 	/* timeout 500ms */
-	Timer2 = 500;
+	uint32_t timeout = HAL_GetTick() + 500;
 
 	/* if SD goes ready, receives 0xFF */
 	do {
 		res = SPI_RxByte();
-	} while ((res != 0xFF) && Timer2);
+	} while ((res != 0xFF) && HAL_GetTick() < timeout);
 
 	return res;
 }
 
 /* power on */
-static void SD_PowerOn(void) 
+static void SD_PowerOn(void)
 {
 	uint8_t args[6];
 	uint32_t cnt = 0x1FFF;
@@ -169,13 +163,13 @@ static void SD_PowerOn(void)
 }
 
 /* power off */
-static void SD_PowerOff(void) 
+static void SD_PowerOff(void)
 {
 	PowerFlag = 0;
 }
 
 /* check power flag */
-static uint8_t SD_CheckPower(void) 
+static uint8_t SD_CheckPower(void)
 {
 	return PowerFlag;
 }
@@ -186,12 +180,12 @@ static bool SD_RxDataBlock(BYTE *buff, uint16_t len)
 	uint8_t token;
 
 	/* timeout 200ms */
-	Timer1 = 200;
+  uint32_t timeout = HAL_GetTick() + 200;
 
 	/* loop until receive a response or timeout */
 	do {
 		token = SPI_RxByte();
-	} while((token == 0xFF) && Timer1);
+	} while((token == 0xFF) && HAL_GetTick() < timeout);
 
 	/* invalid response */
 	if(token != 0xFE) return FALSE;
@@ -199,8 +193,6 @@ static bool SD_RxDataBlock(BYTE *buff, uint16_t len)
 	/* receive data */
 	if(len > 16)
 	{
-		Timer1 = SPI_TIMEOUT;
-
 		// manual txrx
 		SPI_Start((HSPI_SDCARD)->Instance, len + 2);
 
@@ -212,7 +204,7 @@ static bool SD_RxDataBlock(BYTE *buff, uint16_t len)
 		for(int i = 0; i < 4; i++)
 			*((__IO uint32_t *)&(HSPI_SDCARD)->Instance->TXDR) = 0xFFFFFFFF;
 
-		while(Timer1)
+		while(true)
 		{
 			if(((HSPI_SDCARD)->Instance->SR & SPI_FLAG_RXWNE))
 			{
@@ -227,11 +219,11 @@ static bool SD_RxDataBlock(BYTE *buff, uint16_t len)
 
 		// get CRC
 		*((__IO uint16_t *)&(HSPI_SDCARD)->Instance->TXDR) = 0xFFFF;
-		while(!((HSPI_SDCARD)->Instance->SR & SPI_SR_RXPLVL_1) && Timer1);
+		while(!((HSPI_SDCARD)->Instance->SR & SPI_SR_RXPLVL_1));
 		uint16_t crc = *((__IO uint16_t *)&(HSPI_SDCARD)->Instance->RXDR);
 
-		while(!((HSPI_SDCARD)->Instance->SR & SPI_FLAG_EOT) && Timer1); // wait for end
-		
+		while(!((HSPI_SDCARD)->Instance->SR & SPI_FLAG_EOT)); // wait for end
+
 		// end
 		SPI_End((HSPI_SDCARD)->Instance);
 	}
@@ -332,7 +324,7 @@ static BYTE SD_SendCmd(BYTE cmd, uint32_t arg)
  **************************************/
 
 /* initialize SD */
-DSTATUS SD_disk_initialize(BYTE drv) 
+DSTATUS SD_disk_initialize(BYTE drv)
 {
 	uint8_t n, type, ocr[4];
 
@@ -355,7 +347,7 @@ DSTATUS SD_disk_initialize(BYTE drv)
 	if (SD_SendCmd(CMD0, 0) == 1)
 	{
 		/* timeout 1 sec */
-		Timer1 = 1000;
+		uint32_t timeout = HAL_GetTick() + 1000;
 
 		/* SDC V2+ accept CMD8 command, http://elm-chan.org/docs/mmc/mmc_e.html */
 		if (SD_SendCmd(CMD8, 0x1AA) == 1)
@@ -372,10 +364,10 @@ DSTATUS SD_disk_initialize(BYTE drv)
 				/* ACMD41 with HCS bit */
 				do {
 					if (SD_SendCmd(CMD55, 0) <= 1 && SD_SendCmd(CMD41, 1UL << 30) == 0) break;
-				} while (Timer1);
+				} while (HAL_GetTick() < timeout);
 
 				/* READ_OCR */
-				if (Timer1 && SD_SendCmd(CMD58, 0) == 0)
+				if (HAL_GetTick() < timeout && SD_SendCmd(CMD58, 0) == 0)
 				{
 					/* Check CCS bit */
 					for (n = 0; n < 4; n++)
@@ -404,10 +396,10 @@ DSTATUS SD_disk_initialize(BYTE drv)
 					if (SD_SendCmd(CMD1, 0) == 0) break; /* CMD1 */
 				}
 
-			} while (Timer1);
+			} while (HAL_GetTick() < timeout);
 
 			/* SET_BLOCKLEN */
-			if (!Timer1 || SD_SendCmd(CMD16, 512) != 0) type = 0;
+			if (!(HAL_GetTick() >= timeout) || SD_SendCmd(CMD16, 512) != 0) type = 0;
 		}
 	}
 
@@ -432,14 +424,14 @@ DSTATUS SD_disk_initialize(BYTE drv)
 }
 
 /* return disk status */
-DSTATUS SD_disk_status(BYTE drv) 
+DSTATUS SD_disk_status(BYTE drv)
 {
 	if (drv) return STA_NOINIT;
 	return Stat;
 }
 
 /* read sector */
-DRESULT SD_disk_read(BYTE pdrv, BYTE* buff, DWORD sector, UINT count) 
+DRESULT SD_disk_read(BYTE pdrv, BYTE* buff, DWORD sector, UINT count)
 {
 	/* pdrv should be 0 */
 	if (pdrv || !count) return RES_PARERR;
@@ -481,7 +473,7 @@ DRESULT SD_disk_read(BYTE pdrv, BYTE* buff, DWORD sector, UINT count)
 
 /* write sector */
 #if _USE_WRITE == 1
-DRESULT SD_disk_write(BYTE pdrv, const BYTE* buff, DWORD sector, UINT count) 
+DRESULT SD_disk_write(BYTE pdrv, const BYTE* buff, DWORD sector, UINT count)
 {
 	/* pdrv should be 0 */
 	if (pdrv || !count) return RES_PARERR;
@@ -536,7 +528,7 @@ DRESULT SD_disk_write(BYTE pdrv, const BYTE* buff, DWORD sector, UINT count)
 #endif /* _USE_WRITE */
 
 /* ioctl */
-DRESULT SD_disk_ioctl(BYTE drv, BYTE ctrl, void *buff) 
+DRESULT SD_disk_ioctl(BYTE drv, BYTE ctrl, void *buff)
 {
 	DRESULT res;
 	uint8_t n, csd[16], *ptr = (uint8_t*)buff;
