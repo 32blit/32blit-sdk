@@ -122,7 +122,7 @@ namespace blit {
     auto ext = std::string_view(filename).substr(dot + 1);
 
     bool is_bmp = ext == "bmp";
-    bool is_spriterw = ext == "spriterw";
+    bool is_spriterw = ext == "spriterw" || ext == "ssrw";
 
     if(!is_bmp && !is_spriterw)
       return false;
