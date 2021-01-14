@@ -7,8 +7,6 @@
 #include "diskio.h"
 #include "fatfs_sd.h"
 
-uint16_t Timer1, Timer2;					/* 1ms Timer Counter */
-
 static volatile DSTATUS Stat = STA_NOINIT;	/* Disk Status */
 static uint8_t CardType;                    /* Type 0:MMC, 1:SDC, 2:Block addressing */
 static uint8_t PowerFlag = 0;				/* Power flag */
@@ -116,12 +114,12 @@ static uint8_t SD_ReadyWait(void)
 	uint8_t res;
 
 	/* timeout 500ms */
-	Timer2 = 500;
+	uint32_t timeout = HAL_GetTick() + 500;
 
 	/* if SD goes ready, receives 0xFF */
 	do {
 		res = SPI_RxByte();
-	} while ((res != 0xFF) && Timer2);
+	} while ((res != 0xFF) && HAL_GetTick() < timeout);
 
 	return res;
 }
@@ -182,12 +180,12 @@ static bool SD_RxDataBlock(BYTE *buff, uint16_t len)
 	uint8_t token;
 
 	/* timeout 200ms */
-	Timer1 = 200;
+  uint32_t timeout = HAL_GetTick() + 200;
 
 	/* loop until receive a response or timeout */
 	do {
 		token = SPI_RxByte();
-	} while((token == 0xFF) && Timer1);
+	} while((token == 0xFF) && HAL_GetTick() < timeout);
 
 	/* invalid response */
 	if(token != 0xFE) return FALSE;
@@ -349,7 +347,7 @@ DSTATUS SD_disk_initialize(BYTE drv)
 	if (SD_SendCmd(CMD0, 0) == 1)
 	{
 		/* timeout 1 sec */
-		Timer1 = 1000;
+		uint32_t timeout = HAL_GetTick() + 1000;
 
 		/* SDC V2+ accept CMD8 command, http://elm-chan.org/docs/mmc/mmc_e.html */
 		if (SD_SendCmd(CMD8, 0x1AA) == 1)
@@ -366,10 +364,10 @@ DSTATUS SD_disk_initialize(BYTE drv)
 				/* ACMD41 with HCS bit */
 				do {
 					if (SD_SendCmd(CMD55, 0) <= 1 && SD_SendCmd(CMD41, 1UL << 30) == 0) break;
-				} while (Timer1);
+				} while (HAL_GetTick() < timeout);
 
 				/* READ_OCR */
-				if (Timer1 && SD_SendCmd(CMD58, 0) == 0)
+				if (HAL_GetTick() < timeout && SD_SendCmd(CMD58, 0) == 0)
 				{
 					/* Check CCS bit */
 					for (n = 0; n < 4; n++)
@@ -398,10 +396,10 @@ DSTATUS SD_disk_initialize(BYTE drv)
 					if (SD_SendCmd(CMD1, 0) == 0) break; /* CMD1 */
 				}
 
-			} while (Timer1);
+			} while (HAL_GetTick() < timeout);
 
 			/* SET_BLOCKLEN */
-			if (!Timer1 || SD_SendCmd(CMD16, 512) != 0) type = 0;
+			if (!(HAL_GetTick() >= timeout) || SD_SendCmd(CMD16, 512) != 0) type = 0;
 		}
 	}
 
