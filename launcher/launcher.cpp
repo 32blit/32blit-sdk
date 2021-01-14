@@ -196,12 +196,16 @@ void load_file_list(std::string directory) {
       continue;
     }
 
-    if(ext == "bmp" || ext == "spritepk" || ext == "spriterw") {
+    // spritepk and spriterw are old, transitional long exts, sspk and ssrw are the file-association compatible short names
+    if(ext == "bmp" || ext == "spritepk" || ext == "spriterw" || ext == "sspk" || ext == "ssrw") {
       GameInfo game;
       game.type = GameType::screenshot;
       game.title = file.name.substr(0, file.name.length() - ext.length() - 1);
       game.filename = directory == "/" ? file.name : directory + "/" + file.name;
       game.size = file.size;
+
+      // Special case check for an installed handler for these types, ie: a sprite editor
+      game.can_launch = api.get_type_handler_metadata && api.get_type_handler_metadata(ext.c_str());
       game_list.push_back(game);
       continue;
     }
@@ -217,6 +221,7 @@ void load_file_list(std::string directory) {
       game.filename = directory == "/" ? file.name : directory + "/" + file.name;
       game.ext = ext;
       game.size = file.size;
+      game.can_launch = true;
 
       game_list.push_back(game);
     }
@@ -463,15 +468,24 @@ void render(uint32_t time) {
     screen.sprite(2, Point(game_actions_offset.x, game_actions_offset.y));
     screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y));
 
-    // run/view button
-    screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R90);
-
     if(selected_game.type == GameType::screenshot) {
-      // view
-      screen.sprite(4, Point(game_actions_offset.x, game_actions_offset.y + 12));
+      if(screenshot->bounds == Size(128, 128)) {
+        if(selected_game.can_launch){
+          // edit (in sprite editor, presumably)
+          screen.sprite(1, Point(game_actions_offset.x, game_actions_offset.y + 12));
+          screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R90);
+        }
+      }
+      else
+      {
+        // view screenshot fullscreen
+        screen.sprite(4, Point(game_actions_offset.x, game_actions_offset.y + 12));
+        screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R90);
+      }
     } else {
-      // run
+      // run game / launch file
       screen.sprite(1, Point(game_actions_offset.x, game_actions_offset.y + 12));
+      screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R90);
 
       // game info
       if(selected_game_metadata.splash)
@@ -627,7 +641,7 @@ void update(uint32_t time) {
   if(!game_list.empty()) {
     if(button_a)
     {
-      if(selected_game.type == GameType::screenshot) {
+      if(selected_game.type == GameType::screenshot && !selected_game.can_launch) {
         currentScreen = Screen::screenshot;
       }
       else {

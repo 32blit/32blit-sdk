@@ -29,6 +29,8 @@ struct GameInfo {
   std::string title;
   uint32_t size, checksum = 0;
 
+  bool can_launch = true; // use in future to flag games with an API mismatch
+
   std::string filename, ext;
 };
 
