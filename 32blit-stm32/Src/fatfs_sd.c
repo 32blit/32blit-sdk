@@ -195,8 +195,6 @@ static bool SD_RxDataBlock(BYTE *buff, uint16_t len)
 	/* receive data */
 	if(len > 16)
 	{
-		Timer1 = SPI_TIMEOUT;
-
 		// manual txrx
 		SPI_Start((HSPI_SDCARD)->Instance, len + 2);
 
@@ -208,7 +206,7 @@ static bool SD_RxDataBlock(BYTE *buff, uint16_t len)
 		for(int i = 0; i < 4; i++)
 			*((__IO uint32_t *)&(HSPI_SDCARD)->Instance->TXDR) = 0xFFFFFFFF;
 
-		while(Timer1)
+		while(true)
 		{
 			if(((HSPI_SDCARD)->Instance->SR & SPI_FLAG_RXWNE))
 			{
@@ -223,10 +221,10 @@ static bool SD_RxDataBlock(BYTE *buff, uint16_t len)
 
 		// get CRC
 		*((__IO uint16_t *)&(HSPI_SDCARD)->Instance->TXDR) = 0xFFFF;
-		while(!((HSPI_SDCARD)->Instance->SR & SPI_SR_RXPLVL_1) && Timer1);
+		while(!((HSPI_SDCARD)->Instance->SR & SPI_SR_RXPLVL_1));
 		uint16_t crc = *((__IO uint16_t *)&(HSPI_SDCARD)->Instance->RXDR);
 
-		while(!((HSPI_SDCARD)->Instance->SR & SPI_FLAG_EOT) && Timer1); // wait for end
+		while(!((HSPI_SDCARD)->Instance->SR & SPI_FLAG_EOT)); // wait for end
 
 		// end
 		SPI_End((HSPI_SDCARD)->Instance);
