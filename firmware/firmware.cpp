@@ -73,8 +73,10 @@ static bool parse_flash_metadata(uint32_t offset, GameInfo &info) {
   if(qspi_read_buffer(offset, buf, 8) != QSPI_OK)
     return true;
 
-  if(memcmp(buf, "BLITTYPE", 8) != 0)
+  if(memcmp(buf, "BLITTYPE", 8) != 0) {
+    memcpy(info.category, "none", 5);
     return true;
+  }
 
   // type chunk
   RawTypeMetadata type_meta;
