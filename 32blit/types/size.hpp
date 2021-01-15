@@ -32,5 +32,7 @@ namespace blit {
   inline Size operator/ (Size lhs, const int a) { lhs /= a; return lhs; }
   inline Size operator* (Size lhs, const float a) { lhs *= a; return lhs; }
   inline Size operator* (Size lhs, const int a) {  lhs *= a; return lhs; }
+  inline bool operator== (Size lhs, Size rhs) { return lhs.w == rhs.w && lhs.h == rhs.h; }
+  inline bool operator!= (Size lhs, Size rhs) { return lhs.w != rhs.w || lhs.h != rhs.h; }
 
 }
