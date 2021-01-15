@@ -196,8 +196,7 @@ void load_file_list(std::string directory) {
       continue;
     }
 
-    // spritepk and spriterw are old, transitional long exts, sspk and ssrw are the file-association compatible short names
-    if(ext == "bmp" || ext == "spritepk" || ext == "spriterw" || ext == "sspk" || ext == "ssrw") {
+    if(ext == "bmp" || ext == "blim") {
       GameInfo game;
       game.type = GameType::screenshot;
       game.title = file.name.substr(0, file.name.length() - ext.length() - 1);

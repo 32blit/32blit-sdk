@@ -122,7 +122,7 @@ namespace blit {
     auto ext = std::string_view(filename).substr(dot + 1);
 
     bool is_bmp = ext == "bmp";
-    bool is_spriterw = ext == "spriterw" || ext == "ssrw";
+    bool is_spriterw = ext == "blim";
 
     if(!is_bmp && !is_spriterw)
       return false;
@@ -148,7 +148,7 @@ namespace blit {
       file.write(0, sizeof(head), reinterpret_cast<char *>(&head));
       offset = sizeof(head);
     } else {
-      // spriterw
+      // spriterw (.blim file)
       packed_image head;
       memcpy(head.type, "SPRITERW", 8);
       head.byte_count = sizeof(packed_image) + data_size + palette_size * 4;
