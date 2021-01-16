@@ -69,9 +69,7 @@ Point tile_offset(0, 0);
 
 struct SaveData {
   uint32_t highscore;
-} saveData;
-
-uint32_t highscore = 0;
+} save_data;
 
 Vec2 player_position(80.0f, SCREEN_H - PLAYER_H);
 Vec2 player_velocity(0.0f, 0.0f);
@@ -111,10 +109,6 @@ using tile_callback = uint8_t (*)(uint8_t tile, uint8_t x, uint8_t y, void *args
 
 uint32_t prng_lfsr = 0;
 const uint16_t prng_tap = 0x74b8;
-
-uint32_t max(uint32_t a, uint32_t b) {
-  return a > b ? a : b;
-}
 
 uint32_t get_random_number() {
     switch(current_random_source) {
@@ -407,13 +401,12 @@ void init() {
     set_screen_mode(lores);
 
     // Attempt to load the first save slot.
-    if (read_save(saveData)) {
+    if (read_save(save_data)) {
       // Loaded sucessfully!
-      highscore = saveData.highscore;
     }
     else {
       // No save file or it failed to load.
-      saveData.highscore = 0;
+      save_data.highscore = 0;
     }
 
 #ifdef __AUDIO__
@@ -676,9 +669,10 @@ void update(uint32_t time_ms) {
 
         if(player_position.y + PLAYER_H > SCREEN_H || player_position.y > SCREEN_H - water_level) {
             game_state = enum_state::dead;
-            highscore = max(highscore, player_progress);
-            saveData.highscore = highscore;
-            write_save(saveData); // save saveData
+            if (player_progress > save_data.highscore) {
+              save_data.highscore = player_progress;
+              write_save(save_data); // save save_data
+            }
         }
         for_each_tile(collide_player_ud, (void *)&tile_offset);
     }
@@ -706,7 +700,7 @@ void render_summary() {
     screen.text(text, minimal_font, Point(10, (SCREEN_H / 2) + 50));
 
     text = "Highscore: ";
-    text.append(std::to_string(highscore));
+    text.append(std::to_string(save_data.highscore));
     text.append("cm");
     screen.text(text, minimal_font, Point(10, (SCREEN_H / 2) + 40));
 }
