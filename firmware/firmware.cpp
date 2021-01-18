@@ -17,6 +17,9 @@ constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 constexpr uint32_t qspi_flash_size = 32768 * 1024;
 constexpr uint32_t qspi_flash_address = 0x90000000;
 
+// resevered space for temp/cached files
+constexpr uint32_t qspi_tmp_reserved = 4 * 1024 * 1024;
+
 extern CDCCommandStream g_commandStream;
 
 FlashLoader flashLoader;
@@ -197,7 +200,7 @@ static void scan_flash() {
   GameInfo game;
   uint32_t free_start = 0xFFFFFFFF;
 
-  for(uint32_t offset = 0; offset < qspi_flash_size;) {
+  for(uint32_t offset = 0; offset < qspi_flash_size - qspi_tmp_reserved;) {
     BlitGameHeader header;
 
     if(!read_flash_game_header(offset, header)) {
@@ -245,7 +248,7 @@ static void scan_flash() {
   // final free
   if(free_start != 0xFFFFFFFF) {
     auto start_block = free_start / qspi_flash_sector_size;
-    auto end_block = qspi_flash_size / qspi_flash_sector_size;
+    auto end_block = (qspi_flash_size - qspi_tmp_reserved) / qspi_flash_sector_size;
 
     free_space.emplace_back(start_block, end_block - start_block);
   }
