@@ -73,7 +73,7 @@ To find the built files use `Project` > `CMake Cache` > `Open in Explorer`.
 
 ### Building for 32Blit
 
-1. Make sure the "Embedded and IoT development tools" component is installed.
+1. Make sure the "Embedded and IoT development tools" component is installed from the `Linux development with C++` VS Workload.
 
 2. Open the CMake Settings (see above).
 
