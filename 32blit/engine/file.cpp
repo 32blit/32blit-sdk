@@ -26,7 +26,7 @@ namespace blit {
    * Lists files on the SD card (device), the game directory (SDL) or in memory.
    *
    * \param path Path to list files at, relative to the root of the SD card or game directory (SDL).
-   * 
+   *
    * \return Vector of files/directories
    */
   std::vector<FileInfo> list_files(const std::string &path) {
@@ -37,7 +37,7 @@ namespace blit {
 
     for(auto &buf_file : buf_files) {
       auto slash_pos = buf_file.first.find_last_of('/');
-      
+
       bool match = false;
       if(slash_pos == std::string::npos) // file in root
         match = path.empty() || path == "/";
@@ -63,7 +63,7 @@ namespace blit {
    * Check if the specified path exists and is a file
    *
    * \param path Path to check existence of, relative to the root of the SD card (device) or game directory (SDL).
-   * 
+   *
    * \return true if file exists
    */
   bool file_exists(const std::string &path) {
@@ -74,7 +74,7 @@ namespace blit {
    * Check if the specified path exists and is a directory
    *
    * \param path Path to check existence of, relative to the root of the SD card (device) or game directory (SDL).
-   * 
+   *
    * \return true if directory exists
    */
   bool directory_exists(const std::string &path) {
@@ -85,7 +85,7 @@ namespace blit {
    * Create a directory
    *
    * \param path Path to create, relative to the root of the SD card (device) or game directory (SDL).
-   * 
+   *
    * \return true if directory created successfully
    */
   bool create_directory(const std::string &path) {
@@ -97,7 +97,7 @@ namespace blit {
    *
    * \param old_name Path to rename, relative to the root of the SD card (device) or game directory (SDL).
    * \param new_name New name
-   * 
+   *
    * \return true if file renamed successfully
    */
   bool rename_file(const std::string &old_name, const std::string &new_name) {
@@ -108,7 +108,7 @@ namespace blit {
    * Remove a file
    *
    * \param path Path to remove, relative to the root of the SD card (device) or game directory (SDL).
-   * 
+   *
    * \return true if file removed successfully
    */
   bool remove_file(const std::string &path) {
@@ -133,7 +133,7 @@ namespace blit {
    *
    * \param file Path to open.
    * \param mode ::OpenMode to open file as. Cannot contain ::write for in-memory files.
-   * 
+   *
    * \return true if file opened successfully
    */
   bool File::open(const std::string &file, int mode) {
@@ -148,6 +148,16 @@ namespace blit {
       return true;
     }
 
+    // flash cache
+    if(mode == (OpenMode::read | OpenMode::cached) && api.flash_to_tmp) {
+      buf = api.flash_to_tmp(file, buf_len);
+
+      if(buf) {
+        is_cached = true;
+        return true;
+      }
+    }
+
     fh = api.open_file(file, mode);
     return fh != nullptr;
   }
@@ -158,7 +168,7 @@ namespace blit {
    * \param offset Offset to read from
    * \param length Length to read
    * \param buffer Pointer to buffer to store data into, should be at least `length` bytes
-   * 
+   *
    * \return Number of bytes read successfully or -1 if an error occurred.
    */
   int32_t File::read(uint32_t offset, uint32_t length, char *buffer) {
@@ -178,7 +188,7 @@ namespace blit {
    * \param offset Offset to write to
    * \param length Length to write
    * \param buffer Pointer to data to write, should be at least `length` bytes
-   * 
+   *
    * \return Number of bytes written successfully or -1 if an error occurred.
    */
   int32_t File::write(uint32_t offset, uint32_t length, const char *buffer) {
@@ -189,6 +199,11 @@ namespace blit {
    * Close the file. Also called automatically by the destructor.
    */
   void File::close() {
+    if(is_cached) {
+      api.tmp_file_closed(buf);
+      is_cached = false;
+    }
+
     buf = nullptr;
 
     if(!fh)
@@ -212,28 +227,28 @@ namespace blit {
 
   /**
    * Creates an in-memory file, which can be used like a regular (read-only) file.
-   * 
+   *
    * This is useful for porting code which assumes files, or for transparently moving data to flash
    * for extra performance.
-   * 
+   *
    * Example using a packed asset:
    * ```
    * File::add_buffer_file("asset_name.bin", asset_name, asset_name_length);
    * ```
-   * 
+   *
    * Notes:
    * The directory part of the path is not created if it does not exist, so ::list_files/::directory_exists
    * may not work as expected in that case: (Assuming `path/to` does not exist on the SD card)
    * ```
    * File::add_buffer_file("path/to/a.file");
-   * 
+   *
    * file_exists("path/to/a.file"); // true
    * directory_exists("path/to"); // false!
    *
    * list_files("path/to"); // vector containing info for "a.file"
    * list_files("path"); // empty!
    * ```
-   * 
+   *
    * \param path Path for the file
    * \param ptr Pointer to file data
    * \param len Length of file data
