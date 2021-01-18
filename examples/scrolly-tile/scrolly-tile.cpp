@@ -67,6 +67,9 @@ uint32_t current_row = 0;
 Timer state_update;
 Point tile_offset(0, 0);
 
+struct SaveData {
+  uint32_t highscore;
+} save_data;
 
 Vec2 player_position(80.0f, SCREEN_H - PLAYER_H);
 Vec2 player_velocity(0.0f, 0.0f);
@@ -396,6 +399,16 @@ void new_game() {
 
 void init() {
     set_screen_mode(lores);
+
+    // Attempt to load the first save slot.
+    if (read_save(save_data)) {
+      // Loaded sucessfully!
+    }
+    else {
+      // No save file or it failed to load.
+      save_data.highscore = 0;
+    }
+
 #ifdef __AUDIO__
     channels[0].waveforms   = Waveform::NOISE;
     channels[0].frequency   = 4200;
@@ -654,10 +667,12 @@ void update(uint32_t time_ms) {
         // Useful for debug since you can position the player directly
         //player_position.y += movement.y;
 
-        if(player_position.y + PLAYER_H > SCREEN_H) {
+        if(player_position.y + PLAYER_H > SCREEN_H || player_position.y > SCREEN_H - water_level) {
             game_state = enum_state::dead;
-        } else if(player_position.y > SCREEN_H - water_level) {
-            game_state = enum_state::dead;
+            if (player_progress > save_data.highscore) {
+              save_data.highscore = player_progress;
+              write_save(save_data); // save save_data
+            }
         }
         for_each_tile(collide_player_ud, (void *)&tile_offset);
     }
@@ -682,6 +697,11 @@ void render_summary() {
     }
 
     text = "Press B";
+    screen.text(text, minimal_font, Point(10, (SCREEN_H / 2) + 50));
+
+    text = "Highscore: ";
+    text.append(std::to_string(save_data.highscore));
+    text.append("cm");
     screen.text(text, minimal_font, Point(10, (SCREEN_H / 2) + 40));
 }
 
