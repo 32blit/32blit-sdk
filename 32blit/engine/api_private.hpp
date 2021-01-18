@@ -77,6 +77,9 @@ namespace blit {
     void (*set_multiplayer_enabled)(bool enabled);
     void (*send_message)(const uint8_t *data, uint16_t len);
     void (*message_received)(const uint8_t *data, uint16_t len); // set by user
+
+    const uint8_t *(*flash_to_tmp)(const std::string &filename, uint32_t &size);
+    void (*tmp_file_closed)(const uint8_t *ptr);
   };
   #pragma pack(pop)
 

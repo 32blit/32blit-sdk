@@ -48,6 +48,8 @@ uint32_t launcher_offset = ~0;
 
 Dialog dialog;
 
+bool cached_file_in_tmp = false;
+
 // metadata
 
 static bool parse_flash_metadata(uint32_t offset, GameInfo &info) {
@@ -543,10 +545,76 @@ static void *get_type_handler_metadata(const char *filetype) {
   return nullptr;
 }
 
+static const uint8_t *flash_to_tmp(const std::string &filename, uint32_t &size) {
+  // one file at a time
+  // TODO: this could be improved
+  if(cached_file_in_tmp)
+    return nullptr;
+
+  FIL f;
+  if(f_open(&f, filename.c_str(), FA_READ) != FR_OK)
+    return nullptr;
+
+  size = f_size(&f);
+
+  if(f_size(&f) > qspi_tmp_reserved) {
+    f_close(&f);
+    return nullptr;
+  }
+
+  // only called through the API, game will be running
+  blit_disable_user_code();
+  qspi_disable_memorymapped_mode();
+
+  auto flash_offset = qspi_flash_size - qspi_tmp_reserved;
+
+  erase_qspi_flash(flash_offset, size);
+
+  progress.show("Copying file to cache...", size);
+
+  const int buffer_size = SD_BUFFER_SIZE;
+  uint8_t buffer[buffer_size];
+
+  FSIZE_t bytes_flashed = 0;
+  while(bytes_flashed < size) {
+    UINT bytes_read;
+    auto res = f_read(&f, (void *)buffer, buffer_size, &bytes_read);
+
+    if(res != FR_OK)
+      break;
+
+    if(!flash_buffer(bytes_flashed + flash_offset, buffer, bytes_read))
+      break;
+
+    bytes_flashed += bytes_read;
+
+    progress.update(bytes_flashed);
+  }
+
+  progress.hide();
+
+  qspi_enable_memorymapped_mode();
+  blit_enable_user_code();
+
+  f_close(&f);
+
+  if(bytes_flashed < size)
+    return nullptr;
+
+  return (const uint8_t *)(qspi_flash_address + flash_offset);
+}
+
+static void tmp_file_closed(const uint8_t *ptr) {
+  cached_file_in_tmp = false;
+}
+
 void init() {
   api.launch = launch_file_from_sd;
   api.erase_game = erase_flash_game;
   api.get_type_handler_metadata = get_type_handler_metadata;
+
+  api.flash_to_tmp = flash_to_tmp;
+  api.tmp_file_closed = tmp_file_closed;
 
   set_screen_mode(ScreenMode::hires);
   screen.clear();
