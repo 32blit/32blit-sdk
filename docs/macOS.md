@@ -32,11 +32,21 @@ Installing `python3` can be done with homebrew with a simple `brew install pytho
 
 ###  Installing pip3 dependecies
 
+before installing 32blit tools, some binary requirements are needed:
+
+```
+brew install libjpeg
+brew install freetype
+````
+
+Then install 32blit tools itself.
+
 ```
 pip3 install 32blit
 ```
 
 TODO: Document install of `construct` and `bitstring` for Python 3 (probably need a requirements.txt for the tools directory)
+
 
 ###  Verifying install
 
