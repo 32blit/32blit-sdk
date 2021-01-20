@@ -2,6 +2,7 @@
 
 #include <string>
 
+#include "audio/audio.hpp"
 #include "engine/file.hpp"
 
 namespace blit {
@@ -29,8 +30,8 @@ namespace blit {
 
     void read(int32_t len);
 
-    static void static_callback(void *arg);
-    void callback();
+    static void static_callback(AudioChannel &channel);
+    void callback(AudioChannel &channel);
 
     // file io
     blit::File file;

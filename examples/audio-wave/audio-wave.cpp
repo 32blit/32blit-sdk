@@ -9,7 +9,7 @@
 
 /*
     Wave example:
-    
+
     An example of an arbitrary waveform being played through the blit speaker.
 
     This example, a runthrough:
@@ -32,14 +32,14 @@
 
 using namespace blit;
 
-void buff_callback(void *);    //Declare our callback here instead of putting the whole thing here.
+void buff_callback(AudioChannel &);    //Declare our callback here instead of putting the whole thing here.
 
 /* setup */
 void init() {
 
   // Setup channel
-  channels[0].waveforms                  = Waveform::WAVE; // Set type to WAVE
-  channels[0].callback_waveBufferRefresh = &buff_callback;  // Set callback address
+  channels[0].waveforms            = Waveform::WAVE; // Set type to WAVE
+  channels[0].wave_buffer_callback = &buff_callback;  // Set callback address
 
   screen.pen = Pen(0, 0, 0, 255);
   screen.clear();
@@ -54,13 +54,13 @@ static const uint8_t *wav_sample;
 
 
 // Called everytime audio buffer ends
-void buff_callback(void *) {
+void buff_callback(AudioChannel &channel) {
 
   // Copy 64 bytes to the channel audio buffer
   for (int x = 0; x < 64; x++) {
     // If current sample position is greater than the sample length, fill the rest of the buffer with zeros.
-    // Note: The sample used here has an offset, so we adjust by 0x7f. 
-    channels[0].wave_buffer[x] = (wav_pos < wav_size) ? wav_sample[wav_pos] - 0x7f : 0;
+    // Note: The sample used here has an offset, so we adjust by 0x7f.
+    channel.wave_buffer[x] = (wav_pos < wav_size) ? (wav_sample[wav_pos] << 8) - 0x7f00 : 0;
 
     // As the engine is 22050Hz, we can timestretch to match by incrementing our sample every other step (every even 'x')
     if (wav_sample_rate == 11025) {
@@ -69,10 +69,10 @@ void buff_callback(void *) {
       wav_pos++;
     }
   }
-  
+
   // For this example, clear the values
   if (wav_pos >= wav_size) {
-    channels[0].off();        // Stop playback of this channel.
+    channel.off();        // Stop playback of this channel.
     //Clear buffer
     wav_sample = nullptr;
     wav_size = 0;
@@ -93,7 +93,7 @@ void render(uint32_t time_ms) {
 
   screen.pen = Pen(64, 64, 64);
 	screen.text("Press A to break screen.", minimal_font, Point(20, 60));
-} 
+}
 
 void update(uint32_t time_ms) {
   bool button_a = blit::buttons & blit::Button::A;
@@ -105,4 +105,4 @@ void update(uint32_t time_ms) {
     channels[0].trigger_attack(); // Start the playback.
   }
 }
-  
+
