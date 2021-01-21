@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.9)
+project (waveform-demo)
+include (../../32blit.cmake)
+blit_executable (waveform-demo waveform-demo.cpp)
+blit_metadata (waveform-demo metadata.yml)
