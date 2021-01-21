@@ -76,10 +76,10 @@ void init() {
   channels[4].sustain = 0;
   channels[4].release_ms = 5;
 
-  channels[5].waveforms = Waveform::NOISE;
+  channels[5].waveforms = Waveform::SINE;
   channels[5].frequency = 0;
   channels[5].attack_ms = 5;
-  channels[5].decay_ms = 250;
+  channels[5].decay_ms = 400;
   channels[5].sustain = 0;
   channels[5].release_ms = 5;
 
@@ -93,7 +93,7 @@ void init() {
   channels[7].waveforms = Waveform::SINE;
   channels[7].frequency = 0;
   channels[7].attack_ms = 5;
-  channels[7].decay_ms = 700;
+  channels[7].decay_ms = 500;
   channels[7].sustain = 0;
   channels[7].release_ms = 5;
 }
@@ -284,14 +284,14 @@ void update(uint32_t time) {
     break;
 
   case RIGHT_SOUND:
-    if (sound_time > 250) {
+    if (sound_time > 400) {
       // Stop sound
       current_sound = NO_SOUND;
       channels[5].trigger_release();
     }
     else {
       // Update the sweep
-      channels[5].frequency = (3000.0f * sound_sweep) - 800;
+      channels[5].frequency = 1800 - (1000.0f * sound_sweep);
       sound_sweep -= 0.05f;
     }
     break;
@@ -305,7 +305,7 @@ void update(uint32_t time) {
     break;
 
   case LEFT_SOUND:
-    if (sound_time > 700) {
+    if (sound_time > 500) {
       // Stop sound
       current_sound = NO_SOUND;
       channels[7].trigger_release();
