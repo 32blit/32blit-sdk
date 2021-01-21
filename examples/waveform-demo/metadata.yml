@@ -2,9 +2,9 @@ title: Waveform Demo
 description: A demo of the 32blit's waveform generator.
 author: ThePythonator
 splash:
-  file: assets/image.png
+  file: waveform-demo.png
 icon:
-  file: assets/icon.png
+  file: waveform-demo-icon.png
 version: v0.2.2
 url: https://github.com/pimoroni/32blit-beta
 category: demo
