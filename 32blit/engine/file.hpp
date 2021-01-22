@@ -11,7 +11,9 @@ namespace blit {
     /// Open file for reading
     read  = 1 << 0,
     /// Open file for writing
-    write = 1 << 1
+    write = 1 << 1,
+    /// Copy file to the temp area in flash for faster access
+    cached = 1 << 2
   };
 
   enum FileFlags {
@@ -38,9 +40,9 @@ namespace blit {
 
   bool rename_file(const std::string &old_name, const std::string &new_name);
   bool remove_file(const std::string &path);
-  
+
   /**
-   * Class for accessing files on the SD card (device), the game directory (SDL) or in memory. 
+   * Class for accessing files on the SD card (device), the game directory (SDL) or in memory.
    */
   class File final {
   public:
@@ -93,5 +95,6 @@ namespace blit {
       // buffer "files"
       const uint8_t *buf = nullptr;
       uint32_t buf_len;
+      bool is_cached = false;
   };
 }

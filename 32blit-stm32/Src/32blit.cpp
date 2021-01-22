@@ -749,6 +749,7 @@ void blit_enable_user_code() {
   do_tick = user_tick;
   blit::render = user_render;
   user_code_disabled = false;
+  sound::enabled = true;
 }
 
 void blit_disable_user_code() {
@@ -757,6 +758,7 @@ void blit_disable_user_code() {
 
   do_tick = blit::tick;
   blit::render = ::render;
+  sound::enabled = false;
   user_code_disabled = true;
 }
 
