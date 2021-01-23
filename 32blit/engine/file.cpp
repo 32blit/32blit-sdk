@@ -142,7 +142,7 @@ namespace blit {
     // check for buffer
     auto it = buf_files.find(file);
 
-    if (mode == OpenMode::read && it != buf_files.end()) {
+    if (!(mode & OpenMode::write) && it != buf_files.end()) {
       buf = it->second.ptr;
       buf_len = it->second.length;
       return true;
@@ -157,6 +157,8 @@ namespace blit {
         return true;
       }
     }
+
+    mode &= ~OpenMode::cached;
 
     fh = api.open_file(file, mode);
     return fh != nullptr;
