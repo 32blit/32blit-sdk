@@ -118,8 +118,13 @@ namespace blit {
       return Point(x + w, y + h);
     }
 
+    Point center() const {
+      return Point(x + w/2, y + h/2);
+    }
+
   };
 
   inline Rect operator*  (Rect lhs, const float a) { lhs *= a; return lhs; }
 
 }
+
