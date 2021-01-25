@@ -68,9 +68,8 @@ namespace blit {
     }
 
     blit::channels[channel].waveforms = blit::Waveform::WAVE;
-    blit::channels[channel].volume = 0xFF;
-    blit::channels[channel].wave_callback_arg = this;
-    blit::channels[channel].callback_waveBufferRefresh = &MP3Stream::static_callback;
+    blit::channels[channel].user_data = this;
+    blit::channels[channel].wave_buffer_callback = &MP3Stream::static_callback;
 
     blit::channels[channel].adsr = 0xFFFF00;
     blit::channels[channel].trigger_sustain();
@@ -92,7 +91,7 @@ namespace blit {
     for(int i = 0; i < 2; i++) {
       if(!data_size[i])
         decode(i);
-    }    
+    }
   }
 
   unsigned int MP3Stream::get_current_sample() const {
@@ -117,7 +116,7 @@ namespace blit {
         // attempt to convert to mono 22050Hz (badly)
         int16_t tmp_buf[MINIMP3_MAX_SAMPLES_PER_FRAME];
         int tmp_samples = mp3dec_decode_frame(static_cast<mp3dec_t *>(mp3dec), file_buffer, file_buffer_filled, tmp_buf, &info);
-        
+
         if(tmp_samples) {
           freq_scale = info.hz / 22050;
           int div = info.channels * freq_scale;
@@ -126,7 +125,7 @@ namespace blit {
             int32_t tmp = 0;
             for(int j = 0; j < div; j++)
               tmp += tmp_buf[i + j];
-            
+
             audio_buf[buf_index][samples] = tmp / div;
           }
         }
@@ -153,13 +152,13 @@ namespace blit {
     data_size[buf_index] = samples;
   }
 
-  void MP3Stream::static_callback(void *arg) {
-    reinterpret_cast<MP3Stream *>(arg)->callback();
+  void MP3Stream::static_callback(AudioChannel &channel) {
+    reinterpret_cast<MP3Stream *>(channel.user_data)->callback(channel);
   }
 
-  void MP3Stream::callback() {
+  void MP3Stream::callback(AudioChannel &channel) {
     if(!current_sample) {
-      blit::channels[channel].off();
+      channel.off();
       return;
     }
 
@@ -168,12 +167,12 @@ namespace blit {
       if(data_size[cur_audio_buf]) {
         end_sample = audio_buf[cur_audio_buf] + data_size[cur_audio_buf]; // recovered from underrun
       } else {
-        memset(blit::channels[channel].wave_buffer, 0, 64 * sizeof(int16_t));
+        memset(channel.wave_buffer, 0, 64 * sizeof(int16_t));
         return;
       }
     }
 
-    auto out = blit::channels[channel].wave_buffer;
+    auto out = channel.wave_buffer;
 
     int i = 0;
     for(; i < 64; i++)

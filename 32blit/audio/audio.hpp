@@ -2,9 +2,9 @@
 
 #include <cstdint>
 
-namespace blit {  
+namespace blit {
 
-  // The duration a note is played is determined by the amount of attack, 
+  // The duration a note is played is determined by the amount of attack,
   // decay, and release, combined with the length of the note as defined by
   // the user.
   //
@@ -14,14 +14,14 @@ namespace blit {
   // - Release: number of milliseconds it takes for a note to reduce to zero volume after it has ended
   //
   // Attack (750ms) - Decay (500ms) -------- Sustain ----- Release (250ms)
-  // 
+  //
   //                +         +                                  +    +
   //                |         |                                  |    |
   //                |         |                                  |    |
   //                |         |                                  |    |
   //                v         v                                  v    v
   // 0ms               1000ms              2000ms              3000ms              4000ms
-  //                                                                                  
+  //
   // |              XXXX |                   |                   |                   |
   // |             X    X|XX                 |                   |                   |
   // |            X      |  XXX              |                   |                   |
@@ -45,7 +45,7 @@ namespace blit {
   extern uint16_t volume;
 
   enum Waveform {
-    NOISE     = 128, 
+    NOISE     = 128,
     SQUARE    = 64,
     SAW       = 32,
     TRIANGLE  = 16,
@@ -72,7 +72,7 @@ namespace blit {
       uint16_t  release_ms    = 1;      // release period
       uint16_t  pulse_width   = 0x7fff; // duty cycle of square wave (default 50%)
       int16_t   noise         = 0;      // current noise value
-  
+
       uint32_t  waveform_offset  = 0;   // voice offset (Q8)
 
       int32_t   filter_last_sample = 0;
@@ -85,11 +85,11 @@ namespace blit {
 	    int32_t   adsr_step	    = 0;
       ADSRPhase adsr_phase    = ADSRPhase::OFF;
 
-      uint8_t   wave_buf_pos  = 0;      // 
+      uint8_t   wave_buf_pos  = 0;      //
       int16_t   wave_buffer[64];        // buffer for arbitrary waveforms. small as it's filled by user callback
 
-      void  *wave_callback_arg = nullptr;
-      void  (*callback_waveBufferRefresh)(void *);
+      void *user_data = nullptr;
+      void (*wave_buffer_callback)(AudioChannel &channel);
 
       void trigger_attack()  {
         adsr_frame = 0;
