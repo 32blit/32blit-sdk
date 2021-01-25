@@ -48,7 +48,7 @@ function(blit_executable NAME SOURCES)
 endfunction()
 
 function(blit_metadata TARGET FILE)
-	if(NOT EXISTS ${FILE})
+	if(NOT IS_ABSOLUTE ${FILE})
 		set(FILE ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
 	endif()
 
