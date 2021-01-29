@@ -23,11 +23,14 @@ public:
 
 	bool AddData(uint8_t *pData, uint32_t uLen)
 	{
-		m_pData = pData;
-		m_uLen  = uLen;
+		if(m_uLen)
+			memmove(buf, m_pData, m_uLen);
+
+		memcpy(buf + m_uLen, pData, uLen);
+		m_pData = buf;
+		m_uLen += uLen;
 
 		return true;
-
 	}
 
 	uint32_t GetStreamLength(void)
@@ -71,6 +74,8 @@ public:
 private:
 	uint8_t		*m_pData;
 	uint32_t 	m_uLen;
+
+	uint8_t buf[64 + 4]; // slightly larger than a FIFO element
 };
 
 
