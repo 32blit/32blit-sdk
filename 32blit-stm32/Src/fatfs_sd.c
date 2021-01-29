@@ -64,13 +64,6 @@ static void SPI_TxByte(uint8_t data)
   SPI_End(spi);
 }
 
-/* SPI transmit buffer */
-static void SPI_TxBuffer(uint8_t *buffer, uint16_t len)
-{
-	while(!__HAL_SPI_GET_FLAG(HSPI_SDCARD, SPI_FLAG_TXE));
-	HAL_SPI_Transmit(HSPI_SDCARD, buffer, len, SPI_TIMEOUT);
-}
-
 /* SPI receive a byte */
 static uint8_t SPI_RxByte(void)
 {
@@ -141,14 +134,13 @@ static void SD_PowerOn(void)
 	SELECT();
 
 	/* make idle state */
-	args[0] = CMD0;		/* CMD0:GO_IDLE_STATE */
-	args[1] = 0;
-	args[2] = 0;
-	args[3] = 0;
-	args[4] = 0;
-	args[5] = 0x95;		/* CRC */
-
-	SPI_TxBuffer(args, sizeof(args));
+  // SD_SendCmd?
+  SPI_TxByte(CMD0);		/* CMD0:GO_IDLE_STATE */
+	SPI_TxByte(0);
+	SPI_TxByte(0);
+	SPI_TxByte(0);
+	SPI_TxByte(0);
+  SPI_TxByte(0x95);		/* CRC */
 
 	/* wait response */
 	while ((SPI_RxByte() != 0x01) && cnt)
