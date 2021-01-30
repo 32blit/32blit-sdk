@@ -5,6 +5,8 @@ include(${PICO_SDK_PATH}/../pimoroni-pico/drivers/st7789/st7789.cmake)
 # Initialise the Pico SDK
 pico_sdk_init()
 
+set(32BLIT_PICO 1 PARENT_SCOPE)
+
 add_library(BlitHalPico INTERFACE)
 target_sources(BlitHalPico INTERFACE ${CMAKE_CURRENT_LIST_DIR}/main.cpp)
 target_link_libraries(BlitHalPico INTERFACE pico_stdlib st7789) # need the include paths
