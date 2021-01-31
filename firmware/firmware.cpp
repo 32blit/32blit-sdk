@@ -962,8 +962,16 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
           if(bEOS) {
             handle_data_end(result != srError);
 
-            if(result != srError)
+            if(result != srError) {
+              while(CDC_Transmit_HS((uint8_t *)"32BL__OK", 8) == USBD_BUSY){}
+              if(dest == Destination::Flash) {
+                // return the block we used
+                uint16_t block = flash_start_offset / qspi_flash_sector_size;
+                while(CDC_Transmit_HS((uint8_t *)&block, 2) == USBD_BUSY){}
+              }
+
               result = srFinish;
+            }
             progress.hide();
           }
 
