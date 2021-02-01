@@ -886,6 +886,10 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
             // done
             if(m_uParseIndex == num_relocs + 2)
               break;
+
+            // break out of loop as we need more data
+            if(dataStream.GetStreamLength() < 4)
+              return srContinue;
           }
         }
         break;
