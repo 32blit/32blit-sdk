@@ -94,6 +94,14 @@ else()
 		PATH_SUFFIXES bin ${VC_LIB_PATH_SUFFIX}
 	)
 
+	if(NOT SDL2_IMAGE_INCLUDE_DIR OR NOT SDL2_IMAGE_LIBRARY)
+		message(FATAL_ERROR "SDL_image not found!")
+	endif()
+
+	if(NOT SDL2_NET_INCLUDE_DIR OR NOT SDL2_NET_LIBRARY)
+		message(FATAL_ERROR "SDL_net not found!")
+	endif()
+
 	target_include_directories(BlitHalSDL
 		PRIVATE	${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_NET_INCLUDE_DIR}
 	)
