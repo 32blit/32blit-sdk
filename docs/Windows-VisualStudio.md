@@ -59,7 +59,7 @@ To find the built files use `Project` > `CMake Cache` > `Open in Explorer`.
 
 4. Scroll down to the CMake variables and wait for the list to load.
 
-5. Press the "Browse..." button next to `32BLIT_PATH`.
+5. Press the "Browse..." button next to `32BLIT_DIR`.
 
 6. Browse to the folder containing the 32blit repo.
 
