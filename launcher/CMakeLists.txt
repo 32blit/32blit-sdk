@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 project (launcher)
-include (../32blit.cmake)
+find_package (32BLIT CONFIG REQUIRED PATHS ..)
 
 blit_executable(launcher launcher.cpp theme.cpp credits.cpp)
 target_link_libraries(launcher LauncherShared)

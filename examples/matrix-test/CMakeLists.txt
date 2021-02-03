@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
 project (matrix-test)
-include (../../32blit.cmake)
+find_package (32BLIT CONFIG REQUIRED PATHS ../..)
 blit_executable (matrix-test matrix-test.cpp)
 blit_metadata (matrix-test metadata.yml)

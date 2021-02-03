@@ -5,7 +5,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd4244")
 endif()
 
-include(32blit.cmake)
+find_package (32BLIT CONFIG REQUIRED PATHS .)
 add_subdirectory(examples)
 
 add_subdirectory(launcher-shared)

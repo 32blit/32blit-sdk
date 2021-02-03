@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 project (sprite-test)
-include (../../32blit.cmake)
+find_package (32BLIT CONFIG REQUIRED PATHS ../..)
 blit_executable (sprite-test sprite-test.cpp)
 blit_assets_yaml (sprite-test assets.yml)
 blit_metadata (sprite-test metadata.yml)
