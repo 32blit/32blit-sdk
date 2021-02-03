@@ -30,8 +30,8 @@ else()
 	endif()
 
 	# fallback guess for SDL location on Windows
-	if(WIN32 AND NOT SDL2_DIR AND 32BLIT_PATH)
-		set(SDL2_DIR "${32BLIT_PATH}/vs/sdl")
+	if(WIN32 AND NOT SDL2_DIR AND 32BLIT_DIR)
+		set(SDL2_DIR "${32BLIT_DIR}/vs/sdl")
 	endif()
 
 	if(NOT SDL2_LIBRARIES OR NOT SDL2_INCLUDE_DIRS)
