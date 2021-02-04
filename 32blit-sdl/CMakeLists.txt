@@ -176,6 +176,10 @@ function(blit_executable NAME SOURCES)
 			SUFFIX ".html"
 			LINK_FLAGS "-s ENVIRONMENT=web -s SDL2_IMAGE_FORMATS=['jpg']"
 		)
+
+		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.js ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.wasm
+			DESTINATION bin
+		)
 	endif()
 
 	if(APPLE AND SDL2_LIBRARIES MATCHES "\.framework$")
