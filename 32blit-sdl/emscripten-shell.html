@@ -43,8 +43,20 @@
       var progressElement = document.getElementById('progress');
       var spinnerElement = document.getElementById('spinner');
 
+      function mountIDBFS() {
+        // mount a persistant filesystem over the directory used for saves
+        FS.mkdir("/libsdl");
+        FS.mount(IDBFS, {}, '/libsdl');
+
+        // sync before starting game
+        Module['addRunDependency']("SYNC_DATA");
+        FS.syncfs(true, function(err) {
+          Module['removeRunDependency']("SYNC_DATA");
+        });
+      }
+
       var Module = {
-        preRun: [],
+        preRun: [mountIDBFS],
         postRun: [],
         print: (function() {
           return function(text) {

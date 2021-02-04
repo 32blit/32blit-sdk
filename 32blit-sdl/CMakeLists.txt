@@ -176,9 +176,11 @@ function(blit_executable NAME SOURCES)
 	if(EMSCRIPTEN)
 		set_target_properties(${NAME} PROPERTIES
 			SUFFIX ".html"
-			LINK_FLAGS "-s ENVIRONMENT=web -s SDL2_IMAGE_FORMATS=['jpg'] --shell-file ${EMSCRIPTEN_SHELL}"
+			LINK_FLAGS "-s ENVIRONMENT=web -s SDL2_IMAGE_FORMATS=['jpg'] --shell-file ${EMSCRIPTEN_SHELL} -s 'EXTRA_EXPORTED_RUNTIME_METHODS=[\"addRunDependency\", \"removeRunDependency\"]'"
 			LINK_DEPENDS ${EMSCRIPTEN_SHELL}
 		)
+
+		target_link_libraries(${NAME} "-lidbfs.js") # include the persistent IndexedDB-based filesystem
 
 		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.js ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.wasm
 			DESTINATION bin
