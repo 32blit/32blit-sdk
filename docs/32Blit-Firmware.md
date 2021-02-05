@@ -1,14 +1,16 @@
 # 32Blit Firmware <!-- omit in toc -->
 
-This repository includes firmware for the 32Blit that lets you manage games on SD card, and copy or flash games via USB serial.
+This repository includes firmware and a launcher for the 32Blit that lets you manage games on SD card, and copy or flash games via USB serial.
 
 - [Prerequisites](#prerequisites)
 - [Building & Flashing The 32Blit Firmware](#building--flashing-the-32blit-firmware)
   - [Building The Firmware](#building-the-firmware)
   - [Flashing The Firmware To Your 32Blit](#flashing-the-firmware-to-your-32blit)
+    - [Without DFU](#without-dfu)
     - [Prepare the device](#prepare-the-device)
     - [Linux and macOS](#linux-and-macos)
     - [Windows](#windows)
+  - [Flashing a launcher](#flashing-a-launcher)
 - [Troubleshooting](#troubleshooting)
   - [Finding The Right DFU Device](#finding-the-right-dfu-device)
   - [DFU device not showing up in Windows](#dfu-device-not-showing-up-in-windows)
@@ -18,8 +20,8 @@ This repository includes firmware for the 32Blit that lets you manage games on S
 In order to use the 32blit firmware, you will need to:
 
 1. Build and install the 32Blit firmware (if you don't have it already)
-2. The 32blit tools `pip install 32blit`
-3. Flash the firmware to your 32Blit
+2. Install the 32blit tools `pip install 32blit`
+3. Flash the firmware and a launcher to your 32Blit
 
 You must make sure you have an ARM GCC cross-compile environment set up on your computer, refer to the relevant documentation below:
 
@@ -50,6 +52,14 @@ make firmware
 
 ## Flashing The Firmware To Your 32Blit
 
+### Without DFU
+If you currently have a working firmware, you can flash a new firmware without using DFU mode by running:
+```
+make firmware-update.flash
+```
+
+Alternatively, you can run `make firmware-update` and install the resulting `firmware-update/firmware-update.blit` with any of the methods described [here](32blit.md#uploading-an-example).
+
 ### Prepare the device
 
 To enter DFU mode either hold the X & Y buttons and press the reset button or select `dfu mode` from the on device menu. The screen will go dark, this is normal.
@@ -79,6 +89,9 @@ Note: `wsl-flash` uses a hard-coded path to DfuSe 3.0.6 in `c:\Program Files (x8
 If this fails you can run the `DfusSeDemo` application and pick your 32Blit (it should be "STM Device in DFU Mode") from the "Available USB Devices" drop down.
 
 In the "Upload Action" section hit "Choose" and select the `firmware.dfu` file you built earlier. (It should be in `build.stm32/firmware/firmware.dfu`) and finally hit "Upgrade" to flash the file.
+
+## Flashing a launcher
+Flashing a launcher is similar to [flashing a game/example](32blit.md#uploading-an-example), run `make launcher` and the output is `launcher/launcher.blit`. `launcher.blit` is automatically flashed from the SD card if it exists.
 
 # Troubleshooting
 
