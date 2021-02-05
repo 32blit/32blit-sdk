@@ -188,6 +188,13 @@ bool remove_file(const std::string &path) {
 static std::string save_path;
 
 const char *get_save_path() {
+#ifdef __EMSCRIPTEN__
+  // The Emscripten backend's GetPrefPath is a little broken (doesn't create the dirs correctly)
+  // Work around it until the fix gets released
+  mkdir("/libsdl", 0700);
+  mkdir((std::string("/libsdl/") + metadata_author).c_str(), 0700);
+#endif
+
   auto tmp = SDL_GetPrefPath(metadata_author, metadata_title);
   save_path = std::string(tmp);
 
