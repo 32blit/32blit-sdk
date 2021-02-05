@@ -24,6 +24,7 @@ extern CDCCommandStream g_commandStream;
 
 FlashLoader flashLoader;
 CDCEraseHandler cdc_erase_handler;
+CDCLaunchHandler cdc_launch_handler;
 
 struct GameInfo {
   char title[25], author[17];
@@ -632,6 +633,8 @@ void init() {
 
   g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'E', 'R', 'S', 'E'>::value, &cdc_erase_handler);
 
+  g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'L', 'N', 'C', 'H'>::value, &cdc_launch_handler);
+
   // check for updates
   if(::file_exists("firmware-update.blit")) {
     // TODO: -vx.x.x?
@@ -755,6 +758,26 @@ CDCCommandHandler::StreamResult CDCEraseHandler::StreamData(CDCDataStream &dataS
   erase_flash_game(offset);
 
   return srFinish;
+}
+
+CDCCommandHandler::StreamResult CDCLaunchHandler::StreamData(CDCDataStream &dataStream) {
+  uint8_t byte;
+  while(dataStream.Get(byte)) {
+    if(path_off == MAX_FILENAME) {
+      path_off = 0;
+      return srError;
+    }
+
+    path[path_off++] = byte;
+
+    if(byte == 0) {
+      path_off = 0;
+      launch_file_from_sd(path);
+      return srFinish;
+    }
+  }
+
+  return srContinue;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -943,8 +966,16 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
           if(bEOS) {
             handle_data_end(result != srError);
 
-            if(result != srError)
+            if(result != srError) {
+              while(CDC_Transmit_HS((uint8_t *)"32BL__OK", 8) == USBD_BUSY){}
+              if(dest == Destination::Flash) {
+                // return the block we used
+                uint16_t block = flash_start_offset / qspi_flash_sector_size;
+                while(CDC_Transmit_HS((uint8_t *)&block, 2) == USBD_BUSY){}
+              }
+
               result = srFinish;
+            }
             progress.hide();
           }
 

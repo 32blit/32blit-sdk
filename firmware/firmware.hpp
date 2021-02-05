@@ -56,6 +56,18 @@ public:
   }
 };
 
+class CDCLaunchHandler final : public CDCCommandHandler {
+public:
+  StreamResult StreamData(CDCDataStream &dataStream) override;
+
+  bool StreamInit(CDCFourCC uCommand) override {
+    return true;
+  }
+private:
+  char path[MAX_FILENAME];
+  int path_off = 0;
+};
+
 class FlashLoader : public CDCCommandHandler
 {
 public:
