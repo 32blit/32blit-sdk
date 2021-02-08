@@ -575,7 +575,7 @@ namespace blit {
     PixelFormat format = (PixelFormat)image.format;
     Size bounds = Size(image.width, image.height);
 
-    auto needed_size = pixel_format_stride[image.format] * image.width * image.height;
+    size_t needed_size = pixel_format_stride[image.format] * image.width * image.height;
     if(data && needed_size > data_size)
       return nullptr;
 
@@ -635,7 +635,6 @@ namespace blit {
       uint8_t *pdest = (uint8_t *)ret->data;
 
       if(is_rle) {
-        auto bytes = image_data;
         int parse_state = 0;
         uint8_t count = 0;
 
@@ -793,7 +792,6 @@ namespace blit {
         std::swap(ret->palette[i].r, ret->palette[i].b);
     } else {
       // R/B swap
-      auto p = data;
       auto end = data + header.image_size;
       for(auto p = data; p != end; p += ret->pixel_stride)
         std::swap(p[0], p[2]);
