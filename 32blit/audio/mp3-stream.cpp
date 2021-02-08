@@ -182,7 +182,8 @@ namespace blit {
     // swap buffers
     if(current_sample == end_sample) {
       data_size[cur_audio_buf] = 0;
-      cur_audio_buf = ++cur_audio_buf % 2;
+      cur_audio_buf++;
+      cur_audio_buf %= 2;
 
       if(data_size[cur_audio_buf] == -1) // EOF
         current_sample = end_sample = nullptr;
