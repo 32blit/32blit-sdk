@@ -619,6 +619,9 @@ void blit_process_input() {
     joystick_y = 0;
   }
   blit::joystick.y = -joystick_y / 7168.0f;
+  
+  if(blit::joystick.length() > 0.01f)
+    last_input_time = HAL_GetTick();
 
   blit::hack_left = (adc3data[0] >> 1) / 32768.0f;
   blit::hack_right = (adc3data[1] >> 1)  / 32768.0f;
