@@ -173,7 +173,7 @@ namespace blit {
   int32_t orient2d(Point p1, Point p2, Point p3) {
     return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
   }
-  
+
   /**
    * TODO: Document this function
    *
@@ -297,7 +297,7 @@ namespace blit {
         }
       }
 
-      for (uint16_t i = 0; i < n; i += 2) {
+      for (i = 0; i < n; i += 2) {
         h_span(Point(nodes[i], p.y), nodes[i + 1] - nodes[i] + 1);
       }
     }
