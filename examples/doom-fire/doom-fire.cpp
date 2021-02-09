@@ -33,6 +33,8 @@ Pen pallete[] = { // 36 colours
 
 uint8_t fire[screen_width * screen_height];
 uint32_t last_time = 0;
+int8_t wind = 0;
+bool enabled = true;
 
 uint32_t posAt(uint32_t x, uint32_t y) {
   return y * screen_width + x;
@@ -60,45 +62,60 @@ void init() {
 }
 
 void update(uint32_t time) {
-  if (time - last_time < FPS) {
-    return;
+  // Adds wind to east.
+  if (buttons.pressed & Button::DPAD_LEFT) {
+    wind--;
   }
-  last_time = time;
 
-  for (uint32_t src_y = screen_height; src_y > 1; src_y--) {    
-    uint32_t src_row = src_y * screen_width;
+  // Adds wind to east.
+  if (buttons.pressed & Button::DPAD_RIGHT) {
+    wind++;
+  }
 
-    for (uint32_t src_x = 0; src_x < screen_width; src_x++) {
-      int rand = std::rand() % 3;    
-      uint32_t src_index = src_row - src_x;
-      uint8_t color = fire[src_index];
-      if (color > 0) {
-        color = color - (rand & 1);
-      }
-
-      uint32_t dst_x = src_x;
-
-      // Avoid propagating fire to the wrong place, when on the edges
-      if (dst_x == 0) {
-        dst_x = dst_x + std::max(rand - 1, 0);
-      } else if (dst_x == screen_width - 1) {
-        dst_x = dst_x + std::min(rand - 1, 0);
-      } else {
-        dst_x = dst_x + rand - 1;
-      }
-    
-      uint32_t dst_index = src_row - screen_width - dst_x;
-      fire[dst_index] = color;
+  // Toggles fire on and off.
+  if (buttons.pressed & Button::X) {
+    uint8_t fire_index = enabled ? 0 : 35;
+    for (int i = 0; i < screen_width; i++) {
+      uint32_t pos = posAt(i, screen_height - 1);
+      fire[pos] = fire_index;
     }
+    enabled = !enabled;
   }
 }
 
 void render(uint32_t time) {
-  for (uint32_t x = 0; x < screen_width; x++) {
-    for (uint32_t y = 0; y < screen_height; y++) {
-      uint32_t pos = posAt(x, y);
-      screen.pen = pallete[fire[pos]];
+  if (time - last_time < FPS) {
+    return;
+  }
+  last_time = time;
+  for (int y = 0; y < screen_height; y++) {
+    // Precompute the rows for a small performance gain.
+    int row = y * screen_width;
+
+    // For each pixel in each row, calculate the colours that will be
+    // rendered on the previous row, on the next call to update.
+    int next_row = y == 0 ? 0 : (y - 1) * screen_width;
+
+    for (int x = 0; x < screen_width; x++) {
+      // Draw the current pixel.
+      uint8_t color = fire[row + x];
+      screen.pen = pallete[color];
       screen.pixel(Point(x, y));
+
+      // Update the pixels on the previous row.
+      if (y > 0) {
+        int new_x = x;
+        int rand = std::rand() % 3;
+        new_x = (new_x + rand - 1 + wind);
+        if (new_x >= screen_width) {
+          new_x = new_x - screen_width;
+        }
+        else if (new_x < 0) {
+          new_x = new_x + screen_width;
+        }
+        color = color > 0 ? color - (rand & 1) : 0;
+        fire[next_row + new_x] = color;
+      }
     }
   }
 }
