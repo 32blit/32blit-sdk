@@ -200,6 +200,17 @@ function(blit_executable NAME SOURCES)
 		install(DIRECTORY ${SDL2_LIBRARIES} DESTINATION "bin/$<TARGET_FILE_NAME:${NAME}>.app/Contents/Frameworks")
 		install(DIRECTORY ${SDL2_IMAGE_LIBRARY} DESTINATION "bin/$<TARGET_FILE_NAME:${NAME}>.app/Contents/Frameworks")
 		install(DIRECTORY ${SDL2_NET_LIBRARY} DESTINATION "bin/$<TARGET_FILE_NAME:${NAME}>.app/Contents/Frameworks")
+	elseif(APPLE)
+		# TODO: this should be run in both cases to handle any other dependencies, but it fails on the SDL frameworks and there currently aren't any other deps...
+
+		file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/fixup.cmake
+			CONTENT "
+				include(BundleUtilities)
+				fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/bin/$<TARGET_FILE_NAME:${NAME}>.app\" \"\" \"\")
+			"
+		)
+
+		install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/fixup.cmake)
 	endif()
 endfunction()
 
