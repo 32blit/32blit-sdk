@@ -6,5 +6,5 @@ splash:
 icon:
   file: ../examples/no-icon.png
 version: ${FIRMWARE_VERSION}
-url: https://github.com/pimoroni/32blit-beta
+url: https://github.com/32blit/32blit-sdk
 category: firmware

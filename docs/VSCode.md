@@ -64,7 +64,7 @@ To set CMake arguments (like `-D32BLIT_DIR` for out-of-tree builds), you need to
 {
   // other options...
   "cmake.configureSettings": {
-    "32BLIT_DIR": "/path/to/32blit-beta"
+    "32BLIT_DIR": "/path/to/32blit-sdk"
   },
 }
 ```
@@ -81,9 +81,9 @@ Add this to the list:
 ```json
   {
     "name": "32Blit",
-    "toolchainFile": "/path/to/32blit-beta/32blit.toolchain"
+    "toolchainFile": "/path/to/32blit-sdk/32blit.toolchain"
   },
 ```
-(Replacing `/path/to/32blit-beta`, with the actual path.)
+(Replacing `/path/to/32blit-sdk`, with the actual path.)
 
 You should now be able to select "32Blit" as a kit. ("CMake: Change Kit" from the command palette or the button displaying the current kit at the bottom of the window). If you select a target ending with .flash from the list next to the "⚙ Build:" button, that example will be flashed to your device when you build.
