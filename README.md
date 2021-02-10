@@ -1,12 +1,8 @@
-# 32blit Beta Testing Release
+# 32blit SDK
 
-The code in this repository is intended for 32blit beta testers only. It's not intended for general release or for end users. If you expect to be able to get started quickly and easily- you're going to have a bad time.
+This is the software developer kit for 32blit. It includes the 32blit game engine, plus tooling and instructions to compile your 32blit projects on Linux, Windows and macOS.
 
-The 32blit API itself isn't quite finalised yet and may be prone to sudden and sweeping rewrites- that's to say that feedback is appreciated, but your PRs might be in vain.
-
-That said, we're really keen to hear feedback about the setup process, our documentation, ideal tooling, and generally how best get medium to advanced developers up and running with 32blit and C++. 
-
-While the 32blit API is not finalised, this repository represents an overview of how our C++ tooling will work and how we expect to separate user projects from API code and the SDL/STM32 front-ends.
+Finished 32blit games can be released simultaneously for Linux, Windows, macOS and the 32blit using the GitHub actions in the 32blit boilerplate - https://github.com/32blit/32blit-boilerplate/
 
 # You Will Need
 
@@ -14,9 +10,8 @@ While the 32blit API is not finalised, this repository represents an overview of
 2. `gcc` or Visual Studio for compiling test builds
 3. `gcc-arm-none-eabi` for compiling STM32 builds
 4. `cmake` and `make` for building 32blit libraries and examples
-5. _Python3_ installed, along with _pip3_ (`sudo apt install python3 python3-pip` on Ubuntu/WSL) and the [32blit tools](https://github.com/pimoroni/32blit-tools) `pip3 install 32blit`
+5. _Python3_ installed, along with _pip3_ (`sudo apt install python3 python3-pip` on Ubuntu/WSL) and the [32blit tools](https://github.com/32blit/32blit-tools) `pip3 install 32blit`
 6. Ubuntu on Windows 10 WSL (_Windows Subsystem for Linux_), or a Linux VM if you prefer.
-7. If you intend on building/uploading the device firmware, you will need a DFU upload tool, on Windows it's easiest to just use "DfuSe Demonstration" (available from [st.com](https://www.st.com/en/development-tools/stsw-stm32080.html)) and the following Python modules: `pip3 install construct bitstring` 
 
 For more information about how to build on the various systems, refer to the platform specific docs in the `docs` folder!
 
@@ -60,7 +55,15 @@ The `examples` directory contains example projects, these can be built into both
 
 Refer to the OS/platform specific documentation files in the `docs/` folder for instructions on how to compile and run these examples.
 
-The `template` directory contains a minimal game template you can copy to start your own project.
+To get started writing your own game, you should use the 32blit boilerplate - https://github.com/32blit/32blit-boilerplate/
+
+## Help & Support
+
+Join the 32blit community on:
+
+* Discord (Chat) - https://discord.gg/7qM9ftC
+* Discourse (Forum) - https://forums.pimoroni.com/c/32blit/21
+* Reddit (Anarchy) - https://www.reddit.com/r/32blit
 
 ## Troubleshooting
 

@@ -27,13 +27,13 @@ jobs:
             name: STM32
             cache-key: stm32
             release-suffix: STM32
-            cmake-args: -DCMAKE_TOOLCHAIN_FILE=../32blit-beta/32blit.toolchain -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+            cmake-args: -DCMAKE_TOOLCHAIN_FILE=../32blit-sdk/32blit.toolchain -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
             apt-packages: ccache gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib python3-setuptools
 
           - os: ubuntu-20.04
             name: MinGW
             cache-key: mingw
-            cmake-args: -DCMAKE_TOOLCHAIN_FILE=../32blit-beta/mingw.toolchain -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSDL2_DIR=$PWD/../32blit-beta/SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/
+            cmake-args: -DCMAKE_TOOLCHAIN_FILE=../32blit-sdk/mingw.toolchain -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSDL2_DIR=$PWD/../32blit-sdk/SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/
             apt-packages: ccache g++-mingw-w64 python3-setuptools
 
           - os: macos-latest
@@ -44,7 +44,7 @@ jobs:
             name: Visual Studio
             cache-key: windows
             release-suffix: WIN64
-            cmake-args: -DSDL2_DIR=$PWD/../32blit-beta/vs/sdl
+            cmake-args: -DSDL2_DIR=$PWD/../32blit-sdk/vs/sdl
 
     runs-on: ${{matrix.os}}
 

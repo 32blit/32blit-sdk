@@ -80,14 +80,16 @@ To build, flash and run the `logo` example.
 
 #### With the 32blit tool
 
-Alternatively, you can use the tool directly:
+Alternatively, you can use the tool to flash a game directly:
+
 ```
-32blit flash flash --file=[filename].blit
+32blit install filename.blit
 ```
 
-Or, to save to the SD card:
+Or save it to your SD card:
+
 ```
-32blit flash save --file=[filename].blit
+32blit install filename.blit /
 ```
 
 (If `32blit` is not found you can use `python3 -m ttblit` instead)

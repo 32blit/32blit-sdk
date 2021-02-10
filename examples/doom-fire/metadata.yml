@@ -6,5 +6,5 @@ splash:
 icon:
   file: doom-fire-icon.png
 version: v1.0.0
-url: https://github.com/pimoroni/32blit-beta
+url: https://github.com/32blit/32blit-sdk
 category: demo

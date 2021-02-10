@@ -26,7 +26,7 @@ def checkNickname(contributor):
 print("32blit Contributors Updater")
 print("Downloading contributors from Github ...")
 
-r = requests.get('https://api.github.com/repos/pimoroni/32blit-beta/contributors',
+r = requests.get('https://api.github.com/repos/32blit/32blit-sdk/contributors',
         headers = {"Accept": "application/vnd.github.v3+json"})
 
 if r.status_code != 200:
