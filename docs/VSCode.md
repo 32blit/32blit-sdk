@@ -58,13 +58,13 @@ After configuring the project a "CMake Tools would like to configure IntelliSens
 
 ## CMake Arguments
 
-To set CMake arguments (like `-D32BLIT_PATH` for out-of-tree builds), you need to add them to `.vscode/settings.json`:
+To set CMake arguments (like `-D32BLIT_DIR` for out-of-tree builds), you need to add them to `.vscode/settings.json`:
 
 ```json
 {
   // other options...
   "cmake.configureSettings": {
-    "32BLIT_PATH": "/path/to/32blit-beta"
+    "32BLIT_DIR": "/path/to/32blit-beta"
   },
 }
 ```

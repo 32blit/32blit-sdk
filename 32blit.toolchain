@@ -98,4 +98,4 @@ set(NONPIC_STDLIBS "-L ${STDLIB_PATH}/no-pic")
 
 add_definitions(-DTARGET_32BLIT_HW)
 set(32BLIT_HW 1)
-set(32BLIT_PATH ${CMAKE_CURRENT_LIST_DIR} CACHE PATH "Path to 32blit.cmake")
+set(32BLIT_DIR ${CMAKE_CURRENT_LIST_DIR} CACHE PATH "Path to 32blit.cmake")

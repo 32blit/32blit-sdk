@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 project (shmup)
-include (../../32blit.cmake)
+find_package (32BLIT CONFIG REQUIRED PATHS ../..)
 blit_executable (shmup shmup.cpp)
 blit_assets_yaml(shmup assets.yml)
 blit_metadata(shmup metadata.yml)

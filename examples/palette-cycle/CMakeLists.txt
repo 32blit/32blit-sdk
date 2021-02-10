@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 project (palette-cycle)
-include (../../32blit.cmake)
+find_package (32BLIT CONFIG REQUIRED PATHS ../..)
 blit_executable (palette-cycle palette-cycle.cpp)
 blit_assets_yaml (palette-cycle assets.yml)
 blit_metadata (palette-cycle metadata.yml)

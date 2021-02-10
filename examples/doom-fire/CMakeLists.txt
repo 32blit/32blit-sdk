@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
 project (doom-fire)
-include (../../32blit.cmake)
+find_package (32BLIT CONFIG REQUIRED PATHS ../..)
 blit_executable (doom-fire doom-fire.cpp)
 blit_metadata (doom-fire metadata.yml)
