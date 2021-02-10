@@ -180,6 +180,12 @@ int main(int argc, char *argv[]) {
 		}
 		else if(arg_str == "--listen")
 			mp_mode = Multiplayer::Mode::Listen;
+		else if(arg_str == "--position") {
+			int x, y;
+			if(SDL_sscanf(argv[i+1], "%d,%d", &x, &y) == 2) {
+			    SDL_SetWindowPosition(window, x, y);
+			}
+		}
 	}
 
 	blit_system = new System();
