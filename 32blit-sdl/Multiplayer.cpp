@@ -22,63 +22,65 @@ Multiplayer::~Multiplayer() {
         SDLNet_TCP_Close(listen_socket);
 }
 
-void Multiplayer::update() {    
+void Multiplayer::update() {
     if(!socket && !listen_socket)
         return; // TODO: re-attempt connection if mode == Connect
 
-    int num_ready = SDLNet_CheckSockets(sock_set, 0);
+    int num_ready;
 
-    if(num_ready == -1) {
-        std::cerr << "Failed to check socket: " << SDLNet_GetError() << std::endl;
-        return;
-    }
+    while((num_ready = SDLNet_CheckSockets(sock_set, 0))) {
+      if(num_ready == -1) {
+          std::cerr << "Failed to check socket: " << SDLNet_GetError() << std::endl;
+          return;
+      }
 
-    if(listen_socket && SDLNet_SocketReady(listen_socket)) {
-        // new connection
-        socket = SDLNet_TCP_Accept(listen_socket);
-        if(socket) {
-            auto remote_addr = SDLNet_TCP_GetPeerAddress(socket);
-            auto ip = SDL_SwapBE32(remote_addr->host);
-            std::cout << (ip >> 24) << "." << ((ip >> 16) & 0xFF) << "." << ((ip >> 8) & 0xFF) << "." << (ip & 0xFF) << " connected" << std::endl;
+      if(listen_socket && SDLNet_SocketReady(listen_socket)) {
+          // new connection
+          socket = SDLNet_TCP_Accept(listen_socket);
+          if(socket) {
+              auto remote_addr = SDLNet_TCP_GetPeerAddress(socket);
+              auto ip = SDL_SwapBE32(remote_addr->host);
+              std::cout << (ip >> 24) << "." << ((ip >> 16) & 0xFF) << "." << ((ip >> 8) & 0xFF) << "." << (ip & 0xFF) << " connected" << std::endl;
 
-            SDLNet_TCP_AddSocket(sock_set, socket);
-        }
-    }
+              SDLNet_TCP_AddSocket(sock_set, socket);
+          }
+      }
 
-    if(!socket || !SDLNet_SocketReady(socket))
-        return;
+      if(!socket || !SDLNet_SocketReady(socket))
+          return;
 
-    if(!recv_buf) {
-        // read header and setup
-        uint8_t head[10];
-        auto read = SDLNet_TCP_Recv(socket, head, 10);
+      if(!recv_buf) {
+          // read header and setup
+          uint8_t head[10];
+          auto read = SDLNet_TCP_Recv(socket, head, 10);
 
-        recv_len = head[8] | (head[9] << 8);
-        recv_buf = new uint8_t[recv_len];
-        recv_off = 0;
+          recv_len = head[8] | (head[9] << 8);
+          recv_buf = new uint8_t[recv_len];
+          recv_off = 0;
 
-        if(SDLNet_CheckSockets(sock_set, 0) <= 0)
-            return;
-    }
+          if(SDLNet_CheckSockets(sock_set, 0) <= 0)
+              return;
+      }
 
-    auto read = SDLNet_TCP_Recv(socket, recv_buf + recv_off, recv_len - recv_off);
-    if(read < 0) {
-        // failed
-        delete[] recv_buf;
-        recv_buf = nullptr;
-        disconnect();
-        return;
-    }
+      auto read = SDLNet_TCP_Recv(socket, recv_buf + recv_off, recv_len - recv_off);
+      if(read < 0) {
+          // failed
+          delete[] recv_buf;
+          recv_buf = nullptr;
+          disconnect();
+          return;
+      }
 
-    recv_off += read;
+      recv_off += read;
 
-    // got message, pass to user
-    if(recv_off == recv_len) {
-        if(api.message_received)
-            api.message_received(recv_buf, recv_len);
+      // got message, pass to user
+      if(recv_off == recv_len) {
+          if(api.message_received)
+              api.message_received(recv_buf, recv_len);
 
-        delete[] recv_buf;
-        recv_buf = nullptr;
+          delete[] recv_buf;
+          recv_buf = nullptr;
+      }
     }
 }
 
