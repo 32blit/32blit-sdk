@@ -9,9 +9,7 @@ class Input {
 		static int find_key(int key);
 		static int find_button(int button);
 
-		Input(SDL_Window *window, System *system);
-
-		void resize(int width, int height);
+		Input(System *system);
 
 		// Input handlers return true if they handled the event
 		bool handle_mouse(int button, bool state, int x, int y);
@@ -22,9 +20,8 @@ class Input {
 	private:
 		System *target;
 
-		void _virtual_analog(int, int);
-		void _virtual_tilt(int, int);
+		void _virtual_analog(int, int, int, int);
+		void _virtual_tilt(int, int, int, int);
 
-		int win_width, win_height;
 		bool left_ctrl = false;
 };

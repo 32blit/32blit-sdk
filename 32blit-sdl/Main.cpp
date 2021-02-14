@@ -43,7 +43,6 @@ void handle_event(SDL_Event &event) {
 
 		case SDL_WINDOWEVENT:
 			if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-				blit_input->resize(event.window.data1, event.window.data2);
 				blit_renderer->resize(event.window.data1, event.window.data2);
 			}
 			break;
@@ -189,7 +188,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	blit_system = new System();
-	blit_input = new Input(window, blit_system);
+	blit_input = new Input(blit_system);
 	blit_multiplayer = new Multiplayer(mp_mode, mp_address);
 	blit_renderer = new Renderer(window, System::width, System::height);
 	blit_audio = new Audio();
