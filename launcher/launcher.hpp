@@ -17,7 +17,7 @@ enum class Screen {
   screenshot
 };
 
-enum class GameType {
+enum class GameType : uint8_t {
   game,
   file,
   screenshot
@@ -25,13 +25,13 @@ enum class GameType {
 
 struct GameInfo {
   GameType type;
+  bool can_launch = true; // use in future to flag games with an API mismatch
+  char ext[5]{0};
 
   std::string title;
-  uint32_t size, checksum = 0;
+  uint32_t size;
 
-  bool can_launch = true; // use in future to flag games with an API mismatch
-
-  std::string filename, ext;
+  std::string filename;
 };
 
 struct DirectoryInfo {
