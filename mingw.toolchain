@@ -1,8 +1,7 @@
 if(NOT DEFINED SDL2_DIR)
 	set(SDL2_DIR /opt/local/x86_64-w64-mingw32/lib/cmake/SDL2)
 endif()
-list(APPEND CMAKE_MODULE_PATH ${SDL2_DIR})
-include(sdl2-config REQUIRED)
+set(SDL2_PREFIX ${SDL2_DIR}/../../..)
 
 set(CMAKE_SYSTEM_NAME Windows)
 set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc)
