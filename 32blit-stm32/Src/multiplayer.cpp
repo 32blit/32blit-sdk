@@ -165,6 +165,9 @@ namespace multiplayer {
   }
 
   void send_message(const uint8_t *data, uint16_t length) {
+    if(!peer_connected)
+      return;
+
     // header
     cdc_send((uint8_t *)"32BLUSER", 8);
     cdc_send((uint8_t *)&length, 2);
