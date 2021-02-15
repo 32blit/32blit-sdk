@@ -96,7 +96,9 @@ void render(uint32_t time_ms) {
   );
 
   // Also, stretched with the scale factor of the normal sprite functions
-  screen.sprite(Point(0,0), Point(130,40), Point(0,0), 2.0f);
+  // The second Point() argument here is the origin for any transform applied,
+  // but here we aren't applying one.
+  screen.sprite(0, Point(130, 40), Point(0, 0), 2.0f);
 
   uint32_t ms_end = now();
 
