@@ -63,7 +63,7 @@ const uint32_t long_press_exit_time = 1000;
 
 static uint32_t last_input_time = 0;
 static float sleep_fade = 1.0f;
-const int sleep_inactivity_time = 30000; // ms before sleeping
+const int sleep_inactivity_time = 120000; // ms before sleeping
 const int sleep_fade_out_time = 3000, sleep_fade_in_time = 500;
 
 __attribute__((section(".persist"))) Persist persist;
@@ -182,6 +182,8 @@ void blit_tick() {
   blit_process_input();
   blit_update_led();
   blit_update_vibration();
+
+  multiplayer::update();
 
   // SD card inserted/removed
   if(blit_sd_detected() != fs_mounted) {
@@ -619,7 +621,7 @@ void blit_process_input() {
     joystick_y = 0;
   }
   blit::joystick.y = -joystick_y / 7168.0f;
-  
+
   if(blit::joystick.length() > 0.01f)
     last_input_time = HAL_GetTick();
 
