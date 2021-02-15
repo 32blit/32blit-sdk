@@ -18,6 +18,7 @@ Renderer::Renderer(SDL_Window *window, int width, int height) : sys_width(width)
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
 	resize(w, h);
+  set_mode(mode);
 
 	// Clear the window.
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
@@ -33,24 +34,27 @@ Renderer::~Renderer() {
 
 void Renderer::set_mode(Mode new_mode) {
 	mode = new_mode;
-	if (mode == Stretch) {
-		dest.x = 0; dest.y = 0;
-		dest.w = win_width; dest.h = win_height;
-	} else {
-		float current_pixel_size = std::min((float)win_width / sys_width, (float)win_height / sys_height);
-		if (mode == KeepPixels) current_pixel_size = floor(current_pixel_size);
-		else if (mode == KeepPixelsLores) current_pixel_size = (floor(2*current_pixel_size)) / 2.0f;
-		dest.w = sys_width * current_pixel_size;
-		dest.h = sys_height * current_pixel_size;
-		dest.x = (win_width - dest.w) / 2;
-		dest.y = (win_height - dest.h) / 2;
+
+  int w = is_lores ? sys_width / 2 : sys_width;
+  int h = is_lores ? sys_height / 2 : sys_height;
+
+  SDL_RenderSetLogicalSize(renderer, w, h);
+  SDL_RenderSetIntegerScale(renderer, (mode == KeepPixels) ? SDL_TRUE : SDL_FALSE);
+
+  if (mode == Stretch) {
+    // override the automatic scaling to not preserve the ratio
+    SDL_RenderSetViewport(renderer, nullptr);
+
+    SDL_RenderSetScale(renderer, (float)win_width / w, (float)win_height / h);
 	}
 }
 
 void Renderer::resize(int width, int height) {
 	win_width = width;
 	win_height = height;
-	set_mode(mode);
+
+  if (mode == Stretch)
+	  set_mode(mode);
 
 	if (fb_lores_texture) {
 		SDL_DestroyTexture(fb_lores_texture);
@@ -70,6 +74,11 @@ void Renderer::update(System *sys) {
 		current = fb_hires_texture;
 	}
 
+  if(is_lores != (sys->mode() == 0)) {
+    is_lores = sys->mode() == 0;
+    set_mode(mode);
+  }
+
 	sys->update_texture(current);
 }
 
@@ -81,6 +90,17 @@ void Renderer::_render(SDL_Texture *target, SDL_Rect *destination) {
 }
 
 void Renderer::present() {
+  SDL_Rect dest;
+  dest.x = 0;
+  dest.y = 0;
+  dest.w = sys_width;
+  dest.h = sys_height;
+
+  if (is_lores) {
+    dest.w /= 2;
+    dest.h /= 2;
+  }
+
 	_render(nullptr, &dest);
 	SDL_RenderPresent(renderer);
 }

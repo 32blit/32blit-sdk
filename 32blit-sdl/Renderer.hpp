@@ -5,7 +5,7 @@ class Renderer {
 		Renderer(SDL_Window *window, int width, int height);
 		~Renderer();
 
-		enum Mode {Stretch, KeepAspect, KeepPixels, KeepPixelsLores};
+		enum Mode {Stretch, KeepAspect, KeepPixels};
 
 		void resize(int width, int height);
 		void update(System *sys);
@@ -19,9 +19,9 @@ class Renderer {
 		int sys_width, sys_height;
 		int win_width, win_height;
 
+    bool is_lores = false;
 		Mode mode = KeepPixels;
 		SDL_Renderer *renderer = nullptr;
-		SDL_Rect dest = {0, 0, 0, 0};
 
 		SDL_Texture *fb_lores_texture = nullptr;
 		SDL_Texture *fb_hires_texture = nullptr;

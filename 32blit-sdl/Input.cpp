@@ -65,29 +65,25 @@ int Input::find_button(int button) {
 	else return iter->second;
 }
 
-Input::Input(SDL_Window *window, System *target) : target(target) {
-	int w, h;
-	SDL_GetWindowSize(window, &w, &h);
-	resize(w, h);
-}
-
-void Input::resize(int width, int height) {
-	win_width = width;
-	win_height = height;
+Input::Input(System *target) : target(target) {
 }
 
 bool Input::handle_mouse(int button, bool state, int x, int y) {
+
+  int half_w = target->mode() ? target->width / 2 : target->width / 4;
+  int half_h = target->mode() ? target->height / 2 : target->height / 4;
+
 	if (button == SDL_BUTTON_LEFT) {
 		if (state) {
 			if(left_ctrl){
-				_virtual_tilt(x, y);
+				_virtual_tilt(x, y, half_w, half_h);
 			} else {
-				x = x - (win_width / 2);
-				y = y - (win_height / 2);
-				_virtual_analog(x, y);
+				x = x - half_w;
+				y = y - half_h;
+				_virtual_analog(x, y, half_w, half_h);
 			}
 		} else {
-			_virtual_analog(0, 0);
+			_virtual_analog(0, 0, half_w, half_h);
 		}
 		return true;
 	}
@@ -134,10 +130,10 @@ bool Input::handle_controller_motion(int axis, int value) {
 	return false;
 }
 
-void Input::_virtual_tilt(int x, int y) {
+void Input::_virtual_tilt(int x, int y, int half_w, int half_h) {
 	float z = 80.0f;
-	x = x - (win_width / 2);
-	y = y - (win_height / 2);
+	x = x - half_w;
+	y = y - half_h;
 	blit::Vec3 shadow_tilt(x, y, z);
 	shadow_tilt.normalize();
 	target->set_tilt(0, shadow_tilt.x);
@@ -145,9 +141,9 @@ void Input::_virtual_tilt(int x, int y) {
 	target->set_tilt(2, shadow_tilt.z);
 }
 
-void Input::_virtual_analog(int x, int y) {
-	float jx = (float)x / (win_width / 2);
-	float jy = (float)y / (win_height / 2);
+void Input::_virtual_analog(int x, int y, int half_w, int half_h) {
+	float jx = (float)x / half_w;
+	float jy = (float)y / half_h;
 	target->set_joystick(0, jx);
 	target->set_joystick(1, jy);
 }
