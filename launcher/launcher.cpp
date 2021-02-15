@@ -156,7 +156,11 @@ void load_file_list(std::string directory) {
 
   game_list.clear();
 
-  for(auto &file : ::list_files(directory)) {
+  auto files = list_files(directory);
+
+  game_list.reserve(files.size()); // worst case
+
+  for(auto &file : files) {
     if(file.flags & blit::FileFlags::directory)
       continue;
 
@@ -189,7 +193,6 @@ void load_file_list(std::string directory) {
       BlitGameMetadata meta;
       if(parse_file_metadata(game.filename, meta)) {
         game.title = meta.title;
-        game.checksum = meta.crc32;
       }
 
       game_list.push_back(game);
@@ -218,7 +221,8 @@ void load_file_list(std::string directory) {
       game.type = GameType::file;
       game.title = file.name;
       game.filename = directory == "/" ? file.name : directory + "/" + file.name;
-      game.ext = ext;
+      strncpy(game.ext, ext.c_str(), 5);
+      game.ext[4] = 0;
       game.size = file.size;
       game.can_launch = true;
 
@@ -230,6 +234,9 @@ void load_file_list(std::string directory) {
   if(selected_menu_item >= total_items)
     selected_menu_item = total_items - 1;
 
+  // probably doesn't do anything...
+  game_list.shrink_to_fit();
+
   sort_file_list();
 }
 
@@ -240,9 +247,9 @@ void load_current_game_metadata() {
   if(!game_list.empty()) {
     selected_game = game_list[selected_menu_item];
 
-    if(!selected_game.ext.empty()) {
+    if(selected_game.type == GameType::file) {
       // not a .blit
-      auto handler_meta = (char *)api.get_type_handler_metadata(selected_game.ext.c_str());
+      auto handler_meta = (char *)api.get_type_handler_metadata(selected_game.ext);
       auto len = *reinterpret_cast<uint16_t *>(handler_meta + 8);
 
       parse_metadata(handler_meta + 10, len, selected_game_metadata, true);
