@@ -27,7 +27,7 @@ enum MenuItem {
   SD_CARD
 };
 
-static Menu::Item menu_items[]{
+static const Menu::Item menu_items[]{
   { FIRMWARE_VERSION, "Version" },
   { FIRMWARE_DATE, "Date" },
   { Menu::Separator, nullptr },
