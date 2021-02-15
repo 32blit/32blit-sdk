@@ -156,7 +156,11 @@ void load_file_list(std::string directory) {
 
   game_list.clear();
 
-  for(auto &file : ::list_files(directory)) {
+  auto files = list_files(directory);
+
+  game_list.reserve(files.size()); // worst case
+
+  for(auto &file : files) {
     if(file.flags & blit::FileFlags::directory)
       continue;
 
@@ -229,6 +233,9 @@ void load_file_list(std::string directory) {
   int total_items = (int)game_list.size();
   if(selected_menu_item >= total_items)
     selected_menu_item = total_items - 1;
+
+  // probably doesn't do anything...
+  game_list.shrink_to_fit();
 
   sort_file_list();
 }
