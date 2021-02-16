@@ -61,7 +61,7 @@ const float volume_log_base = 2.0f;
 
 const uint32_t long_press_exit_time = 1000;
 
-static uint32_t last_input_time = 0;
+static uint32_t last_input_time = 0, sleep_fade_in_start = 0;
 static float sleep_fade = 1.0f;
 const int sleep_inactivity_time = 120000; // ms before sleeping
 const int sleep_fade_out_time = 3000, sleep_fade_in_time = 500;
@@ -76,6 +76,7 @@ static void (*user_render)(uint32_t time) = nullptr;
 static bool user_code_disabled = false;
 
 void blit_update_volume();
+static void update_active();
 
 void DFUBoot(void)
 {
@@ -199,7 +200,7 @@ void blit_tick() {
     sleep_fade = std::max(0.0f, 1.0f - float(HAL_GetTick() - last_input_time - sleep_inactivity_time) / sleep_fade_out_time);
     blit_update_volume();
   } else if(sleep_fade < 1.0f) {
-    sleep_fade = std::min(1.0f, float(HAL_GetTick() - last_input_time) / sleep_fade_in_time);
+    sleep_fade = std::min(1.0f, float(HAL_GetTick() - sleep_fade_in_start) / sleep_fade_in_time);
     blit_update_volume();
   }
 
@@ -595,7 +596,7 @@ void blit_process_input() {
     (!HAL_GPIO_ReadPin(JOYSTICK_BUTTON_GPIO_Port, JOYSTICK_BUTTON_Pin) ? blit::JOYSTICK   : 0);
 
   if(blit::buttons.state)
-    last_input_time = HAL_GetTick();
+    update_active();
 
   // Process ADC readings
   int joystick_x = (adc1data[0] >> 1) - 16384;
@@ -623,7 +624,7 @@ void blit_process_input() {
   blit::joystick.y = -joystick_y / 7168.0f;
 
   if(blit::joystick.length() > 0.01f)
-    last_input_time = HAL_GetTick();
+    update_active();
 
   blit::hack_left = (adc3data[0] >> 1) / 32768.0f;
   blit::hack_right = (adc3data[1] >> 1)  / 32768.0f;
@@ -800,4 +801,12 @@ RawMetadata *blit_get_running_game_metadata() {
   }
 
   return nullptr;
+}
+
+static void update_active() {
+  // fading out or done fading, fade back in
+  if(HAL_GetTick() - last_input_time > sleep_inactivity_time)
+    sleep_fade_in_start = HAL_GetTick() - sleep_fade * sleep_fade_in_time;
+
+  last_input_time = HAL_GetTick();
 }
