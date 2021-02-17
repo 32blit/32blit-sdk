@@ -89,16 +89,19 @@ namespace pimoroni {
     // spi_set_format(spi, 16, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 
     // initialise dma channel for transmitting pixel data to screen
-    // dma_channel = dma_claim_unused_channel(true);
-    // dma_channel_config config = dma_channel_get_default_config(dma_channel);
-    // channel_config_set_transfer_data_size(&config, DMA_SIZE_16);
-    // channel_config_set_dreq(&config, spi_get_index(spi) ? DREQ_SPI1_TX : DREQ_SPI0_TX);
-    // dma_channel_configure(
-    //   dma_channel, &config, &spi_get_hw(spi)->dr, frame_buffer, width * height, false);
+    dma_channel = dma_claim_unused_channel(true);
+    dma_channel_config config = dma_channel_get_default_config(dma_channel);
+    channel_config_set_transfer_data_size(&config, DMA_SIZE_16);
+    channel_config_set_dreq(&config, spi_get_index(spi) ? DREQ_SPI1_TX : DREQ_SPI0_TX);
+    dma_channel_configure(
+      dma_channel, &config, &spi_get_hw(spi)->dr, frame_buffer, width * height, false);
   }
 
   void ST7789::command(uint8_t command, size_t len, const char *data) {
-    //dma_channel_wait_for_finish_blocking(dma_channel);
+    dma_channel_wait_for_finish_blocking(dma_channel);
+
+    if(bytes_per_pixel == 2)
+      spi_set_format(spi, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 
     gpio_put(cs, 0);
 
@@ -114,9 +117,7 @@ namespace pimoroni {
   }
 
   void ST7789::update(bool dont_block) {
-    ST7789::command(reg::RAMWR, win_w * win_h * bytes_per_pixel, (const char*)frame_buffer);
-
-    /*if(dma_channel_is_busy(dma_channel) && dont_block) {
+    if(dma_channel_is_busy(dma_channel) && dont_block) {
       return;
     }
 
@@ -131,7 +132,14 @@ namespace pimoroni {
 
     gpio_put(dc, 1); // data mode
 
-    dma_channel_set_read_addr(dma_channel, frame_buffer, true);*/
+    if(bytes_per_pixel == 2) {
+      spi_set_format(spi, 16, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
+      dma_channel_set_trans_count(dma_channel, win_w * win_h, false);
+    } else {
+      dma_channel_set_trans_count(dma_channel, win_w * win_h * bytes_per_pixel, false);
+    }
+
+    dma_channel_set_read_addr(dma_channel, frame_buffer, true);
   }
 
   void ST7789::set_backlight(uint8_t brightness) {
@@ -160,5 +168,13 @@ namespace pimoroni {
   void ST7789::set_bytes_per_pixel(int bpp) {
     command(reg::COLMOD, 1, bpp == 2 ? "\x05" : "\x06");
     bytes_per_pixel = bpp;
+
+    auto config = dma_get_channel_config(dma_channel);
+    channel_config_set_transfer_data_size(&config, bytes_per_pixel == 2 ? DMA_SIZE_16 : DMA_SIZE_8);
+    dma_channel_set_config(dma_channel, &config, false);
+  }
+
+  bool ST7789::dma_is_busy() {
+    return dma_channel_is_busy(dma_channel);
   }
 }

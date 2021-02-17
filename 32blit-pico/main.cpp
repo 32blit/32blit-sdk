@@ -10,13 +10,13 @@
 
 using namespace blit;
 
-pimoroni::ST7789 st7789(240, 240, nullptr);
-using ST7789Reg = pimoroni::ST7789::reg;
-
 uint8_t screen_fb[160 * 120 * 3];
 static Surface lores_screen(screen_fb, PixelFormat::RGB, Size(160, 120));
 //static Surface hires_screen(screen_fb, PixelFormat::RGB, Size(320, 240));
 //static Surface hires_palette_screen(screen_fb, PixelFormat::P, Size(320, 240));
+
+pimoroni::ST7789 st7789(240, 240, (uint16_t *)screen_fb);
+using ST7789Reg = pimoroni::ST7789::reg;
 
 ScreenMode cur_screen_mode = ScreenMode::lores;
 
@@ -44,16 +44,6 @@ static Surface &set_screen_mode(ScreenMode mode) {
 
 static uint32_t now() {
   return to_ms_since_boot(get_absolute_time());
-}
-
-static void update_display() {
-  auto start = get_absolute_time();
-
-  st7789.command(ST7789Reg::RAMWR, 160 * 120 * 3, (const char*)screen_fb);
-  auto end = get_absolute_time();
-
-  int elapsed = absolute_time_diff_us(start, end);
-  printf("%i\n", elapsed);
 }
 
 // user funcs
@@ -85,9 +75,9 @@ int main() {
 
     auto now = ::now();
 
-    if(now - last_render >= 20) {
+    if(now - last_render >= 20 && !st7789.dma_is_busy()) {
       ::render(now);
-      update_display();
+      st7789.update();
       last_render = now;
     }
   }
