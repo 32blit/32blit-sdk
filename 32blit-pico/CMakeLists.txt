@@ -1,18 +1,16 @@
 set(CMAKE_C_STANDARD 11)
 
-include(${PICO_SDK_PATH}/../pimoroni-pico/drivers/st7789/st7789.cmake)
-
 # Initialise the Pico SDK
 pico_sdk_init()
 
 set(32BLIT_PICO 1 PARENT_SCOPE)
 
 add_library(BlitHalPico INTERFACE)
-target_sources(BlitHalPico INTERFACE ${CMAKE_CURRENT_LIST_DIR}/main.cpp)
-target_link_libraries(BlitHalPico INTERFACE pico_stdlib st7789) # need the include paths
-
-#shouldn't really need this
-target_include_directories(BlitHalPico INTERFACE ${PICO_SDK_PATH}/../pimoroni-pico/drivers/st7789/)
+target_sources(BlitHalPico INTERFACE
+	${CMAKE_CURRENT_LIST_DIR}/main.cpp
+	${CMAKE_CURRENT_LIST_DIR}/st7789.cpp
+)
+target_link_libraries(BlitHalPico INTERFACE hardware_dma hardware_pwm hardware_spi pico_stdlib)
 
 function(blit_executable_common NAME)
 	target_link_libraries(${NAME} BlitEngine)
