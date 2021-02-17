@@ -68,13 +68,11 @@ namespace pimoroni {
 
       // setup correct addressing window
       if(width == 240 && height == 240) {
-        command(reg::CASET,     4, "\x00\x00\x00\xef");  // 0 .. 239 columns
-        command(reg::RASET,     4, "\x00\x00\x00\xef");  // 0 .. 239 rows
+        set_window(0, 0, 240, 240);
       }
 
       if(width == 240 && height == 135) {
-        command(reg::RASET,     4, "\x00\x35\x00\xbb"); // 53 .. 187 (135 rows)
-        command(reg::CASET,     4, "\x00\x28\x01\x17"); // 40 .. 279 (240 columns)
+        set_window(40, 53, 240, 135);
       }
     }
 
@@ -116,7 +114,7 @@ namespace pimoroni {
   }
 
   void ST7789::update(bool dont_block) {
-    ST7789::command(reg::RAMWR, width * height * sizeof(uint16_t), (const char*)frame_buffer);
+    ST7789::command(reg::RAMWR, win_w * win_h * sizeof(uint16_t), (const char*)frame_buffer);
 
     /*if(dma_channel_is_busy(dma_channel) && dont_block) {
       return;
@@ -146,5 +144,16 @@ namespace pimoroni {
 
   void ST7789::vsync_callback(gpio_irq_callback_t callback) {
     gpio_set_irq_enabled_with_callback(vsync, GPIO_IRQ_EDGE_RISE, true, callback);
+  }
+
+  void ST7789::set_window(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
+    uint32_t cols = __builtin_bswap32((x << 16) | (x + w - 1));
+    uint32_t rows = __builtin_bswap32((y << 16) | (y + h - 1));
+
+    command(reg::CASET, 4, (const char *)&cols);
+    command(reg::RASET, 4, (const char *)&rows);
+
+    win_w = w;
+    win_h = h;
   }
 }

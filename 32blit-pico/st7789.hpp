@@ -15,6 +15,8 @@ namespace pimoroni {
     uint16_t height;
     uint16_t row_stride;
 
+    uint16_t win_w, win_h; // window size
+
     // interface pins with our standard defaults where appropriate
     int8_t cs     = 17;
     int8_t dc     = 16;
@@ -32,13 +34,13 @@ namespace pimoroni {
 
   public:
     ST7789(uint16_t width, uint16_t height, uint16_t *frame_buffer) :
-      width(width), height(height), frame_buffer(frame_buffer) {}
+      width(width), height(height), win_w(width), win_h(height), frame_buffer(frame_buffer) {}
 
     ST7789(uint16_t width, uint16_t height, uint16_t *frame_buffer,
            spi_inst_t *spi,
            uint8_t cs, uint8_t dc, uint8_t sck, uint8_t mosi, uint8_t miso = -1) :
       spi(spi),
-      width(width), height(height),      
+      width(width), height(height), win_w(width), win_h(height),
       cs(cs), dc(dc), sck(sck), mosi(mosi), miso(miso), frame_buffer(frame_buffer) {}
 
     void init(bool auto_init_sequence = true);
@@ -47,6 +49,8 @@ namespace pimoroni {
     void vsync_callback(gpio_irq_callback_t callback);
     void update(bool dont_block = false);
     void set_backlight(uint8_t brightness);
+
+    void set_window(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
 
     enum reg {
       SWRESET   = 0x01,

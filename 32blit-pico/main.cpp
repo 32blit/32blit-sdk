@@ -25,8 +25,7 @@ static Surface &set_screen_mode(ScreenMode mode) {
     case ScreenMode::lores:
       blit::screen = lores_screen;
       // window
-      st7789.command(ST7789Reg::CASET, 4, "\x00\x28\x00\xc7"); // 40 - 199
-      st7789.command(ST7789Reg::RASET, 4, "\x00\x3C\x00\xb3"); // 60 - 179
+      st7789.set_window(40, 60, 160, 120);
       break;
 
     //case ScreenMode::hires:
