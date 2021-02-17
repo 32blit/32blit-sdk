@@ -60,8 +60,56 @@ void update(uint32_t);
 int main() {
   stdio_init_all();
 
-  api.now = ::now;
+  // api.channels = ::channels;
+
   api.set_screen_mode = ::set_screen_mode;
+  // api.set_screen_palette = ::set_screen_palette;
+  api.now = ::now;
+  // api.random = ::random;
+  // api.exit = ::exit;
+
+  // serial debug
+  // api.debug = ::debug;
+
+  // files
+  // api.open_file = ::open_file;
+  // api.read_file = ::read_file;
+  // api.write_file = ::write_file;
+  // api.close_file = ::close_file;
+  // api.get_file_length = ::get_file_length;
+  // api.list_files = ::list_files;
+  // api.file_exists = ::file_exists;
+  // api.directory_exists = ::directory_exists;
+  // api.create_directory = ::create_directory;
+  // api.rename_file = ::rename_file;
+  // api.remove_file = ::remove_file;
+  // api.get_save_path = ::get_save_path;
+  // api.is_storage_available = ::is_storage_available;
+
+  // profiler
+  // api.enable_us_timer = ::enable_us_timer;
+  // api.get_us_timer = ::get_us_timer;
+  // api.get_max_us_timer = ::get_max_us_timer;
+
+  // jpeg
+  // api.decode_jpeg_buffer = ::decode_jpeg_buffer;
+  // api.decode_jpeg_file = ::decode_jpeg_file;
+
+  // launcher
+  // api.launch = ::launch;
+  // api.erase_game = ::erase_game;
+  // api.get_type_handler_metadata = ::get_type_handler_metadata;
+
+  // api.get_launch_path = ::get_launch_path;
+
+  // multiplayer
+  // api.is_multiplayer_connected = ::is_multiplayer_connected;
+  // api.set_multiplayer_enabled = ::set_multiplayer_enabled;
+  // api.send_message = ::send_message;
+  // api.message_received = ::message_received;
+
+  // api.flash_to_tmp = ::flash_to_tmp;
+  // api.tmp_file_closed = ::tmp_file_closed;
 
 #ifdef DISPLAY_ST7789
   st7789.init();
