@@ -2,6 +2,7 @@
 
 #include "pico/stdlib.h"
 
+#include "audio.hpp"
 #include "input.hpp"
 #include "st7789.hpp"
 
@@ -15,6 +16,8 @@ uint8_t screen_fb[240 * 240 * 2];
 static Surface lores_screen(screen_fb, PixelFormat::RGB565, Size(160, 120));
 static Surface hires_screen(screen_fb, PixelFormat::RGB565, Size(240, 240));
 //static Surface hires_palette_screen(screen_fb, PixelFormat::P, Size(320, 240));
+
+static blit::AudioChannel channels[CHANNEL_COUNT];
 
 #ifdef DISPLAY_ST7789
 pimoroni::ST7789 st7789(240, 240, (uint16_t *)screen_fb);
@@ -89,7 +92,7 @@ void update(uint32_t);
 int main() {
   stdio_init_all();
 
-  // api.channels = ::channels;
+  api.channels = ::channels;
 
   api.set_screen_mode = ::set_screen_mode;
   // api.set_screen_palette = ::set_screen_palette;
@@ -152,6 +155,8 @@ int main() {
   blit::render = ::render;
   blit::update = ::update;
 
+  init_audio();
+
   // user init
   ::init();
 
@@ -160,6 +165,7 @@ int main() {
   while(true) {
     update_input();
     tick(::now());
+    update_audio();
 
     auto now = ::now();
 

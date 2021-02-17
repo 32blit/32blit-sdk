@@ -7,13 +7,18 @@ set(32BLIT_PICO 1 PARENT_SCOPE)
 
 add_library(BlitHalPico INTERFACE)
 target_sources(BlitHalPico INTERFACE
+	${CMAKE_CURRENT_LIST_DIR}/audio.cpp
 	${CMAKE_CURRENT_LIST_DIR}/input.cpp
 	${CMAKE_CURRENT_LIST_DIR}/main.cpp
 	${CMAKE_CURRENT_LIST_DIR}/st7789.cpp
 )
-target_link_libraries(BlitHalPico INTERFACE hardware_dma hardware_pwm hardware_spi pico_stdlib)
+target_link_libraries(BlitHalPico INTERFACE hardware_dma hardware_pwm hardware_spi pico_stdlib pico_audio_i2s)
 
 target_compile_definitions(BlitHalPico INTERFACE
+	PICO_AUDIO_I2S_MONO_INPUT=1
+	PICO_AUDIO_I2S_DATA_PIN=6
+	PICO_AUDIO_I2S_CLOCK_PIN_BASE=20
+	AUDIO_I2S
 	DISPLAY_ST7789
 	INPUT_GPIO
 )
