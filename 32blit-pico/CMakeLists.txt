@@ -11,9 +11,6 @@ add_library(BlitHalPico INTERFACE)
 target_sources(BlitHalPico INTERFACE ${CMAKE_CURRENT_LIST_DIR}/main.cpp)
 target_link_libraries(BlitHalPico INTERFACE pico_stdlib st7789) # need the include paths
 
-#pico_set_program_name(test-project "test-project")
-#pico_set_program_version(test-project "0.1")
-
 #shouldn't really need this
 target_include_directories(BlitHalPico INTERFACE ${PICO_SDK_PATH}/../pimoroni-pico/drivers/st7789/)
 
@@ -42,17 +39,14 @@ endfunction()
 
 function(blit_metadata TARGET FILE)
 	# cause cmake to reconfigure whenever the asset list changes
-	#set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
+	set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
 
 	# get the inputs/outputs for the asset tool (at configure time)
-	#execute_process(COMMAND ${PYTHON_EXECUTABLE} -m ttblit cmake --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --cmake ${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
-	#include(${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
+	execute_process(COMMAND ${PYTHON_EXECUTABLE} -m ttblit cmake --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --cmake ${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
+	include(${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
 
-	#add_custom_command(
-	#	TARGET ${TARGET} POST_BUILD
-	#	COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit metadata --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --file ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.reloc.bin
-	#)
-
-	# force relink on change so that the post-build commands are rerun
-	#set_property(TARGET ${TARGET} APPEND PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} ${METADATA_DEPENDS})
+	pico_set_program_name(${TARGET} "${METADATA_TITLE}")
+	pico_set_program_description(${TARGET} "${METADATA_DESCRIPTION}")
+	pico_set_program_version(${TARGET} "${METADATA_VERSION}")
+	pico_set_program_url(${TARGET} "${METADATA_URL}")
 endfunction()
