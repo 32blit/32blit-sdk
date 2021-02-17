@@ -54,6 +54,8 @@ namespace pimoroni {
     void set_window(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
     void set_bytes_per_pixel(int bpp); // 2 or 3
 
+    void clear();
+
     bool dma_is_busy();
 
     enum reg {

@@ -58,6 +58,7 @@ int main() {
   api.set_screen_mode = ::set_screen_mode;
 
   st7789.init();
+  st7789.clear();
   st7789.set_bytes_per_pixel(3);
 
   ::set_screen_mode(ScreenMode::lores);

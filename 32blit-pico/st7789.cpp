@@ -174,6 +174,22 @@ namespace pimoroni {
     dma_channel_set_config(dma_channel, &config, false);
   }
 
+  void ST7789::clear() {
+    uint8_t r = reg::RAMWR;
+
+    gpio_put(cs, 0);
+
+    gpio_put(dc, 0); // command mode
+    spi_write_blocking(spi, &r, 1);
+
+    gpio_put(dc, 1); // data mode
+
+    for(int i = 0; i < win_w * win_h; i++) {
+      uint32_t v = 0;
+      spi_write_blocking(spi0, (const uint8_t *)&v, bytes_per_pixel);
+    }
+  }
+
   bool ST7789::dma_is_busy() {
     return dma_channel_is_busy(dma_channel);
   }
