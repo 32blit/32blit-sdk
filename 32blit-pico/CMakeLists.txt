@@ -7,6 +7,7 @@ set(32BLIT_PICO 1 PARENT_SCOPE)
 
 add_library(BlitHalPico INTERFACE)
 target_sources(BlitHalPico INTERFACE
+	${CMAKE_CURRENT_LIST_DIR}/input.cpp
 	${CMAKE_CURRENT_LIST_DIR}/main.cpp
 	${CMAKE_CURRENT_LIST_DIR}/st7789.cpp
 )
@@ -14,6 +15,7 @@ target_link_libraries(BlitHalPico INTERFACE hardware_dma hardware_pwm hardware_s
 
 target_compile_definitions(BlitHalPico INTERFACE
 	DISPLAY_ST7789
+	INPUT_GPIO
 )
 
 function(blit_executable_common NAME)

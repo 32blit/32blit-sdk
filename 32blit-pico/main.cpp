@@ -2,6 +2,7 @@
 
 #include "pico/stdlib.h"
 
+#include "input.hpp"
 #include "st7789.hpp"
 
 #include "engine/api_private.hpp"
@@ -136,6 +137,8 @@ int main() {
   st7789.clear();
 #endif
 
+  init_input();
+
   ::set_screen_mode(ScreenMode::lores);
 
   blit::render = ::render;
@@ -147,6 +150,7 @@ int main() {
   uint32_t last_render = 0;
 
   while(true) {
+    update_input();
     tick(::now());
 
     auto now = ::now();
