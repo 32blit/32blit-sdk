@@ -52,6 +52,26 @@ static uint32_t now() {
   return to_ms_since_boot(get_absolute_time());
 }
 
+static void *open_file(const std::string &, int) {
+  return nullptr; // stub
+}
+
+static int32_t read_file(void *, uint32_t, uint32_t, char *) {
+  return -1; // stub
+}
+
+static int32_t write_file(void *, uint32_t, uint32_t, const char *) {
+  return -1; // stub
+}
+
+static const char *get_save_path() {
+  return ""; // stub
+}
+
+static bool is_storage_available() {
+  return false;
+}
+
 // user funcs
 void init();
 void render(uint32_t);
@@ -72,9 +92,9 @@ int main() {
   // api.debug = ::debug;
 
   // files
-  // api.open_file = ::open_file;
-  // api.read_file = ::read_file;
-  // api.write_file = ::write_file;
+  api.open_file = ::open_file;
+  api.read_file = ::read_file;
+  api.write_file = ::write_file;
   // api.close_file = ::close_file;
   // api.get_file_length = ::get_file_length;
   // api.list_files = ::list_files;
@@ -83,8 +103,8 @@ int main() {
   // api.create_directory = ::create_directory;
   // api.rename_file = ::rename_file;
   // api.remove_file = ::remove_file;
-  // api.get_save_path = ::get_save_path;
-  // api.is_storage_available = ::is_storage_available;
+  api.get_save_path = ::get_save_path;
+  api.is_storage_available = ::is_storage_available;
 
   // profiler
   // api.enable_us_timer = ::enable_us_timer;
