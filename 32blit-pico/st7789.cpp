@@ -114,7 +114,7 @@ namespace pimoroni {
   }
 
   void ST7789::update(bool dont_block) {
-    ST7789::command(reg::RAMWR, win_w * win_h * sizeof(uint16_t), (const char*)frame_buffer);
+    ST7789::command(reg::RAMWR, win_w * win_h * bytes_per_pixel, (const char*)frame_buffer);
 
     /*if(dma_channel_is_busy(dma_channel) && dont_block) {
       return;
@@ -155,5 +155,10 @@ namespace pimoroni {
 
     win_w = w;
     win_h = h;
+  }
+
+  void ST7789::set_bytes_per_pixel(int bpp) {
+    command(reg::COLMOD, 1, bpp == 2 ? "\x05" : "\x06");
+    bytes_per_pixel = bpp;
   }
 }

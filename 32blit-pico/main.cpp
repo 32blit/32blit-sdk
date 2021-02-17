@@ -68,8 +68,7 @@ int main() {
   api.set_screen_mode = ::set_screen_mode;
 
   st7789.init();
-  //
-  st7789.command(ST7789Reg::COLMOD, 1, "\x06");
+  st7789.set_bytes_per_pixel(3);
 
   ::set_screen_mode(ScreenMode::lores);
 
