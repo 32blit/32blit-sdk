@@ -7,6 +7,7 @@
 #include "file.hpp"
 #include "../audio/audio.hpp"
 #include "../engine/input.hpp"
+#include "../engine/version.hpp"
 #include "../graphics/jpeg.hpp"
 #include "../graphics/surface.hpp"
 #include "../types/vec2.hpp"
@@ -80,6 +81,8 @@ namespace blit {
 
     const uint8_t *(*flash_to_tmp)(const std::string &filename, uint32_t &size);
     void (*tmp_file_closed)(const uint8_t *ptr);
+
+    GameMetadata (*get_metadata)();
   };
   #pragma pack(pop)
 

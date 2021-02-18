@@ -154,6 +154,29 @@ static const char *get_launch_path() {
   return persist.launch_path;
 }
 
+static GameMetadata get_metadata() {
+  GameMetadata ret;
+
+  auto meta = blit_get_running_game_metadata();
+  if(meta) {
+    ret.title = meta->title;
+    ret.author = meta->author;
+    ret.description = meta->description;
+    ret.version = meta->version;
+
+    if(memcmp(meta + 1, "BLITTYPE", 8) == 0) {
+      auto type_meta = reinterpret_cast<RawTypeMetadata *>(reinterpret_cast<char *>(meta) + sizeof(*meta) + 8);
+      ret.url = type_meta->url;
+      ret.category = type_meta->category;
+    } else {
+      ret.url = "";
+      ret.category = "none";
+    }
+  }
+
+  return ret;
+}
+
 static void do_render() {
   if(display::needs_render) {
     blit::render(blit::now());
@@ -357,6 +380,8 @@ void blit_init() {
     blit::api.is_multiplayer_connected = multiplayer::is_connected;
     blit::api.set_multiplayer_enabled = multiplayer::set_enabled;
     blit::api.send_message = multiplayer::send_message;
+
+    blit::api.get_metadata = ::get_metadata;
 
   display::init();
 

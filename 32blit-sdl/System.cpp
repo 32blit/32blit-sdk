@@ -94,6 +94,19 @@ static const char *get_launch_path() {
   return nullptr; // TODO: argv[1]
 }
 
+static blit::GameMetadata get_metadata() {
+  blit::GameMetadata ret;
+
+  ret.title = metadata_title;
+  ret.author = metadata_author;
+  ret.description = metadata_author;
+  ret.version = metadata_version;
+  ret.url = metadata_url;
+  ret.category = metadata_category;
+
+  return ret;
+}
+
 extern Multiplayer *blit_multiplayer;
 bool blit_is_multiplayer_connected() {
 	return blit_multiplayer->is_connected();
@@ -184,6 +197,8 @@ void System::run() {
 	blit::api.is_multiplayer_connected = blit_is_multiplayer_connected;
 	blit::api.set_multiplayer_enabled = blit_set_multiplayer_enabled;
 	blit::api.send_message = blit_send_message;
+
+  blit::api.get_metadata = ::get_metadata;
 
 	::set_screen_mode(blit::lores);
 
