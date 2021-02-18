@@ -258,6 +258,8 @@ const char *metadata_title = \"${METADATA_TITLE}\";
 const char *metadata_author = \"${METADATA_AUTHOR}\";
 const char *metadata_description = \"${METADATA_DESCRIPTION}\";
 const char *metadata_version = \"${METADATA_VERSION}\";
+const char *metadata_url = \"${METADATA_URL}\";
+const char *metadata_category = \"${METADATA_CATEGORY}\";
 		"
 	)
 	target_sources(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/_metadata.cpp)

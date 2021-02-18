@@ -10,3 +10,5 @@ WEAK const char *metadata_title = "32Blit Game";
 WEAK const char *metadata_author = "Unknown";
 WEAK const char *metadata_description = "";
 WEAK const char *metadata_version = "v0.0.0";
+WEAK const char *metadata_url = "";
+WEAK const char *metadata_category = "";
