@@ -10,9 +10,9 @@
 
 using namespace blit;
 
-uint8_t screen_fb[160 * 120 * 3];
+uint8_t screen_fb[240 * 240 * 2];
 static Surface lores_screen(screen_fb, PixelFormat::RGB, Size(160, 120));
-//static Surface hires_screen(screen_fb, PixelFormat::RGB, Size(320, 240));
+static Surface hires_screen(screen_fb, PixelFormat::RGB565, Size(240, 240));
 //static Surface hires_palette_screen(screen_fb, PixelFormat::P, Size(320, 240));
 
 pimoroni::ST7789 st7789(240, 240, (uint16_t *)screen_fb);
@@ -25,11 +25,14 @@ static Surface &set_screen_mode(ScreenMode mode) {
       blit::screen = lores_screen;
       // window
       st7789.set_window(40, 60, 160, 120);
+      st7789.set_bytes_per_pixel(3);
       break;
 
-    //case ScreenMode::hires:
-    //  screen = hires_screen;
-    //  break;
+    case ScreenMode::hires:
+      screen = hires_screen;
+      st7789.set_window(0, 0, 240, 240);
+      st7789.set_bytes_per_pixel(2);
+      break;
 
     //case ScreenMode::hires_palette:
     //  screen = hires_palette_screen;
@@ -58,7 +61,6 @@ int main() {
 
   st7789.init();
   st7789.clear();
-  st7789.set_bytes_per_pixel(3);
 
   ::set_screen_mode(ScreenMode::lores);
 
