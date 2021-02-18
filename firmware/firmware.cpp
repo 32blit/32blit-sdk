@@ -1045,10 +1045,21 @@ void FlashLoader::handle_data_end(bool success) {
       meta.size = header.end - qspi_flash_address;
       if(parse_flash_metadata(flash_start_offset, meta)) {
         cleanup_duplicates(meta, flash_start_offset);
+
+        if(strcmp(meta.category, "launcher") == 0 || strcmp(meta.category, "firmware") == 0) {
+          // if we just flashed a launcher, we need to launch it now as we probably just erased the running one
+          blit_switch_execution(flash_start_offset, true);
+          return;
+        }
       }
 
-      // start it
-      blit_switch_execution(flash_start_offset, true);
+      scan_flash();
+
+      if(flash_mapped) {
+        qspi_enable_memorymapped_mode();
+        flash_mapped = false;
+      }
+      blit_enable_user_code();
     }
   }
 }
