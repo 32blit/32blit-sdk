@@ -900,6 +900,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
             } else if(m_uParseIndex == 1) {
               num_relocs = word;
               m_uFilelen -= num_relocs * 4 + 8;
+              relocation_offsets.clear();
               relocation_offsets.reserve(num_relocs);
             } else if(m_uParseIndex)
               relocation_offsets.push_back(word - qspi_flash_address);
