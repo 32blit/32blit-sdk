@@ -55,9 +55,10 @@ namespace blit {
 
   enum class PixelFormat {
     RGB = 0,   // red, green, blue (8-bits per channel)
-    RGBA = 1,   // red, green, blue, alpha (8-bits per channel)
-    P = 2,   // palette entry (8-bits) into attached palette
-    M = 3    // mask (8-bits, single channel)
+    RGBA = 1,  // red, green, blue, alpha (8-bits per channel)
+    P = 2,     // palette entry (8-bits) into attached palette
+    M = 3,     // mask (8-bits, single channel)
+    RGB565 = 4
   };
 
   static const uint8_t pixel_format_stride[] = {
@@ -65,6 +66,7 @@ namespace blit {
     4,             // RGBA
     1,             // P
     1,             // M
+    2              // RGB565
   };
 
 #pragma pack(push, 1)

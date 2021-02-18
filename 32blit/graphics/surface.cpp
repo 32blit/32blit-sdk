@@ -227,6 +227,10 @@ namespace blit {
       pbf = M_M;
       bbf = M_M;
     }break;
+    case PixelFormat::RGB565: {
+      pbf = RGBA_RGB565;
+      bbf = RGBA_RGB565;
+    }break;
     }
   }
 
