@@ -18,7 +18,7 @@ int32_t modulo(int32_t x, int32_t n) {
 
 uint32_t pixels_drawn = 0;
 
-void draw_face(Vec3* vertices, Vec3* normals, Vec2* texture_coordinates, Surface* texture, Vec3 light, Pen *color, float* zbuffer, float near, float far) {
+void draw_face(Vec3* vertices, Vec3* normals, Vec2* texture_coordinates, Surface* texture, Vec3 light, Pen *color, int16_t* zbuffer, int16_t near, int16_t far) {
   // convert vertices into Q8 integer points
   Point p0(vertices[0].x, vertices[0].y);
   Point p1(vertices[1].x, vertices[1].y);
@@ -81,9 +81,9 @@ void draw_face(Vec3* vertices, Vec3* normals, Vec2* texture_coordinates, Surface
         float  beta = w1 * invarea;
         float gamma = 1.0f - alpha - beta; // ensures sum == 1.0f
 
-        float z = vertices[0].z * alpha + vertices[1].z * beta + vertices[2].z * gamma;
+        int16_t z = (vertices[0].z * alpha + vertices[1].z * beta + vertices[2].z * gamma) * 16384;
 
-        if (z > zbuffer[p.x + (p.y * screen.bounds.w)] && z > -1.0f) {
+        if (z > zbuffer[p.x + (p.y * screen.bounds.w)] && z > -1) {
           zbuffer[p.x + (p.y * screen.bounds.w)] = z;
 
           pixels_drawn++;

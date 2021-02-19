@@ -27,7 +27,7 @@ bool draw_models = true;
 bool draw_lines = false;
 bool draw_vertices = false;
 
-float* zbuffer;
+int16_t* zbuffer;
 
 Object *link_object;
 Camera cam(
@@ -41,10 +41,12 @@ float scale = 1.0f;
 constexpr uint32_t fixed_shift = 0;
 constexpr uint32_t fixed_mul = 1 << fixed_shift;
 
-void init() {
-  set_screen_mode(lores);
+ScreenMode screen_mode = hires;
 
-  zbuffer = new float[screen.bounds.w * screen.bounds.h];
+void init() {
+  set_screen_mode(hires);
+
+  zbuffer = new int16_t[screen.bounds.w * screen.bounds.h];
 
   link_object = Object::load_obj((char*)link_obj);
   main_texture = Surface::load(main_texture_packed);
@@ -114,8 +116,8 @@ void debug_matrix(Mat4& t) {
   return;
 }
 
-float near = 1.0f;
-float far = 50.0f;
+int16_t near = 1;
+int16_t far = 50;
 
 void render(uint32_t time_ms) {
   // clear the screen buffer
@@ -124,7 +126,7 @@ void render(uint32_t time_ms) {
 
   // reset the zbuffer
   for (uint32_t i = 0; i < screen.bounds.w * screen.bounds.h; i++) {
-    zbuffer[i] = -1.0f;
+    zbuffer[i] = -1;
   }
 
   uint32_t ms_start = now();
@@ -269,6 +271,11 @@ void update(uint32_t time) {
 
   if(buttons.pressed & Button::Y) {
     draw_vertices = !draw_vertices;
+  }
+
+  if(buttons.pressed & Button::MENU) {
+    screen_mode = screen_mode == hires ? lores : hires;
+    set_screen_mode(screen_mode);
   }
 }
 
