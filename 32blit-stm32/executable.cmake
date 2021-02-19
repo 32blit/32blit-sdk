@@ -44,7 +44,7 @@ function(blit_executable NAME SOURCES)
 		COMMAND ${PYTHON_EXECUTABLE} -m ttblit relocs --elf-file $<TARGET_FILE:${NAME}> --bin-file ${NAME}.bin --output ${BLIT_FILENAME}
 	)
 
-	add_custom_target(${NAME}.flash DEPENDS ${NAME} COMMAND ${PYTHON_EXECUTABLE} -m ttblit flash flash --port=${FLASH_PORT} --file=${CMAKE_CURRENT_BINARY_DIR}/${BLIT_FILENAME})
+	add_custom_target(${NAME}.flash DEPENDS ${NAME} COMMAND ${PYTHON_EXECUTABLE} -m ttblit install --port=${FLASH_PORT} --launch ${CMAKE_CURRENT_BINARY_DIR}/${BLIT_FILENAME})
 endfunction()
 
 function(blit_metadata TARGET FILE)
