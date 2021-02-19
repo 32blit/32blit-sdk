@@ -22,7 +22,10 @@ Surface *handopen_texture;
 Surface *bracelet_texture;
 Surface *glove_texture;
 Surface *sheath_texture;
-Surface *bookshelf_texture;
+
+bool draw_models = true;
+bool draw_lines = false;
+bool draw_vertices = false;
 
 float* zbuffer;
 
@@ -52,6 +55,7 @@ void init() {
   bracelet_texture = Surface::load(bracelet_texture_packed);
   glove_texture = Surface::load(glove_texture_packed);
   sheath_texture = Surface::load(sheath_texture_packed);
+  link_object->g[0].visible = false; // hide glitched eyebrows TODO: fix?
   link_object->g[1].t = main_texture;
   link_object->g[2].t = main_texture;
   link_object->g[3].t = boots_texture;
@@ -60,6 +64,7 @@ void init() {
   link_object->g[6].t = handopen_texture;
   link_object->g[7].t = bracelet_texture;
   link_object->g[8].t = glove_texture;
+  link_object->g[8].visible = false; // hide links "second" pair of hands...
   link_object->g[9].t = sheath_texture;
 
   // loop through object groups
@@ -178,10 +183,11 @@ void render(uint32_t time_ms) {
   pixels_drawn = 0;
 
   for (uint32_t gi = 0; gi < link_object->gc; gi++) {
-    if (gi == 8) { // hide links "second" pair of hands...
+    Group *g = &link_object->g[gi];
+    // Skip non-visible groups
+    if (!g->visible) {
       continue;
     }
-    Group *g = &link_object->g[gi];
     for (uint32_t fi = 0; fi < g->fc; fi++) {
       Face *f = &g->f[fi];
  
@@ -202,22 +208,26 @@ void render(uint32_t time_ms) {
         link_object->n[f->n[1]],
         link_object->n[f->n[2]]
       };
-        
-     // if (g->t) {
-        //triangle3d(&screen, link_object, f, v, &objlight, g->t/*, st, &shadowmap*/);
-        //screen.pen = Pen(255, 255, 255);
+
+      if(draw_models && g->t) {
         draw_face(vertices, normals, texture_coordinates, g->t, transformed_light, &f->color, zbuffer, near, far);
-    
-        /*screen.pen = Pen(255, 255, 255, 100);
+      }
+
+      if(draw_lines) {
+        screen.pen = Pen(255, 255, 255, 100);
         screen.line(Point(vertices[0].x, vertices[0].y), Point(vertices[1].x, vertices[1].y));
         screen.line(Point(vertices[1].x, vertices[1].y), Point(vertices[2].x, vertices[2].y));
         screen.line(Point(vertices[2].x, vertices[2].y), Point(vertices[0].x, vertices[0].y));
-*/
-       /* screen.pixel(Point(v[0].x, v[0].y));
-        screen.pixel(Point(v[1].x, v[1].y));
-        screen.pixel(Point(v[2].x, v[2].y));*/
-        tri_count++;
-      //}
+      }
+
+      if(draw_vertices) {
+        screen.pen = Pen(255, 255, 255, 100);
+        screen.pixel(Point(vertices[0].x, vertices[0].y));
+        screen.pixel(Point(vertices[1].x, vertices[1].y));
+        screen.pixel(Point(vertices[2].x, vertices[2].y));
+      }
+
+      tri_count++;
     }
   }
   
@@ -239,14 +249,26 @@ void render(uint32_t time_ms) {
   }
 
   screen.watermark();
-
 }
 
 void update(uint32_t time) {
-  static uint32_t last_buttons = 0;
-
   cam.position += cam.direction * joystick.y * 0.1f;
 
-  last_buttons = buttons;
+  if(buttons.pressed & Button::A) {
+    link_object->g[6].visible = !link_object->g[6].visible;
+    link_object->g[8].visible = !link_object->g[8].visible;
+  }
+
+  if(buttons.pressed & Button::B) {
+    draw_models = !draw_models;
+  }
+
+  if(buttons.pressed & Button::X) {
+    draw_lines = !draw_lines;
+  }
+
+  if(buttons.pressed & Button::Y) {
+    draw_vertices = !draw_vertices;
+  }
 }
 

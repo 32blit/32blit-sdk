@@ -20,6 +20,7 @@ public:
 
   Face     *f;            // pointer to face list
   uint32_t  fc = 0;           // face count
+  bool      visible = true;
 
   Surface * t = NULL;
 };
