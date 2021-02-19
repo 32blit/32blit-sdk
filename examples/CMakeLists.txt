@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 project (examples)
 find_package (32BLIT CONFIG REQUIRED PATHS ..)
+add_subdirectory(3d-demo)
 add_subdirectory(another-world)
 add_subdirectory(audio-test)
 add_subdirectory(audio-wave)

@@ -39,7 +39,7 @@ namespace blit {
   Mat4 Camera::perspective_projection_matrix(Rect viewport, float near, float far) {
     Mat4 m;
     
-    float scale = 1.0f / tan(fov * 0.5f * M_PI / 180.0f);
+    float scale = 1.0f / tanf(fov * 0.5f * pi / 180.0f);
     m.v00 = scale; // x coordinate scale
     m.v11 = scale; // y coordinate scale
     m.v22 = -far / (far - near);        // remap z 0 .. 1

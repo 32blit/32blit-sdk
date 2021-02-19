@@ -8,20 +8,21 @@
 #include "3d/camera.hpp"
 #include "object.hpp"
 #include "renderer.hpp"
-#include "link.hpp"
+#include "3d-demo.hpp"
+#include "assets.hpp"
 
 using namespace blit;
 using namespace std;
 
-SpriteSheet *main_texture;
-SpriteSheet *boots_texture;
-SpriteSheet *eye_texture;
-SpriteSheet *mouth_texture;
-SpriteSheet *handopen_texture;
-SpriteSheet *bracelet_texture;
-SpriteSheet *glove_texture;
-SpriteSheet *sheath_texture;
-SpriteSheet *bookshelf_texture;
+Surface *main_texture;
+Surface *boots_texture;
+Surface *eye_texture;
+Surface *mouth_texture;
+Surface *handopen_texture;
+Surface *bracelet_texture;
+Surface *glove_texture;
+Surface *sheath_texture;
+Surface *bookshelf_texture;
 
 float* zbuffer;
 
@@ -41,17 +42,16 @@ void init() {
   set_screen_mode(lores);
 
   zbuffer = new float[screen.bounds.w * screen.bounds.h];
-  
-  /*
-  link_object = load_obj((char*)link_obj);    
-  main_texture = SpriteSheet::load(main_texture_packed);
-  boots_texture = SpriteSheet::load(boots_texture_packed);
-  eye_texture = SpriteSheet::load(eye_texture_packed);
-  mouth_texture = SpriteSheet::load(mouth_texture_packed);
-  handopen_texture = SpriteSheet::load(handopen_texture_packed);
-  bracelet_texture = SpriteSheet::load(bracelet_texture_packed);
-  glove_texture = SpriteSheet::load(glove_texture_packed);
-  sheath_texture = SpriteSheet::load(sheath_texture_packed);
+
+  link_object = load_obj((char*)link_obj);
+  main_texture = Surface::load(main_texture_packed);
+  boots_texture = Surface::load(boots_texture_packed);
+  eye_texture = Surface::load(eye_texture_packed);
+  mouth_texture = Surface::load(mouth_texture_packed);
+  handopen_texture = Surface::load(handopen_texture_packed);
+  bracelet_texture = Surface::load(bracelet_texture_packed);
+  glove_texture = Surface::load(glove_texture_packed);
+  sheath_texture = Surface::load(sheath_texture_packed);
   link_object->g[1].t = main_texture;
   link_object->g[2].t = main_texture;
   link_object->g[3].t = boots_texture;
@@ -60,23 +60,22 @@ void init() {
   link_object->g[6].t = handopen_texture;
   link_object->g[7].t = bracelet_texture;
   link_object->g[8].t = glove_texture;
-  link_object->g[9].t = sheath_texture;*/
-
-  link_object = load_obj((char*)bookshelf_obj);
-  bookshelf_texture = SpriteSheet::load(bookshelf_texture_packed);
-  //link_object->g[0].t = bookshelf_texture;
+  link_object->g[9].t = sheath_texture;
 
   for (uint32_t gi = 0; gi < link_object->gc; gi++) {
     group* g = &link_object->g[gi];
+    if(g->t == nullptr) continue;
     for (uint32_t fi = 0; fi < g->fc; fi++) {
       // sample texture for face color
       face* f = &g->f[fi];
       Vec2* uv = &link_object->t[f->t[0]];
-      uint32_t u = uv->x * bookshelf_texture->bounds.w;
-      uint32_t v = bookshelf_texture->bounds.h - (uv->y * bookshelf_texture->bounds.h);
+      uint32_t u = uv->x * g->t->bounds.w;
+      uint32_t v = g->t->bounds.h - (uv->y * g->t->bounds.h);
 
-      uint8_t pi = bookshelf_texture->data[u + (v * bookshelf_texture->bounds.w)];
-      f->color = bookshelf_texture->palette[pi];
+      if(v > g->t->bounds.h) v = g->t->bounds.h;
+
+      uint8_t pi = g->t->data[u + (v * g->t->bounds.w)];
+      f->color = g->t->palette[pi];
     }
   }
 
@@ -145,8 +144,11 @@ void render(uint32_t time_ms) {
   // object transformation matrix
   Mat4 object_transformation = Mat4::identity();
   object_transformation *= Mat4::translation(Vec3(0.0f, 0.0f, -3.0f));
+
   // rotate around y axis based on time
   object_transformation *= Mat4::rotation(time_ms / 20.0f, Vec3(0.0f, 1.0f, 0.0f));
+  //object_transformation *= Mat4::rotation(joystick.x * 45.0f, Vec3(0.0f, 1.0f, 0.0f));
+
   // scale link to be 1 world unit wide
   float link_scale = 1.0f / (link_object->bounds.v2.x - link_object->bounds.v1.x);
   //link_scale *= 10.0f;

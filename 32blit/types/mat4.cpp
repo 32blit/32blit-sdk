@@ -95,80 +95,28 @@ namespace blit {
     this->v32 = (-m.v30 * s3 + m.v31 * s1 - m.v32 * s0) * invdet;
     this->v33 = (m.v20 * s3 - m.v21 * s1 + m.v22 * s0) * invdet;
   }
+
+  Vec3 Mat4::transform(Vec3 a) {
+    float   x = v00 * a.x + v01 * a.y + v02 * a.z + v03;
+    float   y = v10 * a.x + v11 * a.y + v12 * a.z + v13;
+    float   z = v20 * a.x + v21 * a.y + v22 * a.z + v23;
+    float div = v30 * a.x + v31 * a.y + v32 * a.z + v33;
+
+    a.x = x / div;
+    a.y = y / div;
+    a.z = z / div;
+
+    return a;
+  }
+
+  Mat4 Mat4::ortho(float l, float r, float b, float t, float n, float f) {
+    Mat4 result = Mat4::identity();
+    result.v00 = 2.0f / (r - l);
+    result.v11 = 2.0f / (t - b);
+    result.v22 = 2.0f / (f - n);
+    result.v03 = -(r + l) / (r - l);
+    result.v13 = -(t + b) / (t - b);
+    result.v23 = -(f + n) / (f - n);
+    return result;
+  }
 }
-<<<<<<< HEAD
-=======
-
-Mat4 Mat4::translation(Vec3 v) {
-  Mat4 r = Mat4::identity();
-  r.v03 = v.x; r.v13 = v.y; r.v23 = v.z;
-  return r;
-}
-
-Mat4 Mat4::scale(Vec3 v) {
-  Mat4 r = Mat4::identity();
-  r.v00 = v.x; r.v11 = v.y; r.v22 = v.z;
-  return r;
-}
-
-void Mat4::inverse() {
-  Mat4 m(*this);
-
-  float s0 = m.v00 * m.v11 - m.v10 * m.v01;
-  float s1 = m.v00 * m.v12 - m.v10 * m.v02;
-  float s2 = m.v00 * m.v13 - m.v10 * m.v03;
-  float s3 = m.v01 * m.v12 - m.v11 * m.v02;
-  float s4 = m.v01 * m.v13 - m.v11 * m.v03;
-  float s5 = m.v02 * m.v13 - m.v12 * m.v03;
-  float c5 = m.v22 * m.v33 - m.v32 * m.v23;
-  float c4 = m.v21 * m.v33 - m.v31 * m.v23;
-  float c3 = m.v21 * m.v32 - m.v31 * m.v22;
-  float c2 = m.v20 * m.v33 - m.v30 * m.v23;
-  float c1 = m.v20 * m.v32 - m.v30 * m.v22;
-  float c0 = m.v20 * m.v31 - m.v30 * m.v21;
-
-  float invdet = 1.0f / (s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0);
-
-  this->v00 = (m.v11 * c5 - m.v12 * c4 + m.v13 * c3) * invdet;
-  this->v01 = (-m.v01 * c5 + m.v02 * c4 - m.v03 * c3) * invdet;
-  this->v02 = (m.v31 * s5 - m.v32 * s4 + m.v33 * s3) * invdet;
-  this->v03 = (-m.v21 * s5 + m.v22 * s4 - m.v23 * s3) * invdet;
-  this->v10 = (-m.v10 * c5 + m.v12 * c2 - m.v13 * c1) * invdet;
-  this->v11 = (m.v00 * c5 - m.v02 * c2 + m.v03 * c1) * invdet;
-  this->v12 = (-m.v30 * s5 + m.v32 * s2 - m.v33 * s1) * invdet;
-  this->v13 = (m.v20 * s5 - m.v22 * s2 + m.v23 * s1) * invdet;
-  this->v20 = (m.v10 * c4 - m.v11 * c2 + m.v13 * c0) * invdet;
-  this->v21 = (-m.v00 * c4 + m.v01 * c2 - m.v03 * c0) * invdet;
-  this->v22 = (m.v30 * s4 - m.v31 * s2 + m.v33 * s0) * invdet;
-  this->v23 = (-m.v20 * s4 + m.v21 * s2 - m.v23 * s0) * invdet;
-  this->v30 = (-m.v10 * c3 + m.v11 * c1 - m.v12 * c0) * invdet;
-  this->v31 = (m.v00 * c3 - m.v01 * c1 + m.v02 * c0) * invdet;
-  this->v32 = (-m.v30 * s3 + m.v31 * s1 - m.v32 * s0) * invdet;
-  this->v33 = (m.v20 * s3 - m.v21 * s1 + m.v22 * s0) * invdet;
-}
-
-
-Vec3 Mat4::transform(Vec3 a) {
-  float   x = v00 * a.x + v01 * a.y + v02 * a.z + v03;
-  float   y = v10 * a.x + v11 * a.y + v12 * a.z + v13;
-  float   z = v20 * a.x + v21 * a.y + v22 * a.z + v23;
-  float div = v30 * a.x + v31 * a.y + v32 * a.z + v33;
-
-  a.x = x / div;
-  a.y = y / div;
-  a.z = z / div;
-
-  return a;
-}
-
-Mat4 Mat4::ortho(float l, float r, float b, float t, float n, float f) {
-  Mat4 result = Mat4::identity();
-  result.v00 = 2.0f / (r - l);
-  result.v11 = 2.0f / (t - b);
-  result.v22 = 2.0f / (f - n);
-  result.v03 = -(r + l) / (r - l);
-  result.v13 = -(t + b) / (t - b);
-  result.v23 = -(f + n) / (f - n);
-  return result;
-}
->>>>>>> spinning link

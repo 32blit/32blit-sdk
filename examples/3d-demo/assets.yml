@@ -1,0 +1,20 @@
+assets.hpp:
+  assets/link.obj:
+    name: link_obj
+    type: raw/binary
+  assets/main.0.png:
+    name: main_texture_packed
+  assets/boots.0.png:
+    name: boots_texture_packed
+  assets/eye.0.png:
+    name: eye_texture_packed
+  assets/mouth.0.png:
+    name: mouth_texture_packed
+  assets/handopen.0.png:
+    name: handopen_texture_packed
+  assets/bracelet.0.png:
+    name: bracelet_texture_packed
+  assets/glove.0.png:
+    name: glove_texture_packed
+  assets/sheath.0.png:
+    name: sheath_texture_packed
