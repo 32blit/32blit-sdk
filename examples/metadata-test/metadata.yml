@@ -1,0 +1,16 @@
+title: Metadata Test
+description:
+  This is a long description.
+  Maybe too long.
+  How long is too long?
+  That's a question.
+  The answer is simple.
+  If the t
+author: pimoroni
+splash:
+  file: ../no-image.png
+icon:
+  file: ../no-icon.png
+version: v1.0.0
+url: https://github.com/32blit/32blit-sdk
+category: demo
