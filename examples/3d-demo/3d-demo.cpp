@@ -26,7 +26,7 @@ Surface *bookshelf_texture;
 
 float* zbuffer;
 
-object *link_object;
+Object *link_object;
 Camera cam(
   Vec3(0.0f, 0.0f, -1.5f), 
   Vec3(0.0f, 0.0f, -1.0f),
@@ -43,7 +43,7 @@ void init() {
 
   zbuffer = new float[screen.bounds.w * screen.bounds.h];
 
-  link_object = load_obj((char*)link_obj);
+  link_object = Object::load_obj((char*)link_obj);
   main_texture = Surface::load(main_texture_packed);
   boots_texture = Surface::load(boots_texture_packed);
   eye_texture = Surface::load(eye_texture_packed);
@@ -62,12 +62,15 @@ void init() {
   link_object->g[8].t = glove_texture;
   link_object->g[9].t = sheath_texture;
 
+  // loop through object groups
   for (uint32_t gi = 0; gi < link_object->gc; gi++) {
-    group* g = &link_object->g[gi];
+    Group* g = &link_object->g[gi];
+    // skip groups with no assigned texture
     if(g->t == nullptr) continue;
+    // loop through group faces
     for (uint32_t fi = 0; fi < g->fc; fi++) {
       // sample texture for face color
-      face* f = &g->f[fi];
+      Face* f = &g->f[fi];
       Vec2* uv = &link_object->t[f->t[0]];
       uint32_t u = uv->x * g->t->bounds.w;
       uint32_t v = g->t->bounds.h - (uv->y * g->t->bounds.h);
@@ -178,9 +181,9 @@ void render(uint32_t time_ms) {
     if (gi == 8) { // hide links "second" pair of hands...
       continue;
     }
-    group *g = &link_object->g[gi];
+    Group *g = &link_object->g[gi];
     for (uint32_t fi = 0; fi < g->fc; fi++) {
-      face *f = &g->f[fi];        
+      Face *f = &g->f[fi];
  
       Vec3 vertices[3] = {
         transformation.transform(link_object->v[f->v[0]]),
@@ -218,14 +221,11 @@ void render(uint32_t time_ms) {
     }
   }
   
-  
-  
   uint32_t ms_end = now();  
   
   screen.pen = Pen(255, 255, 255);  
   screen.text(std::to_string(tri_count), minimal_font, Rect(2, screen.bounds.h - 33, 50, 10));
   screen.text(std::to_string(pixels_drawn), minimal_font, Rect(2, screen.bounds.h - 23, 50, 10));
-
 
   // draw FPS meter* 
   screen.pen = Pen(255, 255, 255);
@@ -238,23 +238,12 @@ void render(uint32_t time_ms) {
     screen.rectangle(Rect(i * (block_size + 1) + 1, screen.bounds.h - block_size - 1, block_size, block_size));
   }
 
+  screen.watermark();
+
 }
 
 void update(uint32_t time) {
   static uint32_t last_buttons = 0;
-
-  if (buttons != last_buttons) {  
-/*    if ((buttons & DPAD_UP)) {
-      set_screen_mode(lores);
-      mask = lores_mask;
-      screen.sprites = ss;
-    }
-    else {
-      set_screen_mode(hires);
-      mask = hires_mask;
-      screen.sprites = ss;
-    }*/
-  }
 
   cam.position += cam.direction * joystick.y * 0.1f;
 

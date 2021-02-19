@@ -7,34 +7,24 @@
 #include "object.hpp"
 
 using namespace blit;
-
-#define M_PI           3.14159265358f  /* pi */
-
 using namespace std;
 
-texture::~texture() {
-  //delete[] data;
+
+Object::Object() {
 }
 
-/*
-  object
-*/
-
-object::object() {
-}
-
-//  object::object(vertex *v, uint32_t vc, face *f, uint32_t fc, Vec3 *t, uint32_t tc) :v(v), vc(vc), f(f), fc(fc), t(t), tc(tc) {    
+//  Object::Object(vertex *v, uint32_t vc, face *f, uint32_t fc, Vec3 *t, uint32_t tc) :v(v), vc(vc), f(f), fc(fc), t(t), tc(tc) {
 //    update_bbox();
 //  }
 
-object::~object() {
+Object::~Object() {
   delete[] v;
   delete[] t;
   delete[] n;
   delete[] g;
 }
 
-void object::update_bbox() {
+void Object::update_bbox() {
   bounds.v1.x = v[0].x;
   bounds.v1.y = v[0].y;
   bounds.v1.z = v[0].z;
@@ -52,11 +42,11 @@ void object::update_bbox() {
   }
 }
 
-group::group() {
+Group::Group() {
 
 }
 
-group::~group() {
+Group::~Group() {
   delete[] f;
   delete[] t;
 }
@@ -88,11 +78,11 @@ const char* fetch_token(char** p, char* eof, char extra_delimiter = '\0') {
   return token;
 }
 
-object* load_obj(char *data) {      
+Object* Object::load_obj(char *data) {
   char *p = data;
   char *eof = p + strlen(data);
 
-  object *obj = new object();
+  Object *obj = new Object();
 
   // first pass: count number of groups, vertices, texture coords, and normal Vec3s
   while (p < eof) { 
@@ -116,7 +106,7 @@ object* load_obj(char *data) {
   }
 
   // allocate storage
-  obj->g = new group[obj->gc];
+  obj->g = new Group[obj->gc];
   obj->v = new Vec3[obj->vc];
   obj->t = new Vec2[obj->tc];
   obj->n = new Vec3[obj->nc];
@@ -177,7 +167,7 @@ object* load_obj(char *data) {
   
   // allocate storage for faces on each group
   for (gi = 0; gi < obj->gc; gi++) {
-    obj->g[gi].f = new face[obj->g[gi].fc];
+    obj->g[gi].f = new Face[obj->g[gi].fc];
   }
 
   // third pass: now extract the face indices
@@ -191,7 +181,7 @@ object* load_obj(char *data) {
     }
 
     if (!strcmp(token, "f")) {
-      face *f = &obj->g[gi].f[fi];
+      Face *f = &obj->g[gi].f[fi];
 
       // read in this order (2, 1, 0) to reverse the default 
       // "counter clockwise" winding order in .obj files
@@ -211,8 +201,8 @@ object* load_obj(char *data) {
       if (*(p - 1) != '\n') {
         fi++;
 
-        face *lf = f;
-        face *f = &obj->g[gi].f[fi];
+        Face *lf = f;
+        Face *f = &obj->g[gi].f[fi];
 
         // read in this order (2, 1, 0) to reverse the default 
         // "counter clockwise" winding order in .obj files
