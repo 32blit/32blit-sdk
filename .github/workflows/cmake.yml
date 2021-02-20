@@ -129,7 +129,7 @@ jobs:
       shell: bash
       working-directory: ${{runner.workspace}}/build
       run: |
-        cmake --build . --target package
+        cmake --build . --config $BUILD_TYPE --target package
 
     - name: Upload tar
       if: github.event_name == 'release' && matrix.release-suffix != ''
