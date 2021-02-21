@@ -5,12 +5,13 @@ These instructions cover setting up Visual Studio Code to build the CMake projec
 A working knowledge of using and configuring Visual Studio Code is assumed.
 
 - [Requirements](#requirements)
-- [Mac specific setup](#mac-specific-setup)
 - [Initial setup for local builds](#initial-setup-for-local-builds)
 - [IntelliSense](#intellisense)
 - [CMake Arguments](#cmake-arguments)
 - [Debugger configuration](#debugger-configuration)
 - [Building for 32Blit](#building-for-32blit)
+- [Troubleshooting](#troubleshooting)
+  - [Debugging on macOS](#debugging-on-macos)
 
 ## Requirements
 
@@ -21,23 +22,6 @@ You'll need to install:
  - The [CMake Tools extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools)
 
 Then open the cloned repository with "Open folder...".
-
-## Mac specific setup
-
-If you are running Catalina or higher, you may find difficulty in debugging local builds. To fix this, you need to install the [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) extension. Add a 'Build and attach' configuration like so:
-
-- Add a configuration with Debug > Add Configuration
-- Paste in the following
-
-``` json
-{
-   "name": "Launch and Debug",
-   "type": "lldb",
-   "request": "launch",
-   "program": "${command:cmake.launchTargetPath}"
-}
-```
-Now, when you want to attach the debugger, run with that configuration and now your breakpoints will be respected 🎉
 
 ## Initial setup for local builds
 You should get a notification asking if you want to configure the project. Click "Yes" and select "[Unspecified]" from the "Select a Kit" dropdown for a local build with the default compiler.
@@ -79,3 +63,21 @@ Add this to the list:
 (Replacing `/path/to/32blit-sdk`, with the actual path.)
 
 You should now be able to select "32Blit" as a kit. ("CMake: Change Kit" from the command palette or the button displaying the current kit at the bottom of the window). If you select a target ending with .flash from the list next to the "⚙ Build:" button, that example will be flashed to your device when you build.
+
+## Troubleshooting
+
+### Debugging on macOS
+If you are running Catalina or higher, you may find difficulty in debugging local builds. To fix this, you need to install the [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) extension. Add a 'Build and attach' configuration like so:
+
+- Add a configuration with Debug > Add Configuration
+- Paste in the following
+
+``` json
+{
+   "name": "Launch and Debug",
+   "type": "lldb",
+   "request": "launch",
+   "program": "${command:cmake.launchTargetPath}"
+}
+```
+Now, when you want to attach the debugger, run with that configuration and now your breakpoints will be respected 🎉
