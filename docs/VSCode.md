@@ -5,7 +5,6 @@ These instructions cover setting up Visual Studio Code to build the CMake projec
 A working knowledge of using and configuring Visual Studio Code is assumed.
 
 - [Requirements](#requirements)
-- [Windows specific setup](#windows-specific-setup)
 - [Mac specific setup](#mac-specific-setup)
 - [Initial setup for local builds](#initial-setup-for-local-builds)
 - [IntelliSense](#intellisense)
@@ -22,13 +21,6 @@ You'll need to install:
  - The [CMake Tools extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools)
 
 Then open the cloned repository with "Open folder...".
-
-## Windows specific setup
-
-Windows needs a little help to find the required dependencies for local builds.
-
- - First download SDL as described in the [Visual Studio](Windows-VisualStudio.md) docs.
- - Add `"SDL2_DIR": "${workspaceRoot}/vs/sdl/"` to `configureSettings` (See "CMake Arguments" below)
 
 ## Mac specific setup
 
