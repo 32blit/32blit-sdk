@@ -12,6 +12,8 @@ A working knowledge of using and configuring Visual Studio Code is assumed.
 - [Building for 32Blit](#building-for-32blit)
 - [Troubleshooting](#troubleshooting)
   - [Debugging on macOS](#debugging-on-macos)
+  - ["Unable to determine what CMake generator to use." on Windows](#unable-to-determine-what-cmake-generator-to-use-on-windows)
+  - [`Shift` + `F5` to run not working when using a Visual Studio kit](#shift--f5-to-run-not-working-when-using-a-visual-studio-kit)
 
 ## Requirements
 
@@ -81,3 +83,9 @@ If you are running Catalina or higher, you may find difficulty in debugging loca
 }
 ```
 Now, when you want to attach the debugger, run with that configuration and now your breakpoints will be respected 🎉
+
+### "Unable to determine what CMake generator to use." on Windows
+You may need to run `code` from the VS Developer Command Prompt for CMake Tools to be able to find all of the required build tools.
+
+### `Shift` + `F5` to run not working when using a Visual Studio kit
+The CMake Visual studio generators may result in the SDL2 DLLs getting copied to the wrong place (DLLs in `build/`, exe in `build/Debug/`). You can work around this by adding `"cmake.generator": "NMake Makefiles"` to your settings.json to force the NMake generator instead.
