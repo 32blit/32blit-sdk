@@ -606,6 +606,15 @@ static void tmp_file_closed(const uint8_t *ptr) {
   cached_file_in_tmp = false;
 }
 
+static void start_launcher() {
+  if(launcher_offset == 0xFFFFFFFF)
+    return;
+
+  // if the launcher fails to start it's incompatible, ignore it
+  if(!blit_switch_execution(launcher_offset, false))
+    launcher_offset = 0xFFFFFFFF;
+}
+
 void init() {
   api.launch = launch_file_from_sd;
   api.erase_game = erase_flash_game;
@@ -654,13 +663,13 @@ void init() {
 
       if(yes)
         blit_switch_execution(persist.last_game_offset, false);
-      else if(launcher_offset != 0xFFFFFFFF)
-        blit_switch_execution(launcher_offset, false);
+      else
+        start_launcher();
 
       persist.reset_error = false;
     });
-  } else if(launcher_offset != 0xFFFFFFFF)
-    blit_switch_execution(launcher_offset, false);
+  } else
+    start_launcher();
 }
 
 void render(uint32_t time) {
