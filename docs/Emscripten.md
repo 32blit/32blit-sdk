@@ -19,11 +19,11 @@ In your project directory:
 ``` shell
 mkdir build.em
 cd build.em
-emcmake cmake .. -G "Unix Makefiles"
+emcmake cmake .. -D32BLIT_DIR="/path/to/32blit/repo"
 make
 python3 -m http.server
 ```
 
-If your project is based on the template, make sure to include the `-D32BLIT_DIR="/path/to/32blit/repo"` parameter to the `cmake` command. You must specify an absolute path here when building with Emscripten.
+Make sure to include the `-D32BLIT_DIR="/path/to/32blit/repo"` parameter to the `cmake` command (even when building the SDK examples). You must specify an absolute path here when building with Emscripten.
 
 Finally, open the URL given by Python's HTTP server in your browser and open your project's .html file.
