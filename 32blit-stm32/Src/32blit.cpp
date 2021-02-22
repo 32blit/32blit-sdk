@@ -669,7 +669,7 @@ void blit_process_input() {
 typedef  void (*pFunction)(void);
 pFunction JumpToApplication;
 
-void blit_switch_execution(uint32_t address, bool force_game)
+bool blit_switch_execution(uint32_t address, bool force_game)
 {
   if(blit_user_code_running() && !force_game)
     persist.reset_target = prtFirmware;
@@ -693,6 +693,7 @@ void blit_switch_execution(uint32_t address, bool force_game)
     // TODO: may be possible to return to the menu without a hard reset but currently flashing doesn't work
     SCB_CleanDCache();
     NVIC_SystemReset();
+    return true; // can't get here
   }
 
 	// switch to user app in external flash
@@ -714,20 +715,21 @@ void blit_switch_execution(uint32_t address, bool force_game)
       if(!init(address)) {
         user_render = nullptr;
         user_tick = nullptr;
-        // this would just be a return, but qspi is already mapped by this point
+        // don't try to auto-launch this game again
         persist.reset_target = prtFirmware;
-        SCB_CleanDCache();
-        NVIC_SystemReset();
-        return;
+
+        qspi_disable_memorymapped_mode();
+
+        return false;
       }
 
       blit::render = user_render;
       do_tick = user_tick;
-      return;
+      return true;
     }
     // anything flashed at a non-zero offset should have a valid header
     else if(address != 0)
-      return;
+      return false;
   }
 
   // old-style soft-reset to app with linked HAL
@@ -778,6 +780,8 @@ void blit_switch_execution(uint32_t address, bool force_game)
 	while(1)
 	{
 	}
+
+  return true;
 }
 
 bool blit_user_code_running() {
