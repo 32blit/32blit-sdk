@@ -5,13 +5,15 @@ These instructions cover setting up Visual Studio Code to build the CMake projec
 A working knowledge of using and configuring Visual Studio Code is assumed.
 
 - [Requirements](#requirements)
-- [Windows specific setup](#windows-specific-setup)
-- [Mac specific setup](#mac-specific-setup)
 - [Initial setup for local builds](#initial-setup-for-local-builds)
 - [IntelliSense](#intellisense)
 - [CMake Arguments](#cmake-arguments)
 - [Debugger configuration](#debugger-configuration)
 - [Building for 32Blit](#building-for-32blit)
+- [Troubleshooting](#troubleshooting)
+  - [Debugging on macOS](#debugging-on-macos)
+  - ["Unable to determine what CMake generator to use." on Windows](#unable-to-determine-what-cmake-generator-to-use-on-windows)
+  - [`Shift` + `F5` to run not working when using a Visual Studio kit](#shift--f5-to-run-not-working-when-using-a-visual-studio-kit)
 
 ## Requirements
 
@@ -22,30 +24,6 @@ You'll need to install:
  - The [CMake Tools extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools)
 
 Then open the cloned repository with "Open folder...".
-
-## Windows specific setup
-
-Windows needs a little help to find the required dependencies for local builds.
-
- - First download SDL as described in the [Visual Studio](Windows-VisualStudio.md) docs.
- - Add `"SDL2_DIR": "${workspaceRoot}/vs/sdl/"` to `configureSettings` (See "CMake Arguments" below)
-
-## Mac specific setup
-
-If you are running Catalina or higher, you may find difficulty in debugging local builds. To fix this, you need to install the [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) extension. Add a 'Build and attach' configuration like so:
-
-- Add a configuration with Debug > Add Configuration
-- Paste in the following
-
-``` json
-{
-   "name": "Launch and Debug",
-   "type": "lldb",
-   "request": "launch",
-   "program": "${command:cmake.launchTargetPath}"
-}
-```
-Now, when you want to attach the debugger, run with that configuration and now your breakpoints will be respected 🎉
 
 ## Initial setup for local builds
 You should get a notification asking if you want to configure the project. Click "Yes" and select "[Unspecified]" from the "Select a Kit" dropdown for a local build with the default compiler.
@@ -87,3 +65,27 @@ Add this to the list:
 (Replacing `/path/to/32blit-sdk`, with the actual path.)
 
 You should now be able to select "32Blit" as a kit. ("CMake: Change Kit" from the command palette or the button displaying the current kit at the bottom of the window). If you select a target ending with .flash from the list next to the "⚙ Build:" button, that example will be flashed to your device when you build.
+
+## Troubleshooting
+
+### Debugging on macOS
+If you are running Catalina or higher, you may find difficulty in debugging local builds. To fix this, you need to install the [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) extension. Add a 'Build and attach' configuration like so:
+
+- Add a configuration with Debug > Add Configuration
+- Paste in the following
+
+``` json
+{
+   "name": "Launch and Debug",
+   "type": "lldb",
+   "request": "launch",
+   "program": "${command:cmake.launchTargetPath}"
+}
+```
+Now, when you want to attach the debugger, run with that configuration and now your breakpoints will be respected 🎉
+
+### "Unable to determine what CMake generator to use." on Windows
+You may need to run `code` from the VS Developer Command Prompt for CMake Tools to be able to find all of the required build tools.
+
+### `Shift` + `F5` to run not working when using a Visual Studio kit
+The CMake Visual studio generators may result in the SDL2 DLLs getting copied to the wrong place (DLLs in `build/`, exe in `build/Debug/`). You can work around this by adding `"cmake.generator": "NMake Makefiles"` to your settings.json to force the NMake generator instead.

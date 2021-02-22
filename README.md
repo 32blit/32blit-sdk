@@ -22,6 +22,7 @@ Refer to the OS specific docs:
 * [Linux](docs/Linux.md)
 * [Linux - ChromeOS](docs/ChromeOS.md)
 * [Windows - Visual Studio](docs/Windows-VisualStudio.md)
+* [Windows - Command Line / other editor](docs/Windows.md)
 * [Windows - WSL (Advanced)](docs/Windows-WSL.md)
 * [macOS](docs/macOS.md)
 
