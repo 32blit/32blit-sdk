@@ -454,8 +454,7 @@ static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
     if(auto_delete)
       ::remove_file(path);
 
-    blit_switch_execution(launch_offset, true);
-    return true;
+    return blit_switch_execution(launch_offset, true);
   }
 
   blit_enable_user_code();
@@ -468,8 +467,7 @@ static bool launch_file_from_sd(const char *path) {
   persist.launch_path[0] = 0;
 
   if(strncmp(path, "flash:/", 7) == 0) {
-    blit_switch_execution(atoi(path + 7) * qspi_flash_sector_size, true);
-    return true;
+    return blit_switch_execution(atoi(path + 7) * qspi_flash_sector_size, true);
   }
 
   uint32_t launch_offset = 0xFFFFFFFF;
@@ -495,8 +493,7 @@ static bool launch_file_from_sd(const char *path) {
     // set the path to the file to launch
     strncpy(persist.launch_path, path, sizeof(persist.launch_path));
 
-    blit_switch_execution(launch_offset, true);
-    return true;
+    return blit_switch_execution(launch_offset, true);
   }
 
   // .blit file, install/launch
