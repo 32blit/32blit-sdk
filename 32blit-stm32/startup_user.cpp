@@ -6,17 +6,20 @@ extern void update(uint32_t time);
 extern void render(uint32_t time);
 
 extern "C" bool cpp_do_init() {
-    if(blit::api.version < blit::api_version)
-        return false;
+  if(blit::api.version_major != blit::api_version_major)
+    return false;
 
-    blit::update = update;
-    blit::render = render;
+  if(blit::api.version_minor < blit::api_version_minor)
+    return false;
 
-    blit::set_screen_mode(blit::ScreenMode::lores);
+  blit::update = update;
+  blit::render = render;
 
-    init();
+  blit::set_screen_mode(blit::ScreenMode::lores);
 
-    return true;
+  init();
+
+  return true;
 }
 
 extern "C" void _exit(int code) {
