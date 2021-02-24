@@ -21,8 +21,8 @@ namespace blit {
 
   #pragma pack(push, 4)
   struct API {
-    uint16_t version_major = api_version_major;
-    uint16_t version_minor = api_version_minor;
+    uint16_t version_major;
+    uint16_t version_minor;
 
     ButtonState buttons;
     float hack_left;
