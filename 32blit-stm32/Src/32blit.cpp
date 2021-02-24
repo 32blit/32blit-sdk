@@ -343,6 +343,10 @@ void blit_init() {
     blit_init_accelerometer();
 
     bq24295_init(&hi2c4);
+
+    blit::api.version_major = api_version_major;
+    blit::api.version_minor = api_version_minor;
+
     blit::api.debug = blit_debug;
     blit::api.now = HAL_GetTick;
     blit::api.random = HAL_GetRandom;
