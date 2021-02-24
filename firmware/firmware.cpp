@@ -257,20 +257,32 @@ static void scan_flash() {
   }
 }
 
-static void cleanup_duplicates(GameInfo &new_game, uint32_t new_game_offset) {
+static bool cleanup_duplicates(GameInfo &new_game, uint32_t new_game_offset) {
   bool is_launcher = strcmp(new_game.category, "launcher") == 0;
+
+  bool ret = false;
 
   for(auto &game : game_list) {
     if(game.offset == new_game_offset)
       continue;
 
+    bool erased = false;
+
     if(strcmp(game.title, new_game.title) == 0 && strcmp(game.author, new_game.author) == 0) {
       erase_qspi_flash(game.offset, game.size);
+      erased = true;
     } else if(is_launcher && strcmp(game.category, "launcher") == 0) {
       // flashing a launcher, remove previous launchers
       erase_qspi_flash(game.offset, game.size);
+      erased = true;
     }
+
+    // we just erased the thing that was running
+    if(erased && game.offset == persist.last_game_offset)
+      ret = true;
   }
+
+  return ret;
 }
 
 // returns address to flash file to
@@ -1055,10 +1067,11 @@ void FlashLoader::handle_data_end(bool success) {
       GameInfo meta;
       meta.size = header.end - qspi_flash_address;
       if(parse_flash_metadata(flash_start_offset, meta)) {
-        cleanup_duplicates(meta, flash_start_offset);
+        bool erased_running = cleanup_duplicates(meta, flash_start_offset);
 
-        if(strcmp(meta.category, "launcher") == 0 || strcmp(meta.category, "firmware") == 0) {
-          // if we just flashed a launcher, we need to launch it now as we probably just erased the running one
+        if(erased_running || strcmp(meta.category, "firmware") == 0) {
+          // if we just erased the thing we were running, we need to reset to not crash
+          // also need to do firmware updates immediately
           blit_switch_execution(flash_start_offset, true);
           return;
         }
