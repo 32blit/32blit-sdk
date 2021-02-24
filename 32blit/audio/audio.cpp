@@ -9,17 +9,23 @@
 
 namespace blit {
 
-  uint32_t prng_lfsr = 0x32B71700;
-  constexpr uint16_t prng_tap = 0xb874;
+  uint32_t prng_xorshift_state = 0x32B71700;
 
-  uint32_t prng_lfsr_next() {
-    uint8_t lsb = prng_lfsr & 1;
-    prng_lfsr >>= 1;
+  uint32_t prng_xorshift_next() {
+    uint32_t x = prng_xorshift_state;
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+    prng_xorshift_state = x;
+    return x;
+  }
 
-    if (lsb) {
-        prng_lfsr ^= prng_tap;
-    }
-    return prng_lfsr;
+  int32_t prng_normal() {
+    // rough approximation of a normal distribution
+    uint32_t r0 = prng_xorshift_next();
+    uint32_t r1 = prng_xorshift_next();
+    uint32_t n = ((r0 & 0xffff) + (r1 & 0xffff) + (r0 >> 16) + (r1 >> 16)) / 2;
+    return n - 0xffff;
   }
 
   uint16_t volume = 0xffff;
@@ -78,7 +84,7 @@ namespace blit {
       if(channel.waveform_offset & 0x10000) {
         // if the waveform offset overflows then generate a new
         // random noise sample
-        channel.noise = (prng_lfsr_next() & 0xffff) - 0x7fff;
+        channel.noise = prng_normal();
       }
 
       channel.waveform_offset &= 0xffff;
