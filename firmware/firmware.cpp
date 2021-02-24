@@ -655,10 +655,15 @@ void init() {
   }
 
   // auto-launch
-  if(persist.reset_target == prtGame)
-    blit_switch_execution(persist.last_game_offset, false);
+  if(persist.reset_target == prtGame) {
+    if(!blit_switch_execution(persist.last_game_offset, false)) {
+      // failed to start, notify user and switch to launcher
+      dialog.show("Oops!", "Failed to launch game!", [](bool yes) {
+        start_launcher();
+      }, false);
+    }
   // error reset handling
-  else if(persist.reset_error) {
+  } else if(persist.reset_error) {
     dialog.show("Oops!", "Restart game?", [](bool yes){
 
       if(yes)
