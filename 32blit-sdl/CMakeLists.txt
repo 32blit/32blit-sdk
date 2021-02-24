@@ -55,7 +55,7 @@ else()
 	# find SDL2_image
 	# TODO: may need to be more complicated
 	find_path(SDL2_IMAGE_INCLUDE_DIR SDL_image.h
-		HINTS ${SDL2_DIR} ${SDL2_DIR}../../../
+		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
 		PATH_SUFFIXES SDL2 include/SDL2 include
 	)
 
@@ -68,31 +68,31 @@ else()
 
 	find_library(SDL2_IMAGE_LIBRARY
 		NAMES SDL2_image
-		HINTS ${SDL2_DIR} ${SDL2_DIR}../../../
+		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
 		PATH_SUFFIXES lib ${VC_LIB_PATH_SUFFIX}
 	)
 
 	# dlls
 	find_file(SDL2_IMAGE_DLL SDL2_image.dll
-		HINTS ${SDL2_DIR} ${SDL2_DIR}../../../
+		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
 		PATH_SUFFIXES bin ${VC_LIB_PATH_SUFFIX}
 	)
 
 	#SDL_net
 	find_path(SDL2_NET_INCLUDE_DIR SDL_net.h
-		HINTS ${SDL2_DIR} ${SDL2_DIR}../../../
+		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
 		PATH_SUFFIXES SDL2 include/SDL2 include
 	)
 
 	find_library(SDL2_NET_LIBRARY
 		NAMES SDL2_net
-		HINTS ${SDL2_DIR} ${SDL2_DIR}../../../
+		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
 		PATH_SUFFIXES lib ${VC_LIB_PATH_SUFFIX}
 	)
 
 	# dlls
 	find_file(SDL2_NET_DLL SDL2_net.dll
-		HINTS ${SDL2_DIR} ${SDL2_DIR}../../../
+		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
 		PATH_SUFFIXES bin ${VC_LIB_PATH_SUFFIX}
 	)
 
