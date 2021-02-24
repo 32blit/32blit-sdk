@@ -7,11 +7,13 @@ struct Dialog {
 
   using AnswerFunc = void(*)(bool);
   AnswerFunc on_answer;
+  bool is_question;
 
-  void show(std::string title, std::string message, AnswerFunc on_answer) {
+  void show(std::string title, std::string message, AnswerFunc on_answer, bool is_question = true) {
     this->title = title;
     this->message = message;
     this->on_answer = on_answer;
+    this->is_question = is_question;
   }
 
   bool update() {
@@ -68,10 +70,16 @@ struct Dialog {
     screen.pen = Pen(255, 255, 255);
     screen.text(message, minimal_font, Rect(dialog_rect.x + 6, dialog_rect.y + header_height + 5, dialog_rect.w - 12, 45));
 
-    screen.text("No      Yes    ", minimal_font, Rect(dialog_rect.x + 1, dialog_rect.y + dialog_rect.h - 17, dialog_rect.w - 2, 16 + minimal_font.spacing_y), true, TextAlign::center_right);
+    if(is_question) {
+      screen.text("No      Yes    ", minimal_font, Rect(dialog_rect.x + 1, dialog_rect.y + dialog_rect.h - 17, dialog_rect.w - 2, 16 + minimal_font.spacing_y), true, TextAlign::center_right);
 
-    button_icon(Point(dialog_rect.x + 185, dialog_rect.y + 71), Button::B);
-    button_icon(Point(dialog_rect.x + 218, dialog_rect.y + 71), Button::A);
+      button_icon(Point(dialog_rect.x + 185, dialog_rect.y + 71), Button::B);
+      button_icon(Point(dialog_rect.x + 218, dialog_rect.y + 71), Button::A);
+    } else {
+      screen.text("OK    ", minimal_font, Rect(dialog_rect.x + 1, dialog_rect.y + dialog_rect.h - 17, dialog_rect.w - 2, 16 + minimal_font.spacing_y), true, TextAlign::center_right);
+
+      button_icon(Point(dialog_rect.x + 218, dialog_rect.y + 71), Button::A);
+    }
   }
 
 };
