@@ -988,8 +988,6 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
           progress.update(m_uParseIndex + 1);
 
           if(bEOS) {
-            handle_data_end(result != srError);
-
             if(result != srError) {
               while(CDC_Transmit_HS((uint8_t *)"32BL__OK", 8) == USBD_BUSY){}
               if(dest == Destination::Flash) {
@@ -1001,6 +999,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
               result = srFinish;
             }
             progress.hide();
+            handle_data_end(result != srError);
           }
 
           m_uParseIndex++;
