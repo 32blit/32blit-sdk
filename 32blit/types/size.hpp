@@ -18,11 +18,11 @@ namespace blit {
     inline Size& operator*= (const int a) { w = static_cast<int32_t>(w * a); h = static_cast<int32_t>(h * a); return *this; }
     inline Size& operator/= (const int a) { w = static_cast<int32_t>(w / a); h = static_cast<int32_t>(h / a); return *this; }
 
-    bool empty() { return w <= 0 || h <= 0; }
+    constexpr bool empty() const { return w <= 0 || h <= 0; }
 
-    int32_t area() { return w * h; }
+    constexpr int32_t area() const { return w * h; }
 
-    bool contains(const Point &p) {
+    constexpr bool contains(const Point &p) const {
       return p.x >= 0 && p.y >= 0 && p.x < w && p.y < h;
     }
 
