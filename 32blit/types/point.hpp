@@ -19,13 +19,15 @@ namespace blit {
     inline Point& operator*= (const Mat3 &a) { this->transform(a); return *this; }
     inline Point& operator/= (const int32_t a) { x /= a;   y /= a;   return *this; }
 
-    void   transform(const Mat3 &m) {     
+    void   transform(const Mat3 &m) {
       auto tx = static_cast<float>(x); auto ty = static_cast<float>(y);
       this->x = static_cast<int32_t>(m.v00 * tx + m.v01 * ty + m.v02);
       this->y = static_cast<int32_t>(m.v10 * tx + m.v11 * ty + m.v12);
     }
   };
 
+  inline bool operator== (const Point &lhs, const Point &rhs) { return lhs.x == rhs.x && lhs.y == rhs.y; }
+  inline bool operator!= (const Point &lhs, const Point &rhs) { return !(lhs == rhs); }
   inline Point operator-  (Point lhs, const Point &rhs) { lhs -= rhs; return lhs; }
   inline Point operator-  (const Point &rhs) { return Point(-rhs.x, -rhs.y); }
   inline Point operator+  (Point lhs, const Point &rhs) { lhs += rhs; return lhs; }
