@@ -24,8 +24,8 @@ namespace blit {
    * TODO: Document
    */
   int32_t TileMap::offset(const Point &p) {
-    int32_t cx = ((uint16_t)p.x) & (bounds.w - 1);
-    int32_t cy = ((uint16_t)p.y) & (bounds.h - 1);
+    int32_t cx = ((uint32_t)p.x) & (bounds.w - 1);
+    int32_t cy = ((uint32_t)p.y) & (bounds.h - 1);
 
     if ((p.x ^ cx) | (p.y ^ cy)) {
       if (repeat_mode == DEFAULT_FILL)
@@ -47,8 +47,8 @@ namespace blit {
    * \param[in] y
    */
   int32_t TileMap::offset(int16_t x, int16_t y) {
-    int32_t cx = ((uint16_t)x) & (bounds.w - 1);
-    int32_t cy = ((uint16_t)y) & (bounds.h - 1);
+    int32_t cx = ((uint32_t)x) & (bounds.w - 1);
+    int32_t cy = ((uint32_t)y) & (bounds.h - 1);
 
     if ((x ^ cx) | (y ^ cy)) {
       if (repeat_mode == DEFAULT_FILL)
@@ -168,14 +168,14 @@ namespace blit {
         uint8_t transform = transforms[toff];
 
         // coordinate within sprite
-        uint8_t u = wcx & 0b111;
-        uint8_t v = wcy & 0b111;
+        int u = wcx & 0b111;
+        int v = wcy & 0b111;
 
         // if this tile has a transform then modify the uv coordinates
         if (transform) {
           v = (transform & 0b010) ? (7 - v) : v;
           u = (transform & 0b100) ? (7 - u) : u;
-          if (transform & 0b001) { uint8_t tmp = u; u = v; v = tmp; }
+          if (transform & 0b001) { int tmp = u; u = v; v = tmp; }
         }
 
         // sprite sheet coordinates for top left corner of sprite
