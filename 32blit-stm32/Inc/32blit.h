@@ -33,7 +33,7 @@ extern void blit_process_input();
 
 // Switching execution.
 // Address is relative to the start of flash, ignored if switching to firmware
-extern void blit_switch_execution(uint32_t address, bool force_game);
+extern bool blit_switch_execution(uint32_t address, bool force_game);
 extern bool blit_user_code_running();
 extern "C" void blit_reset_with_error();
 extern void blit_enable_user_code();

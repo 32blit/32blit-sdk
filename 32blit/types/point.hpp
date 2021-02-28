@@ -13,13 +13,15 @@ namespace blit {
     constexpr Point(int32_t x, int32_t y) : x(x), y(y) {}
     constexpr Point(Vec2 v) : x(int32_t(v.x)), y(int32_t(v.y)) {}
 
+    explicit constexpr operator Vec2() const {return Vec2(x, y);}
+
     inline Point& operator-= (const Point &a) { x -= a.x; y -= a.y; return *this; }
     inline Point& operator+= (const Point &a) { x += a.x; y += a.y; return *this; }
     inline Point& operator*= (const float a) { x = static_cast<int32_t>(x * a); y = static_cast<int32_t>(y * a); return *this; }
     inline Point& operator*= (const Mat3 &a) { this->transform(a); return *this; }
     inline Point& operator/= (const int32_t a) { x /= a;   y /= a;   return *this; }
 
-    void   transform(const Mat3 &m) {
+    void transform(const Mat3 &m) {
       auto tx = static_cast<float>(x); auto ty = static_cast<float>(y);
       this->x = static_cast<int32_t>(m.v00 * tx + m.v01 * ty + m.v02);
       this->y = static_cast<int32_t>(m.v10 * tx + m.v11 * ty + m.v12);
