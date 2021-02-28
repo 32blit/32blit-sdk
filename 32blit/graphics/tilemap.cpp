@@ -7,7 +7,7 @@ namespace blit {
 
   /**
    * Create a new tilemap.
-   * 
+   *
    * \param[in] tiles
    * \param[in] transforms
    * \param[in] bounds Map bounds, must be a power of two
@@ -42,7 +42,7 @@ namespace blit {
 
   /**
    * TODO: Document
-   * 
+   *
    * \param[in] x
    * \param[in] y
    */
@@ -144,22 +144,25 @@ namespace blit {
 
   /**
    * TODO: Document
-   * 
+   *
    * \param[in] dest
    * \param[in] s
    * \param[in] c
    * \param[in] swc
    * \param[in] ewc
    */
-  void TileMap::texture_span(Surface *dest, Point s, uint16_t c, Vec2 swc, Vec2 ewc) {
+  void TileMap::texture_span(Surface *dest, Point s, unsigned int c, Vec2 swc, Vec2 ewc) {
     Surface *src = sprites;
 
-    Vec2 wc = swc;
-    Vec2 dwc = (ewc - swc) / float(c);
+    static const int fix_shift = 16;
+
+    Point wc(swc * (1 << fix_shift));
+    Point dwc(((ewc - swc) / float(c)) * (1 << fix_shift));
     int32_t doff = dest->offset(s.x, s.y);
+
     do {
-      int16_t wcx = floorf(wc.x);
-      int16_t wcy = floorf(wc.y);
+      int16_t wcx = wc.x >> fix_shift;
+      int16_t wcy = wc.y >> fix_shift;
 
       int32_t toff = offset(wcx >> 3, wcy >> 3);
 
@@ -182,12 +185,31 @@ namespace blit {
         u += (tile_id & 0b1111) * 8;
         v += (tile_id >> 4) * 8;
 
-        dest->bbf(src, src->offset(u, v), dest, doff, 1, 1);
+        // draw as many pixels as possible
+        int count = 0;
+
+        do {
+          wc += dwc;
+          c--;
+          count++;
+        } while(c && (wc.x >> fix_shift) == wcx && (wc.y >> fix_shift) == wcy);
+
+        int soff = src->offset(u, v);
+        dest->bbf(src, soff, dest, doff, count, 0);
+
+        doff += count;
+
+        continue;
       }
 
-      wc += dwc;
-      doff++;
-    } while (--c);
+      // skip to next tile
+      do {
+        wc += dwc;
+        doff++;
+        c--;
+      } while(c && (wc.x >> fix_shift + 3) == wcx >> 3 && (wc.y >> fix_shift + 3) == wcy >> 3);
+
+    } while (c);
   }
 
 }
