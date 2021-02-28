@@ -257,20 +257,32 @@ static void scan_flash() {
   }
 }
 
-static void cleanup_duplicates(GameInfo &new_game, uint32_t new_game_offset) {
+static bool cleanup_duplicates(GameInfo &new_game, uint32_t new_game_offset) {
   bool is_launcher = strcmp(new_game.category, "launcher") == 0;
+
+  bool ret = false;
 
   for(auto &game : game_list) {
     if(game.offset == new_game_offset)
       continue;
 
+    bool erased = false;
+
     if(strcmp(game.title, new_game.title) == 0 && strcmp(game.author, new_game.author) == 0) {
       erase_qspi_flash(game.offset, game.size);
+      erased = true;
     } else if(is_launcher && strcmp(game.category, "launcher") == 0) {
       // flashing a launcher, remove previous launchers
       erase_qspi_flash(game.offset, game.size);
+      erased = true;
     }
+
+    // we just erased the thing that was running
+    if(erased && game.offset == persist.last_game_offset)
+      ret = true;
   }
+
+  return ret;
 }
 
 // returns address to flash file to
@@ -454,8 +466,7 @@ static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
     if(auto_delete)
       ::remove_file(path);
 
-    blit_switch_execution(launch_offset, true);
-    return true;
+    return blit_switch_execution(launch_offset, true);
   }
 
   blit_enable_user_code();
@@ -468,8 +479,7 @@ static bool launch_file_from_sd(const char *path) {
   persist.launch_path[0] = 0;
 
   if(strncmp(path, "flash:/", 7) == 0) {
-    blit_switch_execution(atoi(path + 7) * qspi_flash_sector_size, true);
-    return true;
+    return blit_switch_execution(atoi(path + 7) * qspi_flash_sector_size, true);
   }
 
   uint32_t launch_offset = 0xFFFFFFFF;
@@ -495,8 +505,7 @@ static bool launch_file_from_sd(const char *path) {
     // set the path to the file to launch
     strncpy(persist.launch_path, path, sizeof(persist.launch_path));
 
-    blit_switch_execution(launch_offset, true);
-    return true;
+    return blit_switch_execution(launch_offset, true);
   }
 
   // .blit file, install/launch
@@ -609,6 +618,15 @@ static void tmp_file_closed(const uint8_t *ptr) {
   cached_file_in_tmp = false;
 }
 
+static void start_launcher() {
+  if(launcher_offset == 0xFFFFFFFF)
+    return;
+
+  // if the launcher fails to start it's incompatible, ignore it
+  if(!blit_switch_execution(launcher_offset, false))
+    launcher_offset = 0xFFFFFFFF;
+}
+
 void init() {
   api.launch = launch_file_from_sd;
   api.erase_game = erase_flash_game;
@@ -649,21 +667,26 @@ void init() {
   }
 
   // auto-launch
-  if(persist.reset_target == prtGame)
-    blit_switch_execution(persist.last_game_offset, false);
+  if(persist.reset_target == prtGame) {
+    if(!blit_switch_execution(persist.last_game_offset, false)) {
+      // failed to start, notify user and switch to launcher
+      dialog.show("Oops!", "Failed to launch game!", [](bool yes) {
+        start_launcher();
+      }, false);
+    }
   // error reset handling
-  else if(persist.reset_error) {
+  } else if(persist.reset_error) {
     dialog.show("Oops!", "Restart game?", [](bool yes){
 
       if(yes)
         blit_switch_execution(persist.last_game_offset, false);
-      else if(launcher_offset != 0xFFFFFFFF)
-        blit_switch_execution(launcher_offset, false);
+      else
+        start_launcher();
 
       persist.reset_error = false;
     });
-  } else if(launcher_offset != 0xFFFFFFFF)
-    blit_switch_execution(launcher_offset, false);
+  } else
+    start_launcher();
 }
 
 void render(uint32_t time) {
@@ -965,8 +988,6 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
           progress.update(m_uParseIndex + 1);
 
           if(bEOS) {
-            handle_data_end(result != srError);
-
             if(result != srError) {
               while(CDC_Transmit_HS((uint8_t *)"32BL__OK", 8) == USBD_BUSY){}
               if(dest == Destination::Flash) {
@@ -978,6 +999,7 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
               result = srFinish;
             }
             progress.hide();
+            handle_data_end(result != srError);
           }
 
           m_uParseIndex++;
@@ -1044,10 +1066,11 @@ void FlashLoader::handle_data_end(bool success) {
       GameInfo meta;
       meta.size = header.end - qspi_flash_address;
       if(parse_flash_metadata(flash_start_offset, meta)) {
-        cleanup_duplicates(meta, flash_start_offset);
+        bool erased_running = cleanup_duplicates(meta, flash_start_offset);
 
-        if(strcmp(meta.category, "launcher") == 0 || strcmp(meta.category, "firmware") == 0) {
-          // if we just flashed a launcher, we need to launch it now as we probably just erased the running one
+        if(erased_running || strcmp(meta.category, "firmware") == 0) {
+          // if we just erased the thing we were running, we need to reset to not crash
+          // also need to do firmware updates immediately
           blit_switch_execution(flash_start_offset, true);
           return;
         }
