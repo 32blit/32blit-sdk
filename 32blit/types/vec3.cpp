@@ -15,11 +15,11 @@ extern "C" {
 namespace blit {
 
   void Vec3::transform(const Mat4 &m) {
-    float w = m.v30 * this->x + m.v31 * this->y + m.v32 * -this->z + m.v33;
+    float w = m.v30 * this->x + m.v31 * this->y + m.v32 * this->z + m.v33;
     float tx = x; float ty = y; float tz = z;
-    this->x = (m.v00 * tx + m.v01 * ty + m.v02 * -tz + m.v03) / w;
-    this->y = (m.v10 * tx + m.v11 * ty + m.v12 * -tz + m.v13) / w;
-    this->z = (m.v20 * tx + m.v21 * ty + m.v22 * -tz + m.v23) / w;
+    this->x = (m.v00 * tx + m.v01 * ty + m.v02 * tz + m.v03) / w;
+    this->y = (m.v10 * tx + m.v11 * ty + m.v12 * tz + m.v13) / w;
+    this->z = (m.v20 * tx + m.v21 * ty + m.v22 * tz + m.v23) / w;
   }
 
   void   Vec3::normalize() { float d = this->length(); x /= d; y /= d; z /= d; }

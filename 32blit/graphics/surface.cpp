@@ -299,10 +299,10 @@ namespace blit {
     if (dr.empty())
       return; // after clipping there is nothing to draw
 
-    uint8_t left = dr.x - p.x;
-    uint8_t top = dr.y - p.y;
-    uint8_t right = sprite.w - (sprite.w - dr.w) + left - 1;
-    uint8_t bottom = sprite.h - (sprite.h - dr.h) + top - 1;
+    int left = dr.x - p.x;
+    int top = dr.y - p.y;
+    int right = sprite.w - (sprite.w - dr.w) + left - 1;
+    int bottom = sprite.h - (sprite.h - dr.h) + top - 1;
 
     if (t & SpriteTransform::VERTICAL) {
       top    = sprite.h - 1 - top;
@@ -323,11 +323,11 @@ namespace blit {
     uint32_t dest_offset = offset(dr);
     uint32_t src_offset;
 
-    uint8_t y_count = dr.h;
-    uint8_t y = top;
+    int y_count = dr.h;
+    int y = top;
     do {
-      uint8_t x_count = dr.w;
-      uint8_t x = left;
+      int x_count = dr.w;
+      int x = left;
 
       if (t & SpriteTransform::XYSWAP)
         src_offset = sprites->offset(sprite.x + y, sprite.y + x);
@@ -378,10 +378,11 @@ namespace blit {
     uint32_t dest_offset = offset(dr);
     uint32_t src_offset;
 
-    uint8_t y_count = dr.h;
+    int y_count = dr.h;
     float y = top;
+
     do {
-      uint8_t x_count = dr.w;
+      int x_count = dr.w;
       float x = left;
       do {
         if (t & SpriteTransform::XYSWAP)
