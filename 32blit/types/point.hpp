@@ -28,6 +28,8 @@ namespace blit {
     }
   };
 
+  inline bool operator== (const Point &lhs, const Point &rhs) { return lhs.x == rhs.x && lhs.y == rhs.y; }
+  inline bool operator!= (const Point &lhs, const Point &rhs) { return !(lhs == rhs); }
   inline Point operator-  (Point lhs, const Point &rhs) { lhs -= rhs; return lhs; }
   inline Point operator-  (const Point &rhs) { return Point(-rhs.x, -rhs.y); }
   inline Point operator+  (Point lhs, const Point &rhs) { lhs += rhs; return lhs; }

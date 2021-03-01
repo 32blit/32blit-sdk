@@ -24,11 +24,11 @@ namespace blit {
     }
 
     bool empty() const {
-      return w <= 0 || h <= 0; 
+      return w <= 0 || h <= 0;
     }
 
     bool contains(const Point &p) const {
-      return p.x >= x && p.y >= y && p.x < x + w && p.y < y + h; 
+      return p.x >= x && p.y >= y && p.x < x + w && p.y < y + h;
     }
 
     bool contains(const Rect &p) const {
@@ -36,14 +36,14 @@ namespace blit {
     }
 
     bool intersects(const Rect &r) const {
-      return !(x > r.x + r.w || x + w < r.x || y > r.y + r.h || y + h < r.y); 
+      return !(x > r.x + r.w || x + w < r.x || y > r.y + r.h || y + h < r.y);
     }
 
     Rect intersection(const Rect &r) const {
       return Rect(
-        std::max(x, r.x), 
-        std::max(y, r.y), 
-        std::min(x + w, r.x + r.w) - std::max(x, r.x), 
+        std::max(x, r.x),
+        std::max(y, r.y),
+        std::min(x + w, r.x + r.w) - std::max(x, r.x),
         std::min(y + h, r.y + r.h) - std::max(y, r.y));
     }
 
@@ -63,12 +63,12 @@ namespace blit {
       rect cdr = intersection(dest);  // clipped destination rect
 
       if (cdr.empty())
-        return; // after clipping there is nothing to draw      
+        return; // after clipping there is nothing to draw
 
       float sx = (src.w) / float(dest.w);
       float sy = (src.h) / float(dest.h);
 
-      // offset source rect to accomodate for clipped destination rect    
+      // offset source rect to accomodate for clipped destination rect
       uint8_t l = cdr.x - dest.x; // top left corner
       uint8_t t = cdr.y - dest.y;
 
@@ -82,11 +82,11 @@ namespace blit {
       src.h = cdr.h * sy;
     }*/
 
-    void deflate(int32_t v) { 
-      x += v; 
-      y += v; 
+    void deflate(int32_t v) {
+      x += v;
+      y += v;
       w -= 2 * v;
-      h -= 2 * v; 
+      h -= 2 * v;
     }
 
     void inflate(int32_t v) {
@@ -98,8 +98,8 @@ namespace blit {
 
     Point clamp(Point p) const {
       return Point(
-        p.x < x ? x : (p.x > x + w ? x + w : p.x), 
-        p.y < y ? y : (p.y > y + h ? y + h : p.y)); 
+        p.x < x ? x : (p.x > x + w ? x + w : p.x),
+        p.y < y ? y : (p.y > y + h ? y + h : p.y));
     }
 
     Point tl() const {
@@ -125,6 +125,6 @@ namespace blit {
   };
 
   inline Rect operator*  (Rect lhs, const float a) { lhs *= a; return lhs; }
-
+  inline bool operator== (const Rect &lhs, const Rect &rhs) { return lhs.x == rhs.x && lhs.y == rhs.y && lhs.w == rhs.w && lhs.h == rhs.h; }
+  inline bool operator!= (const Rect &lhs, const Rect &rhs) { return !(lhs == rhs); }
 }
-
