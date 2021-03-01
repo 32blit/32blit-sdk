@@ -32,8 +32,6 @@ class Multiplayer final {
 
         TCPsocket socket = nullptr, listen_socket = nullptr;
         SDLNet_SocketSet sock_set = nullptr;
-        IPaddress ip;
-        bool have_ip = false;
 
         static const int retry_interval = 5000;
         Uint32 last_connect_time = 0;

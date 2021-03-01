@@ -26,10 +26,8 @@ void Multiplayer::update() {
     if(!socket && !listen_socket) {
         // attempt to reconnect
         auto now = SDL_GetTicks();
-        if(have_ip && (now - last_connect_time) > retry_interval) {
-            socket = SDLNet_TCP_Open(&ip);
-            if(socket)
-              SDLNet_TCP_AddSocket(sock_set, socket);
+        if((now - last_connect_time) > retry_interval) {
+            setup();
 
             last_connect_time = now;
         }
@@ -145,7 +143,7 @@ void Multiplayer::send_message(const uint8_t *data, uint16_t length) {
 void Multiplayer::setup() {
     const uint16_t port = 0x32B1;
 
-    have_ip = false;
+    IPaddress ip;
 
     // try connecting first for auto
     if(mode != Mode::Listen) {
@@ -167,18 +165,18 @@ void Multiplayer::setup() {
         listen_socket = SDLNet_TCP_Open(&ip);
     }
 
-    // we at least have a valid address now
-    have_ip = true;
-
     if(!socket && !listen_socket) {
         std::cerr << "Failed to open socket: " << SDLNet_GetError() << std::endl;
         return;
     }
 
-    if(listen_socket)
+    if(listen_socket) {
         SDLNet_TCP_AddSocket(sock_set, listen_socket);
-    else
+        mode = Mode::Listen;
+    } else {
         SDLNet_TCP_AddSocket(sock_set, socket);
+        mode = Mode::Connect;
+    }
 }
 
 void Multiplayer::disconnect() {
