@@ -52,6 +52,8 @@ void Multiplayer::update() {
 
               SDLNet_TCP_AddSocket(sock_set, socket);
 
+              SDLNet_TCP_Send(socket, "32BLMLTI\1", 9);
+
               // stop listening now
               stop_listening();
           }
@@ -81,6 +83,14 @@ void Multiplayer::update() {
             recv_len = head[0] | (head[1] << 8);
             recv_buf = new uint8_t[recv_len];
             recv_off = 0;
+          } else if(memcmp(head, "32BLMLTI", 8) == 0) {
+            // handle the handshake packet
+            SDLNet_TCP_Recv(socket, head, 1);
+            handshake = head[0] == 1;
+
+            if(mode == Mode::Connect)
+              SDLNet_TCP_Send(socket, "32BLMLTI\1", 9);
+
           } else {
             std::cerr << "Unexpected header: " << std::string(reinterpret_cast<char *>(head), 8) << std::endl;
           }
@@ -112,7 +122,7 @@ void Multiplayer::update() {
 }
 
 bool Multiplayer::is_connected() const {
-    return socket != nullptr;
+    return socket != nullptr && handshake;
 }
 
 void Multiplayer::set_enabled(bool enabled) {
@@ -201,6 +211,8 @@ void Multiplayer::disconnect() {
 
     SDLNet_TCP_Close(socket);
     socket = nullptr;
+
+    handshake = false;
 }
 
 void Multiplayer::stop_listening() {

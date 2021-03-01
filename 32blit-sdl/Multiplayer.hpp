@@ -29,7 +29,7 @@ class Multiplayer final {
 
         Mode mode;
         std::string address;
-        bool enabled = false;
+        bool enabled = false, handshake = false;
 
         TCPsocket socket = nullptr, listen_socket = nullptr;
         SDLNet_SocketSet sock_set = nullptr;
