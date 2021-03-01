@@ -25,6 +25,7 @@ class Multiplayer final {
     private:
         void setup();
         void disconnect();
+        void stop_listening();
 
         Mode mode;
         std::string address;

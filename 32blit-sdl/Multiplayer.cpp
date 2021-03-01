@@ -51,6 +51,9 @@ void Multiplayer::update() {
               std::cout << (ip >> 24) << "." << ((ip >> 16) & 0xFF) << "." << ((ip >> 8) & 0xFF) << "." << (ip & 0xFF) << " connected" << std::endl;
 
               SDLNet_TCP_AddSocket(sock_set, socket);
+
+              // stop listening now
+              stop_listening();
           }
       }
 
@@ -187,4 +190,11 @@ void Multiplayer::disconnect() {
 
     SDLNet_TCP_Close(socket);
     socket = nullptr;
+}
+
+void Multiplayer::stop_listening() {
+    SDLNet_TCP_DelSocket(sock_set, listen_socket);
+
+    SDLNet_TCP_Close(listen_socket);
+    listen_socket = nullptr;
 }
