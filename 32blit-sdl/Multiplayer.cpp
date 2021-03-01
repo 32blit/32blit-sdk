@@ -62,19 +62,30 @@ void Multiplayer::update() {
 
       if(!recv_buf) {
           // read header and setup
-          uint8_t head[10];
-          auto read = SDLNet_TCP_Recv(socket, head, 10);
+          uint8_t head[8];
+          auto read = SDLNet_TCP_Recv(socket, head, 8);
 
           if(read <= 0) {
             disconnect();
             return;
           }
 
-          recv_len = head[8] | (head[9] << 8);
-          recv_buf = new uint8_t[recv_len];
-          recv_off = 0;
+          if(memcmp(head, "32BLUSER", 8) == 0) {
+            read = SDLNet_TCP_Recv(socket, head, 2);
 
-          if(SDLNet_CheckSockets(sock_set, 0) <= 0)
+            if(read <= 0) {
+              disconnect();
+              return;
+            }
+
+            recv_len = head[0] | (head[1] << 8);
+            recv_buf = new uint8_t[recv_len];
+            recv_off = 0;
+          } else {
+            std::cerr << "Unexpected header: " << std::string(reinterpret_cast<char *>(head), 8) << std::endl;
+          }
+
+          if(!recv_buf || SDLNet_CheckSockets(sock_set, 0) <= 0)
               return;
       }
 
