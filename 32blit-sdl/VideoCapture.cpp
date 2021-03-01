@@ -46,7 +46,7 @@ void VideoCapture::start() {
 	auto bt = localtime_xp(std::time(0));
 	std::stringstream filename;
 	filename << name;
-	filename << std::put_time(&bt, "-capture-%Y-%m-%d-%H-%M-%S.mpg");
+	filename << std::put_time(&bt, "-capture-%Y-%m-%d-%H-%M-%S.mp4");
 	start(filename.str().c_str());
 }
 
