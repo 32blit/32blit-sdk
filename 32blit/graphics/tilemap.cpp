@@ -163,7 +163,7 @@ namespace blit {
 
       int32_t toff = offset(wcx >> 3, wcy >> 3);
 
-      if (toff != -1) {
+      if (toff != -1 && tiles[toff] != empty_tile_id) {
         uint8_t tile_id = tiles[toff];
         uint8_t transform = transforms[toff];
 

@@ -26,6 +26,8 @@ namespace blit {
     } repeat_mode;        // determines what to do when drawing outside of the layer bounds.
     uint8_t       default_tile_id;
 
+    int empty_tile_id = -1;
+
     TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites);
 
     inline int32_t offset(const Point &p); // __attribute__((always_inline));
