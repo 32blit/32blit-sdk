@@ -210,12 +210,8 @@ namespace blit {
     do {
       Pen *pen = src->palette ? &src->palette[*s] : (Pen *)s;
 
-      uint16_t a;
-
-      if(src->format == PixelFormat::RGB)
-        a = m ? alpha(*m++, dest->alpha) : dest->alpha;
-      else
-        a = m ? alpha(pen->a, *m++, dest->alpha) : alpha(pen->a, dest->alpha);
+      uint16_t a = src->format == PixelFormat::RGB ? 0 : pen->a;
+      a = m ? alpha(a, *m++, dest->alpha) : alpha(a, dest->alpha);
 
       if (a >= 255) {
         *d++ = pen->r; *d++ = pen->g; *d++ = pen->b; d++;
@@ -240,12 +236,8 @@ namespace blit {
     do {
       Pen *pen = src->palette ? &src->palette[*s] : (Pen *)s;
 
-      uint16_t a;
-
-      if(src->format == PixelFormat::RGB)
-        a = m ? alpha(*m++, dest->alpha) : dest->alpha;
-      else
-        a = m ? alpha(pen->a, *m++, dest->alpha) : alpha(pen->a, dest->alpha);
+      uint16_t a = src->format == PixelFormat::RGB ? 0 : pen->a;
+      a = m ? alpha(a, *m++, dest->alpha) : alpha(a, dest->alpha);
 
       if (a >= 255) {
         *d++ = pen->r; *d++ = pen->g; *d++ = pen->b;
