@@ -153,9 +153,9 @@ void Multiplayer::setup() {
             std::cerr << "Failed to resolve host: " << SDLNet_GetError() << std::endl;
             return;
         }
-    }
 
-    socket = SDLNet_TCP_Open(&ip);
+        socket = SDLNet_TCP_Open(&ip);
+    }
 
     if(!socket && mode != Mode::Connect) {
         // try hosting instead unless connecting was specified
