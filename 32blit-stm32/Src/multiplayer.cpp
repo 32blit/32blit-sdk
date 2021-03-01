@@ -15,7 +15,9 @@ extern USBH_HandleTypeDef hUsbHostHS;
 using namespace blit;
 
 namespace multiplayer {
+  bool enabled = false;
   bool peer_connected = false;
+
   void send_handshake();
 
   class CDCUserHandler : public CDCCommandHandler
@@ -39,7 +41,7 @@ namespace multiplayer {
 
       // done, send to user
       if(read == length) {
-        if(api.message_received)
+        if(api.message_received && enabled)
           api.message_received(buf, length);
 
         delete[] buf;
@@ -85,8 +87,6 @@ namespace multiplayer {
 
   CDCUserHandler cdc_user_handler;
   CDCHandshakeHandler cdc_handshake_handler;
-
-  bool enabled = false;
 
   static uint32_t last_handshake_attempt = 0;
 
