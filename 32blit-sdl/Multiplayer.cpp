@@ -54,6 +54,11 @@ void Multiplayer::update() {
           uint8_t head[10];
           auto read = SDLNet_TCP_Recv(socket, head, 10);
 
+          if(read <= 0) {
+            disconnect();
+            return;
+          }
+
           recv_len = head[8] | (head[9] << 8);
           recv_buf = new uint8_t[recv_len];
           recv_off = 0;
@@ -63,8 +68,8 @@ void Multiplayer::update() {
       }
 
       auto read = SDLNet_TCP_Recv(socket, recv_buf + recv_off, recv_len - recv_off);
-      if(read < 0) {
-          // failed
+      if(read <= 0) {
+          // failed/disconnected
           delete[] recv_buf;
           recv_buf = nullptr;
           disconnect();
