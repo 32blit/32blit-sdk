@@ -18,7 +18,7 @@ namespace multiplayer {
   bool enabled = false;
   bool peer_connected = false;
 
-  void send_handshake();
+  static void send_handshake(bool is_reply = false);
 
   class CDCUserHandler : public CDCCommandHandler
   {
@@ -74,8 +74,8 @@ namespace multiplayer {
       peer_connected = val != 0;
 
       // reply if we're not the host
-      if(peer_connected && !USB_GetMode(USB_OTG_HS))
-        send_handshake();
+      if(val == 1 && !USB_GetMode(USB_OTG_HS))
+        send_handshake(true);
 
       return srFinish;
     }
@@ -114,8 +114,12 @@ namespace multiplayer {
     }
   }
 
-  void send_handshake() {
-    uint8_t buf[]{'3', '2', 'B', 'L', 'M', 'L', 'T','I', enabled ? 1 : 0};
+  static void send_handshake(bool is_reply) {
+    uint8_t val = 0;
+    if(enabled)
+      val = is_reply ? 2 : 1;
+
+    uint8_t buf[]{'3', '2', 'B', 'L', 'M', 'L', 'T','I', val};
     cdc_send(buf, 9);
   }
 

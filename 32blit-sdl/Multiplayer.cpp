@@ -86,10 +86,10 @@ void Multiplayer::update() {
           } else if(memcmp(head, "32BLMLTI", 8) == 0) {
             // handle the handshake packet
             SDLNet_TCP_Recv(socket, head, 1);
-            handshake = head[0] == 1;
+            handshake = head[0] != 0;
 
-            if(mode == Mode::Connect)
-              SDLNet_TCP_Send(socket, "32BLMLTI\1", 9);
+            if(mode == Mode::Connect && head[0] == 1)
+              SDLNet_TCP_Send(socket, "32BLMLTI\2", 9);
 
           } else {
             std::cerr << "Unexpected header: " << std::string(reinterpret_cast<char *>(head), 8) << std::endl;
