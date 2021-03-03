@@ -207,7 +207,7 @@ namespace blit {
         wc += dwc;
         doff++;
         c--;
-      } while(c && (wc.x >> fix_shift + 3) == wcx >> 3 && (wc.y >> fix_shift + 3) == wcy >> 3);
+      } while(c && (wc.x >> (fix_shift + 3)) == wcx >> 3 && (wc.y >> (fix_shift + 3)) == wcy >> 3);
 
     } while (c);
   }
