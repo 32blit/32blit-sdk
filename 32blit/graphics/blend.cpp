@@ -137,6 +137,8 @@ namespace blit {
   }
 
   void RGBA_RGBA(const Pen* pen, const Surface* dest, uint32_t off, uint32_t cnt) {
+    if(!pen->a) return;
+
     uint8_t* d = dest->data + (off * 4);
     uint8_t* m = dest->mask ? dest->mask->data + off : nullptr;
 
@@ -158,6 +160,8 @@ namespace blit {
   }
 
   void RGBA_RGB(const Pen* pen, const Surface* dest, uint32_t off, uint32_t c) {
+    if(!pen->a) return;
+
     uint8_t* d = dest->data + (off * 3);
     uint8_t* m = dest->mask ? dest->mask->data + off : nullptr;
 
@@ -215,7 +219,7 @@ namespace blit {
 
       if (a >= 255) {
         *d++ = pen->r; *d++ = pen->g; *d++ = pen->b; d++;
-      } else if (a > 0) {
+      } else if (a > 1) {
         *d = blend(pen->r, *d, a); d++;
         *d = blend(pen->g, *d, a); d++;
         *d = blend(pen->b, *d, a); d++;
@@ -238,6 +242,9 @@ namespace blit {
       Pen *pen = src->palette ? &src->palette[*s] : (Pen *)s;
 
       uint16_t a = src->format == PixelFormat::RGB ? 255 : pen->a;
+
+      if(!a) return;
+
       a = alpha(a, dest->alpha);
 
       if (a >= 255) {
@@ -259,7 +266,7 @@ namespace blit {
 
       if (a >= 255) {
         *d++ = pen->r; *d++ = pen->g; *d++ = pen->b;
-      } else if (a > 0) {
+      } else if (a > 1) {
         *d = blend(pen->r, *d, a); d++;
         *d = blend(pen->g, *d, a); d++;
         *d = blend(pen->b, *d, a); d++;
