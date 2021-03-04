@@ -78,12 +78,19 @@ void Multiplayer::update() {
             continue;
 
           if(memcmp(head_buf, "32BLUSER", 8) == 0) {
-            read = SDLNet_TCP_Recv(socket, head_buf, 2);
+            // get the length
+            int off = 0;
 
-            if(read <= 0) {
-              disconnect();
-              return;
-            }
+            do {
+              read = SDLNet_TCP_Recv(socket, head_buf + off, 2 - off);
+
+              if(read <= 0) {
+                disconnect();
+                return;
+              }
+
+              off += read;
+            } while(off != 2);
 
             recv_len = head_buf[0] | (head_buf[1] << 8);
             recv_buf = new uint8_t[recv_len];
