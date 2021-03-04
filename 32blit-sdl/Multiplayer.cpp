@@ -64,35 +64,44 @@ void Multiplayer::update() {
 
       if(!recv_buf) {
           // read header and setup
-          uint8_t head[8];
-          auto read = SDLNet_TCP_Recv(socket, head, 8);
+
+          auto read = SDLNet_TCP_Recv(socket, head_buf + head_off, 8 - head_off);
 
           if(read <= 0) {
             disconnect();
             return;
           }
 
-          if(memcmp(head, "32BLUSER", 8) == 0) {
-            read = SDLNet_TCP_Recv(socket, head, 2);
+          head_off += read;
+
+          if(head_off < 8)
+            continue;
+
+          if(memcmp(head_buf, "32BLUSER", 8) == 0) {
+            read = SDLNet_TCP_Recv(socket, head_buf, 2);
 
             if(read <= 0) {
               disconnect();
               return;
             }
 
-            recv_len = head[0] | (head[1] << 8);
+            recv_len = head_buf[0] | (head_buf[1] << 8);
             recv_buf = new uint8_t[recv_len];
             recv_off = 0;
-          } else if(memcmp(head, "32BLMLTI", 8) == 0) {
-            // handle the handshake packet
-            SDLNet_TCP_Recv(socket, head, 1);
-            handshake = head[0] != 0;
+            head_off = 0;
 
-            if(mode == Mode::Connect && head[0] == 1)
+          } else if(memcmp(head_buf, "32BLMLTI", 8) == 0) {
+            // handle the handshake packet
+            SDLNet_TCP_Recv(socket, head_buf, 1);
+            handshake = head_buf[0] != 0;
+
+            if(mode == Mode::Connect && head_buf[0] == 1)
               SDLNet_TCP_Send(socket, "32BLMLTI\2", 9);
 
+            head_off = 0;
           } else {
-            std::cerr << "Unexpected header: " << std::string(reinterpret_cast<char *>(head), 8) << std::endl;
+            std::cerr << "Unexpected header: " << std::string(reinterpret_cast<char *>(head_buf), 8) << std::endl;
+            head_off = 0;
           }
 
           if(!recv_buf || SDLNet_CheckSockets(sock_set, 0) <= 0)

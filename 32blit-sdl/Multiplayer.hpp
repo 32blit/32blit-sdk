@@ -37,6 +37,9 @@ class Multiplayer final {
         static const int retry_interval = 5000;
         Uint32 last_connect_time = 0;
 
+        uint8_t head_buf[8];
+        int head_off = 0;
+
         uint8_t *recv_buf = nullptr;
         uint16_t recv_len = 0, recv_off = 0;
 };
