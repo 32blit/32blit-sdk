@@ -33,6 +33,11 @@ public:
 		return true;
 	}
 
+  void Clear()
+  {
+    m_uLen = 0;
+  }
+
 	uint32_t GetStreamLength(void)
 	{
 		return m_uLen;

@@ -145,9 +145,10 @@ uint8_t CDCCommandStream::Stream(uint8_t *data, uint32_t len)
 		m_pCurrentCommandHandler = m_commandHandlers[uCommand];
 		if(m_pCurrentCommandHandler)
 		{
-			if(m_pCurrentCommandHandler->StreamInit(uCommand))
+			if(m_pCurrentCommandHandler->StreamInit(uCommand)) {
 				m_state = stProcessing;
-			else
+        m_dataStream.Clear(); // make sure there isn't any leftover data in the buffer
+      } else
 			{
 				m_state = stDetect;
 				LogTimeTaken(CDCCommandHandler::srFinish, 0);
