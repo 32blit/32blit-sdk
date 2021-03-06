@@ -58,6 +58,7 @@ private:
 	uint8_t			m_header[4] = { '3', '2', 'B', 'L' };
 	uint8_t			m_uHeaderScanPos = 0;
 	uint8_t			m_uCommandScanPos = 0;
+	CDCCommandHandler::CDCFourCC uCommand = 0;
 
 
 	CDCCommandHandler														*m_pCurrentCommandHandler;

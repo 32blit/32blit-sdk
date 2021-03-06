@@ -76,8 +76,6 @@ uint8_t CDCCommandStream::Stream(uint8_t *data, uint32_t len)
 	blit_disable_ADC();
 	uint8_t   *pScanPos  = data;
 
-	CDCCommandHandler::CDCFourCC uCommand   = 0;
-
   while(pScanPos < (data+len))
   {
     if(m_state == stDetect)
@@ -111,7 +109,7 @@ uint8_t CDCCommandStream::Stream(uint8_t *data, uint32_t len)
         while((m_state == stDetect) && (m_uCommandScanPos < 4))
         {
           uint8_t  *pCommandByte = (uint8_t *)(&uCommand)+m_uCommandScanPos;
-          if(pScanPos > (data + len)) // rest in next packet
+          if(pScanPos >= (data + len)) // rest in next packet
             m_state = stDetectCommandWord;
           else
           {
