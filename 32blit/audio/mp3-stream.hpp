@@ -16,6 +16,7 @@ namespace blit {
 
     void play(int channel);
     void pause();
+    void restart();
 
     bool get_playing() const;
 

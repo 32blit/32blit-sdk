@@ -65,5 +65,9 @@ void update(uint32_t time) {
       stream.play(0);
   }
 
+  // restart
+  if(buttons.released & Button::X)
+    stream.restart();
+
   stream.update();
 }
