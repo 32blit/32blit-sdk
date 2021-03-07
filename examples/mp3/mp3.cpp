@@ -56,5 +56,14 @@ void render(uint32_t time) {
 }
 
 void update(uint32_t time) {
+
+  // play/pause
+  if(buttons.released & Button::A) {
+    if(stream.get_playing())
+      stream.pause();
+    else
+      stream.play(0);
+  }
+
   stream.update();
 }
