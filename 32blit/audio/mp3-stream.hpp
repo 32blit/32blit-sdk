@@ -6,19 +6,26 @@
 #include "engine/file.hpp"
 
 namespace blit {
-  class MP3Stream final
-  {
+
+  class MP3Stream final {
   public:
+
+    enum PlayFlags {
+      from_start = (1 << 0),
+      loop       = (1 << 1)
+    };
+
     MP3Stream();
     ~MP3Stream();
 
     bool load(std::string filename, bool do_duration_calc = false);
 
-    void play(int channel);
+    void play(int channel, int flags = 0);
     void pause();
     void restart();
 
     bool get_playing() const;
+    int get_play_flags() const;
 
     void update();
 
@@ -43,6 +50,7 @@ namespace blit {
     int32_t file_buffer_filled = 0;
 
     int channel = -1;
+    int play_flags = 0;
 
     // decoding
     void *mp3dec = nullptr;
