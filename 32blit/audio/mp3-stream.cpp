@@ -51,11 +51,17 @@ namespace blit {
     return true;
   }
 
-  void MP3Stream::play(int channel) {
+  void MP3Stream::play(int channel, int flags) {
     if(!file_buffer_filled)
       return;
 
+    pause();
+
     this->channel = channel;
+    this->play_flags = flags;
+
+    if((flags & PlayFlags::from_start) && buffered_samples)
+      restart();
 
     if(!current_sample) {
       decode(0);
@@ -79,8 +85,32 @@ namespace blit {
     blit::channels[channel].off();
   }
 
+  void MP3Stream::restart() {
+    bool was_playing = get_playing();
+    pause();
+
+    // reset file buffer
+    file_buffer_filled = 0;
+    file_offset = 0;
+    read(0);
+
+    // reset sample buffer
+    current_sample = nullptr;
+    buffered_samples = 0;
+
+    // re-init decoder
+    mp3dec_init(static_cast<mp3dec_t *>(mp3dec));
+
+    if(was_playing)
+      play(channel, play_flags);
+  }
+
   bool MP3Stream::get_playing() const {
     return channel != -1 && blit::channels[channel].adsr_phase == blit::ADSRPhase::SUSTAIN;
+  }
+
+  int MP3Stream::get_play_flags() const {
+    return play_flags;
   }
 
   void MP3Stream::update() {
@@ -145,7 +175,17 @@ namespace blit {
     } while (samples + (MINIMP3_MAX_SAMPLES_PER_FRAME / (2 * freq_scale)) <= audio_buf_size);
 
     if(!samples) {
-      data_size[buf_index] = -1;
+      if(play_flags & PlayFlags::loop) {
+        // back to start
+        file_buffer_filled = 0;
+        file_offset = 0;
+        read(0);
+
+        mp3dec_init(static_cast<mp3dec_t *>(mp3dec));
+        decode(buf_index);
+      } else
+        data_size[buf_index] = -1;
+
       return;
     }
 
