@@ -191,21 +191,18 @@ void Multiplayer::setup() {
     // try connecting first for auto
     if(mode != Mode::Listen) {
         if(SDLNet_ResolveHost(&ip, address.c_str(), port) == -1) {
-            std::cerr << "Failed to resolve host: " << SDLNet_GetError() << std::endl;
-            return;
-        }
-
-        socket = SDLNet_TCP_Open(&ip);
+            std::cerr << "Failed to resolve \"" << address << "\"!" << std::endl;
+        } else
+            socket = SDLNet_TCP_Open(&ip);
     }
 
     if(!socket && mode != Mode::Connect) {
         // try hosting instead unless connecting was specified
         if(SDLNet_ResolveHost(&ip, nullptr, port) == -1) {
-            std::cerr << "Failed to resolve host: " << SDLNet_GetError() << std::endl;
-            return;
-        }
-
-        listen_socket = SDLNet_TCP_Open(&ip);
+            // this can't fail
+            std::cerr << "Failed to resolve \"any\" address!" << std::endl;
+        } else
+            listen_socket = SDLNet_TCP_Open(&ip);
     }
 
     if(!socket && !listen_socket) {
