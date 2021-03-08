@@ -7,7 +7,7 @@ namespace blit {
 
   /**
    * Create a new tilemap.
-   * 
+   *
    * \param[in] tiles
    * \param[in] transforms
    * \param[in] bounds Map bounds, must be a power of two
@@ -24,8 +24,8 @@ namespace blit {
    * TODO: Document
    */
   int32_t TileMap::offset(const Point &p) {
-    int32_t cx = ((uint16_t)p.x) & (bounds.w - 1);
-    int32_t cy = ((uint16_t)p.y) & (bounds.h - 1);
+    int32_t cx = ((uint32_t)p.x) & (bounds.w - 1);
+    int32_t cy = ((uint32_t)p.y) & (bounds.h - 1);
 
     if ((p.x ^ cx) | (p.y ^ cy)) {
       if (repeat_mode == DEFAULT_FILL)
@@ -42,13 +42,13 @@ namespace blit {
 
   /**
    * TODO: Document
-   * 
+   *
    * \param[in] x
    * \param[in] y
    */
   int32_t TileMap::offset(int16_t x, int16_t y) {
-    int32_t cx = ((uint16_t)x) & (bounds.w - 1);
-    int32_t cy = ((uint16_t)y) & (bounds.h - 1);
+    int32_t cx = ((uint32_t)x) & (bounds.w - 1);
+    int32_t cy = ((uint32_t)y) & (bounds.h - 1);
 
     if ((x ^ cx) | (y ^ cy)) {
       if (repeat_mode == DEFAULT_FILL)
@@ -144,50 +144,72 @@ namespace blit {
 
   /**
    * TODO: Document
-   * 
+   *
    * \param[in] dest
    * \param[in] s
    * \param[in] c
    * \param[in] swc
    * \param[in] ewc
    */
-  void TileMap::texture_span(Surface *dest, Point s, uint16_t c, Vec2 swc, Vec2 ewc) {
+  void TileMap::texture_span(Surface *dest, Point s, unsigned int c, Vec2 swc, Vec2 ewc) {
     Surface *src = sprites;
 
-    Vec2 wc = swc;
-    Vec2 dwc = (ewc - swc) / float(c);
+    static const int fix_shift = 16;
+
+    Point wc(swc * (1 << fix_shift));
+    Point dwc(((ewc - swc) / float(c)) * (1 << fix_shift));
     int32_t doff = dest->offset(s.x, s.y);
+
     do {
-      int16_t wcx = floorf(wc.x);
-      int16_t wcy = floorf(wc.y);
+      int16_t wcx = wc.x >> fix_shift;
+      int16_t wcy = wc.y >> fix_shift;
 
       int32_t toff = offset(wcx >> 3, wcy >> 3);
 
-      if (toff != -1) {
+      if (toff != -1 && tiles[toff] != empty_tile_id) {
         uint8_t tile_id = tiles[toff];
         uint8_t transform = transforms[toff];
 
         // coordinate within sprite
-        uint8_t u = wcx & 0b111;
-        uint8_t v = wcy & 0b111;
+        int u = wcx & 0b111;
+        int v = wcy & 0b111;
 
         // if this tile has a transform then modify the uv coordinates
         if (transform) {
           v = (transform & 0b010) ? (7 - v) : v;
           u = (transform & 0b100) ? (7 - u) : u;
-          if (transform & 0b001) { uint8_t tmp = u; u = v; v = tmp; }
+          if (transform & 0b001) { int tmp = u; u = v; v = tmp; }
         }
 
         // sprite sheet coordinates for top left corner of sprite
         u += (tile_id & 0b1111) * 8;
         v += (tile_id >> 4) * 8;
 
-        dest->bbf(src, src->offset(u, v), dest, doff, 1, 1);
+        // draw as many pixels as possible
+        int count = 0;
+
+        do {
+          wc += dwc;
+          c--;
+          count++;
+        } while(c && (wc.x >> fix_shift) == wcx && (wc.y >> fix_shift) == wcy);
+
+        int soff = src->offset(u, v);
+        dest->bbf(src, soff, dest, doff, count, 0);
+
+        doff += count;
+
+        continue;
       }
 
-      wc += dwc;
-      doff++;
-    } while (--c);
+      // skip to next tile
+      do {
+        wc += dwc;
+        doff++;
+        c--;
+      } while(c && (wc.x >> (fix_shift + 3)) == wcx >> 3 && (wc.y >> (fix_shift + 3)) == wcy >> 3);
+
+    } while (c);
   }
 
 }
