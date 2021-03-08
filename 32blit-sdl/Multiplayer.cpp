@@ -23,8 +23,16 @@ Multiplayer::~Multiplayer() {
 }
 
 void Multiplayer::update() {
-    if(!socket && !listen_socket)
-        return; // TODO: re-attempt connection if mode == Connect
+    if(!socket && !listen_socket) {
+        // attempt to reconnect
+        auto now = SDL_GetTicks();
+        if((now - last_connect_time) > retry_interval) {
+            setup();
+
+            last_connect_time = now;
+        }
+        return;
+    }
 
     int num_ready;
 
@@ -43,6 +51,11 @@ void Multiplayer::update() {
               std::cout << (ip >> 24) << "." << ((ip >> 16) & 0xFF) << "." << ((ip >> 8) & 0xFF) << "." << (ip & 0xFF) << " connected" << std::endl;
 
               SDLNet_TCP_AddSocket(sock_set, socket);
+
+              SDLNet_TCP_Send(socket, "32BLMLTI\1", 9);
+
+              // stop listening now
+              stop_listening();
           }
       }
 
@@ -51,20 +64,60 @@ void Multiplayer::update() {
 
       if(!recv_buf) {
           // read header and setup
-          uint8_t head[10];
-          auto read = SDLNet_TCP_Recv(socket, head, 10);
 
-          recv_len = head[8] | (head[9] << 8);
-          recv_buf = new uint8_t[recv_len];
-          recv_off = 0;
+          auto read = SDLNet_TCP_Recv(socket, head_buf + head_off, 8 - head_off);
 
-          if(SDLNet_CheckSockets(sock_set, 0) <= 0)
+          if(read <= 0) {
+            disconnect();
+            return;
+          }
+
+          head_off += read;
+
+          if(head_off < 8)
+            continue;
+
+          if(memcmp(head_buf, "32BLUSER", 8) == 0) {
+            // get the length
+            int off = 0;
+
+            do {
+              read = SDLNet_TCP_Recv(socket, head_buf + off, 2 - off);
+
+              if(read <= 0) {
+                disconnect();
+                return;
+              }
+
+              off += read;
+            } while(off != 2);
+
+            recv_len = head_buf[0] | (head_buf[1] << 8);
+            recv_buf = new uint8_t[recv_len];
+            recv_off = 0;
+            head_off = 0;
+
+          } else if(memcmp(head_buf, "32BLMLTI", 8) == 0) {
+            // handle the handshake packet
+            SDLNet_TCP_Recv(socket, head_buf, 1);
+            handshake = head_buf[0] != 0;
+
+            if(mode == Mode::Connect && head_buf[0] == 1)
+              SDLNet_TCP_Send(socket, "32BLMLTI\2", 9);
+
+            head_off = 0;
+          } else {
+            std::cerr << "Unexpected header: " << std::string(reinterpret_cast<char *>(head_buf), 8) << std::endl;
+            head_off = 0;
+          }
+
+          if(!recv_buf || SDLNet_CheckSockets(sock_set, 0) <= 0)
               return;
       }
 
       auto read = SDLNet_TCP_Recv(socket, recv_buf + recv_off, recv_len - recv_off);
-      if(read < 0) {
-          // failed
+      if(read <= 0) {
+          // failed/disconnected
           delete[] recv_buf;
           recv_buf = nullptr;
           disconnect();
@@ -85,7 +138,7 @@ void Multiplayer::update() {
 }
 
 bool Multiplayer::is_connected() const {
-    return socket != nullptr;
+    return socket != nullptr && handshake;
 }
 
 void Multiplayer::set_enabled(bool enabled) {
@@ -128,9 +181,9 @@ void Multiplayer::send_message(const uint8_t *data, uint16_t length) {
 }
 
 void Multiplayer::setup() {
-    IPaddress ip;
-
     const uint16_t port = 0x32B1;
+
+    IPaddress ip;
 
     // try connecting first for auto
     if(mode != Mode::Listen) {
@@ -138,9 +191,9 @@ void Multiplayer::setup() {
             std::cerr << "Failed to resolve host: " << SDLNet_GetError() << std::endl;
             return;
         }
-    }
 
-    socket = SDLNet_TCP_Open(&ip);
+        socket = SDLNet_TCP_Open(&ip);
+    }
 
     if(!socket && mode != Mode::Connect) {
         // try hosting instead unless connecting was specified
@@ -157,10 +210,13 @@ void Multiplayer::setup() {
         return;
     }
 
-    if(listen_socket)
+    if(listen_socket) {
         SDLNet_TCP_AddSocket(sock_set, listen_socket);
-    else
+        mode = Mode::Listen;
+    } else {
         SDLNet_TCP_AddSocket(sock_set, socket);
+        mode = Mode::Connect;
+    }
 }
 
 void Multiplayer::disconnect() {
@@ -171,4 +227,13 @@ void Multiplayer::disconnect() {
 
     SDLNet_TCP_Close(socket);
     socket = nullptr;
+
+    handshake = false;
+}
+
+void Multiplayer::stop_listening() {
+    SDLNet_TCP_DelSocket(sock_set, listen_socket);
+
+    SDLNet_TCP_Close(listen_socket);
+    listen_socket = nullptr;
 }

@@ -25,13 +25,20 @@ class Multiplayer final {
     private:
         void setup();
         void disconnect();
+        void stop_listening();
 
         Mode mode;
         std::string address;
-        bool enabled = false;
+        bool enabled = false, handshake = false;
 
         TCPsocket socket = nullptr, listen_socket = nullptr;
         SDLNet_SocketSet sock_set = nullptr;
+
+        static const int retry_interval = 5000;
+        Uint32 last_connect_time = 0;
+
+        uint8_t head_buf[8];
+        int head_off = 0;
 
         uint8_t *recv_buf = nullptr;
         uint16_t recv_len = 0, recv_off = 0;
