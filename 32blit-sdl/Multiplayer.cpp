@@ -23,6 +23,9 @@ Multiplayer::~Multiplayer() {
 }
 
 void Multiplayer::update() {
+    if(!enabled)
+        return;
+  
     if(!socket && !listen_socket) {
         // attempt to reconnect
         auto now = SDL_GetTicks();
