@@ -19,6 +19,9 @@ namespace blit {
   void set_screen_palette(const Pen *colours, int num_cols);
 
   uint32_t now();
+  uint32_t now_us();
+  uint32_t us_diff(uint32_t from, uint32_t to);
+
   uint32_t random();
 
   void debug(std::string message);

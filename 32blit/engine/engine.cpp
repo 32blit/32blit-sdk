@@ -27,6 +27,17 @@ namespace blit {
     return api.now();
   }
 
+  uint32_t now_us() {
+    return api.get_us_timer();
+  }
+
+  uint32_t us_diff(uint32_t from, uint32_t to) {
+    if(to >= from)
+      return to - from;
+    else // wrap
+      return (api.get_max_us_timer() - from) + to;
+  }
+
   uint32_t random() {
     return api.random();
   }
