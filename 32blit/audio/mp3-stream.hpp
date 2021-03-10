@@ -46,7 +46,7 @@ namespace blit {
     uint32_t file_offset = 0;
 
     static const int file_buffer_size = 1024 * 4;
-    uint8_t file_buffer[file_buffer_size];
+    uint8_t *file_buffer = nullptr;
     int32_t file_buffer_filled = 0;
 
     int channel = -1;
