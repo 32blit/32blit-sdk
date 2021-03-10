@@ -12,7 +12,7 @@ These instructions cover building 32blit on Windows (without WSL or a full Visua
 You'll need to install:
 
  - [Git for Windows](https://git-scm.com/download/win)
- - [Python] (https://www.python.org/downloads/)
+ - [Python](https://www.python.org/downloads/)
  - The [Visual Studio build tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2019) (For local builds, select "C++ build tools"). This includes a copy of CMake.
  - The [GNU Arm Embedded Toolchain](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads) (For 32blit device builds, use the 9-2020-q2-update version). Make sure to select the "Add path to environment variable" at the end of the setup.
 
