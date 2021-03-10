@@ -56,7 +56,7 @@ namespace blit {
     void *mp3dec = nullptr;
     bool need_convert = false;
 
-    static const int audio_buf_size = 1152 * 4;
+    static const int audio_buf_size = 1152;
     int16_t audio_buf[2][audio_buf_size];
     int16_t *current_sample = nullptr, *end_sample = nullptr;
     int data_size[2]{};
