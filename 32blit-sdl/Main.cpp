@@ -16,6 +16,8 @@
 #include "Audio.hpp"
 #include "UserCode.hpp"
 
+#include "../launcher/contrib.hpp"
+
 #ifdef VIDEO_CAPTURE
 #include "VideoCapture.hpp"
 #endif
@@ -163,6 +165,26 @@ int main(int argc, char *argv[]) {
 			    custom_window_position = true;
 			}
 		}
+		else if(arg_str == "--credits") {
+			std::cout << "32Blit was made possible by:" << std::endl;
+			std::cout << std::endl;
+			for(auto name : contributors) {
+				if(name != nullptr) {
+					std::cout << " * " << name << std::endl;
+				}
+			}
+			std::cout << std::endl;
+			std::cout << "Special thanks to:" << std::endl;
+			std::cout << std::endl;
+			for(auto name : special_thanks) {
+				if(name != nullptr) {
+					std::cout << " * " << name << std::endl;
+				}
+			}
+			std::cout << std::endl;
+			SDL_Quit();
+			return 0;
+		}
 		else if(arg_str == "--info") {
 			std::cout << metadata_description << std::endl << std::endl;
 			std::cout << " Category: " << metadata_category << std::endl;
@@ -176,6 +198,7 @@ int main(int argc, char *argv[]) {
 			std::cout << " --connect <addr> -- Connect to a listening game instance." << std::endl;
 			std::cout << " --listen         -- Listen for incoming connections." << std::endl;
 			std::cout << " --position x,y   -- Set window position." << std::endl;
+			std::cout << " --credits        -- Print contributor credits and exit." << std::endl;
 			std::cout << " --info           -- Print metadata info and exit." << std::endl << std::endl;
 			SDL_DestroyWindow(window);
 			SDL_Quit();
