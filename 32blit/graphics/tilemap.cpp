@@ -20,6 +20,30 @@ namespace blit {
     }
   }
 
+  TileMap *TileMap::load_tmx(const uint8_t *asset, Surface *sprites, int layer, int flags) {
+    auto map_struct = reinterpret_cast<const TMX *>(asset);
+
+    if(memcmp(map_struct, "MTMX", 4) != 0)
+      return nullptr;
+
+    auto layer_size = map_struct->width * map_struct->height;
+
+    uint8_t *tile_data;
+    if(flags & copy_tiles) {
+      tile_data = new uint8_t[layer_size];
+      memcpy(tile_data, map_struct->data + layer_size * layer, layer_size);
+    } else {
+      tile_data = const_cast<uint8_t *>(map_struct->data + layer_size * layer);
+    }
+
+    // TODO: transforms (requires packer to output them)
+
+    auto ret = new TileMap(tile_data, nullptr, Size(map_struct->width, map_struct->height), sprites);
+    ret->empty_tile_id = map_struct->empty_tile;
+
+    return ret;
+  }
+
   /**
    * TODO: Document
    */
