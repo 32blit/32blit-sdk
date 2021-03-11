@@ -36,9 +36,20 @@ namespace blit {
       tile_data = const_cast<uint8_t *>(map_struct->data + layer_size * layer);
     }
 
-    // TODO: transforms (requires packer to output them)
+    auto transform_base = map_struct->data + layer_size * map_struct->layers;
 
-    auto ret = new TileMap(tile_data, nullptr, Size(map_struct->width, map_struct->height), sprites);
+    uint8_t *transform_data = nullptr;
+
+    if(flags & copy_transforms) {
+      transform_data = new uint8_t[layer_size]();
+
+      if(map_struct->flags & TMX_Transforms)
+        memcpy(transform_data, transform_base + layer_size * layer, layer_size);
+    } else if(map_struct->flags & TMX_Transforms) {
+      transform_data = const_cast<uint8_t *>(transform_base + layer_size * layer);
+    }
+
+    auto ret = new TileMap(tile_data, transform_data, Size(map_struct->width, map_struct->height), sprites);
     ret->empty_tile_id = map_struct->empty_tile;
 
     return ret;

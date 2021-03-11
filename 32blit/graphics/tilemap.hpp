@@ -50,12 +50,13 @@ namespace blit {
     int empty_tile_id = -1;
 
     enum LoadFlags {
-      copy_tiles = (1 << 0)
+      copy_tiles = (1 << 0),
+      copy_transforms = (1 << 0)
     };
 
     TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites);
 
-    static TileMap *load_tmx(const uint8_t *asset, Surface *sprites, int layer = 0, int flags = copy_tiles);
+    static TileMap *load_tmx(const uint8_t *asset, Surface *sprites, int layer = 0, int flags = copy_tiles | copy_transforms);
 
     inline int32_t offset(const Point &p) {return offset(p.x, p.y);} // __attribute__((always_inline));
     int32_t offset(int16_t x, int16_t y); // __attribute__((always_inline));
