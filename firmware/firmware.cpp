@@ -614,6 +614,10 @@ static const uint8_t *flash_to_tmp(const std::string &filename, uint32_t &size) 
   return (const uint8_t *)(qspi_flash_address + flash_offset);
 }
 
+static bool blit_is_launcher_running() {
+  return launcher_offset == persist.last_game_offset;
+}
+
 static void tmp_file_closed(const uint8_t *ptr) {
   cached_file_in_tmp = false;
 }
@@ -1083,6 +1087,12 @@ void FlashLoader::handle_data_end(bool success) {
         flash_mapped = false;
       }
       blit_enable_user_code();
+
+      if(blit_is_launcher_running()) {
+        auto game_header = (BlitGameHeader *) (qspi_flash_address + persist.last_game_offset);
+        auto init = (BlitInitFunction)((uint8_t *)game_header->init + persist.last_game_offset);
+        init(persist.last_game_offset);
+      }
     }
   }
 }
