@@ -46,7 +46,7 @@ namespace blit {
     uint32_t file_offset = 0;
 
     static const int file_buffer_size = 1024 * 4;
-    uint8_t file_buffer[file_buffer_size];
+    uint8_t *file_buffer = nullptr;
     int32_t file_buffer_filled = 0;
 
     int channel = -1;
@@ -56,7 +56,7 @@ namespace blit {
     void *mp3dec = nullptr;
     bool need_convert = false;
 
-    static const int audio_buf_size = 1152 * 4;
+    static const int audio_buf_size = 1152;
     int16_t audio_buf[2][audio_buf_size];
     int16_t *current_sample = nullptr, *end_sample = nullptr;
     int data_size[2]{};

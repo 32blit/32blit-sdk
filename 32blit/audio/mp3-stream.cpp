@@ -28,8 +28,18 @@ namespace blit {
     buffered_samples = 0;
     need_convert = false;
 
+    // avoid attempting to free later
+    if(file.get_ptr())
+      file_buffer = nullptr;
+
     if(!file.open(filename))
       return false;
+
+    // don't need a buffer if it's in flash
+    if(file.get_ptr()) {
+      delete[] file_buffer;
+      file_buffer = nullptr;
+    }
 
     // fill initial buffer
     file_buffer_filled = 0;
@@ -259,6 +269,24 @@ namespace blit {
   }
 
   void MP3Stream::read(int32_t len) {
+    // init buffer
+    if(!file_buffer_filled) {
+      if(file.get_ptr()) {
+        // we have the whole thing
+        file_buffer = const_cast<uint8_t *>(file.get_ptr());
+        file_buffer_filled = file.get_length();
+      } else if(!file_buffer) {
+        file_buffer = new uint8_t[file_buffer_size];
+      }
+    }
+
+    // it's a buffer file, nothing to read
+    if(file.get_ptr()) {
+      file_buffer += len;
+      file_buffer_filled -= len;
+      return;
+    }
+
     if(len < file_buffer_size)
       memmove(file_buffer, file_buffer + len, file_buffer_filled - len);
 
