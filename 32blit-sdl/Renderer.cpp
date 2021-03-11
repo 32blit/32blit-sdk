@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cmath>
+#include <iostream>
 #include "SDL.h"
 
 #include "Renderer.hpp"
@@ -10,7 +11,7 @@ Renderer::Renderer(SDL_Window *window, int width, int height) : sys_width(width)
 	//SDL_SetHint(SDL_HINT_RENDER_DRIVER, "openGL");
 	renderer = SDL_CreateRenderer(window, -1, 0);
 	if (renderer == nullptr) {
-		fprintf(stderr, "could not create renderer: %s\n", SDL_GetError());
+		std::cerr << "could not create renderer: " << SDL_GetError() << std::endl;
 	}
 
 	current = fb_hires_texture;
