@@ -140,32 +140,11 @@ void em_loop() {
 #endif
 
 int main(int argc, char *argv[]) {
+  int x, y;
+  bool custom_window_position = false;
 
-  std::cout << "32Blit SDL2 runtime" << std::endl;
-  std::cout << "(c) Pimoroni et.al. 2019-2020" << std::endl;
-
-	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER|SDL_INIT_AUDIO) < 0) {
-		fprintf(stderr, "could not initialize SDL2: %s\n", SDL_GetError());
-		return 1;
-	}
-
-	window = SDL_CreateWindow(
-		metadata_title,
-		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-		System::width*2, System::height*2,
-		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
-	);
-
-	if (window == nullptr) {
-		fprintf(stderr, "could not create window: %s\n", SDL_GetError());
-		return 1;
-	}
-	SDL_SetWindowMinimumSize(window, System::width, System::height);
-
-	// Open all joysticks as game controllers
-	for(int n=0; n<SDL_NumJoysticks(); n++) {
-		SDL_GameControllerOpen(n);
-	}
+  std::cout << metadata_title << " " << metadata_version << std::endl;
+  std::cout << "Powered by 32Blit SDL2 runtime - github.com/32blit/32blit-sdk" << std::endl << std::endl;
 
 	auto mp_mode = Multiplayer::Mode::Auto;
 	std::string mp_address = "localhost";
@@ -180,11 +159,55 @@ int main(int argc, char *argv[]) {
 		else if(arg_str == "--listen")
 			mp_mode = Multiplayer::Mode::Listen;
 		else if(arg_str == "--position") {
-			int x, y;
 			if(SDL_sscanf(argv[i+1], "%d,%d", &x, &y) == 2) {
-			    SDL_SetWindowPosition(window, x, y);
+			    custom_window_position = true;
 			}
 		}
+		else if(arg_str == "--info") {
+			std::cout << metadata_description << std::endl << std::endl;
+			std::cout << " Category: " << metadata_category << std::endl;
+			std::cout << " Author:   " << metadata_author << std::endl;
+			std::cout << " URL:      " << metadata_url << std::endl << std::endl;
+			SDL_Quit();
+			return 0;
+		}
+		else if(arg_str == "--help") {
+			std::cout << "Usage: " << argv[0] << " <options>" << std::endl << std::endl;
+			std::cout << " --connect <addr> -- Connect to a listening game instance." << std::endl;
+			std::cout << " --listen         -- Listen for incoming connections." << std::endl;
+			std::cout << " --position x,y   -- Set window position." << std::endl;
+			std::cout << " --info           -- Print metadata info and exit." << std::endl << std::endl;
+			SDL_DestroyWindow(window);
+			SDL_Quit();
+			return 0;
+		}
+	}
+
+	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER|SDL_INIT_AUDIO) < 0) {
+		std::cerr << "could not initialize SDL2: " << SDL_GetError() << std::endl;
+		return 1;
+	}
+
+	window = SDL_CreateWindow(
+		metadata_title,
+		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+		System::width*2, System::height*2,
+		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
+	);
+
+	if (window == nullptr) {
+		std::cerr << "could not create window: " << SDL_GetError() << std::endl;
+		return 1;
+	}
+	SDL_SetWindowMinimumSize(window, System::width, System::height);
+
+	if(custom_window_position) {
+		SDL_SetWindowPosition(window, x, y);
+	}
+
+	// Open all joysticks as game controllers
+	for(int n=0; n<SDL_NumJoysticks(); n++) {
+		SDL_GameControllerOpen(n);
 	}
 
 	blit_system = new System();
@@ -210,7 +233,7 @@ int main(int argc, char *argv[]) {
 #endif
 
 	if (running) {
-		fprintf(stderr, "Main loop exited with error: %s\n", SDL_GetError());
+		std::cerr << "Main loop exited with error: " << SDL_GetError() << std::endl;
 		running = false; // ensure timer thread quits
 	}
 
