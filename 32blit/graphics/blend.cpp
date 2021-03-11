@@ -208,7 +208,7 @@ namespace blit {
 
   void RGBA_RGBA(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt, int32_t src_step) {
     uint8_t* s = src->palette ? src->data + soff : src->data + (soff * src->pixel_stride);
-    uint8_t* d = dest->data + (doff * 3);
+    uint8_t* d = dest->data + (doff * 4);
     uint8_t* m = dest->mask ? dest->mask->data + doff : nullptr;
 
     do {
@@ -223,7 +223,7 @@ namespace blit {
         *d = blend(pen->r, *d, a); d++;
         *d = blend(pen->g, *d, a); d++;
         *d = blend(pen->b, *d, a); d++;
-        *d = blend(pen->b, *d, a); d++;
+        *d = blend(pen->a, *d, a); d++;
       }else{
         d += 4;
       }
