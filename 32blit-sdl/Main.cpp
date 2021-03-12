@@ -16,7 +16,7 @@
 #include "Audio.hpp"
 #include "UserCode.hpp"
 
-#include "../launcher/contrib.hpp"
+#include "contrib.hpp"
 
 #ifdef VIDEO_CAPTURE
 #include "VideoCapture.hpp"

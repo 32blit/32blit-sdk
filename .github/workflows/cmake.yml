@@ -96,7 +96,7 @@ jobs:
       shell: bash
       run: |
         echo "TRAVIS_TAG=${{github.event.release.tag_name}}" >> $GITHUB_ENV
-        python3 launcher/update-contributors.py || python launcher/update-contributors.py
+        python3 tools/update-contributors.py || python tools/update-contributors.py
 
     - name: Configure CMake
       shell: bash
