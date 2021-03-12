@@ -214,7 +214,11 @@ namespace blit {
 
     // there was no buffer last time
     if(current_sample == end_sample) {
-      if(data_size[cur_audio_buf]) {
+      if(data_size[cur_audio_buf] == -1) {
+        current_sample = end_sample = nullptr;
+        channel.off();
+        return;
+      } else if(data_size[cur_audio_buf]) {
         end_sample = audio_buf[cur_audio_buf] + data_size[cur_audio_buf]; // recovered from underrun
       } else {
         memset(channel.wave_buffer, 0, 64 * sizeof(int16_t));
