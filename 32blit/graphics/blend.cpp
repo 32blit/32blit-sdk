@@ -137,6 +137,8 @@ namespace blit {
   }
 
   void RGBA_RGBA(const Pen* pen, const Surface* dest, uint32_t off, uint32_t cnt) {
+    if(!pen->a) return;
+
     uint8_t* d = dest->data + (off * 4);
     uint8_t* m = dest->mask ? dest->mask->data + off : nullptr;
 
@@ -158,6 +160,8 @@ namespace blit {
   }
 
   void RGBA_RGB(const Pen* pen, const Surface* dest, uint32_t off, uint32_t c) {
+    if(!pen->a) return;
+
     uint8_t* d = dest->data + (off * 3);
     uint8_t* m = dest->mask ? dest->mask->data + off : nullptr;
 
@@ -204,7 +208,7 @@ namespace blit {
 
   void RGBA_RGBA(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt, int32_t src_step) {
     uint8_t* s = src->palette ? src->data + soff : src->data + (soff * src->pixel_stride);
-    uint8_t* d = dest->data + (doff * 3);
+    uint8_t* d = dest->data + (doff * 4);
     uint8_t* m = dest->mask ? dest->mask->data + doff : nullptr;
 
     do {
@@ -215,11 +219,11 @@ namespace blit {
 
       if (a >= 255) {
         *d++ = pen->r; *d++ = pen->g; *d++ = pen->b; d++;
-      } else if (a > 0) {
+      } else if (a > 1) {
         *d = blend(pen->r, *d, a); d++;
         *d = blend(pen->g, *d, a); d++;
         *d = blend(pen->b, *d, a); d++;
-        *d = blend(pen->b, *d, a); d++;
+        *d = blend(pen->a, *d, a); d++;
       }else{
         d += 4;
       }
@@ -237,7 +241,10 @@ namespace blit {
     if(!m && src_step == 0 && cnt > 1) {
       Pen *pen = src->palette ? &src->palette[*s] : (Pen *)s;
 
-      uint16_t a = src->format == PixelFormat::RGB ? 0 : pen->a;
+      uint16_t a = src->format == PixelFormat::RGB ? 255 : pen->a;
+
+      if(!a) return;
+
       a = alpha(a, dest->alpha);
 
       if (a >= 255) {
@@ -254,12 +261,12 @@ namespace blit {
     do {
       Pen *pen = src->palette ? &src->palette[*s] : (Pen *)s;
 
-      uint16_t a = src->format == PixelFormat::RGB ? 0 : pen->a;
+      uint16_t a = src->format == PixelFormat::RGB ? 255 : pen->a;
       a = m ? alpha(a, *m++, dest->alpha) : alpha(a, dest->alpha);
 
       if (a >= 255) {
         *d++ = pen->r; *d++ = pen->g; *d++ = pen->b;
-      } else if (a > 0) {
+      } else if (a > 1) {
         *d = blend(pen->r, *d, a); d++;
         *d = blend(pen->g, *d, a); d++;
         *d = blend(pen->b, *d, a); d++;
