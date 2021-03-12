@@ -148,18 +148,23 @@ namespace blit {
     int samples = 0;
     int freq_scale = 1;
 
-    do {
+    while(true) {
       if(file_buffer_filled == 0)
         break;
 
       if(need_convert) {
         // attempt to convert to mono 22050Hz (badly)
         int16_t tmp_buf[MINIMP3_MAX_SAMPLES_PER_FRAME];
-        int tmp_samples = mp3dec_decode_frame(static_cast<mp3dec_t *>(mp3dec), file_buffer, file_buffer_filled, tmp_buf, &info);
+        int tmp_samples = mp3dec_decode_frame(static_cast<mp3dec_t *>(mp3dec), file_buffer, file_buffer_filled, nullptr, &info);
 
         if(tmp_samples) {
           freq_scale = info.hz / 22050;
           int div = info.channels * freq_scale;
+
+          if(samples + tmp_samples / freq_scale > audio_buf_size)
+            break;
+
+          mp3dec_decode_frame(static_cast<mp3dec_t *>(mp3dec), file_buffer, file_buffer_filled, tmp_buf, &info);
 
           for(int i = 0; i < tmp_samples * info.channels; i += div, samples++) {
             int32_t tmp = 0;
@@ -169,8 +174,13 @@ namespace blit {
             audio_buf[buf_index][samples] = tmp / div;
           }
         }
-      } else
+      } else {
+        int new_samples = mp3dec_decode_frame(static_cast<mp3dec_t *>(mp3dec), file_buffer, file_buffer_filled, nullptr, &info);
+        if(samples + new_samples > audio_buf_size)
+          break;
+
         samples += mp3dec_decode_frame(static_cast<mp3dec_t *>(mp3dec), file_buffer, file_buffer_filled, audio_buf[buf_index] + samples, &info);
+      }
 
       // switch conversion on and retry if needed
       if(!need_convert && (info.channels != 1 || info.hz != 22050)) {
@@ -180,9 +190,7 @@ namespace blit {
       }
 
       read(info.frame_bytes);
-
-      // / 2 because we only ever store mono
-    } while (samples + (MINIMP3_MAX_SAMPLES_PER_FRAME / (2 * freq_scale)) <= audio_buf_size);
+    }
 
     if(!samples) {
       if(play_flags & PlayFlags::loop) {
