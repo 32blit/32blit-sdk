@@ -92,7 +92,8 @@ namespace blit {
   }
 
   void MP3Stream::pause() {
-    blit::channels[channel].off();
+    if(channel != -1)
+      blit::channels[channel].off();
   }
 
   void MP3Stream::restart() {
