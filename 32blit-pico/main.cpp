@@ -73,6 +73,14 @@ static bool is_storage_available() {
   return false;
 }
 
+static uint32_t get_us_timer() {
+  return to_us_since_boot(get_absolute_time());
+}
+
+static uint32_t get_max_us_timer() {
+  return 0xFFFFFFFF; // it's a 64bit timer...
+}
+
 // user funcs
 void init();
 void render(uint32_t);
@@ -109,8 +117,8 @@ int main() {
 
   // profiler
   // api.enable_us_timer = ::enable_us_timer;
-  // api.get_us_timer = ::get_us_timer;
-  // api.get_max_us_timer = ::get_max_us_timer;
+  api.get_us_timer = ::get_us_timer;
+  api.get_max_us_timer = ::get_max_us_timer;
 
   // jpeg
   // api.decode_jpeg_buffer = ::decode_jpeg_buffer;
