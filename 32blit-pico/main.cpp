@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "hardware/clocks.h"
 #include "pico/stdlib.h"
 
 #include "audio.hpp"
@@ -90,6 +91,9 @@ void render(uint32_t);
 void update(uint32_t);
 
 int main() {
+  set_sys_clock_khz(250000, false);
+  clock_configure(clk_peri, 0, CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS, 250 * MHZ, 250 * MHZ);
+
   stdio_init_all();
 
   api.channels = ::channels;
