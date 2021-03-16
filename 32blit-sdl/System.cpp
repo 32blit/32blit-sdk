@@ -331,7 +331,7 @@ void System::stop() {
 	running = false;
 
 	if(SDL_SemWaitTimeout(s_loop_ended, 500)) {
-		fprintf(stderr, "User code appears to have frozen. Detaching thread.\n");
+		std::cerr << "User code appears to have frozen. Detaching thread." << std::endl;
 		SDL_DetachThread(t_system_loop);
 	} else {
 		SDL_WaitThread(t_system_loop, &returnValue);
