@@ -92,7 +92,8 @@ namespace blit {
   }
 
   void MP3Stream::pause() {
-    blit::channels[channel].off();
+    if(channel != -1)
+      blit::channels[channel].off();
   }
 
   void MP3Stream::restart() {
@@ -148,18 +149,23 @@ namespace blit {
     int samples = 0;
     int freq_scale = 1;
 
-    do {
+    while(true) {
       if(file_buffer_filled == 0)
         break;
 
       if(need_convert) {
         // attempt to convert to mono 22050Hz (badly)
         int16_t tmp_buf[MINIMP3_MAX_SAMPLES_PER_FRAME];
-        int tmp_samples = mp3dec_decode_frame(static_cast<mp3dec_t *>(mp3dec), file_buffer, file_buffer_filled, tmp_buf, &info);
+        int tmp_samples = mp3dec_decode_frame(static_cast<mp3dec_t *>(mp3dec), file_buffer, file_buffer_filled, nullptr, &info);
 
         if(tmp_samples) {
           freq_scale = info.hz / 22050;
           int div = info.channels * freq_scale;
+
+          if(samples + tmp_samples / freq_scale > audio_buf_size)
+            break;
+
+          mp3dec_decode_frame(static_cast<mp3dec_t *>(mp3dec), file_buffer, file_buffer_filled, tmp_buf, &info);
 
           for(int i = 0; i < tmp_samples * info.channels; i += div, samples++) {
             int32_t tmp = 0;
@@ -169,8 +175,13 @@ namespace blit {
             audio_buf[buf_index][samples] = tmp / div;
           }
         }
-      } else
+      } else {
+        int new_samples = mp3dec_decode_frame(static_cast<mp3dec_t *>(mp3dec), file_buffer, file_buffer_filled, nullptr, &info);
+        if(samples + new_samples > audio_buf_size)
+          break;
+
         samples += mp3dec_decode_frame(static_cast<mp3dec_t *>(mp3dec), file_buffer, file_buffer_filled, audio_buf[buf_index] + samples, &info);
+      }
 
       // switch conversion on and retry if needed
       if(!need_convert && (info.channels != 1 || info.hz != 22050)) {
@@ -180,9 +191,7 @@ namespace blit {
       }
 
       read(info.frame_bytes);
-
-      // / 2 because we only ever store mono
-    } while (samples + (MINIMP3_MAX_SAMPLES_PER_FRAME / (2 * freq_scale)) <= audio_buf_size);
+    }
 
     if(!samples) {
       if(play_flags & PlayFlags::loop) {
@@ -214,7 +223,11 @@ namespace blit {
 
     // there was no buffer last time
     if(current_sample == end_sample) {
-      if(data_size[cur_audio_buf]) {
+      if(data_size[cur_audio_buf] == -1) {
+        current_sample = end_sample = nullptr;
+        channel.off();
+        return;
+      } else if(data_size[cur_audio_buf]) {
         end_sample = audio_buf[cur_audio_buf] + data_size[cur_audio_buf]; // recovered from underrun
       } else {
         memset(channel.wave_buffer, 0, 64 * sizeof(int16_t));
