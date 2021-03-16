@@ -6,11 +6,13 @@ extern void update(uint32_t time);
 extern void render(uint32_t time);
 
 extern "C" bool cpp_do_init() {
+#ifndef IGNORE_API_VERSION
   if(blit::api.version_major != blit::api_version_major)
     return false;
 
   if(blit::api.version_minor < blit::api_version_minor)
     return false;
+#endif
 
   blit::update = update;
   blit::render = render;

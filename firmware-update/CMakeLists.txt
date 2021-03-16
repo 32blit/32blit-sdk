@@ -19,3 +19,4 @@ configure_file(metadata.yml.in metadata.yml)
 blit_metadata(firmware-update ${CMAKE_CURRENT_BINARY_DIR}/metadata.yml)
 
 target_include_directories(firmware-update PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_compile_definitions(firmware-update PRIVATE IGNORE_API_VERSION)
