@@ -354,47 +354,66 @@ namespace blit {
     if (dr.empty())
       return; // after clipping there is nothing to draw
 
-    float scale_x = float(sprite.w) / r.w;
-    float scale_y = float(sprite.h) / r.h;
+    static const int fix_shift = 16;
 
-    float left = (dr.x - r.x) * scale_x;
-    float top = (dr.y - r.y) * scale_y;
-    float right = sprite.w - (sprite.w - (dr.w * scale_x)) + left - 1;
-    float bottom = sprite.h - (sprite.h - (dr.h * scale_y)) + top - 1;
+    int scale_x = (sprite.w << fix_shift) / r.w;
+    int scale_y = (sprite.h << fix_shift) / r.h;
+
+    int left = (dr.x - r.x) * scale_x;
+    int top = (dr.y - r.y) * scale_y;
+
+    int y_step = scale_y;
+    int x_step = scale_x;
 
     if (t & SpriteTransform::VERTICAL) {
-      top = sprite.h - 1 - top;
-      bottom = sprite.h - 1 - bottom;
+      top = (sprite.h << fix_shift) - 1 - top;
+      y_step = -y_step;
     }
 
     if (t & SpriteTransform::HORIZONTAL) {
-      left = sprite.w - 1 - left;
-      right = sprite.w - 1 - right;
+      left = (sprite.w << fix_shift) - 1 - left;
+      x_step = -x_step;
     }
-
-    float y_step = top < bottom ? scale_y : -scale_y;
-    float x_step = left < right ? scale_x : -scale_x;
 
     uint32_t dest_offset = offset(dr);
     uint32_t src_offset;
 
     int y_count = dr.h;
-    float y = top;
+    int y = top;
+
+    int x_scale_px = r.w > sprite.w ? std::min(dr.w, int32_t((1 << fix_shift) / scale_x)) : 1;
 
     do {
       int x_count = dr.w;
-      float x = left;
+      int x = left;
+
+      int src_step = 1;
+
+      if (t & SpriteTransform::XYSWAP) {
+        src_offset = sprites->offset(sprite.x + (y >> fix_shift), sprite.y);
+        src_step = sprites->bounds.w;
+      } else
+        src_offset = sprites->offset(sprite.x, sprite.y + (y >> fix_shift));
+
+      // fill an initial block if we're not part way through a pixel
+      int num = (x & ((1 << fix_shift) - 1)) == 0 ? x_scale_px : 1;
       do {
-        if (t & SpriteTransform::XYSWAP)
-          src_offset = sprites->offset(sprite.x + y, sprite.y + x);
-        else
-          src_offset = sprites->offset(sprite.x + x, sprite.y + y);
+        int new_x = x + x_step * num;
 
-        bbf(sprites, src_offset, this, dest_offset, 1, 1);
-        dest_offset++;
+        // can fit another pixel
+        if (x >> fix_shift == new_x >> fix_shift && x_count > num) {
+          num++;
+          new_x += x_step;
+        }
 
-        x += x_step;
-      } while (--x_count);
+        bbf(sprites, src_offset + (x >> fix_shift) * src_step, this, dest_offset, num, 0);
+        dest_offset += num;
+
+        x = new_x;
+        x_count -= num;
+
+        num = std::min(x_count, x_scale_px);
+      } while (x_count);
 
       dest_offset += bounds.w - dr.w;
       y += y_step;
@@ -455,29 +474,51 @@ namespace blit {
     if (cdr.empty())
       return; // after clipping there is nothing to draw
 
-    float sx = (sr.w) / float(dr.w);
-    float sy = (sr.h) / float(dr.h);
+    static const int fix_shift = 16;
 
-    // offset source rect to accomodate for clipped destination rect
-    uint8_t l = cdr.x - dr.x; // top left corner
-    uint8_t t = cdr.y - dr.y;
+    int scale_x = (sr.w << fix_shift) / dr.w;
+    int scale_y = (sr.h << fix_shift) / dr.h;
 
-    sr.x += (sx * l);
-    sr.y += (sy * t);
+    int left = (cdr.x - dr.x) * scale_x;
+    int top = (cdr.y - dr.y) * scale_y;
 
-    sr.w = cdr.w * sx;
-    sr.h = cdr.h * sy;
+    uint32_t dest_offset = offset(cdr);
+    uint32_t src_offset;
 
-    float src_y = sr.y;
-    for (int32_t y = cdr.y; y < cdr.y + cdr.h; y++) {
-      float src_x = sr.x;
-      for (int32_t x = cdr.x; x < cdr.x + cdr.w; x++) {
-        bbf(src, src->offset(src_x, src_y), this, offset(x, y), 1, 1);
+    int y_count = cdr.h;
+    int y = top;
 
-        src_x += sx;
-      }
-      src_y += sy;
-    }
+    int x_scale_px = dr.w > sr.w ? std::min(cdr.w, int32_t((1 << fix_shift) / scale_x)) : 1;
+
+    do {
+      int x_count = cdr.w;
+      int x = left;
+
+      src_offset = src->offset(sr.x, sr.y + (y >> fix_shift));
+
+      // fill an initial block if we're not part way through a pixel
+      int num = (x & ((1 << fix_shift) - 1)) == 0 ? x_scale_px : 1;
+      do {
+        int new_x = x + scale_x * num;
+
+        // can fit another pixel
+        if (x >> fix_shift == new_x >> fix_shift && x_count > num) {
+          num++;
+          new_x += scale_x;
+        }
+
+        bbf(src, src_offset + (x >> fix_shift), this, dest_offset, num, 0);
+        dest_offset += num;
+
+        x = new_x;
+        x_count -= num;
+
+        num = std::min(x_count, x_scale_px);
+      } while (x_count);
+
+      dest_offset += bounds.w - cdr.w;
+      y += scale_y;
+    } while (--y_count);
   }
 
   /**
