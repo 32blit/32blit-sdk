@@ -46,26 +46,6 @@ namespace blit {
 
   /**
    * TODO: Document
-   */
-  int32_t TileMap::offset(const Point &p) {
-    int32_t cx = ((uint32_t)p.x) & (bounds.w - 1);
-    int32_t cy = ((uint32_t)p.y) & (bounds.h - 1);
-
-    if ((p.x ^ cx) | (p.y ^ cy)) {
-      if (repeat_mode == DEFAULT_FILL)
-        return default_tile_id;
-
-      if (repeat_mode == REPEAT)
-        return cx + cy * bounds.w;
-
-      return -1;
-    }
-
-    return cx + cy * bounds.w;
-  }
-
-  /**
-   * TODO: Document
    *
    * \param[in] x
    * \param[in] y
@@ -94,7 +74,7 @@ namespace blit {
    * \return Bitmask of flags for specified tile.
    */
   uint8_t TileMap::tile_at(const Point &p) {
-    int32_t o = offset(p);
+    int32_t o = offset(p.x, p.y);
 
     if(o != -1)
       return tiles[o];
@@ -109,7 +89,7 @@ namespace blit {
    * \return Bitmask of transforms for specified tile.
    */
   uint8_t TileMap::transform_at(const Point &p) {
-    int32_t o = offset(p);
+    int32_t o = offset(p.x, p.y);
 
     if (o != -1 && transforms)
       return transforms[o];

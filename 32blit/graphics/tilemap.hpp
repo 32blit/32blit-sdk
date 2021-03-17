@@ -49,7 +49,7 @@ namespace blit {
 
     static TileMap *load_tmx(const uint8_t *asset, Surface *sprites, int layer = 0, int flags = copy_tiles);
 
-    inline int32_t offset(const Point &p); // __attribute__((always_inline));
+    inline int32_t offset(const Point &p) {return offset(p.x, p.y);} // __attribute__((always_inline));
     int32_t offset(int16_t x, int16_t y); // __attribute__((always_inline));
     uint8_t tile_at(const Point &p); // __attribute__((always_inline));
     uint8_t transform_at(const Point &p); // __attribute__((always_inline));
