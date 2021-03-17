@@ -396,7 +396,7 @@ void render(uint32_t time) {
   screen.pen = theme.color_background;
   screen.clear();
 
-  if(currentScreen != Screen::screenshot) {
+  if(currentScreen != Screen::screenshot && currentScreen != Screen::credits && selected_game.type != GameType::screenshot) {
     screen.pen = Pen(255, 255, 255);
     swoosh(time, 5100.0f, 3900.0f, 1900.0f, 900.0f, 3500);
     screen.pen = theme.color_accent;
