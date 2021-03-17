@@ -362,9 +362,9 @@ void init() {
   credits::prepare();
 }
 
-void swoosh(uint32_t time, float t1, float t2, float s1, float s2, int t0, int offset_y=120, int size=60, int alpha=45) {
-  for(auto x = 0u; x < screen.bounds.w; x++) {
-    if((x + 1) & 0b10) continue; // This is an aesthetic choice, not an optimisation!
+void swoosh(uint32_t time, float t1, float t2, float s1, float s2, int t0, int offset_y=120, int size=60, int alpha=64) {
+  constexpr int swoosh_resolution = 32;
+  for(auto x = 0; x < screen.bounds.w / swoosh_resolution; x++) {
     float t_a = (x / s1) + float(time + t0) / t1;
     float t_b = (x / s2) + float(time + t0) / t2;
 
@@ -386,7 +386,8 @@ void swoosh(uint32_t time, float t1, float t2, float s1, float s2, int t0, int o
       {
         screen.pen.a = alpha * y / range;
       }
-      screen.pixel(Point(x,  y1 + y));
+      // This is an optimisation, not an aesthetic choice!
+      screen.h_span(Point(x * swoosh_resolution,  y1 + y), swoosh_resolution);
     }
   }
 }
