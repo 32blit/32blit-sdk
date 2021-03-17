@@ -28,6 +28,7 @@ constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 
 static Screen currentScreen = Screen::main;
 
+bool show_fps = false;
 bool sd_detected = true;
 Vec2 file_list_scroll_offset(10.0f, 0.0f);
 Point game_info_offset(120, 20);
@@ -361,9 +362,9 @@ void init() {
   credits::prepare();
 }
 
-void swoosh(uint32_t time, float t1, float t2, float s1, float s2, int t0, int offset_y=120, int size=60, int alpha=45) {
-  for(auto x = 0u; x < screen.bounds.w; x++) {
-    if((x + 1) & 0b10) continue; // This is an aesthetic choice, not an optimisation!
+void swoosh(uint32_t time, float t1, float t2, float s1, float s2, int t0, int offset_y=120, int size=60, int alpha=64) {
+  constexpr int swoosh_resolution = 32;
+  for(auto x = 0; x < screen.bounds.w / swoosh_resolution; x++) {
     float t_a = (x / s1) + float(time + t0) / t1;
     float t_b = (x / s2) + float(time + t0) / t2;
 
@@ -385,18 +386,40 @@ void swoosh(uint32_t time, float t1, float t2, float s1, float s2, int t0, int o
       {
         screen.pen.a = alpha * y / range;
       }
-      screen.pixel(Point(x,  y1 + y));
+      // This is an optimisation, not an aesthetic choice!
+      screen.h_span(Point(x * swoosh_resolution,  y1 + y), swoosh_resolution);
     }
   }
 }
 
+void render_fps(uint32_t us_start) {
+  if(!show_fps) return;
+  // draw FPS meter
+  uint32_t us_end = now_us();
+  uint32_t us_elapsed = us_diff(us_start, us_end);
+  screen.mask = nullptr;
+
+  screen.pen = Pen(0, 0, 0);
+  screen.rectangle(Rect(Point(0, screen.bounds.h - 14), Size(game_info_offset.x - 10, 14)));
+
+  screen.pen = Pen(255, 0, 0);
+  for (unsigned int i = 0; i < us_elapsed / 1000; i++) {
+    screen.pen = Pen(i * 5, 255 - (i * 5), 0);
+    screen.rectangle(Rect(i * 3 + 1, screen.bounds.h - 3, 2, 2));
+  }
+
+  screen.pen = Pen(255, 255, 255);
+  screen.text(std::to_string(us_elapsed), minimal_font, Point(0, screen.bounds.h - 12));
+}
+
 void render(uint32_t time) {
+  uint32_t us_start = now_us();
   screen.sprites = spritesheet;
 
   screen.pen = theme.color_background;
   screen.clear();
 
-  if(currentScreen != Screen::screenshot) {
+  if(currentScreen != Screen::screenshot && currentScreen != Screen::credits && selected_game.type != GameType::screenshot) {
     screen.pen = Pen(255, 255, 255);
     swoosh(time, 5100.0f, 3900.0f, 1900.0f, 900.0f, 3500);
     screen.pen = theme.color_accent;
@@ -420,6 +443,7 @@ void render(uint32_t time) {
       // back
       screen.sprite(5, Point(game_actions_offset.x, game_actions_offset.y + 12));
       screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R180);
+      render_fps(us_start);
       return;
     }
 
@@ -533,6 +557,7 @@ void render(uint32_t time) {
 
   //progress.draw();
   dialog.draw();
+  render_fps(us_start);
 }
 
 void update(uint32_t time) {
@@ -557,6 +582,10 @@ void update(uint32_t time) {
 
     if (button_menu) {
       currentScreen = Screen::main;
+    }
+
+    if(button_y) {
+      show_fps = !show_fps;
     }
 
     return;
