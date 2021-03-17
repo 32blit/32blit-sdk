@@ -28,6 +28,7 @@ constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 
 static Screen currentScreen = Screen::main;
 
+bool show_fps = false;
 bool sd_detected = true;
 Vec2 file_list_scroll_offset(10.0f, 0.0f);
 Point game_info_offset(120, 20);
@@ -390,7 +391,28 @@ void swoosh(uint32_t time, float t1, float t2, float s1, float s2, int t0, int o
   }
 }
 
+void render_fps(uint32_t us_start) {
+  if(!show_fps) return;
+  // draw FPS meter
+  uint32_t us_end = now_us();
+  uint32_t us_elapsed = us_diff(us_start, us_end);
+  screen.mask = nullptr;
+
+  screen.pen = Pen(0, 0, 0);
+  screen.rectangle(Rect(Point(0, screen.bounds.h - 14), Size(game_info_offset.x - 10, 14)));
+
+  screen.pen = Pen(255, 0, 0);
+  for (unsigned int i = 0; i < us_elapsed / 1000; i++) {
+    screen.pen = Pen(i * 5, 255 - (i * 5), 0);
+    screen.rectangle(Rect(i * 3 + 1, screen.bounds.h - 3, 2, 2));
+  }
+
+  screen.pen = Pen(255, 255, 255);
+  screen.text(std::to_string(us_elapsed), minimal_font, Point(0, screen.bounds.h - 12));
+}
+
 void render(uint32_t time) {
+  uint32_t us_start = now_us();
   screen.sprites = spritesheet;
 
   screen.pen = theme.color_background;
@@ -420,6 +442,7 @@ void render(uint32_t time) {
       // back
       screen.sprite(5, Point(game_actions_offset.x, game_actions_offset.y + 12));
       screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R180);
+      render_fps(us_start);
       return;
     }
 
@@ -533,6 +556,7 @@ void render(uint32_t time) {
 
   //progress.draw();
   dialog.draw();
+  render_fps(us_start);
 }
 
 void update(uint32_t time) {
@@ -557,6 +581,10 @@ void update(uint32_t time) {
 
     if (button_menu) {
       currentScreen = Screen::main;
+    }
+
+    if(button_y) {
+      show_fps = !show_fps;
     }
 
     return;
