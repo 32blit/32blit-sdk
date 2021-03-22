@@ -34,10 +34,11 @@ static Mat3 dream(uint8_t y) {
   float step = (current_time / 200.0f) + (y / 10.0f);
   float x_offset = (sinf(step) * (cosf(step) * 50.0f)) * (1.0f - progress);
 
-  Mat3 transform = Mat3::identity();
-  transform *= Mat3::translation(Vec2(256, 156)); // offset to middle of world
-  transform *= Mat3::translation(Vec2(x_offset, 0)); // apply dream effect wave
-  transform *= Mat3::translation(Vec2(-80, -60)); // transform to centre of framebuffer
+  Mat3 transform = Mat3::translation(
+    Vec2(256, 156) +    // offset to middle of world
+    Vec2(x_offset, 0) + // apply dream effect wave
+    Vec2(-80, -60)      // transform to centre of framebuffer
+  );
 
   return transform;
 };
@@ -91,10 +92,11 @@ static Mat3 water(uint8_t y) {
   float step = (current_time / 200.0f) + (y / 10.0f);
   float x_offset = (sinf(step) + sinf(step / 3.0f) + sinf(step * 2.0f)) * 2.0f;
 
-  Mat3 transform = Mat3::identity();
-  transform *= Mat3::translation(Vec2(156, 130)); // offset to middle of world
-  transform *= Mat3::translation(Vec2(x_offset, 0)); // apply a water ripple effect
-  transform *= Mat3::translation(Vec2(-80, -60)); // transform to centre of framebuffer
+  Mat3 transform = Mat3::translation(
+    Vec2(156, 130) +    // offset to middle of world
+    Vec2(x_offset, 0) + // apply a water ripple effect
+    Vec2(-80, -60)      // transform to centre of framebuffer
+  );
 
   return transform;
 };
@@ -136,9 +138,11 @@ static Mat3 betamax(uint8_t y) {
     shake = Point((blit::random() % scale) - scale / 2, (blit::random() % scale) - scale / 2);
   }
 
-  Mat3 transform = Mat3::identity();
-  transform *= Mat3::translation(Vec2(256 + shake.x, 156 + shake.y)); // offset to middle of world
-  transform *= Mat3::translation(Vec2(-80, -60)); // transform to centre of framebuffer
+  Mat3 transform = Mat3::translation(
+    Vec2(256, 156) + // offset to middle of world
+    Vec2(shake) +    // apply shake
+    Vec2(-80, -60)   // transform to centre of framebuffer
+  );
 
   return transform;
 };
@@ -158,9 +162,11 @@ static Mat3 shake(uint8_t y) {
     shake *= scale;
   }
 
-  Mat3 transform = Mat3::identity();
-  transform *= Mat3::translation(Vec2(256 + shake.x, 156 + shake.y)); // offset to middle of world
-  transform *= Mat3::translation(Vec2(-80, -60)); // transform to centre of framebuffer
+  Mat3 transform = Mat3::translation(
+    Vec2(256, 156) + // offset to middle of world
+    Vec2(shake) +    // apply shake
+    Vec2(-80, -60)   // transform to centre of framebuffer
+  );
 
   return transform;
 };
