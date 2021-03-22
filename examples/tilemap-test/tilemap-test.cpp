@@ -18,8 +18,6 @@ void init() {
   environment = new TileMap((uint8_t*)asset_tilemap, nullptr, Size(64, 64), screen.sprites);
 }
 
-Mat3 world_transform;
-
 
 float deg2rad(float a) {
   return a * (pi / 180.0f);
