@@ -26,7 +26,7 @@ float deg2rad(float a) {
 uint32_t current_time;
 
 
-std::function<Mat3(uint8_t)> dream = [](uint8_t y) -> Mat3 {
+static Mat3 dream(uint8_t y) {
   float progress = (sinf(current_time / 2000.0f) + 1.0f) * 0.6f;  // two second animation
   progress = progress > 1.0f ? 1.0f : progress;
 
@@ -42,7 +42,7 @@ std::function<Mat3(uint8_t)> dream = [](uint8_t y) -> Mat3 {
   return transform;
 };
 
-std::function<Mat3(uint8_t)> rotozoom = [](uint8_t y) -> Mat3 {
+static Mat3 rotozoom(uint8_t y) {
   float progress = (sinf(current_time / 2000.0f) + 1.0f) / 2.0f;  // two second animation
 
   float angle = (1.0f - progress) * 360.0f;
@@ -57,7 +57,7 @@ std::function<Mat3(uint8_t)> rotozoom = [](uint8_t y) -> Mat3 {
   return transform;
 };
 
-std::function<Mat3(uint8_t)> zoom = [](uint8_t y) -> Mat3 {
+static Mat3 zoom(uint8_t y) {
   float progress = (sinf(current_time / 1000.0f) + 1.0f) / 2.0f;  // two second animation
 
   float scale = progress;
@@ -71,7 +71,7 @@ std::function<Mat3(uint8_t)> zoom = [](uint8_t y) -> Mat3 {
 };
 
 
-std::function<Mat3(uint8_t)> perspective = [](uint8_t y) -> Mat3 {
+static Mat3 perspective(uint8_t y) {
   float progress = (sinf(current_time / 2000.0f) + 1.0f) / 2.0f;  // two second animation
   progress = progress > 1.0f ? 1.0f : progress;
 
@@ -87,7 +87,7 @@ std::function<Mat3(uint8_t)> perspective = [](uint8_t y) -> Mat3 {
 };
 
 
-std::function<Mat3(uint8_t)> water = [](uint8_t y) -> Mat3 {
+static Mat3 water(uint8_t y) {
   float step = (current_time / 200.0f) + (y / 10.0f);
   float x_offset = (sinf(step) + sinf(step / 3.0f) + sinf(step * 2.0f)) * 2.0f;
 
@@ -99,7 +99,7 @@ std::function<Mat3(uint8_t)> water = [](uint8_t y) -> Mat3 {
   return transform;
 };
 
-std::function<Mat3(uint8_t)> warp = [](uint8_t y) -> Mat3 {
+static Mat3 warp(uint8_t y) {
   float step = (current_time / 1000.0f) + (y / 100.0f);
   float x_offset = (sinf(step) * (cosf(step) * 50.0f));
 
@@ -114,7 +114,7 @@ std::function<Mat3(uint8_t)> warp = [](uint8_t y) -> Mat3 {
   return transform;
 };
 
-std::function<Mat3(uint8_t)> ripple = [](uint8_t y) -> Mat3 {
+static Mat3 ripple(uint8_t y) {
   float step = (current_time / 250.0f) + (y / 25.0f);
 
   float scale = (sinf(step) / 4.0f) + 1.0f;
@@ -127,7 +127,7 @@ std::function<Mat3(uint8_t)> ripple = [](uint8_t y) -> Mat3 {
   return transform;
 };
 
-std::function<Mat3(uint8_t)> betamax = [](uint8_t y) -> Mat3 {
+static Mat3 betamax(uint8_t y) {
   float step = (current_time / 250.0f) + (y / 25.0f);
   Point shake(0, 0);
 
@@ -143,7 +143,7 @@ std::function<Mat3(uint8_t)> betamax = [](uint8_t y) -> Mat3 {
   return transform;
 };
 
-std::function<Mat3(uint8_t)> shake = [](uint8_t y) -> Mat3 {
+static Mat3 shake(uint8_t y) {
   static uint32_t last_time = 0;
   static Point shake(0, 0);
 
