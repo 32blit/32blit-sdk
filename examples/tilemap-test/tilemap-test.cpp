@@ -242,19 +242,13 @@ void render(uint32_t time_ms) {
   screen.watermark();
 }
 
-
-uint32_t last_buttons = 0;
 void update(uint32_t time) {
   auto last_effect = uint8_t(effect_names.size() - 1);
 
-  if (buttons != last_buttons) {
-    if (pressed(Button::DPAD_DOWN)) {
-      effect = effect == last_effect ? 0 : effect + 1;
-    }
-    if (pressed(Button::DPAD_UP)) {
-      effect = effect == 0 ? last_effect : effect - 1;
-    }
+  if (buttons.pressed & Button::DPAD_DOWN) {
+    effect = effect == last_effect ? 0 : effect + 1;
   }
-
-  last_buttons = buttons;
+  if (buttons.pressed & Button::DPAD_UP) {
+    effect = effect == 0 ? last_effect : effect - 1;
+  }
 }
