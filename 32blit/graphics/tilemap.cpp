@@ -14,10 +14,6 @@ namespace blit {
    * \param[in] sprites
    */
   TileMap::TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites) : bounds(bounds), tiles(tiles), transforms(transforms), sprites(sprites) {
-    if (!transforms) {
-      this->transforms = new uint8_t[bounds.w * bounds.h];
-      std::memset(this->transforms, 0, bounds.w * bounds.h);
-    }
   }
 
   TileMap *TileMap::load_tmx(const uint8_t *asset, Surface *sprites, int layer, int flags) {
@@ -181,7 +177,7 @@ namespace blit {
 
       if (toff != -1 && tiles[toff] != empty_tile_id) {
         uint8_t tile_id = tiles[toff];
-        uint8_t transform = transforms[toff];
+        uint8_t transform = transforms ? transforms[toff] : 0;
 
         // coordinate within sprite
         int u = wcx & 0b111;
