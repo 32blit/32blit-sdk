@@ -61,6 +61,15 @@ namespace blit {
       if (repeat_mode == REPEAT)
         return cx + cy * bounds.w;
 
+      if(repeat_mode == CLAMP_TO_EDGE) {
+        if(x != cx)
+          cx = x < 0 ? 0 : bounds.w - 1;
+        if(y != cy)
+          cy = y < 0 ? 0 : bounds.h - 1;
+
+        return cx + cy * bounds.w;
+      }
+
       return -1;
     }
 

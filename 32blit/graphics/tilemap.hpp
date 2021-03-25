@@ -35,8 +35,9 @@ namespace blit {
     enum {
       NONE = 0,           // draw nothing
       REPEAT = 1,         // infinite repeat
-      DEFAULT_FILL = 2    // fill with default tile
-    } repeat_mode;        // determines what to do when drawing outside of the layer bounds.
+      DEFAULT_FILL = 2,   // fill with default tile
+      CLAMP_TO_EDGE = 3,  // repeats the tile at the edge
+    } repeat_mode = NONE; // determines what to do when drawing outside of the layer bounds.
     uint8_t       default_tile_id;
 
     int empty_tile_id = -1;
