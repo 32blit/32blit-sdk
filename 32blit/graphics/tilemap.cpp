@@ -26,6 +26,10 @@ namespace blit {
     if(map_struct->flags & TMX_16Bit)
       return nullptr;
 
+    // power of two bounds required
+    if((map_struct->width & (map_struct->width - 1)) || (map_struct->height & (map_struct->height - 1)))
+      return nullptr;
+
     auto layer_size = map_struct->width * map_struct->height;
 
     uint8_t *tile_data;
