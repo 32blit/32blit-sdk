@@ -19,7 +19,11 @@ namespace blit {
   TileMap *TileMap::load_tmx(const uint8_t *asset, Surface *sprites, int layer, int flags) {
     auto map_struct = reinterpret_cast<const TMX *>(asset);
 
-    if(memcmp(map_struct, "MTMX", 4) != 0)
+    if(memcmp(map_struct, "MTMX", 4) != 0 || map_struct->header_length != sizeof(TMX))
+      return nullptr;
+
+    // only 8 bit tiles supported
+    if(map_struct->flags & TMX_16Bit)
       return nullptr;
 
     auto layer_size = map_struct->width * map_struct->height;
