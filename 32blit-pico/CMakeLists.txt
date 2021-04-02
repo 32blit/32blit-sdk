@@ -16,12 +16,29 @@ target_link_libraries(BlitHalPico INTERFACE hardware_dma hardware_pwm hardware_s
 
 target_compile_definitions(BlitHalPico INTERFACE
 	PICO_AUDIO_I2S_MONO_INPUT=1
-	PICO_AUDIO_I2S_DATA_PIN=6
-	PICO_AUDIO_I2S_CLOCK_PIN_BASE=20
-	AUDIO_I2S
-	DISPLAY_ST7789
-	INPUT_GPIO
 )
+
+if(${PICO_BOARD} STREQUAL "vgaboard")
+	message("Using VGA board...")
+	target_link_libraries(BlitHalPico INTERFACE pico_scanvideo_dpi)
+	target_compile_definitions(BlitHalPico INTERFACE
+		PICO_AUDIO_DMA_IRQ=1
+		PICO_SCANVIDEO_PLANE1_VARIABLE_FRAGMENT_DMA=1
+		AUDIO_I2S
+		DISPLAY_SCANVIDEO
+	)
+else()
+	message(WARNING "Using default config for \"${PICO_BOARD}\"...")
+	# messy explorer-based setup
+	target_compile_definitions(BlitHalPico INTERFACE
+		PICO_AUDIO_I2S_DATA_PIN=6
+		PICO_AUDIO_I2S_CLOCK_PIN_BASE=20
+		AUDIO_I2S
+		DISPLAY_ST7789
+		INPUT_GPIO
+	)
+endif()
+
 
 function(blit_executable_common NAME)
 	target_link_libraries(${NAME} BlitEngine)
