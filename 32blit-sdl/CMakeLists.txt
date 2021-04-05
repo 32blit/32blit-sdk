@@ -158,9 +158,14 @@ endif()
 
 function(blit_executable NAME SOURCES)
 	message(STATUS "Processing ${NAME}")
-	add_executable(${NAME} MACOSX_BUNDLE ${SOURCES} ${ARGN})
+	if(ANDROID)
+		add_library(${NAME} SHARED ${SOURCES} ${ARGN})
+	else()
+		add_executable(${NAME} MACOSX_BUNDLE ${SOURCES} ${ARGN})
+	endif()
 
 	install(TARGETS ${NAME}
+		LIBRARY DESTINATION lib
 		RUNTIME DESTINATION bin
 		BUNDLE DESTINATION bin
 	)
