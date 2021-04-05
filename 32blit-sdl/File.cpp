@@ -17,10 +17,10 @@
 
 static std::string basePath;
 
-void setup_base_path()
-{
+void setup_base_path() {
   auto basePathPtr = SDL_GetBasePath();
-  basePath = std::string(basePathPtr);
+  if(basePathPtr)
+    basePath = std::string(basePathPtr);
   SDL_free(basePathPtr);
 }
 
