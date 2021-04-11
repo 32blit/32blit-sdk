@@ -467,13 +467,15 @@ void blit_menu() {
       blit::render = ::render;
     }
 
+    if(!user_code_disabled)
+      sound::enabled = true;
+
     // restore game colours
     if(screen.format == PixelFormat::P) {
       set_screen_palette(menu_saved_colours, num_menu_colours);
     }
-  }
-  else
-  {
+  } else {
+    sound::enabled = false;
     system_menu.prepare();
 
     blit::update = blit_menu_update;
