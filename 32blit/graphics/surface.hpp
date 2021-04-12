@@ -119,6 +119,9 @@ namespace blit {
 
   public:
     Surface(uint8_t *data, const PixelFormat &format, const Size &bounds);
+    ~Surface();
+    bool _bNewData{false};
+    bool _bNewPalette{false};
 
     static Surface *load(const std::string &filename, uint8_t *data, size_t data_size);
     static Surface *load(const std::string &filename) {return load(filename, nullptr, 0);};
