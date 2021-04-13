@@ -173,8 +173,10 @@ namespace multiplayer {
       return;
 
     // header
-    cdc_send((uint8_t *)"32BLUSER", 8);
-    cdc_send((uint8_t *)&length, 2);
+    uint8_t buf[]{'3', '2', 'B', 'L', 'U', 'S', 'E','R',
+      uint8_t(length & 0xFF), uint8_t(length >> 8)
+    };
+    cdc_send(buf, 10);
 
     cdc_send((uint8_t *)data, length);
   }
