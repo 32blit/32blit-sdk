@@ -27,6 +27,7 @@ extern void blit_tick();
 extern void blit_init();
 
 // IO
+void blit_update_volume();
 extern void blit_update_vibration();
 extern void blit_update_led();
 extern void blit_process_input();

@@ -75,7 +75,6 @@ static bool (*user_tick)(uint32_t time) = nullptr;
 static void (*user_render)(uint32_t time) = nullptr;
 static bool user_code_disabled = false;
 
-void blit_update_volume();
 static void update_active();
 
 void DFUBoot(void)

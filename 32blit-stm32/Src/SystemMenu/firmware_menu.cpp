@@ -23,7 +23,6 @@ using namespace blit;
 // Some declarations from 32blit.cpp that we need to do system things
 //
 extern bool take_screenshot;
-void blit_update_volume();
 
 //
 // To use the Item class without specifier
