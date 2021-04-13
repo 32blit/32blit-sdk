@@ -508,16 +508,18 @@ void blit_update_vibration() {
 }
 
 void blit_update_led() {
+    int scale = 10000 * power::sleep_fade;
+
     // RED Led
-    float compare_r = (blit::LED.r * 10000) / 255;
+    int compare_r = (blit::LED.r * scale) / 255;
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_3, compare_r);
 
     // GREEN Led
-    float compare_g = (blit::LED.g * 10000) / 255;
+    int compare_g = (blit::LED.g * scale) / 255;
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_4, compare_g);
 
     // BLUE Led
-    float compare_b = (blit::LED.b * 10000) / 255;
+    int compare_b = (blit::LED.b * scale) / 255;
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2, compare_b);
 
     // Backlight
