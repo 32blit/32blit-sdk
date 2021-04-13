@@ -158,6 +158,13 @@ static USBH_StatusTypeDef USBH_CDC_InterfaceInit(USBH_HandleTypeDef *phost)
   interface = USBH_FindInterface(phost, COMMUNICATION_INTERFACE_CLASS_CODE,
                                  ABSTRACT_CONTROL_MODEL, COMMON_AT_COMMAND);
 
+  // retry with the "non-specific" protocol
+  if ((interface == 0xFFU) || (interface >= USBH_MAX_NUM_INTERFACES))
+  {
+    interface = USBH_FindInterface(phost, COMMUNICATION_INTERFACE_CLASS_CODE,
+                                   ABSTRACT_CONTROL_MODEL, NO_CLASS_SPECIFIC_PROTOCOL_CODE);
+  }
+
   if ((interface == 0xFFU) || (interface >= USBH_MAX_NUM_INTERFACES)) /* No Valid Interface */
   {
     USBH_DbgLog("Cannot Find the interface for Communication Interface Class.", phost->pActiveClass->Name);
