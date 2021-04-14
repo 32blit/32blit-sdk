@@ -132,12 +132,10 @@ static bool parse_file_metadata(FIL &fh, GameInfo &info) {
   if(header.magic == blit_game_magic) {
     uint8_t buf[10];
     f_lseek(&fh, (header.end - qspi_flash_address) + off);
-    auto res = f_read(&fh, buf, 10, &bytes_read);
+    f_read(&fh, buf, 10, &bytes_read);
 
     if(bytes_read == 10 && memcmp(buf, "BLITMETA", 8) == 0) {
       // don't bother reading the whole thing since we don't want the images
-      const auto metadata_len = sizeof(RawMetadata);
-
       RawMetadata raw_meta;
       f_read(&fh, &raw_meta, sizeof(RawMetadata), &bytes_read);
 
@@ -150,7 +148,7 @@ static bool parse_file_metadata(FIL &fh, GameInfo &info) {
     }
 
     // read category
-    res = f_read(&fh, buf, 8, &bytes_read);
+    f_read(&fh, buf, 8, &bytes_read);
     if(bytes_read == 8 && memcmp(buf, "BLITTYPE", 8) == 0) {
       RawTypeMetadata type_meta;
       f_read(&fh, &type_meta, sizeof(RawTypeMetadata), &bytes_read);
