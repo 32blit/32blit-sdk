@@ -3,6 +3,7 @@
 #include "stm32h7xx_hal.h"
 
 #include "32blit.h"
+#include "32blit_battery.hpp"
 #include "i2c.h"
 #include "i2c-bq24295.h"
 
@@ -31,7 +32,14 @@ namespace power {
       }
     } else if(target == Target::OFF && sleep_fade == 0.0f) {
       // fade to off complete
-      bq24295_enable_shipping_mode(&hi2c4);
+
+      // TODO: disable almost everything (need HOME button interrupt, battery status, etc.)
+
+      // we're not charging, enter shipping mode to save battery
+      // (and shut down entirely if not connected to USB)
+      auto charge_status = battery::get_charge_status();
+      if(charge_status == battery::BatteryChargeStatus::NotCharging || charge_status == battery::BatteryChargeStatus::ChargingComplete)
+        bq24295_enable_shipping_mode(&hi2c4);
     }
 
     if(target != Target::IDLE) {
