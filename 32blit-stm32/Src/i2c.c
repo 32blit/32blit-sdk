@@ -43,13 +43,13 @@ void MX_I2C4_Init(void)
   {
     Error_Handler();
   }
-  /** Configure Analogue filter 
+  /** Configure Analogue filter
   */
   if (HAL_I2CEx_ConfigAnalogFilter(&hi2c4, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
   {
     Error_Handler();
   }
-  /** Configure Digital filter 
+  /** Configure Digital filter
   */
   if (HAL_I2CEx_ConfigDigitalFilter(&hi2c4, 0) != HAL_OK)
   {
@@ -60,14 +60,12 @@ void MX_I2C4_Init(void)
 
 void HAL_I2C_MspInit(I2C_HandleTypeDef* i2cHandle)
 {
-
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(i2cHandle->Instance==I2C4)
   {
   /* USER CODE BEGIN I2C4_MspInit 0 */
 
   /* USER CODE END I2C4_MspInit 0 */
- 
+
     /* I2C4 clock enable */
     __HAL_RCC_I2C4_CLK_ENABLE();
 
@@ -100,7 +98,7 @@ void HAL_I2C_MspDeInit(I2C_HandleTypeDef* i2cHandle)
 
   /* USER CODE END I2C4_MspDeInit 1 */
   }
-} 
+}
 
 /* USER CODE BEGIN 1 */
 

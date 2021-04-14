@@ -271,7 +271,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 
   /* USER CODE END TIM16_MspInit 1 */
   }
-  
+
 }
 
 void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle)
@@ -292,10 +292,6 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle)
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
 {
-
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-
   if(timHandle->Instance==TIM3)
   {
   /* USER CODE BEGIN TIM3_MspPostInit 0 */
@@ -305,7 +301,7 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
 
   /* USER CODE BEGIN TIM3_MspPostInit 1 */
     __HAL_RCC_GPIOB_CLK_ENABLE();
-  
+
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2); // Blue LED
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3); // Red LED
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4); // Green LED
@@ -317,7 +313,7 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
   /* USER CODE BEGIN TIM4_MspPostInit 0 */
 
   /* USER CODE END TIM4_MspPostInit 0 */
-  
+
     __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /* USER CODE BEGIN TIM4_MspPostInit 1 */
@@ -329,9 +325,9 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
   /* USER CODE BEGIN TIM15_MspPostInit 0 */
 
   /* USER CODE END TIM15_MspPostInit 0 */
-  
+
     __HAL_RCC_GPIOE_CLK_ENABLE();
- 
+
 
   /* USER CODE BEGIN TIM15_MspPostInit 1 */
     HAL_TIM_PWM_Start(&htim15, TIM_CHANNEL_1);
@@ -423,7 +419,7 @@ void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* tim_pwmHandle)
 
   /* USER CODE END TIM15_MspDeInit 1 */
   }
-} 
+}
 
 /* USER CODE BEGIN 1 */
 

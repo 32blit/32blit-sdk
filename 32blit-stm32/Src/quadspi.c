@@ -47,8 +47,6 @@ void MX_QUADSPI_Init(void)
 
 void HAL_QSPI_MspInit(QSPI_HandleTypeDef* qspiHandle)
 {
-
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(qspiHandle->Instance==QUADSPI)
   {
   /* USER CODE BEGIN QUADSPI_MspInit 0 */
@@ -59,7 +57,7 @@ void HAL_QSPI_MspInit(QSPI_HandleTypeDef* qspiHandle)
 
     __HAL_RCC_QSPI_FORCE_RESET();
     __HAL_RCC_QSPI_RELEASE_RESET();
-  
+
 
   /* USER CODE BEGIN QUADSPI_MspInit 1 */
 
@@ -77,14 +75,14 @@ void HAL_QSPI_MspDeInit(QSPI_HandleTypeDef* qspiHandle)
   /* USER CODE END QUADSPI_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_QSPI_CLK_DISABLE();
-  
-    /**QUADSPI GPIO Configuration    
+
+    /**QUADSPI GPIO Configuration
     PB2     ------> QUADSPI_CLK
     PE7     ------> QUADSPI_BK2_IO0
     PE8     ------> QUADSPI_BK2_IO1
     PE9     ------> QUADSPI_BK2_IO2
     PE10     ------> QUADSPI_BK2_IO3
-    PC11     ------> QUADSPI_BK2_NCS 
+    PC11     ------> QUADSPI_BK2_NCS
     */
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_2);
 
@@ -96,7 +94,7 @@ void HAL_QSPI_MspDeInit(QSPI_HandleTypeDef* qspiHandle)
 
   /* USER CODE END QUADSPI_MspDeInit 1 */
   }
-} 
+}
 
 /* USER CODE BEGIN 1 */
 /**
