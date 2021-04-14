@@ -11,3 +11,6 @@ extern const char *metadata_description;
 extern const char *metadata_version;
 extern const char *metadata_url;
 extern const char *metadata_category;
+
+/* Added a command line ability to specify a launch_path parameter. */
+extern const char *launch_path;

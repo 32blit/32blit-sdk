@@ -32,6 +32,8 @@ Multiplayer *blit_multiplayer;
 Renderer *blit_renderer;
 Audio *blit_audio;
 
+const char *launch_path = nullptr;
+
 #ifdef VIDEO_CAPTURE
 VideoCapture *blit_capture;
 unsigned int last_record_startstop = 0;
@@ -158,6 +160,9 @@ int main(int argc, char *argv[]) {
 			mp_address = std::string(argv[i + 1]);
 			i++;
 		}
+		else if(arg_str == "--launch_path" && i + 1 < argc) {
+			launch_path = argv[++i];
+		}
 		else if(arg_str == "--listen")
 			mp_mode = Multiplayer::Mode::Listen;
 		else if(arg_str == "--position") {
@@ -195,11 +200,12 @@ int main(int argc, char *argv[]) {
 		}
 		else if(arg_str == "--help") {
 			std::cout << "Usage: " << argv[0] << " <options>" << std::endl << std::endl;
-			std::cout << " --connect <addr> -- Connect to a listening game instance." << std::endl;
-			std::cout << " --listen         -- Listen for incoming connections." << std::endl;
-			std::cout << " --position x,y   -- Set window position." << std::endl;
-			std::cout << " --credits        -- Print contributor credits and exit." << std::endl;
-			std::cout << " --info           -- Print metadata info and exit." << std::endl << std::endl;
+			std::cout << " --connect <addr>     -- Connect to a listening game instance." << std::endl;
+			std::cout << " --listen             -- Listen for incoming connections." << std::endl;
+			std::cout << " --position x,y       -- Set window position." << std::endl;
+			std::cout << " --launch_path <file> -- Emulates the file associations on the console." << std::endl;
+			std::cout << " --credits            -- Print contributor credits and exit." << std::endl;
+			std::cout << " --info               -- Print metadata info and exit." << std::endl << std::endl;
 			SDL_DestroyWindow(window);
 			SDL_Quit();
 			return 0;

@@ -91,7 +91,7 @@ uint32_t get_max_us_timer()
 }
 
 static const char *get_launch_path() {
-  return nullptr; // TODO: argv[1]
+  return launch_path;
 }
 
 static blit::GameMetadata get_metadata() {
