@@ -313,6 +313,11 @@ void blit_init() {
       persist.reset_error = false;
       persist.last_game_offset = 0;
       memset(persist.launch_path, 0, sizeof(persist.launch_path));
+
+      // clear LTDC buffer to avoid flash of uninitialised data
+      extern char __ltdc_start;
+      int len = 320 * 240 * 2;
+      memset(&__ltdc_start, 0, len);
     }
 
 #if (INITIALISE_QSPI==1)
