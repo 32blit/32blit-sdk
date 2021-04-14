@@ -7,4 +7,5 @@ namespace power {
   void update_active(); // called when input happens
 
   void power_off();
+  bool is_off();
 }

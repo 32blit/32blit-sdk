@@ -604,6 +604,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 
   } else {
     if(__HAL_TIM_GetCounter(&htim2) > 200){ // 20ms debounce time
+
+      // we're powered down, reset
+      if(power::is_off()) {
+        NVIC_SystemReset();
+      }
+
       toggle_menu = true;
       HAL_TIM_Base_Stop(&htim2);
       HAL_TIM_Base_Stop_IT(&htim2);

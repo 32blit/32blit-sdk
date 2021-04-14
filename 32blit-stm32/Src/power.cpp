@@ -61,4 +61,8 @@ namespace power {
     target = Target::OFF;
     sleep_fade_start = HAL_GetTick();
   }
+
+  bool is_off() {
+    return target == Target::OFF && sleep_fade == 0.0f;
+  }
 }
