@@ -33,10 +33,6 @@ The solutions and projects are made to use toolset version c142.
 
 The solution file is located at `vs\32blit.sln`. It contains two static linked libraries, _32blit_ and _32blit-sdl_ and all the examples that will compile to .EXE.
 
-### Get started with your own game
-
-There is also a skeleton game created for you in `template\game.sln`. This is an empty skeleton with some comments to get you started with your own game (if you do not want to start tweaking one of the examples).
-
 ## Option 2: Use Visual Studio's built-in CMake support
 
 This has the advantage of being closer to the build for the device.
@@ -48,6 +44,10 @@ This has the advantage of being closer to the build for the device.
 3. Build!
 
 To find the built files use `Project` > `CMake Cache` > `Open in Explorer`.
+
+### Get started with your own game
+
+There is also a skeleton game project created for you at https://github.com/32blit/32blit-boilerplate . This is an empty skeleton with some comments to get you started with your own game (if you do not want to start tweaking one of the examples).
 
 ### Building your own game
 
