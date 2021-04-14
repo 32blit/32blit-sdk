@@ -36,11 +36,6 @@ void BatteryMenu::render_item(const Item &item, int y, int index) const {
 
   const auto screen_width = screen.bounds.w;
 
-  const int bar_margin = 2;
-  const int bar_height = item_h - bar_margin * 2;
-  const int bar_width = 75;
-  int bar_x = screen_width - bar_width - item_padding_x;
-
   BatteryInformation bat = battery::get_info();
 
   switch (item.id) {
