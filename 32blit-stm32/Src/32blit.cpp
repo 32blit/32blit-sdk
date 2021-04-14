@@ -219,7 +219,7 @@ void blit_tick() {
   }
 
   power::update();
-  do_tick(blit::now());
+  auto time_to_next_tick = do_tick(blit::now());
 
   // handle delayed switch
   if(game_switch_requested) {
@@ -232,6 +232,10 @@ void blit_tick() {
     }
     game_switch_requested = false;
   }
+
+  // got a while until the next tick, sleep a bit
+  if(time_to_next_tick > 1)
+    __WFI();
 }
 
 bool blit_sd_detected() {
