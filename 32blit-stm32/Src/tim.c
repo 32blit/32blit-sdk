@@ -164,7 +164,6 @@ void MX_TIM4_Init(void)
 /* TIM15 init function */
 void MX_TIM15_Init(void)
 {
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
   TIM_OC_InitTypeDef sConfigOC = {0};
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};

@@ -42,8 +42,6 @@ namespace sound {
     HAL_NVIC_EnableIRQ(TIM6_DAC_IRQn);
     __TIM6_CLK_ENABLE();
 
-    TIM_MasterConfigTypeDef sMasterConfig = {0};
-
     htim6.Instance = TIM6;
     htim6.Init.Prescaler = 310;
     htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
