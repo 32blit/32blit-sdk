@@ -74,7 +74,7 @@ namespace blit {
   static uint32_t last_tick_time = 0;
   static uint32_t last_state = 0;
 
-  bool tick(uint32_t time) {
+  int tick(uint32_t time) {
     if (last_tick_time == 0) {
       last_tick_time = time;
     }
@@ -99,7 +99,7 @@ namespace blit {
 
     last_tick_time = time;
 
-    return true;
+    return update_rate_ms - pending_update_time;
   }
 
   const char *get_launch_path() {

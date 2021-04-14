@@ -64,10 +64,10 @@ const uint32_t long_press_exit_time = 1000;
 
 __attribute__((section(".persist"))) Persist persist;
 
-static bool (*do_tick)(uint32_t time) = blit::tick;
+static int (*do_tick)(uint32_t time) = blit::tick;
 
 // pointers to user code
-static bool (*user_tick)(uint32_t time) = nullptr;
+static int (*user_tick)(uint32_t time) = nullptr;
 static void (*user_render)(uint32_t time) = nullptr;
 static bool user_code_disabled = false;
 
