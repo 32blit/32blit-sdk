@@ -28,7 +28,6 @@ namespace blit {
   int debugf(const char * psFormatString, ...);
 
   bool tick(uint32_t time);
-  void fast_tick(uint32_t time);
 
   const char *get_launch_path();
 }
