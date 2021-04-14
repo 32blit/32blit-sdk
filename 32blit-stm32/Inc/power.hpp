@@ -5,4 +5,6 @@ namespace power {
 
   void update();
   void update_active(); // called when input happens
+
+  void power_off();
 }
