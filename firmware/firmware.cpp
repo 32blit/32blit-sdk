@@ -638,11 +638,10 @@ void init() {
   api.flash_to_tmp = flash_to_tmp;
   api.tmp_file_closed = tmp_file_closed;
 
-  set_screen_mode(ScreenMode::hires);
-  screen.clear();
-
   scan_flash();
   flash_scanned = true;
+
+  set_screen_mode(ScreenMode::hires);
 
   // register PROG
   g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value, &flashLoader);
