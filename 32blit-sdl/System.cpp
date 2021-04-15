@@ -90,6 +90,8 @@ uint32_t get_max_us_timer()
 	return UINT32_MAX;
 }
 
+/* Added a command line ability to specify a launch_path parameter. */
+extern const char *launch_path;
 static const char *get_launch_path() {
   return launch_path;
 }
