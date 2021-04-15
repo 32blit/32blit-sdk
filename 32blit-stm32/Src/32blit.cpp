@@ -193,6 +193,7 @@ void blit_tick() {
       blit::LED.r = 0;
       blit_switch_execution(0, false);
     }
+    exit_game = false;
   }
 
   if(toggle_menu) {
