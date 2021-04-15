@@ -702,6 +702,11 @@ bool blit_switch_execution(uint32_t address, bool force_game)
   if(user_tick && !force_game) {
     user_tick = nullptr;
     user_render = nullptr;
+
+    // close the menu (otherwise we'll end up in an inconsistent state)
+    if(blit::update == blit_menu_update)
+      blit_menu();
+
     blit::render = ::render;
     blit::update = ::update;
     do_tick = blit::tick;
