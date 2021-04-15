@@ -46,6 +46,7 @@ std::list<HandlerInfo> handlers; // flashed games that can "launch" files
 std::list<std::tuple<uint16_t, uint16_t>> free_space; // block start, count
 
 uint32_t launcher_offset = ~0;
+bool flash_scanned = false;
 
 Dialog dialog;
 
@@ -641,6 +642,7 @@ void init() {
   screen.clear();
 
   scan_flash();
+  flash_scanned = true;
 
   // register PROG
   g_commandStream.AddCommandHandler(CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value, &flashLoader);
@@ -693,7 +695,7 @@ void init() {
 
 void render(uint32_t time) {
 
-  if(launcher_offset == 0xFFFFFFFF) {
+  if(flash_scanned && launcher_offset == 0xFFFFFFFF) {
     screen.pen = Pen(0, 0, 0);
     screen.clear();
 
