@@ -97,6 +97,9 @@ static void init_api_shared() {
   api.vibration = 0.0f;
   api.LED = Pen();
 
+  for(int i = 0; i < CHANNEL_COUNT; i++)
+    api.channels[i] = AudioChannel();
+
   api.message_received = nullptr;
 }
 
