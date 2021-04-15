@@ -75,6 +75,8 @@ static bool (*user_tick)(uint32_t time) = nullptr;
 static void (*user_render)(uint32_t time) = nullptr;
 static bool user_code_disabled = false;
 
+static bool game_switch_requested = false;
+
 static void update_active();
 
 void DFUBoot(void)
@@ -231,6 +233,18 @@ void blit_tick() {
   }
 
   do_tick(blit::now());
+
+  // handle delayed switch
+  if(game_switch_requested) {
+    user_tick = nullptr;
+    if(!blit_switch_execution(persist.last_game_offset, true)) {
+      // new game failed and old game will now be broken
+      // reset and let the firmware show the error
+      SCB_CleanDCache();
+      NVIC_SystemReset();
+    }
+    game_switch_requested = false;
+  }
 }
 
 bool blit_sd_detected() {
@@ -685,21 +699,14 @@ bool blit_switch_execution(uint32_t address, bool force_game)
   init_api_shared();
 
   // returning from game running on top of the firmware
-  if(user_tick) {
-    // TODO? should be able to avoid the reset for `force_game` / game -> game by waiting for user code to return before switching
-    if(force_game)
-      persist.last_game_offset = address;
-
+  if(user_tick && !force_game) {
     user_tick = nullptr;
     user_render = nullptr;
     blit::render = ::render;
     blit::update = ::update;
     do_tick = blit::tick;
 
-    // TODO: may be possible to return to the menu without a hard reset but currently flashing doesn't work
-    SCB_CleanDCache();
-    NVIC_SystemReset();
-    return true; // can't get here
+    return true;
   }
 
 	// switch to user app in external flash
@@ -709,6 +716,15 @@ bool blit_switch_execution(uint32_t address, bool force_game)
     auto game_header = ((__IO BlitGameHeader *) (EXTERNAL_LOAD_ADDRESS + address));
 
     if(game_header->magic == blit_game_magic) {
+
+      persist.last_game_offset = address;
+
+      // game possibly running, wait until it isn't
+      if(user_tick) {
+        game_switch_requested = true;
+        return true;
+      }
+
       // load function pointers
       auto init = (BlitInitFunction)((uint8_t *)game_header->init + address);
 
@@ -716,13 +732,9 @@ bool blit_switch_execution(uint32_t address, bool force_game)
       user_render = (BlitRenderFunction) ((uint8_t *)game_header->render + address);
       user_tick = (BlitTickFunction) ((uint8_t *)game_header->tick + address);
 
-      persist.last_game_offset = address;
-
       if(!init(address)) {
         user_render = nullptr;
         user_tick = nullptr;
-        // don't try to auto-launch this game again
-        persist.reset_target = prtFirmware;
 
         qspi_disable_memorymapped_mode();
 
