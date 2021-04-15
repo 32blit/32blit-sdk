@@ -15,3 +15,6 @@ cpp_new_line_before_open_brace_type = same_line
 cpp_new_line_before_open_brace_function = same_line
 cpp_new_line_before_open_brace_class = same_line
 cpp_new_line_before_open_brace_block = same_line
+
+[*.{diff,patch}]
+trim_trailing_whitespace = false
