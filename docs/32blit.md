@@ -97,7 +97,7 @@ Or save it to your SD card:
 
 ## Your Own Projects
 
-You can build a project based on the template by running:
+You can build a project based on the boilerplate (https://github.com/32blit/32blit-boilerplate) by running:
 
 ```
 mkdir build.stm32
