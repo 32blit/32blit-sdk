@@ -712,6 +712,10 @@ void render(uint32_t time) {
 void update(uint32_t time) {
   if(dialog.update())
     return;
+
+  // no game or launcher running, fix this
+  if(launcher_offset != 0xFFFFFFFF && !blit_user_code_running())
+    start_launcher();
 }
 
 // below here are the CDC handlers
