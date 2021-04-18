@@ -10,7 +10,7 @@ A basic knowledge of the Linux command-line, installing tools and compiling code
   - [Installing requirements inside WSL](#installing-requirements-inside-wsl)
 - [Building & Running on 32Blit](#building--running-on-32blit)
 - [Building & Running Locally](#building--running-locally)
-  - [Installing the MinGW compiler/tools](#installing-the-mingw-compiler-tools)
+  - [Installing the MinGW compiler/tools](#installing-the-mingw-compilertools)
   - [Installing SDL2, SDL2_image and SDL2_net](#installing-sdl2-sdl2_image-and-sdl2_net)
     - [SDL2](#sdl2)
     - [SDL2_image](#sdl2_image)
@@ -31,6 +31,7 @@ After that, proceed to the Microsoft Store to download Ubuntu for WSL.
 ### Installing requirements inside WSL
 
 The following requirements enable cross-compile to 32Blit via ARM GCC:
+(These are similar to the [Linux requirements](Linux.md#prerequisites), see those for more details)
 
 ```
 sudo apt install gcc gcc-arm-none-eabi unzip cmake make python3 python3-pip
