@@ -55,7 +55,7 @@ You can use WSL on Windows to cross-compile your project (or any 32Blit example)
 
 If you're more familiar with Visual Studio then you should [follow the instructions in Windows-VisualStudio.md](Windows-VisualStudio.md)
 
-You will need to cross-compile SDL2 for MinGW and install both it, and SDL2-image.
+You will need to install SDL2 and SDL2_image/_net for MinGW.
 
 ### Installing the MinGW compiler/tools
 
