@@ -6,18 +6,9 @@ Finished 32blit games can be released simultaneously for Linux, Windows, macOS a
 
 # You Will Need
 
-1. Some experience writing/compiling C/C++ software
-2. `gcc` or Visual Studio for compiling test builds
-3. `gcc-arm-none-eabi` for compiling STM32 builds
-4. `cmake` and `make` for building 32blit libraries and examples
-5. _Python3_ installed, along with _pip3_ (`sudo apt install python3 python3-pip` on Ubuntu/WSL) and the [32blit tools](https://github.com/32blit/32blit-tools) `pip3 install 32blit`
-6. Ubuntu on Windows 10 WSL (_Windows Subsystem for Linux_), or a Linux VM if you prefer.
+Some experience writing/compiling C/C++ software is required.
 
-For more information about how to build on the various systems, refer to the platform specific docs in the `docs` folder!
-
-# More docs!
-
-Refer to the OS specific docs:
+OS specific docs, these cover setup and command-line builds:
 
 * [Linux](docs/Linux.md)
 * [Linux - ChromeOS](docs/ChromeOS.md)
