@@ -3,11 +3,11 @@
 These instructions cover building 32blit on Windows (without WSL or a full Visual Studio install).
 
 - [Prerequisites](#prerequisites)
-  - [Building & Running on 32Blit](#building--running-on-32blit)
-  - [Building & Running Locally](#building--running-locally)
-    - [Build Everything](#build-everything)
+- [Building & Running on 32Blit](#building--running-on-32blit)
+- [Building & Running Locally](#building--running-locally)
+  - [Build Everything](#build-everything)
 
-# Prerequisites
+## Prerequisites
 
 You'll need to install:
 
