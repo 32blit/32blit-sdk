@@ -36,6 +36,11 @@ else()
 		set(SDL2_DIR "${32BLIT_DIR}/vs/sdl")
 	endif()
 
+	if(ANDROID AND NOT SDL2_DIR)
+		set(SDL2_DIR "${ANDROID_LIB_DIR}/${ANDROID_ABI}/lib/cmake/SDL2")
+		set(CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}" "${ANDROID_LIB_DIR}/${ANDROID_ABI}") # won't search outside this
+	endif()
+
 	if(NOT SDL2_LIBRARIES OR NOT SDL2_INCLUDE_DIRS)
 		find_package(SDL2 REQUIRED)
 	endif()
@@ -153,9 +158,14 @@ endif()
 
 function(blit_executable NAME SOURCES)
 	message(STATUS "Processing ${NAME}")
-	add_executable(${NAME} MACOSX_BUNDLE ${SOURCES} ${ARGN})
+	if(ANDROID)
+		add_library(${NAME} SHARED ${SOURCES} ${ARGN})
+	else()
+		add_executable(${NAME} MACOSX_BUNDLE ${SOURCES} ${ARGN})
+	endif()
 
 	install(TARGETS ${NAME}
+		LIBRARY DESTINATION lib
 		RUNTIME DESTINATION bin
 		BUNDLE DESTINATION bin
 	)
