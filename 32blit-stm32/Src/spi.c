@@ -96,8 +96,6 @@ void MX_SPI4_Init(void)
 
 void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
 {
-
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(spiHandle->Instance==SPI1)
   {
   /* USER CODE BEGIN SPI1_MspInit 0 */
@@ -105,7 +103,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
   /* USER CODE END SPI1_MspInit 0 */
     /* SPI1 clock enable */
     __HAL_RCC_SPI1_CLK_ENABLE();
-  
+
 
 
   /* USER CODE BEGIN SPI1_MspInit 1 */
@@ -119,7 +117,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
   /* USER CODE END SPI4_MspInit 0 */
     /* SPI4 clock enable */
     __HAL_RCC_SPI4_CLK_ENABLE();
-  
+
 
   /* USER CODE BEGIN SPI4_MspInit 1 */
 
@@ -137,11 +135,11 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
   /* USER CODE END SPI1_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_SPI1_CLK_DISABLE();
-  
-    /**SPI1 GPIO Configuration    
+
+    /**SPI1 GPIO Configuration
     PA7     ------> SPI1_MOSI
     PB3 (JTDO/TRACESWO)     ------> SPI1_SCK
-    PB4 (NJTRST)     ------> SPI1_MISO 
+    PB4 (NJTRST)     ------> SPI1_MISO
     */
     HAL_GPIO_DeInit(SD_SPI1_MOSI_GPIO_Port, SD_SPI1_MOSI_Pin);
 
@@ -158,10 +156,10 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
   /* USER CODE END SPI4_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_SPI4_CLK_DISABLE();
-  
-    /**SPI4 GPIO Configuration    
+
+    /**SPI4 GPIO Configuration
     PE2     ------> SPI4_SCK
-    PE6     ------> SPI4_MOSI 
+    PE6     ------> SPI4_MOSI
     */
     HAL_GPIO_DeInit(GPIOE, LCD_SPI4_SCK_Pin|LCD_SPI4_MOSI_Pin);
 
@@ -169,7 +167,7 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
 
   /* USER CODE END SPI4_MspDeInit 1 */
   }
-} 
+}
 
 /* USER CODE BEGIN 1 */
 

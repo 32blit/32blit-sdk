@@ -284,8 +284,6 @@ namespace display {
 	}
 
   void flip(const Surface &source) {
-    static uint32_t flip_time = 0;
-
     // switch colour mode if needed
     if(need_ltdc_mode_update) {
       update_ltdc_for_mode();

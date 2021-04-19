@@ -120,7 +120,6 @@ static uint8_t SD_ReadyWait(void)
 /* power on */
 static void SD_PowerOn(void)
 {
-	uint8_t args[6];
 	uint32_t cnt = 0x1FFF;
 
 	/* transmit bytes to wake up */

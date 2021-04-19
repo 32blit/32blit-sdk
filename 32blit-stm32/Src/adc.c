@@ -37,7 +37,7 @@ void MX_ADC1_Init(void)
   ADC_MultiModeTypeDef multimode = {0};
   ADC_ChannelConfTypeDef sConfig = {0};
 
-  /** Common config 
+  /** Common config
   */
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV4;
@@ -62,14 +62,14 @@ void MX_ADC1_Init(void)
   {
     Error_Handler();
   }
-  /** Configure the ADC multi-mode 
+  /** Configure the ADC multi-mode
   */
   multimode.Mode = ADC_MODE_INDEPENDENT;
   if (HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode) != HAL_OK)
   {
     Error_Handler();
   }
-  /** Configure Regular Channel 
+  /** Configure Regular Channel
   */
   sConfig.Channel = ADC_CHANNEL_4;
   sConfig.Rank = ADC_REGULAR_RANK_1;
@@ -81,7 +81,7 @@ void MX_ADC1_Init(void)
   {
     Error_Handler();
   }
-  /** Configure Regular Channel 
+  /** Configure Regular Channel
   */
   sConfig.Channel = ADC_CHANNEL_10;
   sConfig.Rank = ADC_REGULAR_RANK_2;
@@ -96,7 +96,7 @@ void MX_ADC3_Init(void)
 {
   ADC_ChannelConfTypeDef sConfig = {0};
 
-  /** Common config 
+  /** Common config
   */
   hadc3.Instance = ADC3;
   hadc3.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV4;
@@ -121,7 +121,7 @@ void MX_ADC3_Init(void)
   {
     Error_Handler();
   }
-  /** Configure Regular Channel 
+  /** Configure Regular Channel
   */
   sConfig.Channel = ADC_CHANNEL_11;
   sConfig.Rank = ADC_REGULAR_RANK_1;
@@ -133,7 +133,7 @@ void MX_ADC3_Init(void)
   {
     Error_Handler();
   }
-  /** Configure Regular Channel 
+  /** Configure Regular Channel
   */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = ADC_REGULAR_RANK_2;
@@ -141,7 +141,7 @@ void MX_ADC3_Init(void)
   {
     Error_Handler();
   }
-  /** Configure Regular Channel 
+  /** Configure Regular Channel
   */
   sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = ADC_REGULAR_RANK_3;
@@ -149,7 +149,7 @@ void MX_ADC3_Init(void)
   {
     Error_Handler();
   }
-  /** Configure Regular Channel 
+  /** Configure Regular Channel
    * Reading ADC channel twice, just to make sure
    * I kid. This is actually here because the DMA transfer is circular,
    * and 3 readings into a 32-sample buffer means we have a phase problem.
@@ -166,8 +166,6 @@ void MX_ADC3_Init(void)
 
 void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
 {
-
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(adcHandle->Instance==ADC1)
   {
   /* USER CODE BEGIN ADC1_MspInit 0 */
@@ -175,9 +173,9 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
   /* USER CODE END ADC1_MspInit 0 */
     /* ADC1 clock enable */
     __HAL_RCC_ADC12_CLK_ENABLE();
-  
+
     __HAL_RCC_GPIOC_CLK_ENABLE();
- 
+
 
     /* ADC1 DMA Init */
     /* ADC1 Init */
@@ -212,14 +210,14 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
   /* USER CODE END ADC3_MspInit 0 */
     /* ADC3 clock enable */
     __HAL_RCC_ADC3_CLK_ENABLE();
-  
+
     __HAL_RCC_GPIOC_CLK_ENABLE();
-    /**ADC3 GPIO Configuration    
+    /**ADC3 GPIO Configuration
     PC1     ------> ADC3_INP11
     PC2_C     ------> ADC3_INP0
-    PC3_C     ------> ADC3_INP1 
+    PC3_C     ------> ADC3_INP1
     */
- 
+
     HAL_SYSCFG_AnalogSwitchConfig(SYSCFG_SWITCH_PC2, SYSCFG_SWITCH_PC2_OPEN);
 
     HAL_SYSCFG_AnalogSwitchConfig(SYSCFG_SWITCH_PC3, SYSCFG_SWITCH_PC3_OPEN);
@@ -262,10 +260,10 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
   /* USER CODE END ADC1_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_ADC12_CLK_DISABLE();
-  
-    /**ADC1 GPIO Configuration    
+
+    /**ADC1 GPIO Configuration
     PC0     ------> ADC1_INP10
-    PC4     ------> ADC1_INP4 
+    PC4     ------> ADC1_INP4
     */
     HAL_GPIO_DeInit(GPIOC, JOYSTICK_Y_Pin|JOYSTICK_X_Pin);
 
@@ -285,11 +283,11 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
   /* USER CODE END ADC3_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_ADC3_CLK_DISABLE();
-  
-    /**ADC3 GPIO Configuration    
+
+    /**ADC3 GPIO Configuration
     PC1     ------> ADC3_INP11
     PC2_C     ------> ADC3_INP0
-    PC3_C     ------> ADC3_INP1 
+    PC3_C     ------> ADC3_INP1
     */
     HAL_GPIO_DeInit(USER_LEFT1_GPIO_Port, USER_LEFT1_Pin);
 
@@ -302,7 +300,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 
   /* USER CODE END ADC3_MspDeInit 1 */
   }
-} 
+}
 
 /* USER CODE BEGIN 1 */
 

@@ -63,13 +63,16 @@ blit::JPEGImage blit_decode_jpeg_buffer(const uint8_t *ptr, uint32_t len, blit::
   jpeg_in_len = len;
   jpeg_in_off = 0;
   jpeg_in_file = nullptr;
-  
+
   jpeg_out_block = 0;
 
   jpeg_handle.Instance = JPEG;
   HAL_JPEG_Init(&jpeg_handle);
 
   auto status = HAL_JPEG_Decode(&jpeg_handle, (uint8_t *)ptr, len, jpeg_dec_block, jpeg_max_block_len, 0xFFFFFFFF);
+
+  if(status != HAL_OK)
+    return {blit::Size(0, 0), nullptr};
 
   JPEG_ConfTypeDef conf;
   HAL_JPEG_GetInfo(&jpeg_handle, &conf);
@@ -96,13 +99,16 @@ blit::JPEGImage blit_decode_jpeg_file(const std::string &filename, blit::Allocat
   jpeg_in_buf = new uint8_t[1024];
   jpeg_in_len = read_file(file, 0, 1024, (char *)jpeg_in_buf);
   jpeg_in_off = 0;
-  
+
   jpeg_out_block = 0;
 
   jpeg_handle.Instance = JPEG;
   HAL_JPEG_Init(&jpeg_handle);
 
   auto status = HAL_JPEG_Decode(&jpeg_handle, (uint8_t *)jpeg_in_buf, jpeg_in_len, jpeg_dec_block, jpeg_max_block_len, 0xFFFFFFFF);
+
+  if(status != HAL_OK)
+    return {blit::Size(0, 0), nullptr};
 
   JPEG_ConfTypeDef conf;
   HAL_JPEG_GetInfo(&jpeg_handle, &conf);

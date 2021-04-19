@@ -75,7 +75,6 @@ static bool (*user_tick)(uint32_t time) = nullptr;
 static void (*user_render)(uint32_t time) = nullptr;
 static bool user_code_disabled = false;
 
-void blit_update_volume();
 static void update_active();
 
 void DFUBoot(void)
@@ -314,6 +313,11 @@ void blit_init() {
       persist.reset_error = false;
       persist.last_game_offset = 0;
       memset(persist.launch_path, 0, sizeof(persist.launch_path));
+
+      // clear LTDC buffer to avoid flash of uninitialised data
+      extern char __ltdc_start;
+      int len = 320 * 240 * 2;
+      memset(&__ltdc_start, 0, len);
     }
 
 #if (INITIALISE_QSPI==1)
@@ -608,8 +612,6 @@ void blit_enable_ADC()
 }
 
 void blit_process_input() {
-  bool joystick_button = false;
-
   // Read buttons
   blit::buttons =
     (!HAL_GPIO_ReadPin(DPAD_UP_GPIO_Port,     DPAD_UP_Pin)      ? blit::DPAD_UP    : 0) |
@@ -759,8 +761,6 @@ bool blit_switch_execution(uint32_t address, bool force_game)
   HAL_NVIC_DisableIRQ(OTG_HS_IRQn);
   HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
   HAL_NVIC_DisableIRQ(TIM2_IRQn);
-
-	volatile uint32_t uAddr = EXTERNAL_LOAD_ADDRESS;
 
 	/* Disable I-Cache */
 	SCB_DisableICache();

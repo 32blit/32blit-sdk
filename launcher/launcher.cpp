@@ -128,10 +128,10 @@ bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata
 
     offset = num_relocs * 4 + 8;
     // re-read header
-    f.read(offset, sizeof(header), (char *)&header);
+    read = f.read(offset, sizeof(header), (char *)&header);
   }
 
-  if(header.magic == blit_game_magic) {
+  if(read == sizeof(header) && header.magic == blit_game_magic) {
     uint8_t buf[10];
 
     offset += (header.end & 0x1FFFFFF);

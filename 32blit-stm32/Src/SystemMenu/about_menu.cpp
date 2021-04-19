@@ -40,11 +40,6 @@ void AboutMenu::render_item(const Item &item, int y, int index) const {
 
   const auto screen_width = screen.bounds.w;
 
-  const int bar_margin = 2;
-  const int bar_height = item_h - bar_margin * 2;
-  const int bar_width = 75;
-  int bar_x = screen_width - bar_width - item_padding_x;
-
   switch (item.id) {
   case FIRMWARE_VERSION:
     screen.text(get_version_string(), minimal_font, Point(screen_width - item_padding_x, y + 1), true, TextAlign::right);

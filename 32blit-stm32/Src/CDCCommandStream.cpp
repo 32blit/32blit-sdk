@@ -219,9 +219,6 @@ uint8_t	*CDCCommandStream::GetFifoWriteBuffer(void)
 	else
 		m_bNeedsUSBResume = true;
 
-	if(!pData)
-		volatile int bp = 1;
-
 	return pData;
 }
 

@@ -68,14 +68,11 @@ namespace blit {
   Surface null_surface(nullptr, PixelFormat::M, Size(0, 0));
   Surface &screen = null_surface;
 
-  uint32_t update_rate_ms = 10;
-  uint32_t pending_update_time = 0;
+  static const uint32_t update_rate_ms = 10;
+  static uint32_t pending_update_time = 0;
 
-  uint32_t render_rate_ms = 20;
-  uint32_t pending_render_time = 0;
-
-  uint32_t last_tick_time = 0;
-  uint32_t last_state = 0;
+  static uint32_t last_tick_time = 0;
+  static uint32_t last_state = 0;
 
   bool tick(uint32_t time) {
     if (last_tick_time == 0) {
