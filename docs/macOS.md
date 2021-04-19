@@ -3,11 +3,10 @@
 These instructions cover building 32blit on macOS.
 
 - [Prerequisites](#prerequisites)
-- [Python3](#python3)
-  - [Installing python3](#installing-python3)
-  - [Installing pip3 dependecies](#installing-pip3-dependecies)
-  - [Verifying install](#verifying-install)
-- [Installing `gcc-arm-none-eabi`](#installing-gcc-arm-none-eabi)
+  - [Python3](#python3)
+    - [Installing python3](#installing-python3)
+    - [Installing pip3 dependecies](#installing-pip3-dependecies)
+  - [Installing `gcc-arm-none-eabi`](#installing-gcc-arm-none-eabi)
 - [Building & Running on 32Blit](#building--running-on-32blit)
 - [Building & Running Locally](#building--running-locally)
   - [Build Everything](#build-everything)
@@ -22,15 +21,15 @@ xcode-select --install
 brew install cmake
 ```
 
-## Python3
+### Python3
 
 Before trying to install python3, it's worth checking if you already have it installed (and if so, which version), by jumping to 'Verifying install', below. If you do already have it installed, skip this section.
 
-### Installing python3
+#### Installing python3
 
 Installing `python3` can be done with homebrew with a simple `brew install python` which installs both `python3` and `pip3`.
 
-###  Installing pip3 dependecies
+####  Installing pip3 dependecies
 
 before installing 32blit tools, some binary requirements are needed:
 
@@ -48,7 +47,7 @@ pip3 install 32blit
 TODO: Document install of `construct` and `bitstring` for Python 3 (probably need a requirements.txt for the tools directory)
 
 
-###  Verifying install
+####  Verifying install
 
 ``` shell
 python3 --version
@@ -62,7 +61,7 @@ pip3 --version
 (expected output `pip x.x.x from /usr/local/lib/python3.7/site-packages/pip (python 3.7)` or similar)
 
 <a name="gcc"/></a>
-## Installing `gcc-arm-none-eabi`
+### Installing `gcc-arm-none-eabi`
 
 Once this is done, you'll need to install `gcc-arm-none-eabi`. The easiest way to install this tool is via homebrew with the following source:
 
