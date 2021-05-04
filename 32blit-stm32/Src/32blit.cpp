@@ -199,12 +199,20 @@ void blit_tick() {
     blit_menu();
   }
 
+  power::update();
+
   do_render();
 
   blit_i2c_tick();
   blit_process_input();
   blit_update_led();
   blit_update_vibration();
+
+  // skip update if "off"
+  if(power::is_off()) {
+    __WFI();
+    return;
+  }
 
   multiplayer::update();
 
@@ -218,7 +226,6 @@ void blit_tick() {
     disk.is_initialized[0] = fs_mounted; // this gets set without checking if the init succeeded, un-set it if the init failed (or the card was removed)
   }
 
-  power::update();
   auto time_to_next_tick = do_tick(blit::now());
 
   // handle delayed switch
