@@ -152,6 +152,10 @@ int main(void)
   MX_JPEG_Init();
   /* USER CODE BEGIN 2 */
 
+  // USB in sleep
+  RCC->AHB1LPENR &= ~RCC_AHB1LPENR_USB1OTGHSULPILPEN;
+  RCC->AHB1LPENR |= RCC_AHB1LPENR_USB1OTGHSLPEN;
+
   //NVIC_SetPriority(SysTick_IRQn, 0x0);
 
 #if (INITIALISE_QSPI==1)

@@ -14,6 +14,7 @@
 #include "jpeg.hpp"
 #include "executable.hpp"
 #include "multiplayer.hpp"
+#include "power.hpp"
 
 #include "adc.h"
 #include "tim.h"
@@ -61,23 +62,16 @@ const float volume_log_base = 2.0f;
 
 const uint32_t long_press_exit_time = 1000;
 
-static uint32_t last_input_time = 0, sleep_fade_in_start = 0;
-static float sleep_fade = 1.0f;
-const int sleep_inactivity_time = 120000; // ms before sleeping
-const int sleep_fade_out_time = 3000, sleep_fade_in_time = 500;
-
 __attribute__((section(".persist"))) Persist persist;
 
-static bool (*do_tick)(uint32_t time) = blit::tick;
+static int (*do_tick)(uint32_t time) = blit::tick;
 
 // pointers to user code
-static bool (*user_tick)(uint32_t time) = nullptr;
+static int (*user_tick)(uint32_t time) = nullptr;
 static void (*user_render)(uint32_t time) = nullptr;
 static bool user_code_disabled = false;
 
 static bool game_switch_requested = false;
-
-static void update_active();
 
 void DFUBoot(void)
 {
@@ -205,12 +199,20 @@ void blit_tick() {
     blit_menu();
   }
 
+  power::update();
+
   do_render();
 
   blit_i2c_tick();
   blit_process_input();
   blit_update_led();
   blit_update_vibration();
+
+  // skip update if "off"
+  if(power::is_off()) {
+    __WFI();
+    return;
+  }
 
   multiplayer::update();
 
@@ -224,15 +226,7 @@ void blit_tick() {
     disk.is_initialized[0] = fs_mounted; // this gets set without checking if the init succeeded, un-set it if the init failed (or the card was removed)
   }
 
-  if(HAL_GetTick() - last_input_time > sleep_inactivity_time) {
-    sleep_fade = std::max(0.0f, 1.0f - float(HAL_GetTick() - last_input_time - sleep_inactivity_time) / sleep_fade_out_time);
-    blit_update_volume();
-  } else if(sleep_fade < 1.0f) {
-    sleep_fade = std::min(1.0f, float(HAL_GetTick() - sleep_fade_in_start) / sleep_fade_in_time);
-    blit_update_volume();
-  }
-
-  do_tick(blit::now());
+  auto time_to_next_tick = do_tick(blit::now());
 
   // handle delayed switch
   if(game_switch_requested) {
@@ -245,6 +239,10 @@ void blit_tick() {
     }
     game_switch_requested = false;
   }
+
+  // got a while until the next tick, sleep a bit
+  if(time_to_next_tick > 1)
+    __WFI();
 }
 
 bool blit_sd_detected() {
@@ -271,7 +269,7 @@ void hook_render(uint32_t time) {
 }
 
 void blit_update_volume() {
-    float volume = persist.is_muted ? 0.0f : persist.volume * sleep_fade;
+    float volume = persist.is_muted ? 0.0f : persist.volume * power::sleep_fade;
     blit::volume = (uint16_t)(65535.0f * log(1.0f + (volume_log_base - 1.0f) * volume) / log(volume_log_base));
 }
 
@@ -521,20 +519,22 @@ void blit_update_vibration() {
 }
 
 void blit_update_led() {
+    int scale = 10000 * power::sleep_fade;
+
     // RED Led
-    float compare_r = (blit::LED.r * 10000) / 255;
+    int compare_r = (blit::LED.r * scale) / 255;
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_3, compare_r);
 
     // GREEN Led
-    float compare_g = (blit::LED.g * 10000) / 255;
+    int compare_g = (blit::LED.g * scale) / 255;
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_4, compare_g);
 
     // BLUE Led
-    float compare_b = (blit::LED.b * 10000) / 255;
+    int compare_b = (blit::LED.b * scale) / 255;
     __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2, compare_b);
 
     // Backlight
-    __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, (962 - (962 * persist.backlight)) * sleep_fade + (1024 * (1.0f - sleep_fade)));
+    __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, (962 - (962 * persist.backlight)) * power::sleep_fade + (1024 * (1.0f - power::sleep_fade)));
 
     // TODO we don't want to do this too often!
     switch(battery::get_charge_status()){
@@ -611,6 +611,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 
   } else {
     if(__HAL_TIM_GetCounter(&htim2) > 200){ // 20ms debounce time
+
+      // we're powered down, reset
+      if(power::is_off()) {
+        NVIC_SystemReset();
+      }
+
       toggle_menu = true;
       HAL_TIM_Base_Stop(&htim2);
       HAL_TIM_Base_Stop_IT(&htim2);
@@ -647,7 +653,7 @@ void blit_process_input() {
     (!HAL_GPIO_ReadPin(JOYSTICK_BUTTON_GPIO_Port, JOYSTICK_BUTTON_Pin) ? blit::JOYSTICK   : 0);
 
   if(blit::buttons.state)
-    update_active();
+    power::update_active();
 
   // Process ADC readings
   int joystick_x = (adc1data[0] >> 1) - 16384;
@@ -675,7 +681,7 @@ void blit_process_input() {
   blit::joystick.y = -joystick_y / 7168.0f;
 
   if(blit::joystick.length() > 0.01f)
-    update_active();
+    power::update_active();
 
   blit::hack_left = (adc3data[0] >> 1) / 32768.0f;
   blit::hack_right = (adc3data[1] >> 1)  / 32768.0f;
@@ -857,12 +863,4 @@ RawMetadata *blit_get_running_game_metadata() {
   }
 
   return nullptr;
-}
-
-static void update_active() {
-  // fading out or done fading, fade back in
-  if(HAL_GetTick() - last_input_time > sleep_inactivity_time)
-    sleep_fade_in_start = HAL_GetTick() - sleep_fade * sleep_fade_in_time;
-
-  last_input_time = HAL_GetTick();
 }

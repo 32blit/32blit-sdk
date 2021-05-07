@@ -73,6 +73,7 @@ list(APPEND SOURCES
 	Src/gpio.cpp
 	Src/jpeg.c
 	Src/multiplayer.cpp
+	Src/power.cpp
 	Src/sound.cpp
 	Src/file.cpp
 	Src/jpeg.cpp

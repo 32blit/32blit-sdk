@@ -27,7 +27,7 @@ namespace blit {
   void debug(std::string message);
   int debugf(const char * psFormatString, ...);
 
-  bool tick(uint32_t time);
+  int tick(uint32_t time);
 
   const char *get_launch_path();
 }

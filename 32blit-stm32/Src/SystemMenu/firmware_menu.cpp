@@ -12,7 +12,7 @@
 #include "32blit.hpp"
 #include "file.hpp"
 #include "USBManager.h"
-#include "i2c-bq24295.h"
+#include "power.hpp"
 
 using namespace blit;
 
@@ -191,7 +191,7 @@ void FirmwareMenu::item_activated(const Item &item) {
     take_screenshot = true;
     break;
   case POWER_OFF:
-    bq24295_enable_shipping_mode(&hi2c4);
+    power::power_off();
     break;
   case BATTERY_INFO:
     system_menu.set_menu(SystemMenus::Battery);
