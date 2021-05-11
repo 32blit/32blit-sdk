@@ -312,13 +312,13 @@ namespace display {
     __HAL_RCC_LTDC_CLK_ENABLE();
 
     const int h_sync = 4;
-    const int h_back_porch = 42;
-    const int h_active = 321;
+    const int h_back_porch = 43;
+    const int h_active = 320;
     const int h_front_porch = 8;
 
     const int v_sync = 4;
-    const int v_back_porch = 11;
-    const int v_active = 241;
+    const int v_back_porch = 12;
+    const int v_active = 240;
     const int v_front_porch = 2;
 
     // configure the panel timings and signal polarity
