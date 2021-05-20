@@ -85,7 +85,27 @@ There is also a skeleton game project created for you at https://github.com/32bl
 
 6. Save.
 
-7. Select the new config and build!
+7. Press "Edit JSON", scroll down to the new conficuration and delete the contents of the `variables` array. The result should look like this:
+```jsonc
+    // other configs...
+    {
+      "name": "32Blit-Release",
+      "generator": "Ninja",
+      "configurationType": "Release",
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "gcc-arm" ],
+      "variables": [],
+      "intelliSenseMode": "linux-gcc-arm",
+      "cmakeToolchain": "[path...]/32blit-sdk/32blit.toolchain"
+    }
+    //...
+```
+
+8. Select the new config and build!
 
 ## Troubleshooting
 
