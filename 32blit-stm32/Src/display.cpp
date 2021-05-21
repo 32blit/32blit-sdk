@@ -311,12 +311,26 @@ namespace display {
     // enable ltdc clock
     __HAL_RCC_LTDC_CLK_ENABLE();
 
+    const int h_sync = 4;
+    const int h_back_porch = 43;
+    const int h_active = 320;
+    const int h_front_porch = 8;
+
+    const int v_sync = 4;
+    const int v_back_porch = 12;
+    const int v_active = 240;
+    const int v_front_porch = 2;
+
     // configure the panel timings and signal polarity
     LTDC->GCR &= ~LTDC_GCR_PCPOL;   // synch signal polarity setting
-    LTDC->SSCR = (3 << 16) | 3;     // hsync and vsync
-    LTDC->BPCR = (45 << 16) | 14;   // accumulated horizonal and vertical back porch
-    LTDC->AWCR = (366 << 16) | 255; // accumulated active width and height
-    LTDC->TWCR = (374 << 16) | 257; // accumulated total width and height
+    // hsync and vsync
+    LTDC->SSCR = ((h_sync                                           - 1) << 16) | (v_sync                                           - 1);
+    // accumulated horizonal and vertical back porch
+    LTDC->BPCR = ((h_sync + h_back_porch                            - 1) << 16) | (v_sync + v_back_porch                            - 1);
+    // accumulated active width and height
+    LTDC->AWCR = ((h_sync + h_back_porch + h_active                 - 1) << 16) | (v_sync + v_back_porch + v_active                 - 1);
+    // accumulated total width and height
+    LTDC->TWCR = ((h_sync + h_back_porch + h_active + h_front_porch - 1) << 16) | (v_sync + v_back_porch + v_active + v_front_porch - 1);
 
     // enable ltdc transfer and fifo underrun error interrupts
     LTDC->IER = LTDC_IT_TE | LTDC_IT_FU;
