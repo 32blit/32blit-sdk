@@ -48,7 +48,7 @@ And then run `make examplename` to build an example.
 
 The result of the build will be a `.blit`, `.bin`, `.hex` and `.elf` file in the relevant example directory.
 
-For example you might type `make raycaster` which will give you `examples/raycaster/raycaster.blitn`.
+For example you might type `make raycaster` which will give you `examples/raycaster/raycaster.blit`.
 
 ### Uploading An Example
 
