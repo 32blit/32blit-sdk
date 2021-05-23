@@ -923,6 +923,10 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
           if(!prepare_for_data())
             result = srError;
         } else {
+          // break out of loop as we need more data
+          if(dataStream.GetStreamLength() < 4)
+            return srContinue;
+
           while(result == srContinue && dataStream.Get(word)) {
             if(m_uParseIndex == 0 && word != 0x4F4C4552 /*RELO*/) {
               debugf("Missing relocation header\n");
@@ -940,10 +944,6 @@ CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStrea
             // done
             if(m_uParseIndex == num_relocs + 2)
               break;
-
-            // break out of loop as we need more data
-            if(dataStream.GetStreamLength() < 4)
-              return srContinue;
           }
         }
         break;
