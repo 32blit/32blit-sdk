@@ -2,6 +2,7 @@
 
 This repository includes firmware and a launcher for the 32Blit that lets you manage games on SD card, and copy or flash games via USB serial.
 
+- [Installing from a Release](#installing-from-a-release)
 - [Prerequisites](#prerequisites)
 - [Building & Flashing The 32Blit Firmware](#building--flashing-the-32blit-firmware)
   - [Building The Firmware](#building-the-firmware)
@@ -14,6 +15,19 @@ This repository includes firmware and a launcher for the 32Blit that lets you ma
 - [Troubleshooting](#troubleshooting)
   - [Finding The Right DFU Device](#finding-the-right-dfu-device)
   - [DFU device not showing up in Windows](#dfu-device-not-showing-up-in-windows)
+
+# Installing from a Release
+
+Unless you want to work on the firmware, you can install the latest pre-built firmware/launcher:
+
+1. Go here: https://github.com/32blit/32blit-sdk/releases/latest
+2. Download ` 32blit-sdk-[version]-STM32.zip` from the assets at the bottom
+3. Install `firmware-update-[version].blit`
+4. Install `launcher.blit`
+
+Both files can be installed using `32blit install [file].blit` or by copying to the SD card. You should rename the firmware update to `firmware-update.blit` if copying to the SD card as this will cause it to automatically install.
+
+The rest of these instructions cover building the firmware from source.
 
 # Prerequisites
 
@@ -101,10 +115,10 @@ If you have more than one device in DFU mode connected to your computer then fin
 
 ## DFU device not showing up in Windows
 
-If you have put the device into DFU mode, but the DfuSe tool refuses to recognize it, you might need to update the DFU driver by hand. 
+If you have put the device into DFU mode, but the DfuSe tool refuses to recognize it, you might need to update the DFU driver by hand.
 
-1. First, check your device manager while the 32blit is connected in DFU mode. If there is a new device called **DFU in FS Mode** under the 
+1. First, check your device manager while the 32blit is connected in DFU mode. If there is a new device called **DFU in FS Mode** under the
 "Other devices" category, with a possible exclamation mark over it, you will need to update the driver.
-2. Right click on this device, and select _Update driver_. You will want to look for a driver on your computer. 
-3. Select the following folder: `C:\Program Files (x86)\STMicroelectronics\Software\DfuSe v3.0.6\Bin\Driver\Win10\` This folder contains the driver. 
-4. After the driver has been updated, the DfuSe tools should now see the 32blit as a DFU device and you can go ahead with the firmware update. 
+2. Right click on this device, and select _Update driver_. You will want to look for a driver on your computer.
+3. Select the following folder: `C:\Program Files (x86)\STMicroelectronics\Software\DfuSe v3.0.6\Bin\Driver\Win10\` This folder contains the driver.
+4. After the driver has been updated, the DfuSe tools should now see the 32blit as a DFU device and you can go ahead with the firmware update.
