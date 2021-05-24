@@ -68,7 +68,7 @@ namespace blit {
       float sx = (src.w) / float(dest.w);
       float sy = (src.h) / float(dest.h);
 
-      // offset source rect to accomodate for clipped destination rect
+      // offset source rect to accommodate for clipped destination rect
       uint8_t l = cdr.x - dest.x; // top left corner
       uint8_t t = cdr.y - dest.y;
 

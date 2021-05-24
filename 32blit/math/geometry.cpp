@@ -20,7 +20,7 @@ using namespace blit;
  * \param[in]  sphere_radius      Radius of the sphere
  * \param[out] point              Point of intersection
  * \param[out] distance           Distance to intersection
- * \param[out] normal             Normal of point on sphere surface where intersection occured
+ * \param[out] normal             Normal of point on sphere surface where intersection occurred
  *
  * \return `true` if intersection occurs
  */
@@ -71,7 +71,7 @@ bool ray_sphere_intersect(Vec3 ray_origin, Vec3 ray_vector, Vec3 sphere_origin, 
  * \param[in]  circle_radius      Radius of the circle
  * \param[out] point              Point of intersection
  * \param[out] distance           Distance to intersection
- * \param[out] normal             Normal of point on circle circumference where intersection occured
+ * \param[out] normal             Normal of point on circle circumference where intersection occurred
  *
  * \return `true` if intersection occurs
  */

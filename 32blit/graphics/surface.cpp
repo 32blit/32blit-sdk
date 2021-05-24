@@ -434,7 +434,7 @@ namespace blit {
     if (dr.empty())
       return; // after clipping there is nothing to draw
 
-    // offset source rect to accomodate for clipped destination rect
+    // offset source rect to accommodate for clipped destination rect
     uint8_t l = dr.x - p.x; // top left corner
     uint8_t t = dr.y - p.y;
     r.x += l; r.w -= l; r.y += t; r.h -= t;
@@ -566,7 +566,7 @@ namespace blit {
     if (dr.empty())
       return; // after clipping there is nothing to draw
 
-    // offset source rect to accomodate for clipped destination rect
+    // offset source rect to accommodate for clipped destination rect
     uint8_t l = dr.x - p.x; // top left corner
     uint8_t t = dr.y - p.y;
     r.x += l; r.w -= l; r.y += t; r.h -= t;

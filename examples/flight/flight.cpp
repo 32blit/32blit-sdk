@@ -112,7 +112,7 @@ void init() {
 /* get normalised value off 255 for the dist of object between the above values. 
   So if min is 300 and max is 800, if the distance is 400, we would want to get a scale of the alpha
 */
-float calulateFadeAlpha (const int maxDist, const int minDist, float dist) {
+float calculateFadeAlpha (const int maxDist, const int minDist, float dist) {
   int range = maxDist - minDist;
   int n = dist - minDist;
   float percentage = n / float(range);
@@ -172,7 +172,7 @@ void render(uint32_t time_ms) {
     if (o.dist < float(maxViewDistance)) { // check if the object is in a reasonable distance
 
       if (o.dist > maxClearDistance) {
-        screen.alpha = calulateFadeAlpha(maxViewDistance, maxClearDistance, o.dist); 
+        screen.alpha = calculateFadeAlpha(maxViewDistance, maxClearDistance, o.dist);
       } else {
         screen.alpha = 255.0f;
       }

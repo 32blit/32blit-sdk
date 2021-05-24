@@ -15,7 +15,7 @@ MyGameSave save_data;
 void init() {
   // Attempt to load the first save slot.
   if(read_save(save_data)) {
-    // Loaded sucessfully!
+    // Loaded successfully!
   } else {
     // No save file or it failed to load, set up some defaults.
     strncpy(save_data.name, "My Name", 10);

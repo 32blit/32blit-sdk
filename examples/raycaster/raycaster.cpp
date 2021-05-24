@@ -36,7 +36,7 @@ float tan_half_fov;
 
 bool flip_doom_guy = false;
 Point tile_in_view;
-float grafitti_alpha = 0;
+float graffiti_alpha = 0;
 
 void blur(uint8_t passes);
 

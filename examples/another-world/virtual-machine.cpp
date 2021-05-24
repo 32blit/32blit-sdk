@@ -168,7 +168,7 @@ namespace another_world {
       // setup to achieve the effect.
       (*pd) |= 0x88 & mask;  // set the high bit in the masked nibble
     } else if (color > 0x10) {
-      // theory - this mode only draws the pixel if the equivalnet pixel in the background
+      // theory - this mode only draws the pixel if the equivalent pixel in the background
       // has the high bit set, effectively allowing the masking of shapes
       (*pd) &= (~mask); // clear the nibble in the target
       uint8_t* ps = get_vram_from_id(0) + offset; // get same offset in copy from buffer

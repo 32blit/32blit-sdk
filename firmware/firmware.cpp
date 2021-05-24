@@ -1059,7 +1059,7 @@ bool FlashLoader::prepare_for_data() {
 }
 
 void FlashLoader::handle_data_end(bool success) {
-  // done recieving data
+  // done receiving data
   if(dest == Destination::SD) {
     f_close(&file);
     blit_enable_user_code();
