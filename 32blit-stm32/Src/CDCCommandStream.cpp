@@ -191,8 +191,8 @@ uint8_t CDCCommandStream::Stream(uint8_t *data, uint32_t len)
         break;
       }
 
-      // handled all data
-      if(m_dataStream.GetStreamLength() == 0)
+      // handled all data or need more
+      if(m_dataStream.GetStreamLength() == 0 || m_state != stDetect)
         break;
       else // some data left, advance scan pos and try again
         pScanPos += added_len - std::min(added_len, m_dataStream.GetStreamLength());
