@@ -603,7 +603,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
       HAL_NVIC_DisableIRQ(TIM2_IRQn);
       __HAL_TIM_SetCounter(&htim2, 0);
       __HAL_TIM_SetCompare(&htim2, TIM_CHANNEL_1, long_press_exit_time * 10); // press-to-reset-time
-      HAL_TIM_Base_Start(&htim2);
       HAL_TIM_Base_Start_IT(&htim2);
       __HAL_TIM_CLEAR_FLAG(&htim2, TIM_SR_UIF);
       HAL_NVIC_EnableIRQ(TIM2_IRQn);
