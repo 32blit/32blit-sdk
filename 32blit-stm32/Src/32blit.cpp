@@ -733,10 +733,14 @@ bool blit_switch_execution(uint32_t address, bool force_game)
       persist.last_game_offset = address;
 
       // game possibly running, wait until it isn't
-      if(user_tick) {
+      if(user_tick && !user_code_disabled) {
         game_switch_requested = true;
         return true;
       }
+
+      // avoid starting a game disabled (will break sound and the menu)
+      if(user_code_disabled)
+        blit_enable_user_code();
 
       // load function pointers
       auto init = (BlitInitFunction)((uint8_t *)game_header->init + address);
