@@ -186,8 +186,9 @@ USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
   hhcd_USB_OTG_HS.Init.Sof_enable = DISABLE;
   hhcd_USB_OTG_HS.Init.low_power_enable = DISABLE;
   hhcd_USB_OTG_HS.Init.use_external_vbus = DISABLE;
-  hhcd_USB_OTG_HS.Init.NakCount = 3U;
-  hhcd_USB_OTG_HS.Init.NakTimeout = USBH_HS_NAK_TIMEOUT_MS;
+  // TODO Missing from STM32 H7 HAL v1.9.0
+  // hhcd_USB_OTG_HS.Init.NakCount = 3U;
+  // hhcd_USB_OTG_HS.Init.NakTimeout = USBH_HS_NAK_TIMEOUT_MS;
   if (HAL_HCD_Init(&hhcd_USB_OTG_HS) != HAL_OK)
   {
     Error_Handler( );
@@ -358,7 +359,9 @@ USBH_StatusTypeDef USBH_LL_ClosePipe(USBH_HandleTypeDef *phost, uint8_t pipe)
   */
 USBH_StatusTypeDef USBH_LL_ActivatePipe(USBH_HandleTypeDef * phost, uint8_t pipe)
 {
-  HAL_HCD_HC_Activate(phost->pData, pipe);
+  // TODO HAL_HCD_HC_Activate is missing from STM32 H7 HAL v1.9.0
+  // DoPing looks like - possibly - the correct alternative. Confirm!
+  USB_DoPing(phost->pData, pipe);
   return USBH_OK;
 }
 
