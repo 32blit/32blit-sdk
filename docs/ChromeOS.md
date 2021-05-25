@@ -23,7 +23,7 @@ If you want to download anything and allow your virtual machine to access the fi
 Linux has access to the Chrome OS folder. To do this right click a folder in the Files app on Chrome OS and select share with Linux.
 You can either directly share the downloads folder or create a new one to puts files destined for your virtual machine into it.
 
-Any shared folders will be avaliable under `/mnt/chromeos/`.
+Any shared folders will be available under `/mnt/chromeos/`.
 
 Alternatively you could install a browser within the virtual machine itself.
 

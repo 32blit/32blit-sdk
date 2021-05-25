@@ -164,7 +164,7 @@ struct Player {
     }
   
 
-    // Handle Left/Right collission
+    // Handle Left/Right collisions
     pos.x += vel.x;
     Rect bounds_lr = feet();
 
@@ -195,7 +195,7 @@ struct Player {
       }
     });
 
-    // Handle Up/Down collission
+    // Handle Up/Down collisions
     pos.y += vel.y;
     Rect bounds_ud = feet();
 
@@ -284,7 +284,7 @@ struct Player {
     screen.line(world_to_screen(bb.tl()), world_to_screen(bb.tr()));
     screen.line(world_to_screen(bb.bl()), world_to_screen(bb.br()));
 
-    // Collission Debug
+    // Collisions Debug
     map.tiles_in_rect(bb, [&bb](Point tile_pt) -> void {
       Point sp = world_to_screen(tile_pt * 8);
       Rect rb(sp.x, sp.y, 8, 8);

@@ -21,7 +21,7 @@ constexpr float HALF_FOV = PLAYER_FOV / 360.0f * blit::pi;
 constexpr uint8_t MAP_WIDTH = 16;
 constexpr uint8_t MAP_HEIGHT = 16;
 constexpr uint8_t MAP_TILE_SOLID = 0x80;
-constexpr uint8_t MAP_TILE_GRAFITTI = 0x40;
+constexpr uint8_t MAP_TILE_GRAFFITI = 0x40;
 constexpr uint8_t MAX_RAY_STEPS = 24; //11 //sqrt((MAP_WIDTH ** 2) + (MAP_HEIGHT ** 2))
 
 constexpr uint8_t TEXTURE_FLOOR = 0;

@@ -16,7 +16,7 @@ const uint16_t screen_width = 320;
 const uint16_t screen_height = 240;
 const uint32_t FPS = 1000 / 27; // DoomFire runs at 27FPS.
 
-Pen pallete[] = { // 36 colours
+Pen palette[] = { // 36 colours
   Pen(0x07, 0x07, 0x07), Pen(0x1f, 0x07, 0x07), Pen(0x2f, 0x0f, 0x07),
   Pen(0x47, 0x0f, 0x07), Pen(0x57, 0x17, 0x07), Pen(0x67, 0x1f, 0x07),
   Pen(0x77, 0x1f, 0x07), Pen(0x8f, 0x27, 0x07), Pen(0x9f, 0x2f, 0x07),
@@ -99,7 +99,7 @@ void render(uint32_t time) {
     for (int x = 0; x < screen_width; x++) {
       // Draw the current pixel.
       uint8_t color = fire[row + x];
-      screen.pen = pallete[color];
+      screen.pen = palette[color];
       screen.pixel(Point(x, y));
 
       // Update the pixels on the previous row.
