@@ -14,16 +14,20 @@ namespace blit {
    * \param[in] sprites
    */
   TileMap::TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites) : bounds(bounds), tiles(tiles), transforms(transforms), sprites(sprites) {
-    if (!transforms) {
-      this->transforms = new uint8_t[bounds.w * bounds.h];
-      std::memset(this->transforms, 0, bounds.w * bounds.h);
-    }
   }
 
   TileMap *TileMap::load_tmx(const uint8_t *asset, Surface *sprites, int layer, int flags) {
     auto map_struct = reinterpret_cast<const TMX *>(asset);
 
-    if(memcmp(map_struct, "MTMX", 4) != 0)
+    if(memcmp(map_struct, "MTMX", 4) != 0 || map_struct->header_length != sizeof(TMX))
+      return nullptr;
+
+    // only 8 bit tiles supported
+    if(map_struct->flags & TMX_16Bit)
+      return nullptr;
+
+    // power of two bounds required
+    if((map_struct->width & (map_struct->width - 1)) || (map_struct->height & (map_struct->height - 1)))
       return nullptr;
 
     auto layer_size = map_struct->width * map_struct->height;
@@ -36,9 +40,20 @@ namespace blit {
       tile_data = const_cast<uint8_t *>(map_struct->data + layer_size * layer);
     }
 
-    // TODO: transforms (requires packer to output them)
+    auto transform_base = map_struct->data + layer_size * map_struct->layers;
 
-    auto ret = new TileMap(tile_data, nullptr, Size(map_struct->width, map_struct->height), sprites);
+    uint8_t *transform_data = nullptr;
+
+    if(flags & copy_transforms) {
+      transform_data = new uint8_t[layer_size]();
+
+      if(map_struct->flags & TMX_Transforms)
+        memcpy(transform_data, transform_base + layer_size * layer, layer_size);
+    } else if(map_struct->flags & TMX_Transforms) {
+      transform_data = const_cast<uint8_t *>(transform_base + layer_size * layer);
+    }
+
+    auto ret = new TileMap(tile_data, transform_data, Size(map_struct->width, map_struct->height), sprites);
     ret->empty_tile_id = map_struct->empty_tile;
 
     return ret;
@@ -181,7 +196,7 @@ namespace blit {
 
       if (toff != -1 && tiles[toff] != empty_tile_id) {
         uint8_t tile_id = tiles[toff];
-        uint8_t transform = transforms[toff];
+        uint8_t transform = transforms ? transforms[toff] : 0;
 
         // coordinate within sprite
         int u = wcx & 0b111;
