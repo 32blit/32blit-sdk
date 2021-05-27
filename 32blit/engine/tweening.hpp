@@ -9,6 +9,7 @@ namespace blit {
   struct Tween {
     using TweenFunction = float (*)(uint32_t t, float b, float c, uint32_t d);
     TweenFunction function = nullptr;
+    void *user_data = nullptr;
 
     float from = 0.0f;
     float to = 1.0f;
