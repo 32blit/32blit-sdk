@@ -11,6 +11,7 @@ namespace blit {
     // uint32_t callback;                      // reference to Lua callback function (can be obtained via `ref = _G['function_name']`)
     
     TimerCallback callback = nullptr;
+    void *user_data = nullptr;
    
     uint32_t duration = 0;                  // how many milliseconds between callbacks
     uint32_t started = 0;                   // system time when timer started in milliseconds
