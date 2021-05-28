@@ -30,10 +30,11 @@ After that, proceed to the Microsoft Store to download Ubuntu for WSL.
 
 ### Installing requirements inside WSL
 
-The following requirements enable cross-compile to 32Blit via ARM GCC:
+The following 3 commands enable cross-compile to 32Blit via ARM GCC:
 (These are similar to the [Linux requirements](Linux.md#prerequisites), see those for more details)
 
 ```
+sudo apt update
 sudo apt install gcc gcc-arm-none-eabi unzip cmake make python3 python3-pip
 pip3 install 32blit construct bitstring
 ```
