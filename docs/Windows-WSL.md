@@ -34,7 +34,7 @@ The following requirements enable cross-compile to 32Blit via ARM GCC:
 (These are similar to the [Linux requirements](Linux.md#prerequisites), see those for more details)
 
 ```
-sudo apt install gcc gcc-arm-none-eabi unzip cmake make python3 python3-pip
+sudo apt install gcc gcc-arm-none-eabi unzip cmake make python3 python3-pip python3-setuptools
 pip3 install 32blit construct bitstring
 ```
 

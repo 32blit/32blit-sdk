@@ -26,7 +26,7 @@ For 32Blit device builds:
 New enough versions of these exist in at least Debian "buster" and Ubuntu 20.04.
 
 ```
-sudo apt install git gcc g++ gcc-arm-none-eabi cmake make python3 python3-pip libsdl2-dev libsdl2-image-dev libsdl2-net-dev unzip
+sudo apt install git gcc g++ gcc-arm-none-eabi cmake make python3 python3-pip python3-setuptools libsdl2-dev libsdl2-image-dev libsdl2-net-dev unzip
 
 pip3 install 32blit
 ```
