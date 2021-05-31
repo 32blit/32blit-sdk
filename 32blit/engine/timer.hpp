@@ -8,17 +8,15 @@ namespace blit {
   struct Timer {
     using TimerCallback = void (*)(Timer &timer);
 
-    // uint32_t callback;                      // reference to Lua callback function (can be obtained via `ref = _G['function_name']`)
-    
     TimerCallback callback = nullptr;
     void *user_data = nullptr;
-   
+
     uint32_t duration = 0;                  // how many milliseconds between callbacks
     uint32_t started = 0;                   // system time when timer started in milliseconds
     int16_t loops = -1;                     // number of times to repeat timer (-1 == forever)
-    enum state {                            // state of the timer 
-      STOPPED, 
-      RUNNING, 
+    enum state {                            // state of the timer
+      STOPPED,
+      RUNNING,
       PAUSED,
       FINISHED
     };
@@ -36,14 +34,5 @@ namespace blit {
     Timer();
   };
 
-  extern std::vector<Timer *> timers;
-
-  struct timer_event_t {
-
-  };
-
   extern void update_timers(uint32_t time);
-
-  //extern std::vector<timer *> timers;  
-
 }
