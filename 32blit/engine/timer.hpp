@@ -13,7 +13,7 @@ namespace blit {
 
     uint32_t duration = 0;                  // how many milliseconds between callbacks
     uint32_t started = 0;                   // system time when timer started in milliseconds
-    int16_t loops = -1;                     // number of times to repeat timer (-1 == forever)
+    int32_t loops = -1, orig_loops = -1;    // number of times to repeat timer (-1 == forever)
     enum state {                            // state of the timer
       UNINITIALISED,
       STOPPED,

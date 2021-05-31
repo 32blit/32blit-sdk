@@ -31,7 +31,7 @@ namespace blit {
   void Timer::init(TimerCallback callback, uint32_t duration, int32_t loops) {
     this->callback = callback;
     this->duration = duration;
-    this->loops = loops;
+    this->loops = orig_loops = loops;
   }
 
   /**
@@ -40,6 +40,10 @@ namespace blit {
   void Timer::start() {
     if(state == UNINITIALISED)
       timers.push_back(this);
+
+    // reset loop counter if we're restarting
+    if(state == STOPPED || state == FINISHED)
+      loops = orig_loops;
 
     this->started = blit::now();
     this->state = RUNNING;
