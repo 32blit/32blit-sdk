@@ -45,8 +45,22 @@ namespace blit {
     if(state == STOPPED || state == FINISHED)
       loops = orig_loops;
 
-    this->started = blit::now();
+    if(state == PAUSED)
+      started = blit::now() - (paused - started); // Modify start time based on when timer was paused.
+    else
+      started = blit::now();
+
     this->state = RUNNING;
+  }
+
+  /**
+   * Pause the timer.
+   */
+  void Timer::pause() {
+    if (state != RUNNING) return;
+
+    paused = blit::now();
+    state = PAUSED;
   }
 
   /**

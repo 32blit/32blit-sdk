@@ -13,6 +13,7 @@ namespace blit {
 
     uint32_t duration = 0;                  // how many milliseconds between callbacks
     uint32_t started = 0;                   // system time when timer started in milliseconds
+    uint32_t paused = 0;                    // time when timer was paused
     int32_t loops = -1, orig_loops = -1;    // number of times to repeat timer (-1 == forever)
     enum state {                            // state of the timer
       UNINITIALISED,
@@ -25,6 +26,7 @@ namespace blit {
 
     void init(TimerCallback callback, uint32_t duration, int32_t loops = -1);
     void start();
+    void pause();
     void stop();
 
     bool is_running()   { return this->state == RUNNING; }
