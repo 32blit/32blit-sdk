@@ -6,7 +6,7 @@
 namespace blit {
 
   struct Timer {
-    using TimerCallback = void (*)(Timer &timer);
+    using TimerCallback = std::function<void (Timer &timer)>;
 
     TimerCallback callback = nullptr;
     void *user_data = nullptr;
