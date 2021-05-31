@@ -8,6 +8,15 @@ namespace blit {
 
   Timer::Timer() = default;
 
+  Timer::~Timer() {
+    for(auto it = timers.begin(); it != timers.end(); ++it) {
+      if(*it == this) {
+        timers.erase(it);
+        break;
+      }
+    }
+  }
+
   /**
    * Initialize the timer.
    *

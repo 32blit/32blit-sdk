@@ -32,6 +32,7 @@ namespace blit {
     bool is_finished()  { return this->state == FINISHED; }
 
     Timer();
+    ~Timer();
   };
 
   extern void update_timers(uint32_t time);
