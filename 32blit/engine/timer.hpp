@@ -15,12 +15,13 @@ namespace blit {
     uint32_t started = 0;                   // system time when timer started in milliseconds
     int16_t loops = -1;                     // number of times to repeat timer (-1 == forever)
     enum state {                            // state of the timer
+      UNINITIALISED,
       STOPPED,
       RUNNING,
       PAUSED,
       FINISHED
     };
-    uint8_t state = STOPPED;
+    uint8_t state = UNINITIALISED;
 
     void init(TimerCallback callback, uint32_t duration, int32_t loops = -1);
     void start();

@@ -28,13 +28,15 @@ namespace blit {
     this->callback = callback;
     this->duration = duration;
     this->loops = loops;
-    timers.push_back(this);
   }
 
   /**
    * Start the timer.
    */
   void Timer::start() {
+    if(state == UNINITIALISED)
+      timers.push_back(this);
+
     this->started = blit::now();
     this->state = RUNNING;
   }
@@ -43,6 +45,8 @@ namespace blit {
    * Stop the running timer.
    */
   void Timer::stop() {
+    if(state == UNINITIALISED) return;
+
     this->state = STOPPED;
   }
 
