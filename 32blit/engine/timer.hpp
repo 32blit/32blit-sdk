@@ -33,6 +33,7 @@ namespace blit {
     bool is_finished()  { return this->state == FINISHED; }
 
     Timer();
+    Timer(TimerCallback callback, uint32_t duration, int32_t loops = -1);
     ~Timer();
   };
 

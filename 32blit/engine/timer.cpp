@@ -8,6 +8,10 @@ namespace blit {
 
   Timer::Timer() = default;
 
+  Timer::Timer(TimerCallback callback, uint32_t duration, int32_t loops) {
+    init(callback, duration, loops);
+  }
+
   Timer::~Timer() {
     for(auto it = timers.begin(); it != timers.end(); ++it) {
       if(*it == this) {
