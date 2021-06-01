@@ -74,6 +74,9 @@ namespace blit {
   static uint32_t last_tick_time = 0;
   static uint32_t last_state = 0;
 
+  extern std::vector<Timer *> timers;
+  extern std::vector<Tween *> tweens;
+
   int tick(uint32_t time) {
     if (last_tick_time == 0) {
       last_tick_time = time;
@@ -83,7 +86,18 @@ namespace blit {
 
     // skip time spent in the menu
     if (was_menu_open && time - last_tick_time > 10) {
+      auto skipped_time = time - last_tick_time;
       last_tick_time = time;
+
+      for (auto &timer : timers) {
+        timer->started += skipped_time;
+        timer->paused += skipped_time;
+      }
+
+      for (auto &tween : tweens) {
+        tween->started += skipped_time;
+        tween->paused += skipped_time;
+      }
     }
 
     // update timers
