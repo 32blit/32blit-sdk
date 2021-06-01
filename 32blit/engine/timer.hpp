@@ -9,7 +9,6 @@ namespace blit {
     using TimerCallback = std::function<void (Timer &timer)>;
 
     TimerCallback callback = nullptr;
-    void *user_data = nullptr;
 
     uint32_t duration = 0;                  // how many milliseconds between callbacks
     uint32_t started = 0;                   // system time when timer started in milliseconds
