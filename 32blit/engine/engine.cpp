@@ -79,6 +79,13 @@ namespace blit {
       last_tick_time = time;
     }
 
+    bool was_menu_open = (last_state & Button::HOME) && !(api.buttons.state & Button::HOME);
+
+    // skip time spent in the menu
+    if (was_menu_open && time - last_tick_time > 10) {
+      last_tick_time = time;
+    }
+
     // update timers
     update_timers(time);
     update_tweens(time);
