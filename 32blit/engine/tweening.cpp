@@ -79,17 +79,17 @@ namespace blit {
   void update_tweens(uint32_t time) {
     for (auto tween : tweens) {
       if (tween->state == Tween::RUNNING){
-        uint32_t elapsed = blit::now() - tween->started;
+        uint32_t elapsed = time - tween->started;
         tween->value = tween->function(elapsed, tween->from, tween->to, tween->duration);
 
         if (elapsed >= tween->duration) {
           if(tween->loops == -1){
-            tween->started = blit::now();
+            tween->started = time;
           }
           else
           {
             tween->loop_count++;
-            tween->started = blit::now();
+            tween->started = time;
             if (tween->loop_count == tween->loops){
               tween->state = Tween::FINISHED;
             }
