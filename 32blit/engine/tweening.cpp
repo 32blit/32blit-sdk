@@ -10,6 +10,21 @@
 namespace blit {
   std::vector<Tween *> tweens;
 
+  Tween::Tween() = default;
+
+  Tween::Tween(TweenFunction function, float start, float end, uint32_t duration, int32_t loops) {
+    init(function, start, end, duration, loops);
+  }
+
+  Tween::~Tween() {
+    for(auto it = tweens.begin(); it != tweens.end(); ++it) {
+      if(*it == this) {
+        tweens.erase(it);
+        break;
+      }
+    }
+  }
+
   /**
    * Initialize the tween.
    *
@@ -26,23 +41,42 @@ namespace blit {
     this->to = to;
     this->duration = duration;
     this->loop_count = 0;
-    tweens.push_back(this);
   }
 
   /**
    * Start the tween.
    */
   void Tween::start() {
-    this->started = blit::now();
-    this->loop_count = 0;
+    if(state == UNINITIALISED)
+      tweens.push_back(this);
+
+    if(state == PAUSED) {
+      started = blit::now() - (paused - started); // Modify start time based on when tween was paused.
+    } else {
+      this->started = blit::now();
+      this->loop_count = 0;
+      this->value = this->from;
+    }
+
     this->state = RUNNING;
-    this->value = this->from;
+  }
+
+  /**
+   * Pause the tween.
+   */
+  void Tween::pause() {
+    if (state != RUNNING) return;
+
+    paused = blit::now();
+    state = PAUSED;
   }
 
   /**
    * Stop the running tween.
    */
   void Tween::stop() {
+    if(state == UNINITIALISED) return;
+
     this->state = STOPPED;
   }
 
