@@ -71,4 +71,11 @@ void update(uint32_t time_ms) {
     tween.function = tween_funcs[current_tween_func].func;
     tween.start();
   }
+
+  if(buttons.released & Button::A) {
+    if(tween.is_paused())
+      tween.start();
+    else
+      tween.pause();
+  }
 }
