@@ -41,14 +41,12 @@ namespace blit {
     if(state == UNINITIALISED)
       timers.push_back(this);
 
-    // reset loop counter if we're restarting
-    if(state == STOPPED || state == FINISHED)
-      loop_count = 0;
-
     if(state == PAUSED)
       started = blit::now() - (paused - started); // Modify start time based on when timer was paused.
-    else
+    else {
       started = blit::now();
+      loop_count = 0;
+    }
 
     this->state = RUNNING;
   }
