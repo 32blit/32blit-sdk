@@ -3,6 +3,7 @@
 
 #include "spi-st7272a.h"
 #include "32blit.hpp"
+#include "engine/api_private.hpp"
 
 #include "display.hpp"
 #include "stm32h7xx_ll_dma2d.h"
@@ -61,6 +62,8 @@ namespace display {
   Surface __fb_hires_pal((uint8_t *)&__fb_start, PixelFormat::P, Size(320, 240));
   Surface __fb_lores((uint8_t *)&__fb_start, PixelFormat::RGB, Size(160, 120));
 
+  static SurfaceInfo cur_surf_info; // used to pass screen info back through API
+
   Pen palette[256];
 
   ScreenMode mode = ScreenMode::lores;
@@ -103,21 +106,21 @@ namespace display {
     display::needs_render = false;
   }
 
-  Surface &set_screen_mode(ScreenMode new_mode) {
+  SurfaceInfo &set_screen_mode(ScreenMode new_mode) {
     requested_mode = new_mode;
     switch(new_mode) {
       case ScreenMode::lores:
-        screen = __fb_lores;
+        cur_surf_info = blit::screen = __fb_lores;
         break;
       case ScreenMode::hires:
-        screen = __fb_hires;
+        cur_surf_info = blit::screen = __fb_hires;
         break;
       case ScreenMode::hires_palette:
-        screen = __fb_hires_pal;
+        cur_surf_info = blit::screen = __fb_hires_pal;
         break;
     }
 
-    return screen;
+    return cur_surf_info;
   }
 
   void set_screen_palette(const Pen *colours, int num_cols) {

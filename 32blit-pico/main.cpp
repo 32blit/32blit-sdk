@@ -26,6 +26,8 @@
 
 using namespace blit;
 
+static SurfaceInfo cur_surf_info;
+
 #ifdef DISPLAY_ST7789
 // height rounded up to handle the 135px display
 static const int lores_page_size = (ST7789_WIDTH / 2) * ((ST7789_HEIGHT + 1) / 2) * 2;
@@ -54,10 +56,10 @@ static volatile int buf_index = 0;
 
 static volatile bool do_render = true;
 
-static Surface &set_screen_mode(ScreenMode mode) {
+static SurfaceInfo &set_screen_mode(ScreenMode mode) {
   switch(mode) {
     case ScreenMode::lores:
-      screen = lores_screen;
+      cur_surf_info = lores_screen;
       // window
 #ifdef DISPLAY_ST7789
       if(have_vsync)
@@ -72,11 +74,11 @@ static Surface &set_screen_mode(ScreenMode mode) {
       if(have_vsync)
         do_render = true;
 
-      screen = hires_screen;
+      cur_surf_info = hires_screen;
       st7789::frame_buffer = (uint16_t *)screen_fb;
       st7789::set_pixel_double(false);
 #else
-      return screen;
+      return cur_surf_info;
 #endif
       break;
 
@@ -87,7 +89,7 @@ static Surface &set_screen_mode(ScreenMode mode) {
 
   cur_screen_mode = mode;
 
-  return blit::screen;
+  return cur_surf_info;
 }
 
 static uint32_t now() {

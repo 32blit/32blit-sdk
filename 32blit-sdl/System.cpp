@@ -27,21 +27,22 @@ void blit_debug(const char *message) {
 
 // blit screenmode callback
 blit::ScreenMode _mode = blit::ScreenMode::lores;
-blit::Surface &set_screen_mode(blit::ScreenMode new_mode) {
+blit::SurfaceInfo cur_surf_info;
+blit::SurfaceInfo &set_screen_mode(blit::ScreenMode new_mode) {
 	_mode = new_mode;
-    switch(_mode) {
-      case blit::ScreenMode::lores:
-        blit::screen = __fb_lores;
-        break;
-      case blit::ScreenMode::hires:
-        blit::screen = __fb_hires;
-        break;
-      case blit::ScreenMode::hires_palette:
-        blit::screen = __fb_hires_pal;
-        break;
-    }
+  switch(_mode) {
+    case blit::ScreenMode::lores:
+      cur_surf_info = __fb_lores;
+      break;
+    case blit::ScreenMode::hires:
+      cur_surf_info = __fb_hires;
+      break;
+    case blit::ScreenMode::hires_palette:
+      cur_surf_info = __fb_hires_pal;
+      break;
+  }
 
-	return blit::screen;
+	return cur_surf_info;
 }
 
 static void set_screen_palette(const blit::Pen *colours, int num_cols) {

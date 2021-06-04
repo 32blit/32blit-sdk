@@ -19,6 +19,26 @@ namespace blit {
 
   constexpr uint16_t api_version_major = 0, api_version_minor = 0;
 
+  struct SurfaceInfo {
+    SurfaceInfo() = default;
+    SurfaceInfo(const Surface &surf): data(surf.data), bounds(surf.bounds), format(surf.format), palette(surf.palette) {}
+
+    uint8_t *data = nullptr;
+    Size bounds;
+
+    // unused, here for compat reasons
+    Rect clip;
+    uint8_t alpha;
+    Pen pen;
+
+    PixelFormat format;
+    uint8_t pixel_stride; // unused
+    uint16_t row_stride; // unused
+
+    Surface *mask = nullptr; // unused
+    Pen *palette = nullptr;
+  };
+
   #pragma pack(push, 4)
   struct API {
     uint16_t version_major;
@@ -34,7 +54,7 @@ namespace blit {
 
     AudioChannel *channels;
 
-    Surface &(*set_screen_mode)  (ScreenMode new_mode);
+    SurfaceInfo &(*set_screen_mode)  (ScreenMode new_mode);
     void (*set_screen_palette)  (const Pen *colours, int num_cols);
     uint32_t (*now)();
     uint32_t (*random)();
