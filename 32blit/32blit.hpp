@@ -23,22 +23,3 @@
 #include "types/point.hpp"
 #include "types/rect.hpp"
 #include "types/size.hpp"
-
-#ifdef TARGET_32BLIT_HW
-#define __SECTION__(S) __attribute__((section(S)))
-#else
-#define __SECTION__(S)
-#endif
-
-#if _WIN32
-#define __attribute__(A)
-extern const uint8_t itcm_text_start;
-extern const uint8_t itcm_text_end;
-extern const uint8_t itcm_data;
-#endif
-
-#define DTCM  __SECTION__(".dtcm");
-#define ITCM  __SECTION__(".itcm");
-#define SRAM1 __SECTION__(".sram1")));
-#define SRAM2 __SECTION__(".sram2")));
-#define SRAM3 __SECTION__(".sram3")));
