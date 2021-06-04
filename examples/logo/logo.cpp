@@ -25,14 +25,14 @@ uint8_t logo[] = {
   2, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1
 };
 
-struct Particle {
+struct LogoParticle {
   Vec3 direction;
   Vec3 position;
   Pen color;
 };
 
 // convert the logo points into vec3
-Particle particles[63];
+LogoParticle particles[63];
 
 /* setup */
 void init() {
@@ -100,7 +100,7 @@ void render(uint32_t time) {
   Mat4 t = Mat4::translation(Vec3(80, 60, 0));
 
   for (int i = 0; i < 63; i++) {
-    Particle pc = particles[i];
+    LogoParticle pc = particles[i];
     pc.position *= s;
     pc.position += pc.direction * td * speed;
 
