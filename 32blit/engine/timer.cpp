@@ -8,6 +8,19 @@ namespace blit {
 
   Timer::Timer() = default;
 
+  Timer::Timer(TimerCallback callback, uint32_t duration, int32_t loops) {
+    init(callback, duration, loops);
+  }
+
+  Timer::~Timer() {
+    for(auto it = timers.begin(); it != timers.end(); ++it) {
+      if(*it == this) {
+        timers.erase(it);
+        break;
+      }
+    }
+  }
+
   /**
    * Initialize the timer.
    *
@@ -19,21 +32,41 @@ namespace blit {
     this->callback = callback;
     this->duration = duration;
     this->loops = loops;
-    timers.push_back(this);
   }
 
   /**
    * Start the timer.
    */
   void Timer::start() {
-    this->started = blit::now();
+    if(state == UNINITIALISED)
+      timers.push_back(this);
+
+    if(state == PAUSED)
+      started = blit::now() - (paused - started); // Modify start time based on when timer was paused.
+    else {
+      started = blit::now();
+      loop_count = 0;
+    }
+
     this->state = RUNNING;
+  }
+
+  /**
+   * Pause the timer.
+   */
+  void Timer::pause() {
+    if (state != RUNNING) return;
+
+    paused = blit::now();
+    state = PAUSED;
   }
 
   /**
    * Stop the running timer.
    */
   void Timer::stop() {
+    if(state == UNINITIALISED) return;
+
     this->state = STOPPED;
   }
 
@@ -51,9 +84,9 @@ namespace blit {
           }
           else
           {
-            t->loops--;
+            t->loop_count++;
             t->started = time;
-            if (t->loops == 0){
+            if (t->loop_count == t->loops){
               t->state = Timer::FINISHED;
             }
           }

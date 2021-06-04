@@ -7,9 +7,8 @@ namespace blit {
   const uint32_t LINEAR = 1UL << 0;
 
   struct Tween {
-    using TweenFunction = float (*)(uint32_t t, float b, float c, uint32_t d);
+    using TweenFunction = std::function<float(uint32_t t, float b, float c, uint32_t d)>;
     TweenFunction function = nullptr;
-    void *user_data = nullptr;
 
     float from = 0.0f;
     float to = 1.0f;
@@ -19,23 +18,30 @@ namespace blit {
     int32_t loops = -1;
     int32_t loop_count = 0;
     uint32_t started = 0;
+    uint32_t paused = 0;                    // time when tween was paused
 
     enum state {
-      STOPPED, 
-      RUNNING, 
+      UNINITIALISED,
+      STOPPED,
+      RUNNING,
       PAUSED,
       FINISHED
     };
-    uint8_t state = STOPPED;
+    uint8_t state = UNINITIALISED;
 
     void init(TweenFunction function, float start, float end, uint32_t duration, int32_t loops = -1);
     void start();
+    void pause();
     void stop();
 
     bool is_running()   { return this->state == RUNNING; }
     bool is_paused()    { return this->state == PAUSED; }
     bool is_stopped()   { return this->state == STOPPED; }
     bool is_finished()  { return this->state == FINISHED; }
+
+    Tween();
+    Tween(TweenFunction function, float start, float end, uint32_t duration, int32_t loops = -1);
+    ~Tween();
   };
 
   extern std::vector<Tween *> tweens;
