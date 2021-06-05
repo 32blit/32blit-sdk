@@ -338,7 +338,8 @@ static int write_audio_frame(AVFormatContext *oc, OutputStream *ost)
 			fprintf(stderr, "Error during encoding: %s\n", _av_err2str(ret));
 			return ret;
 		}
-		printf("Encoded frame %3I64d (size=%5d)\n", pkt.pts, pkt.size);
+
+		printf("Encoded frame %3" PRId64 " (size=%5d)\n", pkt.pts, pkt.size);
 		ret = write_frame(oc, &c->time_base, ost->st, &pkt);
 		if (ret != 0) {
 			fprintf(stderr, "Error writing frame: %s\n", _av_err2str(ret));
@@ -473,7 +474,7 @@ static int write_video_frame(AVFormatContext *oc, OutputStream *ost)
 			fprintf(stderr, "Error during encoding: %d\n", ret);
 			return ret;
 		}
-		printf("Encoded frame %3I64d (size=%5d)\n", pkt.pts, pkt.size);
+		printf("Encoded frame %3" PRId64 " (size=%5d)\n", pkt.pts, pkt.size);
 		ret = write_frame(oc, &c->time_base, ost->st, &pkt);
 		if (ret != 0) {
 			fprintf(stderr, "Error writing frame!\n");
