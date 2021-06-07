@@ -24,7 +24,7 @@ if (NOT DEFINED BLIT_ONCE)
 	if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 		set(CMAKE_BUILD_TYPE "Release")
 	endif()
-	
+
 	if(WIN32)
 		add_definitions("-DWIN32")
 	endif()
@@ -36,7 +36,14 @@ if (NOT DEFINED BLIT_ONCE)
 		set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
 
 		# get the inputs/outputs for the asset tool (at configure time)
-		execute_process(COMMAND ${PYTHON_EXECUTABLE} -m ttblit --debug cmake --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --output ${CMAKE_CURRENT_BINARY_DIR} --cmake ${CMAKE_CURRENT_BINARY_DIR}/assets.cmake)
+		execute_process(
+		    COMMAND ${PYTHON_EXECUTABLE} -m ttblit --debug cmake --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --output ${CMAKE_CURRENT_BINARY_DIR} --cmake ${CMAKE_CURRENT_BINARY_DIR}/assets.cmake
+            RESULT_VARIABLE TOOL_RESULT
+		)
+		if(${TOOL_RESULT})
+		    message(FATAL_ERROR "Reading asset config failed!\n")
+		endif()
+
 		include(${CMAKE_CURRENT_BINARY_DIR}/assets.cmake)
 
 		# do asset packing (at build time)

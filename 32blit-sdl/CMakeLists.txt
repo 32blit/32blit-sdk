@@ -237,7 +237,14 @@ function(blit_metadata TARGET FILE)
 	set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${FILE})
 
 	# parse the metadata to variables
-	execute_process(COMMAND ${PYTHON_EXECUTABLE} -m ttblit cmake --config ${FILE} --cmake ${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
+	execute_process(
+		COMMAND ${PYTHON_EXECUTABLE} -m ttblit cmake --config ${FILE} --cmake ${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake
+		RESULT_VARIABLE TOOL_RESULT
+	)
+	if(${TOOL_RESULT})
+		message(FATAL_ERROR "Reading metadata config failed!\n")
+	endif()
+
 	include(${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
 
 	if(APPLE)
