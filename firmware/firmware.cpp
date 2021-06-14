@@ -1079,9 +1079,8 @@ void FlashLoader::handle_data_end(bool success) {
           // if we just erased the thing we were running, we need to reset to not crash
           // also need to do firmware updates immediately
 
-          // update the launcher offset
-          if(strcmp(meta.category, "launcher") == 0)
-            launcher_offset = flash_start_offset;
+          // update the launcher offset and any handlers
+          scan_flash();
 
           blit_switch_execution(flash_start_offset, true);
           return;
