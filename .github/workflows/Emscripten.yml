@@ -48,7 +48,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: emcmake cmake $GITHUB_WORKSPACE -D32BLIT_DIR=$GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+      run: emcmake cmake $GITHUB_WORKSPACE -D32BLIT_DIR=$GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG"
 
     # Problem matching
     - uses: ammaraskar/gcc-problem-matcher@master
