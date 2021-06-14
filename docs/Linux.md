@@ -25,16 +25,18 @@ For 32Blit device builds:
 
 New enough versions of these exist in at least Debian "buster" and Ubuntu 20.04.
 
-```
-sudo apt install git gcc g++ gcc-arm-none-eabi cmake make python3 python3-pip python3-setuptools libsdl2-dev libsdl2-image-dev libsdl2-net-dev unzip
+Install them with apt like so:
 
+```
+sudo apt install git gcc g++ gcc-arm-none-eabi cmake make \
+python3 python3-pip python3-setuptools \
+libsdl2-dev libsdl2-image-dev libsdl2-net-dev unzip
+```
+
+And install the 32blit tools with pip3:
+
+```
 pip3 install 32blit
-```
-
-Optionally, for building the firmware as a .DFU file (usually not needed on Linux):
-
-```
-pip3 install construct bitstring
 ```
 
 ## Building & Running on 32Blit
@@ -78,3 +80,28 @@ make
 ```
 
 When the build completes you should be able to run any example.
+
+# Troubleshooting
+
+## pip3 warns about /home/user/.local/bin not on PATH
+
+If you're running Ubuntu, Pop!_OS or similar you should be able to fix this for your current session by running:
+
+```
+source ~/.profile
+```
+
+Since `$HOME/.local/bin` is included in `$PATH` if it exists.
+
+Otherwise, add something like the following to `~/.profile`:
+
+```bash
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/.local/bin" ] ; then
+    PATH="$HOME/.local/bin:$PATH"
+fi
+```
+
+And make sure to "source" it to update your current session.
+
+Now invoking `32blit` should work.
