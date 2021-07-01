@@ -7,8 +7,6 @@ set(CMAKE_CXX_COMPILER arm-none-eabi-g++ CACHE PATH "Path to C++ compiler")
 find_program(CMAKE_SIZE NAMES arm-none-eabi-size)
 find_program(CMAKE_READELF NAMES arm-none-eabi-readelf) # handled by CMake in 3.16+
 
-set(CMAKE_DFU "${CMAKE_CURRENT_LIST_DIR}/tools/dfu" CACHE PATH "Path to DFU builder")
-
 set(MCU_LINKER_SCRIPT STM32H750VBTx.ld)
 set(MCU_LINKER_FLAGS_INT -Wl,--defsym=FLASH_TARGET_INT=1)
 set(MCU_ARCH cortex-m7)

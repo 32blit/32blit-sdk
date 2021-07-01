@@ -192,6 +192,6 @@ function(blit_executable_int_flash NAME SOURCES)
 
 	add_custom_command(TARGET ${NAME} POST_BUILD
 		COMMENT "Building ${NAME}.dfu"
-		COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_DFU} build --force --out ${NAME}.dfu ${NAME}.bin
+		COMMAND ${PYTHON_EXECUTABLE} -m ttblit dfu build --force --output-file ${NAME}.dfu --input-file ${NAME}.bin
 	)
 endfunction()
