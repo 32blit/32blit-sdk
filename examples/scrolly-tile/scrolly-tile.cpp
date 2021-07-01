@@ -4,7 +4,7 @@
 
 using namespace blit;
 
-#define __AUDIO__
+//#define __AUDIO__
 
 #define SCREEN_W 160
 #define SCREEN_H 120
@@ -39,7 +39,7 @@ using namespace blit;
 #define RANDOM_TYPE_HRNG 0
 #define RANDOM_TYPE_PRNG 1
 
-#define PASSAGE_COUNT 5
+uint8_t passage_count = 3;
 
 // Number of times a player can jump sequentially
 // including mid-air jumps and the initial ground
@@ -95,7 +95,15 @@ float water_level = 0;
 // back to those still active.
 uint16_t linked_passage_mask = 0;
 
-uint8_t passages[PASSAGE_COUNT] = {0};
+
+struct Passage {
+    int8_t x;
+    int8_t direction;
+    uint8_t width;
+    bool enabled;
+};
+
+std::vector<Passage> passages;
 
 // Keep track of game state
 enum enum_state {
@@ -236,65 +244,63 @@ uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
 
 uint16_t generate_new_row_mask() {
     uint16_t new_row_mask = 0x0000;
-    uint8_t passage_width = floorf(((sinf(current_row / 10.0f) + 1.0f) / 2.0f) * PASSAGE_COUNT);
+    bool passage_ended = false;
 
-    // Cut our consistent winding passage through the level
-    // by tracking the x coord of our passage we can ensure
-    // that it's always navigable without having to reject
-    // procedurally generated segments
-    for(auto p = 0; p < PASSAGE_COUNT; p++){
-        if(p > passage_width) {
-            continue;
+    uint8_t passage_idx = 0;
+    int8_t x2 = passages[0].x;
+
+    for(Passage& passage : passages) {
+        uint8_t actions = get_random_number() & 0xff;
+
+        if (actions & 0b00111110) {
+            passage.direction = actions & 0b1 ? -1 : 1;
         }
-        // Controls how far a passage can snake left/right
-        uint8_t turning_size = get_random_number() % 7;
-
-        new_row_mask |= (0x8000 >> passages[p]);
-
-        // At every new generation we choose to branch a passage
-        // either left or right, or let it continue upwards.
-        switch(get_random_number() % 3){
-            case 0: // Passage goes right
-                while(turning_size--){
-                    if(passages[p] < TILES_X - 2){
-                        passages[p] += 1;
-                    }
-                    new_row_mask |= (0x8000 >> passages[p]);
-                }
-                break;
-            case 1: // Passage goes left
-                while(turning_size--){
-                    if(passages[p] > 1){
-                        passages[p] -= 1;
-                    }
-                    new_row_mask |= (0x8000 >> passages[p]);
-                }
-                break;
+        else {
+            passage.direction = 0;
         }
-    }
 
-    // Whenever we have a narrowing of our passage we must check
-    // for orphaned passages and link them back to the ones still
-    // available, to avoid the player going up a tunnel that ends
-    // abruptly :(
-    // This routine picks a random passage from the ones remaining
-    // and routes every orphaned passage to it.
-    if(passage_width < last_passage_width) {
-        uint8_t target_passage = get_random_number() % (passage_width + 1);
-        uint8_t target_p_x = passages[target_passage];
+        if (actions & 0b10000000) {
+            passage.width = ceilf(((sinf(current_row / 10.0f) + 1.0f) / 2.0f) * 3);
+        }
 
-        for(auto i = passage_width; i < last_passage_width + 1; i++){
-            new_row_mask |= (0x8000 >> passages[i]);
-
-            int8_t direction = (passages[i] < target_p_x) ? 1 : -1;
-    
-            while(passages[i] != target_p_x) {
-                passages[i] += direction;
-                new_row_mask |= (0x8000 >> passages[i]);
+        if (actions & 0b01000000) {
+            if(passage_idx > 0) {
+                passage.enabled = !passage.enabled;
+                passage_ended = !passage.enabled;
             }
         }
+        
+        int8_t x1 = passage.x;
+
+        if(passage.enabled) {
+            passage.x += passage.direction * passage.width;
+            if(passage.x < 0) passage.x = 0;
+            if(passage.x > 15) passage.x = 15;
+            x2 = passage.x;
+        }
+        if(passage.enabled | passage_ended) {
+            if(x1 < x2) {
+                for(auto px = x1; px <= x2; px++) {
+                    new_row_mask |= (0x8000 >> px) & 0xffff;
+                }
+            }
+            else if(x1 > x2)
+            {
+                for(auto px = x2; px <= x1; px++) {
+                    new_row_mask |= (0x8000 >> px) & 0xffff;
+                }
+            }
+            else {
+                    new_row_mask |= (0x8000 >> x1) & 0xffff;
+            }
+        }
+        passage_idx += 1;
     }
-    last_passage_width = passage_width;
+
+   if(new_row_mask == 0xffff && (current_row & 0b11) == 0) {
+       new_row_mask = get_random_number() & 0xffff;
+        new_row_mask |= (0x8000 >> x2);
+   }
 
     current_row++;
     return ~new_row_mask;
@@ -377,9 +383,31 @@ void new_level() {
     water_level = 0;
     last_passage_width = 0;
     current_row = 0;
+    passages.clear();
+    passage_count = 1 + (get_random_number() % 6);
 
-    for(auto x = 0; x < 5; x++) {
-        passages[x] = (get_random_number() % 14) + 1;
+    for(auto i = 0u; i < passage_count; i++) {
+        int8_t direction = 0;
+
+        switch(get_random_number() & 0b11) {
+            case 0:
+                direction = -1;
+                break;
+            case 1:
+                direction = 1;
+                break;
+            default:
+                direction = 0;
+        }
+
+        int8_t x = get_random_number() & 0xf;
+
+        passages.push_back(Passage{
+            .x = 10,
+            .direction = direction,
+            .width = 1,
+            .enabled = true
+        });
     }
 
     // Use update_tiles to create the initial game state
@@ -623,11 +651,11 @@ void update(uint32_t time_ms) {
             case near_wall_left:
             case near_wall_right:
                 if ((buttons & Button::DPAD_LEFT) && (player_state == wall_left || player_state == near_wall_left)){
-                    player_velocity.y *= 0.5f;
+                    player_velocity.y *= 0.6f;
                     break;
                 }
                 if ((buttons & Button::DPAD_RIGHT) && (player_state == wall_right || player_state == near_wall_right)){
-                    player_velocity.y *= 0.5f;
+                    player_velocity.y *= 0.6f;
                     break;
                 }
                 // Fall through to air friction
