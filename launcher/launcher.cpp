@@ -116,38 +116,44 @@ void load_directory_list(std::string directory) {
 
 bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata, bool unpack_images = false) {
   blit::File f(filename);
+
+  if(!f.is_open())
+    return false;
+
   uint32_t offset = 0;
 
-  BlitGameHeader header;
-  auto read = f.read(offset, sizeof(header), (char *)&header);
+  uint8_t buf[sizeof(BlitGameHeader)];
+  auto read = f.read(offset, sizeof(buf), (char *)&buf);
 
   // skip relocation data
-  if(header.magic == 0x4F4C4552 /* RELO */) {
+  if(memcmp(buf, "RELO", 4) == 0) {
     uint32_t num_relocs;
     f.read(4, 4, (char *)&num_relocs);
 
     offset = num_relocs * 4 + 8;
     // re-read header
-    read = f.read(offset, sizeof(header), (char *)&header);
+    read = f.read(offset, sizeof(buf), (char *)&buf);
   }
 
-  if(read == sizeof(header) && header.magic == blit_game_magic) {
-    uint8_t buf[10];
-
-    offset += (header.end & 0x1FFFFFF);
-    auto bytes_read = f.read(offset, 10, (char *)buf);
-
-    if(bytes_read == 10 && memcmp(buf, "BLITMETA", 8) == 0) {
-      // don't bother reading the whole thing if we don't want the images
-      auto metadata_len = unpack_images ? *reinterpret_cast<uint16_t *>(buf + 8) : sizeof(RawMetadata);
-
-      uint8_t metadata_buf[0xFFFF];
-      f.read(offset + 10, metadata_len, (char *)metadata_buf);
-
-      parse_metadata(reinterpret_cast<char *>(metadata_buf), metadata_len, metadata, unpack_images);
-
-      return true;
+  // game header - skip to metadata
+  if(memcmp(buf, "BLITMETA", 8) != 0) {
+    auto &header = *(BlitGameHeader *)buf;
+    if(read == sizeof(BlitGameHeader) && header.magic == blit_game_magic) {
+      offset += (header.end & 0x1FFFFFF);
+      read = f.read(offset, 10, (char *)buf);
     }
+  }
+
+  if(read >= 10 && memcmp(buf, "BLITMETA", 8) == 0) {
+    // don't bother reading the whole thing if we don't want the images
+    auto metadata_len = unpack_images ? *reinterpret_cast<uint16_t *>(buf + 8) : sizeof(RawMetadata);
+
+    uint8_t metadata_buf[0xFFFF];
+    f.read(offset + 10, metadata_len, (char *)metadata_buf);
+
+    parse_metadata(reinterpret_cast<char *>(metadata_buf), metadata_len, metadata, unpack_images);
+
+    return true;
   }
 
   return false;
@@ -220,12 +226,19 @@ void load_file_list(std::string directory) {
     if(handler_meta) {
       GameInfo game;
       game.type = GameType::file;
-      game.title = file.name;
       game.filename = directory == "/" ? file.name : directory + "/" + file.name;
       strncpy(game.ext, ext.c_str(), 5);
       game.ext[4] = 0;
       game.size = file.size;
       game.can_launch = true;
+
+      // check got a metadata file
+      BlitGameMetadata meta;
+      auto meta_filename = game.filename + ".blmeta";
+      if(parse_file_metadata(meta_filename, meta))
+        game.title = meta.title;
+      else
+        game.title = file.name;
 
       game_list.push_back(game);
     }
@@ -249,16 +262,19 @@ void load_current_game_metadata() {
     selected_game = game_list[selected_menu_item];
 
     if(selected_game.type == GameType::file) {
-      // not a .blit
-      auto handler_meta = (char *)api.get_type_handler_metadata(selected_game.ext);
-      auto len = *reinterpret_cast<uint16_t *>(handler_meta + 8);
+      // not a .blit - look for a metadata file
+      auto meta_filename = selected_game.filename + ".blmeta";
+      if(!parse_file_metadata(meta_filename, selected_game_metadata, true)) {
+        // fallback to handler metadata/placeholders
+        auto handler_meta = (char *)api.get_type_handler_metadata(selected_game.ext);
+        auto len = *reinterpret_cast<uint16_t *>(handler_meta + 8);
+        parse_metadata(handler_meta + 10, len, selected_game_metadata, true);
 
-      parse_metadata(handler_meta + 10, len, selected_game_metadata, true);
-
-      selected_game_metadata.description = "Launches with: " + selected_game_metadata.title;
-      selected_game_metadata.title = selected_game.title;
-      selected_game_metadata.author = "";
-      selected_game_metadata.version = "";
+        selected_game_metadata.description = "Launches with: " + selected_game_metadata.title;
+        selected_game_metadata.title = selected_game.title;
+        selected_game_metadata.author = "";
+        selected_game_metadata.version = "";
+      }
       loaded = true;
     } else
       loaded = parse_file_metadata(selected_game.filename, selected_game_metadata, true);
