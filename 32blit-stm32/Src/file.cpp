@@ -14,6 +14,10 @@ extern USBManager g_usbManager;
 
 int num_open_files = 0;
 
+bool get_files_open() {
+  return num_open_files > 0;
+}
+
 void *open_file(const std::string &file, int mode) {
   if(g_usbManager.GetType() == USBManager::usbtMSC)
     return nullptr;
