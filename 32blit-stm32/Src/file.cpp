@@ -1,7 +1,7 @@
 #include <cstdint>
 #include <cstring>
 #include <functional>
-#include <map>
+#include <vector>
 
 #include "fatfs.h"
 
@@ -12,10 +12,10 @@
 
 extern USBManager g_usbManager;
 
-int num_open_files = 0;
+std::vector<void *> open_files;
 
 bool get_files_open() {
-  return num_open_files > 0;
+  return open_files.size() > 0;
 }
 
 void *open_file(const std::string &file, int mode) {
@@ -38,7 +38,7 @@ void *open_file(const std::string &file, int mode) {
   FRESULT r = f_open(f, file.c_str(), ff_mode);
 
   if(r == FR_OK) {
-    num_open_files++;
+    open_files.push_back(f);
     return f;
   }
 
@@ -87,7 +87,13 @@ int32_t close_file(void *fh) {
 
   r = f_close((FIL *)fh);
 
-  num_open_files--;
+  for(auto it = open_files.begin(); it != open_files.end(); ++it) {
+    if(*it == fh) {
+      open_files.erase(it);
+      break;
+    }
+  }
+
   delete (FIL *)fh;
   return r == FR_OK ? 0 : -1;
 }
