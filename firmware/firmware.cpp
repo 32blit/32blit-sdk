@@ -610,6 +610,7 @@ static const uint8_t *flash_to_tmp(const std::string &filename, uint32_t &size) 
   if(bytes_flashed < size)
     return nullptr;
 
+  cached_file_in_tmp = true;
   return (const uint8_t *)(qspi_flash_address + flash_offset);
 }
 
