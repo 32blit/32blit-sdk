@@ -18,6 +18,11 @@ bool get_files_open() {
   return open_files.size() > 0;
 }
 
+void close_open_files() {
+  while(!open_files.empty())
+    close_file(open_files.back());
+}
+
 void *open_file(const std::string &file, int mode) {
   if(g_usbManager.GetType() == USBManager::usbtMSC)
     return nullptr;

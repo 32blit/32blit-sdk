@@ -719,6 +719,8 @@ bool blit_switch_execution(uint32_t address, bool force_game)
     blit::update = ::update;
     do_tick = blit::tick;
 
+    close_open_files();
+
     return true;
   }
 
@@ -741,6 +743,8 @@ bool blit_switch_execution(uint32_t address, bool force_game)
       // avoid starting a game disabled (will break sound and the menu)
       if(user_code_disabled)
         blit_enable_user_code();
+
+      close_open_files();
 
       // load function pointers
       auto init = (BlitInitFunction)((uint8_t *)game_header->init + address);
