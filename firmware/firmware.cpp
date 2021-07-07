@@ -50,7 +50,7 @@ bool flash_scanned = false;
 
 Dialog dialog;
 
-bool cached_file_in_tmp = false;
+extern bool cached_file_in_tmp;
 
 // metadata
 
