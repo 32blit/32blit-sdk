@@ -19,7 +19,7 @@ namespace blit {
 
     inline Rect& operator*= (const float a) { x = static_cast<int32_t>(x * a); y = static_cast<int32_t>(y * a); w = static_cast<int32_t>(w * a); h = static_cast<int32_t>(h * a); return *this; }
 
-    Size size() {
+    Size size() const {
       return Size(w, h);
     }
 
