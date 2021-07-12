@@ -43,7 +43,7 @@ void ConnectivityMenu::render_item(const Item &item, int y, int index) const {
   case STORAGE:
     screen.pen = foreground_colour;
     const char *label;
-    if (num_open_files)
+    if (get_files_open())
       label = "Files Open";
     else if (g_usbManager.GetType() == USBManager::usbtMSC)
       label = g_usbManager.GetStateName() + 4; // trim the "MSC "
@@ -68,7 +68,7 @@ void ConnectivityMenu::item_activated(const Item &item) {
     // switch back manually if not mounted
     if (g_usbManager.GetState() == USBManager::usbsMSCInititalising)
       g_usbManager.SetType(USBManager::usbtCDC);
-    else if (num_open_files == 0 && !multiplayer::enabled)
+    else if (!get_files_open() && !multiplayer::enabled)
       g_usbManager.SetType(USBManager::usbtMSC);
     break;
   }

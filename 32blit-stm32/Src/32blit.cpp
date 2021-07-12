@@ -73,6 +73,9 @@ static bool user_code_disabled = false;
 
 static bool game_switch_requested = false;
 
+// flash cache, most of this is hanlded by the firmware. This needs to be here so switch_execution can reset it
+bool cached_file_in_tmp = false;
+
 void DFUBoot(void)
 {
   // Set the special magic word value that's checked by the assembly entry Point upon boot
@@ -719,6 +722,9 @@ bool blit_switch_execution(uint32_t address, bool force_game)
     blit::update = ::update;
     do_tick = blit::tick;
 
+    cached_file_in_tmp = false;
+    close_open_files();
+
     return true;
   }
 
@@ -741,6 +747,9 @@ bool blit_switch_execution(uint32_t address, bool force_game)
       // avoid starting a game disabled (will break sound and the menu)
       if(user_code_disabled)
         blit_enable_user_code();
+
+      cached_file_in_tmp = false;
+      close_open_files();
 
       // load function pointers
       auto init = (BlitInitFunction)((uint8_t *)game_header->init + address);

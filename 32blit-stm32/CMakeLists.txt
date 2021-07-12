@@ -42,8 +42,8 @@ list(APPEND SOURCES
 	Middlewares/Third_Party/FatFs/src/diskio.c
 	Middlewares/Third_Party/FatFs/src/ff.c
 	Middlewares/Third_Party/FatFs/src/ff_gen_drv.c
-	Middlewares/Third_Party/FatFs/src/option/syscall.c
-	Middlewares/Third_Party/FatFs/src/option/ccsbcs.c
+	Middlewares/Third_Party/FatFs/src/ffsystem.c
+	Middlewares/Third_Party/FatFs/src/ffunicode.c
 	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c
 	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c
 	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c
