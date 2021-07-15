@@ -675,6 +675,7 @@ namespace blit {
     if (format == PixelFormat::P) {
       // load paletted
       uint8_t *pdest = (uint8_t *)ret->data;
+      auto dest_end = pdest + needed_size;
 
       if(is_rle) {
         int parse_state = 0;
@@ -711,6 +712,10 @@ namespace blit {
                   bit = 0; col = 0;
                   parse_state = 0;
                   count = 0;
+                  
+                  // done, skip any remaining padding
+                  if(pdest == dest_end)
+                    parse_state = 3;
                 }
                 break;
             }
