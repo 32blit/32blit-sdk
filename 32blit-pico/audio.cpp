@@ -1,10 +1,15 @@
 #include "audio.hpp"
 
+#ifdef AUDIO_I2S
 #include "pico/audio_i2s.h"
+#define HAVE_AUDIO
+#endif
 
 #include "audio/audio.hpp"
 
+#ifdef HAVE_AUDIO
 static audio_buffer_pool *audio_pool = nullptr;
+#endif
 
 void init_audio() {
 #ifdef AUDIO_I2S
@@ -38,16 +43,12 @@ void init_audio() {
   assert(ok);
   audio_i2s_set_enabled(true);
   audio_pool = producer_pool;
-#else
-  audio_pool = nullptr;
 #endif
 }
 
 void update_audio() {
+#ifdef HAVE_AUDIO
   // audio
-  if(!audio_pool)
-    return;
-
   struct audio_buffer *buffer = take_audio_buffer(audio_pool, false);
   if(buffer) {
     auto samples = (int16_t *) buffer->buffer->bytes;
@@ -60,4 +61,5 @@ void update_audio() {
     buffer->sample_count = buffer->max_sample_count;
     give_audio_buffer(audio_pool, buffer);
   }
+#endif
 }

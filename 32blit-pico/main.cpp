@@ -31,7 +31,11 @@ static Surface lores_screen(screen_fb, PixelFormat::RGB565, Size(160, 120));
 static blit::AudioChannel channels[CHANNEL_COUNT];
 
 #ifdef DISPLAY_ST7789
+#ifdef PIMORONI_PICOSYSTEM
+pimoroni::ST7789 st7789(240, 240, (uint16_t *)screen_fb, spi0, 5, 9, 6, 7, 12, 8, 4);
+#else
 pimoroni::ST7789 st7789(240, 240, (uint16_t *)screen_fb);
+#endif
 #endif
 
 ScreenMode cur_screen_mode = ScreenMode::lores;

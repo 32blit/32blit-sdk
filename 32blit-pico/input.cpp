@@ -8,6 +8,17 @@
 #ifdef INPUT_GPIO
 
 enum class ButtonIO {
+#ifdef PIMORONI_PICOSYSTEM
+  UP = 23,
+  DOWN = 20,
+  LEFT = 22,
+  RIGHT = 21,
+
+  A = 18,
+  B = 19,
+  X = 17,
+  Y = 16,
+#else
   UP = 2,
   DOWN = 3,
   LEFT = 4,
@@ -17,6 +28,7 @@ enum class ButtonIO {
   B = 13,
   X = 14,
   Y = 15,
+#endif
 };
 
 static void init_button(ButtonIO b) {
