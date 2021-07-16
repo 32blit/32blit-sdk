@@ -39,10 +39,10 @@ namespace pimoroni {
 
     ST7789(uint16_t width, uint16_t height, uint16_t *frame_buffer,
            spi_inst_t *spi,
-           uint8_t cs, uint8_t dc, uint8_t sck, uint8_t mosi, uint8_t reset = -1) :
+           uint8_t cs, uint8_t dc, uint8_t sck, uint8_t mosi, uint8_t bl, uint8_t vsync, uint8_t reset) :
       spi(spi),
       width(width), height(height), win_w(width), win_h(height),
-      cs(cs), dc(dc), sck(sck), mosi(mosi), reset(reset), frame_buffer(frame_buffer) {}
+      cs(cs), dc(dc), sck(sck), mosi(mosi), bl(bl), vsync(vsync), reset(reset), frame_buffer(frame_buffer) {}
 
     void init(bool auto_init_sequence = true);
 
