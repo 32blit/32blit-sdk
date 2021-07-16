@@ -16,7 +16,6 @@ static Surface lores_screen(screen_fb, PixelFormat::RGB, Size(160, 120));
 //static Surface hires_palette_screen(screen_fb, PixelFormat::P, Size(320, 240));
 
 pimoroni::ST7789 st7789(240, 240, (uint16_t *)screen_fb);
-using ST7789Reg = pimoroni::ST7789::reg;
 
 ScreenMode cur_screen_mode = ScreenMode::lores;
 

@@ -57,34 +57,6 @@ namespace pimoroni {
     void clear();
 
     bool dma_is_busy();
-
-    enum reg {
-      SWRESET   = 0x01,
-      TEON      = 0x35,
-      MADCTL    = 0x36,
-      COLMOD    = 0x3A,
-      GCTRL     = 0xB7,
-      VCOMS     = 0xBB,
-      LCMCTRL   = 0xC0,
-      VDVVRHEN  = 0xC2,
-      VRHS      = 0xC3,
-      VDVS      = 0xC4,
-      FRCTRL2   = 0xC6,
-      PWRCTRL1  = 0xD0,
-      FRMCTR1   = 0xB1,
-      FRMCTR2   = 0xB2,
-      GMCTRP1   = 0xE0,
-      GMCTRN1   = 0xE1,
-      INVOFF    = 0x20,
-      SLPOUT    = 0x11,
-      DISPON    = 0x29,
-      GAMSET    = 0x26,
-      DISPOFF   = 0x28,
-      RAMWR     = 0x2C,
-      INVON     = 0x21,
-      CASET     = 0x2A,
-      RASET     = 0x2B
-    };
   };
 
 }

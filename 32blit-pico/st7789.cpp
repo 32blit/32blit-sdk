@@ -8,6 +8,49 @@
 
 namespace pimoroni {
 
+  enum MADCTL : uint8_t {
+    ROW_ORDER   = 0b10000000,
+    COL_ORDER   = 0b01000000,
+    SWAP_XY     = 0b00100000,  // AKA "MV"
+    SCAN_ORDER  = 0b00010000,
+    RGB         = 0b00001000,
+    HORIZ_ORDER = 0b00000100
+  };
+
+  #define ROT_240_240_0      0
+  #define ROT_240_240_90     MADCTL::SWAP_XY | MADCTL::HORIZ_ORDER | MADCTL::COL_ORDER
+  #define ROT_240_240_180    MADCTL::SCAN_ORDER | MADCTL::HORIZ_ORDER | MADCTL::COL_ORDER | MADCTL::ROW_ORDER
+  #define ROT_240_240_270    MADCTL::SWAP_XY | MADCTL::HORIZ_ORDER | MADCTL::ROW_ORDER
+
+  enum reg {
+    SWRESET   = 0x01,
+    TEOFF     = 0x34,
+    TEON      = 0x35,
+    MADCTL    = 0x36,
+    COLMOD    = 0x3A,
+    GCTRL     = 0xB7,
+    VCOMS     = 0xBB,
+    LCMCTRL   = 0xC0,
+    VDVVRHEN  = 0xC2,
+    VRHS      = 0xC3,
+    VDVS      = 0xC4,
+    FRCTRL2   = 0xC6,
+    PWRCTRL1  = 0xD0,
+    FRMCTR1   = 0xB1,
+    FRMCTR2   = 0xB2,
+    GMCTRP1   = 0xE0,
+    GMCTRN1   = 0xE1,
+    INVOFF    = 0x20,
+    SLPOUT    = 0x11,
+    DISPON    = 0x29,
+    GAMSET    = 0x26,
+    DISPOFF   = 0x28,
+    RAMWR     = 0x2C,
+    INVON     = 0x21,
+    CASET     = 0x2A,
+    RASET     = 0x2B
+  };
+
   void ST7789::init(bool auto_init_sequence) {
     // configure spi interface and pins
     spi_init(spi, spi_baud);
@@ -36,6 +79,7 @@ namespace pimoroni {
       pwm_set_wrap(pwm_gpio_to_slice_num(bl), 65535);
       pwm_init(pwm_gpio_to_slice_num(bl), &cfg, true);
       gpio_set_function(bl, GPIO_FUNC_PWM);
+      set_backlight(255); // Turn backlight on by default to avoid nasty surprises
     }
 
     if(reset != -1) {
@@ -53,15 +97,21 @@ namespace pimoroni {
 
       sleep_ms(150);
 
-      if(width == 240 && height == 240) {
-        command(reg::MADCTL,    1, "\x04");  // row/column addressing order - rgb pixel order
-        command(reg::TEON,      1, "\x00");  // enable frame sync signal if used
-        command(reg::COLMOD,    1, "\x05");  // 16 bits per pixel
-      }
+      command(reg::TEON);  // enable frame sync signal if used
+      command(reg::COLMOD,    1, "\x05");  // 16 bits per pixel
 
-      if(width == 240 && height == 135) {
-        command(reg::MADCTL,    1, "\x70");
-        command(reg::COLMOD,    1, "\x05");
+      if(width == 240 && height == 240) {
+        command(reg::FRMCTR2, 5, "\x0c\x0c\x00\x33\x33");
+        command(reg::GCTRL, 1, "\x14");
+        command(reg::VCOMS, 1, "\x37");
+        command(reg::LCMCTRL, 1, "\x2c");
+        command(reg::VDVVRHEN, 1, "\x01");
+        command(reg::VRHS, 1, "\x12");
+        command(reg::VDVS, 1, "\x20");
+        command(reg::PWRCTRL1, 2, "\xa4\xa1");
+        command(reg::FRMCTR2, 1, "\x0f");
+        command(reg::GMCTRP1, 14, "\xD0\x04\x0D\x11\x13\x2B\x3F\x54\x4C\x18\x0D\x0B\x1F\x23");
+        command(reg::GMCTRN1, 14, "\xD0\x04\x0C\x11\x13\x2C\x3F\x44\x51\x2F\x1F\x1F\x20\x23");
       }
 
       command(reg::INVON);   // set inversion mode
@@ -71,13 +121,18 @@ namespace pimoroni {
       sleep_ms(100);
 
       // setup correct addressing window
+      uint8_t madctl;
       if(width == 240 && height == 240) {
+        madctl = MADCTL::HORIZ_ORDER;
         set_window(0, 0, 240, 240);
       }
 
       if(width == 240 && height == 135) {
+        madctl = MADCTL::COL_ORDER | MADCTL::SWAP_XY | MADCTL::SCAN_ORDER;
         set_window(40, 53, 240, 135);
       }
+
+      command(reg::MADCTL,    1, (char *)&madctl);
     }
 
     // the dma transfer works but without vsync it's not that useful as you could
