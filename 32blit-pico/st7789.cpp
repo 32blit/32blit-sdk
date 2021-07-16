@@ -21,10 +21,6 @@ namespace pimoroni {
     gpio_set_function(sck,  GPIO_FUNC_SPI);
     gpio_set_function(mosi, GPIO_FUNC_SPI);
 
-    if(miso != -1) {
-      gpio_set_function(miso, GPIO_FUNC_SPI);
-    }
-
     // if supported by the display then the vsync pin is
     // toggled high during vertical blanking period
     if(vsync != -1) {
@@ -40,6 +36,14 @@ namespace pimoroni {
       pwm_set_wrap(pwm_gpio_to_slice_num(bl), 65535);
       pwm_init(pwm_gpio_to_slice_num(bl), &cfg, true);
       gpio_set_function(bl, GPIO_FUNC_PWM);
+    }
+
+    if(reset != -1) {
+      gpio_set_function(reset, GPIO_FUNC_SIO);
+      gpio_set_dir(reset, GPIO_OUT);
+      gpio_put(reset, 0);
+      sleep_ms(100);
+      gpio_put(reset, 1);
     }
 
     // if auto_init_sequence then send initialisation sequence
