@@ -10,6 +10,7 @@
 
 #include "audio.hpp"
 #include "input.hpp"
+#include "led.hpp"
 #include "st7789.hpp"
 
 #include "engine/api_private.hpp"
@@ -157,7 +158,6 @@ static int64_t timer_callback(alarm_id_t alarm_id, void *user_data) {
 }
 #endif
 
-
 int main() {
   set_sys_clock_khz(250000, false);
   clock_configure(clk_peri, 0, CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS, 250 * MHZ, 250 * MHZ);
@@ -215,6 +215,8 @@ int main() {
   // api.flash_to_tmp = ::flash_to_tmp;
   // api.tmp_file_closed = ::tmp_file_closed;
 
+  init_led();
+
 #ifdef DISPLAY_ST7789
   st7789.init();
   st7789.clear();
@@ -245,6 +247,7 @@ int main() {
     update_input();
     tick(::now());
     update_audio();
+    update_led();
 
     auto now = ::now();
 
