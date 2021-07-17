@@ -158,8 +158,7 @@ namespace pimoroni {
   void ST7789::command(uint8_t command, size_t len, const char *data) {
     dma_channel_wait_for_finish_blocking(dma_channel);
 
-    if(bytes_per_pixel == 2)
-      spi_set_format(spi, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
+    spi_set_format(spi, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 
     gpio_put(cs, 0);
 
@@ -190,12 +189,8 @@ namespace pimoroni {
 
     gpio_put(dc, 1); // data mode
 
-    if(bytes_per_pixel == 2) {
-      spi_set_format(spi, 16, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
-      dma_channel_set_trans_count(dma_channel, win_w * win_h, false);
-    } else {
-      dma_channel_set_trans_count(dma_channel, win_w * win_h * bytes_per_pixel, false);
-    }
+    spi_set_format(spi, 16, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
+    dma_channel_set_trans_count(dma_channel, win_w * win_h, false);
 
     dma_channel_set_read_addr(dma_channel, frame_buffer, true);
   }
@@ -223,15 +218,6 @@ namespace pimoroni {
     win_h = h;
   }
 
-  void ST7789::set_bytes_per_pixel(int bpp) {
-    command(reg::COLMOD, 1, bpp == 2 ? "\x05" : "\x06");
-    bytes_per_pixel = bpp;
-
-    auto config = dma_get_channel_config(dma_channel);
-    channel_config_set_transfer_data_size(&config, bytes_per_pixel == 2 ? DMA_SIZE_16 : DMA_SIZE_8);
-    dma_channel_set_config(dma_channel, &config, false);
-  }
-
   void ST7789::clear() {
     uint8_t r = reg::RAMWR;
 
@@ -243,8 +229,8 @@ namespace pimoroni {
     gpio_put(dc, 1); // data mode
 
     for(int i = 0; i < win_w * win_h; i++) {
-      uint32_t v = 0;
-      spi_write_blocking(spi0, (const uint8_t *)&v, bytes_per_pixel);
+      uint16_t v = 0;
+      spi_write_blocking(spi0, (const uint8_t *)&v, 2);
     }
   }
 
