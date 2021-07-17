@@ -18,18 +18,22 @@ namespace blit {
   Pen hsv_to_rgba(float h, float s, float v) {
     int i = int(h * 6);
     float f = h * 6 - i;
-    float p = v * (1 - s);
-    float q = v * (1 - f * s);
-    float t = v * (1 - (1 - f) * s);
+
+    v = v * 255.0f;
+    uint8_t bv = uint8_t(v);
+
+    auto p = uint8_t(v * (1 - s));
+    auto q = uint8_t(v * (1 - f * s));
+    auto t = uint8_t(v * (1 - (1 - f) * s));
 
     switch (i % 6) {
-    default: //avoid warning
-    case 0: return Pen(v, t, p);
-    case 1: return Pen(q, v, p);
-    case 2: return Pen(p, v, t);
-    case 3: return Pen(p, q, v);
-    case 4: return Pen(t, p, v);
-    case 5: return Pen(v, p, q);
+    default:
+    case 0: return Pen(bv, t, p);
+    case 1: return Pen(q, bv, p);
+    case 2: return Pen(p, bv, t);
+    case 3: return Pen(p, q, bv);
+    case 4: return Pen(t, p, bv);
+    case 5: return Pen(bv, p, q);
     }
   }
 
