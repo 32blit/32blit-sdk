@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hardware/pio.h"
 #include "hardware/spi.h"
 #include "hardware/gpio.h"
 
@@ -7,6 +8,9 @@ namespace pimoroni {
 
   class ST7789 {
     spi_inst_t *spi = spi0;
+
+    PIO pio = pio0;
+    int pio_sm = 0;
 
     uint32_t dma_channel;
 
@@ -27,6 +31,8 @@ namespace pimoroni {
     int8_t reset  = -1;
 
     uint32_t spi_baud = 64 * 1024 * 1024;
+
+    bool write_mode = false; // in RAMWR
 
   public:
     // frame buffer where pixel data is stored
@@ -55,6 +61,9 @@ namespace pimoroni {
     void clear();
 
     bool dma_is_busy();
+
+  private:
+    void prepare_write();
   };
 
 }

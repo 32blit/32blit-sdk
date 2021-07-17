@@ -6,6 +6,8 @@
 #include "hardware/dma.h"
 #include "hardware/pwm.h"
 
+#include "st7789.pio.h"
+
 namespace pimoroni {
 
   enum MADCTL : uint8_t {
@@ -134,31 +136,40 @@ namespace pimoroni {
       command(reg::MADCTL,    1, (char *)&madctl);
     }
 
-    // the dma transfer works but without vsync it's not that useful as you could
-    // be updating the framebuffer during transfer...
-    //
-    // this could be avoided by creating another buffer to draw into and flip
-    // buffers (but costs another ~100kb of ram)
-    //
-    // it's probably not worth it for this particular usecase but will consider it
-    // some more...
+    // setup PIO
+    auto offset = pio_add_program(pio, &st7789_raw_program);
+    pio_sm_config cfg = st7789_raw_program_get_default_config(offset);
+    sm_config_set_clkdiv(&cfg, 2); // back to 62.5MHz from overclock
+    sm_config_set_out_shift(&cfg, false, true, 16);
+    sm_config_set_out_pins(&cfg, mosi, 1);
+    sm_config_set_fifo_join(&cfg, PIO_FIFO_JOIN_TX);
+    sm_config_set_sideset_pins(&cfg, sck);
 
-    // setup spi for 16-bit transfers
-    // spi_set_format(spi, 16, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
+    pio_sm_set_consecutive_pindirs(pio, pio_sm, mosi, 1, true);
+    pio_sm_set_consecutive_pindirs(pio, pio_sm, sck, 1, true);
+
+    pio_sm_init(pio, pio_sm, offset, &cfg);
 
     // initialise dma channel for transmitting pixel data to screen
     dma_channel = dma_claim_unused_channel(true);
     dma_channel_config config = dma_channel_get_default_config(dma_channel);
     channel_config_set_transfer_data_size(&config, DMA_SIZE_16);
-    channel_config_set_dreq(&config, spi_get_index(spi) ? DREQ_SPI1_TX : DREQ_SPI0_TX);
+    channel_config_set_dreq(&config, pio_get_dreq(pio, pio_sm, true));
     dma_channel_configure(
-      dma_channel, &config, &spi_get_hw(spi)->dr, frame_buffer, width * height, false);
+      dma_channel, &config, &pio->txf[pio_sm], frame_buffer, width * height, false);
   }
 
   void ST7789::command(uint8_t command, size_t len, const char *data) {
     dma_channel_wait_for_finish_blocking(dma_channel);
 
-    spi_set_format(spi, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
+
+    if(write_mode) {
+      // go back to spi
+      pio_sm_set_enabled(pio, pio_sm, false);
+      gpio_set_function(sck,  GPIO_FUNC_SPI);
+      gpio_set_function(mosi, GPIO_FUNC_SPI);
+      write_mode = false;
+    }
 
     gpio_put(cs, 0);
 
@@ -180,18 +191,9 @@ namespace pimoroni {
 
     dma_channel_wait_for_finish_blocking(dma_channel);
 
-    uint8_t r = reg::RAMWR;
+    prepare_write();
 
-    gpio_put(cs, 0);
-
-    gpio_put(dc, 0); // command mode
-    spi_write_blocking(spi, &r, 1);
-
-    gpio_put(dc, 1); // data mode
-
-    spi_set_format(spi, 16, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
     dma_channel_set_trans_count(dma_channel, win_w * win_h, false);
-
     dma_channel_set_read_addr(dma_channel, frame_buffer, true);
   }
 
@@ -219,8 +221,21 @@ namespace pimoroni {
   }
 
   void ST7789::clear() {
-    uint8_t r = reg::RAMWR;
+    prepare_write();
 
+    for(int i = 0; i < win_w * win_h; i++)
+      pio_sm_put_blocking(pio, pio_sm, 0);
+  }
+
+  bool ST7789::dma_is_busy() {
+    return dma_channel_is_busy(dma_channel);
+  }
+
+  void ST7789::prepare_write() {
+    if(write_mode) return;
+
+    // setup for writing
+    uint8_t r = reg::RAMWR;
     gpio_put(cs, 0);
 
     gpio_put(dc, 0); // command mode
@@ -228,13 +243,11 @@ namespace pimoroni {
 
     gpio_put(dc, 1); // data mode
 
-    for(int i = 0; i < win_w * win_h; i++) {
-      uint16_t v = 0;
-      spi_write_blocking(spi0, (const uint8_t *)&v, 2);
-    }
-  }
+    // enable PIO
+    pio_gpio_init(pio, mosi);
+    pio_gpio_init(pio, sck);
+    pio_sm_set_enabled(pio, pio_sm, true);
 
-  bool ST7789::dma_is_busy() {
-    return dma_channel_is_busy(dma_channel);
+    write_mode = true;
   }
 }
