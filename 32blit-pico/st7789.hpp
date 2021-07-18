@@ -1,16 +1,13 @@
 #pragma once
 
 #include "hardware/pio.h"
-#include "hardware/spi.h"
 #include "hardware/gpio.h"
 
 namespace pimoroni {
 
   class ST7789 {
-    spi_inst_t *spi = spi0;
-
     PIO pio = pio0;
-    int pio_sm = 0;
+    uint pio_sm = 0;
 
     uint32_t dma_channel;
 
@@ -30,8 +27,6 @@ namespace pimoroni {
     int8_t vsync  = -1; // only available on some products
     int8_t reset  = -1;
 
-    uint32_t spi_baud = 64 * 1024 * 1024;
-
     bool write_mode = false; // in RAMWR
 
   public:
@@ -43,9 +38,7 @@ namespace pimoroni {
       width(width), height(height), win_w(width), win_h(height), frame_buffer(frame_buffer) {}
 
     ST7789(uint16_t width, uint16_t height, uint16_t *frame_buffer,
-           spi_inst_t *spi,
            uint8_t cs, uint8_t dc, uint8_t sck, uint8_t mosi, uint8_t bl, uint8_t vsync, uint8_t reset) :
-      spi(spi),
       width(width), height(height), win_w(width), win_h(height),
       cs(cs), dc(dc), sck(sck), mosi(mosi), bl(bl), vsync(vsync), reset(reset), frame_buffer(frame_buffer) {}
 

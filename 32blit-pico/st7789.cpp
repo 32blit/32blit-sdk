@@ -5,6 +5,7 @@
 
 #include "hardware/dma.h"
 #include "hardware/pwm.h"
+#include "pico/time.h"
 
 #include "st7789.pio.h"
 
@@ -52,18 +53,24 @@ namespace pimoroni {
     RASET     = 0x2B
   };
 
-  void ST7789::init(bool auto_init_sequence) {
-    // configure spi interface and pins
-    spi_init(spi, spi_baud);
+  static void pio_put_byte(PIO pio, uint sm, uint8_t b) {
+    while (pio_sm_is_tx_fifo_full(pio, sm));
+    *(volatile uint8_t*)&pio->txf[sm] = b;
+  }
 
+  static void pio_wait(PIO pio, uint sm) {
+    uint32_t stall_mask = 1u << (PIO_FDEBUG_TXSTALL_LSB + sm);
+    pio->fdebug |= stall_mask;
+    while(!(pio->fdebug & stall_mask));
+  }
+
+  void ST7789::init(bool auto_init_sequence) {
+    // configure pins
     gpio_set_function(dc, GPIO_FUNC_SIO);
     gpio_set_dir(dc, GPIO_OUT);
 
     gpio_set_function(cs, GPIO_FUNC_SIO);
     gpio_set_dir(cs, GPIO_OUT);
-
-    gpio_set_function(sck,  GPIO_FUNC_SPI);
-    gpio_set_function(mosi, GPIO_FUNC_SPI);
 
     // if supported by the display then the vsync pin is
     // toggled high during vertical blanking period
@@ -90,6 +97,23 @@ namespace pimoroni {
       sleep_ms(100);
       gpio_put(reset, 1);
     }
+
+    // setup PIO
+    auto offset = pio_add_program(pio, &st7789_raw_program);
+    pio_sm_config cfg = st7789_raw_program_get_default_config(offset);
+    sm_config_set_clkdiv(&cfg, 2); // back to 62.5MHz from overclock
+    sm_config_set_out_shift(&cfg, false, true, 8);
+    sm_config_set_out_pins(&cfg, mosi, 1);
+    sm_config_set_fifo_join(&cfg, PIO_FIFO_JOIN_TX);
+    sm_config_set_sideset_pins(&cfg, sck);
+
+    pio_gpio_init(pio, mosi);
+    pio_gpio_init(pio, sck);
+    pio_sm_set_consecutive_pindirs(pio, pio_sm, mosi, 1, true);
+    pio_sm_set_consecutive_pindirs(pio, pio_sm, sck, 1, true);
+
+    pio_sm_init(pio, pio_sm, offset, &cfg);
+    pio_sm_set_enabled(pio, pio_sm, true);
 
     // if auto_init_sequence then send initialisation sequence
     // for our standard displays based on the width and height
@@ -136,20 +160,6 @@ namespace pimoroni {
       command(reg::MADCTL,    1, (char *)&madctl);
     }
 
-    // setup PIO
-    auto offset = pio_add_program(pio, &st7789_raw_program);
-    pio_sm_config cfg = st7789_raw_program_get_default_config(offset);
-    sm_config_set_clkdiv(&cfg, 2); // back to 62.5MHz from overclock
-    sm_config_set_out_shift(&cfg, false, true, 16);
-    sm_config_set_out_pins(&cfg, mosi, 1);
-    sm_config_set_fifo_join(&cfg, PIO_FIFO_JOIN_TX);
-    sm_config_set_sideset_pins(&cfg, sck);
-
-    pio_sm_set_consecutive_pindirs(pio, pio_sm, mosi, 1, true);
-    pio_sm_set_consecutive_pindirs(pio, pio_sm, sck, 1, true);
-
-    pio_sm_init(pio, pio_sm, offset, &cfg);
-
     // initialise dma channel for transmitting pixel data to screen
     dma_channel = dma_claim_unused_channel(true);
     dma_channel_config config = dma_channel_get_default_config(dma_channel);
@@ -160,27 +170,31 @@ namespace pimoroni {
   }
 
   void ST7789::command(uint8_t command, size_t len, const char *data) {
-    dma_channel_wait_for_finish_blocking(dma_channel);
-
+    pio_wait(pio, pio_sm);
 
     if(write_mode) {
-      // go back to spi
+      // reconfigure to 8 bits
       pio_sm_set_enabled(pio, pio_sm, false);
-      gpio_set_function(sck,  GPIO_FUNC_SPI);
-      gpio_set_function(mosi, GPIO_FUNC_SPI);
+      pio->sm[pio_sm].shiftctrl &= ~PIO_SM0_SHIFTCTRL_PULL_THRESH_BITS;
+      pio->sm[pio_sm].shiftctrl |= 8 << PIO_SM0_SHIFTCTRL_PULL_THRESH_LSB;
+      pio_sm_set_enabled(pio, pio_sm, true);
       write_mode = false;
     }
 
     gpio_put(cs, 0);
 
     gpio_put(dc, 0); // command mode
-    spi_write_blocking(spi, &command, 1);
+    pio_put_byte(pio, pio_sm, command);
 
     if(data) {
+      pio_wait(pio, pio_sm);
       gpio_put(dc, 1); // data mode
-      spi_write_blocking(spi, (const uint8_t*)data, len);
+
+      for(size_t i = 0; i < len; i++)
+        pio_put_byte(pio, pio_sm, data[i]);
     }
 
+    pio_wait(pio, pio_sm);
     gpio_put(cs, 1);
   }
 
@@ -234,18 +248,23 @@ namespace pimoroni {
   void ST7789::prepare_write() {
     if(write_mode) return;
 
+    pio_wait(pio, pio_sm);
+
     // setup for writing
     uint8_t r = reg::RAMWR;
     gpio_put(cs, 0);
 
     gpio_put(dc, 0); // command mode
-    spi_write_blocking(spi, &r, 1);
+    pio_put_byte(pio, pio_sm, r);
+    pio_wait(pio, pio_sm);
 
     gpio_put(dc, 1); // data mode
 
-    // enable PIO
-    pio_gpio_init(pio, mosi);
-    pio_gpio_init(pio, sck);
+    // reconfigure to 16 bits
+    pio_sm_set_enabled(pio, pio_sm, false);
+    pio->sm[pio_sm].shiftctrl &= ~PIO_SM0_SHIFTCTRL_PULL_THRESH_BITS;
+    pio->sm[pio_sm].shiftctrl |= 16 << PIO_SM0_SHIFTCTRL_PULL_THRESH_LSB;
+    pio_sm_restart(pio, pio_sm);
     pio_sm_set_enabled(pio, pio_sm, true);
 
     write_mode = true;

@@ -33,7 +33,7 @@ static blit::AudioChannel channels[CHANNEL_COUNT];
 
 #ifdef DISPLAY_ST7789
 #ifdef PIMORONI_PICOSYSTEM
-pimoroni::ST7789 st7789(240, 240, (uint16_t *)screen_fb, spi0, 5, 9, 6, 7, 12, 8, 4);
+pimoroni::ST7789 st7789(240, 240, (uint16_t *)screen_fb, 5, 9, 6, 7, 12, 8, 4);
 #else
 pimoroni::ST7789 st7789(240, 240, (uint16_t *)screen_fb);
 #endif
