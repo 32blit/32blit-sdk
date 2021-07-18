@@ -160,7 +160,6 @@ static int64_t timer_callback(alarm_id_t alarm_id, void *user_data) {
 
 int main() {
   set_sys_clock_khz(250000, false);
-  clock_configure(clk_peri, 0, CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS, 250 * MHZ, 250 * MHZ);
 
   stdio_init_all();
 
