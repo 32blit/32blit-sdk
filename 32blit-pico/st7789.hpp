@@ -8,6 +8,7 @@ namespace pimoroni {
   class ST7789 {
     PIO pio = pio0;
     uint pio_sm = 0;
+    uint pio_offset = 0, pio_double_offset = 0;
 
     uint32_t dma_channel;
 
@@ -28,6 +29,7 @@ namespace pimoroni {
     int8_t reset  = -1;
 
     bool write_mode = false; // in RAMWR
+    bool pixel_double = false;
 
   public:
     // frame buffer where pixel data is stored
@@ -50,6 +52,7 @@ namespace pimoroni {
     void set_backlight(uint8_t brightness);
 
     void set_window(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+    void set_pixel_double(bool pd);
 
     void clear();
 
@@ -57,6 +60,8 @@ namespace pimoroni {
 
   private:
     void prepare_write();
+
+    friend void st7789_dma_irq_handler();
   };
 
 }

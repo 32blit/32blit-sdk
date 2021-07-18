@@ -4,6 +4,7 @@
 #include <math.h>
 
 #include "hardware/dma.h"
+#include "hardware/irq.h"
 #include "hardware/pwm.h"
 #include "pico/time.h"
 
@@ -64,6 +65,26 @@ namespace pimoroni {
     while(!(pio->fdebug & stall_mask));
   }
 
+  // used for pixel doubling
+  // only handles one instance
+  static ST7789 *st7789_ptr = nullptr;
+  static volatile int cur_scanline = 240;
+
+  void __isr st7789_dma_irq_handler() {
+    auto channel = st7789_ptr->dma_channel;
+    if(dma_channel_get_irq0_status(channel)) {
+      dma_channel_acknowledge_irq0(channel);
+
+      if(++cur_scanline > st7789_ptr->win_h / 2)
+        return;
+
+      auto count = cur_scanline == st7789_ptr->win_h / 2 ? st7789_ptr->win_w / 4  : st7789_ptr->win_w / 2;
+
+      dma_channel_set_trans_count(channel, count, false);
+      dma_channel_set_read_addr(channel, st7789_ptr->frame_buffer + (cur_scanline - 1) * (st7789_ptr->win_w / 2), true);
+    }
+  }
+
   void ST7789::init(bool auto_init_sequence) {
     // configure pins
     gpio_set_function(dc, GPIO_FUNC_SIO);
@@ -99,8 +120,10 @@ namespace pimoroni {
     }
 
     // setup PIO
-    auto offset = pio_add_program(pio, &st7789_raw_program);
-    pio_sm_config cfg = st7789_raw_program_get_default_config(offset);
+    pio_offset = pio_add_program(pio, &st7789_raw_program);
+    pio_double_offset = pio_add_program(pio, &st7789_pixel_double_program);
+
+    pio_sm_config cfg = st7789_raw_program_get_default_config(pio_offset);
     sm_config_set_clkdiv(&cfg, 2); // back to 62.5MHz from overclock
     sm_config_set_out_shift(&cfg, false, true, 8);
     sm_config_set_out_pins(&cfg, mosi, 1);
@@ -112,7 +135,7 @@ namespace pimoroni {
     pio_sm_set_consecutive_pindirs(pio, pio_sm, mosi, 1, true);
     pio_sm_set_consecutive_pindirs(pio, pio_sm, sck, 1, true);
 
-    pio_sm_init(pio, pio_sm, offset, &cfg);
+    pio_sm_init(pio, pio_sm, pio_offset, &cfg);
     pio_sm_set_enabled(pio, pio_sm, true);
 
     // if auto_init_sequence then send initialisation sequence
@@ -167,6 +190,10 @@ namespace pimoroni {
     channel_config_set_dreq(&config, pio_get_dreq(pio, pio_sm, true));
     dma_channel_configure(
       dma_channel, &config, &pio->txf[pio_sm], frame_buffer, width * height, false);
+
+    irq_add_shared_handler(DMA_IRQ_0, st7789_dma_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+    irq_set_enabled(DMA_IRQ_0, true);
+    st7789_ptr = this;
   }
 
   void ST7789::command(uint8_t command, size_t len, const char *data) {
@@ -176,7 +203,13 @@ namespace pimoroni {
       // reconfigure to 8 bits
       pio_sm_set_enabled(pio, pio_sm, false);
       pio->sm[pio_sm].shiftctrl &= ~PIO_SM0_SHIFTCTRL_PULL_THRESH_BITS;
-      pio->sm[pio_sm].shiftctrl |= 8 << PIO_SM0_SHIFTCTRL_PULL_THRESH_LSB;
+      pio->sm[pio_sm].shiftctrl |= (8 << PIO_SM0_SHIFTCTRL_PULL_THRESH_LSB) | PIO_SM0_SHIFTCTRL_AUTOPULL_BITS;
+
+      // switch back to raw
+      pio_sm_restart(pio, pio_sm);
+      pio_sm_set_wrap(pio, pio_sm, pio_offset + st7789_raw_wrap_target, pio_offset + st7789_raw_wrap);
+      pio_sm_exec(pio, pio_sm, pio_encode_jmp(pio_offset));
+
       pio_sm_set_enabled(pio, pio_sm, true);
       write_mode = false;
     }
@@ -207,7 +240,15 @@ namespace pimoroni {
 
     prepare_write();
 
-    dma_channel_set_trans_count(dma_channel, win_w * win_h, false);
+    if(pixel_double) {
+      cur_scanline = 0;
+      dma_channel_acknowledge_irq0(dma_channel);
+      dma_channel_set_irq0_enabled(dma_channel, true);
+      dma_channel_set_trans_count(dma_channel, win_w / 4, false);
+    } else {
+      dma_channel_set_irq0_enabled(dma_channel, false);
+      dma_channel_set_trans_count(dma_channel, win_w * win_h, false);
+    }
     dma_channel_set_read_addr(dma_channel, frame_buffer, true);
   }
 
@@ -234,6 +275,14 @@ namespace pimoroni {
     win_h = h;
   }
 
+  void ST7789::set_pixel_double(bool pd) {
+    pixel_double = pd;
+
+    // nop to reconfigure PIO
+    if(write_mode)
+      command(0);
+  }
+
   void ST7789::clear() {
     prepare_write();
 
@@ -242,6 +291,9 @@ namespace pimoroni {
   }
 
   bool ST7789::dma_is_busy() {
+    if(pixel_double && cur_scanline <= win_h / 2)
+      return true;
+
     return dma_channel_is_busy(dma_channel);
   }
 
@@ -260,11 +312,30 @@ namespace pimoroni {
 
     gpio_put(dc, 1); // data mode
 
-    // reconfigure to 16 bits
     pio_sm_set_enabled(pio, pio_sm, false);
-    pio->sm[pio_sm].shiftctrl &= ~PIO_SM0_SHIFTCTRL_PULL_THRESH_BITS;
-    pio->sm[pio_sm].shiftctrl |= 16 << PIO_SM0_SHIFTCTRL_PULL_THRESH_LSB;
     pio_sm_restart(pio, pio_sm);
+
+    if(pixel_double) {
+      // switch program
+      pio_sm_set_wrap(pio, pio_sm, pio_double_offset + st7789_pixel_double_wrap_target, pio_double_offset + st7789_pixel_double_wrap);
+
+      // 32 bits, no autopull
+      pio->sm[pio_sm].shiftctrl &= ~(PIO_SM0_SHIFTCTRL_PULL_THRESH_BITS | PIO_SM0_SHIFTCTRL_AUTOPULL_BITS);
+
+      pio_sm_exec(pio, pio_sm, pio_encode_jmp(pio_double_offset));
+
+      // reconfigure dma size
+      dma_channel_hw_addr(dma_channel)->al1_ctrl &= ~DMA_CH0_CTRL_TRIG_DATA_SIZE_BITS;
+      dma_channel_hw_addr(dma_channel)->al1_ctrl |= DMA_SIZE_32 << DMA_CH0_CTRL_TRIG_DATA_SIZE_LSB;
+    } else {
+      // 16 bits, autopull
+      pio->sm[pio_sm].shiftctrl &= ~PIO_SM0_SHIFTCTRL_PULL_THRESH_BITS;
+      pio->sm[pio_sm].shiftctrl |= (16 << PIO_SM0_SHIFTCTRL_PULL_THRESH_LSB) | PIO_SM0_SHIFTCTRL_AUTOPULL_BITS;
+
+      dma_channel_hw_addr(dma_channel)->al1_ctrl &= ~DMA_CH0_CTRL_TRIG_DATA_SIZE_BITS;
+      dma_channel_hw_addr(dma_channel)->al1_ctrl |= DMA_SIZE_16 << DMA_CH0_CTRL_TRIG_DATA_SIZE_LSB;
+    }
+
     pio_sm_set_enabled(pio, pio_sm, true);
 
     write_mode = true;
