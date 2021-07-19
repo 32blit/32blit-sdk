@@ -37,11 +37,14 @@ pimoroni::ST7789 st7789(240, 240, (uint16_t *)screen_fb, 5, 9, 6, 7, 12, 8, 4);
 #else
 pimoroni::ST7789 st7789(240, 240, (uint16_t *)screen_fb);
 #endif
+static bool have_vsync = false;
 #endif
 
 ScreenMode cur_screen_mode = ScreenMode::lores;
 // double buffering for lores
 static volatile int buf_index = 0;
+
+static volatile bool do_render = true;
 
 static Surface &set_screen_mode(ScreenMode mode) {
   switch(mode) {
@@ -49,12 +52,18 @@ static Surface &set_screen_mode(ScreenMode mode) {
       screen = lores_screen;
       // window
 #ifdef DISPLAY_ST7789
+      if(have_vsync)
+        do_render = true; // prevent starting an update during switch
+
       st7789.set_pixel_double(true);
 #endif
       break;
 
     case ScreenMode::hires:
 #ifdef DISPLAY_ST7789
+      if(have_vsync)
+        do_render = true;
+
       screen = hires_screen;
       st7789.frame_buffer = (uint16_t *)screen_fb;
       st7789.set_pixel_double(false);
@@ -108,9 +117,16 @@ void init();
 void render(uint32_t);
 void update(uint32_t);
 
-#ifdef DISPLAY_SCANVIDEO
+#ifdef DISPLAY_ST7789
+void vsync_callback(uint gpio, uint32_t events) {
+  if(!do_render) {
+    st7789.update();
+    do_render = true;
+  }
+}
+#endif
 
-static volatile bool do_render = true;
+#ifdef DISPLAY_SCANVIDEO
 
 static void fill_scanline_buffer(struct scanvideo_scanline_buffer *buffer) {
   static uint32_t postamble[] = {
@@ -221,6 +237,8 @@ int main() {
 #ifdef DISPLAY_ST7789
   st7789.init();
   st7789.clear();
+
+  have_vsync = st7789.vsync_callback(vsync_callback);
 #endif
 
 #ifdef DISPLAY_SCANVIDEO
@@ -253,17 +271,21 @@ int main() {
     auto now = ::now();
 
 #ifdef DISPLAY_ST7789
-    if(now - last_render >= 20 && (cur_screen_mode == ScreenMode::lores || !st7789.dma_is_busy())) {
-      ::render(now);
-      st7789.update();
-      last_render = now;
-
+    if((do_render || (!have_vsync && now - last_render >= 20)) && (cur_screen_mode == ScreenMode::lores || !st7789.dma_is_busy())) {
       if(cur_screen_mode == ScreenMode::lores) {
         buf_index ^= 1;
 
         screen.data = screen_fb + (buf_index) * (120 * 120 * 2);
         st7789.frame_buffer = (uint16_t *)screen.data;
       }
+
+      ::render(now);
+
+      if(!have_vsync)
+        st7789.update();
+
+      last_render = now;
+      do_render = false;
     }
 #elif defined(DISPLAY_SCANVIDEO)
     if(do_render) {
