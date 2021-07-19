@@ -15,21 +15,27 @@ static Surface lores_screen(screen_fb, PixelFormat::RGB565, Size(160, 120));
 static Surface hires_screen(screen_fb, PixelFormat::RGB565, Size(240, 240));
 //static Surface hires_palette_screen(screen_fb, PixelFormat::P, Size(320, 240));
 
+#ifdef DISPLAY_ST7789
 pimoroni::ST7789 st7789(240, 240, (uint16_t *)screen_fb);
+#endif
 
 ScreenMode cur_screen_mode = ScreenMode::lores;
 
 static Surface &set_screen_mode(ScreenMode mode) {
   switch(mode) {
     case ScreenMode::lores:
-      blit::screen = lores_screen;
+      screen = lores_screen;
       // window
+#ifdef DISPLAY_ST7789
       st7789.set_window(40, 60, 160, 120);
+#endif
       break;
 
     case ScreenMode::hires:
       screen = hires_screen;
+#ifdef DISPLAY_ST7789
       st7789.set_window(0, 0, 240, 240);
+#endif
       break;
 
     //case ScreenMode::hires_palette:
@@ -57,8 +63,10 @@ int main() {
   api.now = ::now;
   api.set_screen_mode = ::set_screen_mode;
 
+#ifdef DISPLAY_ST7789
   st7789.init();
   st7789.clear();
+#endif
 
   ::set_screen_mode(ScreenMode::lores);
 
@@ -75,11 +83,13 @@ int main() {
 
     auto now = ::now();
 
+#ifdef DISPLAY_ST7789
     if(now - last_render >= 20 && !st7789.dma_is_busy()) {
       ::render(now);
       st7789.update();
       last_render = now;
     }
+#endif
   }
 
   return 0;

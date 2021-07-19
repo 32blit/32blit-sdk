@@ -12,6 +12,10 @@ target_sources(BlitHalPico INTERFACE
 )
 target_link_libraries(BlitHalPico INTERFACE hardware_dma hardware_pwm hardware_spi pico_stdlib)
 
+target_compile_definitions(BlitHalPico INTERFACE
+	DISPLAY_ST7789
+)
+
 function(blit_executable_common NAME)
 	target_link_libraries(${NAME} BlitEngine)
 
