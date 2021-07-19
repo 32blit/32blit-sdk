@@ -20,11 +20,15 @@ namespace blit {
     float f = h * 6 - i;
 
     v = v * 255.0f;
-    uint8_t bv = uint8_t(v);
 
-    auto p = uint8_t(v * (1 - s));
-    auto q = uint8_t(v * (1 - f * s));
-    auto t = uint8_t(v * (1 - (1 - f) * s));
+    float sv = s * v;
+    float fsv = f * sv;
+
+    auto p = uint8_t(-sv + v);
+    auto q = uint8_t(-fsv + v);
+    auto t = uint8_t(fsv - sv + v);
+
+    uint8_t bv = uint8_t(v);
 
     switch (i % 6) {
     default:
