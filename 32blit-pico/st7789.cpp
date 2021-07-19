@@ -261,8 +261,12 @@ namespace pimoroni {
     pwm_set_gpio_level(bl, value);
   }
 
-  void ST7789::vsync_callback(gpio_irq_callback_t callback) {
+  bool ST7789::vsync_callback(gpio_irq_callback_t callback) {
+    if(vsync == -1)
+      return false;
+
     gpio_set_irq_enabled_with_callback(vsync, GPIO_IRQ_EDGE_RISE, true, callback);
+    return true;
   }
 
   void ST7789::set_window(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {

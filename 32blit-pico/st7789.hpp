@@ -48,7 +48,7 @@ namespace pimoroni {
     void init(bool auto_init_sequence = true);
 
     void command(uint8_t command, size_t len = 0, const char *data = NULL);
-    void vsync_callback(gpio_irq_callback_t callback);
+    bool vsync_callback(gpio_irq_callback_t callback);
     void update(bool dont_block = false);
     void set_backlight(uint8_t brightness);
 
