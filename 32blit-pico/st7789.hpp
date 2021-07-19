@@ -30,6 +30,7 @@ namespace pimoroni {
 
     bool write_mode = false; // in RAMWR
     bool pixel_double = false;
+    uint16_t *upd_frame_buffer = nullptr;
 
   public:
     // frame buffer where pixel data is stored

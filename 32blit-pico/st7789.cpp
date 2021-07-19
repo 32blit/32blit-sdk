@@ -81,7 +81,7 @@ namespace pimoroni {
       auto count = cur_scanline == st7789_ptr->win_h / 2 ? st7789_ptr->win_w / 4  : st7789_ptr->win_w / 2;
 
       dma_channel_set_trans_count(channel, count, false);
-      dma_channel_set_read_addr(channel, st7789_ptr->frame_buffer + (cur_scanline - 1) * (st7789_ptr->win_w / 2), true);
+      dma_channel_set_read_addr(channel, st7789_ptr->upd_frame_buffer + (cur_scanline - 1) * (st7789_ptr->win_w / 2), true);
     }
   }
 
@@ -242,6 +242,7 @@ namespace pimoroni {
 
     if(pixel_double) {
       cur_scanline = 0;
+      upd_frame_buffer = frame_buffer;
       dma_channel_acknowledge_irq0(dma_channel);
       dma_channel_set_irq0_enabled(dma_channel, true);
       dma_channel_set_trans_count(dma_channel, win_w / 4, false);
