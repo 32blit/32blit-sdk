@@ -21,7 +21,7 @@ using namespace blit;
 
 #ifdef DISPLAY_ST7789
 uint8_t screen_fb[240 * 240 * 2];
-static Surface lores_screen(screen_fb, PixelFormat::RGB565, Size(160, 120));
+static Surface lores_screen(screen_fb, PixelFormat::RGB565, Size(120, 120));
 static Surface hires_screen(screen_fb, PixelFormat::RGB565, Size(240, 240));
 //static Surface hires_palette_screen(screen_fb, PixelFormat::P, Size(320, 240));
 #elif defined(DISPLAY_SCANVIDEO)
@@ -47,14 +47,14 @@ static Surface &set_screen_mode(ScreenMode mode) {
       screen = lores_screen;
       // window
 #ifdef DISPLAY_ST7789
-      st7789.set_window(40, 60, 160, 120);
+      st7789.set_pixel_double(true);
 #endif
       break;
 
     case ScreenMode::hires:
 #ifdef DISPLAY_ST7789
       screen = hires_screen;
-      st7789.set_window(0, 0, 240, 240);
+      st7789.set_pixel_double(false);
 #endif
       break;
 
