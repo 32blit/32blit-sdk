@@ -157,10 +157,11 @@ namespace pimoroni {
         command(reg::VRHS, 1, "\x12");
         command(reg::VDVS, 1, "\x20");
         command(reg::PWCTRL1, 2, "\xa4\xa1");
-        command(reg::FRCTRL2, 1, "\x0f");
         command(reg::PVGAMCTRL, 14, "\xD0\x04\x0D\x11\x13\x2B\x3F\x54\x4C\x18\x0D\x0B\x1F\x23");
         command(reg::NVGAMCTRL, 14, "\xD0\x04\x0C\x11\x13\x2C\x3F\x44\x51\x2F\x1F\x1F\x20\x23");
       }
+
+      command(reg::FRCTRL2, 1, "\x15"); // 50Hz
 
       command(reg::INVON);   // set inversion mode
       command(reg::SLPOUT);  // leave sleep mode
