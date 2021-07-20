@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <random>
 
 #include "hardware/clocks.h"
 #include "pico/stdlib.h"
@@ -82,6 +83,13 @@ static Surface &set_screen_mode(ScreenMode mode) {
 
 static uint32_t now() {
   return to_ms_since_boot(get_absolute_time());
+}
+
+static uint32_t random() {
+  static std::mt19937 random_generator(0); // FIXME: seed
+  static std::uniform_int_distribution<uint32_t> random_distribution;
+
+	return random_distribution(random_generator);
 }
 
 static void *open_file(const std::string &, int) {
@@ -186,7 +194,7 @@ int main() {
   api.set_screen_mode = ::set_screen_mode;
   // api.set_screen_palette = ::set_screen_palette;
   api.now = ::now;
-  // api.random = ::random;
+  api.random = ::random;
   // api.exit = ::exit;
 
   // serial debug
