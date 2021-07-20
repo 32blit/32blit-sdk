@@ -20,13 +20,13 @@ target_link_libraries(BlitHalPico INTERFACE hardware_dma hardware_pio hardware_p
 
 target_compile_definitions(BlitHalPico INTERFACE
 	PICO_AUDIO_I2S_MONO_INPUT=1
+	PICO_AUDIO_DMA_IRQ=1
 )
 
 if(${PICO_BOARD} STREQUAL "vgaboard")
 	message("Using VGA board...")
 	target_link_libraries(BlitHalPico INTERFACE pico_scanvideo_dpi pico_audio_i2s)
 	target_compile_definitions(BlitHalPico INTERFACE
-		PICO_AUDIO_DMA_IRQ=1
 		PICO_SCANVIDEO_PLANE1_VARIABLE_FRAGMENT_DMA=1
 		AUDIO_I2S
 		DISPLAY_SCANVIDEO
