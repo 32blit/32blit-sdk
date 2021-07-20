@@ -2,7 +2,6 @@
 
 static void _i2c_send_8(I2C_HandleTypeDef *i2c_port, uint8_t address, uint8_t reg, uint8_t data);
 static uint8_t _i2c_recv_8(I2C_HandleTypeDef *i2c_port, uint8_t address, uint8_t reg);
-static uint16_t _i2c_recv_16(I2C_HandleTypeDef *i2c_port, uint16_t address, uint8_t reg );
 
 bool bq24295_init(I2C_HandleTypeDef *i2c_port) {
     uint8_t chip_id = _i2c_recv_8(i2c_port, BQ24295_DEVICE_ADDRESS, BQ24295_ID_REGISTER);
@@ -20,18 +19,6 @@ bool bq24295_init(I2C_HandleTypeDef *i2c_port) {
         return true;
     }
     return false;
-}
-
-uint16_t bq24295_get_statusfault(I2C_HandleTypeDef *i2c_port) {
-    return _i2c_recv_16(i2c_port, BQ24295_DEVICE_ADDRESS, BQ24295_SYS_STATUS_REGISTER);
-}
-
-uint8_t bq24295_get_status(I2C_HandleTypeDef *i2c_port) {
-    return _i2c_recv_8(i2c_port, BQ24295_DEVICE_ADDRESS, BQ24295_SYS_STATUS_REGISTER);
-}
-
-uint8_t bq24295_get_fault(I2C_HandleTypeDef *i2c_port) {
-    return _i2c_recv_8(i2c_port, BQ24295_DEVICE_ADDRESS, BQ24295_SYS_FAULT_REGISTER);
 }
 
 void bq24295_disable_battery_fault_int(I2C_HandleTypeDef *i2c_port){
@@ -56,8 +43,8 @@ void bq24295_enable_shipping_mode(I2C_HandleTypeDef *i2c_port){
 
 static uint8_t _i2c_recv_8(I2C_HandleTypeDef *i2c_port,  uint8_t address, uint8_t reg ){
     uint8_t result;
-    HAL_I2C_Master_Transmit(i2c_port, address, &reg, 1, HAL_TIMEOUT);  
-    HAL_Delay(1); 
+    HAL_I2C_Master_Transmit(i2c_port, address, &reg, 1, HAL_TIMEOUT);
+    HAL_Delay(1);
     HAL_I2C_Master_Receive(i2c_port, address, &result, 1, HAL_TIMEOUT);
     return result;
 }
@@ -67,14 +54,4 @@ static void _i2c_send_8(I2C_HandleTypeDef *i2c_port, uint8_t address, uint8_t re
     data_buffer[0] = reg;
     data_buffer[1] = data;
     HAL_I2C_Master_Transmit(i2c_port, address, &data_buffer[0], 2, HAL_TIMEOUT);
-}
-
-static uint16_t _i2c_recv_16(I2C_HandleTypeDef *i2c_port, uint16_t address, uint8_t reg ){
-  uint8_t receive_buffer[2];
-
-  HAL_I2C_Master_Transmit(i2c_port, address, &reg, 1, HAL_TIMEOUT); //set register pointer
-  HAL_Delay(1);
-  HAL_I2C_Master_Receive(i2c_port, address, &receive_buffer[0], 2, HAL_TIMEOUT); //read two bytes from register
-
-  return (uint16_t)(receive_buffer[0] << 8) + receive_buffer [1]; //combine MSB LSB
 }

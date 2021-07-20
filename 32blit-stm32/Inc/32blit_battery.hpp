@@ -23,13 +23,13 @@ namespace battery {
   };
 
   struct BatteryInformation {
-      BatteryChargeStatus charge_status;
-      const char * charge_text;
+    BatteryChargeStatus charge_status;
+    BatteryVbusStatus vbus_status;
 
-      BatteryVbusStatus vbus_status;
-      const char * vbus_text;
+    const char * charge_text;
+    const char * vbus_text;
 
-      float voltage;
+    float voltage;
   };
 
   // Battery information
