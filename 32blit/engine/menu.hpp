@@ -65,7 +65,9 @@ protected:
           render_item(item, y, i);
         }
 
-        y += item_h + item_spacing;
+        if(item.label != nullptr || item.id == Menu::Separator) {
+          y += item_h + item_spacing;
+        }
       }
 
       screen.clip = old_clip;
