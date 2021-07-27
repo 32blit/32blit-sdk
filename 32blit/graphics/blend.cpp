@@ -188,9 +188,10 @@ namespace blit {
 
   void P_P(const Pen* pen, const Surface* dest, uint32_t off, uint32_t cnt) {
     uint8_t* d = dest->data + off;
+    uint8_t transparent = dest->transparent_index;
 
     do {
-      if (pen->a != 0) {
+      if (pen->a != transparent) {
         *d = pen->a;
       }
       d++;
@@ -281,9 +282,10 @@ namespace blit {
   void P_P(const Surface* src, uint32_t soff, const Surface* dest, uint32_t doff, uint32_t cnt, int32_t src_step) {
     uint8_t *s = src->data + soff;
     uint8_t *d = dest->data + doff;
+    uint8_t transparent = dest->transparent_index;
 
     do {
-      if (*s != 0) {
+      if (*s != transparent) {
         *d = *s;
       }
       d++; s += src_step;
