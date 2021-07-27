@@ -82,10 +82,8 @@ namespace blit {
       last_tick_time = time;
     }
 
-    bool was_menu_open = (last_state & Button::HOME) && !(api.buttons.state & Button::HOME);
-
-    // skip time spent in the menu
-    if (was_menu_open && time - last_tick_time > 10) {
+    // skip time where this wasn't the active tick function (menu/game switches)
+    if (api.tick_function_changed) {
       auto skipped_time = time - last_tick_time;
       last_tick_time = time;
 
@@ -98,6 +96,8 @@ namespace blit {
         tween->started += skipped_time;
         tween->paused += skipped_time;
       }
+
+      api.tick_function_changed = false;
     }
 
     // update timers

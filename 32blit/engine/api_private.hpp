@@ -84,6 +84,8 @@ namespace blit {
     void (*tmp_file_closed)(const uint8_t *ptr);
 
     GameMetadata (*get_metadata)();
+
+    bool tick_function_changed;
   };
   #pragma pack(pop)
 
