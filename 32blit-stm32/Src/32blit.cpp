@@ -410,6 +410,8 @@ void blit_init() {
 
     blit::api.get_metadata = ::get_metadata;
 
+    blit::api.tick_function_changed = false;
+
   display::init();
 
   multiplayer::init();
@@ -484,6 +486,7 @@ void blit_menu() {
     if (user_tick && !user_code_disabled) {
       // user code was running
       do_tick = user_tick;
+      api.tick_function_changed = true;
       blit::render = user_render;
     } else {
       blit::update = ::update;
@@ -504,6 +507,7 @@ void blit_menu() {
     blit::update = blit_menu_update;
     blit::render = blit_menu_render;
     do_tick = blit::tick;
+    api.tick_function_changed = true;
 
     if(screen.format == PixelFormat::P) {
       memcpy(menu_saved_colours, screen.palette, num_menu_colours * sizeof(Pen));
@@ -721,6 +725,7 @@ bool blit_switch_execution(uint32_t address, bool force_game)
     blit::render = ::render;
     blit::update = ::update;
     do_tick = blit::tick;
+    api.tick_function_changed = true;
 
     cached_file_in_tmp = false;
     close_open_files();
@@ -846,6 +851,7 @@ void blit_enable_user_code() {
     return;
 
   do_tick = user_tick;
+  api.tick_function_changed = true;
   blit::render = user_render;
   user_code_disabled = false;
   sound::enabled = true;
@@ -856,6 +862,7 @@ void blit_disable_user_code() {
     return;
 
   do_tick = blit::tick;
+  api.tick_function_changed = true;
   blit::render = ::render;
   sound::enabled = false;
   user_code_disabled = true;
