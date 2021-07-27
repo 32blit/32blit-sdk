@@ -30,9 +30,6 @@ extern "C" {
 #endif
 
 extern bool bq24295_init(I2C_HandleTypeDef *i2c_port);
-extern uint16_t bq24295_get_statusfault(I2C_HandleTypeDef *i2c_port);
-extern uint8_t bq24295_get_status(I2C_HandleTypeDef *i2c_port);
-extern uint8_t bq24295_get_fault(I2C_HandleTypeDef *i2c_port);
 extern void bq24295_enable_shipping_mode(I2C_HandleTypeDef *i2c_port);
 extern void bq24295_disable_battery_fault_int(I2C_HandleTypeDef *i2c_port);
 

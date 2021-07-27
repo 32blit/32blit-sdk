@@ -26,8 +26,10 @@ enum I2CState {
   RECV_ACL,
   PROC_ACL,
 
-  SEND_BAT,
-  RECV_BAT,
+  SEND_BAT_STAT,
+  RECV_BAT_STAT,
+  SEND_BAT_FAULT,
+  RECV_BAT_FAULT,
   PROC_BAT
 };
 
@@ -130,19 +132,28 @@ void blit_i2c_tick() {
 
       blit::tilt.normalize();
 
-      i2c_state = SEND_BAT;
+      i2c_state = SEND_BAT_STAT;
       break;
-    case SEND_BAT:
+    case SEND_BAT_STAT:
       i2c_reg = BQ24295_SYS_STATUS_REGISTER;
       HAL_I2C_Master_Transmit_IT(&hi2c4, BQ24295_DEVICE_ADDRESS, &i2c_reg, 1);
-      i2c_state = RECV_BAT;
+      i2c_state = RECV_BAT_STAT;
       break;
-    case RECV_BAT:
-      HAL_I2C_Master_Receive_IT(&hi2c4, BQ24295_DEVICE_ADDRESS, i2c_buffer, 2);
+    case RECV_BAT_STAT:
+      HAL_I2C_Master_Receive_IT(&hi2c4, BQ24295_DEVICE_ADDRESS, i2c_buffer, 1);
+      i2c_state = SEND_BAT_FAULT;
+      break;
+    case SEND_BAT_FAULT:
+      i2c_reg = BQ24295_SYS_FAULT_REGISTER;
+      HAL_I2C_Master_Transmit_IT(&hi2c4, BQ24295_DEVICE_ADDRESS, &i2c_reg, 1);
+      i2c_state = RECV_BAT_FAULT;
+      break;
+    case RECV_BAT_FAULT:
+      HAL_I2C_Master_Receive_IT(&hi2c4, BQ24295_DEVICE_ADDRESS, i2c_buffer + 1, 1);
       i2c_state = PROC_BAT;
       break;
     case PROC_BAT:
-      battery::update_status( i2c_buffer[0], i2c_buffer[1] );
+      battery::update_status(i2c_buffer[0], i2c_buffer[1]);
       blit_i2c_delay(16, SEND_ACL);
       break;
   }
