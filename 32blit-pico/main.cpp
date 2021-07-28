@@ -272,7 +272,7 @@ int main() {
 
   while(true) {
     update_input();
-    tick(::now());
+    int ms_to_next_update =tick(::now());
     update_audio();
     update_led();
 
@@ -295,6 +295,7 @@ int main() {
       last_render = now;
       do_render = false;
     }
+
 #elif defined(DISPLAY_SCANVIDEO)
     if(do_render) {
       screen.data = screen_fb + (buf_index ^ 1) * (160 * 120 * 2); // only works because there's no "firmware" here
@@ -303,6 +304,8 @@ int main() {
       do_render = false;
     }
 #endif
+    else if(ms_to_next_update > 1)
+      best_effort_wfe_or_timeout(make_timeout_time_ms(ms_to_next_update - 1));
   }
 
   return 0;
