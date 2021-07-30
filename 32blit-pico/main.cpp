@@ -93,6 +93,12 @@ static uint32_t random() {
 	return random_distribution(random_generator);
 }
 
+static void debug(const char *message) {
+  fputs(message, stdout);
+
+  usb_debug(message);
+}
+
 static void *open_file(const std::string &, int) {
   return nullptr; // stub
 }
@@ -199,7 +205,7 @@ int main() {
   // api.exit = ::exit;
 
   // serial debug
-  // api.debug = ::debug;
+  api.debug = ::debug;
 
   // files
   api.open_file = ::open_file;
