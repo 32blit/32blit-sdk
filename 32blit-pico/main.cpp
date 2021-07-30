@@ -13,6 +13,7 @@
 #include "input.hpp"
 #include "led.hpp"
 #include "st7789.hpp"
+#include "usb.hpp"
 
 #include "engine/api_private.hpp"
 #include "engine/engine.hpp"
@@ -257,6 +258,7 @@ int main() {
 #endif
 
   init_input();
+  init_usb();
 
   ::set_screen_mode(ScreenMode::lores);
 
@@ -272,9 +274,10 @@ int main() {
 
   while(true) {
     update_input();
-    int ms_to_next_update =tick(::now());
+    int ms_to_next_update = tick(::now());
     update_audio();
     update_led();
+    update_usb();
 
     auto now = ::now();
 

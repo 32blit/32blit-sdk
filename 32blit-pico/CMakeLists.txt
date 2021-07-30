@@ -12,11 +12,14 @@ target_sources(BlitHalPico INTERFACE
 	${CMAKE_CURRENT_LIST_DIR}/led.cpp
 	${CMAKE_CURRENT_LIST_DIR}/main.cpp
 	${CMAKE_CURRENT_LIST_DIR}/st7789.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/usb.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
 )
 
 pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/st7789.pio)
 
-target_link_libraries(BlitHalPico INTERFACE hardware_dma hardware_pio hardware_pwm hardware_spi pico_stdlib)
+target_link_libraries(BlitHalPico INTERFACE hardware_dma hardware_pio hardware_pwm hardware_spi pico_stdlib tinyusb_device)
+target_include_directories(BlitHalPico INTERFACE ${CMAKE_CURRENT_LIST_DIR}) # for tusb_config
 
 target_compile_definitions(BlitHalPico INTERFACE
 	PICO_AUDIO_I2S_MONO_INPUT=1
