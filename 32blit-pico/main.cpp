@@ -239,10 +239,9 @@ int main() {
   // api.get_launch_path = ::get_launch_path;
 
   // multiplayer
-  // api.is_multiplayer_connected = ::is_multiplayer_connected;
-  // api.set_multiplayer_enabled = ::set_multiplayer_enabled;
-  // api.send_message = ::send_message;
-  // api.message_received = ::message_received;
+  api.is_multiplayer_connected = ::is_multiplayer_connected;
+  api.set_multiplayer_enabled = ::set_multiplayer_enabled;
+  api.send_message = ::send_multiplayer_message;
 
   // api.flash_to_tmp = ::flash_to_tmp;
   // api.tmp_file_closed = ::tmp_file_closed;
