@@ -119,7 +119,7 @@ void update(uint32_t);
 
 #ifdef DISPLAY_ST7789
 void vsync_callback(uint gpio, uint32_t events) {
-  if(!do_render) {
+  if(!do_render && !st7789.dma_is_busy()) {
     st7789.update();
     do_render = true;
   }
