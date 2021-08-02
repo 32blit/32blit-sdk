@@ -11,6 +11,7 @@ target_sources(BlitHalPico INTERFACE
 	${CMAKE_CURRENT_LIST_DIR}/input.cpp
 	${CMAKE_CURRENT_LIST_DIR}/led.cpp
 	${CMAKE_CURRENT_LIST_DIR}/main.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/storage.cpp
 	${CMAKE_CURRENT_LIST_DIR}/st7789.cpp
   ${CMAKE_CURRENT_LIST_DIR}/usb.cpp
   ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
