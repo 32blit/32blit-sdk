@@ -5,8 +5,92 @@
 #include "bsp/board.h"
 #include "tusb.h"
 
+#include "storage.hpp"
+
 #include "engine/api_private.hpp"
 
+// msc
+static bool storage_ejected = false;
+
+void tud_mount_cb() {
+  storage_ejected = false;
+}
+
+void tud_msc_inquiry_cb(uint8_t lun, uint8_t vendor_id[8], uint8_t product_id[16], uint8_t product_rev[4]) {
+  (void) lun;
+
+  const char vid[] = "TinyUSB";
+  const char pid[] = "Mass Storage";
+  const char rev[] = "1.0";
+
+  memcpy(vendor_id  , vid, strlen(vid));
+  memcpy(product_id , pid, strlen(pid));
+  memcpy(product_rev, rev, strlen(rev));
+}
+
+bool tud_msc_test_unit_ready_cb(uint8_t lun) {
+  if(storage_ejected) {
+    tud_msc_set_sense(lun, SCSI_SENSE_NOT_READY, 0x3a, 0x00);
+    return false;
+  }
+
+  return true;
+}
+
+void tud_msc_capacity_cb(uint8_t lun, uint32_t *block_count, uint16_t *block_size) {
+  (void) lun;
+
+  get_storage_size(*block_size, *block_count);
+}
+
+bool tud_msc_start_stop_cb(uint8_t lun, uint8_t power_condition, bool start, bool load_eject) {
+  (void) lun;
+  (void) power_condition;
+
+  if(load_eject) {
+    if (start) {
+    } else
+      storage_ejected = true;
+  }
+
+  return true;
+}
+
+int32_t tud_msc_read10_cb(uint8_t lun, uint32_t lba, uint32_t offset, void *buffer, uint32_t bufsize) {
+  (void) lun;
+
+  return storage_read(lba, offset, buffer, bufsize);
+}
+
+int32_t tud_msc_write10_cb(uint8_t lun, uint32_t lba, uint32_t offset, uint8_t *buffer, uint32_t bufsize) {
+  (void) lun;
+
+  return storage_write(lba, offset, buffer, bufsize);
+}
+
+int32_t tud_msc_scsi_cb(uint8_t lun, uint8_t const scsi_cmd[16], void* buffer, uint16_t bufsize) {
+  void const* response = NULL;
+  uint16_t resplen = 0;
+
+  switch (scsi_cmd[0]) {
+    case SCSI_CMD_PREVENT_ALLOW_MEDIUM_REMOVAL:
+      // Host is about to read/write etc ... better not to disconnect disk
+      resplen = 0;
+    break;
+
+    default:
+      // Set Sense = Invalid Command Operation
+      tud_msc_set_sense(lun, SCSI_SENSE_ILLEGAL_REQUEST, 0x20, 0x00);
+
+      // negative means error -> tinyusb could stall and/or response with failed status
+      resplen = -1;
+    break;
+  }
+
+  return resplen;
+}
+
+// cdc
 static bool multiplayer_enabled = false;
 static bool peer_connected = false;
 
