@@ -78,7 +78,7 @@ void render(uint32_t time) {
   float duration = 2.0f;
 
   ts += dir;
-  if (ts > 4.0f) {     
+  if (ts > 4.0f) {
     dir *= -1;
     ts = 1.0f;
   }
@@ -96,7 +96,7 @@ void render(uint32_t time) {
   float half_scale = scale / 2.0f + 0.5f;
   Mat4 r = Mat4::rotation(td * 250.0f, Vec3(0, 1, 0));
   Mat4 s = Mat4::scale(Vec3(scale, scale, scale));
-  Mat4 t = Mat4::translation(Vec3(80, 60, 0));
+  Mat4 t = Mat4::translation(Vec3(screen.bounds.w / 2, screen.bounds.h / 2, 0));
 
   for (int i = 0; i < 63; i++) {
     LogoParticle pc = particles[i];
