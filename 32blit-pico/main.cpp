@@ -10,6 +10,7 @@
 #endif
 
 #include "audio.hpp"
+#include "file.hpp"
 #include "input.hpp"
 #include "led.hpp"
 #include "st7789.hpp"
@@ -99,24 +100,8 @@ static void debug(const char *message) {
   usb_debug(message);
 }
 
-static void *open_file(const std::string &, int) {
-  return nullptr; // stub
-}
-
-static int32_t read_file(void *, uint32_t, uint32_t, char *) {
-  return -1; // stub
-}
-
-static int32_t write_file(void *, uint32_t, uint32_t, const char *) {
-  return -1; // stub
-}
-
-static const char *get_save_path() {
-  return ""; // stub
-}
-
 static bool is_storage_available() {
-  return false;
+  return true; // TODO: optional storage?
 }
 
 static uint32_t get_us_timer() {
@@ -211,14 +196,14 @@ int main() {
   api.open_file = ::open_file;
   api.read_file = ::read_file;
   api.write_file = ::write_file;
-  // api.close_file = ::close_file;
-  // api.get_file_length = ::get_file_length;
-  // api.list_files = ::list_files;
-  // api.file_exists = ::file_exists;
-  // api.directory_exists = ::directory_exists;
-  // api.create_directory = ::create_directory;
-  // api.rename_file = ::rename_file;
-  // api.remove_file = ::remove_file;
+  api.close_file = ::close_file;
+  api.get_file_length = ::get_file_length;
+  api.list_files = ::list_files;
+  api.file_exists = ::file_exists;
+  api.directory_exists = ::directory_exists;
+  api.create_directory = ::create_directory;
+  api.rename_file = ::rename_file;
+  api.remove_file = ::remove_file;
   api.get_save_path = ::get_save_path;
   api.is_storage_available = ::is_storage_available;
 
@@ -263,6 +248,7 @@ int main() {
 #endif
 
   init_input();
+  init_fs();
   init_usb();
 
   ::set_screen_mode(ScreenMode::lores);
