@@ -7,6 +7,10 @@ set(32BLIT_PICO 1 PARENT_SCOPE)
 
 add_library(BlitHalPico INTERFACE)
 target_sources(BlitHalPico INTERFACE
+
+	${CMAKE_CURRENT_LIST_DIR}/../3rd-party/fatfs/ff.c
+	${CMAKE_CURRENT_LIST_DIR}/../3rd-party/fatfs/ffunicode.c
+
 	${CMAKE_CURRENT_LIST_DIR}/audio.cpp
 	${CMAKE_CURRENT_LIST_DIR}/input.cpp
 	${CMAKE_CURRENT_LIST_DIR}/led.cpp
@@ -20,7 +24,10 @@ target_sources(BlitHalPico INTERFACE
 pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/st7789.pio)
 
 target_link_libraries(BlitHalPico INTERFACE hardware_dma hardware_pio hardware_pwm hardware_spi pico_stdlib pico_unique_id tinyusb_device)
-target_include_directories(BlitHalPico INTERFACE ${CMAKE_CURRENT_LIST_DIR}) # for tusb_config
+target_include_directories(BlitHalPico INTERFACE
+	${CMAKE_CURRENT_LIST_DIR} # for tusb_config
+	${CMAKE_CURRENT_LIST_DIR}/../3rd-party/fatfs
+)
 
 target_compile_definitions(BlitHalPico INTERFACE
 	PICO_AUDIO_I2S_MONO_INPUT=1
