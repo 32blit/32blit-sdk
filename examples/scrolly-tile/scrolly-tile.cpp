@@ -132,7 +132,7 @@ void for_each_tile(tile_callback callback, void *args) {
         for(auto x = 0; x < TILES_X; x++) {
             uint16_t index = (y * TILES_X) + x;
             tiles[index] = callback(tiles[index], x, y, args);
-        }    
+        }
     }
 }
 
@@ -186,17 +186,27 @@ uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
         // Draw tiles without anti-aliasing to save code bloat
         // Uses the rounded corner flags to miss a pixel for a
         // basic rounded corner effect.
-        for(auto py = 0; py < TILE_H; py++){
-            for(auto px = 0; px < TILE_W; px++){
-                // Skip drawing the pixels for each rounded corner
-                if(round_tl && px == 0 && py == 0) continue;
-                if(round_tr && px == TILE_W - 1 && py == 0) continue;
-                if(round_bl && px == 0 && py == TILE_H - 1) continue;
-                if(round_br && px == TILE_H - 1 && py == TILE_H - 1) continue;
-                screen.pen = color_base;
-                screen.pixel(Point(tile_x + px, tile_y + py));
-            }
-        }
+
+        screen.pen = color_base;
+
+        // top row
+        int start_x = 0, w = TILE_W;
+
+        if(round_tl) start_x++;
+        if(round_tr) w--;
+        screen.h_span(Point(tile_x + start_x, tile_y), w - start_x);
+
+        // bottom row
+        start_x = 0;
+        w = TILE_W;
+
+        if(round_bl) start_x++;
+        if(round_br) w--;
+        screen.h_span(Point(tile_x + start_x, tile_y + TILE_H - 1), w - start_x);
+
+        // rest of the tile
+        screen.rectangle(Rect(tile_x, tile_y + 1, TILE_W, TILE_H - 2));
+
     } else {
         if(feature_map & TILE_ABOVE) {
             // Draw the top left/right rounded inside corners
@@ -287,7 +297,7 @@ uint16_t generate_new_row_mask() {
             new_row_mask |= (0x8000 >> passages[i]);
 
             int8_t direction = (passages[i] < target_p_x) ? 1 : -1;
-    
+
             while(passages[i] != target_p_x) {
                 passages[i] += direction;
                 new_row_mask |= (0x8000 >> passages[i]);
