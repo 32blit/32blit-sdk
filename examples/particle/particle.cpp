@@ -84,7 +84,7 @@ void smoke(uint32_t time_ms) {
     }
   }
 
-  
+
   last_time_ms = time_ms;
 };
 
@@ -138,7 +138,7 @@ void spark(uint32_t time_ms) {
 
     }
   }
-  
+
   last_time_ms = time_ms;
 };
 
@@ -172,7 +172,7 @@ void rain(uint32_t time_ms) {
     if (p.generated) {
       p.vel += gravity;
       p.pos += p.vel * td;
-      
+
       int floor = -3;
       if (p.pos.x > 20 && p.pos.x < 46)
         floor = -33;
@@ -206,7 +206,7 @@ void rain(uint32_t time_ms) {
 
 
 
-Particle* generate_basic_rain() {  
+Particle* generate_basic_rain() {
   return new Particle(
     Vec2((std::rand() % 120) + 100, 0),
     Vec2(0, 100)
@@ -226,16 +226,7 @@ void render_basic_rain() {
   }
 }
 
-uint32_t prev_buttons = blit::buttons;
-
 void render(uint32_t time_ms) {
-  if ((blit::buttons ^ prev_buttons) & blit::Button::A) {
-      blit::set_screen_mode(blit::lores);
-  }
-  else if ((blit::buttons ^ prev_buttons) & blit::Button::B) {
-      blit::set_screen_mode(blit::hires);
-  }
-  prev_buttons = blit::buttons;
 
   screen.pen = Pen(0, 0, 0, 255);
   screen.clear();
@@ -244,7 +235,7 @@ void render(uint32_t time_ms) {
 
   uint32_t ms_start = now();
   spark(time_ms);
-  smoke(time_ms); 
+  smoke(time_ms);
   rain(time_ms);
   //render_basic_rain();
   uint32_t ms_end = now();
@@ -256,7 +247,7 @@ void render(uint32_t time_ms) {
   screen.pen = Pen(0, 0, 0);
   screen.text("Rain demo", minimal_font, Point(5, 4));
 
- /* screen.pen = Pen(255, 255, 255);  
+ /* screen.pen = Pen(255, 255, 255);
   screen.text("Smoke:", minimal_font, point(10, 20));
   screen.text("Sparks:", minimal_font, point(120, 20));
   screen.text("Rain:", minimal_font, point(220, 20));  */
@@ -284,5 +275,11 @@ void update(uint32_t time_ms) {
 
   if (pressed(Button::DPAD_LEFT)) {
     g.rotate(0.1f);
+  }
+
+  if (blit::buttons.released & blit::Button::A) {
+    blit::set_screen_mode(blit::lores);
+  } else if (blit::buttons.released & blit::Button::B) {
+    blit::set_screen_mode(blit::hires);
   }
 }

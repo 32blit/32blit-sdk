@@ -10,7 +10,7 @@ add_subdirectory(examples)
 
 add_subdirectory(launcher-shared)
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL Generic)
+if(32BLIT_HW)
     add_subdirectory(32blit-stm32)
     add_subdirectory(firmware)
     add_subdirectory(firmware-update)

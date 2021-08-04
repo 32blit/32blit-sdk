@@ -16,24 +16,29 @@ namespace blit {
    * \return Pen colour.
    */
   Pen hsv_to_rgba(float h, float s, float v) {
-    Pen res(0, 0, 0, 255);
-
-    uint8_t i = uint8_t(h * 6);
+    int i = int(h * 6);
     float f = h * 6 - i;
-    float p = v * (1 - s);
-    float q = v * (1 - f * s);
-    float t = v * (1 - (1 - f) * s);
+
+    v = v * 255.0f;
+
+    float sv = s * v;
+    float fsv = f * sv;
+
+    auto p = uint8_t(-sv + v);
+    auto q = uint8_t(-fsv + v);
+    auto t = uint8_t(fsv - sv + v);
+
+    uint8_t bv = uint8_t(v);
 
     switch (i % 6) {
-    case 0: res = Pen(v, t, p); break;
-    case 1: res = Pen(q, v, p); break;
-    case 2: res = Pen(p, v, t); break;
-    case 3: res = Pen(p, q, v); break;
-    case 4: res = Pen(t, p, v); break;
-    case 5: res = Pen(v, p, q); break;
+    default:
+    case 0: return Pen(bv, t, p);
+    case 1: return Pen(q, bv, p);
+    case 2: return Pen(p, bv, t);
+    case 3: return Pen(p, q, bv);
+    case 4: return Pen(t, p, bv);
+    case 5: return Pen(bv, p, q);
     }
-
-    return res;
   }
 
-}  
+}
