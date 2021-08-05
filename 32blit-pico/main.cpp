@@ -22,8 +22,17 @@
 
 using namespace blit;
 
+#ifndef ALLOW_HIRES
+#define ALLOW_HIRES 1
+#endif
+
 #ifdef DISPLAY_ST7789
+#if ALLOW_HIRES
 uint8_t screen_fb[240 * 240 * 2];
+#else
+uint8_t screen_fb[120 * 120 * 2 * 2]; // double-buffered
+#endif
+
 static Surface lores_screen(screen_fb, PixelFormat::RGB565, Size(120, 120));
 static Surface hires_screen(screen_fb, PixelFormat::RGB565, Size(240, 240));
 //static Surface hires_palette_screen(screen_fb, PixelFormat::P, Size(320, 240));
@@ -63,13 +72,15 @@ static Surface &set_screen_mode(ScreenMode mode) {
       break;
 
     case ScreenMode::hires:
-#ifdef DISPLAY_ST7789
+#if defined(DISPLAY_ST7789) && ALLOW_HIRES
       if(have_vsync)
         do_render = true;
 
       screen = hires_screen;
       st7789.frame_buffer = (uint16_t *)screen_fb;
       st7789.set_pixel_double(false);
+#else
+      return screen;
 #endif
       break;
 
