@@ -15,12 +15,21 @@ Vec2 ray_cache[SCREEN_WIDTH];
 
 std::vector<sprite> map_sprites(NUM_SPRITES);
 std::vector<star> stars(NUM_STARS);
+std::vector<sprite> spray(MAX_SPRAY);
 
 /* Ambient Occlusion Mask */
 uint8_t __m[SCREEN_WIDTH * SCREEN_HEIGHT];
 Surface mask((uint8_t *)__m, PixelFormat::M, Size(SCREEN_WIDTH, SCREEN_HEIGHT));
 
-player player1{ Vec2(0,0), Vec2(0,0), Vec2(0,0), 0, false, false };
+player player1{
+	Vec2(0,0),
+	Vec2(0,0),
+	Vec2(0,0),
+	0.0f,
+	false,
+	0.0f,
+	false
+};
 Map map(Rect(0, 0, 16, 16));
 MapLayer *map_layer_walls;
 MapLayer *map_layer_floor;
@@ -96,6 +105,7 @@ void init() {
 	player1.direction.y = -1;
 	player1.position.x = 3.5;
 	player1.position.y = 3.5;
+	player1.rotation = 0.0f;
 
 	for (int x = 0; x < SCREEN_WIDTH; x++) {
 		lut_camera_displacement[x] = (float)(2 * x) / (float)(SCREEN_WIDTH) - 1.0f;
@@ -135,6 +145,8 @@ void init() {
 		map_sprites[s].position.x = tile.x + offset.x;
 		map_sprites[s].position.y = tile.y + offset.y;
 		map_sprites[s].color = blit::random() % 3;
+		map_sprites[s].velocity.x = 0;
+		map_sprites[s].velocity.y = 0;
 	}
 }
 
@@ -214,28 +226,42 @@ void update(uint32_t time) {
 		player1.position.y += rmove.y;
 	}
 
+	static unsigned int spray_index = 0;
+
+	if (pressed(Button::DPAD_LEFT)) {
+		player1.facing = false;
+		player1.rotation += -0.02f;
+	}
+	else if (pressed(Button::DPAD_RIGHT)) {
+		player1.facing = true;
+		player1.rotation += 0.02f;
+	}
+	else if (joystick.x < -0.1f || joystick.x > 0.1f) {
+		player1.rotation += joystick.x * 0.02f;
+		player1.facing = joystick.x > 0;
+	}
+
+	player1.direction = Vec2(0, -1);
+	player1.direction.rotate(player1.rotation);
+	player1.direction.normalize();
+
 	if (pressed(Button::A)) {
+		Vec2 spray_offset(0.5f, 0.0f);
+		spray_offset.rotate(player1.rotation);
 		player1.spraying = 1;
+		spray[spray_index].position = player1.position + player1.direction + spray_offset;
+		spray[spray_index].color = 64;
+		spray[spray_index].texture = 64;
+		spray[spray_index].velocity = (player1.direction * 0.01f);
+		spray_index++;
+		if(spray_index >= spray.size()) {
+			spray_index = 0;
+		}
 	}
 	else
 	{
 		player1.spraying = 0;
 	}
-
-	if (pressed(Button::DPAD_LEFT)) {
-		player1.facing = false;
-		player1.direction.rotate(-0.02f);
-	}
-	else if (pressed(Button::DPAD_RIGHT)) {
-		player1.facing = true;
-		player1.direction.rotate(0.02f);
-	}
-	else if (joystick.x < -0.1f || joystick.x > 0.1f) {
-		player1.direction.rotate(joystick.x * 0.02f);
-		player1.facing = joystick.x > 0;
-	}
-
-	player1.direction.normalize();
 }
 
 
@@ -270,7 +296,7 @@ void render(uint32_t time) {
 
 	render_stars();
 
-	screen.clip = Rect(0, OFFSET_TOP, SCREEN_WIDTH, VIEW_HEIGHT);
+	screen.clip = Rect(0, 0, SCREEN_WIDTH, OFFSET_TOP + VIEW_HEIGHT);
 	render_world(time);
 
 #ifdef AMBIENT_OCCLUSION
@@ -283,11 +309,12 @@ void render(uint32_t time) {
 #endif
 
 	render_sprites(time);
+	render_spray(time);
 	screen.clip = Rect(Point(0, 0), screen.bounds);
 
 	// draw bug spray    
 	int offset = OFFSET_TOP + int(sinf((player1.position.x + player1.position.y) * 4) * 3); // bob
-	screen.sprite(Rect(5, 16, 3, 4), Point(SCREEN_WIDTH - 48, VIEW_HEIGHT - 30 + offset));
+	screen.sprite(player1.spraying ? Rect(8, 16, 3, 4) : Rect(5, 16, 3, 4), Point(SCREEN_WIDTH - 48, VIEW_HEIGHT - 30 + offset));
 
 	// draw the HUD
 	screen.pen = Pen(37, 36, 46);
@@ -581,6 +608,88 @@ void render_world(uint32_t time) {
 	}
 }
 
+void render_spray(uint32_t time) {
+
+	// Calculate distance from player to each sprite
+	for (auto i = 0u; i < MAX_SPRAY; i++) {
+		Vec2 sprite_distance(
+			spray[i].position.x - player1.position.x,
+			spray[i].position.y - player1.position.y
+		);
+		spray[i].distance = (sprite_distance.x * sprite_distance.x) + (sprite_distance.y * sprite_distance.y);
+	}
+
+	// sort the sprites by distance
+	std::sort(spray.begin(), spray.end());
+
+	for (int i = 0; i < MAX_SPRAY; i++) {
+		sprite *psprite = &spray[i];
+		if(spray[i].color) {
+			spray[i].color--;
+		}
+		if(spray[i].texture < 255) {
+			spray[i].texture++;
+		}
+		spray[i].position += spray[i].velocity;
+		if(spray[i].position.x < 0) {spray[i].position.x = 0;}
+		if(spray[i].position.y < 0) {spray[i].position.y = 0;}
+		if(spray[i].position.x > MAP_WIDTH) {spray[i].position.x = MAP_WIDTH - 1;}
+		if(spray[i].position.y > MAP_HEIGHT) {spray[i].position.y = MAP_HEIGHT - 1;}
+
+		// Skip any sprites that aren't in a map tile that's "visible" to the player.
+		// This might cull sprites that might have visible foleage, but it's pretty tricky to notice
+		if (!visibility_map[int(psprite->position.x) + int(psprite->position.y) * MAP_WIDTH]) {
+			continue;
+		}
+
+		// Give the larger sprites a better view distance
+		float max_distance = 64.0;
+
+		float distance = std::min(max_distance, psprite->distance) / max_distance;
+		if (distance == 1.0f) {
+			continue;
+		}
+
+		// Get the player-relative position of the sprite
+		Vec2 relative_position = psprite->position - player1.position;
+
+		Vec2 screen_transform(
+			player1.inverse_det * (player1.direction.y * relative_position.x - player1.direction.x * relative_position.y),
+			player1.inverse_det * (-player1.camera.y * relative_position.x + player1.camera.x * relative_position.y)
+		);
+
+		// Skip any sprites which are behind the player
+		if (screen_transform.y < 0) {
+			continue;
+		}
+
+		Rect bounds(0, 0, psprite->texture / 4, psprite->texture / 4);
+
+		int sprite_height = std::abs(int(bounds.h * SPRITE_SCALE / screen_transform.y));
+		//int sprite_width = ((float)bounds.w / (float)bounds.h) * sprite_height;
+
+		// Get the screen-space position of the sprites base on the floor
+		Vec2 screen_pos(
+			int((SCREEN_WIDTH / 2) * (1 + screen_transform.x / screen_transform.y)),
+			HORIZON + (HORIZON / screen_transform.y)
+		);
+
+		/* DEBUG: Plot the sprite's base with a red dot
+		screen.alpha = 255 - int(255 * distance);
+		screen.pen = Pen(255, 0, 0);
+		screen.pixel(point(screen_pos.x, screen_pos.y));
+		*/
+
+		// offset screen coordinate with sprite bounds
+		//screen_pos -= Vec2(sprite_width / 2, sprite_height);
+		screen_pos.y -= sprite_height;
+		screen_pos.y += OFFSET_TOP;
+
+		screen.pen = Pen(255, 0, 255, psprite->color / 4);
+		screen.circle(screen_pos, sprite_height / 2);
+	}
+}
+
 void render_sprites(uint32_t time) {
 
 	// Calculate distance from player to each sprite
@@ -610,10 +719,8 @@ void render_sprites(uint32_t time) {
 			Pen(0x30, 0x8f, 0x23, 200)
 		};
 
-		screen.sprites->palette[11] = cols_a[psprite->color];
-		screen.sprites->palette[12] = cols_b[psprite->color];
-
-
+		// Skip any sprites that aren't in a map tile that's "visible" to the player.
+		// This might cull sprites that might have visible foleage, but it's pretty tricky to notice
 		if (!visibility_map[int(psprite->position.x) + int(psprite->position.y) * MAP_WIDTH]) {
 			continue;
 		}
@@ -634,10 +741,13 @@ void render_sprites(uint32_t time) {
 			player1.inverse_det * (-player1.camera.y * relative_position.x + player1.camera.x * relative_position.y)
 		);
 
+		// Skip any sprites which are behind the player
 		if (screen_transform.y < 0) {
 			continue;
 		}
 
+		screen.sprites->palette[11] = cols_a[psprite->color];
+		screen.sprites->palette[12] = cols_b[psprite->color];
 
 		// TODO:: palette change
 		//int color_offset = spr.color * 4;
