@@ -329,7 +329,6 @@ void render(uint32_t time) {
 	}
 
 	// draw DOOM guy (phil)
-	Rect ss_guy_rect(SCREEN_WIDTH - 72, SCREEN_WIDTH - 32, 24, 32);
 	screen.sprite(Rect(11, 16, 3, 4), Point(0, SCREEN_HEIGHT - 32), player1.facing ? SpriteTransform::HORIZONTAL : 0);
 
 #ifdef SHOW_FPS
