@@ -9,43 +9,23 @@
 
 using namespace blit;
 
-const uint16_t screen_width = 160;
-const uint16_t screen_height = 120;
-
-uint8_t __m[160 * 120];
-
 float z_buffer[SCREEN_WIDTH];
 float lut_camera_displacement[SCREEN_WIDTH];
+Vec2 ray_cache[SCREEN_WIDTH];
 
-const int num_sprites = 5000;
-std::vector<sprite> map_sprites(num_sprites);
+std::vector<sprite> map_sprites(NUM_SPRITES);
+std::vector<star> stars(NUM_STARS);
 
-const int num_stars = 100;
-std::vector<star> stars(num_stars);
+/* Ambient Occlusion Mask */
+uint8_t __m[SCREEN_WIDTH * SCREEN_HEIGHT];
+Surface mask((uint8_t *)__m, PixelFormat::M, Size(SCREEN_WIDTH, SCREEN_HEIGHT));
 
-/* create surfaces */
-Surface mask((uint8_t *)__m, PixelFormat::M, Size(screen_width, screen_height));
-
-
-player player1{ Vec2(0,0), Vec2(0,0), Vec2(0,0), 0 };
-int bug_spraying = 0;
-
-uint32_t tick_seed = 0;
-
-float tan_half_fov;
-
-bool flip_doom_guy = false;
-Point tile_in_view;
-float graffiti_alpha = 0;
-
-void blur(uint8_t passes);
-
+player player1{ Vec2(0,0), Vec2(0,0), Vec2(0,0), 0, false, false };
 Map map(Rect(0, 0, 16, 16));
 MapLayer *map_layer_walls;
 MapLayer *map_layer_floor;
 
 enum TileFlags { WALL = 1, NO_GRASS = 2 };
-
 enum TileFacing { NONE = 0, NORTH = 1, SOUTH = 2, EAST = 4, WEST = 8 };
 
 bool visibility_map[MAP_WIDTH * MAP_HEIGHT] = { 0 };
@@ -98,12 +78,10 @@ void get_random_empty_tile_location(Point &pos) {
 	}
 }
 
-/* setup */
+
 void init() {
 	set_screen_mode(ScreenMode::lores);
-	//printf("Init: STARTED\n");
-	//engine::render = ::render;
-	//engine::update = ::update;
+
 	screen.sprites = Surface::load(asset_raycaster);
 
 	map.add_layer("walls", map_data_walls);
@@ -119,15 +97,13 @@ void init() {
 	player1.position.x = 3.5;
 	player1.position.y = 3.5;
 
-	tan_half_fov = tanf(HALF_FOV);
-
 	for (int x = 0; x < SCREEN_WIDTH; x++) {
 		lut_camera_displacement[x] = (float)(2 * x) / (float)(SCREEN_WIDTH) - 1.0f;
 	}
 
 	srand(0x32bl);
-	//stars.resize((const int)num_stars);
-	for (int s = 0; s < num_stars; s++) {
+
+	for (int s = 0; s < NUM_STARS; s++) {
 		stars[s].position.x = blit::random() % 360;
 		stars[s].position.y = blit::random() % (HORIZON / 2);
 		stars[s].brightness = 32 + (blit::random() % 128);
@@ -135,8 +111,8 @@ void init() {
 
 	Point tile;
 	Vec2 offset;
-	//map_sprites.resize((const int)num_sprites);
-	for (int s = 0; s < num_sprites; s++) {
+
+	for (int s = 0; s < NUM_SPRITES; s++) {
 		int texture = blit::random() % 100;
 		if (texture == 0) {
 			map_sprites[s].texture = 0;
@@ -160,41 +136,13 @@ void init() {
 		map_sprites[s].position.y = tile.y + offset.y;
 		map_sprites[s].color = blit::random() % 3;
 	}
-
-	//printf("Init: FINISHED\n");
 }
 
-// TODO: should be in the vec2 class
-Vec2 rotate_point(Vec2 p, Vec2 v) {
-	float a = atan2f(v.y, v.x);
-	return rotate_vector(p, a);
-}
-
-// TODO: should be in the vec2 class
-Vec2 rotate_vector(Vec2 v, float a) {
-	float c = cosf(a);
-	float s = sinf(a);
-	float tx = v.x * c - v.y * s;
-	float ty = v.x * s + v.y * c;
-	return Vec2{ tx, ty };
-}
-
-// TODO: should be in the vec2 class
-float measure_vector(Vec2 v) {
-	return sqrtf((v.x * v.x) + (v.y * v.y));
-}
-
-uint32_t elapsed;
 
 void update(uint32_t time) {
-	//printf("Update: STARTED\n");
-	static uint32_t last_time;
-	elapsed = time - last_time;
-	last_time = time;
 	static Vec2 size(0.2f, 0.2f);
 	static Vec2 rmove(0, 0);
 	Vec2 move(0, 0);
-
 	int check_tile = 0;
 
 	if (pressed(Button::DPAD_UP)) {
@@ -206,17 +154,6 @@ void update(uint32_t time) {
 	else if (joystick.y < -0.1f || joystick.y > 0.1f) {
 		move.x = -joystick.y * 0.02f;
 	}
-
-	/*if (blit::joystick.x != 0) {
-		float x = blit::joystick.x / (float)30.0;
-		flip_doom_guy = blit::joystick.x > 0;
-		player1.direction = rotate_vector(player1.direction, x);
-	}
-
-	if (blit::joystick.y != 0) {
-		float y = blit::joystick.y / (float)30.0;
-		move.x = -y;
-	}*/
 
 	rmove.x = move.x * player1.direction.x - move.y * player1.direction.y;
 	rmove.y = move.x * player1.direction.y + move.y * player1.direction.x;
@@ -278,121 +215,97 @@ void update(uint32_t time) {
 	}
 
 	if (pressed(Button::A)) {
-		bug_spraying = 1;
+		player1.spraying = 1;
 	}
 	else
 	{
-		bug_spraying = 0;
+		player1.spraying = 0;
 	}
 
 	if (pressed(Button::DPAD_LEFT)) {
-		flip_doom_guy = false;
-		player1.direction = rotate_vector(player1.direction, -0.02f);
+		player1.facing = false;
+		player1.direction.rotate(-0.02f);
 	}
 	else if (pressed(Button::DPAD_RIGHT)) {
-		flip_doom_guy = true;
-		player1.direction = rotate_vector(player1.direction, 0.02f);
+		player1.facing = true;
+		player1.direction.rotate(0.02f);
 	}
 	else if (joystick.x < -0.1f || joystick.x > 0.1f) {
-		player1.direction = rotate_vector(player1.direction, joystick.x * 0.02f);
-		flip_doom_guy = joystick.x > 0;
+		player1.direction.rotate(joystick.x * 0.02f);
+		player1.facing = joystick.x > 0;
 	}
 
 	player1.direction.normalize();
+}
+
+
+void render(uint32_t time) {
+#ifdef SHOW_FPS
+	uint32_t ms_start = now();
+#endif
 
 	// update the orientation of the player camera plane
 	player1.camera = Vec2(-player1.direction.y, player1.direction.x);
-	//printf("Update: FINISHED\n");
-}
+	player1.inverse_det = 1.0f / (player1.camera.x * player1.direction.y - player1.direction.x * player1.camera.y);
 
-void render(uint32_t time) {
-	//printf("Render: STARTED\n");
-	uint32_t ms_start = now();
+	// the current ray direction is the player direction, plus the camera direction multiplied by the displacement
+	for(auto column = 0u; column < SCREEN_WIDTH; column++) {
+		ray_cache[column].x = player1.direction.x + player1.camera.x * lut_camera_displacement[column];
+		ray_cache[column].y = player1.direction.y + player1.camera.y * lut_camera_displacement[column];
+	}
 
 	// clear the mask
+#ifdef AMBIENT_OCCLUSION
 	mask.alpha = 255;
 	mask.pen = Pen(0);
 	mask.clear();
+#endif
 
 	// clear the canvas
 	screen.alpha = 255;
-	screen.mask = nullptr;
 	screen.pen = Pen(22, 21, 31);
 	screen.clear();
 
-	//printf("Render: SKY\n");
 	render_sky();
 
-	//printf("Render: STARS\n");
 	render_stars();
 
-	// TODO ???		
-	//printf("Render: WORLD\n");
+	screen.clip = Rect(0, OFFSET_TOP, SCREEN_WIDTH, VIEW_HEIGHT);
 	render_world(time);
-	/*
-	screen.mask = &m;
-	blur(5);
-	screen.pen = Pen(0, 0, 0, 140);
-	screen.clear();
 
-	screen.mask = nullptr;*/
-
-	//edges();
-
-		blur(1);
+#ifdef AMBIENT_OCCLUSION
+	blur(1);
 
 	screen.pen = Pen(10, 36, 24);
+	screen.mask = &mask;
+	screen.clear();
 	screen.mask = nullptr;
-	for (int y = 0; y < mask.bounds.h; y++) {
-		for (int x = 0; x < mask.bounds.w; x++) {
-			uint8_t v = *mask.ptr(x, y);
-			screen.alpha = v;
-			screen.pixel(Point(x, y));
-		}
-	}
-	screen.alpha = 255;
+#endif
 
-	// TODO ???	
-
-
-	//printf("Render: SPRITES\n");
 	render_sprites(time);
+	screen.clip = Rect(Point(0, 0), screen.bounds);
 
 	// draw bug spray    
-	//rect ss_spray_rect(40, 160 - 32, 24, 32);
-	int offset = int(sinf((player1.position.x + player1.position.y) * 4) * 3); // bob
-
+	int offset = OFFSET_TOP + int(sinf((player1.position.x + player1.position.y) * 4) * 3); // bob
 	screen.sprite(Rect(5, 16, 3, 4), Point(SCREEN_WIDTH - 48, VIEW_HEIGHT - 30 + offset));
-
-
-	//screen.blit(&ss, ss_spray_rect, point(SCREEN_WIDTH - 48, VIEW_HEIGHT - 30 + offset));
 
 	// draw the HUD
 	screen.pen = Pen(37, 36, 46);
-	screen.rectangle(Rect(0, 120 - 24, 160, 24));
-	//rect ss_hud_rect(0, 160 - 24, 8, 8);
-	for (int x = 0; x < 160 / 8; x++) {
-		//screen.blit(&ss, ss_hud_rect, point(x * 8, 120 - 24));
-		screen.sprite(340, Point(x * 8, 120 - 24));
+	screen.rectangle(Rect(0, SCREEN_HEIGHT - 24, SCREEN_WIDTH, 24));
+	for (int x = 0; x < SCREEN_WIDTH / 8; x++) {
+		screen.sprite(340, Point(x * 8, SCREEN_HEIGHT - 24));
 	}
 
-	//rect ss_heart_filled_rect(8, 128, 8, 8);
-	//rect ss_heart_empty_rect(16, 128, 8, 8);
+	// draw the health bar
 	for (int x = 0; x < 4; x++) {
-		//screen.blit(&ss, x > 1 ? ss_heart_empty_rect : ss_heart_filled_rect, point(32 + x * 10, 120 - 16));
-		screen.sprite(x > 1 ? 322 : 321, Point(32 + x * 10, 120 - 16));
+		screen.sprite(x > 1 ? 322 : 321, Point(32 + x * 10, SCREEN_HEIGHT - 16));
 	}
 
 	// draw DOOM guy (phil)
-	Rect ss_guy_rect(160 - 72, 160 - 32, 24, 32);
-	//screen.blit(&ss, ss_guy_rect, point(0, 120 - 32), flip_doom_guy);
-	screen.sprite(Rect(11, 16, 3, 4), Point(0, 120 - 32), flip_doom_guy ? SpriteTransform::HORIZONTAL : 0);
+	Rect ss_guy_rect(SCREEN_WIDTH - 72, SCREEN_WIDTH - 32, 24, 32);
+	screen.sprite(Rect(11, 16, 3, 4), Point(0, SCREEN_HEIGHT - 32), player1.facing ? SpriteTransform::HORIZONTAL : 0);
 
-	//screen.mask = &m;
-	//screen.pen = Pen(255, 0, 0, 255);
-	//screen.rectangle(rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
-	//screen.blit(&m, rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT), point(0, 0));
-
+#ifdef SHOW_FPS
 	uint32_t ms_end = now();
 
 	// draw FPS meter
@@ -400,40 +313,27 @@ void render(uint32_t time) {
 	screen.pen = Pen(255, 0, 0);
 	for (unsigned int i = 0; i < (ms_end - ms_start); i++) {
 		screen.pen = Pen(i * 5, 255 - (i * 5), 0);
-		screen.rectangle(Rect(i * 3 + 1, 117, 2, 2));
+		screen.rectangle(Rect(i * 3 + 1, SCREEN_HEIGHT - 3, 2, 2));
 	}
-	//printf("Render: FINISHED\n");
+#endif
 }
 
 void render_sky() {
 	for (uint16_t column = 0; column < SCREEN_WIDTH; column++) {
-		// Moved to a lookup table
-		//float camera_displacement = (float)(2 * column) / SCREEN_WIDTH - 1;
-
-		// the current ray direction is the player direction, plus the camera direction multiplied by the displacement
-		Vec2 ray(
-			player1.direction.x + player1.camera.x * lut_camera_displacement[column],
-			player1.direction.y + player1.camera.y * lut_camera_displacement[column]
-		);
-
-		ray.normalize();
-
-		// TODO: for the API? 
-		// Convert the facing vector to an angle in degrees
-		//float r = abs(atan2(ray.x, ray.y) * 180.0 / pi);
+		Vec2 ray = ray_cache[column];
+		// ray.normalize();  // WHY? Has no visual impact
 
 		float r = std::atan2(ray.x, ray.y);
 		r = (r > 0.0f ? r : (2.0f * pi + r)) * 360.0f / (2.0f * pi);
 
-
 		Point uv(24 + (int(r * 3.0f) % 16), 160 - 32);
 
-		screen.stretch_blit_vspan(screen.sprites, uv, 32, Point(column, 0), HORIZON); // TODO: blit from spritesheet?
+		screen.stretch_blit_vspan(screen.sprites, uv, 32, Point(column, 0), HORIZON + OFFSET_TOP); // TODO: blit from spritesheet?
 
 		// Apply radial darkness to simulate directional sunset
-		uint8_t fade = std::max(-120, std::min(120, std::abs(int(r) - 120))) + 120;  // calculate a `fog` based on angle
+		uint8_t fade = std::max(-120, std::min(120, std::abs(int(r) - 120))) + 60;  // calculate a `fog` based on angle
 		screen.pen = Pen(12, 33, 52, fade);
-		screen.line(Point(column, 0), Point(column, HORIZON));
+		screen.line(Point(column, 0), Point(column, OFFSET_TOP + HORIZON));
 	}
 }
 
@@ -441,8 +341,9 @@ void render_stars() {
 	// Get the player's facing angle in degrees from 0 to 359
 	float r = std::atan2(player1.direction.x, player1.direction.y);
 	r = (r > 0.0f ? r : (2.0f * pi + r)) * 360.0f / (2.0f * pi);
+	screen.pen = Pen(255, 255, 255, 255);
 
-	for (int s = 0; s < num_stars; s++) {
+	for (int s = 0; s < NUM_STARS; s++) {
 		star *sp = &stars[s];
 
 		// If the stars radial X position is within our field of view
@@ -454,54 +355,39 @@ void render_stars() {
 
 			// Convert the degrees to screen columns
 			x = 80 + (x / 45.0f) * 80;
-			screen.pen = Pen(255, 255, 255, sp->brightness);
+			screen.alpha = sp->brightness;
 			screen.pixel(Point(
 				x,
 				sp->position.y * 2
 			));
 		}
 	}
-
-	/*std::ostringstream message;
-	message << r << ":" << x << "c:" << count;
-	screen.pen = Pen(255, 255, 255);
-	screen.text(message.str().c_str(), rect(0, HORIZON, 160, 20));*/
-
+	screen.alpha = 255;
 }
 
 void render_world(uint32_t time) {
-	//TileFacing tfacing = TileFacing::NONE;
-	//TileFacing last_tfacing = TileFacing::NONE;
 	float perpendicular_wall_distance, wall_x;
-	Point map_location_g((int32_t)std::floor(player1.position.x), (int32_t)std::floor(player1.position.y));
+	Point player_map_location((int32_t)std::floor(player1.position.x), (int32_t)std::floor(player1.position.y));
 	Point map_location;
 	Point last_map_location(-1, -1);
-		int last_side = -1;
-
+#ifdef AMBIENT_OCCLUSION
+	int last_side = -1;
 	float last_wall_distance = 0;
+#endif
 
-	//printf("render_world: populate visibility map\n");
-	for (int y = 0; y < MAP_HEIGHT; y++) {
-		for (int x = 0; x < MAP_WIDTH; x++) {
-			visibility_map[x + y * MAP_WIDTH] = false;
-		}
+	// Reset the visibility map
+	for (int x = 0; x < MAP_HEIGHT * MAP_WIDTH; x++) {
+		visibility_map[x] = false;
 	}
-	visibility_map[map_location_g.x + map_location_g.y * MAP_WIDTH] = true;
 
-	//printf("render_world: start column scanning\n");
+	// Add the current player map location to the player visibility  map
+	visibility_map[player_map_location.x + player_map_location.y * MAP_WIDTH] = true;
+
 	for (uint16_t column = 0; column < SCREEN_WIDTH; column++) { // trace SCREEN_WIDTH rays from left to right
 		// calculate the amount we need to scale the plane_x/y camera displacement
 		// this gives us a step along the camera displacement that corresponds to the current ray
-		map_location = map_location_g;
-
-		// Moved to lookup table
-		//camera_displacement = (float)(2 * column) / SCREEN_WIDTH - 1;
-
-		// the current ray direction is the player direction, plus the camera direction multiplied by the displacement
-		Vec2 ray(
-			player1.direction.x + player1.camera.x * lut_camera_displacement[column],
-			player1.direction.y + player1.camera.y * lut_camera_displacement[column]
-		);
+		map_location = player_map_location;
+		Vec2 ray = ray_cache[column];
 
 		Vec2 delta_dist(
 			std::abs(1.0f / ray.x),
@@ -533,7 +419,6 @@ void render_world(uint32_t time) {
 
 		bool hit = false;
 
-		//printf("render_world: cast ray for column %d\n", column);
 		int side = 0;
 		for (int s = 0; s < MAX_RAY_STEPS; s++) {
 
@@ -549,20 +434,11 @@ void render_world(uint32_t time) {
 				side = 1;
 			}
 
-			//printf("render_world: update visibility map %d:%d\n", map_location.x, map_location.y);
+			// Add any map tile a ray steps through to the player visible map
 			if (map_location.x + map_location.y * MAP_WIDTH < MAP_WIDTH * MAP_HEIGHT) {
 				visibility_map[map_location.x + map_location.y * MAP_WIDTH] = true;
 			}
-			//printf("render_world: update visibility map %d:%d: DONE!\n", map_location.x, map_location.y);
 
-				//tile = get_map_tile(map_location);
-
-				//if (column == 80) {
-				//	tile_in_view = map_location;
-				//}
-				/*if (tile & MAP_TILE_SOLID) {
-					break;
-				}*/
 			if (map.has_flag(map_location, TileFlags::WALL)) {
 				hit = true;
 				break;
@@ -570,30 +446,15 @@ void render_world(uint32_t time) {
 		}
 
 		if (hit) {
-			//printf("render_world: resolving hit %d:%d\n", map_location.x, map_location.y);
 			uint8_t texture_wall = map_layer_walls->tile_at(map_location) - 1;// tile & 0x0f;
 
 			if (side == 0) {
 				perpendicular_wall_distance = ((float)map_location.x - player1.position.x + (1 - step_x) / 2.0f) / ray.x;
 				wall_x = player1.position.y + perpendicular_wall_distance * ray.y;
-				/*if (ray.x > 0) {
-					tfacing = TileFacing::WEST;
-				}
-				else
-				{
-					tfacing = TileFacing::EAST;
-				}*/
 			}
 			else {
 				perpendicular_wall_distance = ((float)map_location.y - player1.position.y + (1 - step_y) / 2.0f) / ray.y;
 				wall_x = player1.position.x + perpendicular_wall_distance * ray.x;
-				/*if (ray.y > 0) {
-					tfacing = TileFacing::NORTH;
-				}
-				else
-				{
-					tfacing = TileFacing::SOUTH;
-				}*/
 			}
 
 			wall_x -= std::floor(wall_x);
@@ -607,10 +468,9 @@ void render_world(uint32_t time) {
 			int start_y = HORIZON - wall_half_height;
 			int end_y = HORIZON + wall_half_height;
 
-			//printf("render_world: updating z_buffer\n");
 			z_buffer[column] = perpendicular_wall_distance;
 
-			//mask.pen = int(alpha);
+#ifdef AMBIENT_OCCLUSION
 			mask.pen = 200;
 
 			float line_distance = std::abs(perpendicular_wall_distance - last_wall_distance);
@@ -618,40 +478,28 @@ void render_world(uint32_t time) {
 			int width = wall_half_height / 8.0f;
 
 			if (column > 0 && (side != last_side) && line_distance < 0.5f && !(map_location.x == last_map_location.x && map_location.y == last_map_location.y)) {
-
 				for (int c = column - width; c < column + width; c++) {
 					int alpha = (std::abs(column - c) * 160) / width;
 					mask.pen = 160 - alpha;
-					mask.line(Point(c, start_y), Point(c, end_y));
+					mask.line(Point(c, start_y + OFFSET_TOP), Point(c, end_y + OFFSET_TOP));
 				};
-				/*mask.rectangle(rect(
-					point(column - width, start_y),
-					point(column + width, end_y)
-				));*/
-				//mask.line(point(column-1, start_y), point(column-1, end_y));
-				//mask.line(point(column, start_y), point(column, end_y));
-				//mask.line(point(column+1, start_y), point(column+1, end_y));
 			}
 			else {
 				for (int r = end_y - width; r < end_y + width; r++) {
 					int alpha = (std::abs(end_y - r) * 160) / width;
 					mask.pen = 160 - alpha;
-					mask.pixel(Point(column, r));
-					/*mask.rectangle(rect(
-						point(column, end_y - width - width + 2),
-						point(column + 1, end_y + 2)
-					));*/
+					mask.pixel(Point(column, r + OFFSET_TOP));
 				}
 			}
 
-			//last_tfacing = tfacing;
 			last_side = side;
 			last_wall_distance = perpendicular_wall_distance;
+#endif
+
 			last_map_location = map_location;
 
 			/* draw the walls */
 
-		//printf("render_world: drawing vertical wall slice\n");
 			// TODO: add mipmap support? automatic based on scale?          
 
 			// texture_wall
@@ -664,35 +512,12 @@ void render_world(uint32_t time) {
 			uint16_t texture_offset_x = texture_wall * 32;
 			Point uv = Point(uint16_t(wall_x * 32.0f) + texture_offset_x, 0);
 
-			//if ((time >> 2) % 160 == column) {
+			screen.stretch_blit_vspan(screen.sprites, uv, 32, Point(column, start_y + OFFSET_TOP), end_y - start_y); // TODO Blit from Spritesheet
 
-			screen.stretch_blit_vspan(screen.sprites, uv, 32, Point(column, start_y), end_y - start_y); // TODO Blit from Spritesheet
-
-
-			//}
-			/*int8_t fade = (int)(wall_distance * 255.0f);  // calculate a `fog` based on distance
-			if (side == 1) {
-				fade *= 0.9f;
-			}*/
-
-			/*if (side == 1) {
-				alpha *= 0.9f;
-			}*/
-
-			//printf("render_world: distance shading\n");
 			float wall_distance = perpendicular_wall_distance / MAX_RAY_STEPS;
 			float alpha = wall_distance * 255.0f;
 			screen.pen = Pen(0, 0, 0, int(alpha));
-			screen.line(Point(column, start_y), Point(column, end_y));
-
-
-			/*mask.pen = Pen(255);
-			mask.line(point(column, start_y), point(column, end_y));
-			*/
-
-
-
-
+			screen.line(Point(column, start_y + OFFSET_TOP), Point(column, end_y + OFFSET_TOP));
 
 			Vec2 floor_wall(map_location.x, map_location.y);
 
@@ -711,8 +536,7 @@ void render_world(uint32_t time) {
 				floor_wall.y += 1.0f;
 			}
 
-			//printf("render_world: drawing floor\n");
-				// Draw the floor
+			// Draw the floor
 			for (int y = end_y + 1; y < VIEW_HEIGHT + 1; y++) {
 				float distance = (float)VIEW_HEIGHT / (2.0f * y - VIEW_HEIGHT);
 				float weight = distance / perpendicular_wall_distance;
@@ -745,15 +569,13 @@ void render_world(uint32_t time) {
 
 
 				uint8_t fragment_c_idx = *screen.sprites->ptr(fragment_x, fragment_y);
-				//if (time >> 2 % 360 == column) {
 				screen.pen = screen.sprites->palette[fragment_c_idx];
-				screen.pixel(Point(column, y - 1));
-				//}
+				screen.pixel(Point(column, y - 1 + OFFSET_TOP));
 
 				float floor_distance = distance / MAX_RAY_STEPS;
 
 				screen.pen = Pen(0, 0, 0, int(floor_distance * 255.0f));
-				screen.pixel(Point(column, y - 1));
+				screen.pixel(Point(column, y - 1 + OFFSET_TOP));
 			}
 		}
 	}
@@ -761,10 +583,8 @@ void render_world(uint32_t time) {
 
 void render_sprites(uint32_t time) {
 
-	float inverse_det = 1.0f / (player1.camera.x * player1.direction.y - player1.direction.x * player1.camera.y);
-
 	// Calculate distance from player to each sprite
-	for (int i = 0; i < num_sprites; i++) {
+	for (auto i = 0u; i < NUM_SPRITES; i++) {
 		Vec2 sprite_distance(
 			map_sprites[i].position.x - player1.position.x,
 			map_sprites[i].position.y - player1.position.y
@@ -775,7 +595,7 @@ void render_sprites(uint32_t time) {
 	// sort the sprites by distance
 	std::sort(map_sprites.begin(), map_sprites.end());
 
-	for (int i = 0; i < num_sprites; i++) {
+	for (int i = 0; i < NUM_SPRITES; i++) {
 		sprite *psprite = &map_sprites[i];
 
 		Pen cols_a[]{
@@ -794,7 +614,7 @@ void render_sprites(uint32_t time) {
 		screen.sprites->palette[12] = cols_b[psprite->color];
 
 
-		if (visibility_map[int(psprite->position.x) + int(psprite->position.y) * MAP_WIDTH] == 0) {
+		if (!visibility_map[int(psprite->position.x) + int(psprite->position.y) * MAP_WIDTH]) {
 			continue;
 		}
 
@@ -810,8 +630,8 @@ void render_sprites(uint32_t time) {
 		Vec2 relative_position = psprite->position - player1.position;
 
 		Vec2 screen_transform(
-			inverse_det * (player1.direction.y * relative_position.x - player1.direction.x * relative_position.y),
-			inverse_det * (-player1.camera.y * relative_position.x + player1.camera.x * relative_position.y)
+			player1.inverse_det * (player1.direction.y * relative_position.x - player1.direction.x * relative_position.y),
+			player1.inverse_det * (-player1.camera.y * relative_position.x + player1.camera.x * relative_position.y)
 		);
 
 		if (screen_transform.y < 0) {
@@ -837,7 +657,8 @@ void render_sprites(uint32_t time) {
 		int sprite_height = std::abs(int(bounds.h * SPRITE_SCALE / screen_transform.y));
 		int sprite_width = ((float)bounds.w / (float)bounds.h) * sprite_height;
 
-		int sprite_top_y = ((VIEW_HEIGHT - bounds.h) * SPRITE_SCALE) / screen_transform.y;
+		// Unused?
+		//int sprite_top_y = ((VIEW_HEIGHT - bounds.h) * SPRITE_SCALE) / screen_transform.y;
 
 		// Get the screen-space position of the sprites base on the floor
 		Vec2 screen_pos(
@@ -854,82 +675,32 @@ void render_sprites(uint32_t time) {
 		// offset screen coordinate with sprite bounds
 		screen_pos -= Vec2(sprite_width / 2, sprite_height);
 
-		//screen.stretch_blit(&my_sprites, bounds, rect(screen_pos.x, screen_pos.y, sprite_width, sprite_height));
-
 		for (int x = std::max((uint16_t)0, uint16_t(screen_pos.x)); x < std::min(SCREEN_WIDTH, uint16_t(screen_pos.x + sprite_width)); x++) {
 			if (screen_transform.y > z_buffer[x]) continue;
-
-			//if ((time >> 2) % 160 != x) { continue; }
 
 			Vec2 uv(
 				bounds.x + ((float(x - screen_pos.x) / float(sprite_width)) * bounds.w),
 				bounds.y
 			);
 
-			screen.stretch_blit_vspan(screen.sprites, uv, bounds.h, Point(x, screen_pos.y), sprite_height); // TODO: blit from spritesheet?
+			screen.stretch_blit_vspan(screen.sprites, uv, bounds.h, Point(x, screen_pos.y + OFFSET_TOP), sprite_height); // TODO: blit from spritesheet?
 		}
 		screen.sprites->palette[11] = Pen(0x15, 0x98, 0x5d, 200);
 		screen.sprites->palette[12] = Pen(0x00, 0x7f, 0x43, 200);
 	}
 }
 
-void update_player_camera_plane() {
-	//vec2 plane(-player1.direction.y, player1.direction.x);
-
-	//plane = rotate_vector(plane, M_PI_H);
-	//float magnitude = plane.length() / tan_half_fov;
-	//player1.camera.x = plane.x / magnitude;
-	//player1.camera.y = plane.y / magnitude;
-
-	//plane.rotate(float(M_PI_H));
-	//plane.rotate90cw();
-	//plane.normalize();
-
-	// If the player's camera plane is 90 degrees to their facing direction,
-	// then since math.cos(PI / 2) =~ 0 and math.sin(PI / 2) =~ 1.0
-	// a 90 degree rotation is just (-y, x)
-}
-
-void edges() {
-	uint8_t *p = (uint8_t *)mask.data + 160;
-	for (uint16_t y = 1; y < 119; y++) {
-		p++;
-
-		for (uint16_t x = 1; x < 159; x++) {
-			uint8_t v1 = std::abs(*(p + 1) - *p);
-			uint8_t v2 = std::abs(*(p + 160) - *p);
-			uint8_t d = v1 > v2 ? v1 : v2;
-			*p++ = d < 3 ? 0 : 255;
-		}
-
-		p++;
-	}
-
-	p = (uint8_t *)mask.data + (120 * 160) - 1 - 160;
-	for (uint16_t y = 1; y < 119; y++) {
-		p--;
-
-		for (uint16_t x = 1; x < 159; x++) {
-			uint8_t v1 = std::abs(*(p - 1) - *p);
-			uint8_t v2 = std::abs(*(p - 160) - *p);
-			uint8_t d = v1 > v2 ? v1 : v2;
-			*p-- = d < 3 ? 0 : 255;
-		}
-
-		p--;
-	}
-}
-
+/* Exclusively for blurring the ambient occlusion mask */
 void blur(uint8_t passes) {
 	uint8_t last;
 
 	for (uint8_t pass = 0; pass < passes; pass++) {
 		uint8_t *p = (uint8_t *)mask.data;
-		for (uint16_t y = 0; y < 120; y++) {
+		for (uint16_t y = 0; y < SCREEN_HEIGHT; y++) {
 			last = *p;
 			p++;
 
-			for (uint16_t x = 1; x < 159; x++) {
+			for (uint16_t x = 1; x < SCREEN_WIDTH - 1; x++) {
 				*p = (*(p + 1) + last + *p + *p) >> 2;
 				last = *p;
 				p++;
@@ -941,16 +712,16 @@ void blur(uint8_t passes) {
 
 	// vertical      
 	for (uint8_t pass = 0; pass < passes; pass++) {
-		for (uint16_t x = 0; x < 160; x++) {
+		for (uint16_t x = 0; x < SCREEN_WIDTH; x++) {
 			uint8_t *p = (uint8_t *)mask.data + x;
 
 			last = *p;
-			p += 160;
+			p += SCREEN_WIDTH;
 
-			for (uint16_t y = 1; y < 119; y++) {
-				*p = (*(p + 160) + last + *p + *p) >> 2;
+			for (uint16_t y = 1; y < SCREEN_HEIGHT - 1; y++) {
+				*p = (*(p + SCREEN_WIDTH) + last + *p + *p) >> 2;
 				last = *p;
-				p += 160;
+				p += SCREEN_WIDTH;
 			}
 		}
 	}
