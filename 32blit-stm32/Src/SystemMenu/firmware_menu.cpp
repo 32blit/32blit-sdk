@@ -47,14 +47,14 @@ static Menu::Item firmware_menu_items[] {
     {BACKLIGHT, "Backlight"},
     {VOLUME, "Volume"},
     {SCREENSHOT, "Take Screenshot"},
-    {Menu::Separator,nullptr},
+    {Menu::Separator, nullptr},
     {CONNECTIVITY, "Connectivity >"},
-    {Menu::Separator,nullptr},
+    {Menu::Separator, nullptr},
     {BATTERY_INFO, "Battery info >"},
-    {Menu::Separator,nullptr},
-    {ABOUT,"About 32blit >"},
+    {Menu::Separator, nullptr},
+    {ABOUT, "About 32blit >"},
     {POWER_OFF, "Power Off"},
-    {SWITCH_EXE, ""}, // label depends on if a game is running
+    {SWITCH_EXE, nullptr}, // label depends on if a game is running
 };
 
 //
@@ -65,7 +65,8 @@ void FirmwareMenu::prepare() {
   for(int i = 0; i < num_items; ++i ) {
     auto &item = const_cast<Item *>(items)[i];
     if(item.id == SWITCH_EXE) {
-      item.label = blit_user_code_running() ? "Exit Game" : "Launch Game";
+      auto metadata = get_metadata();
+      item.label = strcmp(metadata.category, "launcher") == 0 ? "Restart Launcher" : "Exit Game";
       break;
     }
   }
