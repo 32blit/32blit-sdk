@@ -534,20 +534,19 @@ namespace blit {
     float v = uv.y;
     float vs = float(sc) / float(dc);
 
-    if (p.y < 0) {
-      dc += p.y;
-      v += (vs * float(-p.y));
-      p.y = 0;
+    if (p.y < clip.y) {
+      dc += clip.y - p.y;
+      v += (vs * float(-(p.y - clip.y)));
+      p.y = clip.y;
     }
 
     if (dc <= 0) {
       return;
     }
 
-    int16_t max_y = std::min(p.y + dc, bounds.h);
+    int16_t max_y = std::min(p.y + dc, clip.y + clip.h);
     for (; p.y < max_y; p.y++) {
       bbf(src, src->offset(Point(uv.x, v)), this, offset(p), 1, 1);
-
       v += vs;
     }
   }
