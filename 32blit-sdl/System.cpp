@@ -101,7 +101,7 @@ static blit::GameMetadata get_metadata() {
 
   ret.title = metadata_title;
   ret.author = metadata_author;
-  ret.description = metadata_author;
+  ret.description = metadata_description;
   ret.version = metadata_version;
   ret.url = metadata_url;
   ret.category = metadata_category;
