@@ -2,6 +2,7 @@
 #include <random>
 
 #include "hardware/clocks.h"
+#include "pico/binary_info.h"
 #include "pico/stdlib.h"
 
 #ifdef DISPLAY_SCANVIDEO
@@ -118,6 +119,37 @@ static uint32_t get_us_timer() {
 
 static uint32_t get_max_us_timer() {
   return 0xFFFFFFFF; // it's a 64bit timer...
+}
+
+static GameMetadata get_metadata() {
+  GameMetadata ret;
+
+  // parse binary info
+  extern binary_info_t *__binary_info_start, *__binary_info_end;
+
+  for(auto tag_ptr = &__binary_info_start; tag_ptr != &__binary_info_end ; tag_ptr++) {
+    if((*tag_ptr)->type != BINARY_INFO_TYPE_ID_AND_STRING || (*tag_ptr)->tag != BINARY_INFO_TAG_RASPBERRY_PI)
+      continue;
+
+    auto id_str_tag = (binary_info_id_and_string_t *)*tag_ptr;
+
+    switch(id_str_tag->id) {
+      case BINARY_INFO_ID_RP_PROGRAM_NAME:
+        ret.title = id_str_tag->value;
+        break;
+      case BINARY_INFO_ID_RP_PROGRAM_VERSION_STRING:
+        ret.version = id_str_tag->value;
+        break;
+      case BINARY_INFO_ID_RP_PROGRAM_URL:
+        ret.url = id_str_tag->value;
+        break;
+      case BINARY_INFO_ID_RP_PROGRAM_DESCRIPTION:
+        ret.description = id_str_tag->value;
+        break;
+    }
+
+  }
+  return ret;
 }
 
 // user funcs
@@ -238,6 +270,8 @@ int main() {
 
   // api.flash_to_tmp = ::flash_to_tmp;
   // api.tmp_file_closed = ::tmp_file_closed;
+
+  api.get_metadata = ::get_metadata;
 
   init_led();
 
