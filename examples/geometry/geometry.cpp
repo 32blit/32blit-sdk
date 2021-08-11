@@ -123,7 +123,7 @@ uint16_t area_of_polygon(std::vector<Vec2> &points) {
         a = b;
     }
     // Fix for infinitely small poygons shooting to 65535
-    return area > 60000 ? 0u : (uint16_t)area;
+    return area > 60000 || area < 0 ? 0 : (uint16_t)area;
 }
 
 Vec2 centroid_of_polygon(std::vector<Vec2> &points) {
@@ -247,11 +247,11 @@ void draw_polygon(std::vector<Vec2> &points) {
 }
 
 std::vector<Vec2> random_convex_polygon(Vec2 origin, float radius) {
-    unsigned int count = (rand() % 7) + 3;
+    unsigned int count = (blit::random() % 7) + 3;
     origin += Vec2(radius, radius);
     std::vector<float> angles;
     for (auto a = 0u; a < count; a++) {
-        angles.push_back(float(rand() % 360) * pi / (float)180);
+        angles.push_back(float(blit::random() % 360) * pi / (float)180);
     }
     std::sort(angles.begin(), angles.end());
     std::vector<Vec2> points;
@@ -290,22 +290,27 @@ void translate_polygon(std::vector<Vec2> &points, Vec2 translation) {
     }
 }
 
+float random_float_between(float a, float b) {
+    float r = float(blit::random() - INT32_MAX) / float(INT32_MAX);
+    return a + r * (b - a);
+}
+
 void init() {
     set_screen_mode(ScreenMode::hires);
     for(unsigned int i = 0; i < ASTEROID_COUNT; i++){
         polygon p;
-        float x = rand() % screen.bounds.w;
-        float y = rand() % screen.bounds.h;
+        float x = random_float_between(0, screen.bounds.w);
+        float y = random_float_between(0, screen.bounds.h);
         //float x = screen.bounds.w / 2;
         //float y = screen.bounds.h / 2;
-        float r = (rand() % (ASTEROID_MAX_R - ASTEROID_MIN_R)) + ASTEROID_MIN_R;
-        float vx = ((rand() % 10) - 5) / 25.0f;
-        float vy = ((rand() % 10) - 5) / 25.0f;
-        p.colour_offset = (rand() % 100) / 100.0f;
+        float r = (blit::random() % (ASTEROID_MAX_R - ASTEROID_MIN_R)) + ASTEROID_MIN_R;
+        float vx = random_float_between(-0.1f, 0.1f);
+        float vy = random_float_between(-0.1f, 0.1f);
+        p.colour_offset = random_float_between(0.0f, 1.0f);
         p.points = random_convex_polygon(Vec2(x, y), r);
         p.velocity = Vec2(vx, vy);
         p.origin = centroid_of_polygon(p.points);
-        p.rotational_velocity = ((rand() % 10) - 5) / 1000.0f;
+        p.rotational_velocity = random_float_between(-0.002f, 0.002f);
         p.area = area_of_polygon(p.points);
         polygons.push_back(p);
     }
@@ -456,8 +461,11 @@ void update(uint32_t time) {
         player1.invincible = false;
     }
 
-    if (buttons & Button::A && player1.energy >= LASER_COST) {
-        player1.shot_charge++;
+    if (buttons & Button::A) {
+        if(player1.energy >= LASER_COST) {
+            player1.shot_charge++;
+            player1.energy -= LASER_COST;
+        }
 
         // Offet the shot to just in front of the players nose
         Vec2 shot_offset(0.0f, -10.0f);
@@ -470,8 +478,6 @@ void update(uint32_t time) {
         beam.rotate(-player1.rotation);
         beam += player1.shot_origin;
         player1.shot_target = Vec2(beam.x, beam.y);
-
-        player1.energy -= LASER_COST;
     }
 
     if (buttons.released & Button::A && time - player1.t_shot_fired > 50) {
@@ -480,7 +486,6 @@ void update(uint32_t time) {
 
         channels[1].frequency = 2000;
         channels[1].trigger_attack();
-        player1.energy -= LASER_COST;
         player1.shot_charge = 0;
     }
 
@@ -572,11 +577,9 @@ void update(uint32_t time) {
 
         if(offset.x){
             polygon.velocity.x *= -1;
-            polygon.rotational_velocity += 0.0005f;
         }
         if(offset.y){
             polygon.velocity.y *= -1;
-            polygon.rotational_velocity += 0.0005f;
         }
 
         translate_polygon(polygon, offset);
@@ -618,7 +621,8 @@ void update(uint32_t time) {
         player1.reset_or_die();
     }
 
-    if(player1.energy <= STARTING_ENERGY) {
+    // Energy only regenerates if a shot isn't charging
+    if(player1.energy <= STARTING_ENERGY && player1.shot_charge == 0) {
         player1.energy += REGEN_ENERGY;
     }
 }
