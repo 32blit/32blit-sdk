@@ -11,8 +11,8 @@ using namespace blit;
 
 const int16_t STARTING_ENERGY = 500;
 const int16_t REGEN_ENERGY = 1;
-const int16_t LASER_COST = 50;
-const int16_t MOVEMENT_COST = 3;
+const int16_t LASER_COST = 2;
+const int16_t MOVEMENT_COST = 1;
 const int16_t DAMAGE_COST = 10;
 const uint8_t STARTING_LIVES = 3;
 const uint8_t P_MAX_AGE = 255;
@@ -44,6 +44,7 @@ struct player {
     unsigned int t_shot_fired = 0;
     Vec2 shot_origin;
     Vec2 shot_target;
+    int32_t shot_charge;
     uint8_t lives = 3;
     bool invincible = false;
 
@@ -116,13 +117,13 @@ bool prune_polygons(polygon p){
 
 uint16_t area_of_polygon(std::vector<Vec2> &points) {
     auto a = points.back();
-    uint16_t area = 0;
+    int32_t area = 0;
     for (auto b : points) {
-        area += ((a.x * b.y) - (b.x * a.y)) / 2u;
+        area += ((a.x * b.y) - (b.x * a.y)) / 2;
         a = b;
     }
     // Fix for infinitely small poygons shooting to 65535
-    return area > 60000 ? 0 : area;
+    return area > 60000 ? 0u : (uint16_t)area;
 }
 
 Vec2 centroid_of_polygon(std::vector<Vec2> &points) {
@@ -164,18 +165,18 @@ polygon split_polygon(polygon *poly, Vec2 a, Vec2 b) {
         if (bside != last_bside) {
             Vec2 intersection;
             if (line_segment_intersection(&intersection, last_point, p, a, b)) {
-                split_a.emplace_back(intersection);
-                split_b.emplace_back(intersection);
-                split_line_segment.emplace_back(intersection);
+                split_a.push_back(intersection);
+                split_b.push_back(intersection);
+                split_line_segment.push_back(intersection);
                 explode(Vec2(intersection.x, intersection.y), 0.25f);
             }
         }
 
         if (bside > 0) {
-            split_a.push_back(Vec2(p.x, p.y));
+            split_a.push_back(p);
         }
         else {
-            split_b.push_back(Vec2(p.x, p.y));
+            split_b.push_back(p);
         }
 
         last_point = p;
@@ -370,6 +371,7 @@ void render(uint32_t time) {
 #ifdef __DEBUG__
         screen.text(std::to_string(p.area), minimal_font, Point(p.origin), true, center_center);
         screen.pen = Pen(255, 255, 255);
+        screen.text(std::to_string(p.points.size()), minimal_font, Point(p.origin) + Point(0, 12), true, center_center);
         screen.pixel(p.origin);
 #endif
     }
@@ -387,6 +389,9 @@ void render(uint32_t time) {
     if(time - player1.t_shot_fired > 0 && time - player1.t_shot_fired < 500){
         int c = 255 - ((time - player1.t_shot_fired ) / 2);
         screen.pen = Pen(c, c, c);
+        screen.line(player1.shot_origin, player1.shot_target);
+    } else if (player1.shot_charge > 0) {
+        screen.pen = Pen(0, 255, 0);
         screen.line(player1.shot_origin, player1.shot_target);
     }
 
@@ -421,9 +426,13 @@ void render(uint32_t time) {
 void update(uint32_t time) {
 
     Vec2 movement(0, 0);
+    float rotation_speed = pi / 720.0f;
+    if(buttons & Button::B) {
+        rotation_speed /= 2.0f;
+    }
 
-    if (pressed(Button::DPAD_LEFT))  { player1.rotational_velocity += pi / 720; }
-    if (pressed(Button::DPAD_RIGHT)) { player1.rotational_velocity -= pi / 720; }
+    if (pressed(Button::DPAD_LEFT))  { player1.rotational_velocity += rotation_speed; }
+    if (pressed(Button::DPAD_RIGHT)) { player1.rotational_velocity -= rotation_speed; }
     //player1.rotational_velocity -= joystick.x * pi / 720;
 
     if(player1.energy >= MOVEMENT_COST) {
@@ -447,25 +456,32 @@ void update(uint32_t time) {
         player1.invincible = false;
     }
 
-    if (buttons.pressed & Button::A && time - player1.t_shot_fired > 50 && player1.energy >= LASER_COST) {
-        player1.shot_fired = true;
-        player1.t_shot_fired = time;
+    if (buttons & Button::A && player1.energy >= LASER_COST) {
+        player1.shot_charge++;
 
         // Offet the shot to just in front of the players nose
         Vec2 shot_offset(0.0f, -10.0f);
         shot_offset.rotate(-player1.rotation);
         player1.shot_origin = player1.position + shot_offset;
 
-        // Create a line extrued out from the shot origin
+        // Create a line extruded out from the shot origin
         Vec2 beam(0, 0);
-        beam -= Vec2(0, 300);
+        beam -= Vec2(0, player1.shot_charge);
         beam.rotate(-player1.rotation);
         beam += player1.shot_origin;
         player1.shot_target = Vec2(beam.x, beam.y);
 
+        player1.energy -= LASER_COST;
+    }
+
+    if (buttons.released & Button::A && time - player1.t_shot_fired > 50) {
+        player1.shot_fired = true;
+        player1.t_shot_fired = time;
+
         channels[1].frequency = 2000;
         channels[1].trigger_attack();
         player1.energy -= LASER_COST;
+        player1.shot_charge = 0;
     }
 
     // Decay the shot and explosion frequency
