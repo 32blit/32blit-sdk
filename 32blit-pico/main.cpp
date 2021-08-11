@@ -306,12 +306,6 @@ int main() {
   uint32_t last_render = 0;
 
   while(true) {
-    update_input();
-    int ms_to_next_update = tick(::now());
-    update_audio();
-    update_led();
-    update_usb();
-
     auto now = ::now();
 
 #ifdef DISPLAY_ST7789
@@ -340,7 +334,13 @@ int main() {
       do_render = false;
     }
 #endif
-    else if(ms_to_next_update > 1)
+    update_input();
+    int ms_to_next_update = tick(::now());
+    update_audio();
+    update_led();
+    update_usb();
+
+    if(ms_to_next_update > 1)
       best_effort_wfe_or_timeout(make_timeout_time_ms(ms_to_next_update - 1));
   }
 
