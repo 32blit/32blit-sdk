@@ -25,9 +25,12 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "diskio.h"
 #include "ff.h"
+#include "diskio.h"
 #include "stdint.h"
+
+#define _USE_WRITE	1	/* 1: Enable disk_write function */
+#define _USE_IOCTL	1	/* 1: Enable disk_ioctl function */
 
 
 /* Exported types ------------------------------------------------------------*/
