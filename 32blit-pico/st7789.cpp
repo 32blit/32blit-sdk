@@ -239,18 +239,16 @@ namespace pimoroni {
 
     dma_channel_wait_for_finish_blocking(dma_channel);
 
-    prepare_write();
+    if(!write_mode)
+      prepare_write();
 
     if(pixel_double) {
       cur_scanline = 0;
       upd_frame_buffer = frame_buffer;
-      dma_channel_acknowledge_irq0(dma_channel);
-      dma_channel_set_irq0_enabled(dma_channel, true);
       dma_channel_set_trans_count(dma_channel, win_w / 4, false);
-    } else {
-      dma_channel_set_irq0_enabled(dma_channel, false);
+    } else
       dma_channel_set_trans_count(dma_channel, win_w * win_h, false);
-    }
+
     dma_channel_set_read_addr(dma_channel, frame_buffer, true);
   }
 
@@ -287,10 +285,17 @@ namespace pimoroni {
     // nop to reconfigure PIO
     if(write_mode)
       command(0);
+
+    if(pixel_double) {
+      dma_channel_acknowledge_irq0(dma_channel);
+      dma_channel_set_irq0_enabled(dma_channel, true);
+    } else
+      dma_channel_set_irq0_enabled(dma_channel, false);
   }
 
   void ST7789::clear() {
-    prepare_write();
+    if(!write_mode)
+      prepare_write();
 
     for(int i = 0; i < win_w * win_h; i++)
       pio_sm_put_blocking(pio, pio_sm, 0);
@@ -304,8 +309,6 @@ namespace pimoroni {
   }
 
   void ST7789::prepare_write() {
-    if(write_mode) return;
-
     pio_wait(pio, pio_sm);
 
     // setup for writing
