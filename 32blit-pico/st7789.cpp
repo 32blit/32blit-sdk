@@ -51,7 +51,8 @@ namespace pimoroni {
     RAMWR     = 0x2C,
     INVON     = 0x21,
     CASET     = 0x2A,
-    RASET     = 0x2B
+    RASET     = 0x2B,
+    STE       = 0x44
   };
 
   static void pio_put_byte(PIO pio, uint sm, uint8_t b) {
@@ -145,7 +146,7 @@ namespace pimoroni {
 
       sleep_ms(150);
 
-      command(reg::TEON);  // enable frame sync signal if used
+      command(reg::TEON,      1, "\x00");  // enable frame sync signal if used
       command(reg::COLMOD,    1, "\x05");  // 16 bits per pixel
 
       if(width == 240 && height == 240) {
@@ -159,6 +160,10 @@ namespace pimoroni {
         command(reg::PWCTRL1, 2, "\xa4\xa1");
         command(reg::PVGAMCTRL, 14, "\xD0\x04\x0D\x11\x13\x2B\x3F\x54\x4C\x18\x0D\x0B\x1F\x23");
         command(reg::NVGAMCTRL, 14, "\xD0\x04\x0C\x11\x13\x2C\x3F\x44\x51\x2F\x1F\x1F\x20\x23");
+
+        // trigger "vsync" slightly earlier to avoid tearing while pixel-doubling
+        // (this is still outside of the visible part of the screen)
+        command(reg::STE, 2, "\x01\x2C");
       }
 
       command(reg::FRCTRL2, 1, "\x15"); // 50Hz
