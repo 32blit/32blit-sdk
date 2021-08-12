@@ -263,7 +263,7 @@ namespace blit {
    * \param[in] points `std::vector<point>` of points describing the polygon.
    */
   void Surface::polygon(std::vector<Point> points) {
-    static int32_t nodes[64]; // maximum allowed number of nodes per scanline for polygon rendering
+    int32_t nodes[64]; // maximum allowed number of nodes per scanline for polygon rendering
 
     int32_t miny = points[0].y, maxy = points[0].y;
 

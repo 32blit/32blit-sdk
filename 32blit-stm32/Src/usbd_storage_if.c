@@ -23,6 +23,7 @@
 #include "usbd_storage_if.h"
 
 /* USER CODE BEGIN INCLUDE */
+#include "ff.h"
 #include "diskio.h"
 #include "USBManager.h"
 
@@ -95,10 +96,10 @@ extern USBManager g_usbManager;
   * @{
   */
 
-/* USER CODE BEGIN INQUIRY_DATA_HS */ 
+/* USER CODE BEGIN INQUIRY_DATA_HS */
 /** USB Mass storage Standard Inquiry Data. */
 const uint8_t STORAGE_Inquirydata_HS[] = {/* 36 */
-  
+
   /* LUN 0 */
   0x00,
   0x80,
@@ -106,13 +107,13 @@ const uint8_t STORAGE_Inquirydata_HS[] = {/* 36 */
   0x02,
   (STANDARD_INQUIRY_DATA_LEN - 5),
   0x00,
-  0x00,	
+  0x00,
   0x00,
   'S', 'T', 'M', ' ', ' ', ' ', ' ', ' ', /* Manufacturer : 8 bytes */
   '3', '2', 'B', 'l', 'i', 't', ' ', 'S', /* Product      : 16 Bytes */
   'D', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
   '0', '.', '0' ,'1'                      /* Version      : 4 Bytes */
-}; 
+};
 /* USER CODE END INQUIRY_DATA_HS */
 
 /* USER CODE BEGIN PRIVATE_VARIABLES */

@@ -4,7 +4,7 @@
 #include "stm32h7xx_hal.h"
 #include <stdbool.h>
 #include <string.h>
-#include "diskio.h"
+#include "ff_gen_drv.h"
 #include "fatfs_sd.h"
 
 static volatile DSTATUS Stat = STA_NOINIT;	/* Disk Status */

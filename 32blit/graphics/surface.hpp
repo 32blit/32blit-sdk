@@ -75,11 +75,12 @@ namespace blit {
     uint8_t a = 0;
 
     inline bool operator ==(const Pen rhs) {return r == rhs.r && g == rhs.g && b == rhs.b && a == rhs.a;};
-    Pen() = default;
-    Pen(int a) : a(a) {}
-    Pen(float a) : a((uint8_t)(a * 255.0f)) {}
-    Pen(int r, int g, int b, int a = 255) : r(r), g(g), b(b), a(a) {}
-    Pen(float r, float g, float b, float a = 1.0f) : r((uint8_t)(r * 255.0f)), g((uint8_t)(g * 255.0f)), b((uint8_t)(b * 255.0f)), a((uint8_t)(a * 255.0f)) {}
+
+    constexpr Pen() = default;
+    constexpr Pen(int a) : a(a) {}
+    constexpr Pen(float a) : a((uint8_t)(a * 255.0f)) {}
+    constexpr Pen(int r, int g, int b, int a = 255) : r(r), g(g), b(b), a(a) {}
+    constexpr Pen(float r, float g, float b, float a = 1.0f) : r((uint8_t)(r * 255.0f)), g((uint8_t)(g * 255.0f)), b((uint8_t)(b * 255.0f)), a((uint8_t)(a * 255.0f)) {}
   };
 #pragma pack(pop)
 
