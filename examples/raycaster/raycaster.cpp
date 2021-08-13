@@ -21,6 +21,8 @@ std::vector<sprite> spray(MAX_SPRAY);
 uint8_t __m[SCREEN_WIDTH * SCREEN_HEIGHT];
 Surface mask((uint8_t *)__m, PixelFormat::M, Size(SCREEN_WIDTH, SCREEN_HEIGHT));
 
+Surface *wasp;
+
 player player1{
 	Vec2(0,0),
 	Vec2(0,0),
@@ -34,10 +36,32 @@ Map map(Rect(0, 0, 16, 16));
 MapLayer *map_layer_walls;
 MapLayer *map_layer_floor;
 
+// Sizes for various sprites
+const Rect sprite_bounds[7] = {
+	Rect(0, 64, 28, 64),   // 0 Full-grown tree
+	Rect(28, 74, 28, 54),  // 1 Mature tree
+	Rect(56, 94, 28, 34),  // 2 Tall shrub
+	Rect(56, 70, 28, 24),  // 3 Short shrub
+	Rect(48, 65, 8, 8),    // 4 Tall grass
+	Rect(38, 66, 9, 7),    // 5 Mid grass
+	Rect(30, 68, 7, 5)     // 6 Smol grass
+};
+
+// Alternate palette colours
+const Pen cols_a[]{
+	Pen(0x15, 0x98, 0x5d, 200),
+	Pen(0x35, 0xA8, 0x3d, 200),
+	Pen(0x45, 0x88, 0x2d, 200)
+};
+
+const Pen cols_b[]{
+	Pen(0x00, 0x7f, 0x43, 200),
+	Pen(0x20, 0x6f, 0x33, 200),
+	Pen(0x30, 0x8f, 0x23, 200)
+};
+
 enum TileFlags { WALL = 1, NO_GRASS = 2 };
 enum TileFacing { NONE = 0, NORTH = 1, SOUTH = 2, EAST = 4, WEST = 8 };
-
-bool visibility_map[MAP_WIDTH * MAP_HEIGHT] = { 0 };
 
 std::vector<uint8_t> map_data_walls = {
 	0x01, 0x02, 0x03, 0x04, 0x03, 0x02, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
@@ -92,15 +116,16 @@ void init() {
 	set_screen_mode(ScreenMode::lores);
 
 	screen.sprites = Surface::load(asset_raycaster);
+	wasp = Surface::load(asset_wasp);
 
 	map.add_layer("walls", map_data_walls);
 	map_layer_walls = &map.layers["walls"];
 	map_layer_walls->add_flags({ 1, 2, 3, 4, 5 }, TileFlags::WALL);
-	map_layer_walls->add_flags({ 1, 2, 3, 4, 5 }, TileFlags::NO_GRASS);
+	map_layer_walls->add_flags({ 1, 2, 3, 4, 5 }, TileFlags::NO_GRASS); // Don't draw grass on walls
 
 	map.add_layer("floor", map_data_floor);
 	map_layer_floor = &map.layers["floor"];
-	map_layer_floor->add_flags({ 3, 4, 5 }, TileFlags::NO_GRASS);
+	map_layer_floor->add_flags({ 3, 4, 5 }, TileFlags::NO_GRASS); // Don't draw grass on flagstones
 
 	player1.direction.y = -1;
 	player1.position.x = 3.5;
@@ -120,19 +145,11 @@ void init() {
 	Point tile;
 	Vec2 offset;
 
-	for (int s = 0; s < NUM_SPRITES; s++) {
+	for (int s = 0; s < NUM_SPRITES - 1; s++) {
 		int texture = blit::random() % 100;
-		if (texture == 0) {
-			map_sprites[s].texture = 0;
-		}
-		else if (texture == 1) {
-			map_sprites[s].texture = 1;
-		}
-		else if (texture == 2) {
-			map_sprites[s].texture = 2;
-		}
-		else if (texture == 3) {
-			map_sprites[s].texture = 3;
+		// Bit of a hack to generate fewer trees and shrubs
+		if (texture <= 3) {
+			map_sprites[s].texture = texture;
 		}
 		else {
 			map_sprites[s].texture = 4 + (texture % 3);
@@ -150,6 +167,7 @@ void init() {
 
 
 void update(uint32_t time) {
+	static unsigned int spray_index = 0;
 	static Vec2 size(0.2f, 0.2f);
 	static Vec2 rmove(0, 0);
 	Vec2 move(0, 0);
@@ -223,8 +241,6 @@ void update(uint32_t time) {
 	if ((check_tile & TileFlags::WALL) == 0) {
 		player1.position.y += rmove.y;
 	}
-
-	static unsigned int spray_index = 0;
 
 	if (pressed(Button::DPAD_LEFT)) {
 		player1.facing = false;
@@ -329,6 +345,7 @@ void render(uint32_t time) {
 	// draw DOOM guy (phil)
 	screen.sprite(Rect(11, 16, 3, 4), Point(0, SCREEN_HEIGHT - 32), player1.facing ? SpriteTransform::HORIZONTAL : 0);
 
+
 #ifdef SHOW_FPS
 	uint32_t ms_end = now();
 
@@ -399,14 +416,6 @@ void render_world(uint32_t time) {
 	float last_wall_distance = 0;
 #endif
 
-	// Reset the visibility map
-	for (int x = 0; x < MAP_HEIGHT * MAP_WIDTH; x++) {
-		visibility_map[x] = false;
-	}
-
-	// Add the current player map location to the player visibility  map
-	visibility_map[player_map_location.x + player_map_location.y * MAP_WIDTH] = true;
-
 	for (uint16_t column = 0; column < SCREEN_WIDTH; column++) { // trace SCREEN_WIDTH rays from left to right
 		// calculate the amount we need to scale the plane_x/y camera displacement
 		// this gives us a step along the camera displacement that corresponds to the current ray
@@ -456,11 +465,6 @@ void render_world(uint32_t time) {
 				side_dist.y += delta_dist.y;
 				map_location.y += step_y;
 				side = 1;
-			}
-
-			// Add any map tile a ray steps through to the player visible map
-			if (map_location.x + map_location.y * MAP_WIDTH < MAP_WIDTH * MAP_HEIGHT) {
-				visibility_map[map_location.x + map_location.y * MAP_WIDTH] = true;
 			}
 
 			if (map.has_flag(map_location, TileFlags::WALL)) {
@@ -633,17 +637,11 @@ void render_spray(uint32_t time) {
 		if(spray[i].position.x > MAP_WIDTH) {spray[i].position.x = MAP_WIDTH - 1;}
 		if(spray[i].position.y > MAP_HEIGHT) {spray[i].position.y = MAP_HEIGHT - 1;}
 
-		// Skip any sprites that aren't in a map tile that's "visible" to the player.
-		// This might cull sprites that might have visible foleage, but it's pretty tricky to notice
-		if (!visibility_map[int(psprite->position.x) + int(psprite->position.y) * MAP_WIDTH]) {
-			continue;
-		}
-
 		// Give the larger sprites a better view distance
 		float max_distance = 64.0;
 
-		float distance = std::min(max_distance, psprite->distance) / max_distance;
-		if (distance == 1.0f) {
+		float distance = std::min(max_distance, psprite->distance);
+		if (distance >= max_distance) {
 			continue;
 		}
 
@@ -663,7 +661,6 @@ void render_spray(uint32_t time) {
 		Rect bounds(0, 0, psprite->texture / 4, psprite->texture / 4);
 
 		int sprite_height = std::abs(int(bounds.h * SPRITE_SCALE / screen_transform.y));
-		//int sprite_width = ((float)bounds.w / (float)bounds.h) * sprite_height;
 
 		// Get the screen-space position of the sprites base on the floor
 		Vec2 screen_pos(
@@ -671,14 +668,6 @@ void render_spray(uint32_t time) {
 			HORIZON + (HORIZON / screen_transform.y)
 		);
 
-		/* DEBUG: Plot the sprite's base with a red dot
-		screen.alpha = 255 - int(255 * distance);
-		screen.pen = Pen(255, 0, 0);
-		screen.pixel(point(screen_pos.x, screen_pos.y));
-		*/
-
-		// offset screen coordinate with sprite bounds
-		//screen_pos -= Vec2(sprite_width / 2, sprite_height);
 		screen_pos.y -= sprite_height;
 		screen_pos.y += OFFSET_TOP;
 
@@ -688,6 +677,16 @@ void render_spray(uint32_t time) {
 }
 
 void render_sprites(uint32_t time) {
+
+#ifdef __Z_DEBUG__
+	for(auto x = 0u; x < screen.bounds.w; x++) {
+		float d = z_buffer[x];
+		uint8_t a = (d / 9.0f) * 255;
+		uint8_t b = 255 - a;
+		screen.pen = Pen(a, 0, b);
+		screen.line(Point(x, 0), Point(x, 10));
+	}
+#endif
 
 	// Calculate distance from player to each sprite
 	for (auto i = 0u; i < NUM_SPRITES; i++) {
@@ -701,32 +700,17 @@ void render_sprites(uint32_t time) {
 	// sort the sprites by distance
 	std::sort(map_sprites.begin(), map_sprites.end());
 
+	screen.clip = Rect(0, 0, screen.bounds.w, VIEW_HEIGHT + OFFSET_TOP);
+
 	for (int i = 0; i < NUM_SPRITES; i++) {
 		sprite *psprite = &map_sprites[i];
-
-		Pen cols_a[]{
-			Pen(0x15, 0x98, 0x5d, 200),
-			Pen(0x35, 0xA8, 0x3d, 200),
-			Pen(0x45, 0x88, 0x2d, 200)
-		};
-
-		Pen cols_b[]{
-			Pen(0x00, 0x7f, 0x43, 200),
-			Pen(0x20, 0x6f, 0x33, 200),
-			Pen(0x30, 0x8f, 0x23, 200)
-		};
-
-		// Skip any sprites that aren't in a map tile that's "visible" to the player.
-		// This might cull sprites that might have visible foleage, but it's pretty tricky to notice
-		if (!visibility_map[int(psprite->position.x) + int(psprite->position.y) * MAP_WIDTH]) {
-			continue;
-		}
+		Rect bounds;
 
 		// Give the larger sprites a better view distance
-		float max_distance = (psprite->texture == 0 || psprite->texture == 1) ? 64.0 : 16.0;
+		float max_distance = (psprite->texture == 0 || psprite->texture == 1) ? MAX_RAY_STEPS : (MAX_RAY_STEPS / 2);
 
-		float distance = std::min(max_distance, psprite->distance) / max_distance;
-		if (distance == 1.0f) {
+		float distance = std::min(max_distance, psprite->distance);
+		if (distance >= max_distance) {
 			continue;
 		}
 
@@ -743,23 +727,7 @@ void render_sprites(uint32_t time) {
 			continue;
 		}
 
-		screen.sprites->palette[11] = cols_a[psprite->color];
-		screen.sprites->palette[12] = cols_b[psprite->color];
-
-		// TODO:: palette change
-		//int color_offset = spr.color * 4;
-
-		Rect sprite_bounds[7] = {
-			Rect(0, 64, 28, 64),   // Full-grown tree
-			Rect(28, 74, 28, 54),  // Mature tree
-			Rect(56, 94, 28, 34),  // Tall shrub
-			Rect(56, 70, 28, 24),  // Short shrub
-			Rect(48, 65, 8, 8),    // Tall grass
-			Rect(38, 66, 9, 7),    // Mid grass
-			Rect(30, 68, 7, 5)     // Smol grass
-		};
-
-		Rect bounds = sprite_bounds[psprite->texture];
+		bounds = sprite_bounds[psprite->texture];
 
 		int sprite_height = std::abs(int(bounds.h * SPRITE_SCALE / screen_transform.y));
 		int sprite_width = ((float)bounds.w / (float)bounds.h) * sprite_height;
@@ -769,32 +737,52 @@ void render_sprites(uint32_t time) {
 
 		// Get the screen-space position of the sprites base on the floor
 		Vec2 screen_pos(
-			int((SCREEN_WIDTH / 2) * (1 + screen_transform.x / screen_transform.y)),
+			(SCREEN_WIDTH / 2) * (1 + screen_transform.x / screen_transform.y),
 			HORIZON + (HORIZON / screen_transform.y)
 		);
 
-		/* DEBUG: Plot the sprite's base with a red dot
-		screen.alpha = 255 - int(255 * distance);
+#ifdef __DEBUG_SPRITE_ORIGIN__
+		// DEBUG: Plot the sprite's base with a red dot
+		screen.alpha = 255 - int(255 * distance / max_distance);
 		screen.pen = Pen(255, 0, 0);
-		screen.pixel(point(screen_pos.x, screen_pos.y));
-		*/
+		screen.pixel(Point(screen_pos.x, screen_pos.y));
+#endif
 
 		// offset screen coordinate with sprite bounds
 		screen_pos -= Vec2(sprite_width / 2, sprite_height);
 
-		for (int x = std::max((uint16_t)0, uint16_t(screen_pos.x)); x < std::min(SCREEN_WIDTH, uint16_t(screen_pos.x + sprite_width)); x++) {
-			if (screen_transform.y > z_buffer[x]) continue;
+		Rect dest(screen_pos.x, screen_pos.y + OFFSET_TOP, sprite_width, sprite_height);
 
-			Vec2 uv(
-				bounds.x + ((float(x - screen_pos.x) / float(sprite_width)) * bounds.w),
-				bounds.y
-			);
+		// Create a clipping rectangle around the sprite bounds
+		screen.clip.x = std::max((int16_t)0, int16_t(screen_pos.x));
+		screen.clip.w = std::min(SCREEN_WIDTH, uint16_t(screen_pos.x + sprite_width)) - screen.clip.x;
 
-			screen.stretch_blit_vspan(screen.sprites, uv, bounds.h, Point(x, screen_pos.y + OFFSET_TOP), sprite_height); // TODO: blit from spritesheet?
+		bool start = true;
+		int end = screen.clip.x + screen.clip.w;
+		for(int x = screen.clip.x; x < end; x++) {
+			if(screen_transform.y > z_buffer[x]) {
+				if(start) {
+					screen.clip.x++;
+					screen.clip.w--;
+				} else {
+					screen.clip.w -= end - x;
+					break;
+				}
+			} else {
+				start = false;
+			}
 		}
-		screen.sprites->palette[11] = Pen(0x15, 0x98, 0x5d, 200);
-		screen.sprites->palette[12] = Pen(0x00, 0x7f, 0x43, 200);
+
+		if(screen.clip.w && bounds.w && dest.w) {
+			screen.sprites->palette[11] = cols_a[psprite->color];
+			screen.sprites->palette[12] = cols_b[psprite->color];
+			screen.stretch_blit_sprite(bounds, dest, SpriteTransform::NONE);
+			screen.sprites->palette[11] = Pen(0x15, 0x98, 0x5d, 200);
+			screen.sprites->palette[12] = Pen(0x00, 0x7f, 0x43, 200);
+		}
 	}
+
+	screen.clip = Rect(0, 0, screen.bounds.w, VIEW_HEIGHT + OFFSET_TOP);
 }
 
 /* Exclusively for blurring the ambient occlusion mask */

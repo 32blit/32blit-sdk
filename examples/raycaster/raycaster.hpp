@@ -23,7 +23,7 @@ constexpr uint16_t SCREEN_HEIGHT = 120;
 constexpr uint16_t NUM_SPRITES = 5000;
 constexpr uint16_t NUM_STARS = 100;
 #define AMBIENT_OCCLUSION
-#define SHOW_FPS
+//#define SHOW_FPS
 #endif
 
 constexpr uint8_t MAX_SPRAY = 100;
@@ -40,17 +40,6 @@ constexpr uint8_t MAP_WIDTH = 16;
 constexpr uint8_t MAP_HEIGHT = 16;
 constexpr uint8_t MAX_RAY_STEPS = 24; //11 //sqrt((MAP_WIDTH ** 2) + (MAP_HEIGHT ** 2))
 
-
-blit::Vec2 rotate_point(blit::Vec2 p, blit::Vec2 v);
-blit::Vec2 rotate_vector(blit::Vec2 v, float a);
-
-//void cast_floor();
-void render_world(uint32_t time);
-void render_sprites(uint32_t time);
-void render_spray(uint32_t time);
-void render_sky();
-void render_stars();
-
 struct player {
 	blit::Vec2 direction;
 	blit::Vec2 position;
@@ -64,6 +53,7 @@ struct player {
 struct sprite {
 	blit::Vec2 position;
 	blit::Vec2 velocity;
+	float rotation;
 	uint8_t texture;
 	uint8_t color;
 	float distance;
@@ -75,8 +65,14 @@ struct star {
 	uint8_t brightness;
 };
 
-void blur(uint8_t passes);
-
 void init();
 void update(uint32_t time);
 void render(uint32_t time);
+
+void render_world(uint32_t time);
+void render_sprites(uint32_t time);
+void render_spray(uint32_t time);
+void render_sky();
+void render_stars();
+
+void blur(uint8_t passes);

@@ -27,7 +27,14 @@ namespace blit {
     //atan2d(x1*y2-y1*x2,x1*x2+y1*y2);
 
     return std::atan2(this->x * o.y - this->y * o.x, this->x * o.x + this->y * o.y);
+
+    //return std::atan2(this->y - o.y, this->x - o.x);
+    // return std::atan2(o.y, o.x) - std::atan2(this->y, this->x);
     //return acos(this->dot(o));
+  }
+
+  float Vec2::angle_to(Vec2 o) {
+    return std::atan2(this->y - o.y, this->x - o.x);
   }
 
   /*
