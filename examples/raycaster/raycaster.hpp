@@ -26,7 +26,8 @@ constexpr uint16_t NUM_STARS = 100;
 //#define SHOW_FPS
 #endif
 
-constexpr uint8_t MAX_SPRAY = 100;
+constexpr uint8_t MAX_SPRAY = 100; // Has its own spray storage for now
+constexpr uint8_t MAX_ENEMIES = 20; // Uses capacity from NUM_SPRITES
 
 constexpr uint16_t VIEW_HEIGHT = SCREEN_HEIGHT - OFFSET_TOP - 24;
 constexpr float SPRITE_SCALE = float(VIEW_HEIGHT) / 60.0f;
@@ -50,13 +51,33 @@ struct player {
 	bool facing;
 };
 
+enum SpriteType {
+	PASSIVE = 0,
+	ACTIVE = 1
+};
+
+enum SpriteTexture : uint8_t {
+	FULL_TREE = 0,
+	MATURE_TREE = 1,
+	TALL_SHRUB = 2,
+	SHORT_SHRUB = 3,
+	TALL_GASS = 4,
+	MID_GRASS = 5,
+	SMOL_GRASS = 6,
+	ANGRY_WASP = 7,
+	SPRAY = 64
+};
+
 struct sprite {
 	blit::Vec2 position;
 	blit::Vec2 velocity;
 	float rotation;
-	uint8_t texture;
+	uint8_t size;
+	SpriteTexture texture;
+	SpriteType type;
 	uint8_t color;
 	float distance;
+	bool active;
 	bool operator < (const sprite& rhs) const { return distance > rhs.distance; };
 };
 

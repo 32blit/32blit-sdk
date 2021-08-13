@@ -21,7 +21,8 @@ std::vector<sprite> spray(MAX_SPRAY);
 uint8_t __m[SCREEN_WIDTH * SCREEN_HEIGHT];
 Surface mask((uint8_t *)__m, PixelFormat::M, Size(SCREEN_WIDTH, SCREEN_HEIGHT));
 
-Surface *wasp;
+Surface *sprites_wasp;
+Surface *sprites_world;
 
 player player1{
 	Vec2(0,0),
@@ -37,14 +38,15 @@ MapLayer *map_layer_walls;
 MapLayer *map_layer_floor;
 
 // Sizes for various sprites
-const Rect sprite_bounds[7] = {
+const Rect sprite_bounds[8] = {
 	Rect(0, 64, 28, 64),   // 0 Full-grown tree
 	Rect(28, 74, 28, 54),  // 1 Mature tree
 	Rect(56, 94, 28, 34),  // 2 Tall shrub
 	Rect(56, 70, 28, 24),  // 3 Short shrub
 	Rect(48, 65, 8, 8),    // 4 Tall grass
 	Rect(38, 66, 9, 7),    // 5 Mid grass
-	Rect(30, 68, 7, 5)     // 6 Smol grass
+	Rect(30, 68, 7, 5),    // 6 Smol grass
+	Rect(0, 0, 64, 64)     // 7 Angry Wasp -> sprites_wasp
 };
 
 // Alternate palette colours
@@ -115,8 +117,9 @@ void get_random_empty_tile_location(Point &pos) {
 void init() {
 	set_screen_mode(ScreenMode::lores);
 
-	screen.sprites = Surface::load(asset_raycaster);
-	wasp = Surface::load(asset_wasp);
+	sprites_world = Surface::load(asset_raycaster);
+	sprites_wasp = Surface::load(asset_wasp);
+	screen.sprites = sprites_world;
 
 	map.add_layer("walls", map_data_walls);
 	map_layer_walls = &map.layers["walls"];
@@ -145,23 +148,36 @@ void init() {
 	Point tile;
 	Vec2 offset;
 
-	for (int s = 0; s < NUM_SPRITES - 1; s++) {
+	for (int s = 0; s < NUM_SPRITES - MAX_ENEMIES; s++) {
 		int texture = blit::random() % 100;
 		// Bit of a hack to generate fewer trees and shrubs
 		if (texture <= 3) {
-			map_sprites[s].texture = texture;
+			map_sprites[s].texture = (SpriteTexture)texture;
 		}
 		else {
-			map_sprites[s].texture = 4 + (texture % 3);
+			map_sprites[s].texture = (SpriteTexture)(4 + (texture % 3));
 		}
 		get_random_empty_tile_location(tile);
 		offset.x = (float)blit::random() / 4294967295.0f;
 		offset.y = (float)blit::random() / 4294967295.0f;
-		map_sprites[s].position.x = tile.x + offset.x;
-		map_sprites[s].position.y = tile.y + offset.y;
+		map_sprites[s].position = Vec2(tile) + offset;
 		map_sprites[s].color = blit::random() % 3;
 		map_sprites[s].velocity.x = 0;
 		map_sprites[s].velocity.y = 0;
+		map_sprites[s].size = 1;
+		map_sprites[s].type = PASSIVE;
+	}
+
+	for (int s = NUM_SPRITES - MAX_ENEMIES; s < NUM_SPRITES; s++) {
+		map_sprites[s].texture = ANGRY_WASP;
+		get_random_empty_tile_location(tile);
+		map_sprites[s].position = Vec2(tile) + Vec2(0.5f, 0.5f);
+		map_sprites[s].color = blit::random() % 3;
+		map_sprites[s].velocity.x = 0;
+		map_sprites[s].velocity.y = 0;
+		map_sprites[s].size = 1;
+		map_sprites[s].type = ACTIVE;
+		map_sprites[s].rotation = (blit::random() % 360) / 360.0f * 2.0f * pi;
 	}
 }
 
@@ -265,7 +281,8 @@ void update(uint32_t time) {
 		player1.spraying = 1;
 		spray[spray_index].position = player1.position + player1.direction + spray_offset;
 		spray[spray_index].color = 64;
-		spray[spray_index].texture = 64;
+		spray[spray_index].texture = SPRAY;
+		spray[spray_index].size = 64;
 		spray[spray_index].velocity = (player1.direction * 0.01f);
 		spray_index++;
 		if(spray_index >= spray.size()) {
@@ -628,8 +645,8 @@ void render_spray(uint32_t time) {
 		if(spray[i].color) {
 			spray[i].color--;
 		}
-		if(spray[i].texture < 255) {
-			spray[i].texture++;
+		if(spray[i].size < 255) {
+			spray[i].size++;
 		}
 		spray[i].position += spray[i].velocity;
 		if(spray[i].position.x < 0) {spray[i].position.x = 0;}
@@ -658,7 +675,7 @@ void render_spray(uint32_t time) {
 			continue;
 		}
 
-		Rect bounds(0, 0, psprite->texture / 4, psprite->texture / 4);
+		Rect bounds(0, 0, psprite->size / 4, psprite->size / 4);
 
 		int sprite_height = std::abs(int(bounds.h * SPRITE_SCALE / screen_transform.y));
 
@@ -707,7 +724,7 @@ void render_sprites(uint32_t time) {
 		Rect bounds;
 
 		// Give the larger sprites a better view distance
-		float max_distance = (psprite->texture == 0 || psprite->texture == 1) ? MAX_RAY_STEPS : (MAX_RAY_STEPS / 2);
+		float max_distance = (psprite->texture == FULL_TREE || psprite->texture == MATURE_TREE || psprite->texture == ANGRY_WASP) ? MAX_RAY_STEPS : (MAX_RAY_STEPS / 2);
 
 		float distance = std::min(max_distance, psprite->distance);
 		if (distance >= max_distance) {
@@ -727,7 +744,7 @@ void render_sprites(uint32_t time) {
 			continue;
 		}
 
-		bounds = sprite_bounds[psprite->texture];
+		bounds = sprite_bounds[(unsigned int)psprite->texture];
 
 		int sprite_height = std::abs(int(bounds.h * SPRITE_SCALE / screen_transform.y));
 		int sprite_width = ((float)bounds.w / (float)bounds.h) * sprite_height;
@@ -773,16 +790,46 @@ void render_sprites(uint32_t time) {
 			}
 		}
 
+		SpriteTransform transform = SpriteTransform::NONE;
+
+		if(psprite->texture == ANGRY_WASP) {
+			float angle =  psprite->position.angle_to(player1.position);
+			angle += psprite->rotation;
+			angle -= 22.5f * pi / 180.0f; // Correct angle of rotation by 45deg / 2
+
+			// Clamp from 0.0 to 2 * pi
+			while(angle < 0) {angle += 2 * pi;}
+			while(angle > 2 * pi) {angle -= 2 * pi;}
+
+			angle *= (180.0f / pi);
+			int facing = (360 - angle) + 22;
+			facing = facing / 45;
+			if(facing > 4) {
+				facing = 4 - (facing - 4);
+				transform = SpriteTransform::HORIZONTAL;
+			}
+			if(facing < 0) {
+				facing = 0;
+			}
+			bounds.x = facing * 64;
+		}
+
 		if(screen.clip.w && bounds.w && dest.w) {
-			screen.sprites->palette[11] = cols_a[psprite->color];
-			screen.sprites->palette[12] = cols_b[psprite->color];
-			screen.stretch_blit_sprite(bounds, dest, SpriteTransform::NONE);
-			screen.sprites->palette[11] = Pen(0x15, 0x98, 0x5d, 200);
-			screen.sprites->palette[12] = Pen(0x00, 0x7f, 0x43, 200);
+			screen.sprites = psprite->texture == ANGRY_WASP ? sprites_wasp : sprites_world; //sprite_source[(unsigned int)psprite->texture];
+			if(screen.sprites == sprites_world) {
+				screen.sprites->palette[11] = cols_a[psprite->color];
+				screen.sprites->palette[12] = cols_b[psprite->color];
+			}
+			screen.stretch_blit_sprite(bounds, dest, transform);
+			if(screen.sprites == sprites_world) {
+				screen.sprites->palette[11] = Pen(0x15, 0x98, 0x5d, 200);
+				screen.sprites->palette[12] = Pen(0x00, 0x7f, 0x43, 200);
+			}
 		}
 	}
 
 	screen.clip = Rect(0, 0, screen.bounds.w, VIEW_HEIGHT + OFFSET_TOP);
+	screen.sprites = sprites_world;
 }
 
 /* Exclusively for blurring the ambient occlusion mask */
