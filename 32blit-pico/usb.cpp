@@ -5,6 +5,7 @@
 #include "bsp/board.h"
 #include "tusb.h"
 
+#include "file.hpp"
 #include "storage.hpp"
 
 #include "engine/api_private.hpp"
@@ -88,6 +89,10 @@ int32_t tud_msc_scsi_cb(uint8_t lun, uint8_t const scsi_cmd[16], void* buffer, u
   }
 
   return resplen;
+}
+
+bool tud_msc_is_writable_cb(uint8_t lun) {
+  return !get_files_open();
 }
 
 // cdc
