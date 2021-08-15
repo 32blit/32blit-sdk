@@ -31,6 +31,14 @@ jobs:
             apt-packages: ccache gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib python3-setuptools
 
           - os: ubuntu-20.04
+            pico-sdk: true
+            name: PicoSystem
+            cache-key: picosystem
+            release-suffix: PicoSystem
+            cmake-args: -D32BLIT_DIR=$GITHUB_WORKSPACE -DPICO_SDK_PATH=$GITHUB_WORKSPACE/pico-sdk -DPICO_BOARD=pimoroni_picosystem -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+            apt-packages: ccache gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib python3-setuptools
+
+          - os: ubuntu-20.04
             name: MinGW
             cache-key: mingw
             cmake-args: -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/mingw.toolchain -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSDL2_DIR=$GITHUB_WORKSPACE/SDL2-2.0.10/x86_64-w64-mingw32/lib/cmake/SDL2/
@@ -52,7 +60,24 @@ jobs:
       RELEASE_FILE: ${{github.event.repository.name}}-${{github.event.release.tag_name}}-${{matrix.release-suffix}}
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout 32Blit SDK
+      uses: actions/checkout@v2
+
+    # pico sdk/extras for some builds
+    - name: Checkout Pico SDK
+      if: matrix.pico-sdk
+      uses: actions/checkout@v2
+      with:
+        repository: raspberrypi/pico-sdk
+        path: pico-sdk
+        submodules: true
+
+    - name: Checkout Pico Extras
+      if: matrix.pico-sdk
+      uses: actions/checkout@v2
+      with:
+        repository: raspberrypi/pico-extras
+        path: pico-extras
 
     - name: Cache
       uses: actions/cache@v2
