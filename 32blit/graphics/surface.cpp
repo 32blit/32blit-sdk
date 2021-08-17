@@ -145,8 +145,22 @@ namespace blit {
       head.bpp = pixel_stride * 8;
       head.image_size = data_size;
 
+      // need to specify bitfields for 565
+      if(format == PixelFormat::RGB565) {
+        head.compression = 3; // bitfields
+        head.file_size += 16;
+        head.info_size += 16;
+        head.data_offset += 16;
+      }
+
       file.write(0, sizeof(head), reinterpret_cast<char *>(&head));
       offset = sizeof(head);
+
+      if(format == PixelFormat::RGB565) {
+        const uint32_t masks[]{0xF800, 0x7E0, 0x1F, 0};
+        file.write(offset, 16, reinterpret_cast<const char *>(masks));
+        offset += 16;
+      }
     } else {
       // spriterw (.blim file)
       packed_image head;
@@ -175,7 +189,7 @@ namespace blit {
     for(int y = 0; y < bounds.h; y++) {
         auto in_offset = y * row_stride;
 
-        if(pixel_stride == 1)
+        if(pixel_stride <= 2) // P/RGB565
           file.write(offset, row_stride, reinterpret_cast<char *>(data + in_offset));
         else {
           // RGB(A)
@@ -715,7 +729,7 @@ namespace blit {
                   bit = 0; col = 0;
                   parse_state = 0;
                   count = 0;
-                  
+
                   // done, skip any remaining padding
                   if(pdest == dest_end)
                     parse_state = 3;
