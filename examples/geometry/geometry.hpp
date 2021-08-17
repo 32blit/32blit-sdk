@@ -4,13 +4,14 @@
 //#define __DEBUG__
 
 
-const int16_t STARTING_ENERGY = 500;
-const int16_t REGEN_ENERGY = 1;
-const int16_t LASER_COST = 2;
-const int16_t MOVEMENT_COST = 1;
-const int16_t DAMAGE_COST = 10;
+const int16_t STARTING_ENERGY = 5000;
+const int16_t REGEN_ENERGY = 10;
+const int16_t LASER_COST = 12;
+const int16_t MOVEMENT_COST = 10;
+const int16_t DAMAGE_COST = 100;
 const uint8_t STARTING_LIVES = 3;
 const uint8_t P_MAX_AGE = 255;
+const float WARNING_ENERGY = 0.4f;
 
 const uint8_t ASTEROID_COUNT = 5;
 const uint8_t ASTEROID_MIN_R = 40;
@@ -44,16 +45,19 @@ struct Player {
     uint8_t lives = 3;
     bool invincible = false;
 
-    void reset_or_die() {
+    bool reset_or_die() {
+        bool reset = false;
         energy = STARTING_ENERGY;
         if(lives == 0) {
             lives = STARTING_LIVES;
             score = 0;
+            reset = true;
         }
         invincible = true;
         position = blit::Vec2(blit::screen.bounds.w / 2, blit::screen.bounds.h / 2);
         rotation = 0.0f;
         rotational_velocity = 0.0f;
+        return reset;
     }
 };
 

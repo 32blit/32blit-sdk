@@ -1,11 +1,13 @@
 #include "geometry.hpp"
+#include "font_asset.hpp"
+
 #include "graphics/color.hpp"
 #include "types/vec2.hpp"
 #include "engine/particle.hpp"
 
 using namespace blit;
 
-
+const Font custom_font(press_start_font);
 std::vector<SpaceDust> particles;
 std::vector<Polygon> polygons;
 
@@ -168,9 +170,8 @@ Polygon split_polygon(Polygon *poly, Vec2 a, Vec2 b) {
             explode(centroid_of_polygon(split_b), area / float(ASTEROID_MIN_AREA));
         }
     }
-    
-    Polygon new_polygon;
-    return new_polygon;
+
+    return Polygon();
 }
 
 void draw_polygon(std::vector<Vec2> &points) {
@@ -230,8 +231,9 @@ float random_float_between(float a, float b) {
     return a + r * (b - a);
 }
 
-void init() {
-    set_screen_mode(ScreenMode::hires);
+void reset() {
+    polygons.clear();
+
     for(unsigned int i = 0; i < ASTEROID_COUNT; i++){
         Polygon p;
         float x = random_float_between(0, screen.bounds.w);
@@ -249,8 +251,11 @@ void init() {
         p.area = area_of_polygon(p.points);
         polygons.push_back(p);
     }
+}
 
-    player1.reset_or_die();
+void init() {
+    set_screen_mode(ScreenMode::hires);
+
     player1.shape.push_back(Vec2(0, -6));
     player1.shape.push_back(Vec2(-6, 6));
     player1.shape.push_back(Vec2(0, 2));
@@ -281,23 +286,32 @@ void init() {
     channels[2].release_ms  = 0;
     channels[2].volume      = 8000;
 #endif
+
+    player1.reset_or_die();
+    reset();
 }
 
 void render(uint32_t time) {
 #ifdef __DEBUG__
     uint32_t ms_start = now();
 #endif
-    float h = time / (pi * 2) / 100.0f;
+    float h = time / (pi * 2) / 50.0f;
 
     screen.pen = Pen(0, 0, 0);
     screen.clear();
 
+    float energy = float(player1.energy) / STARTING_ENERGY;
     if(player1.invincible) {
         uint8_t rgb = (sinf(time / 200.0f) * 70) + 100;
         screen.pen = Pen(rgb, rgb, rgb);
     }
     else {
-        screen.pen = Pen(255, 255, 255);
+        if(energy <= WARNING_ENERGY) {
+            uint8_t c = 128 + sin(time / 100) * 127;
+            screen.pen = Pen(255, c, c);
+        } else {
+            screen.pen = Pen(255, 255, 255);
+        }
     }
     std::vector<Vec2> player1_shape(player1.shape);
     translate_polygon(player1_shape, player1.position);
@@ -305,8 +319,13 @@ void render(uint32_t time) {
     draw_polygon(player1_shape);
 
     for(auto &p: polygons){
-        Pen c = hsv_to_rgba(h / (pi * 2) + p.colour_offset, 1.0, 1.0);
-        screen.pen = c;
+        uint16_t area = std::min((uint16_t)5000u, p.area);
+        if(area <= ASTEROID_MIN_AREA * 2) {
+            screen.pen = hsv_to_rgba(h / (pi * 2) + p.colour_offset, 1.0, 1.0);
+        } else {
+            float scale = area / 10000.0f;
+            screen.pen = Pen(1.0f - scale, 0.0f, 1.0f);
+        }
         draw_polygon(p.points);
 #ifdef __DEBUG__
         screen.text(std::to_string(p.area), minimal_font, Point(p.origin), true, center_center);
@@ -354,13 +373,32 @@ void render(uint32_t time) {
 #endif
 
     screen.pen = Pen(255, 255, 255);
-    screen.text("score: " + std::to_string(player1.score) + " lives: " + std::to_string(player1.lives), minimal_font, Point(5, 5));
+    screen.text(std::to_string(player1.score), custom_font, Point(0, 0));
 
-    screen.pen = Pen(0, 255, 0, 200);
-    Rect energy = Rect(5, screen.bounds.h - 5, 0, 5);
-    energy.y -= energy.h;
-    energy.w = player1.energy * (screen.bounds.w - 10) / STARTING_ENERGY;
-    screen.rectangle(energy);
+
+    Vec2 lives = Vec2(screen.bounds.w - (STARTING_LIVES * 15), 5);
+    for(auto i = 0u; i < STARTING_LIVES; i++) {
+        std::vector<Vec2> life_shape(player1.shape);
+        rotate_polygon(life_shape, 0.0f, lives);
+        translate_polygon(life_shape, lives);
+        lives.x += 15;
+        screen.pen = i < player1.lives ? Pen(255, 255, 255) :  Pen(64, 64, 64);
+        draw_polygon(life_shape);
+    }
+
+    uint8_t alpha = 255;
+    if(energy <= WARNING_ENERGY) {
+        alpha = 128 + sin(time / 100) * 127;
+    }
+    Rect rect_energy = Rect(5, screen.bounds.h - 5, 0, 5);
+    rect_energy.y -= rect_energy.h;
+    rect_energy.w = (screen.bounds.w - 10) * energy;
+    screen.pen = Pen(255, 255, 255);
+    screen.rectangle(rect_energy);
+    screen.alpha = alpha;
+    screen.pen = Pen(1.0f - energy, energy, 0.0f);
+    screen.rectangle(rect_energy);
+    screen.alpha = 255;
 }
 
 void update(uint32_t time) {
@@ -468,11 +506,19 @@ void update(uint32_t time) {
             player_inside_asteroid = true;
         }
 
-        // If the player's shot intersects any line in this polygon we must slice it into twos
+        // If the player's shot intersects any line in this polygon we must slice it into two
         if(do_split){
-            Polygon poly = split_polygon(&p, player1.shot_origin, player1.shot_target);
-            if(poly.points.size()) {
-                new_polygons.push_back(poly);
+            // If the polygon is 2*ASTEROID_MIN_AREA then usually it'll result in
+            // two invalid polygons so we just count hitting it with *any* shot
+            // bump the player score, and remove it.
+            if(p.area <= ASTEROID_MIN_AREA * 2) {
+                player1.score += p.area;
+                p.prune = true;
+            } else {
+                Polygon poly = split_polygon(&p, player1.shot_origin, player1.shot_target);
+                if(poly.points.size()) {
+                    new_polygons.push_back(poly);
+                }
             }
         }
     }
@@ -553,7 +599,9 @@ void update(uint32_t time) {
         if(player1.lives > 0) {
             player1.lives--;
         }
-        player1.reset_or_die();
+        if(player1.reset_or_die()) {
+            reset();
+        }
     }
 
     // Energy only regenerates if a shot isn't charging
