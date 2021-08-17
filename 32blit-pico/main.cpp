@@ -280,6 +280,7 @@ int main() {
   init_led();
 
 #ifdef DISPLAY_ST7789
+  bool backlight_enabled = false;
   st7789.init();
   st7789.clear();
 
@@ -325,6 +326,12 @@ int main() {
 
       if(!have_vsync)
         st7789.update();
+
+      if(last_render && !backlight_enabled) {
+        // the first render should have made it to the screen at this point
+        st7789.set_backlight(255);
+        backlight_enabled = true;
+      }
 
       last_render = now;
       do_render = false;

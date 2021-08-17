@@ -109,7 +109,6 @@ namespace pimoroni {
       pwm_set_wrap(pwm_gpio_to_slice_num(bl), 65535);
       pwm_init(pwm_gpio_to_slice_num(bl), &cfg, true);
       gpio_set_function(bl, GPIO_FUNC_PWM);
-      set_backlight(255); // Turn backlight on by default to avoid nasty surprises
     }
 
     if(reset != -1) {
