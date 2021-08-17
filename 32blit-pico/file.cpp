@@ -34,14 +34,46 @@ DRESULT disk_write(BYTE pdrv, const BYTE *buff, LBA_t sector, UINT count) {
 }
 
 DRESULT disk_ioctl(BYTE pdrv, BYTE cmd, void* buff) {
-  if(cmd == CTRL_SYNC)
-    return RES_OK;
+  uint16_t block_size;
+  uint32_t num_blocks;
+
+  switch(cmd) {
+    case CTRL_SYNC:
+      return RES_OK;
+
+    case GET_SECTOR_COUNT:
+      get_storage_size(block_size, num_blocks);
+      *(LBA_t *)buff = num_blocks;
+      return RES_OK;
+
+    case GET_BLOCK_SIZE:
+      *(DWORD *)buff = 1;
+      return RES_OK;
+  }
 
   return RES_PARERR;
 }
 
 void init_fs() {
-  f_mount(&fs, "", 1);
+  auto res = f_mount(&fs, "", 1);
+
+  if(res == FR_NO_FILESYSTEM) {
+    printf("No filesystem found, formatting...\n");
+
+    MKFS_PARM opts{};
+    opts.fmt = FM_ANY | FM_SFD;
+    res = f_mkfs("", &opts, fs.win, FF_MAX_SS);
+
+    if(res != FR_OK) {
+      printf("...failed! (%i)\n", res);
+      return;
+    }
+
+    res = f_mount(&fs, "", 1);
+  }
+
+  if(res != FR_OK)
+    printf("Failed to mount filesystem! (%i)\n", res);
 }
 
 bool get_files_open() {
