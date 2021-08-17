@@ -13,9 +13,8 @@ float z_buffer[SCREEN_WIDTH];
 float lut_camera_displacement[SCREEN_WIDTH];
 Vec2 ray_cache[SCREEN_WIDTH];
 
-std::vector<sprite> map_sprites(NUM_SPRITES);
-std::vector<star> stars(NUM_STARS);
-std::vector<sprite> spray(MAX_SPRAY);
+std::vector<Sprite> map_sprites(NUM_SPRITES);
+std::vector<Star> stars(NUM_STARS);
 
 /* Ambient Occlusion Mask */
 uint8_t __m[SCREEN_WIDTH * SCREEN_HEIGHT];
@@ -24,13 +23,15 @@ Surface mask((uint8_t *)__m, PixelFormat::M, Size(SCREEN_WIDTH, SCREEN_HEIGHT));
 Surface *sprites_wasp;
 Surface *sprites_world;
 
-player player1{
+Player player1{
 	Vec2(0,0),
+	Vec2(0,0),
+	0.0f,
+	4,
 	Vec2(0,0),
 	Vec2(0,0),
 	0.0f,
 	false,
-	0.0f,
 	false
 };
 Map map(Rect(0, 0, 16, 16));
@@ -38,7 +39,7 @@ MapLayer *map_layer_walls;
 MapLayer *map_layer_floor;
 
 // Sizes for various sprites
-const Rect sprite_bounds[8] = {
+const Rect sprite_bounds[9] = {
 	Rect(0, 64, 28, 64),   // 0 Full-grown tree
 	Rect(28, 74, 28, 54),  // 1 Mature tree
 	Rect(56, 94, 28, 34),  // 2 Tall shrub
@@ -46,7 +47,8 @@ const Rect sprite_bounds[8] = {
 	Rect(48, 65, 8, 8),    // 4 Tall grass
 	Rect(38, 66, 9, 7),    // 5 Mid grass
 	Rect(30, 68, 7, 5),    // 6 Smol grass
-	Rect(0, 0, 64, 64)     // 7 Angry Wasp -> sprites_wasp
+	Rect(0, 0, 64, 64),    // 7 Angry Wasp -> sprites_wasp
+	Rect(96, 64, 64, 64)     // 8 Spraypaint -> just a circle
 };
 
 // Alternate palette colours
@@ -113,42 +115,17 @@ void get_random_empty_tile_location(Point &pos) {
 	}
 }
 
-
-void init() {
-	set_screen_mode(ScreenMode::lores);
-
-	sprites_world = Surface::load(asset_raycaster);
-	sprites_wasp = Surface::load(asset_wasp);
-	screen.sprites = sprites_world;
-
-	map.add_layer("walls", map_data_walls);
-	map_layer_walls = &map.layers["walls"];
-	map_layer_walls->add_flags({ 1, 2, 3, 4, 5 }, TileFlags::WALL);
-	map_layer_walls->add_flags({ 1, 2, 3, 4, 5 }, TileFlags::NO_GRASS); // Don't draw grass on walls
-
-	map.add_layer("floor", map_data_floor);
-	map_layer_floor = &map.layers["floor"];
-	map_layer_floor->add_flags({ 3, 4, 5 }, TileFlags::NO_GRASS); // Don't draw grass on flagstones
-
+void reset() {
 	player1.direction.y = -1;
 	player1.position.x = 3.5;
 	player1.position.y = 3.5;
 	player1.rotation = 0.0f;
-
-	for (int x = 0; x < SCREEN_WIDTH; x++) {
-		lut_camera_displacement[x] = (float)(2 * x) / (float)(SCREEN_WIDTH) - 1.0f;
-	}
-
-	for (int s = 0; s < NUM_STARS; s++) {
-		stars[s].position.x = blit::random() % 360;
-		stars[s].position.y = blit::random() % (HORIZON / 2);
-		stars[s].brightness = 32 + (blit::random() % 128);
-	}
+	player1.health = 4.0f;
 
 	Point tile;
 	Vec2 offset;
 
-	for (int s = 0; s < NUM_SPRITES - MAX_ENEMIES; s++) {
+	for (int s = 0; s < NUM_SPRITES - MAX_ENEMIES - MAX_SPRAY; s++) {
 		int texture = blit::random() % 100;
 		// Bit of a hack to generate fewer trees and shrubs
 		if (texture <= 3) {
@@ -165,29 +142,146 @@ void init() {
 		map_sprites[s].velocity.x = 0;
 		map_sprites[s].velocity.y = 0;
 		map_sprites[s].size = 1;
-		map_sprites[s].type = PASSIVE;
+		map_sprites[s].type = PLANT;
+		map_sprites[s].active = true;
 	}
 
-	for (int s = NUM_SPRITES - MAX_ENEMIES; s < NUM_SPRITES; s++) {
+	for (int s = NUM_SPRITES - MAX_ENEMIES - MAX_SPRAY; s < NUM_SPRITES - MAX_SPRAY; s++) {
 		map_sprites[s].texture = ANGRY_WASP;
 		get_random_empty_tile_location(tile);
 		map_sprites[s].position = Vec2(tile) + Vec2(0.5f, 0.5f);
 		map_sprites[s].color = blit::random() % 3;
 		map_sprites[s].velocity.x = 0;
 		map_sprites[s].velocity.y = 0;
-		map_sprites[s].size = 1;
-		map_sprites[s].type = ACTIVE;
+		map_sprites[s].size = map_sprites[s].color & 0b1;
+		map_sprites[s].type = WASP;
+		map_sprites[s].health = 4.0f;
 		map_sprites[s].rotation = (blit::random() % 360) / 360.0f * 2.0f * pi;
+		map_sprites[s].active = true;
+	}
+
+	for (int s = NUM_SPRITES - MAX_SPRAY; s < NUM_SPRITES; s++) {
+		map_sprites[s].type = SPRAY;
+		map_sprites[s].health = 0.0f;
+		map_sprites[s].active = false;
+		map_sprites[s].color = 0;
 	}
 }
 
 
+void init() {
+	set_screen_mode(ScreenMode::lores);
+
+	sprites_world = Surface::load(asset_raycaster);
+	sprites_wasp = Surface::load(asset_wasp);
+	screen.sprites = sprites_world;
+
+	// Paint a circle into the spritesheet for bug spray
+	sprites_world->pen = Pen(16);
+	sprites_world->circle(sprite_bounds[8].center(), sprite_bounds[8].w / 2);
+
+	map.add_layer("walls", map_data_walls);
+	map_layer_walls = &map.layers["walls"];
+	map_layer_walls->add_flags({ 1, 2, 3, 4, 5 }, TileFlags::WALL);
+	map_layer_walls->add_flags({ 1, 2, 3, 4, 5 }, TileFlags::NO_GRASS); // Don't draw grass on walls
+
+	map.add_layer("floor", map_data_floor);
+	map_layer_floor = &map.layers["floor"];
+	map_layer_floor->add_flags({ 3, 4, 5 }, TileFlags::NO_GRASS); // Don't draw grass on flagstones
+
+
+	for (int x = 0; x < SCREEN_WIDTH; x++) {
+		lut_camera_displacement[x] = (float)(2 * x) / (float)(SCREEN_WIDTH) - 1.0f;
+	}
+
+	for (int s = 0; s < NUM_STARS; s++) {
+		stars[s].position.x = blit::random() % 360;
+		stars[s].position.y = blit::random() % (HORIZON / 2);
+		stars[s].brightness = 32 + (blit::random() % 128);
+	}
+
+	reset();
+}
+
+
+Vec2 update_position(Entity *entity, Vec2 movement) {
+	Vec2 size(0.3f, 0.3f);
+	Vec2 result(0, 0);
+	int check_tile = 0;
+
+	if (movement.x < 0) {
+		int bound = (int)std::floor(entity->position.x + movement.x - size.x);
+
+		check_tile = check_tile | map.get_flags(Point(bound, (int32_t)std::floor(entity->position.y)));
+		if (movement.y > 0) {
+			check_tile = check_tile | map.get_flags(Point(bound, (int32_t)std::floor(entity->position.y - size.y)));
+		}
+		else if (movement.y < 0) {
+			check_tile = check_tile | map.get_flags(Point(bound, (int32_t)std::floor(entity->position.y + size.y)));
+		}
+	}
+	else if (movement.x > 0) {
+		int bound = (int)std::floor(entity->position.x + movement.x + size.x);
+
+		check_tile = check_tile | map.get_flags(Point(bound, (int32_t)std::floor(entity->position.y)));
+		if (movement.y > 0) {
+			check_tile = check_tile | map.get_flags(Point(bound, (int32_t)std::floor(entity->position.y - size.y)));
+		}
+		else if (movement.y < 0) {
+			check_tile = check_tile | map.get_flags(Point(bound, (int32_t)std::floor(entity->position.y + size.y)));
+		}
+	}
+
+	if ((check_tile & TileFlags::WALL) == 0) {
+		entity->position.x += movement.x;
+		result.x = movement.x;
+	}
+
+	check_tile = 0;
+
+	if (movement.y < 0) {
+		int bound = (int)std::floor(entity->position.y + movement.y - size.y);
+
+		check_tile = check_tile | map.get_flags(Point((int32_t)std::floor(entity->position.x), bound));
+		if (movement.x > 0) {
+			check_tile = check_tile | map.get_flags(Point((int32_t)std::floor(entity->position.x - size.x), bound));
+		}
+		else if (movement.x < 0) {
+			check_tile = check_tile | map.get_flags(Point((int32_t)std::floor(entity->position.x + size.x), bound));
+		}
+	}
+	else if (movement.y > 0) {
+		int bound = (int)std::floor(entity->position.y + movement.y + size.y);
+
+		check_tile = check_tile | map.get_flags(Point((int32_t)std::floor(entity->position.x), bound));
+		if (movement.x > 0) {
+			check_tile = check_tile | map.get_flags(Point((int32_t)std::floor(entity->position.x - size.x), bound));
+		}
+		else if (movement.x < 0) {
+			check_tile = check_tile | map.get_flags(Point((int32_t)std::floor(entity->position.x + size.x), bound));
+		}
+	}
+
+	if ((check_tile & TileFlags::WALL) == 0) {
+		entity->position.y += movement.y;
+		result.y = movement.y;
+	}
+
+	return result;
+}
+
+
 void update(uint32_t time) {
-	static unsigned int spray_index = 0;
-	static Vec2 size(0.2f, 0.2f);
+	static uint32_t last_spray = 0;
 	static Vec2 rmove(0, 0);
 	Vec2 move(0, 0);
-	int check_tile = 0;
+
+	if(player1.health <= 0) {
+		if(buttons.pressed & Button::A) {
+			reset();
+		}
+		return;
+	}
 
 	if (pressed(Button::DPAD_UP)) {
 		move.x = 0.02f;
@@ -202,61 +296,7 @@ void update(uint32_t time) {
 	rmove.x = move.x * player1.direction.x - move.y * player1.direction.y;
 	rmove.y = move.x * player1.direction.y + move.y * player1.direction.x;
 
-	if (rmove.x < 0) {
-		int bound = (int)std::floor(player1.position.x + rmove.x - size.x);
-
-		check_tile = check_tile | map.get_flags(Point(bound, (int32_t)std::floor(player1.position.y)));
-		if (rmove.y > 0) {
-			check_tile = check_tile | map.get_flags(Point(bound, (int32_t)std::floor(player1.position.y - size.y)));
-		}
-		else if (rmove.y < 0) {
-			check_tile = check_tile | map.get_flags(Point(bound, (int32_t)std::floor(player1.position.y + size.y)));
-		}
-	}
-	else if (rmove.x > 0) {
-		int bound = (int)std::floor(player1.position.x + rmove.x + size.x);
-
-		check_tile = check_tile | map.get_flags(Point(bound, (int32_t)std::floor(player1.position.y)));
-		if (rmove.y > 0) {
-			check_tile = check_tile | map.get_flags(Point(bound, (int32_t)std::floor(player1.position.y - size.y)));
-		}
-		else if (rmove.y < 0) {
-			check_tile = check_tile | map.get_flags(Point(bound, (int32_t)std::floor(player1.position.y + size.y)));
-		}
-	}
-
-	if ((check_tile & TileFlags::WALL) == 0) {
-		player1.position.x += rmove.x;
-	}
-
-	check_tile = 0;
-
-	if (rmove.y < 0) {
-		int bound = (int)std::floor(player1.position.y + rmove.y - size.y);
-
-		check_tile = check_tile | map.get_flags(Point((int32_t)std::floor(player1.position.x), bound));
-		if (rmove.x > 0) {
-			check_tile = check_tile | map.get_flags(Point((int32_t)std::floor(player1.position.x - size.x), bound));
-		}
-		else if (rmove.x < 0) {
-			check_tile = check_tile | map.get_flags(Point((int32_t)std::floor(player1.position.x + size.x), bound));
-		}
-	}
-	else if (rmove.y > 0) {
-		int bound = (int)std::floor(player1.position.y + rmove.y + size.y);
-
-		check_tile = check_tile | map.get_flags(Point((int32_t)std::floor(player1.position.x), bound));
-		if (rmove.x > 0) {
-			check_tile = check_tile | map.get_flags(Point((int32_t)std::floor(player1.position.x - size.x), bound));
-		}
-		else if (rmove.x < 0) {
-			check_tile = check_tile | map.get_flags(Point((int32_t)std::floor(player1.position.x + size.x), bound));
-		}
-	}
-
-	if ((check_tile & TileFlags::WALL) == 0) {
-		player1.position.y += rmove.y;
-	}
+	player1.velocity = update_position(&player1, rmove);
 
 	if (pressed(Button::DPAD_LEFT)) {
 		player1.facing = false;
@@ -276,30 +316,121 @@ void update(uint32_t time) {
 	player1.direction.normalize();
 
 	if (pressed(Button::A)) {
-		Vec2 spray_offset(0.5f, 0.0f);
-		spray_offset.rotate(player1.rotation);
 		player1.spraying = 1;
-		spray[spray_index].position = player1.position + player1.direction + spray_offset;
-		spray[spray_index].color = 64;
-		spray[spray_index].texture = SPRAY;
-		spray[spray_index].size = 64;
-		spray[spray_index].velocity = (player1.direction * 0.01f);
-		spray_index++;
-		if(spray_index >= spray.size()) {
-			spray_index = 0;
+
+		if(time - last_spray > 50) {
+			Vec2 spray_offset(0.1f, 0.0f);
+			spray_offset.rotate(player1.rotation);
+			for(auto &sprite : map_sprites) {
+				if(sprite.type == SPRAY && !sprite.active) {
+					sprite.position = player1.position + (player1.direction * 0.1f) + spray_offset;
+					sprite.texture = BUGSPRAY;
+					sprite.velocity = (player1.direction * 0.01f) + player1.velocity;
+					sprite.health = 64.0f;
+					sprite.active = true;
+					last_spray = time;
+					break;
+				}
+			}
 		}
 	}
 	else
 	{
 		player1.spraying = 0;
 	}
+
+	for(Sprite &sprite : map_sprites) {
+		if(!sprite.active) continue;
+		if(sprite.type == SPRAY) {
+			sprite.health -= 0.2f;
+			if(sprite.health < 0.0f) {
+				sprite.health = 0.0f;
+				sprite.active = false;
+			} else {
+				update_position(&sprite, sprite.velocity);
+			}
+		}
+		else if(sprite.type == WASP) {
+			Vec2 move = player1.position - sprite.position;
+			float angle = sprite.position.angle_to(player1.position);
+			float distance = move.length();
+			if(distance < 0.3f) {
+				player1.health -= 0.01f;
+			}
+			angle = (2 * pi) - angle;
+			if(angle > sprite.rotation) {
+				sprite.rotation += 0.005f;
+			}
+			if(angle < sprite.rotation) {
+				sprite.rotation -= 0.005f;
+			}
+			while(sprite.rotation < 0.0f) {
+				sprite.rotation += 2 * pi;
+			}
+			while(sprite.rotation > 2 * pi) {
+				sprite.rotation -= 2 * pi;
+			}
+			move.normalize();
+			move *= 0.003f;
+			for(Sprite &sprite_b : map_sprites) {
+				if(!sprite_b.active) continue;
+				if(sprite_b.type == WASP && sprite.position != sprite_b.position) {
+					Vec2 distance = sprite.position - sprite_b.position;
+					if(abs(distance.length()) < 1.0f) {
+						distance.normalize();
+						move += distance * 0.003f;
+					}
+				} else if (sprite_b.type == SPRAY) {
+					Vec2 distance = sprite.position - sprite_b.position;
+					if(abs(distance.length()) < 1.0f) {
+						sprite.health -= 0.01f;
+						if(sprite.health < 0.0f) {
+							sprite.health = 0.0f;
+							sprite.active = false;
+						}
+					}
+				}
+			}
+			update_position(&sprite, move);
+		}
+	}
 }
 
+uint32_t lfsr = 1;
+uint16_t tap = 0x74b8;
+void fizzlefade(uint8_t iterations=1) {
+	for(auto i = 0u; i < iterations; i++) {
+		uint16_t x = lfsr & 0x00ff;
+		uint16_t y = (lfsr & 0x7f00) >> 8;
+
+		uint8_t lsb = lfsr & 1;
+		lfsr >>= 1;
+
+		if (lsb) {
+			lfsr ^= tap;
+		}
+
+		Point ff = Point(x - 1, y);
+		if(screen.bounds.contains(ff)) {
+			screen.pixel(Point(x - 1, y));
+		}
+	}
+}
 
 void render(uint32_t time) {
 #ifdef SHOW_FPS
 	uint32_t ms_start = now();
 #endif
+
+	if(player1.health <= 0) {
+		screen.alpha = 255;
+		screen.pen = Pen(255, 0, 0);
+		fizzlefade(50);
+
+		screen.pen = Pen(255, 255, 255);
+		screen.text("You Died!", minimal_font, Rect(Point(0, 0), screen.bounds), true, center_center);
+		return;
+	}
 
 	// update the orientation of the player camera plane
 	player1.camera = Vec2(-player1.direction.y, player1.direction.x);
@@ -340,7 +471,7 @@ void render(uint32_t time) {
 #endif
 
 	render_sprites(time);
-	render_spray(time);
+	//render_spray(time);
 	screen.clip = Rect(Point(0, 0), screen.bounds);
 
 	// draw bug spray
@@ -356,7 +487,7 @@ void render(uint32_t time) {
 
 	// draw the health bar
 	for (int x = 0; x < 4; x++) {
-		screen.sprite(x > 1 ? 322 : 321, Point(32 + x * 10, SCREEN_HEIGHT - 16));
+		screen.sprite(x >= player1.health ? 322 : 321, Point(32 + x * 10, SCREEN_HEIGHT - 16));
 	}
 
 	// draw DOOM guy (phil)
@@ -401,22 +532,20 @@ void render_stars() {
 	r = (r > 0.0f ? r : (2.0f * pi + r)) * 360.0f / (2.0f * pi);
 	screen.pen = Pen(255, 255, 255, 255);
 
-	for (int s = 0; s < NUM_STARS; s++) {
-		star *sp = &stars[s];
-
+	for(Star& star : stars) {
 		// If the stars radial X position is within our field of view
-		if ((180 - std::abs(std::abs(r - sp->position.x) - 180)) < 45) {
+		if ((180 - std::abs(std::abs(r - star.position.x) - 180)) < 45) {
 			// Get the difference between the star and player angle as degrees, signed
-			int x = (int)r - sp->position.x + 180;
+			int x = (int)r - star.position.x + 180;
 			x = x - std::floor(float(x) / 360.0f) * 360;
 			x -= 180;
 
 			// Convert the degrees to screen columns
 			x = 80 + (x / 45.0f) * 80;
-			screen.alpha = sp->brightness;
+			screen.alpha = star.brightness;
 			screen.pixel(Point(
 				x,
-				sp->position.y * 2
+				star.position.y * 2
 			));
 		}
 	}
@@ -626,73 +755,6 @@ void render_world(uint32_t time) {
 	}
 }
 
-void render_spray(uint32_t time) {
-
-	// Calculate distance from player to each sprite
-	for (auto i = 0u; i < MAX_SPRAY; i++) {
-		Vec2 sprite_distance(
-			spray[i].position.x - player1.position.x,
-			spray[i].position.y - player1.position.y
-		);
-		spray[i].distance = (sprite_distance.x * sprite_distance.x) + (sprite_distance.y * sprite_distance.y);
-	}
-
-	// sort the sprites by distance
-	std::sort(spray.begin(), spray.end());
-
-	for (int i = 0; i < MAX_SPRAY; i++) {
-		sprite *psprite = &spray[i];
-		if(spray[i].color) {
-			spray[i].color--;
-		}
-		if(spray[i].size < 255) {
-			spray[i].size++;
-		}
-		spray[i].position += spray[i].velocity;
-		if(spray[i].position.x < 0) {spray[i].position.x = 0;}
-		if(spray[i].position.y < 0) {spray[i].position.y = 0;}
-		if(spray[i].position.x > MAP_WIDTH) {spray[i].position.x = MAP_WIDTH - 1;}
-		if(spray[i].position.y > MAP_HEIGHT) {spray[i].position.y = MAP_HEIGHT - 1;}
-
-		// Give the larger sprites a better view distance
-		float max_distance = 64.0;
-
-		float distance = std::min(max_distance, psprite->distance);
-		if (distance >= max_distance) {
-			continue;
-		}
-
-		// Get the player-relative position of the sprite
-		Vec2 relative_position = psprite->position - player1.position;
-
-		Vec2 screen_transform(
-			player1.inverse_det * (player1.direction.y * relative_position.x - player1.direction.x * relative_position.y),
-			player1.inverse_det * (-player1.camera.y * relative_position.x + player1.camera.x * relative_position.y)
-		);
-
-		// Skip any sprites which are behind the player
-		if (screen_transform.y < 0) {
-			continue;
-		}
-
-		Rect bounds(0, 0, psprite->size / 4, psprite->size / 4);
-
-		int sprite_height = std::abs(int(bounds.h * SPRITE_SCALE / screen_transform.y));
-
-		// Get the screen-space position of the sprites base on the floor
-		Vec2 screen_pos(
-			int((SCREEN_WIDTH / 2) * (1 + screen_transform.x / screen_transform.y)),
-			HORIZON + (HORIZON / screen_transform.y)
-		);
-
-		screen_pos.y -= sprite_height;
-		screen_pos.y += OFFSET_TOP;
-
-		screen.pen = Pen(255, 0, 255, psprite->color / 4);
-		screen.circle(screen_pos, sprite_height / 2);
-	}
-}
-
 void render_sprites(uint32_t time) {
 
 #ifdef __Z_DEBUG__
@@ -719,20 +781,26 @@ void render_sprites(uint32_t time) {
 
 	screen.clip = Rect(0, 0, screen.bounds.w, VIEW_HEIGHT + OFFSET_TOP);
 
-	for (int i = 0; i < NUM_SPRITES; i++) {
-		sprite *psprite = &map_sprites[i];
+	for (auto &psprite : map_sprites) {
+		if(!psprite.active) continue;
 		Rect bounds;
+		int sprite_width, sprite_height;
+		float factor = 1.0f;
 
 		// Give the larger sprites a better view distance
-		float max_distance = (psprite->texture == FULL_TREE || psprite->texture == MATURE_TREE || psprite->texture == ANGRY_WASP) ? MAX_RAY_STEPS : (MAX_RAY_STEPS / 2);
+		float max_distance = (psprite.texture == FULL_TREE || psprite.texture == MATURE_TREE) ? MAX_RAY_STEPS : (MAX_RAY_STEPS / 2);
 
-		float distance = std::min(max_distance, psprite->distance);
+		if(psprite.type == WASP) {
+			max_distance = MAX_RAY_STEPS * 2;
+		}
+
+		float distance = std::min(max_distance, psprite.distance);
 		if (distance >= max_distance) {
 			continue;
 		}
 
 		// Get the player-relative position of the sprite
-		Vec2 relative_position = psprite->position - player1.position;
+		Vec2 relative_position = psprite.position - player1.position;
 
 		Vec2 screen_transform(
 			player1.inverse_det * (player1.direction.y * relative_position.x - player1.direction.x * relative_position.y),
@@ -740,14 +808,20 @@ void render_sprites(uint32_t time) {
 		);
 
 		// Skip any sprites which are behind the player
-		if (screen_transform.y < 0) {
+		if (screen_transform.y <= 0) {
 			continue;
 		}
 
-		bounds = sprite_bounds[(unsigned int)psprite->texture];
+		bounds = sprite_bounds[(unsigned int)psprite.texture];
 
-		int sprite_height = std::abs(int(bounds.h * SPRITE_SCALE / screen_transform.y));
-		int sprite_width = ((float)bounds.w / (float)bounds.h) * sprite_height;
+		if(psprite.type == SPRAY) {
+			factor = 1.0f - (psprite.health / MAX_SPRAY_HEALTH);
+			sprite_height = std::abs(int(bounds.h * factor * factor / screen_transform.y));
+		}
+		else {
+			sprite_height = std::abs(int(bounds.h * SPRITE_SCALE / screen_transform.y));
+		}
+		sprite_width = ((float)bounds.w / (float)bounds.h) * sprite_height;
 
 		// Unused?
 		//int sprite_top_y = ((VIEW_HEIGHT - bounds.h) * SPRITE_SCALE) / screen_transform.y;
@@ -767,6 +841,10 @@ void render_sprites(uint32_t time) {
 
 		// offset screen coordinate with sprite bounds
 		screen_pos -= Vec2(sprite_width / 2, sprite_height);
+
+		if(psprite.type == SPRAY) {
+			screen_pos.y -= 30 / screen_transform.y;
+		}
 
 		Rect dest(screen_pos.x, screen_pos.y + OFFSET_TOP, sprite_width, sprite_height);
 
@@ -792,9 +870,9 @@ void render_sprites(uint32_t time) {
 
 		SpriteTransform transform = SpriteTransform::NONE;
 
-		if(psprite->texture == ANGRY_WASP) {
-			float angle =  psprite->position.angle_to(player1.position);
-			angle += psprite->rotation;
+		if(psprite.type == WASP) {
+			float angle =  psprite.position.angle_to(player1.position);
+			angle += psprite.rotation;
 			angle -= 22.5f * pi / 180.0f; // Correct angle of rotation by 45deg / 2
 
 			// Clamp from 0.0 to 2 * pi
@@ -812,18 +890,24 @@ void render_sprites(uint32_t time) {
 				facing = 0;
 			}
 			bounds.x = facing * 64;
+			psprite.size = !psprite.size;
+			bounds.y = psprite.size * 64;
 		}
 
 		if(screen.clip.w && bounds.w && dest.w) {
-			screen.sprites = psprite->texture == ANGRY_WASP ? sprites_wasp : sprites_world; //sprite_source[(unsigned int)psprite->texture];
-			if(screen.sprites == sprites_world) {
-				screen.sprites->palette[11] = cols_a[psprite->color];
-				screen.sprites->palette[12] = cols_b[psprite->color];
+			screen.sprites = psprite.type == WASP ? sprites_wasp : sprites_world; //sprite_source[(unsigned int)psprite.texture];
+			if(psprite.type == PLANT) {
+				screen.sprites->palette[11] = cols_a[psprite.color];
+				screen.sprites->palette[12] = cols_b[psprite.color];
+			} else if(psprite.type == SPRAY) {
+				screen.alpha = 128 - (128 * factor);
 			}
 			screen.stretch_blit_sprite(bounds, dest, transform);
-			if(screen.sprites == sprites_world) {
+			if(psprite.type == PLANT) {
 				screen.sprites->palette[11] = Pen(0x15, 0x98, 0x5d, 200);
 				screen.sprites->palette[12] = Pen(0x00, 0x7f, 0x43, 200);
+			} else if(psprite.type == SPRAY) {
+				screen.alpha = 255;
 			}
 		}
 	}

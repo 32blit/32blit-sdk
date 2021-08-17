@@ -12,7 +12,7 @@ constexpr float EPSILON = 0.00000001f;
 constexpr uint16_t OFFSET_TOP = 30;
 constexpr uint16_t SCREEN_WIDTH = 120;
 constexpr uint16_t SCREEN_HEIGHT = 120;
-constexpr uint16_t NUM_SPRITES = 500;
+constexpr uint16_t NUM_SPRITES = 1000;
 constexpr uint16_t NUM_STARS = 50;
 #define AMBIENT_OCCLUSION // Paints into a mask with a blur pass, disable for a slight performance boost
 //#define SHOW_FPS          // Frame time is pretty high on PicoSystem, so just turn off the FPS meter :D
@@ -26,8 +26,10 @@ constexpr uint16_t NUM_STARS = 100;
 //#define SHOW_FPS
 #endif
 
-constexpr uint8_t MAX_SPRAY = 100; // Has its own spray storage for now
-constexpr uint8_t MAX_ENEMIES = 20; // Uses capacity from NUM_SPRITES
+constexpr uint8_t MAX_SPRAY = 100;  // Uses capacity from NUM_SPRITES
+constexpr uint8_t MAX_ENEMIES = 10; // Uses capacity from NUM_SPRITES
+
+constexpr float MAX_SPRAY_HEALTH = 128;
 
 constexpr uint16_t VIEW_HEIGHT = SCREEN_HEIGHT - OFFSET_TOP - 24;
 constexpr float SPRITE_SCALE = float(VIEW_HEIGHT) / 60.0f;
@@ -41,19 +43,25 @@ constexpr uint8_t MAP_WIDTH = 16;
 constexpr uint8_t MAP_HEIGHT = 16;
 constexpr uint8_t MAX_RAY_STEPS = 24; //11 //sqrt((MAP_WIDTH ** 2) + (MAP_HEIGHT ** 2))
 
-struct player {
-	blit::Vec2 direction;
+struct Entity {
 	blit::Vec2 position;
+	blit::Vec2 velocity;
+	float rotation;
+	float health;
+};
+
+struct Player : Entity {
+	blit::Vec2 direction;
 	blit::Vec2 camera;
 	float inverse_det;
 	bool spraying;
-	float rotation;
 	bool facing;
 };
 
 enum SpriteType {
-	PASSIVE = 0,
-	ACTIVE = 1
+	PLANT = 0,
+	WASP = 1,
+	SPRAY = 2
 };
 
 enum SpriteTexture : uint8_t {
@@ -65,23 +73,20 @@ enum SpriteTexture : uint8_t {
 	MID_GRASS = 5,
 	SMOL_GRASS = 6,
 	ANGRY_WASP = 7,
-	SPRAY = 64
+	BUGSPRAY = 8
 };
 
-struct sprite {
-	blit::Vec2 position;
-	blit::Vec2 velocity;
-	float rotation;
+struct Sprite : Entity {
 	uint8_t size;
 	SpriteTexture texture;
 	SpriteType type;
 	uint8_t color;
 	float distance;
 	bool active;
-	bool operator < (const sprite& rhs) const { return distance > rhs.distance; };
+	bool operator < (const Sprite& rhs) const { return distance > rhs.distance; };
 };
 
-struct star {
+struct Star {
 	blit::Point position;
 	uint8_t brightness;
 };
