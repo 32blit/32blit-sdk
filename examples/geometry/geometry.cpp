@@ -5,76 +5,11 @@
 
 using namespace blit;
 
-#define __AUDIO__
-//#define __DEBUG__
-
-
-const int16_t STARTING_ENERGY = 500;
-const int16_t REGEN_ENERGY = 1;
-const int16_t LASER_COST = 2;
-const int16_t MOVEMENT_COST = 1;
-const int16_t DAMAGE_COST = 10;
-const uint8_t STARTING_LIVES = 3;
-const uint8_t P_MAX_AGE = 255;
-
-const uint8_t ASTEROID_COUNT = 5;
-const uint8_t ASTEROID_MIN_R = 40;
-const uint8_t ASTEROID_MAX_R = 50;
-
-const uint16_t ASTEROID_MIN_AREA = 100;
-
-struct SpaceDust {
-    blit::Vec2 pos;
-    blit::Vec2 vel;
-    uint32_t age = 0;
-    uint8_t color = 0;
-
-    SpaceDust(Vec2 pos, Vec2 vel, uint8_t color) : pos(pos), vel(vel), color(color) {};
-};
-
-struct player {
-    Vec2 velocity;
-    Vec2 position;
-    float rotation = 0;
-    float rotational_velocity = 0;
-    std::vector<Vec2> shape;
-    int32_t energy = 0;
-    unsigned int score = 0;
-    bool shot_fired = false;
-    unsigned int t_shot_fired = 0;
-    Vec2 shot_origin;
-    Vec2 shot_target;
-    int32_t shot_charge;
-    uint8_t lives = 3;
-    bool invincible = false;
-
-    void reset_or_die() {
-        energy = STARTING_ENERGY;
-        if(lives == 0) {
-            lives = STARTING_LIVES;
-            score = 0;
-        }
-        invincible = true;
-        position = Vec2(screen.bounds.w / 2, screen.bounds.h / 2);
-        rotation = 0.0f;
-        rotational_velocity = 0.0f;
-    }
-};
-
-struct polygon {
-    float colour_offset;
-    Vec2 velocity;
-    float rotational_velocity = 0;
-    Vec2 origin;
-    std::vector<Vec2> points;
-    bool prune = false;
-    uint16_t area = 0;
-};
 
 std::vector<SpaceDust> particles;
-std::vector<polygon> polygons;
+std::vector<Polygon> polygons;
 
-player player1;
+Player player1;
 
 void explode(Vec2 origin, float factor=1.0f) {
     channels[2].frequency = 800;
@@ -108,7 +43,7 @@ void thrust(Vec2 origin, Vec2 vel) {
     }
 }
 
-bool prune_polygons(polygon p){
+bool prune_polygons(Polygon p){
     if(p.prune) {
         explode(p.origin, p.area / float(ASTEROID_MIN_AREA));
     }
@@ -150,7 +85,7 @@ bool line_segment_intersection(Vec2 *intersection, Vec2 a, Vec2 b, Vec2 c, Vec2 
     return false;
 }
 
-polygon split_polygon(polygon *poly, Vec2 a, Vec2 b) {
+Polygon split_polygon(Polygon *poly, Vec2 a, Vec2 b) {
     std::vector<Vec2> split_a;
     std::vector<Vec2> split_b;
     std::vector<Vec2> split_line_segment;
@@ -210,7 +145,7 @@ polygon split_polygon(polygon *poly, Vec2 a, Vec2 b) {
 
         if(area >= ASTEROID_MIN_AREA) {
 
-            polygon new_polygon;
+            Polygon new_polygon;
             new_polygon.colour_offset = poly->colour_offset;
             new_polygon.points = std::vector<Vec2>(split_b);
             new_polygon.origin = centroid_of_polygon(new_polygon.points);
@@ -234,7 +169,7 @@ polygon split_polygon(polygon *poly, Vec2 a, Vec2 b) {
         }
     }
     
-    polygon new_polygon;
+    Polygon new_polygon;
     return new_polygon;
 }
 
@@ -273,7 +208,7 @@ void rotate_polygon(std::vector<Vec2> &points, float angle, Vec2 origin) {
     }
 }
 
-void translate_polygon(polygon &polygon, Vec2 translation) {
+void translate_polygon(Polygon &polygon, Vec2 translation) {
     Mat3 t = Mat3::identity();
     t *= Mat3::translation(translation);
     for (auto &p : polygon.points) {
@@ -298,7 +233,7 @@ float random_float_between(float a, float b) {
 void init() {
     set_screen_mode(ScreenMode::hires);
     for(unsigned int i = 0; i < ASTEROID_COUNT; i++){
-        polygon p;
+        Polygon p;
         float x = random_float_between(0, screen.bounds.w);
         float y = random_float_between(0, screen.bounds.h);
         //float x = screen.bounds.w / 2;
@@ -506,7 +441,7 @@ void update(uint32_t time) {
     player1.rotational_velocity *= 0.95f;
     player1.rotation += player1.rotational_velocity;
 
-    std::vector<polygon> new_polygons;
+    std::vector<Polygon> new_polygons;
 
     bool player_inside_asteroid = false;
 
@@ -535,7 +470,7 @@ void update(uint32_t time) {
 
         // If the player's shot intersects any line in this polygon we must slice it into twos
         if(do_split){
-            polygon poly = split_polygon(&p, player1.shot_origin, player1.shot_target);
+            Polygon poly = split_polygon(&p, player1.shot_origin, player1.shot_target);
             if(poly.points.size()) {
                 new_polygons.push_back(poly);
             }
