@@ -326,7 +326,7 @@ void update(uint32_t time) {
 					sprite.position = player1.position + (player1.direction * 0.1f) + spray_offset;
 					sprite.texture = BUGSPRAY;
 					sprite.velocity = (player1.direction * 0.01f) + player1.velocity;
-					sprite.health = 64.0f;
+					sprite.health = MAX_SPRAY_HEALTH;
 					sprite.active = true;
 					last_spray = time;
 					break;
@@ -342,7 +342,7 @@ void update(uint32_t time) {
 	for(Sprite &sprite : map_sprites) {
 		if(!sprite.active) continue;
 		if(sprite.type == SPRAY) {
-			sprite.health -= 0.2f;
+			sprite.health -= 1.0f;
 			if(sprite.health < 0.0f) {
 				sprite.health = 0.0f;
 				sprite.active = false;
@@ -808,7 +808,7 @@ void render_sprites(uint32_t time) {
 		);
 
 		// Skip any sprites which are behind the player
-		if (screen_transform.y <= 0) {
+		if (screen_transform.y <= 0.01f) {
 			continue;
 		}
 
@@ -817,11 +817,12 @@ void render_sprites(uint32_t time) {
 		if(psprite.type == SPRAY) {
 			factor = 1.0f - (psprite.health / MAX_SPRAY_HEALTH);
 			sprite_height = std::abs(int(bounds.h * factor * factor / screen_transform.y));
+			sprite_width = sprite_height;
 		}
 		else {
 			sprite_height = std::abs(int(bounds.h * SPRITE_SCALE / screen_transform.y));
+			sprite_width = ((float)bounds.w / (float)bounds.h) * sprite_height;
 		}
-		sprite_width = ((float)bounds.w / (float)bounds.h) * sprite_height;
 
 		// Unused?
 		//int sprite_top_y = ((VIEW_HEIGHT - bounds.h) * SPRITE_SCALE) / screen_transform.y;
@@ -843,7 +844,7 @@ void render_sprites(uint32_t time) {
 		screen_pos -= Vec2(sprite_width / 2, sprite_height);
 
 		if(psprite.type == SPRAY) {
-			screen_pos.y -= 30 / screen_transform.y;
+			screen_pos.y -= 43 / screen_transform.y;
 		}
 
 		Rect dest(screen_pos.x, screen_pos.y + OFFSET_TOP, sprite_width, sprite_height);
