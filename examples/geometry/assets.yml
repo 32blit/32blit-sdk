@@ -2,7 +2,8 @@
 # pipeline will compile and link these assets into your code.
 
 font_asset.cpp:
-  PressStart2P-Regular.ttf:
-    name: press_start_font
-    height: 12
+  numbers.png:
+    name: asset_custom_font
+    type: font/image
+    height: 13
 

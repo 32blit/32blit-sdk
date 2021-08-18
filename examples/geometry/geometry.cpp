@@ -7,7 +7,7 @@
 
 using namespace blit;
 
-const Font custom_font(press_start_font);
+const Font custom_font(asset_custom_font);
 std::vector<SpaceDust> particles;
 std::vector<Polygon> polygons;
 
@@ -373,15 +373,15 @@ void render(uint32_t time) {
 #endif
 
     screen.pen = Pen(255, 255, 255);
-    screen.text(std::to_string(player1.score), custom_font, Point(0, 0));
+    screen.text(std::to_string(player1.score), custom_font, Point(5, 5));
 
 
-    Vec2 lives = Vec2(screen.bounds.w - (STARTING_LIVES * 15), 5);
+    Vec2 lives = Vec2(screen.bounds.w - (STARTING_LIVES * 18) + 7, 11);
     for(auto i = 0u; i < STARTING_LIVES; i++) {
         std::vector<Vec2> life_shape(player1.shape);
         rotate_polygon(life_shape, 0.0f, lives);
         translate_polygon(life_shape, lives);
-        lives.x += 15;
+        lives.x += 18;
         screen.pen = i < player1.lives ? Pen(255, 255, 255) :  Pen(64, 64, 64);
         draw_polygon(life_shape);
     }
@@ -393,12 +393,16 @@ void render(uint32_t time) {
     Rect rect_energy = Rect(5, screen.bounds.h - 5, 0, 5);
     rect_energy.y -= rect_energy.h;
     rect_energy.w = (screen.bounds.w - 10) * energy;
-    screen.pen = Pen(255, 255, 255);
-    screen.rectangle(rect_energy);
-    screen.alpha = alpha;
-    screen.pen = Pen(1.0f - energy, energy, 0.0f);
-    screen.rectangle(rect_energy);
-    screen.alpha = 255;
+
+    for(auto y = 0; y < rect_energy.h; y+=2) {
+        screen.pen = Pen(255, 255, 255);
+        screen.line(rect_energy.tl(), rect_energy.tr());
+        screen.alpha = alpha;
+        screen.pen = Pen(1.0f - energy, energy, 0.0f);
+        screen.line(rect_energy.tl(), rect_energy.tr());
+        screen.alpha = 255;
+        rect_energy.y += 2;
+    }
 }
 
 void update(uint32_t time) {
