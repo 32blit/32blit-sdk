@@ -5,6 +5,7 @@
 #include "bsp/board.h"
 #include "tusb.h"
 
+#include "config.h"
 #include "file.hpp"
 #include "storage.hpp"
 
@@ -20,8 +21,8 @@ void tud_mount_cb() {
 void tud_msc_inquiry_cb(uint8_t lun, uint8_t vendor_id[8], uint8_t product_id[16], uint8_t product_rev[4]) {
   (void) lun;
 
-  const char vid[] = "TinyUSB";
-  const char pid[] = "Mass Storage";
+  const char vid[] = USB_VENDOR_STR;
+  const char pid[] = USB_PRODUCT_STR " Storage";
   const char rev[] = "1.0";
 
   memcpy(vendor_id  , vid, strlen(vid));

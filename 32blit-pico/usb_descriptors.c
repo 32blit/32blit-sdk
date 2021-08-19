@@ -27,15 +27,19 @@
 
 #include "pico/unique_id.h"
 
+#include "config.h"
+
 /* A combination of interfaces must have a unique product id, since PC will save device driver after the first plug.
  * Same VID/PID with different interface e.g MSC (first), then CDC (later) will possibly cause system error on PC.
  *
  * Auto ProductID layout's Bitmap:
  *   [MSB]         HID | MSC | CDC          [LSB]
  */
+#ifndef USB_PRODUCT_ID
 #define _PID_MAP(itf, n)  ( (CFG_TUD_##itf) << (n) )
-#define USB_PID           (0x4000 | _PID_MAP(CDC, 0) | _PID_MAP(MSC, 1) | _PID_MAP(HID, 2) | \
-                           _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4) )
+#define USB_PRODUCT_ID           (0x4000 | _PID_MAP(CDC, 0) | _PID_MAP(MSC, 1) | _PID_MAP(HID, 2) | \
+                                  _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4) )
+#endif
 
 //--------------------------------------------------------------------+
 // Device Descriptors
@@ -54,8 +58,8 @@ tusb_desc_device_t const desc_device =
 
     .bMaxPacketSize0    = CFG_TUD_ENDPOINT0_SIZE,
 
-    .idVendor           = 0xCafe,
-    .idProduct          = USB_PID,
+    .idVendor           = USB_VENDOR_ID,
+    .idProduct          = USB_PRODUCT_ID,
     .bcdDevice          = 0x0100,
 
     .iManufacturer      = 0x01,
@@ -124,11 +128,11 @@ uint8_t const * tud_descriptor_configuration_cb(uint8_t index)
 char const* string_desc_arr [] =
 {
   (const char[]) { 0x09, 0x04 }, // 0: is supported language is English (0x0409)
-  "TinyUSB",                     // 1: Manufacturer
-  "TinyUSB Device",              // 2: Product
+  USB_VENDOR_STR,                // 1: Manufacturer
+  USB_PRODUCT_STR,               // 2: Product
   NULL,                          // 3: Serials, should use chip ID
-  "TinyUSB CDC",                 // 4: CDC Interface
-  "TinyUSB MSC",                 // 5: MSC Interface
+  USB_PRODUCT_STR" CDC",         // 4: CDC Interface
+  USB_PRODUCT_STR" MSC",         // 5: MSC Interface
 };
 
 static uint16_t _desc_str[32];
