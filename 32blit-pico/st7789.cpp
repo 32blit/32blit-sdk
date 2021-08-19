@@ -177,14 +177,14 @@ namespace pimoroni {
       sleep_ms(100);
 
       // setup correct addressing window
-      uint8_t madctl;
+      uint8_t madctl = MADCTL::RGB;
       if(width == 240 && height == 240) {
-        madctl = MADCTL::HORIZ_ORDER;
+        madctl |= MADCTL::HORIZ_ORDER;
         set_window(0, 0, 240, 240);
       }
 
       if(width == 240 && height == 135) {
-        madctl = MADCTL::COL_ORDER | MADCTL::SWAP_XY | MADCTL::SCAN_ORDER;
+        madctl |= MADCTL::COL_ORDER | MADCTL::SWAP_XY | MADCTL::SCAN_ORDER;
         set_window(40, 53, 240, 135);
       }
 

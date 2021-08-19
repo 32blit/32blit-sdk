@@ -137,13 +137,13 @@ namespace blit {
   }
 
   __attribute__((always_inline)) inline uint16_t pack_rgb565(uint8_t r, uint8_t g, uint8_t b) {
-    return (b >> 3) | ((g >> 2) << 5) | ((r >> 3) << 11);
+    return (r >> 3) | ((g >> 2) << 5) | ((b >> 3) << 11);
   }
 
   __attribute__((always_inline)) inline void unpack_rgb565(uint16_t rgb565, uint8_t &r, uint8_t &g, uint8_t &b) {
-    b =  rgb565        & 0x1F; b = b << 3;
+    r =  rgb565        & 0x1F; r = r << 3;
     g = (rgb565 >>  5) & 0x3F; g = g << 2;
-    r = (rgb565 >> 11) & 0x1F; r = r << 3;
+    b = (rgb565 >> 11) & 0x1F; b = b << 3;
   }
 
   __attribute__((always_inline)) inline void blend_rgba_rgb565(const Pen *s, uint8_t *d, uint8_t a, uint32_t c) {
