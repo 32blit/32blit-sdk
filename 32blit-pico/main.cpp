@@ -10,6 +10,7 @@
 #endif
 
 #include "audio.hpp"
+#include "config.h"
 #include "file.hpp"
 #include "input.hpp"
 #include "led.hpp"
@@ -21,10 +22,6 @@
 #include "graphics/surface.hpp"
 
 using namespace blit;
-
-#ifndef ALLOW_HIRES
-#define ALLOW_HIRES 1
-#endif
 
 #ifdef DISPLAY_ST7789
 #if ALLOW_HIRES
