@@ -221,7 +221,9 @@ static int64_t timer_callback(alarm_id_t alarm_id, void *user_data) {
 #endif
 
 int main() {
+#if OVERCLOCK_250
   set_sys_clock_khz(250000, false);
+#endif
 
   stdio_init_all();
 

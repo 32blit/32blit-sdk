@@ -8,6 +8,7 @@
 #include "hardware/pwm.h"
 #include "pico/time.h"
 
+#include "config.h"
 #include "st7789.pio.h"
 
 namespace pimoroni {
@@ -124,7 +125,9 @@ namespace pimoroni {
     pio_double_offset = pio_add_program(pio, &st7789_pixel_double_program);
 
     pio_sm_config cfg = st7789_raw_program_get_default_config(pio_offset);
+#if OVERCLOCK_250
     sm_config_set_clkdiv(&cfg, 2); // back to 62.5MHz from overclock
+#endif
     sm_config_set_out_shift(&cfg, false, true, 8);
     sm_config_set_out_pins(&cfg, mosi, 1);
     sm_config_set_fifo_join(&cfg, PIO_FIFO_JOIN_TX);
