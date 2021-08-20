@@ -345,8 +345,10 @@ int main() {
 
       ::render(now);
 
-      if(!have_vsync)
+      if(!have_vsync) {
+        while(st7789.dma_is_busy()) {} // may need to wait for lores.
         st7789.update();
+      }
 
       if(last_render && !backlight_enabled) {
         // the first render should have made it to the screen at this point
