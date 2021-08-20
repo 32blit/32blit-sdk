@@ -26,7 +26,8 @@
 using namespace blit;
 
 #ifdef DISPLAY_ST7789
-static const int lores_page_size = (ST7789_WIDTH / 2) * (ST7789_HEIGHT / 2) * 2;
+// height rounded up to handle the 135px display
+static const int lores_page_size = (ST7789_WIDTH / 2) * ((ST7789_HEIGHT + 1) / 2) * 2;
 
 #if ALLOW_HIRES
 uint8_t screen_fb[ST7789_WIDTH * ST7789_HEIGHT * 2];

@@ -80,7 +80,7 @@ namespace pimoroni {
       if(++cur_scanline > st7789_ptr->win_h / 2)
         return;
 
-      auto count = cur_scanline == st7789_ptr->win_h / 2 ? st7789_ptr->win_w / 4  : st7789_ptr->win_w / 2;
+      auto count = cur_scanline == (st7789_ptr->win_h + 1) / 2 ? st7789_ptr->win_w / 4  : st7789_ptr->win_w / 2;
 
       dma_channel_set_trans_count(channel, count, false);
       dma_channel_set_read_addr(channel, st7789_ptr->upd_frame_buffer + (cur_scanline - 1) * (st7789_ptr->win_w / 2), true);
