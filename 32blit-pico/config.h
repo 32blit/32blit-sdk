@@ -5,6 +5,14 @@
 #define ALLOW_HIRES 1
 #endif
 
+#ifndef ST7789_WIDTH
+#define ST7789_WIDTH 240
+#endif
+
+#ifndef ST7789_HEIGHT
+#define ST7789_HEIGHT 240
+#endif
+
 #ifndef OVERCLOCK_250
 #define OVERCLOCK_250 1
 #endif
