@@ -62,6 +62,8 @@ if (NOT DEFINED BLIT_ONCE)
 		set(FLASH_PORT "AUTO" CACHE STRING "Port to use for flash")
 
 		include(${CMAKE_CURRENT_LIST_DIR}/32blit-stm32/executable.cmake)
+	elseif(PICO_SDK_PATH)
+		add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/32blit-pico 32blit-pico)
 	else()
 		add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/32blit-sdl 32blit-sdl)
 	endif()

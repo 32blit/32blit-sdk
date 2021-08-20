@@ -1,0 +1,52 @@
+.program st7789_raw
+.side_set 1 opt
+
+; raw serial, nothing special
+.wrap_target
+    out pins, 1 side 0
+    nop         side 1
+.wrap
+
+; pixel doubling, "borrowed" from PicoSystem
+.program st7789_pixel_double
+.side_set 1 opt
+
+.wrap_target
+
+  pull                      ; fetch two pixels
+  out y, 16                 ; first pixel in y register
+  out x, 16                 ; second pixel in x register
+
+; write first pixel
+
+  mov osr, x                ; move pixel data back into osr from register x
+  out null, 16              ; discard the 16-bits of dummy data from the mov
+p1:
+  out pins, 1   side 0      ; output bit, clear clock
+  jmp !osre p1  side 1      ; if still bits in osr then jump back to start of loop and clock in data
+
+; duplicate first pixel
+
+  mov osr, x                ; move pixel data back into osr from register x
+  out null, 16              ; discard as above..
+p1d:
+  out pins, 1   side 0      ; output bit, clear clock
+  jmp !osre p1d  side 1     ; if still bits in osr then jump back to start of loop and clock in data
+
+; write second pixel
+
+  mov osr, y                ; move pixel data back into osr from register y
+  out null, 16              ; discard as above..
+p2:
+  out pins, 1   side 0      ; output bit, clear clock
+  jmp !osre p2  side 1      ; if still bits in osr then jump back to start of loop and clock in data
+
+; duplicate second pixel
+
+  mov osr, y                ; move pixel data back into osr from register y
+  out null, 16              ; discard as above..
+p2d:
+  out pins, 1   side 0      ; output bit, clear clock
+  jmp !osre p2d  side 1     ; if still bits in osr then jump back to start of loop and clock in data
+
+.wrap
