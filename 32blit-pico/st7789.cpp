@@ -170,6 +170,21 @@ namespace pimoroni {
         command(reg::STE, 2, "\x01\x2C");
       }
 
+      if(width == 320 && height == 240) {
+        command(reg::PORCTRL, 5, "\x0c\x0c\x00\x33\x33");
+        command(reg::GCTRL, 1, "\x74");
+        command(reg::VCOMS, 1, "\x2f");
+        command(reg::LCMCTRL, 1, "\2c");
+        command(reg::LCMCTRL, 1, "\x22");
+        command(reg::VDVVRHEN, 1, "\x01");
+        command(reg::VRHS, 1, "\x19");
+        command(reg::VDVS, 1, "\x20");
+        command(reg::PWCTRL1, 2, "\xa4\xa1");
+        command(0xd6, 1, "\xa1"); // ???
+        command(reg::PVGAMCTRL, 14, "\xF0\x08\x0F\x0B\x0B\x07\x34\x43\x4B\x38\x14\x13\x2C\x31");
+        command(reg::NVGAMCTRL, 14, "\xF0\x0C\x11\x09\x08\x24\x34\x33\x4A\x3A\x16\x16\x2E\x32");
+      }
+
       command(reg::FRCTRL2, 1, "\x15"); // 50Hz
 
       command(reg::INVON);   // set inversion mode
@@ -189,6 +204,9 @@ namespace pimoroni {
         madctl |= MADCTL::COL_ORDER | MADCTL::SWAP_XY | MADCTL::SCAN_ORDER;
         set_window(40, 53, 240, 135);
       }
+
+      if(width == 320 && height == 240)
+        set_window(0, 0, 320, 240);
 
       command(reg::MADCTL,    1, (char *)&madctl);
     }
