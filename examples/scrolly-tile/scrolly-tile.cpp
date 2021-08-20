@@ -6,9 +6,6 @@ using namespace blit;
 
 #define __AUDIO__
 
-#define SCREEN_W 160
-#define SCREEN_H 120
-
 #define TILE_W 10
 #define TILE_H 10
 #define TILE_SOLID 0b1 << 7
@@ -41,6 +38,8 @@ using namespace blit;
 
 #define PASSAGE_COUNT 5
 
+const std::string TITLE = "RAINBOW ASCENT";
+
 // Number of times a player can jump sequentially
 // including mid-air jumps and the initial ground
 // or wall jump
@@ -60,7 +59,7 @@ uint32_t current_random_seed = 0x64063701;
 // IE: when our screen is shifted down 5px you can see 13
 // rows and both the top and bottom visible row are next to the
 // additional two invisible rows which govern how corners are rounded.
-uint8_t tiles[16 * 15] = { 0 };
+uint8_t tiles[TILES_X * TILES_Y] = { 0 };
 
 uint32_t current_row = 0;
 
@@ -71,9 +70,10 @@ struct SaveData {
   uint32_t highscore;
 } save_data;
 
-Vec2 player_position(80.0f, SCREEN_H - PLAYER_H);
+Vec2 player_position(0.0f, 0.0f);
 Vec2 player_velocity(0.0f, 0.0f);
 Vec2 jump_velocity(0.0f, -2.0f);
+Point camera_offset(0, 0);
 uint8_t player_jump_count = 0;
 uint32_t player_progress = 0;
 bool player_on_floor = false;
@@ -169,6 +169,8 @@ uint8_t render_tile(uint8_t tile, uint8_t x, uint8_t y, void *args) {
     // corners depending upon the content of neighbouring tiles.
     // This could probably be rewritten to use a lookup table?
     Point offset = *(Point *)args;
+
+    offset += camera_offset;
 
     auto tile_x = (x * TILE_W) + offset.x;
     auto tile_y = (y * TILE_H) + offset.y;
@@ -378,7 +380,7 @@ void new_level() {
     prng_lfsr = current_random_seed;
 
     player_position.x = 80.0f;
-    player_position.y = float(SCREEN_H - PLAYER_H);
+    player_position.y = float(screen.bounds.h - PLAYER_H);
     player_velocity.x = 0.0f;
     player_velocity.y = 0.0f;
     player_progress = 0;
@@ -515,7 +517,7 @@ uint8_t collide_player_ud(uint8_t tile, uint8_t x, uint8_t y, void *args) {
 }
 
 void update(uint32_t time_ms) {
-    int32_t water_dist = player_position.y - (SCREEN_H - water_level);
+    int32_t water_dist = player_position.y - (screen.bounds.h - water_level);
     if (water_dist < 0) {
         water_dist = 0;
     }
@@ -665,8 +667,8 @@ void update(uint32_t time_ms) {
             player_velocity.x = 0;
             player_state = wall_left;
         }
-        else if(player_position.x + PLAYER_W >= SCREEN_W) {
-            player_position.x = float(SCREEN_W - PLAYER_W);
+        else if(player_position.x + PLAYER_W >= 160) {
+            player_position.x = float(160 - PLAYER_W);
             player_velocity.x = 0;
             player_state = wall_right;
 
@@ -677,7 +679,7 @@ void update(uint32_t time_ms) {
         // Useful for debug since you can position the player directly
         //player_position.y += movement.y;
 
-        if(player_position.y + PLAYER_H > SCREEN_H || player_position.y > SCREEN_H - water_level) {
+        if(player_position.y + PLAYER_H > screen.bounds.h || player_position.y > screen.bounds.h - water_level) {
             game_state = enum_state::dead;
             if (player_progress > save_data.highscore) {
               save_data.highscore = player_progress;
@@ -685,40 +687,47 @@ void update(uint32_t time_ms) {
             }
         }
         for_each_tile(collide_player_ud, (void *)&tile_offset);
+
+        if(screen.bounds.w < 160) {
+            uint8_t max_offset = 160 - screen.bounds.w;
+            camera_offset.x = -max_offset * player_position.x / screen.bounds.w;
+        }
     }
 }
 
-void render_summary() {
-    std::string text = "Game mode: ";
+void render_summary(uint8_t text_left) {
+    std::string text = "Mode: ";
 
     if(current_random_source == RANDOM_TYPE_PRNG) {
         text.append("Competitive");
     } else {
-        text.append("Random Practice");
+        text.append("Practice");
     }
-    screen.text(text, minimal_font, Point(10, (SCREEN_H / 2) + 20));
+    screen.text(text, minimal_font, Point(text_left, (screen.bounds.h / 2) + 20));
 
     if(current_random_source == RANDOM_TYPE_PRNG) {
         char buf[9];
         snprintf(buf, 9, "%08" PRIX32, current_random_seed);
-        text = "Level seed: ";
+        text = "Seed: ";
         text.append(buf);
-        screen.text(text, minimal_font, Point(10, (SCREEN_H / 2) + 30));
+        screen.text(text, minimal_font, Point(text_left, (screen.bounds.h / 2) + 30));
     }
 
     text = "Press B";
-    screen.text(text, minimal_font, Point(10, (SCREEN_H / 2) + 50));
+    screen.text(text, minimal_font, Point(text_left, (screen.bounds.h / 2) + 50));
 
     text = "Highscore: ";
     text.append(std::to_string(save_data.highscore));
     text.append("cm");
-    screen.text(text, minimal_font, Point(10, (SCREEN_H / 2) + 40));
+    screen.text(text, minimal_font, Point(text_left, (screen.bounds.h / 2) + 40));
 }
 
 void render(uint32_t time_ms) {
+    uint8_t text_left = screen.bounds.w == 120 ? 5 : 10;
+    uint8_t title_spacing = screen.bounds.w == 120 ? 8 : 10;
+
     screen.pen = Pen(0, 0, 0);
     screen.clear();
-    std::string text = "RAINBOW ASCENT";
 
     if (game_state == enum_state::menu) {
         for_each_tile(render_tile, (void *)&tile_offset);
@@ -732,21 +741,21 @@ void render(uint32_t time_ms) {
         screen.pen = Pen(0, 0, 0, 200);
         screen.clear();
 
-        uint8_t x = 10;
-        for(auto c : text) {
-            uint8_t y = 20 + (5.0f * sinf((time_ms / 250.0f) + (float(x) / text.length() * 2.0f * pi)));
+        uint8_t x = text_left;
+        for(auto c : TITLE) {
+            uint8_t y = 20 + (5.0f * sinf((time_ms / 250.0f) + (float(x) / TITLE.length() * 2.0f * pi)));
             Pen color_letter = hsv_to_rgba((x - 10) / 140.0f, 0.5f, 0.8f);
             screen.pen = color_letter;
             char buf[2];
             buf[0] = c;
             buf[1] = '\0';
             screen.text(buf, minimal_font, Point(x, y));
-            x += 10;
+            x += title_spacing;
         }
 
         screen.pen = Pen(255, 255, 255, 150);
 
-        render_summary();
+        render_summary(text_left);
 
         return;
     }
@@ -756,18 +765,18 @@ void render(uint32_t time_ms) {
 
     if(water_level > 0){
         screen.pen = color_water;
-        screen.rectangle(Rect(0, SCREEN_H - water_level, SCREEN_W, water_level + 1));
+        screen.rectangle(Rect(0, screen.bounds.h - water_level, screen.bounds.w, water_level + 1));
 
-        for(auto x = 0; x < SCREEN_W; x++){
-            uint16_t offset = x + uint16_t(sinf(time_ms / 500.0f) * 5.0f);
+        for(auto x = 0; x < screen.bounds.w; x++){
+            uint16_t offset = x + camera_offset.x + uint16_t(sinf(time_ms / 500.0f) * 5.0f);
             if((offset % 5) > 0){
-                screen.pixel(Point(x, SCREEN_H - water_level - 1));
+                screen.pixel(Point(x, screen.bounds.h - water_level - 1));
             }
             if(((offset + 2) % 5) == 0){
-                screen.pixel(Point(x, SCREEN_H - water_level - 2));
+                screen.pixel(Point(x, screen.bounds.h - water_level - 2));
             }
             if(((offset + 3) % 5) == 0){
-                screen.pixel(Point(x, SCREEN_H - water_level - 2));
+                screen.pixel(Point(x, screen.bounds.h - water_level - 2));
             }
         }
     }
@@ -776,9 +785,9 @@ void render(uint32_t time_ms) {
 
     // Draw the player
     screen.pen = Pen(255, 255, 255);
-    screen.rectangle(Rect(player_position.x, player_position.y, PLAYER_W, PLAYER_H));
+    screen.rectangle(Rect(player_position + camera_offset, Size(PLAYER_W, PLAYER_H)));
     screen.pen = Pen(255, 50, 50);
-    screen.rectangle(Rect(player_position.x, player_position.y, PLAYER_W, 1));
+    screen.rectangle(Rect(player_position + camera_offset, Size(PLAYER_W, 1)));
 
     /*
     // Show number of active passages
@@ -790,48 +799,40 @@ void render(uint32_t time_ms) {
     if(water_level > 0){
         color_water.a = 100;
         screen.pen = color_water;
-        screen.rectangle(Rect(0, SCREEN_H - water_level, SCREEN_W, water_level + 1));
+        screen.rectangle(Rect(0, screen.bounds.h - water_level, screen.bounds.w, water_level + 1));
 
-        for(auto x = 0; x < SCREEN_W; x++){
+        for(auto x = 0; x < screen.bounds.w; x++){
             uint16_t offset = x + uint16_t(sinf(time_ms / 500.0f) * 5.0f);
             if((offset % 5) > 0){
-                screen.pixel(Point(x, SCREEN_H - water_level - 1));
+                screen.pixel(Point(x, screen.bounds.h - water_level - 1));
             }
             if(((offset + 2) % 5) == 0){
-                screen.pixel(Point(x, SCREEN_H - water_level - 2));
+                screen.pixel(Point(x, screen.bounds.h - water_level - 2));
             }
             if(((offset + 3) % 5) == 0){
-                screen.pixel(Point(x, SCREEN_H - water_level - 2));
+                screen.pixel(Point(x, screen.bounds.h - water_level - 2));
             }
         }
     }
 
     if(game_state == enum_state::dead) {
         screen.pen = Pen(128, 0, 0, 200);
-        screen.rectangle(Rect(0, 0, SCREEN_W, SCREEN_H));
+        screen.rectangle(Rect(0, 0, screen.bounds.w, screen.bounds.h));
         screen.pen = Pen(255, 0, 0, 255);
-        screen.text("YOU DIED!", minimal_font, Point((SCREEN_W / 2) - 20, (SCREEN_H / 2) - 4));
+        screen.text("YOU DIED!", minimal_font, Point((screen.bounds.w / 2) - 20, (screen.bounds.h / 2) - 4));
 
         // Round stats
         screen.pen = Pen(255, 255, 255);
 
-        std::string text = "";
+        screen.text("You climbed: " + std::to_string(player_progress) + "cm", minimal_font, Point(text_left, (screen.bounds.h / 2) + 10));
 
-        text = "You climbed: ";
-        text.append(std::to_string(player_progress));
-        text.append("cm");
-        screen.text(text, minimal_font, Point(10, (SCREEN_H / 2) + 10));
-
-        render_summary();
+        render_summary(text_left);
     }
     else
     {
         // Draw the HUD
         screen.pen = Pen(255, 255, 255);
-
-        text = std::to_string(player_progress);
-        text.append("cm");
-        screen.text(text, minimal_font, Point(2, 2));
+        screen.text(std::to_string(player_progress) + "cm", minimal_font, Point(2, 2));
 
         /*
         // State debug info
