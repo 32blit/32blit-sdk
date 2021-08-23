@@ -1,0 +1,9 @@
+# This file defines assets used by the example; the standard 32Blit
+# pipeline will compile and link these assets into your code.
+
+font_asset.cpp:
+  numbers.png:
+    name: asset_custom_font
+    type: font/image
+    height: 13
+
