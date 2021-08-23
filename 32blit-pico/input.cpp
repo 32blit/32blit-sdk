@@ -2,6 +2,8 @@
 
 #include "hardware/gpio.h"
 
+#include "pico/binary_info.h"
+
 #include "engine/api_private.hpp"
 #include "engine/input.hpp"
 
@@ -53,6 +55,17 @@ void init_input() {
   init_button(ButtonIO::B);
   init_button(ButtonIO::X);
   init_button(ButtonIO::Y);
+
+  #define BUTTON_DECL(btn) bi_decl(bi_1pin_with_name(static_cast<int>(ButtonIO::btn), #btn" Button"));
+  BUTTON_DECL(UP)
+  BUTTON_DECL(DOWN)
+  BUTTON_DECL(LEFT)
+  BUTTON_DECL(RIGHT)
+  BUTTON_DECL(A)
+  BUTTON_DECL(B)
+  BUTTON_DECL(X)
+  BUTTON_DECL(Y)
+  #undef BUTTON_DECL
 #endif
 }
 

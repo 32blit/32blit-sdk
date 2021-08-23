@@ -4,6 +4,7 @@
 
 #include "hardware/gpio.h"
 #include "hardware/pwm.h"
+#include "pico/binary_info.h"
 
 #include "engine/api_private.hpp"
 
@@ -20,6 +21,10 @@ void init_led() {
     pwm_init(pwm_gpio_to_slice_num(pin), &cfg, true);
     gpio_set_function(pin, GPIO_FUNC_PWM);
   }
+
+  bi_decl(bi_1pin_with_name(led_pins[0], "Red LED"));
+  bi_decl(bi_1pin_with_name(led_pins[1], "Green LED"));
+  bi_decl(bi_1pin_with_name(led_pins[2], "Blue LED"));
 #endif
 }
 
