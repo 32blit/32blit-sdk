@@ -160,8 +160,10 @@ namespace pimoroni {
         command(reg::VRHS, 1, "\x12");
         command(reg::VDVS, 1, "\x20");
         command(reg::PWCTRL1, 2, "\xa4\xa1");
-        command(reg::PVGAMCTRL, 14, "\xD0\x04\x0D\x11\x13\x2B\x3F\x54\x4C\x18\x0D\x0B\x1F\x23");
-        command(reg::NVGAMCTRL, 14, "\xD0\x04\x0C\x11\x13\x2C\x3F\x44\x51\x2F\x1F\x1F\x20\x23");
+
+        command(reg::PVGAMCTRL, 14, "\xD0\x08\x11\x08\x0c\x15\x39\x33\x50\x36\x13\x14\x29\x2d");
+        command(reg::NVGAMCTRL, 14, "\xD0\x08\x10\x08\x06\x06\x39\x44\x51\x0b\x16\x14\x2f\x31");
+
 
         // trigger "vsync" slightly earlier to avoid tearing while pixel-doubling
         // (this is still outside of the visible part of the screen)
