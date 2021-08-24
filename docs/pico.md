@@ -61,7 +61,7 @@ Building a boilerplate project is similar, but first you need to import the Pico
 cmake_minimum_required(VERSION 3.9)
 
 # this is a wrapper for the pico sdk import files, which are only included if PICO_BOARD is set
-include(${32BLIT_DIR}/32blit-pico/sdk_import.cmake)
+include(${32BLIT_DIR}/32blit-pico/sdk_import.cmake OPTIONAL)
 
 project(my-amazing-gane)
 ...

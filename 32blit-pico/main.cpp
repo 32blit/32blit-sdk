@@ -26,14 +26,16 @@
 using namespace blit;
 
 #ifdef DISPLAY_ST7789
+static const int lores_page_size = (ST7789_WIDTH / 2) * (ST7789_HEIGHT / 2) * 2;
+
 #if ALLOW_HIRES
-uint8_t screen_fb[240 * 240 * 2];
+uint8_t screen_fb[ST7789_WIDTH * ST7789_HEIGHT * 2];
 #else
-uint8_t screen_fb[120 * 120 * 2 * 2]; // double-buffered
+uint8_t screen_fb[lores_page_size * 2]; // double-buffered
 #endif
 
-static Surface lores_screen(screen_fb, PixelFormat::RGB565, Size(120, 120));
-static Surface hires_screen(screen_fb, PixelFormat::RGB565, Size(240, 240));
+static Surface lores_screen(screen_fb, PixelFormat::RGB565, Size(ST7789_WIDTH / 2, ST7789_HEIGHT / 2));
+static Surface hires_screen(screen_fb, PixelFormat::RGB565, Size(ST7789_WIDTH, ST7789_HEIGHT));
 //static Surface hires_palette_screen(screen_fb, PixelFormat::P, Size(320, 240));
 #elif defined(DISPLAY_SCANVIDEO)
 uint8_t screen_fb[160 * 120 * 4];
@@ -44,9 +46,11 @@ static blit::AudioChannel channels[CHANNEL_COUNT];
 
 #ifdef DISPLAY_ST7789
 #ifdef PIMORONI_PICOSYSTEM
+// non-default pins
+// TODO: clean this up?
 pimoroni::ST7789 st7789(240, 240, (uint16_t *)screen_fb, 5, 9, 6, 7, 12, 8, 4);
 #else
-pimoroni::ST7789 st7789(240, 240, (uint16_t *)screen_fb);
+pimoroni::ST7789 st7789(ST7789_WIDTH, ST7789_HEIGHT, (uint16_t *)screen_fb);
 #endif
 static bool have_vsync = false;
 #endif
@@ -334,7 +338,7 @@ int main() {
       if(cur_screen_mode == ScreenMode::lores) {
         buf_index ^= 1;
 
-        screen.data = screen_fb + (buf_index) * (120 * 120 * 2);
+        screen.data = screen_fb + (buf_index) * lores_page_size;
         st7789.frame_buffer = (uint16_t *)screen.data;
       }
 
