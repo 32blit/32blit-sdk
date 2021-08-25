@@ -338,7 +338,8 @@ static int write_audio_frame(AVFormatContext *oc, OutputStream *ost)
 			fprintf(stderr, "Error during encoding: %s\n", _av_err2str(ret));
 			return ret;
 		}
-		printf("Encoded frame %3I64d (size=%5d)\n", pkt.pts, pkt.size);
+
+		printf("Encoded frame %3" PRId64 " (size=%5d)\n", pkt.pts, pkt.size);
 		ret = write_frame(oc, &c->time_base, ost->st, &pkt);
 		if (ret != 0) {
 			fprintf(stderr, "Error writing frame: %s\n", _av_err2str(ret));
@@ -406,47 +407,15 @@ static void open_video(AVFormatContext *oc, AVCodec *codec, OutputStream *ost, A
 		exit(1);
 	}
 }
-/* Prepare a dummy image. */
-static void fill_yuv_image(AVFrame *pict, int frame_index,
-	int width, int height)
-{
-	int x, y, i;
-	i = frame_index;
-	/* Y */
-	for (y = 0; y < height; y++)
-		for (x = 0; x < width; x++)
-			pict->data[0][y * pict->linesize[0] + x] = x + y + i * 3;
-	/* Cb and Cr */
-	for (y = 0; y < height / 2; y++) {
-		for (x = 0; x < width / 2; x++) {
-			pict->data[1][y * pict->linesize[1] + x] = 128 + y + i * 2;
-			pict->data[2][y * pict->linesize[2] + x] = 64 + x + i * 5;
-		}
-	}
-}
-static void fill_rgb_image(AVFrame *pict, int frame_index,
-	int width, int height) {
-	srand(frame_index);
-	for (int y = 0; y < height; y++) {
-		for (int x = 0; x < width; x++) {
-			pict->data[0][y * pict->linesize[0] + (x * 3) + 0] = rand() % 128;
-			pict->data[0][y * pict->linesize[0] + (x * 3) + 1] = rand() % 255;
-			pict->data[0][y * pict->linesize[0] + (x * 3) + 2] = rand() % 128;
-		}
-	}
-}
 
 static void fill_from_source(AVFrame *pict, int frame_index, int width, int height) {
-	if (source_format == AV_PIX_FMT_RGB24){
-		for (int i = 0; i < width * height * 3; i++) {
-			pict->data[0][i] = picture_source[i];
-		}
-	}
-	else if (source_format == AV_PIX_FMT_RGB565) {
-		for (int i = 0; i < width * height * 2; i++) {
-			pict->data[0][i] = picture_source[i];
-		}
-	}
+  int bpp = 3;
+
+  for(int y = 0; y < height; y++) {
+    for(int i = 0; i < width * bpp; i++) {
+      pict->data[0][y * pict->linesize[0] + i] = picture_source[y * width * bpp + i];
+    }
+  }
 }
 
 static AVFrame *get_video_frame(OutputStream *ost)
@@ -505,7 +474,7 @@ static int write_video_frame(AVFormatContext *oc, OutputStream *ost)
 			fprintf(stderr, "Error during encoding: %d\n", ret);
 			return ret;
 		}
-		printf("Encoded frame %3I64d (size=%5d)\n", pkt.pts, pkt.size);
+		printf("Encoded frame %3" PRId64 " (size=%5d)\n", pkt.pts, pkt.size);
 		ret = write_frame(oc, &c->time_base, ost->st, &pkt);
 		if (ret != 0) {
 			fprintf(stderr, "Error writing frame!\n");
@@ -552,7 +521,7 @@ int ffmpeg_open_stream(const char *filename, int width, int height, uint8_t *pic
 	/* Add the audio and video streams using the default format codecs
 	 * and initialize the codecs. */
 	if (fmt->video_codec != AV_CODEC_ID_NONE) {
-		add_stream(&video_st, oc, &video_codec, fmt->video_codec, 640, 480);
+		add_stream(&video_st, oc, &video_codec, fmt->video_codec, width * 2, height * 2);
 		have_video = 1;
 		encode_video = 1;
 	}
