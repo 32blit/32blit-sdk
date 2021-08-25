@@ -408,16 +408,13 @@ static void open_video(AVFormatContext *oc, AVCodec *codec, OutputStream *ost, A
 }
 
 static void fill_from_source(AVFrame *pict, int frame_index, int width, int height) {
-	if (source_format == AV_PIX_FMT_RGB24){
-		for (int i = 0; i < width * height * 3; i++) {
-			pict->data[0][i] = picture_source[i];
-		}
-	}
-	else if (source_format == AV_PIX_FMT_RGB565) {
-		for (int i = 0; i < width * height * 2; i++) {
-			pict->data[0][i] = picture_source[i];
-		}
-	}
+  int bpp = 3;
+
+  for(int y = 0; y < height; y++) {
+    for(int i = 0; i < width * bpp; i++) {
+      pict->data[0][y * pict->linesize[0] + i] = picture_source[y * width * bpp + i];
+    }
+  }
 }
 
 static AVFrame *get_video_frame(OutputStream *ost)
