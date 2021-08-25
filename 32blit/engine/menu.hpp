@@ -54,7 +54,7 @@ protected:
       }
 
       auto old_clip = screen.clip;
-      screen.clip = Rect(x, y, w, display_height);
+      screen.clip = screen.clip.intersection({x, y, w, display_height});
       y += (int)scroll_offset + margin_y;
 
       // items
