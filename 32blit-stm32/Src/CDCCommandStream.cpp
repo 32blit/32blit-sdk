@@ -212,7 +212,7 @@ uint32_t CDCCommandStream::GetTimeTaken(void)
 uint8_t	*CDCCommandStream::GetFifoWriteBuffer(void)
 {
 	uint8_t *pData = NULL;
-	if(m_uFifoUsedCount < CDC_FIFO_BUFFERS - 1)
+	if((m_uFifoWritePos + 1) % CDC_FIFO_BUFFERS != m_uFifoReadPos)
 	{
 		pData = m_fifoElements[m_uFifoWritePos].m_data;
 	}
@@ -228,13 +228,12 @@ void	CDCCommandStream::ReleaseFifoWriteBuffer(uint8_t uLen)
 	m_uFifoWritePos++;
 	if(m_uFifoWritePos == CDC_FIFO_BUFFERS)
 		m_uFifoWritePos = 0;
-	m_uFifoUsedCount++;
 }
 
 CDCFifoElement  *CDCCommandStream::GetFifoReadElement(void)
 {
 	CDCFifoElement *pElement = NULL;
-	if(m_uFifoUsedCount)
+	if(m_uFifoReadPos != m_uFifoWritePos)
 		pElement = &m_fifoElements[m_uFifoReadPos];
 	return pElement;
 }
@@ -244,7 +243,6 @@ void CDCCommandStream::ReleaseFifoReadElement(void)
 	m_uFifoReadPos++;
 	if(m_uFifoReadPos == CDC_FIFO_BUFFERS)
 		m_uFifoReadPos = 0;
-	m_uFifoUsedCount--;
 }
 
 // usb host glue

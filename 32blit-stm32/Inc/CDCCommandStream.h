@@ -26,7 +26,7 @@ struct CDCFifoElement
 class CDCCommandStream
 {
 public:
-	CDCCommandStream() : m_uFifoReadPos(0), m_uFifoWritePos(0), m_uFifoUsedCount(0)
+	CDCCommandStream() : m_uFifoReadPos(0), m_uFifoWritePos(0)
 	{
 		Init();
 	}
@@ -44,11 +44,6 @@ public:
 	void						ReleaseFifoWriteBuffer(uint8_t uLen);
 	CDCFifoElement  *GetFifoReadElement(void);
 	void 						ReleaseFifoReadElement(void);
-	bool						IsFifoFull(void)
-	{
-		return m_uFifoUsedCount==CDC_FIFO_BUFFERS;
-	}
-
 
 private:
 	typedef enum { stDetect, stDetectCommandWord, stDispatch, stProcessing, stError } StreamState;
@@ -74,7 +69,6 @@ private:
 	CDCFifoElement m_fifoElements[CDC_FIFO_BUFFERS];
 	uint8_t				 m_uFifoReadPos;
 	uint8_t				 m_uFifoWritePos;
-	uint8_t				 m_uFifoUsedCount;
 
 	bool					m_bNeedsUSBResume;
 
