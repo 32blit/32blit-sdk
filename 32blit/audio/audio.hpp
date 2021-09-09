@@ -104,10 +104,15 @@ namespace blit {
 		    adsr_step = (int32_t(sustain << 8) - int32_t(adsr)) / int32_t(adsr_end_frame);
 	    }
       void trigger_sustain() {
+        if(sustain == 0) {
+          off();
+          return;
+        }
         adsr_frame = 0;
 		    adsr_phase = ADSRPhase::SUSTAIN;
         adsr_end_frame = 0;
 		    adsr_step = 0;
+        adsr = int32_t(sustain << 8);
 	    }
       void trigger_release() {
         adsr_frame = 0;
