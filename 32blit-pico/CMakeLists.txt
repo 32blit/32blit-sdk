@@ -45,11 +45,9 @@ if(${PICO_BOARD} STREQUAL "vgaboard")
 	)
 elseif(${PICO_BOARD} STREQUAL "pimoroni_picosystem")
 	message("Using picosystem...")
-	target_link_libraries(BlitHalPico INTERFACE pico_audio_pwm)
 	target_compile_definitions(BlitHalPico INTERFACE
-		PICO_AUDIO_PWM_PIO=1
-		PICO_AUDIO_PWM_MONO_PIN=11
-		AUDIO_PWM
+		AUDIO_BEEP_PIN=11
+		AUDIO_BEEP
 		DISPLAY_ST7789
 		INPUT_GPIO
 	)

@@ -1,4 +1,5 @@
 #include "audio.hpp"
+#include "config.h"
 
 #ifdef AUDIO_I2S
 #include "pico/audio_i2s.h"
@@ -13,6 +14,17 @@
 #define AUDIO_SAMPLE_FREQ 22050
 #endif
 
+#ifdef AUDIO_BEEP
+#include "hardware/pwm.h"
+#include "hardware/clocks.h"
+#include "hardware/gpio.h"
+
+static const uint32_t PWM_WRAP = 65535;
+static uint32_t slice_num = 0;
+static float clock_hz = 0.0;
+static uint32_t beep_time = 0;
+#endif
+
 #include "audio/audio.hpp"
 
 #ifdef HAVE_AUDIO
@@ -20,6 +32,15 @@ static audio_buffer_pool *audio_pool = nullptr;
 #endif
 
 void init_audio() {
+#ifdef AUDIO_BEEP
+  clock_hz = clock_get_hz(clk_sys);
+
+  gpio_set_function(AUDIO_BEEP_PIN, GPIO_FUNC_PWM);
+  slice_num = pwm_gpio_to_slice_num(AUDIO_BEEP_PIN);
+
+  pwm_set_wrap(slice_num, PWM_WRAP);
+#endif
+
 #ifdef HAVE_AUDIO
   static audio_format_t audio_format = {
     .sample_freq = AUDIO_SAMPLE_FREQ,
@@ -66,7 +87,9 @@ void init_audio() {
   if (!output_format) {
       panic("PicoAudio: Unable to open audio device.\n");
   }
-  pio_sm_set_clkdiv(pio1, 1, 2.0f); //!
+#if OVERCLOCK_250
+  pio_sm_set_clkdiv(pio1, 1, 2.0f);
+#endif
   bool ok = audio_pwm_default_connect(producer_pool, false);
   assert(ok);
   audio_pwm_set_enabled(true);
@@ -78,7 +101,35 @@ void init_audio() {
 #endif
 }
 
-void update_audio() {
+void update_audio(uint32_t time) {
+#ifdef AUDIO_BEEP
+  bool on = false;
+  uint32_t elapsed = time - beep_time;
+  beep_time = time;
+
+  for(auto f = 0u; f < elapsed * blit::sample_rate / 1000; f++) {
+    blit::get_audio_frame();
+  }
+
+  // Find the first square wave enabled channel and use freq/pulse width to drive the beeper
+  for(int c = 0; c < CHANNEL_COUNT; c++) {
+    auto &channel = blit::channels[c];
+
+    if(channel.waveforms & blit::Waveform::SQUARE) {
+      on = channel.volume
+        && channel.adsr_phase != blit::ADSRPhase::RELEASE
+        && channel.adsr_phase != blit::ADSRPhase::OFF;
+
+      if(on) {
+        pwm_set_clkdiv(slice_num, (clock_hz / PWM_WRAP) / channel.frequency);
+        pwm_set_gpio_level(AUDIO_BEEP_PIN, channel.pulse_width);
+        break;
+      }
+    }
+  }
+
+  pwm_set_enabled(slice_num, on);
+#endif
 #ifdef HAVE_AUDIO
   // audio
   struct audio_buffer *buffer = take_audio_buffer(audio_pool, false);
