@@ -7,7 +7,6 @@ set(32BLIT_PICO 1 PARENT_SCOPE)
 
 add_library(BlitHalPico INTERFACE)
 target_sources(BlitHalPico INTERFACE
-
 	${CMAKE_CURRENT_LIST_DIR}/../3rd-party/fatfs/ff.c
 	${CMAKE_CURRENT_LIST_DIR}/../3rd-party/fatfs/ffunicode.c
 
@@ -46,14 +45,25 @@ if(${PICO_BOARD} STREQUAL "vgaboard")
 elseif(${PICO_BOARD} STREQUAL "pimoroni_picosystem")
 	message("Using picosystem...")
 	target_compile_definitions(BlitHalPico INTERFACE
-		AUDIO_BEEP_PIN=11
-		AUDIO_BEEP
 		DISPLAY_ST7789
 		INPUT_GPIO
 	)
+	if(AUDIO_PWM)
+		target_link_libraries(BlitHalPico INTERFACE pico_audio_pwm)
+		target_compile_definitions(BlitHalPico INTERFACE
+			PICO_AUDIO_PWM_MONO_PIN=11
+			PICO_AUDIO_PWM_PIO=1
+			AUDIO_PWM
+		)
+	else()
+		target_compile_definitions(BlitHalPico INTERFACE
+			AUDIO_BEEP_PIN=11
+			AUDIO_BEEP
+		)
+	endif()
 else()
 	message(WARNING "Using default config for \"${PICO_BOARD}\"...")
-  target_link_libraries(BlitHalPico INTERFACE pico_audio_i2s)
+	target_link_libraries(BlitHalPico INTERFACE pico_audio_i2s)
 	# messy explorer-based setup
 	target_compile_definitions(BlitHalPico INTERFACE
 		PICO_AUDIO_I2S_DATA_PIN=6
@@ -71,13 +81,13 @@ function(blit_executable_common NAME)
 endfunction()
 
 function(blit_executable_int_flash NAME SOURCES)
-    add_executable(${NAME} ${SOURCES} ${ARGN})
-    target_link_libraries(${NAME} BlitHalPico BlitEngine)
+	add_executable(${NAME} ${SOURCES} ${ARGN})
+	target_link_libraries(${NAME} BlitHalPico BlitEngine)
 
-    pico_enable_stdio_uart(${NAME} 1)
-    pico_enable_stdio_usb(${NAME} 0)
+	pico_enable_stdio_uart(${NAME} 1)
+	pico_enable_stdio_usb(${NAME} 0)
 
-    pico_add_extra_outputs(${NAME})
+	pico_add_extra_outputs(${NAME})
 
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.uf2
 		DESTINATION bin
