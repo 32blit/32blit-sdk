@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.9)
+project (pico-audio)
+find_package (32BLIT CONFIG REQUIRED PATHS ../..)
+blit_executable (pico-audio pico-audio.cpp)
+blit_metadata (pico-audio metadata.yml)

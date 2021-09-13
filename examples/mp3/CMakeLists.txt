@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.9)
 project (mp3)
 find_package (32BLIT CONFIG REQUIRED PATHS ../..)
+
+if(32BLIT_PICO)
+    # PicoSystem does not support mp3 audio
+    return()
+endif()
+
 blit_executable (mp3 mp3.cpp)
 blit_assets_yaml (mp3 assets.yml)
 blit_metadata (mp3 metadata.yml)
