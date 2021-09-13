@@ -67,36 +67,46 @@ void render(uint32_t time) {
   bool dpad_u = buttons & Button::DPAD_UP;
   bool dpad_d = buttons & Button::DPAD_DOWN;
 
-  for(int b = 0; b < screen.bounds.w; b++){
-    for(int v = 0; v < screen.bounds.h; v++){
-      screen.pen = hsv_to_rgba(float(b) / (float)(screen.bounds.w), 1.0f, float(v) / (float)(screen.bounds.h));
-      screen.pixel(Point(b, v));
-    }
+  float offset = time / 10000.0f;
+  for(int x = 0; x < screen.bounds.w; x++){
+      screen.pen = hsv_to_rgba(float(x) / (float)(screen.bounds.w) + offset, 1.0f, 1.0f);
+      screen.v_span(Point(x, 0), screen.bounds.h);
   }
 
+  screen.pen = Pen(255, 255, 255, 128);
+  Rect dpad(5, 5, 30, 30);
+  screen.circle(dpad.center() - Point(1, 1), dpad.w / 2);
+  dpad.deflate(1);
+
   screen.pen = dpad_r ? Pen(255, 0, 0) : Pen(128, 128, 128);
-  screen.text("R", minimal_font, Point(25, 15), false, center_center);
+  screen.text("R", outline_font, dpad, false, center_right);
 
   screen.pen = dpad_d ? Pen(255, 0, 0) : Pen(128, 128, 128);
-  screen.text("D", minimal_font, Point(15, 25), false, center_center);
+  screen.text("D", outline_font, dpad, false, bottom_center);
 
   screen.pen = dpad_u ? Pen(255, 0, 0) : Pen(128, 128, 128);
-  screen.text("U", minimal_font, Point(15, 5), false, center_center);
+  screen.text("U", outline_font, dpad, false, top_center);
 
   screen.pen = dpad_l ? Pen(255, 0, 0) : Pen(128, 128, 128);
-  screen.text("L", minimal_font, Point(5, 15), false, center_center);
+  screen.text("L", outline_font, dpad, false, center_left);
+
+  screen.pen = Pen(255, 255, 255, 128);
+  Rect face_buttons(5, 5, 30, 30);
+  face_buttons.x = screen.bounds.w - face_buttons.w - face_buttons.x; // Align right
+  screen.circle(face_buttons.center() - Point(1, 1), face_buttons.w / 2);
+  face_buttons.deflate(1);
 
   screen.pen = button_a ? Pen(255, 0, 0) : Pen(128, 128, 128);
-  screen.text("A", minimal_font, Point(screen.bounds.w - 5, 15), false, center_center);
+  screen.text("A", outline_font, face_buttons, false, center_right);
 
   screen.pen = button_b ? Pen(255, 0, 0) : Pen(128, 128, 128);
-  screen.text("B", minimal_font, Point(screen.bounds.w - 15, 25), false, center_center);
+  screen.text("B", outline_font, face_buttons, false, bottom_center);
 
   screen.pen = button_x ? Pen(255, 0, 0) : Pen(128, 128, 128);
-  screen.text("X", minimal_font, Point(screen.bounds.w - 15, 5), false, center_center);
+  screen.text("X", outline_font, face_buttons, false, top_center);
 
   screen.pen = button_y ? Pen(255, 0, 0) : Pen(128, 128, 128);
-  screen.text("Y", minimal_font, Point(screen.bounds.w - 25, 15), false, center_center);
+  screen.text("Y", outline_font, face_buttons, false, center_left);
 
   //LED = hsv_to_rgba(time / 50.0f, 1.0f, 1.0f);
   LED = LED_COLOUR[(time / 1000) % 3];
