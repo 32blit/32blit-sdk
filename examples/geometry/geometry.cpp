@@ -270,7 +270,7 @@ void init() {
     channels[0].release_ms  = 10;
     channels[0].volume      = 4000;
 
-    channels[1].waveforms   = Waveform::SINE;
+    channels[1].waveforms   = Waveform::SQUARE | Waveform::SINE;
     channels[1].frequency   = 0;
     channels[1].attack_ms   = 10;
     channels[1].decay_ms    = 500;

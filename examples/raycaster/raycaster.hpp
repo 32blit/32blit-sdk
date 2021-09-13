@@ -8,7 +8,7 @@ constexpr float M_PI_H = 1.5707963267948966f;
 
 constexpr float EPSILON = 0.00000001f;
 
-#ifdef DISPLAY_ST7789
+#ifdef PICO_BOARD
 constexpr uint16_t OFFSET_TOP = 30;
 constexpr uint16_t SCREEN_WIDTH = 120;
 constexpr uint16_t SCREEN_HEIGHT = 120;

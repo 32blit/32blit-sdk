@@ -367,7 +367,7 @@ int main() {
 #endif
     update_input();
     int ms_to_next_update = tick(::now());
-    update_audio();
+    update_audio(now);
     update_led();
     update_usb();
 

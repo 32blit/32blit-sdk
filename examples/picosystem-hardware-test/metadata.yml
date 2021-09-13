@@ -1,0 +1,10 @@
+title: Hardware Test
+description: A test of 32Blit's inputs and outputs.
+author: pimoroni
+splash:
+  file: hardware-test.png
+icon:
+  file: hardware-test-icon.png
+version: v1.0.0
+url: https://github.com/32blit/32blit-sdk
+category: utility
