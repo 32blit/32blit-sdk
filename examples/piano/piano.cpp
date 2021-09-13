@@ -36,7 +36,7 @@ void init() {
   // configure voices
 
   // melody track
-  channels[0].waveforms   = Waveform::TRIANGLE;
+  channels[0].waveforms   = Waveform::SQUARE;
   channels[0].attack_ms   = 10;
   channels[0].decay_ms    = 350;
   channels[0].sustain     = 0;
