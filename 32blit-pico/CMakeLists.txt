@@ -1,6 +1,8 @@
 set(CMAKE_C_STANDARD 11)
 
 # Initialise the Pico SDK
+include (pico_sdk_import.cmake)
+include (pico_extras_import.cmake)
 pico_sdk_init()
 
 set(32BLIT_PICO 1 PARENT_SCOPE)
