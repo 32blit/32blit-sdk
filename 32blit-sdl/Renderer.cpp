@@ -4,6 +4,7 @@
 #include <iostream>
 #include "SDL.h"
 
+#include "32blit.hpp"
 #include "Renderer.hpp"
 #include "System.hpp"
 
@@ -63,20 +64,46 @@ void Renderer::resize(int width, int height) {
 	if (fb_hires_texture) {
 		SDL_DestroyTexture(fb_hires_texture);
 	}
+    if (fb_lores_565_texture) {
+        SDL_DestroyTexture(fb_lores_texture);
+    }
+    if (fb_hires_565_texture) {
+        SDL_DestroyTexture(fb_hires_texture);
+    }
 
-	fb_lores_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, sys_width/2, sys_height/2);
-	fb_hires_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, sys_width, sys_height);
+    fb_lores_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, sys_width/2, sys_height/2);
+    fb_hires_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, sys_width, sys_height);
+    fb_lores_565_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_BGR565, SDL_TEXTUREACCESS_STREAMING, sys_width/2, sys_height/2);
+    fb_hires_565_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_BGR565, SDL_TEXTUREACCESS_STREAMING, sys_width, sys_height);
 }
 
 void Renderer::update(System *sys) {
-	if (sys->mode() == 0) {
-		current = fb_lores_texture;
-	} else {
-		current = fb_hires_texture;
-	}
+    bool lores = false;
+    switch(sys->mode()) {
+        case blit::ScreenMode::lores:
+            current = fb_lores_texture;
+            lores = true;
+            break;
+        case blit::ScreenMode::hires:
+            current = fb_hires_texture;
+            break;
+        case blit::ScreenMode::hires_palette:
+            current = fb_hires_texture;
+            break;
+        case blit::ScreenMode::lores_565:
+            current = fb_lores_565_texture;
+            lores = true;
+            break;
+        case blit::ScreenMode::hires_565:
+            current = fb_hires_565_texture;
+            break;
+        default:
+            current = fb_hires_texture;
+            break;
+    }
 
-  if(is_lores != (sys->mode() == 0)) {
-    is_lores = sys->mode() == 0;
+  if(is_lores != lores) {
+    is_lores = lores;
     set_mode(mode);
   }
 

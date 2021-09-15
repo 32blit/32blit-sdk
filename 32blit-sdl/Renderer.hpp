@@ -25,5 +25,7 @@ class Renderer {
 
 		SDL_Texture *fb_lores_texture = nullptr;
 		SDL_Texture *fb_hires_texture = nullptr;
+        SDL_Texture *fb_lores_565_texture = nullptr;
+        SDL_Texture *fb_hires_565_texture = nullptr;
 		SDL_Texture *current = nullptr;
 };

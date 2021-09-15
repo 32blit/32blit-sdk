@@ -60,6 +60,8 @@ namespace display {
   Surface __fb_hires((uint8_t *)&__fb_start, PixelFormat::RGB, Size(320, 240));
   Surface __fb_hires_pal((uint8_t *)&__fb_start, PixelFormat::P, Size(320, 240));
   Surface __fb_lores((uint8_t *)&__fb_start, PixelFormat::RGB, Size(160, 120));
+  Surface __fb_hires_565((uint8_t *)&__fb_start, PixelFormat::RGB565, Size(320, 240));
+  Surface __fb_lores_565((uint8_t *)&__fb_start, PixelFormat::RGB565, Size(160, 120));
 
   Pen palette[256];
 
@@ -112,6 +114,12 @@ namespace display {
       case ScreenMode::hires:
         screen = __fb_hires;
         break;
+      case ScreenMode::lores_565:
+        screen = __fb_lores_565;
+        break;
+      case ScreenMode::hires_565:
+        screen = __fb_hires_565;
+        break;
       case ScreenMode::hires_palette:
         screen = __fb_hires_pal;
         break;
@@ -151,6 +159,32 @@ namespace display {
     // trigger start of dma2d transfer
     DMA2D->CR |= DMA2D_CR_START;
   }
+
+    void dma2d_hires_565_flip(const Surface &source) {
+        SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 2);
+        // set the transform type (clear bits 17..16 of control register)
+        MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M_PFC);
+        // set source pixel format (clear bits 3..0 of foreground format register)
+        MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB565);
+        // set source buffer address
+        DMA2D->FGMAR = (uintptr_t)source.data;
+        // set target pixel format (clear bits 3..0 of output format register)
+        MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_RGB565);
+        // set target buffer address
+        DMA2D->OMAR = (uintptr_t)&__ltdc_start;
+        // set the number of pixels per line and number of lines
+        DMA2D->NLR = (320 << 16) | (240);
+        // set the source offset
+        DMA2D->FGOR = 0;
+        // set the output offset
+        DMA2D->OOR = 0;
+        //enable the DMA2D interrupt
+        SET_BIT(DMA2D->CR, DMA2D_CR_TCIE|DMA2D_CR_TEIE|DMA2D_CR_CEIE);
+        //set DMA2d steps //set occupied
+        dma2d_stepCount = 0;
+        // trigger start of dma2d transfer
+        DMA2D->CR |= DMA2D_CR_START;
+    }
 
   void dma2d_hires_pal_flip(const Surface &source) {
     // copy RGBA at quarter width
@@ -213,6 +247,32 @@ namespace display {
     // trigger start of dma2d transfer
     DMA2D->CR |= DMA2D_CR_START;
   }
+
+    void dma2d_lores_565_flip(const Surface &source) {
+        SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 160 * 120 * 2);
+        //Step 1.
+        // set the transform type (clear bits 17..16 of control register)
+        MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M_PFC);
+        // set source pixel format (clear bits 3..0 of foreground format register)
+        MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB565);
+        // set source buffer address
+        DMA2D->FGMAR = (uintptr_t)source.data;
+        // set target pixel format (clear bits 3..0 of output format register)
+        MODIFY_REG(DMA2D->OPFCCR, DMA2D_OPFCCR_CM, LL_DMA2D_OUTPUT_MODE_RGB565);
+        // set target buffer address
+        DMA2D->OMAR = ((uintptr_t)&__ltdc_start)+320*120*2;
+        // set the number of pixels per line and number of lines
+        DMA2D->NLR = (1 << 16) | (160*120);
+        // set the source offset
+        DMA2D->FGOR = 0;
+        // set the output offset
+        DMA2D->OOR = 1;
+        SET_BIT(DMA2D->CR, DMA2D_CR_TCIE|DMA2D_CR_TEIE|DMA2D_CR_CEIE);//enable the DMA2D interrupt
+        //set DMA2d steps //set occupied
+        dma2d_stepCount = 3;
+        // trigger start of dma2d transfer
+        DMA2D->CR |= DMA2D_CR_START;
+    }
 
 	void dma2d_lores_flip_Step2(void){
 		//Step 2.
@@ -284,19 +344,29 @@ namespace display {
 	}
 
   void flip(const Surface &source) {
-    // switch colour mode if needed
-    if(need_ltdc_mode_update) {
-      update_ltdc_for_mode();
-      need_ltdc_mode_update = false;
-    }
+      // switch colour mode if needed
+      if (need_ltdc_mode_update) {
+          update_ltdc_for_mode();
+          need_ltdc_mode_update = false;
+      }
 
-    if(mode == ScreenMode::lores) {
-      dma2d_lores_flip(source);
-    } else if(mode == ScreenMode::hires) {
-      dma2d_hires_flip(source);
-    } else {
-      dma2d_hires_pal_flip(source);
-    }
+      switch (mode) {
+          case ScreenMode::lores:
+              dma2d_lores_flip(source);
+              break;
+          case ScreenMode::hires:
+              dma2d_hires_flip(source);
+              break;
+          case ScreenMode::lores_565:
+              dma2d_lores_565_flip(source);
+              break;
+          case ScreenMode::hires_565:
+              dma2d_hires_565_flip(source);
+              break;
+          default:
+              dma2d_hires_pal_flip(source);
+              break;
+      }
   }
 
   void screen_init() {

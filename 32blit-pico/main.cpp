@@ -64,6 +64,7 @@ static volatile bool do_render = true;
 static Surface &set_screen_mode(ScreenMode mode) {
   switch(mode) {
     case ScreenMode::lores:
+    case ScreenMode::lores_565:
       screen = lores_screen;
       // window
 #ifdef DISPLAY_ST7789
@@ -75,6 +76,7 @@ static Surface &set_screen_mode(ScreenMode mode) {
       break;
 
     case ScreenMode::hires:
+    case ScreenMode::hires_565:
 #if defined(DISPLAY_ST7789) && ALLOW_HIRES
       if(have_vsync)
         do_render = true;

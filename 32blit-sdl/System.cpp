@@ -17,6 +17,8 @@ uint8_t framebuffer[320 * 240 * 3];
 blit::Surface __fb_hires((uint8_t *)framebuffer, blit::PixelFormat::RGB, blit::Size(320, 240));
 blit::Surface __fb_hires_pal((uint8_t *)framebuffer, blit::PixelFormat::P, blit::Size(320, 240));
 blit::Surface __fb_lores((uint8_t *)framebuffer, blit::PixelFormat::RGB, blit::Size(160, 120));
+blit::Surface __fb_hires_565((uint8_t *)framebuffer, blit::PixelFormat::RGB565, blit::Size(320, 240));
+blit::Surface __fb_lores_565((uint8_t *)framebuffer, blit::PixelFormat::RGB565, blit::Size(160, 120));
 
 static blit::Pen palette[256];
 
@@ -38,6 +40,12 @@ blit::Surface &set_screen_mode(blit::ScreenMode new_mode) {
         break;
       case blit::ScreenMode::hires_palette:
         blit::screen = __fb_hires_pal;
+        break;
+    case blit::ScreenMode::hires_565:
+        blit::screen = __fb_hires_565;
+        break;
+    case blit::ScreenMode::lores_565:
+        blit::screen = __fb_lores_565;
         break;
     }
 
@@ -277,25 +285,39 @@ Uint32 System::mode() {
 
 void System::update_texture(SDL_Texture *texture) {
 	blit::render(::now());
-	if (_mode == blit::ScreenMode::lores) {
-		SDL_UpdateTexture(texture, nullptr, __fb_lores.data, 160 * 3);
-	}
-	else if(_mode == blit::ScreenMode::hires) {
-		SDL_UpdateTexture(texture, nullptr, __fb_hires.data, 320 * 3);
-	} else {
-		uint8_t col_fb[320 * 240 * 3];
+    switch(_mode) {
+        case blit::ScreenMode::lores:
+            SDL_UpdateTexture(texture, nullptr, __fb_lores.data, 160 * 3);
+            break;
+        case blit::ScreenMode::hires:
+            SDL_UpdateTexture(texture, nullptr, __fb_hires.data, 320 * 3);
+            break;
+        case blit::ScreenMode::hires_palette:
+            {
+                uint8_t col_fb[320 * 240 * 3];
 
-		auto in = __fb_hires_pal.data, out = col_fb;
+                auto in = __fb_hires_pal.data, out = col_fb;
 
-		for(int i = 0; i < 320 * 240; i++) {
-			uint8_t index = *(in++);
-			(*out++) = palette[index].r;
-			(*out++) = palette[index].g;
-			(*out++) = palette[index].b;
-		}
+                for (int i = 0; i < 320 * 240; i++) {
+                    uint8_t index = *(in++);
+                    (*out++) = palette[index].r;
+                    (*out++) = palette[index].g;
+                    (*out++) = palette[index].b;
+                }
 
-		SDL_UpdateTexture(texture, nullptr, col_fb, 320 * 3);
-	}
+                SDL_UpdateTexture(texture, nullptr, col_fb, 320 * 3);
+            }
+            break;
+        case blit::ScreenMode::hires_565:
+            SDL_UpdateTexture(texture, nullptr, __fb_hires.data, 320 * 2);
+            break;
+        case blit::ScreenMode::lores_565:
+            SDL_UpdateTexture(texture, nullptr, __fb_lores.data, 160 * 2);
+            break;
+        default:
+            std::cerr << "Unknown screen mode." << std::endl;
+            break;
+    }
 }
 
 void System::notify_redraw() {
