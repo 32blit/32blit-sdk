@@ -105,7 +105,6 @@ void handle_event(SDL_Event &event) {
 
 		default:
 			if(event.type == System::loop_event) {
-				blit_multiplayer->update();
 				blit_renderer->update(blit_system);
 				blit_system->notify_redraw();
 				blit_renderer->present();

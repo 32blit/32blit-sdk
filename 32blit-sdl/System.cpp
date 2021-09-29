@@ -269,6 +269,7 @@ void System::loop()
 	blit::joystick.y = shadow_joystick[1];
 	SDL_UnlockMutex(m_input);
 	blit::tick(::now());
+	blit_multiplayer->update();
 }
 
 Uint32 System::mode() {
