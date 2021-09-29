@@ -269,6 +269,7 @@ void System::loop()
 	blit::joystick.y = shadow_joystick[1];
 	SDL_UnlockMutex(m_input);
 	blit::tick(::now());
+	blit::render(::now());
 	blit_multiplayer->update();
 }
 
@@ -277,7 +278,6 @@ Uint32 System::mode() {
 }
 
 void System::update_texture(SDL_Texture *texture) {
-	blit::render(::now());
 	if (_mode == blit::ScreenMode::lores) {
 		SDL_UpdateTexture(texture, nullptr, __fb_lores.data, 160 * 3);
 	}
