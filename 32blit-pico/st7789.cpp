@@ -6,6 +6,7 @@
 #include "hardware/dma.h"
 #include "hardware/irq.h"
 #include "hardware/pwm.h"
+#include "pico/binary_info.h"
 #include "pico/time.h"
 
 #include "config.h"
@@ -131,12 +132,17 @@ namespace st7789 {
     gpio_set_function(CS, GPIO_FUNC_SIO);
     gpio_set_dir(CS, GPIO_OUT);
 
+    bi_decl_if_func_used(bi_1pin_with_name(DC, "Display D/C"));
+    bi_decl_if_func_used(bi_1pin_with_name(CS, "Display CS"));
+
     // if supported by the display then the vsync pin is
     // toggled high during vertical blanking period
 #ifdef VSYNC
     gpio_set_function(VSYNC, GPIO_FUNC_SIO);
     gpio_set_dir(VSYNC, GPIO_IN);
     gpio_set_pulls(VSYNC, false, true);
+
+    bi_decl_if_func_used(bi_1pin_with_name(VSYNC, "Display TE/VSync"));
 #endif
 
     // if a backlight pin is provided then set it up for
@@ -147,6 +153,7 @@ namespace st7789 {
     pwm_init(pwm_gpio_to_slice_num(BACKLIGHT), &pwm_cfg, true);
     gpio_set_function(BACKLIGHT, GPIO_FUNC_PWM);
 
+    bi_decl_if_func_used(bi_1pin_with_name(BACKLIGHT, "Display Backlight"));
 #endif
 
 #ifdef RESET
@@ -155,6 +162,8 @@ namespace st7789 {
     gpio_put(RESET, 0);
     sleep_ms(100);
     gpio_put(RESET, 1);
+
+    bi_decl_if_func_used(bi_1pin_with_name(RESET, "Display Reset"));
 #endif
 
     // setup PIO
@@ -177,6 +186,9 @@ namespace st7789 {
 
     pio_sm_init(pio, pio_sm, pio_offset, &cfg);
     pio_sm_set_enabled(pio, pio_sm, true);
+
+    bi_decl_if_func_used(bi_1pin_with_name(MOSI, "Display TX"));
+    bi_decl_if_func_used(bi_1pin_with_name(SCK, "Display SCK"));
 
     // if auto_init_sequence then send initialisation sequence
     // for our standard displays based on the width and height
