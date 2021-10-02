@@ -15,8 +15,12 @@ static const int led_pins[]{LED_R_PIN, LED_G_PIN, LED_B_PIN};
 
 void init_led() {
 #ifdef HAVE_LED
+  pwm_config cfg = pwm_get_default_config();
+#ifdef LED_INVERTED
+  pwm_config_set_output_polarity(&cfg, true, true);
+#endif
+
   for(auto &pin : led_pins) {
-    pwm_config cfg = pwm_get_default_config();
     pwm_set_wrap(pwm_gpio_to_slice_num(pin), 65535);
     pwm_init(pwm_gpio_to_slice_num(pin), &cfg, true);
     gpio_set_function(pin, GPIO_FUNC_PWM);
