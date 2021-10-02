@@ -8,8 +8,8 @@
 
 #include "engine/api_private.hpp"
 
-#ifdef PIMORONI_PICOSYSTEM
-static const int led_pins[]{PICOSYSTEM_LED_R_PIN, PICOSYSTEM_LED_G_PIN, PICOSYSTEM_LED_B_PIN};
+#if defined(LED_R_PIN) && defined(LED_G_PIN) && defined(LED_B_PIN)
+static const int led_pins[]{LED_R_PIN, LED_G_PIN, LED_B_PIN};
 #define HAVE_LED
 #endif
 
