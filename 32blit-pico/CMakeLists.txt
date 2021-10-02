@@ -52,13 +52,13 @@ elseif(${PICO_BOARD} STREQUAL "pimoroni_picosystem")
     if(AUDIO_PWM)
         target_link_libraries(BlitHalPico INTERFACE pico_audio_pwm)
         target_compile_definitions(BlitHalPico INTERFACE
-            PICO_AUDIO_PWM_MONO_PIN=11
+            PICO_AUDIO_PWM_MONO_PIN=PICOSYSTEM_AUDIO_PIN
             PICO_AUDIO_PWM_PIO=1
             AUDIO_PWM
         )
     else()
         target_compile_definitions(BlitHalPico INTERFACE
-            AUDIO_BEEP_PIN=11
+            AUDIO_BEEP_PIN=PICOSYSTEM_AUDIO_PIN
             AUDIO_BEEP
         )
     endif()
