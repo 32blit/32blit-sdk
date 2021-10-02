@@ -47,6 +47,7 @@ elseif(${PICO_BOARD} STREQUAL "pimoroni_picosystem")
     target_compile_definitions(BlitHalPico INTERFACE
         DISPLAY_ST7789
         INPUT_GPIO
+        USB_PRODUCT_STR="PicoSystem"
     )
     if(AUDIO_PWM)
         target_link_libraries(BlitHalPico INTERFACE pico_audio_pwm)
