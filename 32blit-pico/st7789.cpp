@@ -11,7 +11,7 @@
 #include "config.h"
 #include "st7789.pio.h"
 
-namespace pimoroni {
+namespace st7789 {
 
   enum MADCTL : uint8_t {
     ROW_ORDER   = 0b10000000,
@@ -56,6 +56,49 @@ namespace pimoroni {
     STE       = 0x44
   };
 
+  static PIO pio = pio0;
+  static uint pio_sm = 0;
+  static uint pio_offset = 0, pio_double_offset = 0;
+
+  static uint32_t dma_channel = 0;
+
+  // screen properties
+  static const uint16_t width = ST7789_WIDTH;
+  static const uint16_t height = ST7789_HEIGHT;
+
+  static uint16_t win_w, win_h; // window size
+
+#ifdef PIMORONI_PICOSYSTEM
+  static const int8_t cs     = PICOSYSTEM_LCD_CSN_PIN;
+  static const int8_t dc     = PICOSYSTEM_LCD_DC_PIN;
+  static const int8_t sck    = PICOSYSTEM_LCD_SCLK_PIN;
+  static const int8_t mosi   = PICOSYSTEM_LCD_MOSI_PIN;
+  static const int8_t bl     = PICOSYSTEM_BACKLIGHT_PIN;
+  static const int8_t vsync  = PICOSYSTEM_LCD_VSYNC_PIN;
+  static const int8_t reset  = PICOSYSTEM_LCD_RESET_PIN;
+#else
+  static const int8_t cs     = PICO_DEFAULT_SPI_CSN_PIN;
+  static const int8_t dc     = 16;
+  static const int8_t sck    = PICO_DEFAULT_SPI_SCK_PIN;
+  static const int8_t mosi   = PICO_DEFAULT_SPI_TX_PIN;
+  static const int8_t bl     = 20;
+  static const int8_t vsync  = -1; // only available on some products
+  static const int8_t reset  = -1;
+#endif
+
+  static bool write_mode = false; // in RAMWR
+  static bool pixel_double = false;
+  static uint16_t *upd_frame_buffer = nullptr;
+
+  // frame buffer where pixel data is stored
+  uint16_t *frame_buffer = nullptr;
+
+  // pixel double scanline counter
+  static volatile int cur_scanline = 240;
+
+  void prepare_write();
+
+  // PIO helpers
   static void pio_put_byte(PIO pio, uint sm, uint8_t b) {
     while (pio_sm_is_tx_fifo_full(pio, sm));
     *(volatile uint8_t*)&pio->txf[sm] = b;
@@ -68,26 +111,21 @@ namespace pimoroni {
   }
 
   // used for pixel doubling
-  // only handles one instance
-  static ST7789 *st7789_ptr = nullptr;
-  static volatile int cur_scanline = 240;
+  static void __isr st7789_dma_irq_handler() {
+    if(dma_channel_get_irq0_status(dma_channel)) {
+      dma_channel_acknowledge_irq0(dma_channel);
 
-  void __isr st7789_dma_irq_handler() {
-    auto channel = st7789_ptr->dma_channel;
-    if(dma_channel_get_irq0_status(channel)) {
-      dma_channel_acknowledge_irq0(channel);
-
-      if(++cur_scanline > st7789_ptr->win_h / 2)
+      if(++cur_scanline > win_h / 2)
         return;
 
-      auto count = cur_scanline == (st7789_ptr->win_h + 1) / 2 ? st7789_ptr->win_w / 4  : st7789_ptr->win_w / 2;
+      auto count = cur_scanline == (win_h + 1) / 2 ? win_w / 4  : win_w / 2;
 
-      dma_channel_set_trans_count(channel, count, false);
-      dma_channel_set_read_addr(channel, st7789_ptr->upd_frame_buffer + (cur_scanline - 1) * (st7789_ptr->win_w / 2), true);
+      dma_channel_set_trans_count(dma_channel, count, false);
+      dma_channel_set_read_addr(dma_channel, upd_frame_buffer + (cur_scanline - 1) * (win_w / 2), true);
     }
   }
 
-  void ST7789::init(bool auto_init_sequence) {
+  void init(bool auto_init_sequence) {
     // configure pins
     gpio_set_function(dc, GPIO_FUNC_SIO);
     gpio_set_dir(dc, GPIO_OUT);
@@ -221,10 +259,9 @@ namespace pimoroni {
 
     irq_add_shared_handler(DMA_IRQ_0, st7789_dma_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
     irq_set_enabled(DMA_IRQ_0, true);
-    st7789_ptr = this;
   }
 
-  void ST7789::command(uint8_t command, size_t len, const char *data) {
+  void command(uint8_t command, size_t len, const char *data) {
     pio_wait(pio, pio_sm);
 
     if(write_mode) {
@@ -259,7 +296,7 @@ namespace pimoroni {
     gpio_put(cs, 1);
   }
 
-  void ST7789::update(bool dont_block) {
+  void update(bool dont_block) {
     if(dma_channel_is_busy(dma_channel) && dont_block) {
       return;
     }
@@ -279,7 +316,7 @@ namespace pimoroni {
     dma_channel_set_read_addr(dma_channel, frame_buffer, true);
   }
 
-  void ST7789::set_backlight(uint8_t brightness) {
+  void set_backlight(uint8_t brightness) {
     // gamma correct the provided 0-255 brightness value onto a
     // 0-65535 range for the pwm counter
     float gamma = 2.8;
@@ -287,7 +324,7 @@ namespace pimoroni {
     pwm_set_gpio_level(bl, value);
   }
 
-  bool ST7789::vsync_callback(gpio_irq_callback_t callback) {
+  bool vsync_callback(gpio_irq_callback_t callback) {
     if(vsync == -1)
       return false;
 
@@ -295,7 +332,7 @@ namespace pimoroni {
     return true;
   }
 
-  void ST7789::set_window(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
+  void set_window(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
     uint32_t cols = __builtin_bswap32((x << 16) | (x + w - 1));
     uint32_t rows = __builtin_bswap32((y << 16) | (y + h - 1));
 
@@ -306,7 +343,7 @@ namespace pimoroni {
     win_h = h;
   }
 
-  void ST7789::set_pixel_double(bool pd) {
+  void set_pixel_double(bool pd) {
     pixel_double = pd;
 
     // nop to reconfigure PIO
@@ -320,7 +357,7 @@ namespace pimoroni {
       dma_channel_set_irq0_enabled(dma_channel, false);
   }
 
-  void ST7789::clear() {
+  void clear() {
     if(!write_mode)
       prepare_write();
 
@@ -328,14 +365,14 @@ namespace pimoroni {
       pio_sm_put_blocking(pio, pio_sm, 0);
   }
 
-  bool ST7789::dma_is_busy() {
+  bool dma_is_busy() {
     if(pixel_double && cur_scanline <= win_h / 2)
       return true;
 
     return dma_channel_is_busy(dma_channel);
   }
 
-  void ST7789::prepare_write() {
+  void prepare_write() {
     pio_wait(pio, pio_sm);
 
     // setup for writing
