@@ -2,7 +2,6 @@
 
 #include <cstring>
 
-#include "bsp/board.h"
 #include "tusb.h"
 
 #include "config.h"
