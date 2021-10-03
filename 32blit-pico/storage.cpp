@@ -6,6 +6,7 @@
 #include "hardware/flash.h"
 #include "hardware/sync.h"
 #include "pico/binary_info.h"
+#include "pico/multicore.h"
 
 static const uint32_t storage_size = PICO_FLASH_SIZE_BYTES / 4;
 static const uint32_t storage_offset = PICO_FLASH_SIZE_BYTES - storage_size;
@@ -33,10 +34,14 @@ int32_t storage_read(uint32_t sector, uint32_t offset, void *buffer, uint32_t si
 int32_t storage_write(uint32_t sector, uint32_t offset, const uint8_t *buffer, uint32_t size_bytes) {
   auto status = save_and_disable_interrupts();
 
+  multicore_lockout_start_blocking(); // pause core1
+
   if(offset == 0)
     flash_range_erase(storage_offset + sector * FLASH_SECTOR_SIZE, FLASH_SECTOR_SIZE);
 
   flash_range_program(storage_offset + sector * FLASH_SECTOR_SIZE + offset, buffer, size_bytes);
+
+  multicore_lockout_end_blocking(); // resume core1
 
   restore_interrupts(status);
 
