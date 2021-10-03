@@ -109,7 +109,11 @@ void core1_main() {
   core1_started = true;
   multicore_lockout_victim_init();
 
+  init_display_core1();
+
   while(true) {
+    update_display_core1();
+    sleep_us(1);
   }
 }
 

@@ -51,6 +51,7 @@ static void vsync_callback(uint gpio, uint32_t events) {
 #endif
 
 #ifdef DISPLAY_SCANVIDEO
+static int last_frame = 0;
 
 static void fill_scanline_buffer(struct scanvideo_scanline_buffer *buffer) {
   static uint32_t postamble[] = {
@@ -76,27 +77,6 @@ static void fill_scanline_buffer(struct scanvideo_scanline_buffer *buffer) {
   buffer->data[10] = (COMPOSABLE_RAW_RUN << 16u) | pixels[2];
   buffer->data[11] = (((w - 3) + 1 - 3) << 16u) | pixels[3]; // note we add one for the black pixel at the end
 }
-
-static int64_t timer_callback(alarm_id_t alarm_id, void *user_data) {
-  static int last_frame = 0;
-  struct scanvideo_scanline_buffer *buffer = scanvideo_begin_scanline_generation(false);
-  while (buffer) {
-    fill_scanline_buffer(buffer);
-    scanvideo_end_scanline_generation(buffer);
-
-    auto next_frame = scanvideo_frame_number(scanvideo_get_next_scanline_id());
-    if(next_frame != last_frame) {
-    //if(scanvideo_in_vblank() && !do_render) {
-      do_render = true;
-      last_frame = next_frame;
-      break;
-    }
-
-    buffer = scanvideo_begin_scanline_generation(false);
-  }
-
-  return 100;
-}
 #endif
 
 void init_display() {
@@ -106,13 +86,6 @@ void init_display() {
   st7789::clear();
 
   have_vsync = st7789::vsync_callback(vsync_callback);
-#endif
-
-#ifdef DISPLAY_SCANVIDEO
-  //scanvideo_setup(&vga_mode_320x240_60); // not quite
-  scanvideo_setup(&vga_mode_160x120_60);
-  scanvideo_timing_enable(true);
-  add_alarm_in_us(100, timer_callback, nullptr, true);
 #endif
 }
 
@@ -150,6 +123,34 @@ void update_display(uint32_t time) {
     ::render(time);
     buf_index ^= 1;
     do_render = false;
+  }
+#endif
+}
+
+void init_display_core1() {
+#ifdef DISPLAY_SCANVIDEO
+  //scanvideo_setup(&vga_mode_320x240_60); // not quite
+  scanvideo_setup(&vga_mode_160x120_60);
+  scanvideo_timing_enable(true);
+#endif
+}
+
+void update_display_core1() {
+#ifdef DISPLAY_SCANVIDEO
+  struct scanvideo_scanline_buffer *buffer = scanvideo_begin_scanline_generation(true);
+  while (buffer) {
+    fill_scanline_buffer(buffer);
+    scanvideo_end_scanline_generation(buffer);
+
+    auto next_frame = scanvideo_frame_number(scanvideo_get_next_scanline_id());
+    if(next_frame != last_frame) {
+    //if(scanvideo_in_vblank() && !do_render) {
+      do_render = true;
+      last_frame = next_frame;
+      break;
+    }
+
+    buffer = scanvideo_begin_scanline_generation(false);
   }
 #endif
 }
