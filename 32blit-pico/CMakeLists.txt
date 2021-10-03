@@ -101,6 +101,10 @@ elseif(BLIT_DISPLAY_DRIVER STREQUAL "st7789")
     list(APPEND BLIT_BOARD_DEFINITIONS DISPLAY_ST7789) # config defaults use this, also some games are using it for picosystem detection
 endif()
 
+if(BLIT_INPUT_DRIVER STREQUAL "usb_hid")
+    list(APPEND BLIT_BOARD_DEFINITIONS INPUT_USB_HID)
+endif()
+
 if(BLIT_USB_DRIVER STREQUAL "host")
     list(APPEND BLIT_BOARD_DEFINITIONS USB_HOST)
     list(APPEND BLIT_BOARD_LIBRARIES tinyusb_host)
