@@ -11,6 +11,7 @@
 #include "engine/api_private.hpp"
 
 // msc
+#ifndef USB_HOST
 static bool storage_ejected = false;
 
 void tud_mount_cb() {
@@ -93,8 +94,11 @@ int32_t tud_msc_scsi_cb(uint8_t lun, uint8_t const scsi_cmd[16], void* buffer, u
 bool tud_msc_is_writable_cb(uint8_t lun) {
   return !get_files_open();
 }
+#endif
 
 // cdc
+#ifndef USB_HOST
+
 static bool multiplayer_enabled = false;
 static bool peer_connected = false;
 
@@ -125,13 +129,16 @@ static void send_handshake(bool is_reply = false) {
   send_all(buf, 9);
   tud_cdc_write_flush();
 }
-
+#endif
 
 void init_usb() {
   tusb_init();
 }
 
 void update_usb() {
+#ifdef USB_HOST
+  tuh_task();
+#else // device
   tud_task();
 
   if(!tud_ready()) { // tud_cdc_connected returns false with STM USB host
@@ -189,28 +196,38 @@ void update_usb() {
       }
     }
   }
+#endif
 }
 
 void usb_debug(const char *message) {
+#ifndef USB_HOST
   if(!tud_cdc_connected())
     return;
 
   auto len = strlen(message);
   send_all(message, len);
+#endif
 }
 
 bool is_multiplayer_connected() {
+#ifdef USB_HOST
+  return false;
+#else
   return multiplayer_enabled && peer_connected;
+#endif
 }
 
 void set_multiplayer_enabled(bool enabled) {
+#ifndef USB_HOST // could be supported with USB host, but we'd need a hub
   multiplayer_enabled = enabled;
 
   if(!enabled)
     send_handshake();
+#endif
 }
 
 void send_multiplayer_message(const uint8_t *data, uint16_t len) {
+#ifndef USB_HOST
   if(!peer_connected)
     return;
 
@@ -222,4 +239,5 @@ void send_multiplayer_message(const uint8_t *data, uint16_t len) {
   send_all((uint8_t *)data, len);
 
   tud_cdc_write_flush();
+#endif
 }
