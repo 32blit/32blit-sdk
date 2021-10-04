@@ -12,16 +12,18 @@
 #include "storage.hpp"
 
 static FATFS fs;
+static bool initialised = false;
 
 std::vector<void *> open_files;
 
 // fatfs io funcs
 DSTATUS disk_initialize(BYTE pdrv) {
-  return RES_OK;
+  initialised = storage_init();
+  return initialised ? RES_OK : STA_NOINIT;
 }
 
 DSTATUS disk_status(BYTE pdrv) {
-  return RES_OK; // FIXME: NOINIT?
+  return initialised ? RES_OK : STA_NOINIT;
 }
 
 DRESULT disk_read(BYTE pdrv, BYTE *buff, LBA_t sector, UINT count) {
