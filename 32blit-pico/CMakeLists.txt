@@ -126,6 +126,10 @@ if(BLIT_INPUT_DRIVER STREQUAL "usb_hid")
     list(APPEND BLIT_BOARD_DEFINITIONS INPUT_USB_HID)
 endif()
 
+if(BLIT_STORAGE_DRIVER STREQUAL "sd_spi")
+    list(APPEND BLIT_BOARD_DEFINITIONS STORAGE_SD)
+endif()
+
 if(BLIT_USB_DRIVER STREQUAL "host")
     list(APPEND BLIT_BOARD_DEFINITIONS USB_HOST)
     list(APPEND BLIT_BOARD_LIBRARIES tinyusb_host)
@@ -141,6 +145,7 @@ pico_sdk_init()
 
 # generate PIO headers (has to be after SDK init)
 pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/st7789.pio)
+pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/spi.pio)
 
 # driver sources
 target_sources(BlitHalPico INTERFACE
