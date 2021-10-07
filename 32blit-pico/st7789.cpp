@@ -6,12 +6,13 @@
 #include "hardware/dma.h"
 #include "hardware/irq.h"
 #include "hardware/pwm.h"
+#include "pico/binary_info.h"
 #include "pico/time.h"
 
 #include "config.h"
 #include "st7789.pio.h"
 
-namespace pimoroni {
+namespace st7789 {
 
   enum MADCTL : uint8_t {
     ROW_ORDER   = 0b10000000,
@@ -56,6 +57,47 @@ namespace pimoroni {
     STE       = 0x44
   };
 
+  static PIO pio = pio0;
+  static uint pio_sm = 0;
+  static uint pio_offset = 0, pio_double_offset = 0;
+
+  static uint32_t dma_channel = 0;
+
+  // screen properties
+  static const uint16_t width = ST7789_WIDTH;
+  static const uint16_t height = ST7789_HEIGHT;
+
+  static uint16_t win_w, win_h; // window size
+
+#ifdef PIMORONI_PICOSYSTEM
+  #define CS        PICOSYSTEM_LCD_CSN_PIN
+  #define DC        PICOSYSTEM_LCD_DC_PIN
+  #define SCK       PICOSYSTEM_LCD_SCLK_PIN
+  #define MOSI      PICOSYSTEM_LCD_MOSI_PIN
+  #define BACKLIGHT PICOSYSTEM_BACKLIGHT_PIN
+  #define VSYNC     PICOSYSTEM_LCD_VSYNC_PIN
+  #define RESET     PICOSYSTEM_LCD_RESET_PIN
+#else
+  #define CS        PICO_DEFAULT_SPI_CSN_PIN
+  #define DC        16
+  #define SCK       PICO_DEFAULT_SPI_SCK_PIN
+  #define MOSI      PICO_DEFAULT_SPI_TX_PIN
+  #define BACKLIGHT 20
+#endif
+
+  static bool write_mode = false; // in RAMWR
+  static bool pixel_double = false;
+  static uint16_t *upd_frame_buffer = nullptr;
+
+  // frame buffer where pixel data is stored
+  uint16_t *frame_buffer = nullptr;
+
+  // pixel double scanline counter
+  static volatile int cur_scanline = 240;
+
+  void prepare_write();
+
+  // PIO helpers
   static void pio_put_byte(PIO pio, uint sm, uint8_t b) {
     while (pio_sm_is_tx_fifo_full(pio, sm));
     *(volatile uint8_t*)&pio->txf[sm] = b;
@@ -68,57 +110,61 @@ namespace pimoroni {
   }
 
   // used for pixel doubling
-  // only handles one instance
-  static ST7789 *st7789_ptr = nullptr;
-  static volatile int cur_scanline = 240;
+  static void __isr st7789_dma_irq_handler() {
+    if(dma_channel_get_irq0_status(dma_channel)) {
+      dma_channel_acknowledge_irq0(dma_channel);
 
-  void __isr st7789_dma_irq_handler() {
-    auto channel = st7789_ptr->dma_channel;
-    if(dma_channel_get_irq0_status(channel)) {
-      dma_channel_acknowledge_irq0(channel);
-
-      if(++cur_scanline > st7789_ptr->win_h / 2)
+      if(++cur_scanline > win_h / 2)
         return;
 
-      auto count = cur_scanline == st7789_ptr->win_h / 2 ? st7789_ptr->win_w / 4  : st7789_ptr->win_w / 2;
+      auto count = cur_scanline == (win_h + 1) / 2 ? win_w / 4  : win_w / 2;
 
-      dma_channel_set_trans_count(channel, count, false);
-      dma_channel_set_read_addr(channel, st7789_ptr->upd_frame_buffer + (cur_scanline - 1) * (st7789_ptr->win_w / 2), true);
+      dma_channel_set_trans_count(dma_channel, count, false);
+      dma_channel_set_read_addr(dma_channel, upd_frame_buffer + (cur_scanline - 1) * (win_w / 2), true);
     }
   }
 
-  void ST7789::init(bool auto_init_sequence) {
+  void init(bool auto_init_sequence) {
     // configure pins
-    gpio_set_function(dc, GPIO_FUNC_SIO);
-    gpio_set_dir(dc, GPIO_OUT);
+    gpio_set_function(DC, GPIO_FUNC_SIO);
+    gpio_set_dir(DC, GPIO_OUT);
 
-    gpio_set_function(cs, GPIO_FUNC_SIO);
-    gpio_set_dir(cs, GPIO_OUT);
+    gpio_set_function(CS, GPIO_FUNC_SIO);
+    gpio_set_dir(CS, GPIO_OUT);
+
+    bi_decl_if_func_used(bi_1pin_with_name(DC, "Display D/C"));
+    bi_decl_if_func_used(bi_1pin_with_name(CS, "Display CS"));
 
     // if supported by the display then the vsync pin is
     // toggled high during vertical blanking period
-    if(vsync != -1) {
-      gpio_set_function(vsync, GPIO_FUNC_SIO);
-      gpio_set_dir(vsync, GPIO_IN);
-      gpio_set_pulls(vsync, false, true);
-    }
+#ifdef VSYNC
+    gpio_set_function(VSYNC, GPIO_FUNC_SIO);
+    gpio_set_dir(VSYNC, GPIO_IN);
+    gpio_set_pulls(VSYNC, false, true);
+
+    bi_decl_if_func_used(bi_1pin_with_name(VSYNC, "Display TE/VSync"));
+#endif
 
     // if a backlight pin is provided then set it up for
     // pwm control
-    if(bl != -1) {
-      pwm_config cfg = pwm_get_default_config();
-      pwm_set_wrap(pwm_gpio_to_slice_num(bl), 65535);
-      pwm_init(pwm_gpio_to_slice_num(bl), &cfg, true);
-      gpio_set_function(bl, GPIO_FUNC_PWM);
-    }
+#ifdef BACKLIGHT
+    pwm_config pwm_cfg = pwm_get_default_config();
+    pwm_set_wrap(pwm_gpio_to_slice_num(BACKLIGHT), 65535);
+    pwm_init(pwm_gpio_to_slice_num(BACKLIGHT), &pwm_cfg, true);
+    gpio_set_function(BACKLIGHT, GPIO_FUNC_PWM);
 
-    if(reset != -1) {
-      gpio_set_function(reset, GPIO_FUNC_SIO);
-      gpio_set_dir(reset, GPIO_OUT);
-      gpio_put(reset, 0);
-      sleep_ms(100);
-      gpio_put(reset, 1);
-    }
+    bi_decl_if_func_used(bi_1pin_with_name(BACKLIGHT, "Display Backlight"));
+#endif
+
+#ifdef RESET
+    gpio_set_function(RESET, GPIO_FUNC_SIO);
+    gpio_set_dir(RESET, GPIO_OUT);
+    gpio_put(RESET, 0);
+    sleep_ms(100);
+    gpio_put(RESET, 1);
+
+    bi_decl_if_func_used(bi_1pin_with_name(RESET, "Display Reset"));
+#endif
 
     // setup PIO
     pio_offset = pio_add_program(pio, &st7789_raw_program);
@@ -129,17 +175,20 @@ namespace pimoroni {
     sm_config_set_clkdiv(&cfg, 2); // back to 62.5MHz from overclock
 #endif
     sm_config_set_out_shift(&cfg, false, true, 8);
-    sm_config_set_out_pins(&cfg, mosi, 1);
+    sm_config_set_out_pins(&cfg, MOSI, 1);
     sm_config_set_fifo_join(&cfg, PIO_FIFO_JOIN_TX);
-    sm_config_set_sideset_pins(&cfg, sck);
+    sm_config_set_sideset_pins(&cfg, SCK);
 
-    pio_gpio_init(pio, mosi);
-    pio_gpio_init(pio, sck);
-    pio_sm_set_consecutive_pindirs(pio, pio_sm, mosi, 1, true);
-    pio_sm_set_consecutive_pindirs(pio, pio_sm, sck, 1, true);
+    pio_gpio_init(pio, MOSI);
+    pio_gpio_init(pio, SCK);
+    pio_sm_set_consecutive_pindirs(pio, pio_sm, MOSI, 1, true);
+    pio_sm_set_consecutive_pindirs(pio, pio_sm, SCK, 1, true);
 
     pio_sm_init(pio, pio_sm, pio_offset, &cfg);
     pio_sm_set_enabled(pio, pio_sm, true);
+
+    bi_decl_if_func_used(bi_1pin_with_name(MOSI, "Display TX"));
+    bi_decl_if_func_used(bi_1pin_with_name(SCK, "Display SCK"));
 
     // if auto_init_sequence then send initialisation sequence
     // for our standard displays based on the width and height
@@ -170,6 +219,21 @@ namespace pimoroni {
         command(reg::STE, 2, "\x01\x2C");
       }
 
+      if(width == 320 && height == 240) {
+        command(reg::PORCTRL, 5, "\x0c\x0c\x00\x33\x33");
+        command(reg::GCTRL, 1, "\x74");
+        command(reg::VCOMS, 1, "\x2f");
+        command(reg::LCMCTRL, 1, "\2c");
+        command(reg::LCMCTRL, 1, "\x22");
+        command(reg::VDVVRHEN, 1, "\x01");
+        command(reg::VRHS, 1, "\x19");
+        command(reg::VDVS, 1, "\x20");
+        command(reg::PWCTRL1, 2, "\xa4\xa1");
+        command(0xd6, 1, "\xa1"); // ???
+        command(reg::PVGAMCTRL, 14, "\xF0\x08\x0F\x0B\x0B\x07\x34\x43\x4B\x38\x14\x13\x2C\x31");
+        command(reg::NVGAMCTRL, 14, "\xF0\x0C\x11\x09\x08\x24\x34\x33\x4A\x3A\x16\x16\x2E\x32");
+      }
+
       command(reg::FRCTRL2, 1, "\x15"); // 50Hz
 
       command(reg::INVON);   // set inversion mode
@@ -190,6 +254,9 @@ namespace pimoroni {
         set_window(40, 53, 240, 135);
       }
 
+      if(width == 320 && height == 240)
+        set_window(0, 0, 320, 240);
+
       command(reg::MADCTL,    1, (char *)&madctl);
     }
 
@@ -203,10 +270,9 @@ namespace pimoroni {
 
     irq_add_shared_handler(DMA_IRQ_0, st7789_dma_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
     irq_set_enabled(DMA_IRQ_0, true);
-    st7789_ptr = this;
   }
 
-  void ST7789::command(uint8_t command, size_t len, const char *data) {
+  void command(uint8_t command, size_t len, const char *data) {
     pio_wait(pio, pio_sm);
 
     if(write_mode) {
@@ -224,24 +290,24 @@ namespace pimoroni {
       write_mode = false;
     }
 
-    gpio_put(cs, 0);
+    gpio_put(CS, 0);
 
-    gpio_put(dc, 0); // command mode
+    gpio_put(DC, 0); // command mode
     pio_put_byte(pio, pio_sm, command);
 
     if(data) {
       pio_wait(pio, pio_sm);
-      gpio_put(dc, 1); // data mode
+      gpio_put(DC, 1); // data mode
 
       for(size_t i = 0; i < len; i++)
         pio_put_byte(pio, pio_sm, data[i]);
     }
 
     pio_wait(pio, pio_sm);
-    gpio_put(cs, 1);
+    gpio_put(CS, 1);
   }
 
-  void ST7789::update(bool dont_block) {
+  void update(bool dont_block) {
     if(dma_channel_is_busy(dma_channel) && dont_block) {
       return;
     }
@@ -261,23 +327,26 @@ namespace pimoroni {
     dma_channel_set_read_addr(dma_channel, frame_buffer, true);
   }
 
-  void ST7789::set_backlight(uint8_t brightness) {
+  void set_backlight(uint8_t brightness) {
+#ifdef BACKLIGHT
     // gamma correct the provided 0-255 brightness value onto a
     // 0-65535 range for the pwm counter
     float gamma = 2.8;
     uint16_t value = (uint16_t)(pow((float)(brightness) / 255.0f, gamma) * 65535.0f + 0.5f);
-    pwm_set_gpio_level(bl, value);
+    pwm_set_gpio_level(BACKLIGHT, value);
+#endif
   }
 
-  bool ST7789::vsync_callback(gpio_irq_callback_t callback) {
-    if(vsync == -1)
-      return false;
-
-    gpio_set_irq_enabled_with_callback(vsync, GPIO_IRQ_EDGE_RISE, true, callback);
+  bool vsync_callback(gpio_irq_callback_t callback) {
+#ifdef VSYNC
+    gpio_set_irq_enabled_with_callback(VSYNC, GPIO_IRQ_EDGE_RISE, true, callback);
     return true;
+#else
+    return false;
+#endif
   }
 
-  void ST7789::set_window(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
+  void set_window(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
     uint32_t cols = __builtin_bswap32((x << 16) | (x + w - 1));
     uint32_t rows = __builtin_bswap32((y << 16) | (y + h - 1));
 
@@ -288,7 +357,7 @@ namespace pimoroni {
     win_h = h;
   }
 
-  void ST7789::set_pixel_double(bool pd) {
+  void set_pixel_double(bool pd) {
     pixel_double = pd;
 
     // nop to reconfigure PIO
@@ -302,7 +371,7 @@ namespace pimoroni {
       dma_channel_set_irq0_enabled(dma_channel, false);
   }
 
-  void ST7789::clear() {
+  void clear() {
     if(!write_mode)
       prepare_write();
 
@@ -310,25 +379,25 @@ namespace pimoroni {
       pio_sm_put_blocking(pio, pio_sm, 0);
   }
 
-  bool ST7789::dma_is_busy() {
+  bool dma_is_busy() {
     if(pixel_double && cur_scanline <= win_h / 2)
       return true;
 
     return dma_channel_is_busy(dma_channel);
   }
 
-  void ST7789::prepare_write() {
+  void prepare_write() {
     pio_wait(pio, pio_sm);
 
     // setup for writing
     uint8_t r = reg::RAMWR;
-    gpio_put(cs, 0);
+    gpio_put(CS, 0);
 
-    gpio_put(dc, 0); // command mode
+    gpio_put(DC, 0); // command mode
     pio_put_byte(pio, pio_sm, r);
     pio_wait(pio, pio_sm);
 
-    gpio_put(dc, 1); // data mode
+    gpio_put(DC, 1); // data mode
 
     pio_sm_set_enabled(pio, pio_sm, false);
     pio_sm_restart(pio, pio_sm);

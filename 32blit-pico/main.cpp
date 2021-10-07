@@ -26,13 +26,15 @@
 using namespace blit;
 
 #ifdef DISPLAY_ST7789
-static const int lores_page_size = (ST7789_WIDTH / 2) * (ST7789_HEIGHT / 2) * 2;
+// height rounded up to handle the 135px display
+static const int lores_page_size = (ST7789_WIDTH / 2) * ((ST7789_HEIGHT + 1) / 2) * 2;
 
 #if ALLOW_HIRES
 uint8_t screen_fb[ST7789_WIDTH * ST7789_HEIGHT * 2];
 #else
 uint8_t screen_fb[lores_page_size * 2]; // double-buffered
 #endif
+static bool have_vsync = false;
 
 static Surface lores_screen(screen_fb, PixelFormat::RGB565, Size(ST7789_WIDTH / 2, ST7789_HEIGHT / 2));
 static Surface hires_screen(screen_fb, PixelFormat::RGB565, Size(ST7789_WIDTH, ST7789_HEIGHT));
@@ -44,16 +46,6 @@ static Surface lores_screen(screen_fb, PixelFormat::RGB565, Size(160, 120));
 
 static blit::AudioChannel channels[CHANNEL_COUNT];
 
-#ifdef DISPLAY_ST7789
-#ifdef PIMORONI_PICOSYSTEM
-// non-default pins
-// TODO: clean this up?
-pimoroni::ST7789 st7789(240, 240, (uint16_t *)screen_fb, 5, 9, 6, 7, 12, 8, 4);
-#else
-pimoroni::ST7789 st7789(ST7789_WIDTH, ST7789_HEIGHT, (uint16_t *)screen_fb);
-#endif
-static bool have_vsync = false;
-#endif
 
 ScreenMode cur_screen_mode = ScreenMode::lores;
 // double buffering for lores
@@ -70,7 +62,7 @@ static Surface &set_screen_mode(ScreenMode mode) {
       if(have_vsync)
         do_render = true; // prevent starting an update during switch
 
-      st7789.set_pixel_double(true);
+      st7789::set_pixel_double(true);
 #endif
       break;
 
@@ -80,8 +72,8 @@ static Surface &set_screen_mode(ScreenMode mode) {
         do_render = true;
 
       screen = hires_screen;
-      st7789.frame_buffer = (uint16_t *)screen_fb;
-      st7789.set_pixel_double(false);
+      st7789::frame_buffer = (uint16_t *)screen_fb;
+      st7789::set_pixel_double(false);
 #else
       return screen;
 #endif
@@ -181,8 +173,8 @@ void update(uint32_t);
 
 #ifdef DISPLAY_ST7789
 void vsync_callback(uint gpio, uint32_t events) {
-  if(!do_render && !st7789.dma_is_busy()) {
-    st7789.update();
+  if(!do_render && !st7789::dma_is_busy()) {
+    st7789::update();
     do_render = true;
   }
 }
@@ -301,10 +293,11 @@ int main() {
 
 #ifdef DISPLAY_ST7789
   bool backlight_enabled = false;
-  st7789.init();
-  st7789.clear();
+  st7789::frame_buffer = (uint16_t *)screen_fb;
+  st7789::init();
+  st7789::clear();
 
-  have_vsync = st7789.vsync_callback(vsync_callback);
+  have_vsync = st7789::vsync_callback(vsync_callback);
 #endif
 
 #ifdef DISPLAY_SCANVIDEO
@@ -334,22 +327,24 @@ int main() {
     auto now = ::now();
 
 #ifdef DISPLAY_ST7789
-    if((do_render || (!have_vsync && now - last_render >= 20)) && (cur_screen_mode == ScreenMode::lores || !st7789.dma_is_busy())) {
+    if((do_render || (!have_vsync && now - last_render >= 20)) && (cur_screen_mode == ScreenMode::lores || !st7789::dma_is_busy())) {
       if(cur_screen_mode == ScreenMode::lores) {
         buf_index ^= 1;
 
         screen.data = screen_fb + (buf_index) * lores_page_size;
-        st7789.frame_buffer = (uint16_t *)screen.data;
+        st7789::frame_buffer = (uint16_t *)screen.data;
       }
 
       ::render(now);
 
-      if(!have_vsync)
-        st7789.update();
+      if(!have_vsync) {
+        while(st7789::dma_is_busy()) {} // may need to wait for lores.
+        st7789::update();
+      }
 
       if(last_render && !backlight_enabled) {
         // the first render should have made it to the screen at this point
-        st7789.set_backlight(255);
+        st7789::set_backlight(255);
         backlight_enabled = true;
       }
 
