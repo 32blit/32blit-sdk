@@ -47,17 +47,21 @@ elseif(${PICO_BOARD} STREQUAL "pimoroni_picosystem")
     target_compile_definitions(BlitHalPico INTERFACE
         DISPLAY_ST7789
         INPUT_GPIO
+        LED_R_PIN=PICOSYSTEM_LED_R_PIN
+        LED_G_PIN=PICOSYSTEM_LED_G_PIN
+        LED_B_PIN=PICOSYSTEM_LED_B_PIN
+        USB_PRODUCT_STR="PicoSystem"
     )
     if(AUDIO_PWM)
         target_link_libraries(BlitHalPico INTERFACE pico_audio_pwm)
         target_compile_definitions(BlitHalPico INTERFACE
-            PICO_AUDIO_PWM_MONO_PIN=11
+            PICO_AUDIO_PWM_MONO_PIN=PICOSYSTEM_AUDIO_PIN
             PICO_AUDIO_PWM_PIO=1
             AUDIO_PWM
         )
     else()
         target_compile_definitions(BlitHalPico INTERFACE
-            AUDIO_BEEP_PIN=11
+            AUDIO_BEEP_PIN=PICOSYSTEM_AUDIO_PIN
             AUDIO_BEEP
         )
     endif()
