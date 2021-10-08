@@ -4,13 +4,14 @@ The Pico port brings the 32blit SDK to PicoSystem and other RP2040-based devices
 
 Since RP2040 is slower and less capable than 32blit's STM32H750 there are some limitations, but most of the 32blit SDK conceniences work well.
 
-- [Wh y use 32blit SDK on PicoSystem?](#wh-y-use-32blit-sdk-on-picosystem)
-- [Building](#building)
-  - [Linux](#linux)
-    - [Fetch Pico SDK Automatically (Quick-Start)](#fetch-pico-sdk-automatically-quick-start)
-    - [Existing Pico SDK (Advanced)](#existing-pico-sdk-advanced)
+- [Why use 32blit SDK on PicoSystem?](#why-use-32blit-sdk-on-picosystem)
+- [Building The SDK & Examples](#building-the-sdk--examples)
+  - [Fetch Pico SDK Automatically (Quick-Start)](#fetch-pico-sdk-automatically-quick-start)
+  - [Existing Pico SDK (Advanced)](#existing-pico-sdk-advanced)
 - [Starting Your Own 32blit SDK Project](#starting-your-own-32blit-sdk-project)
   - [Enabling PicoSystem builds](#enabling-picosystem-builds)
+  - [Building](#building)
+  - [Copying to your PicoSystem](#copying-to-your-picosystem)
   - [Enabling PicoSystem CI](#enabling-picosystem-ci)
   - [Extra configuration](#extra-configuration)
 - [API Limitations & Board Details](#api-limitations--board-details)
@@ -18,16 +19,16 @@ Since RP2040 is slower and less capable than 32blit's STM32H750 there are some l
   - [Limitations](#limitations)
   - [Board-specific details](#board-specific-details)
 
-## Wh y use 32blit SDK on PicoSystem?
+## Why use 32blit SDK on PicoSystem?
 
 The number 1 reason is portability! 32blit SDK will build for:
 
-1. Windows
-2. macOS
-3. Linux
-4. Emscripten (Web assembly)
-5. PicoSystem
-6. 32blit
+* Windows
+* macOS
+* Linux
+* Emscripten (Web assembly)
+* PicoSystem
+* 32blit
 
 And is portable to any platform supporting SDL2.
 
@@ -35,13 +36,15 @@ This means you can ship your game to more people on more platforms, share it onl
 
 Additionally the 32blit SDK has some conveniences:
 
-1. Tiled editor .tmx support for levels
-2. An asset pipeline for converting fonts & spritesheets for use on device
-3. A boilerplate project with GitHub Actions
+* Tiled editor .tmx support for levels
+* An asset pipeline for converting fonts & spritesheets for use on device
+* A boilerplate project with GitHub Actions
 
-## Building
+## Building The SDK & Examples
 
-### Linux
+We recommend using Linux to work with PicoSystem/Pico SDK. It's the path of least resistance!
+
+This guide was tested with Ubuntu 21.04, and most of these instructions will work in its WSL (Windows Subsystem for Linux) equivalent.
 
 You'll need a compiler and a few other dependencies to get started building C++ for PicoSystem:
 
@@ -57,7 +60,15 @@ And the 32blit tools:
 pip3 install 32blit
 ```
 
-#### Fetch Pico SDK Automatically (Quick-Start)
+If pip gives you warnings about 32blit being installed in a directory not on PATH, make sure you add it, eg:
+
+```
+export PATH=$PATH:~/.local/bin
+```
+
+You might also want to add this to the bottom of your `~/.bashrc`.
+
+### Fetch Pico SDK Automatically (Quick-Start)
 
 You can use Pico SDK's fetch-from-git feature and build like so:
 
@@ -73,7 +84,7 @@ And then run `make` as usual.
 
 Now you can start hacking on an existing example, or skip to [Starting Your Own 32blit SDK Project](#starting-your-own-32blit-sdk-project).
 
-#### Existing Pico SDK (Advanced)
+### Existing Pico SDK (Advanced)
 
 This requires a working Pico SDK setup ([Getting started with Raspberry Pi Pico](https://datasheets.raspberrypi.org/pico/getting-started-with-pico.pdf)), the 32blit tools and a copy of the 32blit SDK (this repository).
 
@@ -115,10 +126,37 @@ project(my-amazing-gane)
 ...
 ```
 
-Then configure (as above) with something like:
+Then configure, making sure to specify `32BLIT_DIR` or the Pico SDK import will fail:
+
 ```
 cmake .. -D32BLIT_DIR=/path/to/32blit-sdk -DPICO_SDK_PATH=/path/to/pico-sdk -DPICO_BOARD=pimoroni_picosystem
 ```
+
+Alternatively you can omit `PICO_SDK_PATH` and ask the SDK to fetch it from git:
+
+```
+cmake .. -D32BLIT_DIR=/path/to/32blit-sdk -DPICO_SDK_FETCH_FROM_GIT=true -DPICO_EXTRAS_FETCH_FROM_GIT=true -DPICO_BOARD=pimoroni_picosystem
+```
+
+Note: you should probably grab local copies of `pico-sdk` and `pico-extras` somewhere memorable, since fetching them from git every time you configure will get tedious!
+
+### Building
+
+Finally type `make` to build your project into a `.uf2` file compatible with PicoSystem. This will output `your-project-name.uf2` which you must copy to your PicoSystem.
+
+### Copying to your PicoSystem
+
+Connect your PicoSystem to your computer using a USB Type-C cable.
+
+From a power-off state, hold down X (the top face button) and press Power (the button at the top left, next to the USB Type-C port).
+
+Your PicoSystem should mount as "RPI-RP2". On Linux this might be `/media/<username>/RPI-RP2`:
+
+```
+cp your-project-name.uf2 /media/`whoami`/RPI-RP2
+```
+
+The file should copy over, and your PicoSystem should automatically reboot into your game.
 
 ### Enabling PicoSystem CI
 
