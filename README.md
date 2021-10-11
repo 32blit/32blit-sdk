@@ -54,7 +54,6 @@ Join the 32blit community on:
 
 * Discord (Chat) - https://discord.gg/7qM9ftC
 * Discourse (Forum) - https://forums.pimoroni.com/c/32blit/21
-* Reddit (Anarchy) - https://www.reddit.com/r/32blit
 
 ## Troubleshooting
 
