@@ -235,7 +235,7 @@ SECTIONS
   /* Remove information from the standard libraries */
   /DISCARD/ :
   {
-    libc.a ( * )
+    libc_nano.a ( * )
     libm.a ( * )
     libgcc.a ( * )
   }
