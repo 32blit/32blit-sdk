@@ -9,10 +9,9 @@ Since RP2040 is slower and less capable than 32blit's STM32H750 there are some l
   - [Fetch Pico SDK Automatically (Quick-Start)](#fetch-pico-sdk-automatically-quick-start)
   - [Existing Pico SDK (Advanced)](#existing-pico-sdk-advanced)
 - [Starting Your Own 32blit SDK Project](#starting-your-own-32blit-sdk-project)
-  - [Enabling PicoSystem builds](#enabling-picosystem-builds)
+  - [Coniguring PicoSystem builds](#coniguring-picosystem-builds)
   - [Building](#building)
   - [Copying to your PicoSystem](#copying-to-your-picosystem)
-  - [Enabling PicoSystem CI](#enabling-picosystem-ci)
   - [Extra configuration](#extra-configuration)
 - [API Limitations & Board Details](#api-limitations--board-details)
   - [Unsupported Features](#unsupported-features)
@@ -38,7 +37,7 @@ Additionally the 32blit SDK has some conveniences:
 
 * Tiled editor .tmx support for levels
 * An asset pipeline for converting fonts & spritesheets for use on device
-* A boilerplate project with GitHub Actions
+* A boilerplate project with GitHub Actions - https://github.com/32blit/picosystem-boilerplate
 
 ## Building The SDK & Examples
 
@@ -106,39 +105,36 @@ Now you can start hacking on an existing example, or skip to [Starting Your Own 
 
 ## Starting Your Own 32blit SDK Project
 
-We've created a boilerplate 32blit SDK project to get you started: https://github.com/32blit/32blit-boilerplate/
+We've created a boilerplate 32blit SDK project to get you started: https://github.com/32blit/picosystem-boilerplate/
 
-If you use GitHub, just click the green "Use this template" button to start creating your new project.
+Click the green "Use this template" button to start creating your new project.
 
-Alternatively you can run `32blit setup` for a step-by-step boilerplate setup.
+### Coniguring PicoSystem builds
 
-### Enabling PicoSystem builds
+Clone your new GitHub project to your local machine alongside the "pico-sdk" directory.
 
-To set up the boilerplate project for PicoSystem builds, you must import the Pico SDK before the `project` line in your CMakeLists.txt.
-
-```cmake
-cmake_minimum_required(VERSION 3.9)
-
-# this is a wrapper for the pico sdk import files, which are only included if PICO_BOARD is set
-include(${32BLIT_DIR}/32blit-pico/sdk_import.cmake OPTIONAL)
-
-project(my-amazing-gane)
-...
-```
-
-Then configure, making sure to specify `32BLIT_DIR` or the Pico SDK import will fail:
+Create a new build directory for PicoSystem, the name doesn't matter but we tend to use "build.pico":
 
 ```
-cmake .. -D32BLIT_DIR=/path/to/32blit-sdk -DPICO_SDK_PATH=/path/to/pico-sdk -DPICO_BOARD=pimoroni_picosystem
+cd your-repo-name
+mkdir build.pico
+cd build.pico
 ```
 
-Alternatively you can omit `PICO_SDK_PATH` and ask the SDK to fetch it from git:
+Then configure, like so:
 
 ```
-cmake .. -D32BLIT_DIR=/path/to/32blit-sdk -DPICO_SDK_FETCH_FROM_GIT=true -DPICO_EXTRAS_FETCH_FROM_GIT=true -DPICO_BOARD=pimoroni_picosystem
+cmake .. -DCMAKE_TOOLCHAIN_FILE=../../32blit-sdk/pico.toolchain -DPICO_BOARD=pimoroni_picosystem
+```
+This requires the Pico SDK, Pico Extras and 32blit SDK to be alongside your project directory.
+
+Alternatively you can ask the Pico SDK to fetch itself from git:
+
+```
+cmake .. -DCMAKE_TOOLCHAIN_FILE=../../32blit-sdk/pico.toolchain -DPICO_BOARD=pimoroni_picosystem -DPICO_SDK_FETCH_FROM_GIT=true -DPICO_EXTRAS_FETCH_FROM_GIT=true
 ```
 
-Note: you should probably grab local copies of `pico-sdk` and `pico-extras` somewhere memorable, since fetching them from git every time you configure will get tedious!
+:warning: Note: you should probably grab local copies of `pico-sdk` and `pico-extras` somewhere memorable, since fetching them from git every time you configure will get tedious!
 
 ### Building
 
@@ -157,56 +153,6 @@ cp your-project-name.uf2 /media/`whoami`/RPI-RP2
 ```
 
 The file should copy over, and your PicoSystem should automatically reboot into your game.
-
-### Enabling PicoSystem CI
-
-You can also enable automatic, GitHub actions builds of PicoSystem .uf2 files when you tag a release on your project. Make the following changes to `.github/workflows/build.yml`:
-
-```diff
-diff --git a/.github/workflows/build.yml b/.github/workflows/build.yml
-index db26a2b..b37df91 100644
---- a/.github/workflows/build.yml
-+++ b/.github/workflows/build.yml
-@@ -38,6 +38,14 @@ jobs:
-             cmake-args: -D32BLIT_DIR=$GITHUB_WORKSPACE/32blit-sdk -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/32blit-sdk/32blit.toolchain
-             apt-packages: gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib python3-setuptools
- 
-+          - os: ubuntu-20.04
-+            pico-sdk: true
-+            name: PicoSystem
-+            cache-key: picosystem
-+            release-suffix: PicoSystem
-+            cmake-args: -D32BLIT_DIR=$GITHUB_WORKSPACE/32blit-sdk -DPICO_SDK_PATH=$GITHUB_WORKSPACE/pico-sdk -DPICO_BOARD=pimoroni_picosystem
-+            apt-packages: gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib python3-setuptools
-+
-           - os: ubuntu-20.04
-             name: Emscripten
-             release-suffix: WEB
-@@ -75,6 +83,22 @@ jobs:
-         repository: 32blit/32blit-sdk
-         path: 32blit-sdk
- 
-+    # pico sdk/extras for some builds
-+    - name: Checkout Pico SDK
-+      if: matrix.pico-sdk
-+      uses: actions/checkout@v2
-+      with:
-+        repository: raspberrypi/pico-sdk
-+        path: pico-sdk
-+        submodules: true
-+
-+    - name: Checkout Pico Extras
-+      if: matrix.pico-sdk
-+      uses: actions/checkout@v2
-+      with:
-+        repository: raspberrypi/pico-extras
-+        path: pico-extras
-+
-     # Linux dependencies
-     - name: Install Linux deps
-       if: runner.os == 'Linux'
-
-```
 
 ### Extra configuration
 
@@ -247,7 +193,6 @@ Additionally some supported features have limitations:
 - Using the MP3 decoder is probably not a good idea
 
 ### Board-specific details
-
 
 The RP2040/Pico port supports PicoSystem and VGA board. Below is a table showing which features are available on each platform, and which `PICO_BOARD` to use to target them:
 
