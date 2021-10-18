@@ -9,6 +9,7 @@
 
 #ifdef AUDIO_PWM
 #include "pico/audio_pwm.h"
+#include "hardware/clocks.h"
 #include "hardware/pio.h"
 #define HAVE_AUDIO
 #define AUDIO_SAMPLE_FREQ 22050
@@ -87,9 +88,10 @@ void init_audio() {
   if (!output_format) {
       panic("PicoAudio: Unable to open audio device.\n");
   }
-#if OVERCLOCK_250
-  pio_sm_set_clkdiv(pio1, 1, 2.0f);
-#endif
+
+  // PWM PIO program assumes 48MHz
+  pio_sm_set_clkdiv(pio1, 1, clock_get_hz(clk_sys) / 48000000.0f);
+
   bool ok = audio_pwm_default_connect(producer_pool, false);
   assert(ok);
   audio_pwm_set_enabled(true);
