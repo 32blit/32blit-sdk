@@ -170,6 +170,8 @@ namespace st7789 {
     pio_offset = pio_add_program(pio, &st7789_raw_program);
     pio_double_offset = pio_add_program(pio, &st7789_pixel_double_program);
 
+    pio_sm = pio_claim_unused_sm(pio, true);
+
     pio_sm_config cfg = st7789_raw_program_get_default_config(pio_offset);
 #if OVERCLOCK_250
     sm_config_set_clkdiv(&cfg, 2); // back to 62.5MHz from overclock
