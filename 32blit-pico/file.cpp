@@ -59,6 +59,8 @@ DRESULT disk_ioctl(BYTE pdrv, BYTE cmd, void* buff) {
 void init_fs() {
   auto res = f_mount(&fs, "", 1);
 
+  // auto-format flash, but not SD cards
+#ifndef STORAGE_SD
   if(res == FR_NO_FILESYSTEM) {
     printf("No filesystem found, formatting...\n");
 
@@ -73,6 +75,7 @@ void init_fs() {
 
     res = f_mount(&fs, "", 1);
   }
+#endif
 
   if(res != FR_OK)
     printf("Failed to mount filesystem! (%i)\n", res);
