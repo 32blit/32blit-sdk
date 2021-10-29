@@ -3,6 +3,7 @@
 
 #include "hardware/clocks.h"
 #include "hardware/structs/rosc.h"
+#include "hardware/vreg.h"
 #include "pico/binary_info.h"
 #include "pico/stdlib.h"
 
@@ -232,6 +233,10 @@ static int64_t timer_callback(alarm_id_t alarm_id, void *user_data) {
 
 int main() {
 #if OVERCLOCK_250
+  // Apply a modest overvolt, default is 1.10v.
+  // this is required for a stable 250MHz on some RP2040s
+  vreg_set_voltage(VREG_VOLTAGE_1_20);
+  sleep_ms(10);
   set_sys_clock_khz(250000, false);
 #endif
 
