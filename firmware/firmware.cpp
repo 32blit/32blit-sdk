@@ -9,6 +9,8 @@
 #include "file.hpp"
 #include "executable.hpp"
 #include "dialog.hpp"
+#include "power.hpp"
+
 #include "engine/api_private.hpp"
 
 using namespace blit;
@@ -820,6 +822,8 @@ CDCCommandHandler::StreamResult CDCLaunchHandler::StreamData(CDCDataStream &data
 
 // StreamInit() Initialise state machine
 bool FlashLoader::StreamInit(CDCFourCC uCommand) {
+  power::update_active();
+
   switch(uCommand) {
     case CDCCommandHandler::CDCFourCCMake<'P', 'R', 'O', 'G'>::value:
       dest = Destination::Flash;
@@ -855,6 +859,8 @@ bool FlashLoader::StreamInit(CDCFourCC uCommand) {
 // stData     : The binary data (.bin file)
 CDCCommandHandler::StreamResult FlashLoader::StreamData(CDCDataStream &dataStream)
 {
+  power::update_active();
+
   CDCCommandHandler::StreamResult result = srContinue;
   uint8_t byte;
   while(dataStream.GetStreamLength() && result == srContinue)
