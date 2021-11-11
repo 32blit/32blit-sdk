@@ -5,12 +5,15 @@
 
 #include "File.hpp"
 #include "System.hpp"
+#include "Input.hpp"
 #include "32blit.hpp"
 #include "UserCode.hpp"
 #include "JPEG.hpp"
 #include "Multiplayer.hpp"
 
 #include "engine/api_private.hpp"
+
+extern Input *blit_input;
 
 // blit framebuffer memory
 uint8_t framebuffer[320 * 240 * 3];
@@ -269,6 +272,16 @@ void System::loop()
 	blit::joystick.y = shadow_joystick[1];
 	SDL_UnlockMutex(m_input);
 	blit::tick(::now());
+
+    if(blit::vibration > 0) {
+        for (auto gc : blit_input->game_controllers) {
+            if(gc.can_rumble) {
+                auto frequency = blit::vibration * 0xFFFF;
+                SDL_GameControllerRumble(gc.gc_id, frequency, frequency, 20);
+            }
+        }
+    }
+
 	blit::render(::now());
 	blit_multiplayer->update();
 }

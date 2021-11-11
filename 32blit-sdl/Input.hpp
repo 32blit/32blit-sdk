@@ -1,12 +1,21 @@
 #include <map>
+#include <vector>
 class System;
+
+struct game_controller
+    {
+        SDL_GameController* gc_id;
+        bool can_rumble;
+    };
 
 class Input {
 	public:
 		static std::map<int, int> keys;
 		static std::map<int, int> buttons;
 
-		static int find_key(int key);
+        std::vector<game_controller> game_controllers;
+
+        static int find_key(int key);
 		static int find_button(int button);
 
 		Input(System *system);

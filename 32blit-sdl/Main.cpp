@@ -233,13 +233,39 @@ int main(int argc, char *argv[]) {
 		SDL_SetWindowPosition(window, x, y);
 	}
 
+    blit_system = new System();
+    blit_input = new Input(blit_system);
+
+    printf("Found that many Joysticks: %d\n", SDL_NumJoysticks());
+
 	// Open all joysticks as game controllers
-	for(int n=0; n<SDL_NumJoysticks(); n++) {
-		SDL_GameControllerOpen(n);
+	for(int n = 0; n < SDL_NumJoysticks(); n++) {
+
+        if(SDL_IsGameController(n)) {
+
+            SDL_GameController* gc = SDL_GameControllerOpen(n);
+
+            if (gc != nullptr && SDL_GameControllerGetAttached(gc) == SDL_TRUE) {
+
+                // welcome rumble to test if it can rumble
+                auto can_rumble = SDL_GameControllerRumble(gc, 0xFFFF, 0xFFFF, 200);
+
+                game_controller gcs = {gc, can_rumble == 0};
+                blit_input->game_controllers.push_back(gcs);
+            }
+            else {
+
+                printf("SDL_GetError() = %s\n", SDL_GetError());
+            }
+        }
 	}
 
-	blit_system = new System();
-	blit_input = new Input(blit_system);
+    if(!blit_input->game_controllers.empty()) {
+
+        SDL_GameControllerEventState(SDL_ENABLE);
+
+    }
+
 	blit_multiplayer = new Multiplayer(mp_mode, mp_address);
 	blit_renderer = new Renderer(window, System::width, System::height);
 	blit_audio = new Audio();
@@ -269,6 +295,13 @@ int main(int argc, char *argv[]) {
 	if (blit_capture->recording()) blit_capture->stop();
 	delete blit_capture;
 #endif
+
+    // delete game controllers
+    for (auto gc : blit_input->game_controllers)
+    {
+        SDL_GameControllerClose(gc.gc_id);
+    }
+    blit_input->game_controllers.clear();
 
 	blit_system->stop();
 	delete blit_system;
