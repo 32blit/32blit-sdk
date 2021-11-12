@@ -1,5 +1,6 @@
 #include <map>
 #include <vector>
+#include <algorithm>
 class System;
 
 struct game_controller
@@ -13,9 +14,7 @@ class Input {
 		static std::map<int, int> keys;
 		static std::map<int, int> buttons;
 
-        std::vector<game_controller> game_controllers;
-
-        static int find_key(int key);
+    static int find_key(int key);
 		static int find_button(int button);
 
 		Input(System *system);

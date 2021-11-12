@@ -272,17 +272,8 @@ void System::loop()
 	blit::joystick.y = shadow_joystick[1];
 	SDL_UnlockMutex(m_input);
 	blit::tick(::now());
-
-    if(blit::vibration > 0) {
-        for (auto gc : blit_input->game_controllers) {
-            if(gc.can_rumble) {
-                auto frequency = blit::vibration * 0xFFFF;
-                SDL_GameControllerRumble(gc.gc_id, frequency, frequency, 20);
-            }
-        }
-    }
-
-	blit::render(::now());
+  blit_input->rumble_controllers(blit::vibration);
+  blit::render(::now());
 	blit_multiplayer->update();
 }
 
