@@ -68,6 +68,25 @@ int Input::find_button(int button) {
 }
 
 Input::Input(System *target) : target(target) {
+  // Open all joysticks as game controllers
+  for(int n = 0; n < SDL_NumJoysticks(); n++) {
+
+    if(SDL_IsGameController(n)) {
+
+      auto gc = SDL_GameControllerOpen(n);
+      if(gc != nullptr) {
+        _add_controller(gc);
+      }
+    }
+  }
+}
+
+Input::~Input() {
+  for (auto gc : game_controllers)
+  {
+    _remove_controller(gc.gc_id);
+  }
+  game_controllers.clear();
 }
 
 bool Input::handle_mouse(int button, bool state, int x, int y) {
@@ -132,6 +151,34 @@ bool Input::handle_controller_motion(int axis, int value) {
 	return false;
 }
 
+void Input::handle_controller_added(Sint32 joystick_index) {
+
+  SDL_GameController* gc = SDL_GameControllerOpen(joystick_index);
+  if (gc != nullptr) {
+    _add_controller(gc);
+  }
+}
+
+void Input::handle_controller_removed(Sint32 joystick_index) {
+
+  auto gc_removed = SDL_GameControllerFromInstanceID(joystick_index);
+  if(gc_removed != nullptr) {
+    _remove_controller(gc_removed);
+  }
+}
+
+void Input::rumble_controllers(const float& volume) {
+
+  if(volume > 0) {
+    for (auto gc : game_controllers) {
+      if(gc.can_rumble) {
+        auto frequency = volume * 0xFFFF;
+        SDL_GameControllerRumble(gc.gc_id, frequency, frequency, 50);
+      }
+    }
+  }
+}
+
 void Input::_virtual_tilt(int x, int y, int half_w, int half_h) {
 	float z = 80.0f;
 	x = x - half_w;
@@ -148,4 +195,22 @@ void Input::_virtual_analog(int x, int y, int half_w, int half_h) {
 	float jy = (float)y / half_h;
 	target->set_joystick(0, jx);
 	target->set_joystick(1, jy);
+}
+
+void Input::_add_controller(SDL_GameController* gc) {
+  // welcome rumble to test if it can rumble
+  auto can_rumble = SDL_GameControllerRumble(gc, 0xFFFF, 0xFFFF, 200);
+
+  GameController gcs = {gc, can_rumble == 0};
+  game_controllers.push_back(gcs);
+}
+
+void Input::_remove_controller(SDL_GameController* gc) {
+  game_controllers.erase(
+    std::remove_if(game_controllers.begin(), game_controllers.end(), [&](GameController const & controller) {
+        return controller.gc_id == gc;
+    }),
+    game_controllers.end());
+
+  SDL_GameControllerClose(gc);
 }

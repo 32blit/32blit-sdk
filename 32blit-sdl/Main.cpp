@@ -88,11 +88,11 @@ void handle_event(SDL_Event &event) {
 			break;
 
 		case SDL_CONTROLLERDEVICEADDED:
-			SDL_GameControllerOpen(event.cdevice.which);
+      blit_input->handle_controller_added(event.cdevice.which);
 			break;
 
 		case SDL_CONTROLLERDEVICEREMOVED:
-			SDL_GameControllerClose(SDL_GameControllerFromInstanceID(event.cdevice.which));
+      blit_input->handle_controller_removed(event.cdevice.which);
 			break;
 
 		case SDL_RENDER_TARGETS_RESET:
@@ -267,6 +267,7 @@ int main(int argc, char *argv[]) {
 
 	blit_system->stop();
 	delete blit_system;
+  delete blit_input;
 	delete blit_multiplayer;
 	delete blit_renderer;
 
