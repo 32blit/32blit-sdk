@@ -92,6 +92,10 @@ static SurfaceInfo &set_screen_mode(ScreenMode mode) {
   return cur_surf_info;
 }
 
+static void set_screen_palette(const Pen *colours, int num_cols) {
+
+}
+
 static uint32_t now() {
   return to_ms_since_boot(get_absolute_time());
 }
@@ -247,7 +251,7 @@ int main() {
   api.channels = ::channels;
 
   api.set_screen_mode = ::set_screen_mode;
-  // api.set_screen_palette = ::set_screen_palette;
+  api.set_screen_palette = ::set_screen_palette;
   api.now = ::now;
   api.random = ::random;
   // api.exit = ::exit;
