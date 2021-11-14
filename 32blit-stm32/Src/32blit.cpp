@@ -377,10 +377,14 @@ void blit_init() {
 
     blit::api.set_screen_mode = display::set_screen_mode;
     blit::api.set_screen_palette = display::set_screen_palette;
+    blit::api.set_screen_mode_format = display::set_screen_mode_format;
+
     display::set_screen_mode(blit::lores);
+
     blit::update = ::update;
     blit::render = ::render;
     blit::init   = ::init;
+
     blit::api.open_file = ::open_file;
     blit::api.read_file = ::read_file;
     blit::api.write_file = ::write_file;

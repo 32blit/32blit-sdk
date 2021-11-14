@@ -52,6 +52,36 @@ static void set_screen_palette(const blit::Pen *colours, int num_cols) {
 	memcpy(palette, colours, num_cols * sizeof(blit::Pen));
 }
 
+static bool set_screen_mode_format(blit::ScreenMode new_mode, blit::SurfaceTemplate &new_surf_template) {
+  new_surf_template.data = framebuffer;
+
+  switch(new_mode) {
+    case blit::ScreenMode::lores:
+      new_surf_template.bounds = __fb_lores.bounds;
+      break;
+    case blit::ScreenMode::hires:
+    case blit::ScreenMode::hires_palette:
+      new_surf_template.bounds = __fb_hires.bounds;
+      break;
+  }
+
+  switch(new_surf_template.format) {
+    case blit::PixelFormat::RGB:
+      break;
+    case blit::PixelFormat::P:
+      new_surf_template.palette = palette;
+      break;
+
+    default:
+      return false;
+  }
+
+  _mode = new_mode;
+  cur_format = new_surf_template.format;
+
+  return true;
+}
+
 // blit timer callback
 std::chrono::steady_clock::time_point start;
 uint32_t now() {
@@ -170,6 +200,7 @@ void System::run() {
 	blit::api.debug = ::blit_debug;
 	blit::api.set_screen_mode = ::set_screen_mode;
 	blit::api.set_screen_palette = ::set_screen_palette;
+  blit::api.set_screen_mode_format = ::set_screen_mode_format;
 	blit::update = ::update;
 	blit::render = ::render;
 

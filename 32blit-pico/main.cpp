@@ -96,6 +96,42 @@ static void set_screen_palette(const Pen *colours, int num_cols) {
 
 }
 
+static bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_template) {
+  new_surf_template.data = screen_fb;
+
+  switch(new_mode) {
+    case ScreenMode::lores:
+      new_surf_template.bounds = lores_screen.bounds;
+      break;
+    case ScreenMode::hires:
+    case ScreenMode::hires_palette:
+#if defined(DISPLAY_ST7789) && ALLOW_HIRES
+      new_surf_template.bounds = hires_screen.bounds;
+      break;
+#else
+      return false; // no hires for scanvideo
+#endif
+  }
+
+#ifdef DISPLAY_ST7789
+      if(have_vsync)
+        do_render = true; // prevent starting an update during switch
+
+      st7789::set_pixel_double(new_mode == ScreenMode::lores);
+
+      if(new_mode == ScreenMode::hires)
+        st7789::frame_buffer = (uint16_t *)screen_fb;
+#endif
+
+  // don't support any other formats for various reasons (RAM, no format conversion, pixel double PIO)
+  if(new_surf_template.format != PixelFormat::RGB565)
+    return false;
+
+  cur_screen_mode = new_mode;
+
+  return true;
+}
+
 static uint32_t now() {
   return to_ms_since_boot(get_absolute_time());
 }
@@ -252,6 +288,7 @@ int main() {
 
   api.set_screen_mode = ::set_screen_mode;
   api.set_screen_palette = ::set_screen_palette;
+  api.set_screen_mode_format = ::set_screen_mode_format;
   api.now = ::now;
   api.random = ::random;
   // api.exit = ::exit;

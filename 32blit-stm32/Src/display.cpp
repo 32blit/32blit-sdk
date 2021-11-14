@@ -67,6 +67,7 @@ namespace display {
 
   ScreenMode mode = ScreenMode::lores;
   ScreenMode requested_mode = ScreenMode::lores;
+  PixelFormat format = PixelFormat::RGB, requested_format = PixelFormat::RGB;
 
   bool needs_render = false;
   int palette_needs_update = 0;
@@ -89,8 +90,9 @@ namespace display {
 
   void enable_vblank_interrupt() {
     // set new mode after rendering first frame in it
-    if(mode != requested_mode) {
+    if(mode != requested_mode || format != requested_format) {
       mode = requested_mode;
+      format = requested_format;
       need_ltdc_mode_update = true;
     }
 
@@ -120,6 +122,8 @@ namespace display {
     screen = Surface(cur_surf_info.data, cur_surf_info.format, cur_surf_info.bounds);
     screen.palette = cur_surf_info.palette;
 
+    requested_format = screen.format;
+
     return cur_surf_info;
   }
 
@@ -127,6 +131,41 @@ namespace display {
     memcpy(palette, colours, num_cols * sizeof(blit::Pen));
     palette_update_delay = 1;
     palette_needs_update = num_cols;
+  }
+
+  bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_template) {
+    new_surf_template.data = (uint8_t *)&__fb_start;
+
+    switch(new_mode) {
+      case ScreenMode::lores:
+        new_surf_template.bounds = __fb_lores.bounds;
+        break;
+      case ScreenMode::hires:
+      case ScreenMode::hires_palette:
+        new_surf_template.bounds = __fb_hires.bounds;
+        break;
+    }
+
+    switch(new_surf_template.format) {
+      case PixelFormat::RGB:
+        break;
+      case PixelFormat::P:
+        new_surf_template.palette = palette;
+        palette_needs_update = 256;
+        palette_update_delay = 0;
+        break;
+
+      default:
+        return false;
+    }
+
+    requested_mode = new_mode;
+    requested_format = new_surf_template.format;
+
+    screen = Surface(new_surf_template.data, new_surf_template.format, new_surf_template.bounds);
+    screen.palette = new_surf_template.palette;
+
+    return true;
   }
 
   void dma2d_hires_flip(const Surface &source) {
@@ -193,11 +232,25 @@ namespace display {
 
   void dma2d_lores_flip(const Surface &source) {
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 160 * 120 * 3);
+
+    // palette update
+    if(format == PixelFormat::P && palette_needs_update && palette_update_delay-- == 0) {
+      SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(palette), palette_needs_update * 4);
+
+      DMA2D->FGCMAR = (uint32_t)palette;
+      MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CCM | DMA2D_FGPFCCR_CS, (palette_needs_update - 1) << DMA2D_FGPFCCR_CS_Pos);
+
+      DMA2D->FGPFCCR |= DMA2D_FGPFCCR_START;
+      while(DMA2D->FGPFCCR & DMA2D_FGPFCCR_START);
+
+      palette_needs_update = 0;
+    }
+
     //Step 1.
     // set the transform type (clear bits 17..16 of control register)
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M_PFC);
     // set source pixel format (clear bits 3..0 of foreground format register)
-    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB888);
+    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, format == PixelFormat::P ? LL_DMA2D_INPUT_MODE_L8 : LL_DMA2D_INPUT_MODE_RGB888);
     // set source buffer address
     DMA2D->FGMAR = (uintptr_t)source.data;
     // set target pixel format (clear bits 3..0 of output format register)
@@ -295,10 +348,11 @@ namespace display {
 
     if(mode == ScreenMode::lores) {
       dma2d_lores_flip(source);
-    } else if(mode == ScreenMode::hires) {
-      dma2d_hires_flip(source);
-    } else {
-      dma2d_hires_pal_flip(source);
+    } else { // hires(_palette)
+      if(format == PixelFormat::P)
+        dma2d_hires_pal_flip(source);
+      else
+        dma2d_hires_flip(source);
     }
   }
 
@@ -359,7 +413,8 @@ namespace display {
   }
 
   void update_ltdc_for_mode() {
-    if(mode == ScreenMode::hires_palette) {
+    // hires palette is special
+    if(mode != ScreenMode::lores && format == PixelFormat::P) {
       LTDC_Layer1->PFCR = LTDC_PIXEL_FORMAT_L8;
       LTDC_Layer1->CFBAR  = (uint32_t)&__ltdc_start + 320 * 240 * 1;  // frame buffer start address
       LTDC_Layer1->CFBLR  = ((320 * 1) << LTDC_LxCFBLR_CFBP_Pos) | (((320 * 1) + 7) << LTDC_LxCFBLR_CFBLL_Pos);  // frame buffer line length and pitch

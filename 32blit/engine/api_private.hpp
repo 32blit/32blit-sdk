@@ -17,7 +17,7 @@ namespace blit {
 
   using AllocateCallback = uint8_t *(*)(size_t);
 
-  constexpr uint16_t api_version_major = 0, api_version_minor = 0;
+  constexpr uint16_t api_version_major = 0, api_version_minor = 1;
 
   // template for screen modes
   struct SurfaceTemplate {
@@ -116,6 +116,8 @@ namespace blit {
     GameMetadata (*get_metadata)();
 
     bool tick_function_changed;
+
+    bool (*set_screen_mode_format)(ScreenMode new_mode, SurfaceTemplate &new_surf_template);
   };
   #pragma pack(pop)
 

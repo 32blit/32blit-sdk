@@ -14,6 +14,7 @@ extern "C" {
 using namespace blit;
 
 namespace blit {
+  struct SurfaceTemplate;
   struct SurfaceInfo;
 }
 
@@ -28,6 +29,8 @@ namespace display {
 
   SurfaceInfo &set_screen_mode(ScreenMode new_mode);
   void set_screen_palette(const Pen *colours, int num_cols);
+  bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_template);
+
   void flip(const Surface &source);
 
   void screen_init();

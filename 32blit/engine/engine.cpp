@@ -19,6 +19,19 @@ namespace blit {
     screen.palette = new_screen.palette;
   }
 
+  bool set_screen_mode(ScreenMode new_mode, PixelFormat format) {
+    SurfaceTemplate new_screen;
+    new_screen.format = format;
+
+    if(!api.set_screen_mode_format(new_mode, new_screen))
+      return false;
+
+    screen = Surface(new_screen.data, new_screen.format, new_screen.bounds);
+    screen.palette = new_screen.palette;
+
+    return true;
+  }
+
   void set_screen_palette(const Pen *colours, int num_cols) {
     api.set_screen_palette(colours, num_cols);
   }
