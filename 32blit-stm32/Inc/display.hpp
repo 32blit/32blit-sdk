@@ -38,9 +38,9 @@ namespace display {
 
   uint32_t get_dma2d_count(void);
 
-  void dma2d_lores_flip_Step2(void);
-  void dma2d_lores_flip_Step3(void);
-  void dma2d_lores_flip_Step4(void);
+  void dma2d_lores_flip_step2(void);
+  void dma2d_lores_flip_step3(void);
+  void dma2d_lores_flip_step4(void);
 }
 
 

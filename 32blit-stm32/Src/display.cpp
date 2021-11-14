@@ -34,13 +34,13 @@ void DMA2D_IRQHandler(void){
 	switch(count){
 		case 3:
 			display::needs_render = true;
-			display::dma2d_lores_flip_Step2();
+			display::dma2d_lores_flip_step2();
 			break;
 		case 2:
-			display::dma2d_lores_flip_Step3();
+			display::dma2d_lores_flip_step3();
 			break;
 		case 1:
-			display::dma2d_lores_flip_Step4();
+			display::dma2d_lores_flip_step4();
 			break;
 		case 0:   //highres, pal mode goto case 0 directly
 			CLEAR_BIT(DMA2D->CR, DMA2D_CR_TCIE|DMA2D_CR_TEIE|DMA2D_CR_CEIE);//disable the DMA2D interrupt
@@ -55,7 +55,7 @@ void DMA2D_IRQHandler(void){
 namespace display {
 	void update_ltdc_for_mode();
 
-  __IO uint32_t dma2d_stepCount = 0;
+  __IO uint32_t dma2d_step_count = 0;
 
   static Pen palette[256];
   // lo and hi res screen back buffers
@@ -189,7 +189,7 @@ namespace display {
 		//enable the DMA2D interrupt
 	  SET_BIT(DMA2D->CR, DMA2D_CR_TCIE|DMA2D_CR_TEIE|DMA2D_CR_CEIE);
 		//set DMA2d steps //set occupied
-    dma2d_stepCount = 0;
+    dma2d_step_count = 0;
     // trigger start of dma2d transfer
     DMA2D->CR |= DMA2D_CR_START;
   }
@@ -217,7 +217,7 @@ namespace display {
     //enable the DMA2D interrupt
 	  SET_BIT(DMA2D->CR, DMA2D_CR_TCIE|DMA2D_CR_TEIE|DMA2D_CR_CEIE);
 		//set DMA2d steps //set occupied
-    dma2d_stepCount = 0;
+    dma2d_step_count = 0;
     // trigger start of dma2d transfer
     DMA2D->CR |= DMA2D_CR_START;
     // update pal next, dma2d could work at same time
@@ -265,12 +265,12 @@ namespace display {
     DMA2D->OOR = 1;
 	  SET_BIT(DMA2D->CR, DMA2D_CR_TCIE|DMA2D_CR_TEIE|DMA2D_CR_CEIE);//enable the DMA2D interrupt
 		//set DMA2d steps //set occupied
-    dma2d_stepCount = 3;
+    dma2d_step_count = 3;
     // trigger start of dma2d transfer
     DMA2D->CR |= DMA2D_CR_START;
   }
 
-	void dma2d_lores_flip_Step2(void){
+	void dma2d_lores_flip_step2(void){
 		//Step 2.
 			// set the transform type (clear bits 17..16 of control register)
 		MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
@@ -289,11 +289,11 @@ namespace display {
 			// set the output offset
 		DMA2D->OOR = 1;
 				// trigger start of dma2d transfer
-		dma2d_stepCount = 2;
+		dma2d_step_count = 2;
 		DMA2D->CR |= DMA2D_CR_START;
 	}
 
-	void dma2d_lores_flip_Step3(void){
+	void dma2d_lores_flip_step3(void){
 		//step 3.
 		// set the transform type (clear bits 17..16 of control register)
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
@@ -311,13 +311,12 @@ namespace display {
     DMA2D->FGOR = 0;
     // set the output offset
     DMA2D->OOR = 160;
-		dma2d_stepCount = 1;
+		dma2d_step_count = 1;
 			// trigger start of dma2d transfer
 		DMA2D->CR |= DMA2D_CR_START;
-
 	}
 
-	void dma2d_lores_flip_Step4(void){
+	void dma2d_lores_flip_step4(void){
 		// set the transform type (clear bits 17..16 of control register)
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
     // set source pixel format (clear bits 3..0 of foreground format register)
@@ -334,7 +333,7 @@ namespace display {
     DMA2D->FGOR = 160;
     // set the output offset
     DMA2D->OOR = 160;
-		dma2d_stepCount = 0;
+		dma2d_step_count = 0;
 		// trigger start of dma2d transfer
 		DMA2D->CR |= DMA2D_CR_START;
 	}
@@ -430,6 +429,6 @@ namespace display {
   }
 
 	uint32_t get_dma2d_count(void){
-		return dma2d_stepCount;
+		return dma2d_step_count;
 	}
 }
