@@ -148,6 +148,7 @@ namespace display {
 
     switch(new_surf_template.format) {
       case PixelFormat::RGB:
+      case PixelFormat::RGB565:
         break;
       case PixelFormat::P:
         new_surf_template.palette = palette;
@@ -173,7 +174,10 @@ namespace display {
     // set the transform type (clear bits 17..16 of control register)
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M_PFC);
     // set source pixel format (clear bits 3..0 of foreground format register)
-    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB888);
+    if(format == PixelFormat::RGB565)
+      MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB565);
+    else
+      MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB888);
     // set source buffer address
     DMA2D->FGMAR = (uintptr_t)source.data;
     // set target pixel format (clear bits 3..0 of output format register)
@@ -250,7 +254,13 @@ namespace display {
     // set the transform type (clear bits 17..16 of control register)
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M_PFC);
     // set source pixel format (clear bits 3..0 of foreground format register)
-    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, format == PixelFormat::P ? LL_DMA2D_INPUT_MODE_L8 : LL_DMA2D_INPUT_MODE_RGB888);
+    if(format == PixelFormat::RGB565)
+      MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB565);
+    else if(format == PixelFormat::P)
+      MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_L8);
+    else
+      MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB888);
+
     // set source buffer address
     DMA2D->FGMAR = (uintptr_t)source.data;
     // set target pixel format (clear bits 3..0 of output format register)
