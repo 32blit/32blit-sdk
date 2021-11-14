@@ -27,6 +27,8 @@ void blit_debug(const char *message) {
 
 // blit screenmode callback
 blit::ScreenMode _mode = blit::ScreenMode::lores;
+static blit::PixelFormat cur_format = blit::PixelFormat::RGB;
+
 blit::SurfaceInfo cur_surf_info;
 blit::SurfaceInfo &set_screen_mode(blit::ScreenMode new_mode) {
 	_mode = new_mode;
@@ -42,6 +44,7 @@ blit::SurfaceInfo &set_screen_mode(blit::ScreenMode new_mode) {
       break;
   }
 
+  cur_format = cur_surf_info.format;
 	return cur_surf_info;
 }
 
@@ -277,25 +280,25 @@ Uint32 System::mode() {
 }
 
 void System::update_texture(SDL_Texture *texture) {
-	if (_mode == blit::ScreenMode::lores) {
-		SDL_UpdateTexture(texture, nullptr, __fb_lores.data, 160 * 3);
-	}
-	else if(_mode == blit::ScreenMode::hires) {
-		SDL_UpdateTexture(texture, nullptr, __fb_hires.data, 320 * 3);
-	} else {
-		uint8_t col_fb[320 * 240 * 3];
+  bool is_lores = _mode == blit::ScreenMode::lores;
+  auto stride = (is_lores ? 160 : 320) * blit::pixel_format_stride[int(cur_format)];
 
-		auto in = __fb_hires_pal.data, out = col_fb;
+  if(cur_format == blit::PixelFormat::P) {
+    uint8_t col_fb[320 * 240 * 3];
 
-		for(int i = 0; i < 320 * 240; i++) {
-			uint8_t index = *(in++);
-			(*out++) = palette[index].r;
-			(*out++) = palette[index].g;
-			(*out++) = palette[index].b;
-		}
+    auto in = framebuffer, out = col_fb;
+    auto size = is_lores ? 160 * 120 : 320 * 240;
 
-		SDL_UpdateTexture(texture, nullptr, col_fb, 320 * 3);
-	}
+    for(int i = 0; i < size; i++) {
+      uint8_t index = *(in++);
+      (*out++) = palette[index].r;
+      (*out++) = palette[index].g;
+      (*out++) = palette[index].b;
+    }
+
+    SDL_UpdateTexture(texture, nullptr, col_fb, stride * 3);
+  } else
+    SDL_UpdateTexture(texture, nullptr, framebuffer, stride);
 }
 
 void System::notify_redraw() {
