@@ -19,9 +19,19 @@ namespace blit {
 
   constexpr uint16_t api_version_major = 0, api_version_minor = 0;
 
+  // template for screen modes
+  struct SurfaceTemplate {
+    uint8_t *data = nullptr;
+    Size bounds;
+    PixelFormat format;
+    Pen *palette = nullptr;
+  };
+
+  // subset of Surface for API compat
   struct SurfaceInfo {
     SurfaceInfo() = default;
     SurfaceInfo(const Surface &surf): data(surf.data), bounds(surf.bounds), format(surf.format), palette(surf.palette) {}
+    SurfaceInfo(const SurfaceTemplate &surf): data(surf.data), bounds(surf.bounds), format(surf.format), palette(surf.palette) {}
 
     uint8_t *data = nullptr;
     Size bounds;

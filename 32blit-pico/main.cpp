@@ -39,12 +39,12 @@ uint8_t screen_fb[lores_page_size * 2]; // double-buffered
 #endif
 static bool have_vsync = false;
 
-static Surface lores_screen(screen_fb, PixelFormat::RGB565, Size(ST7789_WIDTH / 2, ST7789_HEIGHT / 2));
-static Surface hires_screen(screen_fb, PixelFormat::RGB565, Size(ST7789_WIDTH, ST7789_HEIGHT));
-//static Surface hires_palette_screen(screen_fb, PixelFormat::P, Size(320, 240));
+static const blit::SurfaceTemplate lores_screen{screen_fb, Size(ST7789_WIDTH / 2, ST7789_HEIGHT / 2), blit::PixelFormat::RGB565, nullptr};
+static const blit::SurfaceTemplate hires_screen{screen_fb, Size(ST7789_WIDTH, ST7789_HEIGHT), blit::PixelFormat::RGB565, nullptr};
+
 #elif defined(DISPLAY_SCANVIDEO)
 uint8_t screen_fb[160 * 120 * 4];
-static Surface lores_screen(screen_fb, PixelFormat::RGB565, Size(160, 120));
+static const blit::SurfaceTemplate lores_screen{screen_fb, Size(160, 120), blit::PixelFormat::RGB565, nullptr};
 #endif
 
 static blit::AudioChannel channels[CHANNEL_COUNT];

@@ -57,14 +57,13 @@ namespace display {
 
   __IO uint32_t dma2d_stepCount = 0;
 
+  static Pen palette[256];
   // lo and hi res screen back buffers
-  Surface __fb_hires((uint8_t *)&__fb_start, PixelFormat::RGB, Size(320, 240));
-  Surface __fb_hires_pal((uint8_t *)&__fb_start, PixelFormat::P, Size(320, 240));
-  Surface __fb_lores((uint8_t *)&__fb_start, PixelFormat::RGB, Size(160, 120));
+  static const blit::SurfaceTemplate __fb_hires{(uint8_t *)&__fb_start, blit::Size(320, 240), blit::PixelFormat::RGB, nullptr};
+  static const blit::SurfaceTemplate __fb_hires_pal{(uint8_t *)&__fb_start, blit::Size(320, 240), blit::PixelFormat::P, palette};
+  static const blit::SurfaceTemplate __fb_lores{(uint8_t *)&__fb_start, blit::Size(160, 120), blit::PixelFormat::RGB, nullptr};
 
   static SurfaceInfo cur_surf_info; // used to pass screen info back through API
-
-  Pen palette[256];
 
   ScreenMode mode = ScreenMode::lores;
   ScreenMode requested_mode = ScreenMode::lores;
@@ -76,8 +75,6 @@ namespace display {
   bool need_ltdc_mode_update = false;
 
   void init() {
-    __fb_hires_pal.palette = palette;
-
     // TODO: replace interrupt setup with non HAL method
     HAL_NVIC_SetPriority(LTDC_IRQn, 4, 4);
     HAL_NVIC_EnableIRQ(LTDC_IRQn);
@@ -110,15 +107,18 @@ namespace display {
     requested_mode = new_mode;
     switch(new_mode) {
       case ScreenMode::lores:
-        cur_surf_info = blit::screen = __fb_lores;
+        cur_surf_info = __fb_lores;
         break;
       case ScreenMode::hires:
-        cur_surf_info = blit::screen = __fb_hires;
+        cur_surf_info = __fb_hires;
         break;
       case ScreenMode::hires_palette:
-        cur_surf_info = blit::screen = __fb_hires_pal;
+        cur_surf_info = __fb_hires_pal;
         break;
     }
+
+    screen = Surface(cur_surf_info.data, cur_surf_info.format, cur_surf_info.bounds);
+    screen.palette = cur_surf_info.palette;
 
     return cur_surf_info;
   }

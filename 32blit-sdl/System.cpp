@@ -13,12 +13,12 @@
 #include "engine/api_private.hpp"
 
 // blit framebuffer memory
-uint8_t framebuffer[320 * 240 * 3];
-blit::Surface __fb_hires((uint8_t *)framebuffer, blit::PixelFormat::RGB, blit::Size(320, 240));
-blit::Surface __fb_hires_pal((uint8_t *)framebuffer, blit::PixelFormat::P, blit::Size(320, 240));
-blit::Surface __fb_lores((uint8_t *)framebuffer, blit::PixelFormat::RGB, blit::Size(160, 120));
-
+static uint8_t framebuffer[320 * 240 * 3];
 static blit::Pen palette[256];
+
+static const blit::SurfaceTemplate __fb_hires{framebuffer, blit::Size(320, 240), blit::PixelFormat::RGB, nullptr};
+static const blit::SurfaceTemplate __fb_hires_pal{framebuffer, blit::Size(320, 240), blit::PixelFormat::P, palette};
+static const blit::SurfaceTemplate __fb_lores{framebuffer, blit::Size(160, 120), blit::PixelFormat::RGB, nullptr};
 
 // blit debug callback
 void blit_debug(const char *message) {
@@ -147,8 +147,6 @@ System::System() {
 	s_loop_update = SDL_CreateSemaphore(0);
 	s_loop_redraw = SDL_CreateSemaphore(0);
 	s_loop_ended = SDL_CreateSemaphore(0);
-
-	__fb_hires_pal.palette = palette;
 }
 
 System::~System() {
