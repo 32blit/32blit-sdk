@@ -25,6 +25,9 @@ Renderer::Renderer(SDL_Window *window, int width, int height) : sys_width(width)
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	SDL_RenderClear(renderer);
 	SDL_RenderPresent(renderer);
+
+  fb_lores_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, sys_width/2, sys_height/2);
+	fb_hires_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, sys_width, sys_height);
 }
 
 Renderer::~Renderer() {
@@ -56,16 +59,6 @@ void Renderer::resize(int width, int height) {
 
   if (mode == Stretch)
 	  set_mode(mode);
-
-	if (fb_lores_texture) {
-		SDL_DestroyTexture(fb_lores_texture);
-	}
-	if (fb_hires_texture) {
-		SDL_DestroyTexture(fb_hires_texture);
-	}
-
-	fb_lores_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, sys_width/2, sys_height/2);
-	fb_hires_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, sys_width, sys_height);
 }
 
 void Renderer::update(System *sys) {
