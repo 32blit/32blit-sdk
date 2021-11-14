@@ -4,6 +4,8 @@
 #include <iostream>
 #include "SDL.h"
 
+#include "graphics/surface.hpp"
+
 #include "Renderer.hpp"
 #include "System.hpp"
 
@@ -28,11 +30,15 @@ Renderer::Renderer(SDL_Window *window, int width, int height) : sys_width(width)
 
   fb_lores_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, sys_width/2, sys_height/2);
 	fb_hires_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, sys_width, sys_height);
+  fb_lores_565_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_BGR565, SDL_TEXTUREACCESS_STREAMING, sys_width/2, sys_height/2);
+  fb_hires_565_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_BGR565, SDL_TEXTUREACCESS_STREAMING, sys_width, sys_height);
 }
 
 Renderer::~Renderer() {
 	SDL_DestroyTexture(fb_lores_texture);
 	SDL_DestroyTexture(fb_hires_texture);
+	SDL_DestroyTexture(fb_lores_565_texture);
+	SDL_DestroyTexture(fb_hires_565_texture);
 	SDL_DestroyRenderer(renderer);
 }
 
@@ -62,10 +68,12 @@ void Renderer::resize(int width, int height) {
 }
 
 void Renderer::update(System *sys) {
+  auto format = blit::PixelFormat(sys->format());
+
 	if (sys->mode() == 0) {
-		current = fb_lores_texture;
+		current = format == blit::PixelFormat::RGB565 ? fb_lores_565_texture : fb_lores_texture;
 	} else {
-		current = fb_hires_texture;
+		current = format == blit::PixelFormat::RGB565 ? fb_hires_565_texture : fb_hires_texture;
 	}
 
   if(is_lores != (sys->mode() == 0)) {

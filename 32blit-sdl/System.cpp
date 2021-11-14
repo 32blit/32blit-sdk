@@ -67,6 +67,7 @@ static bool set_screen_mode_format(blit::ScreenMode new_mode, blit::SurfaceTempl
 
   switch(new_surf_template.format) {
     case blit::PixelFormat::RGB:
+    case blit::PixelFormat::RGB565:
       break;
     case blit::PixelFormat::P:
       new_surf_template.palette = palette;
@@ -308,6 +309,10 @@ void System::loop()
 
 Uint32 System::mode() {
 	return _mode;
+}
+
+Uint32 System::format() {
+	return Uint32(cur_format);
 }
 
 void System::update_texture(SDL_Texture *texture) {
