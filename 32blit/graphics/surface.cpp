@@ -305,13 +305,13 @@ namespace blit {
   }
 
   /**
-   * Blit a sprite to the surface
+   * Blit another surface to the surface with a transform
    *
    * \param sprite
    * \param p
    * \param t
    */
-  void Surface::blit_sprite(const Rect &sprite, const Point &p, uint8_t t) {
+  void Surface::blit(Surface *src, const Rect &sprite, const Point &p, uint8_t t) {
     Rect dr = clip.intersection(Rect(p.x, p.y, sprite.w, sprite.h));  // clipped destination rect
 
     if (dr.empty())
@@ -336,7 +336,7 @@ namespace blit {
     int x_step = left < right ? 1 : -1;
 
     if(t & SpriteTransform::XYSWAP)
-      x_step *= sprites->bounds.w;
+      x_step *= src->bounds.w;
 
     uint32_t dest_offset = offset(dr);
     uint32_t src_offset;
@@ -348,11 +348,11 @@ namespace blit {
       int x = left;
 
       if (t & SpriteTransform::XYSWAP)
-        src_offset = sprites->offset(sprite.x + y, sprite.y + x);
+        src_offset = src->offset(sprite.x + y, sprite.y + x);
       else
-        src_offset = sprites->offset(sprite.x + x, sprite.y + y);
+        src_offset = src->offset(sprite.x + x, sprite.y + y);
 
-      bbf(sprites, src_offset, this, dest_offset, x_count, x_step);
+      bbf(src, src_offset, this, dest_offset, x_count, x_step);
 
       dest_offset += bounds.w;
       y += y_step;
@@ -360,13 +360,13 @@ namespace blit {
   }
 
   /**
-   * Blit a stretched sprite to the surface
+   * Blit a stretched and transformed surface to the surface
    *
    * \param sprite
    * \param p
    * \param t
    */
-  void Surface::stretch_blit_sprite(const Rect &sprite, const Rect &r, uint8_t t) {
+  void Surface::stretch_blit(Surface *src, const Rect &sprite, const Rect &r, uint8_t t) {
     Rect dr = clip.intersection(r);  // clipped destination rect
 
     if (dr.empty())
@@ -408,10 +408,10 @@ namespace blit {
       int src_step = 1;
 
       if (t & SpriteTransform::XYSWAP) {
-        src_offset = sprites->offset(sprite.x + (y >> fix_shift), sprite.y);
-        src_step = sprites->bounds.w;
+        src_offset = src->offset(sprite.x + (y >> fix_shift), sprite.y);
+        src_step = src->bounds.w;
       } else
-        src_offset = sprites->offset(sprite.x, sprite.y + (y >> fix_shift));
+        src_offset = src->offset(sprite.x, sprite.y + (y >> fix_shift));
 
       // fill an initial block if we're not part way through a pixel
       int num = (x & ((1 << fix_shift) - 1)) == 0 ? x_scale_px : 1;
@@ -424,7 +424,7 @@ namespace blit {
           new_x += x_step;
         }
 
-        bbf(sprites, src_offset + (x >> fix_shift) * src_step, this, dest_offset, num, 0);
+        bbf(src, src_offset + (x >> fix_shift) * src_step, this, dest_offset, num, 0);
         dest_offset += num;
 
         x = new_x;
@@ -446,7 +446,7 @@ namespace blit {
    * \param p
    * \param hflip `true` to flip the source surface horizontally
    */
-  void Surface::blit(Surface *src, Rect r, Point p, bool hflip) {
+  void Surface::blit(Surface *src, Rect r, Point p) {
     Rect dr = clip.intersection(Rect(p.x, p.y, r.w, r.h));  // clipped destination rect
 
     if (dr.empty())
@@ -461,18 +461,9 @@ namespace blit {
 
     uint32_t src_offset = src->offset(r.x, r.y);
 
-    uint8_t src_offset_flip = 0;
-    int8_t src_direction = 1;
-    if (hflip) {
-      src_offset_flip = r.w - 1;
-      src_direction = -1;
-    }
-
-
-
     int32_t dest_offset = offset(dr);
     for (int32_t y = p.y; y < p.y + r.h; y++) {
-      bbf(src, src_offset + src_offset_flip, this, dest_offset, r.w, src_direction);
+      bbf(src, src_offset, this, dest_offset, r.w, 1);
 
       src_offset += src->bounds.w;
       dest_offset += bounds.w;
@@ -486,7 +477,7 @@ namespace blit {
    * \param sr `rect` soruce
    * \param dr `rect` destination
    */
-  void Surface::stretch_blit(Surface *src, Rect sr, Rect dr) {
+  void Surface::stretch_blit(Surface *src, const Rect &sr, const Rect &dr) {
     Rect cdr = clip.intersection(dr);  // clipped destination rect
 
     if (cdr.empty())

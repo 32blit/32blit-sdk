@@ -185,9 +185,18 @@ namespace blit {
     /*void outline_circle(const point &c, int32_t r);
 
     */
-    void blit(Surface *src, Rect r, Point p, bool hflip = false);
-    void stretch_blit(Surface *src, Rect sr, Rect dr);
+    void blit(Surface *src, Rect src_r, Point dst_p);
+    void blit(Surface *src, const Rect &src_r, const Point &dst_p, uint8_t transforms);
+
+    void stretch_blit(Surface *src, const Rect &src_r, const Rect &dst_r);
+    void stretch_blit(Surface *src, const Rect &src_r, const Rect &dst_r, uint8_t transforms);
+
     void stretch_blit_vspan(Surface *src, Point uv, uint16_t sc, Point p, int16_t dc);
+
+    [[deprecated]]
+    void blit(Surface *src, Rect r, Point p, bool hflip) {
+      blit(src, r, p, (uint8_t)(hflip ? SpriteTransform::HORIZONTAL : 0));
+    }
 
     void custom_blend(Surface *src, Rect r, Point p, std::function<void(uint8_t *psrc, uint8_t *pdest, int16_t c)> f);
     void custom_modify(Rect r, std::function<void(uint8_t *p, int16_t c)> f);
@@ -205,8 +214,15 @@ namespace blit {
     Rect sprite_bounds(const Point &p);
     Rect sprite_bounds(const Rect &r);
 
-    void blit_sprite(const Rect &src, const Point &p, uint8_t t = 0);
-    void stretch_blit_sprite(const Rect&src, const Rect &r, uint8_t t = 0);
+    [[deprecated]]
+    void blit_sprite(const Rect &src, const Point &p, uint8_t t = 0) {
+      blit(sprites, src, p, t);
+    }
+
+    [[deprecated]]
+    void stretch_blit_sprite(const Rect &src, const Rect &r, uint8_t t = 0) {
+      stretch_blit(sprites, src, r, t);
+    }
 
     void sprite(const Rect &sprite, const Point &position, uint8_t transform = 0);
     void sprite(const Point &sprite, const Point &position, uint8_t transform = 0);
