@@ -236,7 +236,7 @@ void System::run() {
 
   blit::api.get_metadata = ::get_metadata;
 
-	::set_screen_mode(blit::lores);
+	blit::set_screen_mode(blit::lores);
 
 #ifdef __EMSCRIPTEN__
 	::init();
