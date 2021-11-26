@@ -186,16 +186,16 @@ namespace blit {
 
     */
     void blit(Surface *src, Rect src_r, Point dst_p);
-    void blit(Surface *src, const Rect &src_r, const Point &dst_p, uint8_t transforms);
+    void blit(Surface *src, const Rect &src_r, const Point &dst_p, int transforms);
 
     void stretch_blit(Surface *src, const Rect &src_r, const Rect &dst_r);
-    void stretch_blit(Surface *src, const Rect &src_r, const Rect &dst_r, uint8_t transforms);
+    void stretch_blit(Surface *src, const Rect &src_r, const Rect &dst_r, int transforms);
 
     void stretch_blit_vspan(Surface *src, Point uv, uint16_t sc, Point p, int16_t dc);
 
     [[deprecated]]
     void blit(Surface *src, Rect r, Point p, bool hflip) {
-      blit(src, r, p, (uint8_t)(hflip ? SpriteTransform::HORIZONTAL : 0));
+      blit(src, r, p, hflip ? SpriteTransform::HORIZONTAL : 0);
     }
 
     void custom_blend(Surface *src, Rect r, Point p, std::function<void(uint8_t *psrc, uint8_t *pdest, int16_t c)> f);

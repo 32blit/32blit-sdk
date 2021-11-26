@@ -311,7 +311,7 @@ namespace blit {
    * \param p
    * \param t
    */
-  void Surface::blit(Surface *src, const Rect &sprite, const Point &p, uint8_t t) {
+  void Surface::blit(Surface *src, const Rect &sprite, const Point &p, int t) {
     Rect dr = clip.intersection(Rect(p.x, p.y, sprite.w, sprite.h));  // clipped destination rect
 
     if (dr.empty())
@@ -366,7 +366,7 @@ namespace blit {
    * \param p
    * \param t
    */
-  void Surface::stretch_blit(Surface *src, const Rect &sprite, const Rect &r, uint8_t t) {
+  void Surface::stretch_blit(Surface *src, const Rect &sprite, const Rect &r, int t) {
     Rect dr = clip.intersection(r);  // clipped destination rect
 
     if (dr.empty())
