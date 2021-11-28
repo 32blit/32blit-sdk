@@ -1422,8 +1422,8 @@ static int16_t mp3d_scale_pcm(float sample)
     s32 -= (s32 < 0);
     int16_t s = (int16_t)minimp3_clip_int16_arm(s32);
 #else
-    if (sample >=  32766.5) return (int16_t) 32767;
-    if (sample <= -32767.5) return (int16_t)-32768;
+    if (sample >=  32766.5f) return (int16_t) 32767;
+    if (sample <= -32767.5f) return (int16_t)-32768;
     int16_t s = (int16_t)(sample + .5f);
     s -= (s < 0);   /* away from zero, to be compliant */
 #endif
