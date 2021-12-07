@@ -186,6 +186,7 @@ SECTIONS
     . = ALIGN(4);
     itcm_text_start = .;
     *(.itcm)         /* ITCM code section */
+    *(.itcm*)
     . = ALIGN(4);
     itcm_text_end = .;
   } >ITCMRAM AT> FLASH
