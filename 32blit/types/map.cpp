@@ -35,8 +35,9 @@ namespace blit {
     uint16_t mipmap_index = floorf(mipmap);
     uint8_t blend = (mipmap - floorf(mipmap)) * 255;
 
-    mipmap_index = mipmap_index >= sprites->mipmaps.size() ? uint16_t(sprites->mipmaps.size() - 1) : mipmap_index;
-    mipmap_index = mipmap_index < 0 ? 0 : mipmap_index;
+    if (mipmap_index >= sprites->mipmaps.size()) {
+        mipmap_index = int32_t(sprites->mipmaps.size()) - 1 < 0 ? 0 : uint16_t(sprites->mipmaps.size() - 1);
+    }
 
     dest->alpha = 255;
     texture_span(dest, s, c, sprites->mipmaps[mipmap_index], swc, ewc, mipmap_index);
