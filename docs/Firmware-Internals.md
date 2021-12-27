@@ -7,6 +7,7 @@
   - [Game Metadata](#game-metadata)
 - [The Firmware](#the-firmware)
 - [The Launcher](#the-launcher)
+- [Memory Layout](#memory-layout)
 
 ## PIC
 
@@ -101,3 +102,15 @@ The interface between the games/firmware is in [`32blit/engine/api_private.hpp`]
 The launcher is actually mostly a regular game, with a category of "launcher". The firmware switches to this whenever a game is not running.
 
 It uses some "semi-private" firmware API to handle launching/flashing games. It's possible to replace the launcher entirely, like [this extremely basic one](https://github.com/Daft-Freak/32blit-misc/tree/main/launcher-test).
+
+## Memory Layout
+
+|     Section    | Address  | Size |                     Usage                     |
+|----------------|----------|------|-----------------------------------------------|
+| ITCM           |`00000000`| 64k  | fast code, not currently used                 |
+| Internal flash |`08000000`| 128k | firmware `.text`/`.rodata`                    |
+| DTCM           |`20000000`| 128k | `.data`, stack                                |
+| D1 RAM         |`24000000`| 512k | 362k game heap/`.bss`, 150k for LTDC (screen) |
+| D2 RAM         |`30000000`| 288k | firmware heap/`.bss`, 225k for framebuffer    |
+| D3 RAM         |`38000000`| 64k  | some used by firmware, mostly unused          |
+| External flash |`90000000`| 32M  | game `.text`/`.rodata`/metadata, 4MB reserved |
