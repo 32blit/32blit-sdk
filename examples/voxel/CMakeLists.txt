@@ -8,4 +8,5 @@ if(32BLIT_PICO)
 endif()
 
 blit_executable (voxel voxel.cpp)
+blit_assets_yaml(voxel assets.yml)
 blit_metadata (voxel metadata.yml)
