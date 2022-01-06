@@ -26,6 +26,8 @@
 
 using namespace blit;
 
+static SurfaceInfo cur_surf_info;
+
 #ifdef DISPLAY_ST7789
 // height rounded up to handle the 135px display
 static const int lores_page_size = (ST7789_WIDTH / 2) * ((ST7789_HEIGHT + 1) / 2) * 2;
@@ -37,12 +39,12 @@ uint8_t screen_fb[lores_page_size * 2]; // double-buffered
 #endif
 static bool have_vsync = false;
 
-static Surface lores_screen(screen_fb, PixelFormat::RGB565, Size(ST7789_WIDTH / 2, ST7789_HEIGHT / 2));
-static Surface hires_screen(screen_fb, PixelFormat::RGB565, Size(ST7789_WIDTH, ST7789_HEIGHT));
-//static Surface hires_palette_screen(screen_fb, PixelFormat::P, Size(320, 240));
+static const blit::SurfaceTemplate lores_screen{screen_fb, Size(ST7789_WIDTH / 2, ST7789_HEIGHT / 2), blit::PixelFormat::RGB565, nullptr};
+static const blit::SurfaceTemplate hires_screen{screen_fb, Size(ST7789_WIDTH, ST7789_HEIGHT), blit::PixelFormat::RGB565, nullptr};
+
 #elif defined(DISPLAY_SCANVIDEO)
 uint8_t screen_fb[160 * 120 * 4];
-static Surface lores_screen(screen_fb, PixelFormat::RGB565, Size(160, 120));
+static const blit::SurfaceTemplate lores_screen{screen_fb, Size(160, 120), blit::PixelFormat::RGB565, nullptr};
 #endif
 
 static blit::AudioChannel channels[CHANNEL_COUNT];
@@ -54,10 +56,10 @@ static volatile int buf_index = 0;
 
 static volatile bool do_render = true;
 
-static Surface &set_screen_mode(ScreenMode mode) {
+static SurfaceInfo &set_screen_mode(ScreenMode mode) {
   switch(mode) {
     case ScreenMode::lores:
-      screen = lores_screen;
+      cur_surf_info = lores_screen;
       // window
 #ifdef DISPLAY_ST7789
       if(have_vsync)
@@ -72,11 +74,11 @@ static Surface &set_screen_mode(ScreenMode mode) {
       if(have_vsync)
         do_render = true;
 
-      screen = hires_screen;
+      cur_surf_info = hires_screen;
       st7789::frame_buffer = (uint16_t *)screen_fb;
       st7789::set_pixel_double(false);
 #else
-      return screen;
+      return cur_surf_info;
 #endif
       break;
 
@@ -87,7 +89,47 @@ static Surface &set_screen_mode(ScreenMode mode) {
 
   cur_screen_mode = mode;
 
-  return blit::screen;
+  return cur_surf_info;
+}
+
+static void set_screen_palette(const Pen *colours, int num_cols) {
+
+}
+
+static bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_template) {
+  new_surf_template.data = screen_fb;
+
+  switch(new_mode) {
+    case ScreenMode::lores:
+      new_surf_template.bounds = lores_screen.bounds;
+      break;
+    case ScreenMode::hires:
+    case ScreenMode::hires_palette:
+#if defined(DISPLAY_ST7789) && ALLOW_HIRES
+      new_surf_template.bounds = hires_screen.bounds;
+      break;
+#else
+      return false; // no hires for scanvideo
+#endif
+  }
+
+#ifdef DISPLAY_ST7789
+      if(have_vsync)
+        do_render = true; // prevent starting an update during switch
+
+      st7789::set_pixel_double(new_mode == ScreenMode::lores);
+
+      if(new_mode == ScreenMode::hires)
+        st7789::frame_buffer = (uint16_t *)screen_fb;
+#endif
+
+  // don't support any other formats for various reasons (RAM, no format conversion, pixel double PIO)
+  if(new_surf_template.format != PixelFormat::RGB565)
+    return false;
+
+  cur_screen_mode = new_mode;
+
+  return true;
 }
 
 static uint32_t now() {
@@ -245,7 +287,8 @@ int main() {
   api.channels = ::channels;
 
   api.set_screen_mode = ::set_screen_mode;
-  // api.set_screen_palette = ::set_screen_palette;
+  api.set_screen_palette = ::set_screen_palette;
+  api.set_screen_mode_format = ::set_screen_mode_format;
   api.now = ::now;
   api.random = ::random;
   // api.exit = ::exit;

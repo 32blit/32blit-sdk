@@ -18,6 +18,8 @@ class System {
 		void loop();
 
 		Uint32 mode();
+    Uint32 format();
+
 		void update_texture(SDL_Texture *);
 		void notify_redraw();
 

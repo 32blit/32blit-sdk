@@ -3,6 +3,7 @@
 
 #include "spi-st7272a.h"
 #include "32blit.hpp"
+#include "engine/api_private.hpp"
 
 #include "display.hpp"
 #include "stm32h7xx_ll_dma2d.h"
@@ -33,13 +34,13 @@ void DMA2D_IRQHandler(void){
 	switch(count){
 		case 3:
 			display::needs_render = true;
-			display::dma2d_lores_flip_Step2();
+			display::dma2d_lores_flip_step2();
 			break;
 		case 2:
-			display::dma2d_lores_flip_Step3();
+			display::dma2d_lores_flip_step3();
 			break;
 		case 1:
-			display::dma2d_lores_flip_Step4();
+			display::dma2d_lores_flip_step4();
 			break;
 		case 0:   //highres, pal mode goto case 0 directly
 			CLEAR_BIT(DMA2D->CR, DMA2D_CR_TCIE|DMA2D_CR_TEIE|DMA2D_CR_CEIE);//disable the DMA2D interrupt
@@ -54,17 +55,19 @@ void DMA2D_IRQHandler(void){
 namespace display {
 	void update_ltdc_for_mode();
 
-  __IO uint32_t dma2d_stepCount = 0;
+  __IO uint32_t dma2d_step_count = 0;
 
+  static Pen palette[256];
   // lo and hi res screen back buffers
-  Surface __fb_hires((uint8_t *)&__fb_start, PixelFormat::RGB, Size(320, 240));
-  Surface __fb_hires_pal((uint8_t *)&__fb_start, PixelFormat::P, Size(320, 240));
-  Surface __fb_lores((uint8_t *)&__fb_start, PixelFormat::RGB, Size(160, 120));
+  static const blit::SurfaceTemplate __fb_hires{(uint8_t *)&__fb_start, blit::Size(320, 240), blit::PixelFormat::RGB, nullptr};
+  static const blit::SurfaceTemplate __fb_hires_pal{(uint8_t *)&__fb_start, blit::Size(320, 240), blit::PixelFormat::P, palette};
+  static const blit::SurfaceTemplate __fb_lores{(uint8_t *)&__fb_start, blit::Size(160, 120), blit::PixelFormat::RGB, nullptr};
 
-  Pen palette[256];
+  static SurfaceInfo cur_surf_info; // used to pass screen info back through API
 
   ScreenMode mode = ScreenMode::lores;
   ScreenMode requested_mode = ScreenMode::lores;
+  PixelFormat format = PixelFormat::RGB, requested_format = PixelFormat::RGB;
 
   bool needs_render = false;
   int palette_needs_update = 0;
@@ -73,8 +76,6 @@ namespace display {
   bool need_ltdc_mode_update = false;
 
   void init() {
-    __fb_hires_pal.palette = palette;
-
     // TODO: replace interrupt setup with non HAL method
     HAL_NVIC_SetPriority(LTDC_IRQn, 4, 4);
     HAL_NVIC_EnableIRQ(LTDC_IRQn);
@@ -89,8 +90,9 @@ namespace display {
 
   void enable_vblank_interrupt() {
     // set new mode after rendering first frame in it
-    if(mode != requested_mode) {
+    if(mode != requested_mode || format != requested_format) {
       mode = requested_mode;
+      format = requested_format;
       need_ltdc_mode_update = true;
     }
 
@@ -103,21 +105,26 @@ namespace display {
     display::needs_render = false;
   }
 
-  Surface &set_screen_mode(ScreenMode new_mode) {
+  SurfaceInfo &set_screen_mode(ScreenMode new_mode) {
     requested_mode = new_mode;
     switch(new_mode) {
       case ScreenMode::lores:
-        screen = __fb_lores;
+        cur_surf_info = __fb_lores;
         break;
       case ScreenMode::hires:
-        screen = __fb_hires;
+        cur_surf_info = __fb_hires;
         break;
       case ScreenMode::hires_palette:
-        screen = __fb_hires_pal;
+        cur_surf_info = __fb_hires_pal;
         break;
     }
 
-    return screen;
+    screen = Surface(cur_surf_info.data, cur_surf_info.format, cur_surf_info.bounds);
+    screen.palette = cur_surf_info.palette;
+
+    requested_format = screen.format;
+
+    return cur_surf_info;
   }
 
   void set_screen_palette(const Pen *colours, int num_cols) {
@@ -126,12 +133,51 @@ namespace display {
     palette_needs_update = num_cols;
   }
 
+  bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_template) {
+    new_surf_template.data = (uint8_t *)&__fb_start;
+
+    switch(new_mode) {
+      case ScreenMode::lores:
+        new_surf_template.bounds = __fb_lores.bounds;
+        break;
+      case ScreenMode::hires:
+      case ScreenMode::hires_palette:
+        new_surf_template.bounds = __fb_hires.bounds;
+        break;
+    }
+
+    switch(new_surf_template.format) {
+      case PixelFormat::RGB:
+      case PixelFormat::RGB565:
+        break;
+      case PixelFormat::P:
+        new_surf_template.palette = palette;
+        palette_needs_update = 256;
+        palette_update_delay = 0;
+        break;
+
+      default:
+        return false;
+    }
+
+    requested_mode = new_mode;
+    requested_format = new_surf_template.format;
+
+    screen = Surface(new_surf_template.data, new_surf_template.format, new_surf_template.bounds);
+    screen.palette = new_surf_template.palette;
+
+    return true;
+  }
+
   void dma2d_hires_flip(const Surface &source) {
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 3);
     // set the transform type (clear bits 17..16 of control register)
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M_PFC);
     // set source pixel format (clear bits 3..0 of foreground format register)
-    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB888);
+    if(format == PixelFormat::RGB565)
+      MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB565);
+    else
+      MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB888);
     // set source buffer address
     DMA2D->FGMAR = (uintptr_t)source.data;
     // set target pixel format (clear bits 3..0 of output format register)
@@ -147,7 +193,7 @@ namespace display {
 		//enable the DMA2D interrupt
 	  SET_BIT(DMA2D->CR, DMA2D_CR_TCIE|DMA2D_CR_TEIE|DMA2D_CR_CEIE);
 		//set DMA2d steps //set occupied
-    dma2d_stepCount = 0;
+    dma2d_step_count = 0;
     // trigger start of dma2d transfer
     DMA2D->CR |= DMA2D_CR_START;
   }
@@ -175,7 +221,7 @@ namespace display {
     //enable the DMA2D interrupt
 	  SET_BIT(DMA2D->CR, DMA2D_CR_TCIE|DMA2D_CR_TEIE|DMA2D_CR_CEIE);
 		//set DMA2d steps //set occupied
-    dma2d_stepCount = 0;
+    dma2d_step_count = 0;
     // trigger start of dma2d transfer
     DMA2D->CR |= DMA2D_CR_START;
     // update pal next, dma2d could work at same time
@@ -190,11 +236,31 @@ namespace display {
 
   void dma2d_lores_flip(const Surface &source) {
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 160 * 120 * 3);
+
+    // palette update
+    if(format == PixelFormat::P && palette_needs_update && palette_update_delay-- == 0) {
+      SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(palette), palette_needs_update * 4);
+
+      DMA2D->FGCMAR = (uint32_t)palette;
+      MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CCM | DMA2D_FGPFCCR_CS, (palette_needs_update - 1) << DMA2D_FGPFCCR_CS_Pos);
+
+      DMA2D->FGPFCCR |= DMA2D_FGPFCCR_START;
+      while(DMA2D->FGPFCCR & DMA2D_FGPFCCR_START);
+
+      palette_needs_update = 0;
+    }
+
     //Step 1.
     // set the transform type (clear bits 17..16 of control register)
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M_PFC);
     // set source pixel format (clear bits 3..0 of foreground format register)
-    MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB888);
+    if(format == PixelFormat::RGB565)
+      MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB565);
+    else if(format == PixelFormat::P)
+      MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_L8);
+    else
+      MODIFY_REG(DMA2D->FGPFCCR, DMA2D_FGPFCCR_CM, LL_DMA2D_INPUT_MODE_RGB888);
+
     // set source buffer address
     DMA2D->FGMAR = (uintptr_t)source.data;
     // set target pixel format (clear bits 3..0 of output format register)
@@ -209,12 +275,12 @@ namespace display {
     DMA2D->OOR = 1;
 	  SET_BIT(DMA2D->CR, DMA2D_CR_TCIE|DMA2D_CR_TEIE|DMA2D_CR_CEIE);//enable the DMA2D interrupt
 		//set DMA2d steps //set occupied
-    dma2d_stepCount = 3;
+    dma2d_step_count = 3;
     // trigger start of dma2d transfer
     DMA2D->CR |= DMA2D_CR_START;
   }
 
-	void dma2d_lores_flip_Step2(void){
+	void dma2d_lores_flip_step2(void){
 		//Step 2.
 			// set the transform type (clear bits 17..16 of control register)
 		MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
@@ -233,11 +299,11 @@ namespace display {
 			// set the output offset
 		DMA2D->OOR = 1;
 				// trigger start of dma2d transfer
-		dma2d_stepCount = 2;
+		dma2d_step_count = 2;
 		DMA2D->CR |= DMA2D_CR_START;
 	}
 
-	void dma2d_lores_flip_Step3(void){
+	void dma2d_lores_flip_step3(void){
 		//step 3.
 		// set the transform type (clear bits 17..16 of control register)
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
@@ -255,13 +321,12 @@ namespace display {
     DMA2D->FGOR = 0;
     // set the output offset
     DMA2D->OOR = 160;
-		dma2d_stepCount = 1;
+		dma2d_step_count = 1;
 			// trigger start of dma2d transfer
 		DMA2D->CR |= DMA2D_CR_START;
-
 	}
 
-	void dma2d_lores_flip_Step4(void){
+	void dma2d_lores_flip_step4(void){
 		// set the transform type (clear bits 17..16 of control register)
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
     // set source pixel format (clear bits 3..0 of foreground format register)
@@ -278,7 +343,7 @@ namespace display {
     DMA2D->FGOR = 160;
     // set the output offset
     DMA2D->OOR = 160;
-		dma2d_stepCount = 0;
+		dma2d_step_count = 0;
 		// trigger start of dma2d transfer
 		DMA2D->CR |= DMA2D_CR_START;
 	}
@@ -292,10 +357,11 @@ namespace display {
 
     if(mode == ScreenMode::lores) {
       dma2d_lores_flip(source);
-    } else if(mode == ScreenMode::hires) {
-      dma2d_hires_flip(source);
-    } else {
-      dma2d_hires_pal_flip(source);
+    } else { // hires(_palette)
+      if(format == PixelFormat::P)
+        dma2d_hires_pal_flip(source);
+      else
+        dma2d_hires_flip(source);
     }
   }
 
@@ -356,7 +422,8 @@ namespace display {
   }
 
   void update_ltdc_for_mode() {
-    if(mode == ScreenMode::hires_palette) {
+    // hires palette is special
+    if(mode != ScreenMode::lores && format == PixelFormat::P) {
       LTDC_Layer1->PFCR = LTDC_PIXEL_FORMAT_L8;
       LTDC_Layer1->CFBAR  = (uint32_t)&__ltdc_start + 320 * 240 * 1;  // frame buffer start address
       LTDC_Layer1->CFBLR  = ((320 * 1) << LTDC_LxCFBLR_CFBP_Pos) | (((320 * 1) + 7) << LTDC_LxCFBLR_CFBLL_Pos);  // frame buffer line length and pitch
@@ -372,6 +439,6 @@ namespace display {
   }
 
 	uint32_t get_dma2d_count(void){
-		return dma2d_stepCount;
+		return dma2d_step_count;
 	}
 }

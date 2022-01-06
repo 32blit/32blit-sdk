@@ -17,7 +17,37 @@ namespace blit {
 
   using AllocateCallback = uint8_t *(*)(size_t);
 
-  constexpr uint16_t api_version_major = 0, api_version_minor = 0;
+  constexpr uint16_t api_version_major = 0, api_version_minor = 1;
+
+  // template for screen modes
+  struct SurfaceTemplate {
+    uint8_t *data = nullptr;
+    Size bounds;
+    PixelFormat format;
+    Pen *palette = nullptr;
+  };
+
+  // subset of Surface for API compat
+  struct SurfaceInfo {
+    SurfaceInfo() = default;
+    SurfaceInfo(const Surface &surf): data(surf.data), bounds(surf.bounds), format(surf.format), palette(surf.palette) {}
+    SurfaceInfo(const SurfaceTemplate &surf): data(surf.data), bounds(surf.bounds), format(surf.format), palette(surf.palette) {}
+
+    uint8_t *data = nullptr;
+    Size bounds;
+
+    // unused, here for compat reasons
+    Rect clip;
+    uint8_t alpha;
+    Pen pen;
+
+    PixelFormat format;
+    uint8_t pixel_stride; // unused
+    uint16_t row_stride; // unused
+
+    Surface *mask = nullptr; // unused
+    Pen *palette = nullptr;
+  };
 
   #pragma pack(push, 4)
   struct API {
@@ -34,7 +64,7 @@ namespace blit {
 
     AudioChannel *channels;
 
-    Surface &(*set_screen_mode)  (ScreenMode new_mode);
+    SurfaceInfo &(*set_screen_mode)  (ScreenMode new_mode);
     void (*set_screen_palette)  (const Pen *colours, int num_cols);
     uint32_t (*now)();
     uint32_t (*random)();
@@ -86,6 +116,8 @@ namespace blit {
     GameMetadata (*get_metadata)();
 
     bool tick_function_changed;
+
+    bool (*set_screen_mode_format)(ScreenMode new_mode, SurfaceTemplate &new_surf_template);
   };
   #pragma pack(pop)
 
