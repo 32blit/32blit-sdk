@@ -95,4 +95,28 @@ namespace blit {
     this->v32 = (-m.v30 * s3 + m.v31 * s1 - m.v32 * s0) * invdet;
     this->v33 = (m.v20 * s3 - m.v21 * s1 + m.v22 * s0) * invdet;
   }
+
+  Vec3 Mat4::transform(Vec3 a) {
+    float   x = v00 * a.x + v01 * a.y + v02 * a.z + v03;
+    float   y = v10 * a.x + v11 * a.y + v12 * a.z + v13;
+    float   z = v20 * a.x + v21 * a.y + v22 * a.z + v23;
+    float div = v30 * a.x + v31 * a.y + v32 * a.z + v33;
+
+    a.x = x / div;
+    a.y = y / div;
+    a.z = z / div;
+
+    return a;
+  }
+
+  Mat4 Mat4::ortho(float l, float r, float b, float t, float n, float f) {
+    Mat4 result = Mat4::identity();
+    result.v00 = 2.0f / (r - l);
+    result.v11 = 2.0f / (t - b);
+    result.v22 = 2.0f / (f - n);
+    result.v03 = -(r + l) / (r - l);
+    result.v13 = -(t + b) / (t - b);
+    result.v23 = -(f + n) / (f - n);
+    return result;
+  }
 }

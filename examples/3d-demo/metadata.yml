@@ -1,0 +1,10 @@
+title: 3D Test
+description: A test of 32Blit's 3D functions
+author: pimoroni
+splash:
+  file: ../no-icon.png
+icon:
+  file: ../no-image.png
+version: v1.0.0
+url: https://github.com/32blit/32blit-sdk
+category: demo

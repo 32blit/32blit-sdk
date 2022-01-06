@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.9)
+project (3d-demo)
+find_package (32BLIT CONFIG REQUIRED PATHS ../..)
+blit_executable (3d-demo 3d-demo.cpp 3d/camera.cpp object.cpp renderer.cpp)
+blit_metadata (3d-demo metadata.yml)
+blit_assets_yaml (3d-demo assets.yml)
