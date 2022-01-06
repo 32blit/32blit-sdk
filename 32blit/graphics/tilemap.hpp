@@ -2,7 +2,8 @@
 
 #include <cstdint>
 
-#include "../32blit.hpp"
+#include "surface.hpp"
+#include "../engine/engine.hpp"
 #include "../types/size.hpp"
 #include "../types/point.hpp"
 #include "../types/mat3.hpp"
