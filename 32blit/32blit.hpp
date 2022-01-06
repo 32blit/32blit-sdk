@@ -4,6 +4,7 @@
 #include "audio/mp3-stream.hpp"
 #include "engine/api.hpp"
 #include "engine/engine.hpp"
+#include "engine/fast_code.hpp"
 #include "engine/file.hpp"
 #include "engine/input.hpp"
 #include "engine/menu.hpp"
