@@ -279,7 +279,7 @@ const char *metadata_category = \"\${METADATA_CATEGORY}\";"
 		METADATA_CONTENT ESCAPE_QUOTES
 	)
 
-	file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/_metadata.cpp CONTENT "${METADATA_CONTENT}")
+	file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_metadata.cpp CONTENT "${METADATA_CONTENT}")
 
-	target_sources(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/_metadata.cpp)
+	target_sources(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_metadata.cpp)
 endfunction()
