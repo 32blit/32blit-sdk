@@ -19,7 +19,26 @@
 
 namespace blit {
 
-  struct sprite_p;
+  /**
+   * All sprite mirroring and rotations (90/180/270) can be composed
+   * of simple horizontal/vertical flips and x/y coordinate swaps.
+   *
+   * The bits set represent the transforms required to achieve the
+   * end result. Operations are performed (if needed) in the following
+   * order: horizontal flip -> vertical flip -> x/y swap
+   *
+   * For example a 90 degree rotation needs a vertical flip
+   * followed by an x/y coordinate swap.
+  */
+  enum SpriteTransform {
+    NONE = 0b000,
+    HORIZONTAL = 0b001,
+    VERTICAL = 0b010,
+    XYSWAP = 0b100,
+    R90 = 0b101,
+    R180 = 0b011,
+    R270 = 0b110
+  };
 
 #pragma pack(push, 1)
   struct packed_image {
@@ -166,9 +185,18 @@ namespace blit {
     /*void outline_circle(const point &c, int32_t r);
 
     */
-    void blit(Surface *src, Rect r, Point p, bool hflip = false);
-    void stretch_blit(Surface *src, Rect sr, Rect dr);
+    void blit(Surface *src, Rect src_r, Point dst_p);
+    void blit(Surface *src, const Rect &src_r, const Point &dst_p, int transforms);
+
+    void stretch_blit(Surface *src, const Rect &src_r, const Rect &dst_r);
+    void stretch_blit(Surface *src, const Rect &src_r, const Rect &dst_r, int transforms);
+
     void stretch_blit_vspan(Surface *src, Point uv, uint16_t sc, Point p, int16_t dc);
+
+    [[deprecated]]
+    void blit(Surface *src, Rect r, Point p, bool hflip) {
+      blit(src, r, p, hflip ? SpriteTransform::HORIZONTAL : 0);
+    }
 
     void custom_blend(Surface *src, Rect r, Point p, std::function<void(uint8_t *psrc, uint8_t *pdest, int16_t c)> f);
     void custom_modify(Rect r, std::function<void(uint8_t *p, int16_t c)> f);
@@ -186,8 +214,15 @@ namespace blit {
     Rect sprite_bounds(const Point &p);
     Rect sprite_bounds(const Rect &r);
 
-    void blit_sprite(const Rect &src, const Point &p, uint8_t t = 0);
-    void stretch_blit_sprite(const Rect&src, const Rect &r, uint8_t t = 0);
+    [[deprecated]]
+    void blit_sprite(const Rect &src, const Point &p, uint8_t t = 0) {
+      blit(sprites, src, p, t);
+    }
+
+    [[deprecated]]
+    void stretch_blit_sprite(const Rect &src, const Rect &r, uint8_t t = 0) {
+      stretch_blit(sprites, src, r, t);
+    }
 
     void sprite(const Rect &sprite, const Point &position, uint8_t transform = 0);
     void sprite(const Point &sprite, const Point &position, uint8_t transform = 0);

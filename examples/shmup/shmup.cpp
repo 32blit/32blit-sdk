@@ -110,7 +110,7 @@ void draw_tilebased_sprite(Surface* ss, Point origin, const std::vector<uint8_t>
       if (ship_mask & (0b10000000 >> jj)) {
         uint8_t offset_x = (jj * 8);
         uint8_t src_x = o_x + offset_x;
-        screen.blit(ss, Rect(src_x, src_y, 8, 8), Point(origin.x + (j * 8), origin.y + offset_y), hflip);
+        screen.blit(ss, Rect(src_x, src_y, 8, 8), Point(origin.x + (j * 8), origin.y + offset_y), hflip ? SpriteTransform::HORIZONTAL : 0);
       }
     }
   }

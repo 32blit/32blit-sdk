@@ -14,7 +14,7 @@ namespace blit {
 
   /**
    * Return the bounds of a sprite by index
-   * 
+   *
    * Takes an index offset to the sprite in the spritesheet
    * and returns a `rect` describing the location and size of the sprite in pixels.
    *
@@ -27,7 +27,7 @@ namespace blit {
 
  /**
    * Return the bounds of a sprite by index
-   * 
+   *
    * Takes a `point` describing the x/y offset of the sprite in terms of tiles/units
    * and returns a `rect` describing the location of the sprite in pixels.
    *
@@ -40,7 +40,7 @@ namespace blit {
 
  /**
    * Return the bounds of a sprite by index
-   * 
+   *
    * Takes a `rect` describing the x/y offset and size of the sprite in terms of tiles/units
    * and returns a `rect` describing the location and size of the sprite in pixels.
    *
@@ -53,32 +53,18 @@ namespace blit {
 
 
   // unscaled sprites
-  
+
   /**
    * Draws a sprite to the surface
-   * 
+   *
    * \param[in] sprite Index of the sprite in the sheet
    * \param[in] position `point` at which to place the sprite in the target surface
    * \param[in] transform to apply
    */
   void Surface::sprite(uint16_t sprite, const Point &position, uint8_t transform) {
     if(sprites == nullptr) return;
-    blit_sprite(
-      sprites->sprite_bounds(sprite), 
-      position, 
-      transform);
-  }
-
-  /**
-   * Draws a sprite to the surface
-   * 
-   * \param[in] sprite `point` describing the x/y offset of the sprite in the spritesheet in tiles/units
-   * \param[in] position `point` at which to place the sprite in the target surface
-   * \param[in] transform to apply
-   */
-  void Surface::sprite(const Point &sprite, const Point &position, uint8_t transform) {
-    if(sprites == nullptr) return;
-    blit_sprite(
+    blit(
+      sprites,
       sprites->sprite_bounds(sprite),
       position,
       transform);
@@ -86,14 +72,31 @@ namespace blit {
 
   /**
    * Draws a sprite to the surface
-   * 
+   *
+   * \param[in] sprite `point` describing the x/y offset of the sprite in the spritesheet in tiles/units
+   * \param[in] position `point` at which to place the sprite in the target surface
+   * \param[in] transform to apply
+   */
+  void Surface::sprite(const Point &sprite, const Point &position, uint8_t transform) {
+    if(sprites == nullptr) return;
+    blit(
+      sprites,
+      sprites->sprite_bounds(sprite),
+      position,
+      transform);
+  }
+
+  /**
+   * Draws a sprite to the surface
+   *
    * \param[in] sprite `rect` describing the x/y offset and size of the sprite in the spritesheet in tiles/units
    * \param[in] position `point` at which to place the sprite in the target surface
    * \param[in] transform to apply
    */
-  void Surface::sprite(const Rect &sprite, const Point &position, uint8_t transform) {       
-    if(sprites == nullptr) return; 
-    blit_sprite(
+  void Surface::sprite(const Rect &sprite, const Point &position, uint8_t transform) {
+    if(sprites == nullptr) return;
+    blit(
+      sprites,
       sprites->sprite_bounds(sprite),
       position,
       transform);
@@ -103,7 +106,7 @@ namespace blit {
 
   /**
    * Draws a sprite to the surface
-   * 
+   *
    * \param[in] sprite Index of the sprite in the sheet
    * \param[in] position `point` at which to place the sprite in the target surface
    * \param[in] origin `point` around which to transform the sprite
@@ -115,7 +118,7 @@ namespace blit {
 
   /**
    * Draws a sprite to the surface
-   * 
+   *
    * \param[in] sprite `point` describing the x/y offset of the sprite in the spritesheet in tiles/units
    * \param[in] position `point` at which to place the sprite in the target surface
    * \param[in] origin `point` around which to transform the sprite
@@ -127,7 +130,7 @@ namespace blit {
 
   /**
    * Draws a sprite to the surface
-   * 
+   *
    * \param[in] sprite `rect` describing the x/y offset and size of the sprite in the spritesheet in tiles/units
    * \param[in] position `point` at which to place the sprite in the target surface
    * \param[in] origin `point` around which to transform the sprite
@@ -141,7 +144,7 @@ namespace blit {
 
   /**
    * Draws a sprite to the surface
-   * 
+   *
    * \param[in] sprite Index of the sprite in the sheet
    * \param[in] position `point` at which to place the sprite in the target surface
    * \param[in] origin `point` around which to transform & scale the sprite
@@ -158,7 +161,8 @@ namespace blit {
       roundf(8.0f * scale.y)
     );
 
-    stretch_blit_sprite(
+    stretch_blit(
+      sprites,
       sprites->sprite_bounds(sprite),
       dest_rect,
       transform);
@@ -166,7 +170,7 @@ namespace blit {
 
   /**
    * Draws a sprite to the surface
-   * 
+   *
    * \param[in] sprite `point` describing the x/y offset of the sprite in the spritesheet in tiles/units
    * \param[in] position `point` at which to place the sprite in the target surface
    * \param[in] origin `point` around which to transform & scale the sprite
@@ -183,7 +187,8 @@ namespace blit {
       roundf(8.0f * scale.y)
     );
 
-    stretch_blit_sprite(
+    stretch_blit(
+      sprites,
       sprites->sprite_bounds(sprite),
       dest_rect,
       transform);
@@ -191,7 +196,7 @@ namespace blit {
 
   /**
    * Draws a sprite to the surface
-   * 
+   *
    * \param[in] sprite `rect` describing the x/y offset and size of the sprite in the spritesheet in tiles/units
    * \param[in] position `point` at which to place the sprite in the target surface
    * \param[in] origin `point` around which to transform  & scale the sprite
@@ -208,7 +213,8 @@ namespace blit {
       roundf(sprite.h * 8.0f * scale.y)
     );
 
-    stretch_blit_sprite(
+    stretch_blit(
+      sprites,
       sprites->sprite_bounds(sprite),
       dest_rect,
       transform);
@@ -216,7 +222,7 @@ namespace blit {
 
   /**
    * Draws a sprite to the surface
-   * 
+   *
    * \param[in] sprite Index of the sprite in the sheet
    * \param[in] position `point` at which to place the sprite in the target surface
    * \param[in] origin `point` around which to transform & scale the sprite
@@ -229,7 +235,7 @@ namespace blit {
 
   /**
    * Draws a sprite to the surface
-   * 
+   *
    * \param[in] sprite `point` describing the x/y offset of the sprite in the spritesheet in tiles/units
    * \param[in] position `point` at which to place the sprite in the target surface
    * \param[in] origin `point` around which to transform & scale the sprite
@@ -242,7 +248,7 @@ namespace blit {
 
   /**
    * Draws a sprite to the surface
-   * 
+   *
    * \param[in] sprite `rect` describing the x/y offset and size of the sprite in the spritesheet in tiles/units
    * \param[in] position `point` at which to place the sprite in the target surface
    * \param[in] origin `point` around which to transform  & scale the sprite
@@ -288,15 +294,15 @@ namespace blit {
       this->blit(&ss, sr, pos - origin);
 
     }
-    
+
   }*/
   /*
   void surface::sprite(spritesheet &ss, uint16_t index, point pos, size span, point origin, float scale) {
     if (scale != 1.0f) {
       rect sr = ss.sprite_bounds(index);
       sr.w = span.w * ss.sprite_size.w;
-      sr.h = span.h * ss.sprite_size.h;            
-    
+      sr.h = span.h * ss.sprite_size.h;
+
       rect dr = rect(
         pos - (origin * scale),
         size(sr.w * scale, sr.h * scale)
@@ -313,4 +319,4 @@ namespace blit {
     }
   }*/
 
-} 
+}
