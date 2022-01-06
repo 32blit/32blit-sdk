@@ -88,11 +88,11 @@ void handle_event(SDL_Event &event) {
 			break;
 
 		case SDL_CONTROLLERDEVICEADDED:
-			SDL_GameControllerOpen(event.cdevice.which);
+      blit_input->handle_controller_added(event.cdevice.which);
 			break;
 
 		case SDL_CONTROLLERDEVICEREMOVED:
-			SDL_GameControllerClose(SDL_GameControllerFromInstanceID(event.cdevice.which));
+      blit_input->handle_controller_removed(event.cdevice.which);
 			break;
 
 		case SDL_RENDER_TARGETS_RESET:
@@ -233,13 +233,8 @@ int main(int argc, char *argv[]) {
 		SDL_SetWindowPosition(window, x, y);
 	}
 
-	// Open all joysticks as game controllers
-	for(int n=0; n<SDL_NumJoysticks(); n++) {
-		SDL_GameControllerOpen(n);
-	}
-
-	blit_system = new System();
-	blit_input = new Input(blit_system);
+  blit_system = new System();
+  blit_input = new Input(blit_system);
 	blit_multiplayer = new Multiplayer(mp_mode, mp_address);
 	blit_renderer = new Renderer(window, System::width, System::height);
 	blit_audio = new Audio();
@@ -272,6 +267,7 @@ int main(int argc, char *argv[]) {
 
 	blit_system->stop();
 	delete blit_system;
+  delete blit_input;
 	delete blit_multiplayer;
 	delete blit_renderer;
 
