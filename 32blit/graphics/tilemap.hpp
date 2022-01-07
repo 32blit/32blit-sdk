@@ -51,7 +51,7 @@ namespace blit {
 
     enum LoadFlags {
       copy_tiles = (1 << 0),
-      copy_transforms = (1 << 0)
+      copy_transforms = (1 << 1)
     };
 
     TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites);
