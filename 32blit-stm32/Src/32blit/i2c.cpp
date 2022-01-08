@@ -62,15 +62,19 @@ void blit_i2c_delay(uint16_t ms, I2CState state) {
 }
 
 //
-// Initialize the accelerometer
+// Initialise i2c devices
 //
-void blit_init_accelerometer() {
+void blit_init_i2c() {
+  // init accelerometer
   if(is_beta_unit){
     msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
     accel_address = MSA301_DEVICE_ADDRESS;
   } else {
     lis3dh_init(&hi2c4);
   }
+
+  // init battery management
+  bq24295_init(&hi2c4);
 }
 
 //

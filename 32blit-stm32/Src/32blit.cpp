@@ -20,10 +20,6 @@
 #include "tim.h"
 #include "rng.h"
 #include "spi.h"
-#include "i2c.h"
-#include "i2c-msa301.h"
-#include "i2c-lis3dh.h"
-#include "i2c-bq24295.h"
 #include "fatfs.h"
 #include "quadspi.h"
 #include "usbd_core.h"
@@ -353,9 +349,7 @@ void blit_init() {
 
     fs_mounted = f_mount(&filesystem, "", 1) == FR_OK;  // this shouldn't be necessary here right?
 
-    blit_init_accelerometer();
-
-    bq24295_init(&hi2c4);
+    blit_init_i2c();
 
     blit::api.version_major = api_version_major;
     blit::api.version_minor = api_version_minor;
