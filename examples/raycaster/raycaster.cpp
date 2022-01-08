@@ -111,8 +111,6 @@ void init() {
 		lut_camera_displacement[x] = (float)(2 * x) / (float)(SCREEN_WIDTH) - 1.0f;
 	}
 
-	srand(0x32bl);
-
 	for (int s = 0; s < NUM_STARS; s++) {
 		stars[s].position.x = blit::random() % 360;
 		stars[s].position.y = blit::random() % (HORIZON / 2);
@@ -312,7 +310,7 @@ void render(uint32_t time) {
 	render_spray(time);
 	screen.clip = Rect(Point(0, 0), screen.bounds);
 
-	// draw bug spray    
+	// draw bug spray
 	int offset = OFFSET_TOP + int(sinf((player1.position.x + player1.position.y) * 4) * 3); // bob
 	screen.sprite(player1.spraying ? Rect(8, 16, 3, 4) : Rect(5, 16, 3, 4), Point(SCREEN_WIDTH - 48, VIEW_HEIGHT - 30 + offset));
 
@@ -526,7 +524,7 @@ void render_world(uint32_t time) {
 
 			/* draw the walls */
 
-			// TODO: add mipmap support? automatic based on scale?          
+			// TODO: add mipmap support? automatic based on scale?
 
 			// texture_wall
 			//
@@ -819,7 +817,7 @@ void blur(uint8_t passes) {
 		}
 	}
 
-	// vertical      
+	// vertical
 	for (uint8_t pass = 0; pass < passes; pass++) {
 		for (uint16_t x = 0; x < SCREEN_WIDTH; x++) {
 			uint8_t *p = (uint8_t *)mask.data + x;
