@@ -1,6 +1,4 @@
-#include "string.h"
-#include <map>
-#include <bitset>
+#include <cstring>
 
 #include "32blit.h"
 #include "32blit/battery.hpp"
@@ -19,30 +17,21 @@
 
 #include "tim.h"
 #include "rng.h"
-#include "spi.h"
 #include "fatfs.h"
 #include "quadspi.h"
 #include "usbd_core.h"
 #include "USBManager.h"
 #include "usbd_cdc_if.h"
 
-#include "32blit.hpp"
 #include "engine/api_private.hpp"
-#include "graphics/color.hpp"
-#include "engine/running_average.hpp"
-#include "engine/menu.hpp"
-#include "engine/version.hpp"
 
 #include "SystemMenu/system_menu_controller.hpp"
 
-#include "stdarg.h"
 using namespace blit;
 using battery::BatteryChargeStatus;
 
 extern USBD_HandleTypeDef hUsbDeviceHS;
 extern USBManager g_usbManager;
-
-
 
 FATFS filesystem;
 extern Disk_drvTypeDef disk;
