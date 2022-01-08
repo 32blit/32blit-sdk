@@ -687,11 +687,9 @@ void blit_process_input() {
 
 // blit_switch_execution
 //
-// Switches execution to new location defined by EXTERNAL_LOAD_ADDRESS
-// EXTERNAL_LOAD_ADDRESS is the start of the Vector Table location
+// Attempts to init a new game and switch render/tick to run it.
+// Can also be used to exit back to the firmware.
 //
-typedef  void (*pFunction)(void);
-pFunction JumpToApplication;
 
 bool blit_switch_execution(uint32_t address, bool force_game)
 {
@@ -807,8 +805,9 @@ bool blit_switch_execution(uint32_t address, bool force_game)
 	/* Disable Systick interrupt */
 	SysTick->CTRL = 0;
 
+  typedef  void (*pFunction)(void);
 	/* Initialize user application's Stack Pointer & Jump to user application */
-	JumpToApplication = (pFunction) (*(__IO uint32_t*) (EXTERNAL_LOAD_ADDRESS + 4));
+	auto JumpToApplication = (pFunction) (*(__IO uint32_t*) (EXTERNAL_LOAD_ADDRESS + 4));
 	__set_MSP(*(__IO uint32_t*) EXTERNAL_LOAD_ADDRESS);
 	JumpToApplication();
 
