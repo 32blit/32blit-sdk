@@ -20,7 +20,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "adc.h"
 #include "dma.h"
 #include "fatfs.h"
 #include "hrtim.h"
@@ -32,6 +31,7 @@
 #include "tim.h"
 #include "usb_device.h"
 
+#include "adc.hpp"
 #include "gpio.hpp"
 #include "display.hpp"
 #include "sound.hpp"
@@ -138,8 +138,8 @@ int main(void)
 #if (INITIALISE_QSPI==1)
   MX_QUADSPI_Init();
 #endif
-  MX_ADC1_Init();
-  MX_ADC3_Init();
+  adc::init();
+
   //MX_USB_OTG_HS_USB_Init();
   MX_SPI1_Init();
   MX_SPI4_Init();

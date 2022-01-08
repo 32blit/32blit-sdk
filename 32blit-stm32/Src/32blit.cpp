@@ -7,6 +7,7 @@
 #include "32blit_i2c.hpp"
 #include "main.h"
 
+#include "adc.hpp"
 #include "sound.hpp"
 #include "display.hpp"
 #include "gpio.hpp"
@@ -16,7 +17,6 @@
 #include "multiplayer.hpp"
 #include "power.hpp"
 
-#include "adc.h"
 #include "tim.h"
 #include "rng.h"
 #include "spi.h"
@@ -46,10 +46,7 @@ using battery::BatteryChargeStatus;
 extern USBD_HandleTypeDef hUsbDeviceHS;
 extern USBManager g_usbManager;
 
-#define ADC_BUFFER_SIZE 32
 
-__attribute__((section(".dma_data"))) ALIGN_32BYTES(__IO uint16_t adc1data[ADC_BUFFER_SIZE]);
-__attribute__((section(".dma_data"))) ALIGN_32BYTES(__IO uint16_t adc3data[ADC_BUFFER_SIZE]);
 
 FATFS filesystem;
 extern Disk_drvTypeDef disk;
@@ -264,11 +261,11 @@ void hook_render(uint32_t time) {
   ::render(time);
 
   blit::screen.pen = Pen(255, 255, 255);
-  for(auto i = 0; i < ADC_BUFFER_SIZE; i++) {
+  /*for(auto i = 0; i < ADC_BUFFER_SIZE; i++) {
     int x = i / 8;
     int y = i % 8;
     blit::screen.text(std::to_string(adc1data[i]), minimal_font, Point(x * 30, y * 10));
-  }
+  }*/
 }
 
 void blit_update_volume() {
@@ -353,9 +350,6 @@ void blit_init() {
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     DWT->CYCCNT = 0;
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-
-    HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc1data, ADC_BUFFER_SIZE);
-    HAL_ADC_Start_DMA(&hadc3, (uint32_t *)adc3data, ADC_BUFFER_SIZE);
 
     fs_mounted = f_mount(&filesystem, "", 1) == FR_OK;  // this shouldn't be necessary here right?
 
@@ -568,25 +562,6 @@ void blit_update_led() {
     }
 }
 
-void HAL_ADC_ErrorCallback(ADC_HandleTypeDef* hadc){
-}
-
-void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc){
-  if(hadc->Instance == ADC1) {
-    SCB_InvalidateDCache_by_Addr((uint32_t *) &adc1data[0], ADC_BUFFER_SIZE);
-  } else if (hadc->Instance == ADC3) {
-    SCB_InvalidateDCache_by_Addr((uint32_t *) &adc3data[0], ADC_BUFFER_SIZE);
-  }
-}
-
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
-  if(hadc->Instance == ADC1) {
-    SCB_InvalidateDCache_by_Addr((uint32_t *) &adc1data[ADC_BUFFER_SIZE / 2], ADC_BUFFER_SIZE / 2);
-  } else if (hadc->Instance == ADC3) {
-    SCB_InvalidateDCache_by_Addr((uint32_t *) &adc3data[ADC_BUFFER_SIZE / 2], ADC_BUFFER_SIZE / 2);
-  }
-}
-
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   if(htim == &htim2) {
     bool pressed = HAL_GPIO_ReadPin(BUTTON_HOME_GPIO_Port, BUTTON_HOME_Pin);
@@ -648,7 +623,7 @@ void blit_process_input() {
     power::update_active();
 
   // Process ADC readings
-  int joystick_x = (adc1data[0] >> 1) - 16384;
+  int joystick_x = (adc::get_value(adc::Value::joystick_x) >> 1) - 16384;
   joystick_x = std::max(-8192, std::min(8192, joystick_x));
   if(joystick_x < -1024) {
     joystick_x += 1024;
@@ -660,7 +635,7 @@ void blit_process_input() {
   }
   blit::joystick.x = joystick_x / 7168.0f;
 
-  int joystick_y = (adc1data[1] >> 1) - 16384;
+  int joystick_y = (adc::get_value(adc::Value::joystick_y) >> 1) - 16384;
   joystick_y = std::max(-8192, std::min(8192, joystick_y));
   if(joystick_y < -1024) {
     joystick_y += 1024;
@@ -675,10 +650,10 @@ void blit_process_input() {
   if(blit::joystick.length() > 0.01f)
     power::update_active();
 
-  blit::hack_left = (adc3data[0] >> 1) / 32768.0f;
-  blit::hack_right = (adc3data[1] >> 1)  / 32768.0f;
+  blit::hack_left = (adc::get_value(adc::Value::hack_left) >> 1) / 32768.0f;
+  blit::hack_right = (adc::get_value(adc::Value::hack_right) >> 1)  / 32768.0f;
 
-  battery::update_charge(6.6f * adc3data[2] / 65535.0f);
+  battery::update_charge(6.6f * adc::get_value(adc::Value::battery_charge) / 65535.0f);
 }
 
 // blit_switch_execution
@@ -767,9 +742,7 @@ bool blit_switch_execution(uint32_t address, bool force_game)
   // old-style soft-reset to app with linked HAL
   // left for compatibility/testing
 
-  // Stop the ADC DMA
-  HAL_ADC_Stop_DMA(&hadc1);
-  HAL_ADC_Stop_DMA(&hadc3);
+  adc::stop();
 
   // Stop the audio
   HAL_TIM_Base_Stop_IT(&htim6);

@@ -78,6 +78,7 @@ list(APPEND SOURCES
 	Src/file.cpp
 	Src/jpeg.cpp
 	Src/adc.c
+	Src/adc.cpp
 	Src/debug.c
 	Src/dma.c
 	Src/hrtim.c
