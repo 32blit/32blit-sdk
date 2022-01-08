@@ -9,6 +9,7 @@
 //
 
 #include "32blit.h"
+#include "main.h"
 #include "32blit/battery.hpp"
 
 using namespace blit;
@@ -46,7 +47,34 @@ namespace battery {
   // Update battery status and fault (read using I2C)
   //
   void update_status ( uint8_t status, uint8_t fault ) {
-    battery_status = status;
+
+    if(battery_status != status) {
+      battery_status = status;
+
+      switch(get_charge_status()){
+        case BatteryChargeStatus::NotCharging:
+          charge_led_r = 1;
+          charge_led_b = 0;
+          charge_led_g = 0;
+          break;
+        case BatteryChargeStatus::PreCharging:
+          charge_led_r = 1;
+          charge_led_b = 1;
+          charge_led_g = 0;
+          break;
+        case BatteryChargeStatus::FastCharging:
+          charge_led_r = 0;
+          charge_led_b = 1;
+          charge_led_g = 0;
+          break;
+        case BatteryChargeStatus::ChargingComplete:
+          charge_led_r = 0;
+          charge_led_b = 0;
+          charge_led_g = 1;
+          break;
+      }
+    }
+
     battery_fault = fault;
   }
 

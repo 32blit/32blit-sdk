@@ -3,7 +3,6 @@
 #include "32blit.h"
 #include "32blit/battery.hpp"
 #include "32blit/i2c.hpp"
-#include "main.h"
 
 #include "adc.hpp"
 #include "sound.hpp"
@@ -28,7 +27,6 @@
 #include "SystemMenu/system_menu_controller.hpp"
 
 using namespace blit;
-using battery::BatteryChargeStatus;
 
 extern USBD_HandleTypeDef hUsbDeviceHS;
 extern USBManager g_usbManager;
@@ -519,30 +517,6 @@ void blit_update_led() {
 
     // Backlight
     __HAL_TIM_SetCompare(&htim15, TIM_CHANNEL_1, (962 - (962 * persist.backlight)) * power::sleep_fade + (1024 * (1.0f - power::sleep_fade)));
-
-    // TODO we don't want to do this too often!
-    switch(battery::get_charge_status()){
-      case BatteryChargeStatus::NotCharging:
-        charge_led_r = 1;
-        charge_led_b = 0;
-        charge_led_g = 0;
-        break;
-      case BatteryChargeStatus::PreCharging:
-        charge_led_r = 1;
-        charge_led_b = 1;
-        charge_led_g = 0;
-        break;
-      case BatteryChargeStatus::FastCharging:
-        charge_led_r = 0;
-        charge_led_b = 1;
-        charge_led_g = 0;
-        break;
-      case BatteryChargeStatus::ChargingComplete:
-        charge_led_r = 0;
-        charge_led_b = 0;
-        charge_led_g = 1;
-        break;
-    }
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
