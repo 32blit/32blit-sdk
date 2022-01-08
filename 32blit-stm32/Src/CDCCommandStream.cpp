@@ -73,7 +73,6 @@ void CDCCommandStream::Stream(void)
 
 uint8_t CDCCommandStream::Stream(uint8_t *data, uint32_t len)
 {
-	blit_disable_ADC();
 	uint8_t   *pScanPos  = data;
 
   while(pScanPos < (data+len))
@@ -173,7 +172,6 @@ uint8_t CDCCommandStream::Stream(uint8_t *data, uint32_t len)
           // handler has finished or failed go back to detect state
           m_state = stDetect;
           LogTimeTaken(result, m_pCurrentCommandHandler->GetBytesHandled());
-          blit_enable_ADC();
         }
         break;
 
@@ -183,7 +181,6 @@ uint8_t CDCCommandStream::Stream(uint8_t *data, uint32_t len)
           {
             m_state = stDetect;
             LogTimeTaken(result, m_pCurrentCommandHandler->GetBytesHandled());
-            blit_enable_ADC();
           }
         return false;
 

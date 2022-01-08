@@ -633,18 +633,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   }
 }
 
-void blit_disable_ADC()
-{
-  // TODO: Flesh this out if it's still necessary in interrupt-driven ADC mode
-  return;
-}
-
-void blit_enable_ADC()
-{
-  // TODO: Flesh this out if it's still necessary in interrupt-driven ADC mode
-  return;
-}
-
 void blit_process_input() {
   // Read buttons
   blit::buttons =

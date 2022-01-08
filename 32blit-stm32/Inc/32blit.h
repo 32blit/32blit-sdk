@@ -44,6 +44,3 @@ RawMetadata *blit_get_running_game_metadata();
 void blit_menu_update(uint32_t time);
 void blit_menu_render(uint32_t time);
 void blit_menu();
-
-void blit_enable_ADC();
-void blit_disable_ADC();
