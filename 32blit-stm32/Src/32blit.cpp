@@ -186,7 +186,7 @@ void blit_tick() {
 
   do_render();
 
-  blit_i2c_tick();
+  i2c::tick();
   blit_process_input();
   blit_update_led();
   blit_update_vibration();
@@ -336,7 +336,7 @@ void blit_init() {
 
     fs_mounted = f_mount(&filesystem, "", 1) == FR_OK;  // this shouldn't be necessary here right?
 
-    blit_init_i2c();
+    i2c::init();
 
     blit::api.version_major = api_version_major;
     blit::api.version_minor = api_version_minor;

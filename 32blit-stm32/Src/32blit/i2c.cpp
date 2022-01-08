@@ -55,110 +55,113 @@ static I2CState i2c_next_state = SEND_ACL;
 //
 // delay for a given number of ms and transition to another I2CState
 //
-void blit_i2c_delay(uint16_t ms, I2CState state) {
+static void blit_i2c_delay(uint16_t ms, I2CState state) {
   i2c_delay_until = HAL_GetTick() + ms;
   i2c_next_state = state;
   i2c_state = DELAY;
 }
 
-//
-// Initialise i2c devices
-//
-void blit_init_i2c() {
-  // init accelerometer
-  if(is_beta_unit){
-    msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
-    accel_address = MSA301_DEVICE_ADDRESS;
-  } else {
-    lis3dh_init(&hi2c4);
-  }
+namespace i2c {
 
-  // init battery management
-  bq24295_init(&hi2c4);
-}
-
-//
-// I2C state machine runner
-//
-void blit_i2c_tick() {
-  if(i2c_state == STOPPED) {
-    return;
-  }
-  if(i2c_state == DELAY) {
-    if(HAL_GetTick() >= i2c_delay_until){
-      i2c_state = i2c_next_state;
+  //
+  // Initialise i2c devices
+  //
+  void init() {
+    // init accelerometer
+    if(is_beta_unit){
+      msa301_init(&hi2c4, MSA301_CONTROL2_POWR_MODE_NORMAL, 0x00, MSA301_CONTROL1_ODR_62HZ5);
+      accel_address = MSA301_DEVICE_ADDRESS;
+    } else {
+      lis3dh_init(&hi2c4);
     }
+
+    // init battery management
+    bq24295_init(&hi2c4);
   }
-  if(HAL_I2C_GetState(&hi2c4) != HAL_I2C_STATE_READY){
-    return;
-  }
 
-  switch(i2c_state) {
-    case STOPPED:
-    case DELAY:
-      break;
-    case SEND_ACL:
-      i2c_reg = is_beta_unit ? MSA301_X_ACCEL_RESISTER : (LIS3DH_OUT_X_L | LIS3DH_ADDR_AUTO_INC);
-      i2c_status = HAL_I2C_Master_Transmit_IT(&hi2c4, accel_address, &i2c_reg, 1);
-      if(i2c_status == HAL_OK){
-        i2c_state = RECV_ACL;
-      } else {
+  //
+  // I2C state machine runner
+  //
+  void tick() {
+    if(i2c_state == STOPPED) {
+      return;
+    }
+    if(i2c_state == DELAY) {
+      if(HAL_GetTick() >= i2c_delay_until){
+        i2c_state = i2c_next_state;
+      }
+    }
+    if(HAL_I2C_GetState(&hi2c4) != HAL_I2C_STATE_READY){
+      return;
+    }
+
+    switch(i2c_state) {
+      case STOPPED:
+      case DELAY:
+        break;
+      case SEND_ACL:
+        i2c_reg = is_beta_unit ? MSA301_X_ACCEL_RESISTER : (LIS3DH_OUT_X_L | LIS3DH_ADDR_AUTO_INC);
+        i2c_status = HAL_I2C_Master_Transmit_IT(&hi2c4, accel_address, &i2c_reg, 1);
+        if(i2c_status == HAL_OK){
+          i2c_state = RECV_ACL;
+        } else {
+          blit_i2c_delay(16, SEND_ACL);
+        }
+        break;
+      case RECV_ACL:
+        i2c_status = HAL_I2C_Master_Receive_IT(&hi2c4, accel_address, i2c_buffer, 6);
+        if(i2c_status == HAL_OK){
+          i2c_state = PROC_ACL;
+        } else {
+          blit_i2c_delay(16, SEND_ACL);
+        }
+        break;
+      case PROC_ACL:
+        // LIS3DH & MSA301 - 12-bit left-justified
+        accel_x.add(((int8_t)i2c_buffer[1] << 6) | (i2c_buffer[0] >> 2));
+        accel_y.add(((int8_t)i2c_buffer[3] << 6) | (i2c_buffer[2] >> 2));
+        accel_z.add(((int8_t)i2c_buffer[5] << 6) | (i2c_buffer[4] >> 2));
+
+        if(is_beta_unit){
+          blit::tilt = Vec3(
+            accel_x.average(),
+            accel_y.average(),
+            -accel_z.average()
+          );
+        } else {
+          blit::tilt = Vec3(
+            -accel_x.average(),
+            -accel_y.average(),
+            -accel_z.average()
+          );
+        }
+
+        blit::tilt.normalize();
+
+        i2c_state = SEND_BAT_STAT;
+        break;
+      case SEND_BAT_STAT:
+        i2c_reg = BQ24295_SYS_STATUS_REGISTER;
+        HAL_I2C_Master_Transmit_IT(&hi2c4, BQ24295_DEVICE_ADDRESS, &i2c_reg, 1);
+        i2c_state = RECV_BAT_STAT;
+        break;
+      case RECV_BAT_STAT:
+        HAL_I2C_Master_Receive_IT(&hi2c4, BQ24295_DEVICE_ADDRESS, i2c_buffer, 1);
+        i2c_state = SEND_BAT_FAULT;
+        break;
+      case SEND_BAT_FAULT:
+        i2c_reg = BQ24295_SYS_FAULT_REGISTER;
+        HAL_I2C_Master_Transmit_IT(&hi2c4, BQ24295_DEVICE_ADDRESS, &i2c_reg, 1);
+        i2c_state = RECV_BAT_FAULT;
+        break;
+      case RECV_BAT_FAULT:
+        HAL_I2C_Master_Receive_IT(&hi2c4, BQ24295_DEVICE_ADDRESS, i2c_buffer + 1, 1);
+        i2c_state = PROC_BAT;
+        break;
+      case PROC_BAT:
+        battery::update_status(i2c_buffer[0], i2c_buffer[1]);
         blit_i2c_delay(16, SEND_ACL);
-      }
-      break;
-    case RECV_ACL:
-      i2c_status = HAL_I2C_Master_Receive_IT(&hi2c4, accel_address, i2c_buffer, 6);
-      if(i2c_status == HAL_OK){
-        i2c_state = PROC_ACL;
-      } else {
-        blit_i2c_delay(16, SEND_ACL);
-      }
-      break;
-    case PROC_ACL:
-      // LIS3DH & MSA301 - 12-bit left-justified
-      accel_x.add(((int8_t)i2c_buffer[1] << 6) | (i2c_buffer[0] >> 2));
-      accel_y.add(((int8_t)i2c_buffer[3] << 6) | (i2c_buffer[2] >> 2));
-      accel_z.add(((int8_t)i2c_buffer[5] << 6) | (i2c_buffer[4] >> 2));
-
-      if(is_beta_unit){
-        blit::tilt = Vec3(
-          accel_x.average(),
-          accel_y.average(),
-          -accel_z.average()
-        );
-      } else {
-        blit::tilt = Vec3(
-          -accel_x.average(),
-          -accel_y.average(),
-          -accel_z.average()
-        );
-      }
-
-      blit::tilt.normalize();
-
-      i2c_state = SEND_BAT_STAT;
-      break;
-    case SEND_BAT_STAT:
-      i2c_reg = BQ24295_SYS_STATUS_REGISTER;
-      HAL_I2C_Master_Transmit_IT(&hi2c4, BQ24295_DEVICE_ADDRESS, &i2c_reg, 1);
-      i2c_state = RECV_BAT_STAT;
-      break;
-    case RECV_BAT_STAT:
-      HAL_I2C_Master_Receive_IT(&hi2c4, BQ24295_DEVICE_ADDRESS, i2c_buffer, 1);
-      i2c_state = SEND_BAT_FAULT;
-      break;
-    case SEND_BAT_FAULT:
-      i2c_reg = BQ24295_SYS_FAULT_REGISTER;
-      HAL_I2C_Master_Transmit_IT(&hi2c4, BQ24295_DEVICE_ADDRESS, &i2c_reg, 1);
-      i2c_state = RECV_BAT_FAULT;
-      break;
-    case RECV_BAT_FAULT:
-      HAL_I2C_Master_Receive_IT(&hi2c4, BQ24295_DEVICE_ADDRESS, i2c_buffer + 1, 1);
-      i2c_state = PROC_BAT;
-      break;
-    case PROC_BAT:
-      battery::update_status(i2c_buffer[0], i2c_buffer[1]);
-      blit_i2c_delay(16, SEND_ACL);
-      break;
+        break;
+    }
   }
 }
