@@ -5,7 +5,7 @@
  */
 
 #include "32blit.h"
-#include "32blit_battery.hpp"
+#include "32blit/battery.hpp"
 #include "32blit.hpp"
 
 using namespace blit;

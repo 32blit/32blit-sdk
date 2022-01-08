@@ -92,8 +92,8 @@ list(APPEND SOURCES
 	Src/sys.c
 	Src/tim.c
 	Src/rng.c
-	Src/32blit/32blit_battery.cpp
-	Src/32blit/32blit_i2c.cpp
+	Src/32blit/battery.cpp
+	Src/32blit/i2c.cpp
 	Src/SystemMenu/firmware_menu.cpp
 	Src/SystemMenu/system_menu_controller.cpp
 	Src/SystemMenu/battery_menu.cpp

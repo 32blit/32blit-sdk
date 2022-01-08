@@ -4,8 +4,8 @@
 //
 
 #include "32blit.h"
-#include "32blit_battery.hpp"
-#include "32blit_i2c.hpp"
+#include "32blit/battery.hpp"
+#include "32blit/i2c.hpp"
 #include "engine/running_average.hpp"
 
 #include "i2c.h"
