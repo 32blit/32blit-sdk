@@ -15,7 +15,7 @@
 #include "File.hpp"
 #include "UserCode.hpp"
 
-static std::string basePath, save_path;
+static std::string base_path, save_path;
 
 static std::string map_path(const std::string &path) {
   // check if the path is under the save path
@@ -23,14 +23,14 @@ static std::string map_path(const std::string &path) {
     return path;
 
   // otherwise it should be under the base path
-  return basePath + path;
+  return base_path + path;
 }
 
 void setup_base_path() {
-  auto basePathPtr = SDL_GetBasePath();
-  if(basePathPtr)
-    basePath = std::string(basePathPtr);
-  SDL_free(basePathPtr);
+  auto base_path_str = SDL_GetBasePath();
+  if(base_path_str)
+    base_path = std::string(base_path_str);
+  SDL_free(base_path_str);
 
   auto tmp = SDL_GetPrefPath(metadata_author, metadata_title);
   if(tmp)
