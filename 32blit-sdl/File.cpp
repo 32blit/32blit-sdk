@@ -15,13 +15,19 @@
 #include "File.hpp"
 #include "UserCode.hpp"
 
-static std::string basePath;
+static std::string basePath, save_path;
 
 void setup_base_path() {
   auto basePathPtr = SDL_GetBasePath();
   if(basePathPtr)
     basePath = std::string(basePathPtr);
   SDL_free(basePathPtr);
+
+  auto tmp = SDL_GetPrefPath(metadata_author, metadata_title);
+  if(tmp)
+    save_path = std::string(tmp);
+
+  SDL_free(tmp);
 }
 
 void *open_file(const std::string &name, int mode) {
@@ -185,14 +191,7 @@ bool remove_file(const std::string &path) {
   return remove((basePath + path).c_str()) == 0;
 }
 
-static std::string save_path;
-
 const char *get_save_path() {
-  auto tmp = SDL_GetPrefPath(metadata_author, metadata_title);
-  save_path = std::string(tmp);
-
-  SDL_free(tmp);
-
   return save_path.c_str();
 }
 
