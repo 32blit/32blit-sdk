@@ -17,6 +17,15 @@
 
 static std::string basePath, save_path;
 
+static std::string map_path(const std::string &path) {
+  // check if the path is under the save path
+  if(path.compare(0, save_path.length(), save_path) == 0)
+    return path;
+
+  // otherwise it should be under the base path
+  return basePath + path;
+}
+
 void setup_base_path() {
   auto basePathPtr = SDL_GetBasePath();
   if(basePathPtr)
@@ -42,14 +51,7 @@ void *open_file(const std::string &name, int mode) {
   else
     return nullptr;
 
-  auto file = SDL_RWFromFile((basePath + name).c_str(), str_mode);
-
-  if(!file) {
-    // check if the path is under the save path
-    std::string save_path = get_save_path();
-    if(name.compare(0, save_path.length(), save_path) == 0)
-      file = SDL_RWFromFile(name.c_str(), str_mode);
-  }
+  auto file = SDL_RWFromFile(map_path(name).c_str(), str_mode);
 
   return file;
 }
