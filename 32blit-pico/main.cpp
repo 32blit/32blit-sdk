@@ -103,7 +103,10 @@ void init();
 void render(uint32_t);
 void update(uint32_t);
 
+bool core1_started = false;
+
 void core1_main() {
+  core1_started = true;
   multicore_lockout_victim_init();
 
   while(true) {
