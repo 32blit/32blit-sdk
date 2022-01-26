@@ -182,7 +182,13 @@ bool rename_file(const std::string &old_name, const std::string &new_name) {
 }
 
 bool remove_file(const std::string &path) {
-  return remove((basePath + path).c_str()) == 0;
+  // check if the path is under the save path and do not add basePath if this is the case
+  std::string save_path = get_save_path();
+  if (path.compare(0, save_path.length(), save_path) == 0) {
+    return remove(path.c_str()) == 0;
+  } else {
+    return remove((basePath + path).c_str()) == 0;
+  }
 }
 
 static std::string save_path;

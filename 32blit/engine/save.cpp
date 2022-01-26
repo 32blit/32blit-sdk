@@ -39,4 +39,25 @@ namespace blit {
     }, 0 /* unused arg to avoid "error: expected expression" */);
 #endif
   }
+
+  /**
+   * Delete a block of save data at the given slot
+   * @param slot Save slot to delete, can be any number
+   *
+   * @return `true` if the file was deleted successfully
+   */
+  bool remove_save(int slot) {
+    bool success = remove_file(std::string(api.get_save_path()) + "save" + std::to_string(slot));
+
+#ifdef __EMSCRIPTEN__
+    if (success) {
+      // sync the filesystem so that the save persists
+      EM_ASM({
+        FS.syncfs(function(err) {});
+      }, 0 /* unused arg to avoid "error: expected expression" */);
+    }
+#endif
+
+    return success;
+  }
 }

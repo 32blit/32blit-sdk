@@ -23,6 +23,7 @@ bld/
 build/
 build.stm32/
 build.mingw/
+cmake-build-debug/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
