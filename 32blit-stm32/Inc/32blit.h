@@ -4,7 +4,6 @@
 #define UNUSED(x) ((void)(__typeof__(x))(x)) // suppress "UNUSED" warnings
 
 #include "32blit.hpp"
-#include "fatfs.h"
 #include "persistence.h"
 #include "executable.hpp"
 
@@ -16,7 +15,6 @@ void update(uint32_t time);
 void render(uint32_t time);
 
 // SD storage
-char *get_fr_err_text(FRESULT err);
 bool blit_sd_detected();
 bool blit_sd_mounted();
 
@@ -44,6 +42,3 @@ RawMetadata *blit_get_running_game_metadata();
 void blit_menu_update(uint32_t time);
 void blit_menu_render(uint32_t time);
 void blit_menu();
-
-void blit_enable_ADC();
-void blit_disable_ADC();

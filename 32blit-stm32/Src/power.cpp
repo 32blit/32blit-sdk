@@ -3,7 +3,7 @@
 #include "stm32h7xx_hal.h"
 
 #include "32blit.h"
-#include "32blit_battery.hpp"
+#include "32blit/battery.hpp"
 #include "i2c.h"
 #include "i2c-bq24295.h"
 
