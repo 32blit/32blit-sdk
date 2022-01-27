@@ -15,13 +15,28 @@
 #include "File.hpp"
 #include "UserCode.hpp"
 
-static std::string basePath;
+static std::string base_path, save_path;
+
+static std::string map_path(const std::string &path) {
+  // check if the path is under the save path
+  if(path.compare(0, save_path.length(), save_path) == 0)
+    return path;
+
+  // otherwise it should be under the base path
+  return base_path + path;
+}
 
 void setup_base_path() {
-  auto basePathPtr = SDL_GetBasePath();
-  if(basePathPtr)
-    basePath = std::string(basePathPtr);
-  SDL_free(basePathPtr);
+  auto base_path_str = SDL_GetBasePath();
+  if(base_path_str)
+    base_path = std::string(base_path_str);
+  SDL_free(base_path_str);
+
+  auto tmp = SDL_GetPrefPath(metadata_author, metadata_title);
+  if(tmp)
+    save_path = std::string(tmp);
+
+  SDL_free(tmp);
 }
 
 void *open_file(const std::string &name, int mode) {
@@ -36,14 +51,7 @@ void *open_file(const std::string &name, int mode) {
   else
     return nullptr;
 
-  auto file = SDL_RWFromFile((basePath + name).c_str(), str_mode);
-
-  if(!file) {
-    // check if the path is under the save path
-    std::string save_path = get_save_path();
-    if(name.compare(0, save_path.length(), save_path) == 0)
-      file = SDL_RWFromFile(name.c_str(), str_mode);
-  }
+  auto file = SDL_RWFromFile(map_path(name).c_str(), str_mode);
 
   return file;
 }
@@ -90,7 +98,7 @@ void list_files(const std::string &path, std::function<void(blit::FileInfo &)> c
 #ifdef WIN32
   HANDLE file;
   WIN32_FIND_DATAA findData;
-  file = FindFirstFileA((basePath + path + "\\*").c_str(), &findData);
+  file = FindFirstFileA((map_path(path) + "\\*").c_str(), &findData);
 
   if(file == INVALID_HANDLE_VALUE)
     return;
@@ -116,7 +124,8 @@ void list_files(const std::string &path, std::function<void(blit::FileInfo &)> c
   FindClose(file);
 
 #else
-  auto dir = opendir((basePath + path).c_str());
+  auto mapped_path = map_path(path);
+  auto dir = opendir(mapped_path.c_str());
 
   if(!dir)
     return;
@@ -133,7 +142,7 @@ void list_files(const std::string &path, std::function<void(blit::FileInfo &)> c
 
     struct stat stat_buf;
 
-    if(stat((basePath + path + "/" + info.name).c_str(), &stat_buf) < 0)
+    if(stat((mapped_path + "/" + info.name).c_str(), &stat_buf) < 0)
       continue;
 
     info.flags = 0;
@@ -151,55 +160,41 @@ void list_files(const std::string &path, std::function<void(blit::FileInfo &)> c
 
 bool file_exists(const std::string &path) {
 #ifdef WIN32
-	DWORD attribs = GetFileAttributesA((basePath + path).c_str());
+	DWORD attribs = GetFileAttributesA(map_path(path).c_str());
 	return (attribs != INVALID_FILE_ATTRIBUTES && !(attribs & FILE_ATTRIBUTE_DIRECTORY));
 #else
   struct stat stat_buf;
-  return (stat((basePath + path).c_str(), &stat_buf) == 0 && S_ISREG(stat_buf.st_mode));
+  return (stat(map_path(path).c_str(), &stat_buf) == 0 && S_ISREG(stat_buf.st_mode));
 #endif
 }
 
 bool directory_exists(const std::string &path) {
 #ifdef WIN32
-	DWORD attribs = GetFileAttributesA((basePath + path).c_str());
+	DWORD attribs = GetFileAttributesA(map_path(path).c_str());
 	return (attribs != INVALID_FILE_ATTRIBUTES && (attribs & FILE_ATTRIBUTE_DIRECTORY));
 #else
   struct stat stat_buf;
-  return (stat((basePath + path).c_str(), &stat_buf) == 0 && S_ISDIR(stat_buf.st_mode));
+  return (stat(map_path(path).c_str(), &stat_buf) == 0 && S_ISDIR(stat_buf.st_mode));
 #endif
 }
 
 bool create_directory(const std::string &path) {
 #ifdef WIN32
-  return _mkdir((basePath + path).c_str()) == 0 || errno == EEXIST;
+  return _mkdir(map_path(path).c_str()) == 0 || errno == EEXIST;
 #else
-  return mkdir((basePath + path).c_str(), 0755) == 0 || errno == EEXIST;
+  return mkdir(map_path(path).c_str(), 0755) == 0 || errno == EEXIST;
 #endif
 }
 
 bool rename_file(const std::string &old_name, const std::string &new_name) {
-  return rename((basePath + old_name).c_str(), (basePath + new_name).c_str()) == 0;
+  return rename(map_path(old_name).c_str(), map_path(new_name).c_str()) == 0;
 }
 
 bool remove_file(const std::string &path) {
-  return remove((basePath + path).c_str()) == 0;
+  return remove(map_path(path).c_str()) == 0;
 }
 
-static std::string save_path;
-
 const char *get_save_path() {
-#ifdef __EMSCRIPTEN__
-  // The Emscripten backend's GetPrefPath is a little broken (doesn't create the dirs correctly)
-  // Work around it until the fix gets released
-  mkdir("/libsdl", 0700);
-  mkdir((std::string("/libsdl/") + metadata_author).c_str(), 0700);
-#endif
-
-  auto tmp = SDL_GetPrefPath(metadata_author, metadata_title);
-  save_path = std::string(tmp);
-
-  SDL_free(tmp);
-
   return save_path.c_str();
 }
 
