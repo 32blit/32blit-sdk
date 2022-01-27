@@ -5,6 +5,7 @@
 namespace blit {
   bool read_save(char *data, uint32_t length, int slot = 0);
   void write_save(const char *data, uint32_t length, int slot = 0);
+  bool remove_save(int slot = 0);
 
   /**
    * \overload
