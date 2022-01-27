@@ -5,5 +5,7 @@
 
 #pragma once
 
-extern void blit_i2c_tick();
-extern void blit_init_accelerometer();
+namespace i2c {
+  void init();
+  void tick();
+}
