@@ -25,7 +25,7 @@ The number 1 reason is portability! 32blit SDK will build for:
 * Windows
 * macOS
 * Linux
-* Emscripten (Web assembly)
+* Emscripten (WebAssembly)
 * PicoSystem
 * 32blit
 
@@ -200,10 +200,10 @@ The RP2040/Pico port supports PicoSystem and VGA board. Below is a table showing
 |------------|------------------------------|-----------------------------|-----------
 | PICO_BOARD | N/A                          | pimoroni_picosystem         | vgaboard
 | CPU        | 480MHz                       | 250MHz †                    | 250MHz †
-| RAM        | 611K §                       | 151K to 207K (lores only ¶) | ~207K
+| RAM        | 583K §                       | 151K to 207K (lores only ¶) | ~189K
 | FPU        | Yes                          | No                          | No
-| Buttons    | 6 + reset                    | 4 + power                   | HID Gamepad
-| Joystick   | Yes                          | No                          | No
+| Buttons    | 6 + reset                    | 4 + power                   | HID Gamepad (WIP)
+| Joystick   | Yes                          | No                          | HID Gamepad (WIP)
 | Tilt       | Yes                          | No                          | No
 | Sound      | 8CH mini speaker             | 1CH piezo booper ‡          | 8CH 3.5mm jack (i2s DAC)
 | Storage    | 32MB XiP QSPI + 128K Flash   | 12MB XiP QSPI               | 1.5MB XiP QSPI
@@ -215,5 +215,5 @@ The RP2040/Pico port supports PicoSystem and VGA board. Below is a table showing
 
 * † - technically 2 cores overclocked from 133MHz to 250MHz but the 32Blit SDK uses only one
 * ‡ - makes a best-effort attempt to play any `SQUARE` waveforms (single-channel)
-* § - 362K main RAM, 64K D3 RAM, 127K DTCMRAM, 58K ITCMRAM
+* § - 362K main RAM, 64K D3 RAM, 127K DTCMRAM, 30K ITCMRAM
 * ¶ - setting `ALLOW_HIRES=0` allocates a doubled buffered 120x120 16bit framebuffer (56.25k) and disables the hires screen mode.
