@@ -414,7 +414,7 @@ int main() {
     update_led();
     update_usb();
 
-    if(ms_to_next_update > 1)
+    if(ms_to_next_update > 1 && !do_render)
       best_effort_wfe_or_timeout(make_timeout_time_ms(ms_to_next_update - 1));
   }
 
