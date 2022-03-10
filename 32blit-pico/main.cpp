@@ -359,7 +359,7 @@ int main() {
   init_fs();
   init_usb();
 
-  ::set_screen_mode(ScreenMode::lores);
+  blit::set_screen_mode(ScreenMode::lores);
 
   blit::render = ::render;
   blit::update = ::update;
