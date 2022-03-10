@@ -111,14 +111,14 @@ void list_files(const std::string &path, std::function<void(blit::FileInfo &)> c
   if(g_usbManager.GetType() == USBManager::usbtMSC)
     return;
 
-  auto dir = new DIR();
+  DIR dir;
 
-  if(f_opendir(dir, path.c_str()) != FR_OK)
+  if(f_opendir(&dir, path.c_str()) != FR_OK)
     return;
 
   FILINFO ent;
 
-  while(f_readdir(dir, &ent) == FR_OK && ent.fname[0]) {
+  while(f_readdir(&dir, &ent) == FR_OK && ent.fname[0]) {
     blit::FileInfo info;
 
     info.name = ent.fname;
@@ -131,7 +131,7 @@ void list_files(const std::string &path, std::function<void(blit::FileInfo &)> c
     callback(info);
   }
 
-  f_closedir(dir);
+  f_closedir(&dir);
 }
 
 bool file_exists(const std::string &path) {
