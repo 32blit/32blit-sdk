@@ -106,8 +106,11 @@ void blit_debug(const char *message) {
 void blit_exit(bool is_error) {
   if(is_error)
     blit_reset_with_error(); // likely an abort
-  else
-    blit_switch_execution(0, false); // switch back to firmware
+  else {
+    persist.reset_target = prtFirmware;
+    SCB_CleanDCache();
+    NVIC_SystemReset();
+  }
 }
 
 void enable_us_timer()
