@@ -33,18 +33,18 @@ static SurfaceInfo cur_surf_info;
 static const int lores_page_size = (ST7789_WIDTH / 2) * ((ST7789_HEIGHT + 1) / 2) * 2;
 
 #if ALLOW_HIRES
-uint8_t screen_fb[ST7789_WIDTH * ST7789_HEIGHT * 2];
+uint16_t screen_fb[ST7789_WIDTH * ST7789_HEIGHT];
 #else
-uint8_t screen_fb[lores_page_size * 2]; // double-buffered
+uint16_t screen_fb[lores_page_size]; // double-buffered
 #endif
 static bool have_vsync = false;
 
-static const blit::SurfaceTemplate lores_screen{screen_fb, Size(ST7789_WIDTH / 2, ST7789_HEIGHT / 2), blit::PixelFormat::RGB565, nullptr};
-static const blit::SurfaceTemplate hires_screen{screen_fb, Size(ST7789_WIDTH, ST7789_HEIGHT), blit::PixelFormat::RGB565, nullptr};
+static const blit::SurfaceTemplate lores_screen{(uint8_t *)screen_fb, Size(ST7789_WIDTH / 2, ST7789_HEIGHT / 2), blit::PixelFormat::RGB565, nullptr};
+static const blit::SurfaceTemplate hires_screen{(uint8_t *)screen_fb, Size(ST7789_WIDTH, ST7789_HEIGHT), blit::PixelFormat::RGB565, nullptr};
 
 #elif defined(DISPLAY_SCANVIDEO)
-uint8_t screen_fb[160 * 120 * 4];
-static const blit::SurfaceTemplate lores_screen{screen_fb, Size(160, 120), blit::PixelFormat::RGB565, nullptr};
+uint16_t screen_fb[160 * 120 * 2];
+static const blit::SurfaceTemplate lores_screen{(uint8_t *)screen_fb, Size(160, 120), blit::PixelFormat::RGB565, nullptr};
 #endif
 
 static blit::AudioChannel channels[CHANNEL_COUNT];
@@ -75,7 +75,7 @@ static SurfaceInfo &set_screen_mode(ScreenMode mode) {
         do_render = true;
 
       cur_surf_info = hires_screen;
-      st7789::frame_buffer = (uint16_t *)screen_fb;
+      st7789::frame_buffer = screen_fb;
       st7789::set_pixel_double(false);
 #else
       return cur_surf_info;
@@ -97,7 +97,7 @@ static void set_screen_palette(const Pen *colours, int num_cols) {
 }
 
 static bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_template) {
-  new_surf_template.data = screen_fb;
+  new_surf_template.data = (uint8_t *)screen_fb;
 
   switch(new_mode) {
     case ScreenMode::lores:
@@ -120,7 +120,7 @@ static bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_sur
       st7789::set_pixel_double(new_mode == ScreenMode::lores);
 
       if(new_mode == ScreenMode::hires)
-        st7789::frame_buffer = (uint16_t *)screen_fb;
+        st7789::frame_buffer = screen_fb;
 #endif
 
   // don't support any other formats for various reasons (RAM, no format conversion, pixel double PIO)
@@ -235,7 +235,7 @@ static void fill_scanline_buffer(struct scanvideo_scanline_buffer *buffer) {
   buffer->data[0] = 4;
   buffer->data[1] = host_safe_hw_ptr(buffer->data + 8);
   buffer->data[2] = (w - 4) / 2; // first four pixels are handled separately
-  uint16_t *pixels = ((uint16_t *)screen_fb) + buf_index * (160 * 120) + scanvideo_scanline_number(buffer->scanline_id) * w;
+  uint16_t *pixels = screen_fb + buf_index * (160 * 120) + scanvideo_scanline_number(buffer->scanline_id) * w;
   buffer->data[3] = host_safe_hw_ptr(pixels + 4);
   buffer->data[4] = count_of(postamble);
   buffer->data[5] = host_safe_hw_ptr(postamble);
@@ -341,7 +341,7 @@ int main() {
 
 #ifdef DISPLAY_ST7789
   bool backlight_enabled = false;
-  st7789::frame_buffer = (uint16_t *)screen_fb;
+  st7789::frame_buffer = screen_fb;
   st7789::init();
   st7789::clear();
 
@@ -379,7 +379,7 @@ int main() {
       if(cur_screen_mode == ScreenMode::lores) {
         buf_index ^= 1;
 
-        screen.data = screen_fb + (buf_index) * lores_page_size;
+        screen.data = (uint8_t *)screen_fb + (buf_index) * lores_page_size;
         st7789::frame_buffer = (uint16_t *)screen.data;
       }
 
@@ -402,7 +402,7 @@ int main() {
 
 #elif defined(DISPLAY_SCANVIDEO)
     if(do_render) {
-      screen.data = screen_fb + (buf_index ^ 1) * (160 * 120 * 2); // only works because there's no "firmware" here
+      screen.data = (uint8_t *)screen_fb + (buf_index ^ 1) * (160 * 120 * 2); // only works because there's no "firmware" here
       ::render(now);
       buf_index ^= 1;
       do_render = false;
