@@ -16,12 +16,12 @@
 extern Input *blit_input;
 
 // blit framebuffer memory
-static uint8_t framebuffer[320 * 240 * 3];
+static uint8_t framebuffer[System::width * System::height * 3];
 static blit::Pen palette[256];
 
-static const blit::SurfaceTemplate __fb_hires{framebuffer, blit::Size(320, 240), blit::PixelFormat::RGB, nullptr};
-static const blit::SurfaceTemplate __fb_hires_pal{framebuffer, blit::Size(320, 240), blit::PixelFormat::P, palette};
-static const blit::SurfaceTemplate __fb_lores{framebuffer, blit::Size(160, 120), blit::PixelFormat::RGB, nullptr};
+static const blit::SurfaceTemplate __fb_hires{framebuffer, blit::Size(System::width, System::height), blit::PixelFormat::RGB, nullptr};
+static const blit::SurfaceTemplate __fb_hires_pal{framebuffer, blit::Size(System::width, System::height), blit::PixelFormat::P, palette};
+static const blit::SurfaceTemplate __fb_lores{framebuffer, blit::Size(System::width / 2, System::height / 2), blit::PixelFormat::RGB, nullptr};
 
 // blit debug callback
 void blit_debug(const char *message) {
@@ -321,13 +321,13 @@ Uint32 System::format() {
 
 void System::update_texture(SDL_Texture *texture) {
   bool is_lores = _mode == blit::ScreenMode::lores;
-  auto stride = (is_lores ? 160 : 320) * blit::pixel_format_stride[int(cur_format)];
+  auto stride = (is_lores ? width / 2 : width) * blit::pixel_format_stride[int(cur_format)];
 
   if(cur_format == blit::PixelFormat::P) {
-    uint8_t col_fb[320 * 240 * 3];
+    uint8_t col_fb[width * height * 3];
 
     auto in = framebuffer, out = col_fb;
-    auto size = is_lores ? 160 * 120 : 320 * 240;
+    auto size = is_lores ? (width / 2) * (height / 2) : width * height;
 
     for(int i = 0; i < size; i++) {
       uint8_t index = *(in++);
