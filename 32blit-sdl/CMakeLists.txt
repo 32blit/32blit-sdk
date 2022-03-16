@@ -117,18 +117,24 @@ endif()
 target_link_libraries(BlitHalSDL PUBLIC BlitEngine ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARY} ${SDL2_NET_LIBRARY})
 
 # copy SDL2 dlls to build/install dir for windows users
+set(DLLS_TO_COPY)
+
 if(SDL2_DLL)
-	install(FILES ${SDL2_DLL} DESTINATION bin)
-	set(SDL2_DLL ${SDL2_DLL} PARENT_SCOPE)
+	list(APPEND DLLS_TO_COPY ${SDL2_DLL})
 endif()
 
 if(SDL2_IMAGE_DLL)
-	install(FILES ${SDL2_IMAGE_DLL} DESTINATION bin)
+	list(APPEND DLLS_TO_COPY ${SDL2_IMAGE_DLL})
 endif()
 
 if(SDL2_NET_DLL)
-	install(FILES ${SDL2_NET_DLL} DESTINATION bin)
+	list(APPEND DLLS_TO_COPY ${SDL2_NET_DLL})
 endif()
+
+set(DLLS_TO_COPY ${DLLS_TO_COPY} PARENT_SCOPE)
+
+# copy once for install
+install(FILES ${DLLS_TO_COPY} DESTINATION bin)
 
 if(DEFINED VIDEO_CAPTURE AND VIDEO_CAPTURE)
 	find_path(AVCODEC_INCLUDE_DIR libavcodec/avcodec.h)
@@ -178,18 +184,14 @@ function(blit_executable NAME SOURCES)
   		target_link_libraries(${NAME} -Wl,--whole-archive BlitHalSDL -Wl,--no-whole-archive)
 	endif()
 
-    # windows dll fun
-    if(SDL2_DLL)
-        configure_file(${SDL2_DLL} ${CMAKE_CURRENT_BINARY_DIR}/SDL2.dll COPYONLY)
-    endif()
-
-    if(SDL2_IMAGE_DLL)
-        configure_file(${SDL2_IMAGE_DLL} ${CMAKE_CURRENT_BINARY_DIR}/SDL2_image.dll COPYONLY)
-	endif()
-
-	if(SDL2_NET_DLL)
-		configure_file(${SDL2_NET_DLL} ${CMAKE_CURRENT_BINARY_DIR}/SDL2_net.dll COPYONLY)
-	endif()
+	# copy dlls to build dir for dev
+	foreach(DLL ${DLLS_TO_COPY})
+		add_custom_command(TARGET ${NAME} POST_BUILD
+    		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			"${DLL}"
+			$<TARGET_FILE_DIR:${NAME}>
+		)  
+	endforeach()
 
 	if(EMSCRIPTEN)
 		set_target_properties(${NAME} PROPERTIES
