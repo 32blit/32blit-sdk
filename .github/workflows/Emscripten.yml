@@ -1,12 +1,12 @@
 name: CMake / Emscripten
 
-on: 
+on:
   push:
     branches:
       - '**' # only run on branches
   pull_request:
   release:
-    types: [created]
+    types: [published]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
