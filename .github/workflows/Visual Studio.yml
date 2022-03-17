@@ -1,6 +1,8 @@
 name: Visual Studio (.sln)
-on: 
+on:
   push:
+    branches:
+      - '**' # only run on branches
   pull_request:
 
 jobs:
