@@ -17,18 +17,18 @@ static SurfaceInfo cur_surf_info;
 
 #ifdef DISPLAY_ST7789
 // height rounded up to handle the 135px display
-static const int lores_page_size = (ST7789_WIDTH / 2) * ((ST7789_HEIGHT + 1) / 2) * 2;
+static const int lores_page_size = (DISPLAY_WIDTH / 2) * ((DISPLAY_HEIGHT + 1) / 2) * 2;
 
 #if ALLOW_HIRES
-static uint16_t screen_fb[ST7789_WIDTH * ST7789_HEIGHT];
+static uint16_t screen_fb[DISPLAY_WIDTH * DISPLAY_HEIGHT];
 #else
 static uint16_t screen_fb[lores_page_size]; // double-buffered
 #endif
 static bool have_vsync = false;
 static bool backlight_enabled = false;
 
-static const blit::SurfaceTemplate lores_screen{(uint8_t *)screen_fb, Size(ST7789_WIDTH / 2, ST7789_HEIGHT / 2), blit::PixelFormat::RGB565, nullptr};
-static const blit::SurfaceTemplate hires_screen{(uint8_t *)screen_fb, Size(ST7789_WIDTH, ST7789_HEIGHT), blit::PixelFormat::RGB565, nullptr};
+static const blit::SurfaceTemplate lores_screen{(uint8_t *)screen_fb, Size(DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2), blit::PixelFormat::RGB565, nullptr};
+static const blit::SurfaceTemplate hires_screen{(uint8_t *)screen_fb, Size(DISPLAY_WIDTH, DISPLAY_HEIGHT), blit::PixelFormat::RGB565, nullptr};
 
 #elif defined(DISPLAY_SCANVIDEO)
 static uint16_t screen_fb[160 * 120 * 2];

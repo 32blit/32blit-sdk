@@ -64,8 +64,8 @@ namespace st7789 {
   static uint32_t dma_channel = 0;
 
   // screen properties
-  static const uint16_t width = ST7789_WIDTH;
-  static const uint16_t height = ST7789_HEIGHT;
+  static const uint16_t width = DISPLAY_WIDTH;
+  static const uint16_t height = DISPLAY_HEIGHT;
 
   static uint16_t win_w, win_h; // window size
 

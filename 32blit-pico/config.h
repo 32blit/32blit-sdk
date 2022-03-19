@@ -5,12 +5,16 @@
 #define ALLOW_HIRES 1
 #endif
 
-#ifndef ST7789_WIDTH
-#define ST7789_WIDTH 240
+#ifndef DISPLAY_WIDTH
+#ifdef DISPLAY_ST7789
+#define DISPLAY_WIDTH 240
+#else
+#define DISPLAY_WIDTH 320
+#endif
 #endif
 
-#ifndef ST7789_HEIGHT
-#define ST7789_HEIGHT 240
+#ifndef DISPLAY_HEIGHT
+#define DISPLAY_HEIGHT 240
 #endif
 
 #ifndef OVERCLOCK_250
