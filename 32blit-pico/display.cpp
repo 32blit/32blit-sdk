@@ -15,8 +15,8 @@ using namespace blit;
 
 static SurfaceInfo cur_surf_info;
 
-#ifdef DISPLAY_ST7789
 // height rounded up to handle the 135px display
+// this is in bytes
 static const int lores_page_size = (DISPLAY_WIDTH / 2) * ((DISPLAY_HEIGHT + 1) / 2) * 2;
 
 #if ALLOW_HIRES
@@ -24,16 +24,9 @@ static uint16_t screen_fb[DISPLAY_WIDTH * DISPLAY_HEIGHT];
 #else
 static uint16_t screen_fb[lores_page_size]; // double-buffered
 #endif
-static bool have_vsync = false;
-static bool backlight_enabled = false;
 
 static const blit::SurfaceTemplate lores_screen{(uint8_t *)screen_fb, Size(DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2), blit::PixelFormat::RGB565, nullptr};
 static const blit::SurfaceTemplate hires_screen{(uint8_t *)screen_fb, Size(DISPLAY_WIDTH, DISPLAY_HEIGHT), blit::PixelFormat::RGB565, nullptr};
-
-#elif defined(DISPLAY_SCANVIDEO)
-static uint16_t screen_fb[160 * 120 * 2];
-static const blit::SurfaceTemplate lores_screen{(uint8_t *)screen_fb, Size(160, 120), blit::PixelFormat::RGB565, nullptr};
-#endif
 
 static ScreenMode cur_screen_mode = ScreenMode::lores;
 // double buffering for lores
@@ -46,6 +39,9 @@ static uint32_t last_render = 0;
 void render(uint32_t);
 
 #ifdef DISPLAY_ST7789
+static bool have_vsync = false;
+static bool backlight_enabled = false;
+
 static void vsync_callback(uint gpio, uint32_t events) {
   if(!do_render && !st7789::dma_is_busy()) {
     st7789::update();
@@ -150,7 +146,7 @@ void update_display(uint32_t time) {
 
 #elif defined(DISPLAY_SCANVIDEO)
   if(do_render) {
-    screen.data = (uint8_t *)screen_fb + (buf_index ^ 1) * (160 * 120 * 2); // only works because there's no "firmware" here
+    screen.data = (uint8_t *)screen_fb + (buf_index ^ 1) * lores_page_size; // only works because there's no "firmware" here
     ::render(time);
     buf_index ^= 1;
     do_render = false;
@@ -168,23 +164,11 @@ SurfaceInfo &set_screen_mode(ScreenMode mode) {
   switch(mode) {
     case ScreenMode::lores:
       cur_surf_info = lores_screen;
-      // window
-#ifdef DISPLAY_ST7789
-      if(have_vsync)
-        do_render = true; // prevent starting an update during switch
-
-      st7789::set_pixel_double(true);
-#endif
       break;
 
     case ScreenMode::hires:
-#if defined(DISPLAY_ST7789) && ALLOW_HIRES
-      if(have_vsync)
-        do_render = true;
-
+#if ALLOW_HIRES
       cur_surf_info = hires_screen;
-      st7789::frame_buffer = screen_fb;
-      st7789::set_pixel_double(false);
 #else
       return cur_surf_info;
 #endif
@@ -194,6 +178,16 @@ SurfaceInfo &set_screen_mode(ScreenMode mode) {
     //  screen = hires_palette_screen;
     //  break;
   }
+
+#ifdef DISPLAY_ST7789
+  if(have_vsync)
+    do_render = true; // prevent starting an update during switch
+
+  st7789::set_pixel_double(mode == ScreenMode::lores);
+
+  if(mode == ScreenMode::hires)
+    st7789::frame_buffer = screen_fb;
+#endif
 
   cur_screen_mode = mode;
 
@@ -209,7 +203,7 @@ bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_templ
       break;
     case ScreenMode::hires:
     case ScreenMode::hires_palette:
-#if defined(DISPLAY_ST7789) && ALLOW_HIRES
+#if ALLOW_HIRES
       new_surf_template.bounds = hires_screen.bounds;
       break;
 #else
@@ -218,13 +212,13 @@ bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_templ
   }
 
 #ifdef DISPLAY_ST7789
-      if(have_vsync)
-        do_render = true; // prevent starting an update during switch
+  if(have_vsync)
+    do_render = true; // prevent starting an update during switch
 
-      st7789::set_pixel_double(new_mode == ScreenMode::lores);
+  st7789::set_pixel_double(new_mode == ScreenMode::lores);
 
-      if(new_mode == ScreenMode::hires)
-        st7789::frame_buffer = screen_fb;
+  if(new_mode == ScreenMode::hires)
+    st7789::frame_buffer = screen_fb;
 #endif
 
   // don't support any other formats for various reasons (RAM, no format conversion, pixel double PIO)
