@@ -26,11 +26,11 @@ DSTATUS disk_status(BYTE pdrv) {
 
 DRESULT disk_read(BYTE pdrv, BYTE *buff, LBA_t sector, UINT count) {
   static_assert(FF_MIN_SS == FF_MAX_SS);
-  return storage_read(sector, 0, buff, FF_MIN_SS * count) == FF_MIN_SS * count ? RES_OK : RES_ERROR;
+  return storage_read(sector, 0, buff, FF_MIN_SS * count) == int32_t(FF_MIN_SS * count) ? RES_OK : RES_ERROR;
 }
 
 DRESULT disk_write(BYTE pdrv, const BYTE *buff, LBA_t sector, UINT count) {
-  return storage_write(sector, 0, buff, FF_MIN_SS * count) == FF_MIN_SS * count ? RES_OK : RES_ERROR;
+  return storage_write(sector, 0, buff, FF_MIN_SS * count) == int32_t(FF_MIN_SS * count) ? RES_OK : RES_ERROR;
 }
 
 DRESULT disk_ioctl(BYTE pdrv, BYTE cmd, void* buff) {
