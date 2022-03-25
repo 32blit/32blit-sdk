@@ -70,7 +70,7 @@ void init_audio() {
     panic("PicoAudio: Unable to open audio device.\n");
   }
 
-  bool ok = audio_i2s_connect(producer_pool);
+  [[maybe_unused]] bool ok = audio_i2s_connect(producer_pool);
   assert(ok);
   audio_i2s_set_enabled(true);
 #endif
@@ -92,7 +92,7 @@ void init_audio() {
   // PWM PIO program assumes 48MHz
   pio_sm_set_clkdiv(pio1, 1, clock_get_hz(clk_sys) / 48000000.0f);
 
-  bool ok = audio_pwm_default_connect(producer_pool, false);
+  [[maybe_unused]] bool ok = audio_pwm_default_connect(producer_pool, false);
   assert(ok);
   audio_pwm_set_enabled(true);
   gpio_set_drive_strength(PICO_AUDIO_PWM_MONO_PIN, GPIO_DRIVE_STRENGTH_4MA);
