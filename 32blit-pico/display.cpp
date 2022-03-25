@@ -119,7 +119,8 @@ void update_display(uint32_t time) {
 
 #elif defined(DISPLAY_SCANVIDEO)
   if(do_render) {
-    screen.data = (uint8_t *)screen_fb + (buf_index ^ 1) * lores_page_size; // only works because there's no "firmware" here
+    if(cur_screen_mode == ScreenMode::lores)
+      screen.data = (uint8_t *)screen_fb + (buf_index ^ 1) * lores_page_size; // only works because there's no "firmware" here
     ::render(time);
     do_render = false;
   }
@@ -128,8 +129,13 @@ void update_display(uint32_t time) {
 
 void init_display_core1() {
 #ifdef DISPLAY_SCANVIDEO
-  //scanvideo_setup(&vga_mode_320x240_60); // not quite
+  // no mode switching yet
+#if ALLOW_HIRES
+  scanvideo_setup(&vga_mode_320x240_60);
+#else
   scanvideo_setup(&vga_mode_160x120_60);
+#endif
+
   scanvideo_timing_enable(true);
 #endif
 }
@@ -141,13 +147,19 @@ void update_display_core1() {
     fill_scanline_buffer(buffer);
     scanvideo_end_scanline_generation(buffer);
 
-    const int height = DISPLAY_HEIGHT / 2;
+    const int height = screen.bounds.h;
 
-    // swap buffers at the end of the frame, but don't start a render yet
-    // (the last few lines of the old buffer are still in the queue)
     if(scanvideo_scanline_number(buffer->scanline_id) == height - 1 && !do_render) {
-      do_render_soon = true;
-      buf_index ^= 1;
+      // swap buffers at the end of the frame, but don't start a render yet
+      // (the last few lines of the old buffer are still in the queue)
+      if(cur_screen_mode == ScreenMode::lores) {
+        do_render_soon = true;
+        buf_index ^= 1;
+      } else {
+        // hires is single buffered and disabled by default
+        // rendering correctly is the user's problem
+        do_render = true;
+      }
       break;
     } else if(do_render_soon && scanvideo_scanline_number(buffer->scanline_id) == PICO_SCANVIDEO_SCANLINE_BUFFER_COUNT - 1) {
       // should be safe to reuse old buffer now
