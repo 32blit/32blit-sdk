@@ -37,6 +37,10 @@ target_compile_definitions(BlitHalPico INTERFACE
     PICO_AUDIO_DMA_IRQ=1
 )
 
+target_compile_options(BlitHalPico INTERFACE
+    -Wno-ignored-qualifiers # pico-sdk generates a lot of these
+)
+
 if(${PICO_BOARD} STREQUAL "vgaboard")
     message("Using VGA board...")
     target_link_libraries(BlitHalPico INTERFACE pico_scanvideo_dpi pico_audio_i2s)
