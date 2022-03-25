@@ -33,7 +33,6 @@ static ScreenMode cur_screen_mode = ScreenMode::lores;
 static volatile int buf_index = 0;
 
 static volatile bool do_render = true;
-static uint32_t last_render = 0;
 
 // user render function
 void render(uint32_t);
@@ -41,6 +40,7 @@ void render(uint32_t);
 #ifdef DISPLAY_ST7789
 static bool have_vsync = false;
 static bool backlight_enabled = false;
+static uint32_t last_render = 0;
 
 static void vsync_callback(uint gpio, uint32_t events) {
   if(!do_render && !st7789::dma_is_busy()) {
@@ -174,9 +174,8 @@ SurfaceInfo &set_screen_mode(ScreenMode mode) {
 #endif
       break;
 
-    //case ScreenMode::hires_palette:
-    //  screen = hires_palette_screen;
-    //  break;
+    case ScreenMode::hires_palette:
+      return cur_surf_info; // unsupported
   }
 
 #ifdef DISPLAY_ST7789
