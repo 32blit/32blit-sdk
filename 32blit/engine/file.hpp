@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -32,7 +33,7 @@ namespace blit {
 
   bool is_storage_available();
 
-  std::vector<FileInfo> list_files(const std::string &path);
+  std::vector<FileInfo> list_files(const std::string &path, std::function<bool(const FileInfo &)> filter = nullptr);
   bool file_exists(const std::string &path);
   bool directory_exists(const std::string &path);
 
