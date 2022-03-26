@@ -131,7 +131,11 @@ void init_display_core1() {
 #ifdef DISPLAY_SCANVIDEO
   // no mode switching yet
 #if ALLOW_HIRES
+#if DISPLAY_HEIGHT == 160 // extra middle mode
+  scanvideo_setup(&vga_mode_213x160_60);
+#else
   scanvideo_setup(&vga_mode_320x240_60);
+#endif
 #else
   scanvideo_setup(&vga_mode_160x120_60);
 #endif
