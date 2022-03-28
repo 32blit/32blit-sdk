@@ -24,7 +24,7 @@ namespace blit {
     Menu(std::string_view title, const Item *items = nullptr, int num_items = 0, const Font &font = minimal_font)
       : title(title), items(items), num_items(num_items), display_rect(0, 0, 0, 0), font(font) {}
 
-    virtual ~Menu() {}
+    virtual ~Menu() = default;
 
     //
     // Render the menu to the screen
