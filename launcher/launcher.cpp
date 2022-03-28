@@ -92,12 +92,18 @@ void sort_file_list() {
 void load_directory_list(std::string directory) {
   directory_list.clear();
 
-  for(auto &folder : ::list_files(directory)) {
-    if(folder.flags & blit::FileFlags::directory) {
-      if(folder.name.compare("System Volume Information") == 0 || folder.name[0] == '.') continue;
-      directory_list.push_back({folder.name, 0, 0});
-    }
-  }
+  auto dir_filter = [](const FileInfo &info){
+    if(!(info.flags & FileFlags::directory))
+      return false;
+
+    if(info.name.compare("System Volume Information") == 0 || info.name[0] == '.')
+      return false;
+
+    return true;
+  };
+
+  for(auto &folder : ::list_files(directory, dir_filter))
+    directory_list.push_back({folder.name, 0, 0});
 
   directory_list.sort([](const auto &a, const auto &b) { return a.name > b.name; });
 
@@ -163,25 +169,26 @@ void load_file_list(std::string directory) {
 
   game_list.clear();
 
-  auto files = list_files(directory);
+  auto files = list_files(directory, [](auto &file) {
+    if(file.flags & FileFlags::directory)
+      return false;
+
+    if(file.name.length() < 6) // minimum length for single-letter game (a.blit)
+      return false;
+
+    if(file.name[0] == '.') // hidden file
+      return false;
+
+    if(file.name.find_last_of('.') == std::string::npos) // no extension
+      return false;
+
+    return true;
+  });
 
   game_list.reserve(files.size()); // worst case
 
   for(auto &file : files) {
-    if(file.flags & blit::FileFlags::directory)
-      continue;
-
-    if(file.name.length() < 6) // minimum length for single-letter game (a.blit)
-      continue;
-
-    if (file.name[0] == '.') // hidden file
-      continue;
-
     auto last_dot = file.name.find_last_of('.');
-
-    // no extension
-    if(last_dot == std::string::npos)
-      continue;
 
     auto ext = file.name.substr(file.name.find_last_of('.') + 1);
 
