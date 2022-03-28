@@ -12,9 +12,6 @@ Without making it so complicated that it fails to elucidate its point.
 
 using namespace blit;
 
-const uint16_t screen_width = 320;
-const uint16_t screen_height = 240;
-
 blit::Timer timer_count;
 uint32_t count;
 
@@ -46,7 +43,7 @@ int tick_count = 0;
 void render(uint32_t time_ms) {
   screen.pen = Pen(20, 30, 40);
   screen.clear();
-  
+
   // Fancy title bar, nothing to see here.
   screen.pen = Pen(255, 255, 255);
   screen.rectangle(Rect(0, 0, 320, 14));

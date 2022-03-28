@@ -8,19 +8,6 @@
 
 using namespace blit;
 
-const uint16_t screen_width = 160;
-const uint16_t screen_height = 120;
-
-/* define storage for the framebuffer, spritesheet, and mask */
-//rgb     __fb[screen_width * screen_height] __attribute__((section(".fb")));
-// uint8_t __m[screen_width * screen_height] __attribute__((section(".m")));
-// uint8_t __pb[screen_width * screen_height] __attribute__((section(".m")));
-
-/* create surfaces */
-//surface fb((uint8_t *)__fb, size(screen_width, screen_height), pixel_format::RGB);
-// surface m((uint8_t *)__m, size(screen_width, screen_height), pixel_format::M);
-// surface fbb((uint8_t *)__pb, size(screen_width, screen_height), pixel_format::P);
-
 #define FADE_STEPS 3
 
 Pen fade_to[FADE_STEPS]{

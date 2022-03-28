@@ -8,9 +8,6 @@
 
 using namespace blit;
 
-const uint16_t screen_width = 320;
-const uint16_t screen_height = 240;
-
 blit::Tween tween_bounce;
 blit::Tween tween_colour;
 

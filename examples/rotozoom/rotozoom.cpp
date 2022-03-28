@@ -28,9 +28,6 @@ uint8_t logo[16][16] = {
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 };
 
-const uint16_t screen_width = 320;
-const uint16_t screen_height = 240;
-
 uint8_t mask_buffer[320 * 240];
 Surface hires_mask(mask_buffer, PixelFormat::M, Size(320, 240));
 Surface lores_mask(mask_buffer, PixelFormat::M, Size(160, 120));
@@ -68,15 +65,15 @@ void rotozoom(uint32_t time_ms) {
 
       uint8_t pi = logo[15 - u][v];
 
-      // slower to call the pixel routine due to extra overhead of the function 
-      // call and clipping      
+      // slower to call the pixel routine due to extra overhead of the function
+      // call and clipping
       // - screen.pen(palette[pi]);
       // - screen.pixel(p);
 
       // however we know our coordinates are within bounds so we can call the
       // pen blend function (pbf) directly for a big speed up!
       screen.pbf(&palette[pi], &screen, o, 1);
-      
+
       o++;
     }
   }
@@ -88,7 +85,7 @@ void render(uint32_t time_ms) {
   screen.mask = nullptr;
   screen.pen = Pen(0, 0, 0, 255);
   screen.clear();
-  
+
   mask.pen = Pen(50);
   mask.clear();
   mask.pen = Pen(255);
@@ -100,8 +97,8 @@ void render(uint32_t time_ms) {
   uint32_t ms_start = now();
 
   rotozoom(time_ms);
-  
-  uint32_t ms_end = now();  
+
+  uint32_t ms_end = now();
 /*
   for (auto y = 0; y < 10; y++) {
     for (auto x = 0; x < 10; x++) {
@@ -111,7 +108,7 @@ void render(uint32_t time_ms) {
   }*/
 
   screen.mask = nullptr;
-  
+
 
   // draw FPS meter
   screen.pen = Pen(0, 0, 0, 200);
@@ -131,7 +128,7 @@ void render(uint32_t time_ms) {
 void update(uint32_t time) {
   static uint32_t last_buttons = 0;
 
-  if (buttons != last_buttons) {  
+  if (buttons != last_buttons) {
     if ((buttons & DPAD_UP)) {
       set_screen_mode(lores);
       mask = lores_mask;

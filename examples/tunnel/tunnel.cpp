@@ -9,9 +9,6 @@
 
 using namespace blit;
 
-const uint16_t screen_width = 160;
-const uint16_t screen_height = 120;
-
 Surface *ss_ship = Surface::load(packed_data_ship);
 
 /* setup */
