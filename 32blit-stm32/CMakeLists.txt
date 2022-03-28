@@ -170,6 +170,8 @@ target_compile_definitions(BlitHalSTM32
 
 target_compile_options(BlitHalSTM32 PUBLIC "$<$<CONFIG:RELEASE>:-Os>")
 target_compile_options(BlitHalSTM32 PUBLIC "$<$<CONFIG:Debug>:-finline-functions-called-once>") # need at least some inlining, otherwise build is too big
+target_compile_options(BlitHalSTM32 PRIVATE -Wno-missing-field-initializers)
+
 set_target_properties(BlitHalSTM32 PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
 set_target_properties(BlitHalSTM32 PROPERTIES POSITION_INDEPENDENT_CODE OFF)
 
