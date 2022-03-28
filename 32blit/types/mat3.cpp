@@ -13,8 +13,6 @@ namespace blit {
     v02 = 0.0f; v12 = 0.0f; v22 = 0.0f;
   }
 
-  Mat3::Mat3(const Mat3 &m) = default;
-
   Mat3 Mat3::identity() {
     Mat3 m;
     m.v00 = 1.0f; m.v11 = 1.0f; m.v22 = 1.0f;

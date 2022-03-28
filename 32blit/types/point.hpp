@@ -9,7 +9,6 @@ namespace blit {
     int32_t x = 0, y = 0;
 
     Point() = default;
-    Point(const Point &p) = default;
     constexpr Point(int32_t x, int32_t y) : x(x), y(y) {}
     constexpr Point(Vec2 v) : x(int32_t(v.x)), y(int32_t(v.y)) {}
 
