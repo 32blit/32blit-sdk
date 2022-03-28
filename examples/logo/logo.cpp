@@ -8,8 +8,6 @@
 
 using namespace blit;
 
-const Size screen_size(160, 120);
-
 uint8_t logo[] = {
   1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 2,
   0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2,
@@ -53,9 +51,6 @@ void init() {
       }
     }
   }
-
-  //engine::update = update;
-  //engine::render = render;
 }
 
 float clamp(float v, float min, float max) {
@@ -68,14 +63,10 @@ void render(uint32_t time) {
   static float ts = 0.0f;
   static float dir = 0.02f;
 
-  //screen.pen = rgba(39, 39, 54, 100);
   screen.pen = Pen(0, 0, 0, 50);
   screen.clear();
 
-  uint32_t ms_start = now();
-
   time = time % 10000;
-  float duration = 2.0f;
 
   ts += dir;
   if (ts > 4.0f) {
@@ -141,38 +132,17 @@ void render(uint32_t time) {
     br *= brp;
     br *= t;
 
-
-    //float fade = (pc.position.z / 10.0f) + 1.0f;
-    screen.pen = pc.color;// rgba(pc.color.r * fade, pc.color.g * fade, pc.color.b * fade;
-    //g.pen.a = brp * 127.0f;
-
+    screen.pen = pc.color;
 
     Point ptl(tl.x, tl.y);
     Point ptr(tr.x, tr.y);
     Point pbr(br.x, br.y);
     Point pbl(bl.x, bl.y);
-    Point pts[4] = { ptl, ptr, pbr, pbl };
-
-    //line(ptl, ptr);
-    //line(ptr, pbr);
-    //line(pbr, pbl);
-    //line(pbl, ptl);
-
-    //polygon(pts, 4);
 
     screen.triangle(ptl, ptr, pbl);
     screen.triangle(pbl, ptr, pbr);
-    /*    rectangle(rect(
-          pc.position.x - half_scale + 80,
-          pc.position.y -half_scale + 60,
-          scale,
-          scale));*/
-
   }
-
-
 }
 
 void update(uint32_t time) {
-  float duration = 0.01f;     // == 10ms as a float
 }
