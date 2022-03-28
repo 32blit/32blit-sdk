@@ -58,9 +58,9 @@ void init() {
 
   // set global volume
   // volume = 2048;
-  
+
   screen.pen = Pen(0, 0, 0, 255);
-  screen.clear();  
+  screen.clear();
 }
 
 void render(uint32_t time_ms) {
@@ -79,16 +79,22 @@ void render(uint32_t time_ms) {
       switch(note % 12) {
         case 11:
           y += 10;
+          [[fallthrough]];
         case 9:
           y += 10;
+          [[fallthrough]];
         case 7:
           y += 10;
+          [[fallthrough]];
         case 5:
           y += 10;
+          [[fallthrough]];
         case 4:
           y += 10;
+          [[fallthrough]];
         case 2:
           y += 10;
+          [[fallthrough]];
         case 0:
           y_offset = 3;
           if (pass == 1) continue;
@@ -96,6 +102,7 @@ void render(uint32_t time_ms) {
           break;
         case 3:
           y += 10;
+          [[fallthrough]];
         case 1:
           y += 4;
           w = 15;
@@ -106,8 +113,10 @@ void render(uint32_t time_ms) {
           break;
         case 10:
           y += 10;
+          [[fallthrough]];
         case 8:
           y += 10;
+          [[fallthrough]];
         case 6:
           y += 34;
           w = 15;
@@ -159,7 +168,7 @@ void render(uint32_t time_ms) {
     10, 5
   ));
 
-  screen.watermark();  
+  screen.watermark();
 }
 
 void play_selected_note() {
@@ -233,4 +242,4 @@ void update(uint32_t time_ms) {
     beat = 0;
   }
 }
-  
+
