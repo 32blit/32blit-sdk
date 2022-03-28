@@ -606,24 +606,6 @@ DRESULT SD_disk_ioctl(BYTE drv, BYTE ctrl, void *buff)
 		case CTRL_SYNC:
 			if (SD_ReadyWait() == 0xFF) res = RES_OK;
 			break;
-		case MMC_GET_CSD:
-			/* SEND_CSD */
-			if (SD_SendCmd(CMD9, 0) == 0 && SD_RxDataBlock(ptr, 16)) res = RES_OK;
-			break;
-		case MMC_GET_CID:
-			/* SEND_CID */
-			if (SD_SendCmd(CMD10, 0) == 0 && SD_RxDataBlock(ptr, 16)) res = RES_OK;
-			break;
-		case MMC_GET_OCR:
-			/* READ_OCR */
-			if (SD_SendCmd(CMD58, 0) == 0)
-			{
-				for (n = 0; n < 4; n++)
-				{
-					*ptr++ = SPI_RxByte();
-				}
-				res = RES_OK;
-			}
 		default:
 			res = RES_PARERR;
 		}
