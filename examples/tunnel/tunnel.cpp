@@ -38,7 +38,7 @@ void tunnel_test(uint32_t time_ms) {
 	};
 
 	float x = time_ms / 1000.0;
-	
+
 	float y = 1.0;
 
 	for (int scanline = 0; scanline < screen.bounds.w; scanline++) {
@@ -46,8 +46,6 @@ void tunnel_test(uint32_t time_ms) {
 		float z = 3.0; // Distance from our imaginary wall plane
 		z += sinf((time_ms + scanline) / 1000.0f);
 		y = sinf((time_ms + scanline) / 200.0f);
-
-		int offset = scanline;
 
 		int wall_height = screen.bounds.h / z;
 		int wall_offset_top = (screen.bounds.h - wall_height) / 2;
@@ -68,7 +66,7 @@ void tunnel_test(uint32_t time_ms) {
 		if (wall_height <= 64) {
 			mipmap_index = 1;
 		}
-			
+
 		Point texture_origin = mipmap_offset[mipmap_index];
 		uint8_t texture_size = mipmap_size[mipmap_index];
 

@@ -148,7 +148,6 @@ struct Player {
     static float air_acceleration_x = 0.2f;
     static float ground_drag_x = 0.70f;
     static float air_drag_x = 0.8f;
-    static float duration = 0.01f;
     static float jump_velocity = 4.0f;
     static Vec2 gravity(0, 0.98f / 10.0f);
 
@@ -450,7 +449,6 @@ void render(uint32_t time) {
   for (uint8_t y = 0; y < 24; y++) {
     for (uint8_t x = 0; x < 48; x++) {
       Point pt = world_to_screen(Point(x *   8, y * 8));
-      uint32_t ti = map.tile_index(Point(x, y));
 
       if (map.has_flag(Point(x, y), TileFlags::WATER)) {
         screen.rectangle(Rect(pt.x, pt.y, 8, 8));
@@ -811,7 +809,6 @@ void draw_flags() {
   for (uint8_t y = 0; y < 24; y++) {
     for (uint8_t x = 0; x < 48; x++) {
       Point pt = world_to_screen(Point(x * 8, y * 8));
-      uint32_t ti = map.tile_index(Point(x, y));
       uint8_t f = map.get_flags(Point(x, y));
 
       for (uint8_t i = 0; i < 3; i++) {
