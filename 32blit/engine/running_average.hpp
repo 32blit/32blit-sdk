@@ -8,7 +8,7 @@ template<typename T>
 class RunningAverage
 {
 public:
-	typedef std::vector<T> Data;
+  using Data = std::vector<T>;
 	RunningAverage(std::size_t uSize) : m_uSize(uSize), m_uIndex(0), m_average(0), m_bFull(false) {};
 
 	const T &operator[] (std::size_t i) const
