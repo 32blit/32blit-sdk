@@ -70,7 +70,6 @@ int32_t tud_msc_write10_cb(uint8_t lun, uint32_t lba, uint32_t offset, uint8_t *
 }
 
 int32_t tud_msc_scsi_cb(uint8_t lun, uint8_t const scsi_cmd[16], void* buffer, uint16_t bufsize) {
-  void const* response = NULL;
   uint16_t resplen = 0;
 
   switch (scsi_cmd[0]) {
