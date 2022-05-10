@@ -14,13 +14,11 @@
 .wrap_target
 
   pull                      ; fetch two pixels
-  out y, 16                 ; first pixel in y register
-  out x, 16                 ; second pixel in x register
+  mov x, osr                ; both pixels in x register
+  out y, 16                 ; second pixel in y register
 
-; write first pixel
+; write first pixel (still in osr)
 
-  mov osr, x                ; move pixel data back into osr from register x
-  out null, 16              ; discard the 16-bits of dummy data from the mov
 p1:
   out pins, 1   side 0      ; output bit, clear clock
   jmp !osre p1  side 1      ; if still bits in osr then jump back to start of loop and clock in data
@@ -28,7 +26,7 @@ p1:
 ; duplicate first pixel
 
   mov osr, x                ; move pixel data back into osr from register x
-  out null, 16              ; discard as above..
+  out null, 16              ; discard second pixel
 p1d:
   out pins, 1   side 0      ; output bit, clear clock
   jmp !osre p1d  side 1     ; if still bits in osr then jump back to start of loop and clock in data
@@ -36,7 +34,7 @@ p1d:
 ; write second pixel
 
   mov osr, y                ; move pixel data back into osr from register y
-  out null, 16              ; discard as above..
+  out null, 16              ; discard the 16-bits of dummy data from the mov
 p2:
   out pins, 1   side 0      ; output bit, clear clock
   jmp !osre p2  side 1      ; if still bits in osr then jump back to start of loop and clock in data
