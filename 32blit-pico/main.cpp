@@ -187,7 +187,9 @@ int main() {
   init_fs();
   init_usb();
 
+#if defined(DISPLAY_SCANVIDEO)
   multicore_launch_core1(core1_main);
+#endif
 
   blit::set_screen_mode(ScreenMode::lores);
 
