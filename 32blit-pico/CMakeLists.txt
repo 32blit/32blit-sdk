@@ -113,8 +113,16 @@ function(blit_metadata TARGET FILE)
     execute_process(COMMAND ${PYTHON_EXECUTABLE} -m ttblit cmake --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --cmake ${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
     include(${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
 
-    pico_set_program_name(${TARGET} "${METADATA_TITLE}")
-    pico_set_program_description(${TARGET} "${METADATA_DESCRIPTION}")
-    pico_set_program_version(${TARGET} "${METADATA_VERSION}")
-    pico_set_program_url(${TARGET} "${METADATA_URL}")
+    # create metadata/binary info source at build time
+    set(METADATA_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_binary_info.cpp")
+
+    add_custom_command(
+        OUTPUT ${METADATA_SOURCE}
+        COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit metadata --force --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --pico-bi ${METADATA_SOURCE}
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${FILE}
+    )
+
+    # add the generated source
+    target_sources(${TARGET} PRIVATE ${METADATA_SOURCE})
+
 endfunction()
