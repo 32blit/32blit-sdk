@@ -14,6 +14,8 @@
 
 static audio_buffer_pool *audio_pool = nullptr;
 
+static struct audio_buffer *cur_buffer = nullptr;
+
 void init_audio() {
   static audio_format_t audio_format = {
     .sample_freq = AUDIO_SAMPLE_FREQ,
@@ -62,17 +64,28 @@ void init_audio() {
 }
 
 void update_audio(uint32_t time) {
-  // audio
-  struct audio_buffer *buffer = take_audio_buffer(audio_pool, false);
-  if(buffer) {
-    auto samples = (int16_t *) buffer->buffer->bytes;
+  // attempt to get new buffer
+  if(!cur_buffer) {
+    cur_buffer = take_audio_buffer(audio_pool, false);
+    if(cur_buffer)
+      cur_buffer->sample_count = 0;
+  }
 
-    for(uint32_t i = 0; i < buffer->max_sample_count; i++) {
+  if(cur_buffer) {
+    auto samples = ((int16_t *)cur_buffer->buffer->bytes) + cur_buffer->sample_count;
+
+    auto max_samples = cur_buffer->max_sample_count - cur_buffer->sample_count;
+
+    for(uint32_t i = 0; i < max_samples; i++) {
       int val = (int)blit::get_audio_frame() - 0x8000;
       *samples++ = val;
     }
 
-    buffer->sample_count = buffer->max_sample_count;
-    give_audio_buffer(audio_pool, buffer);
+    cur_buffer->sample_count += max_samples;
+
+    if(cur_buffer->sample_count == cur_buffer->max_sample_count) {
+      give_audio_buffer(audio_pool, cur_buffer);
+      cur_buffer = nullptr;
+    }
   }
 }
