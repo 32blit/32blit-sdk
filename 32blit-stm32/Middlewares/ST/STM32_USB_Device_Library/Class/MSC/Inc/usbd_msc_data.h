@@ -71,10 +71,10 @@ extern "C" {
 /** @defgroup USBD_INFO_Exported_Variables
   * @{
   */
-extern uint8_t MSC_Page00_Inquiry_Data[LENGTH_INQUIRY_PAGE00];
-extern uint8_t MSC_Page80_Inquiry_Data[LENGTH_INQUIRY_PAGE80];
-extern uint8_t MSC_Mode_Sense6_data[MODE_SENSE6_LEN];
-extern uint8_t MSC_Mode_Sense10_data[MODE_SENSE10_LEN];
+extern const uint8_t MSC_Page00_Inquiry_Data[LENGTH_INQUIRY_PAGE00];
+extern const uint8_t MSC_Page80_Inquiry_Data[LENGTH_INQUIRY_PAGE80];
+extern const uint8_t MSC_Mode_Sense6_data[MODE_SENSE6_LEN];
+extern const uint8_t MSC_Mode_Sense10_data[MODE_SENSE10_LEN];
 
 /**
   * @}

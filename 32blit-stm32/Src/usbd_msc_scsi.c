@@ -101,7 +101,7 @@ static int8_t SCSI_ProcessRead(USBD_HandleTypeDef *pdev, uint8_t lun);
 static int8_t SCSI_ProcessWrite(USBD_HandleTypeDef *pdev, uint8_t lun);
 
 static int8_t SCSI_UpdateBotData(USBD_MSC_BOT_HandleTypeDef *hmsc,
-                                 uint8_t *pBuff, uint16_t length);
+                                 const uint8_t *pBuff, uint16_t length);
 /**
   * @}
   */
@@ -1053,7 +1053,7 @@ static int8_t SCSI_ProcessWrite(USBD_HandleTypeDef *pdev, uint8_t lun)
 * @retval status
 */
 static int8_t SCSI_UpdateBotData(USBD_MSC_BOT_HandleTypeDef *hmsc,
-                                 uint8_t *pBuff, uint16_t length)
+                                 const uint8_t *pBuff, uint16_t length)
 {
   uint16_t len = length;
 
