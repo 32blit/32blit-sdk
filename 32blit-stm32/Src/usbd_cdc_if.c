@@ -132,6 +132,7 @@ static int8_t CDC_Init_HS(void);
 static int8_t CDC_DeInit_HS(void);
 static int8_t CDC_Control_HS(uint8_t cmd, uint8_t* pbuf, uint16_t length);
 static int8_t CDC_Receive_HS(uint8_t* pbuf, uint32_t *Len);
+static int8_t CDC_TransmitCplt_HS(uint8_t *pbuf, uint32_t *Len, uint8_t epnum);
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_DECLARATION */
 
@@ -146,7 +147,8 @@ USBD_CDC_ItfTypeDef USBD_Interface_fops_HS =
   CDC_Init_HS,
   CDC_DeInit_HS,
   CDC_Control_HS,
-  CDC_Receive_HS
+  CDC_Receive_HS,
+  CDC_TransmitCplt_HS
 };
 
 /* Private functions ---------------------------------------------------------*/
@@ -313,6 +315,27 @@ uint8_t CDC_Transmit_HS(uint8_t* Buf, uint16_t Len)
 
   /* USER CODE END 12 */
   return result;
+}
+
+/**
+  * @brief  TEMPLATE_TransmitCplt
+  *         Data transmited callback
+  *
+  *         @note
+  *         This function is IN transfer complete callback used to inform user that
+  *         the submitted Data is successfully sent over USB.
+  *
+  * @param  Buf: Buffer of data to be received
+  * @param  Len: Number of data received (in bytes)
+  * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
+  */
+static int8_t CDC_TransmitCplt_HS(uint8_t *Buf, uint32_t *Len, uint8_t epnum)
+{
+  UNUSED(Buf);
+  UNUSED(Len);
+  UNUSED(epnum);
+
+  return USBD_OK;
 }
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */
