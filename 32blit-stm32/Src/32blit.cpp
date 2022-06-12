@@ -652,48 +652,46 @@ bool blit_switch_execution(uint32_t address, bool force_game)
   }
 
 	// switch to user app in external flash
-	if(EXTERNAL_LOAD_ADDRESS >= 0x90000000) {
-		qspi_enable_memorymapped_mode();
+  qspi_enable_memorymapped_mode();
 
-    auto game_header = ((__IO BlitGameHeader *) (EXTERNAL_LOAD_ADDRESS + address));
+  auto game_header = ((__IO BlitGameHeader *) (0x90000000 + address));
 
-    if(game_header->magic == blit_game_magic) {
+  if(game_header->magic == blit_game_magic) {
 
-      persist.last_game_offset = address;
+    persist.last_game_offset = address;
 
-      // game possibly running, wait until it isn't
-      if(user_tick && !user_code_disabled) {
-        game_switch_requested = true;
-        return true;
-      }
-
-      // avoid starting a game disabled (will break sound and the menu)
-      if(user_code_disabled)
-        blit_enable_user_code();
-
-      cached_file_in_tmp = false;
-      close_open_files();
-
-      // load function pointers
-      auto init = (BlitInitFunction)((uint8_t *)game_header->init + address);
-
-      // set these up early so that blit_user_code_running works in code called from init
-      user_render = (BlitRenderFunction) ((uint8_t *)game_header->render + address);
-      user_tick = (BlitTickFunction) ((uint8_t *)game_header->tick + address);
-
-      if(!init(address)) {
-        user_render = nullptr;
-        user_tick = nullptr;
-
-        qspi_disable_memorymapped_mode();
-
-        return false;
-      }
-
-      blit::render = user_render;
-      do_tick = user_tick;
+    // game possibly running, wait until it isn't
+    if(user_tick && !user_code_disabled) {
+      game_switch_requested = true;
       return true;
     }
+
+    // avoid starting a game disabled (will break sound and the menu)
+    if(user_code_disabled)
+      blit_enable_user_code();
+
+    cached_file_in_tmp = false;
+    close_open_files();
+
+    // load function pointers
+    auto init = (BlitInitFunction)((uint8_t *)game_header->init + address);
+
+    // set these up early so that blit_user_code_running works in code called from init
+    user_render = (BlitRenderFunction) ((uint8_t *)game_header->render + address);
+    user_tick = (BlitTickFunction) ((uint8_t *)game_header->tick + address);
+
+    if(!init(address)) {
+      user_render = nullptr;
+      user_tick = nullptr;
+
+      qspi_disable_memorymapped_mode();
+
+      return false;
+    }
+
+    blit::render = user_render;
+    do_tick = user_tick;
+    return true;
   }
 
   return false;
