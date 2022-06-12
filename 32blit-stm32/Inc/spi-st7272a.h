@@ -5,8 +5,11 @@
 #define ST7272A_DISPLAY_MODE_REGISTER 0x19
 #define ST7272A_DISPLAY_MODE_DEFAULT  0xec  // 0b11101100 VA Mode, Top/Bottom & Left/Right scan, Negative polarity VSync/HSync pulses
 
+#define HIGH(PORT, PIN) HAL_GPIO_WritePin(PORT, PIN, GPIO_PIN_SET);
+#define LOW(PORT, PIN) HAL_GPIO_WritePin(PORT, PIN, GPIO_PIN_RESET);
+
 #define ST7272A_CS(active)            if(active) {LOW(LCD_CS_GPIO_Port, LCD_CS_Pin)} else {HIGH(LCD_CS_GPIO_Port, LCD_CS_Pin)}
-#define ST7272A_RESET()               LOW(LCD_RESET_GPIO_Port, LCD_RESET_Pin); DELAY(100); HIGH(LCD_RESET_GPIO_Port, LCD_RESET_Pin); DELAY(100);
+#define ST7272A_RESET()               LOW(LCD_RESET_GPIO_Port, LCD_RESET_Pin); HAL_Delay(100); HIGH(LCD_RESET_GPIO_Port, LCD_RESET_Pin); HAL_Delay(100);
 
 #ifdef __cplusplus
 extern "C" {

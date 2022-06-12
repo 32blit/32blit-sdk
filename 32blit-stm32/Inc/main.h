@@ -66,10 +66,7 @@ extern uint8_t charge_led_b;
 /* Private defines -----------------------------------------------------------*/
 
 /* USER CODE BEGIN Private defines */
-#define HIGH(PORT, PIN) HAL_GPIO_WritePin(PORT, PIN, GPIO_PIN_SET);
-#define LOW(PORT, PIN) HAL_GPIO_WritePin(PORT, PIN, GPIO_PIN_RESET);
 
-#define DELAY(MS)       HAL_Delay(MS)
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
