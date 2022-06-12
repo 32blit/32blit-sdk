@@ -279,12 +279,11 @@ static void save_screenshot() {
     }
   }
 
+  if(!::directory_exists(screenshots_dir_name))
+    ::create_directory(screenshots_dir_name);
+
   do {
     snprintf(buf, 200, "%s/%s%i.bmp", screenshots_dir_name.c_str(), app_name.c_str(), index);
-
-    if(!::directory_exists(screenshots_dir_name)){
-      ::create_directory(screenshots_dir_name);
-    }
 
     if(!::file_exists(buf))
       break;
