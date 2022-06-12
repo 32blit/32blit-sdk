@@ -20,7 +20,7 @@ void TIM6_DAC_IRQHandler(void) {
       bool enable_amp = sound::enabled && is_audio_playing();
 
       if(enable_amp != was_amp_enabled) {
-        HAL_GPIO_WritePin(AMP_SHUTDOWN_GPIO_Port, AMP_SHUTDOWN_Pin, enable_amp ? GPIO_PIN_SET : GPIO_PIN_RESET);
+        gpio::write(AMP_SHUTDOWN_GPIO_Port, AMP_SHUTDOWN_Pin, enable_amp);
         was_amp_enabled = enable_amp;
       }
 

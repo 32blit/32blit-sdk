@@ -233,7 +233,7 @@ void blit_tick() {
 }
 
 bool blit_sd_detected() {
-  return HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_11) == 1;
+  return gpio::read(GPIOD, GPIO_PIN_11);
 }
 
 bool blit_sd_mounted() {
@@ -324,7 +324,7 @@ void blit_init() {
     }
 
     // don't switch to game if it crashed, or home is held
-    if(persist.reset_target == prtGame && (HAL_GPIO_ReadPin(BUTTON_HOME_GPIO_Port,  BUTTON_HOME_Pin) || persist.reset_error))
+    if(persist.reset_target == prtGame && (gpio::read(BUTTON_HOME_GPIO_Port,  BUTTON_HOME_Pin) || persist.reset_error))
       persist.reset_target = prtFirmware;
 
     init_api_shared();
@@ -523,7 +523,7 @@ void blit_update_led() {
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   if(htim == &htim2) {
-    bool pressed = HAL_GPIO_ReadPin(BUTTON_HOME_GPIO_Port, BUTTON_HOME_Pin);
+    bool pressed = gpio::read(BUTTON_HOME_GPIO_Port, BUTTON_HOME_Pin);
     if(pressed && blit_user_code_running()) { // if button was pressed and we are inside a game, queue the game exit
       exit_game = true;
     }
@@ -532,7 +532,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-  bool pressed = HAL_GPIO_ReadPin(BUTTON_HOME_GPIO_Port, BUTTON_HOME_Pin);
+  bool pressed = gpio::read(BUTTON_HOME_GPIO_Port, BUTTON_HOME_Pin);
   if(pressed) {
     /*
     The timer will generate a spurious interrupt as soon as it's enabled- apparently to load the compare value.
@@ -566,17 +566,17 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 void blit_process_input() {
   // Read buttons
   blit::buttons =
-    (!HAL_GPIO_ReadPin(DPAD_UP_GPIO_Port,     DPAD_UP_Pin)      ? uint32_t(DPAD_UP)    : 0) |
-    (!HAL_GPIO_ReadPin(DPAD_DOWN_GPIO_Port,   DPAD_DOWN_Pin)    ? uint32_t(DPAD_DOWN)  : 0) |
-    (!HAL_GPIO_ReadPin(DPAD_LEFT_GPIO_Port,   DPAD_LEFT_Pin)    ? uint32_t(DPAD_LEFT)  : 0) |
-    (!HAL_GPIO_ReadPin(DPAD_RIGHT_GPIO_Port,  DPAD_RIGHT_Pin)   ? uint32_t(DPAD_RIGHT) : 0) |
-    (!HAL_GPIO_ReadPin(BUTTON_A_GPIO_Port,    BUTTON_A_Pin)     ? uint32_t(A)          : 0) |
-    (!HAL_GPIO_ReadPin(BUTTON_B_GPIO_Port,    BUTTON_B_Pin)     ? uint32_t(B)          : 0) |
-    (!HAL_GPIO_ReadPin(BUTTON_X_GPIO_Port,    BUTTON_X_Pin)     ? uint32_t(X)          : 0) |
-    (!HAL_GPIO_ReadPin(BUTTON_Y_GPIO_Port,    BUTTON_Y_Pin)     ? uint32_t(Y)          : 0) |
-    (HAL_GPIO_ReadPin(BUTTON_HOME_GPIO_Port,  BUTTON_HOME_Pin)  ? uint32_t(HOME)       : 0) |  // INVERTED LOGIC!
-    (!HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port, BUTTON_MENU_Pin)  ? uint32_t(MENU)       : 0) |
-    (!HAL_GPIO_ReadPin(JOYSTICK_BUTTON_GPIO_Port, JOYSTICK_BUTTON_Pin) ? uint32_t(JOYSTICK)   : 0);
+    (!gpio::read(DPAD_UP_GPIO_Port,     DPAD_UP_Pin)      ? uint32_t(DPAD_UP)    : 0) |
+    (!gpio::read(DPAD_DOWN_GPIO_Port,   DPAD_DOWN_Pin)    ? uint32_t(DPAD_DOWN)  : 0) |
+    (!gpio::read(DPAD_LEFT_GPIO_Port,   DPAD_LEFT_Pin)    ? uint32_t(DPAD_LEFT)  : 0) |
+    (!gpio::read(DPAD_RIGHT_GPIO_Port,  DPAD_RIGHT_Pin)   ? uint32_t(DPAD_RIGHT) : 0) |
+    (!gpio::read(BUTTON_A_GPIO_Port,    BUTTON_A_Pin)     ? uint32_t(A)          : 0) |
+    (!gpio::read(BUTTON_B_GPIO_Port,    BUTTON_B_Pin)     ? uint32_t(B)          : 0) |
+    (!gpio::read(BUTTON_X_GPIO_Port,    BUTTON_X_Pin)     ? uint32_t(X)          : 0) |
+    (!gpio::read(BUTTON_Y_GPIO_Port,    BUTTON_Y_Pin)     ? uint32_t(Y)          : 0) |
+    ( gpio::read(BUTTON_HOME_GPIO_Port,  BUTTON_HOME_Pin)  ? uint32_t(HOME)       : 0) |  // INVERTED LOGIC!
+    (!gpio::read(BUTTON_MENU_GPIO_Port, BUTTON_MENU_Pin)  ? uint32_t(MENU)       : 0) |
+    (!gpio::read(JOYSTICK_BUTTON_GPIO_Port, JOYSTICK_BUTTON_Pin) ? uint32_t(JOYSTICK)   : 0);
 
   if(blit::buttons.state)
     power::update_active();

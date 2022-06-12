@@ -124,7 +124,7 @@ int main(void)
   gpio::init();
   sound::init();
 
-  is_beta_unit = HAL_GPIO_ReadPin(VERSION_GPIO_Port, VERSION_Pin);
+  is_beta_unit = gpio::read(VERSION_GPIO_Port, VERSION_Pin);
 
   //MX_GPIO_Init();
 
