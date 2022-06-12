@@ -49,7 +49,36 @@ namespace blit {
 #pragma pack(pop)
 
   Surface::Surface(uint8_t *data, const PixelFormat &format, const Size &bounds) : data(data), bounds(bounds), format(format) {
-    init();
+    clip = Rect(0, 0, bounds.w, bounds.h);
+
+    rows = bounds.h / 8;
+    cols = bounds.w / 8;
+
+    pixel_stride = pixel_format_stride[static_cast<uint8_t>(format)];
+    row_stride = pixel_stride * bounds.w;
+
+    switch (format) {
+    case PixelFormat::RGBA: {
+      pbf = RGBA_RGBA;
+      bbf = RGBA_RGBA;
+    }break;
+    case PixelFormat::RGB: {
+      pbf = RGBA_RGB;
+      bbf = RGBA_RGB;
+    }break;
+    case PixelFormat::P: {
+      pbf = P_P;
+      bbf = P_P;
+    }break;
+    case PixelFormat::M: {
+      pbf = M_M;
+      bbf = M_M;
+    }break;
+    case PixelFormat::RGB565: {
+      pbf = RGBA_RGB565;
+      bbf = RGBA_RGB565;
+    }break;
+    }
   }
 
   /**
@@ -213,39 +242,6 @@ namespace blit {
     }
 
     return true;
-  }
-
-  void Surface::init() {
-    clip = Rect(0, 0, bounds.w, bounds.h);
-
-    rows = bounds.h / 8;
-    cols = bounds.w / 8;
-
-    pixel_stride = pixel_format_stride[static_cast<uint8_t>(format)];
-    row_stride = pixel_stride * bounds.w;
-
-    switch (format) {
-    case PixelFormat::RGBA: {
-      pbf = RGBA_RGBA;
-      bbf = RGBA_RGBA;
-    }break;
-    case PixelFormat::RGB: {
-      pbf = RGBA_RGB;
-      bbf = RGBA_RGB;
-    }break;
-    case PixelFormat::P: {
-      pbf = P_P;
-      bbf = P_P;
-    }break;
-    case PixelFormat::M: {
-      pbf = M_M;
-      bbf = M_M;
-    }break;
-    case PixelFormat::RGB565: {
-      pbf = RGBA_RGB565;
-      bbf = RGBA_RGB565;
-    }break;
-    }
   }
 
   /**
