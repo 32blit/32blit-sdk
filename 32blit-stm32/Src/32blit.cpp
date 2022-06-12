@@ -694,58 +694,9 @@ bool blit_switch_execution(uint32_t address, bool force_game)
       do_tick = user_tick;
       return true;
     }
-    // anything flashed at a non-zero offset should have a valid header
-    else if(address != 0)
-      return false;
   }
 
-  // old-style soft-reset to app with linked HAL
-  // left for compatibility/testing
-
-  adc::stop();
-
-  // Stop the audio
-  HAL_TIM_Base_Stop_IT(&htim6);
-  HAL_DAC_Stop(&hdac1, DAC_CHANNEL_2);
-
-  // Stop system button timer
-  HAL_TIM_Base_Stop_IT(&htim2);
-
-  // stop USB
-  USBD_Stop(&hUsbDeviceHS);
-
-  // Disable all the interrupts... just to be sure
-  HAL_NVIC_DisableIRQ(LTDC_IRQn);
-  HAL_NVIC_DisableIRQ(ADC_IRQn);
-  HAL_NVIC_DisableIRQ(ADC3_IRQn);
-  HAL_NVIC_DisableIRQ(DMA1_Stream0_IRQn);
-  HAL_NVIC_DisableIRQ(DMA1_Stream1_IRQn);
-  HAL_NVIC_DisableIRQ(TIM6_DAC_IRQn);
-  HAL_NVIC_DisableIRQ(OTG_HS_IRQn);
-  HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
-  HAL_NVIC_DisableIRQ(TIM2_IRQn);
-
-	/* Disable I-Cache */
-	SCB_DisableICache();
-
-	/* Disable D-Cache */
-	SCB_DisableDCache();
-
-	/* Disable Systick interrupt */
-	SysTick->CTRL = 0;
-
-  typedef  void (*pFunction)(void);
-	/* Initialize user application's Stack Pointer & Jump to user application */
-	auto JumpToApplication = (pFunction) (*(__IO uint32_t*) (EXTERNAL_LOAD_ADDRESS + 4));
-	__set_MSP(*(__IO uint32_t*) EXTERNAL_LOAD_ADDRESS);
-	JumpToApplication();
-
-	/* We should never get here as execution is now on user application */
-	while(1)
-	{
-	}
-
-  return true;
+  return false;
 }
 
 bool blit_user_code_running() {
