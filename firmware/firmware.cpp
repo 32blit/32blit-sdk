@@ -458,8 +458,10 @@ static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
       cleanup_duplicates(meta, launch_offset);
   }
 
-  if(launch_offset == 0xFFFFFFFF)
+  if(launch_offset == 0xFFFFFFFF) {
     launch_offset = flash_from_sd_to_qspi_flash(file, flash_offset);
+    scan_flash();
+  }
 
   f_close(&file);
 
