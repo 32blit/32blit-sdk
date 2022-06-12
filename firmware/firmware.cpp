@@ -106,52 +106,54 @@ static bool parse_flash_metadata(uint32_t offset, GameInfo &info) {
 }
 
 static bool parse_file_metadata(FIL &fh, GameInfo &info) {
-  BlitGameHeader header;
   UINT bytes_read;
-  bool result = false;
-  f_lseek(&fh, 0);
-  f_read(&fh, &header, sizeof(header), &bytes_read);
+  uint8_t buf[10];
 
   // skip relocation data
-  int off = 0;
-  if(header.magic == 0x4F4C4552 /* RELO */) {
-    f_lseek(&fh, 4);
-    uint32_t num_relocs;
-    f_read(&fh, (void *)&num_relocs, 4, &bytes_read);
+  f_lseek(&fh, 0);
+  f_read(&fh, buf, 4, &bytes_read);
 
-    off = num_relocs * 4 + 8;
-    f_lseek(&fh, off);
+  if(memcmp(buf, "RELO", 4) != 0)
+    return false;
 
-    // re-read header
-    f_read(&fh, &header, sizeof(header), &bytes_read);
+  uint32_t num_relocs;
+  f_read(&fh, (void *)&num_relocs, 4, &bytes_read);
+
+  int relocs_size = num_relocs * 4 + 8;
+  f_lseek(&fh, relocs_size);
+
+  // read header
+  BlitGameHeader header;
+  f_read(&fh, &header, sizeof(header), &bytes_read);
+
+  if(header.magic != blit_game_magic)
+    return false;
+
+  bool result = false;
+
+  // get metadata
+  f_lseek(&fh, (header.end - qspi_flash_address) + relocs_size);
+  f_read(&fh, buf, 10, &bytes_read);
+
+  if(bytes_read == 10 && memcmp(buf, "BLITMETA", 8) == 0) {
+    // don't bother reading the whole thing since we don't want the images
+    RawMetadata raw_meta;
+    f_read(&fh, &raw_meta, sizeof(RawMetadata), &bytes_read);
+
+    info.size += *reinterpret_cast<uint16_t *>(buf + 8) + 10;
+    info.checksum = raw_meta.crc32;
+    memcpy(info.title, raw_meta.title, sizeof(info.title));
+    memcpy(info.author, raw_meta.author, sizeof(info.author));
+
+    result = true;
   }
 
-  if(header.magic == blit_game_magic) {
-    uint8_t buf[10];
-    f_lseek(&fh, (header.end - qspi_flash_address) + off);
-    f_read(&fh, buf, 10, &bytes_read);
-
-    if(bytes_read == 10 && memcmp(buf, "BLITMETA", 8) == 0) {
-      // don't bother reading the whole thing since we don't want the images
-      RawMetadata raw_meta;
-      f_read(&fh, &raw_meta, sizeof(RawMetadata), &bytes_read);
-
-      info.size += *reinterpret_cast<uint16_t *>(buf + 8) + 10;
-      info.checksum = raw_meta.crc32;
-      memcpy(info.title, raw_meta.title, sizeof(info.title));
-      memcpy(info.author, raw_meta.author, sizeof(info.author));
-
-      result = true;
-    }
-
-    // read category
-    f_read(&fh, buf, 8, &bytes_read);
-    if(bytes_read == 8 && memcmp(buf, "BLITTYPE", 8) == 0) {
-      RawTypeMetadata type_meta;
-      f_read(&fh, &type_meta, sizeof(RawTypeMetadata), &bytes_read);
-      memcpy(info.category, type_meta.category, sizeof(info.category));
-    }
-
+  // read category
+  f_read(&fh, buf, 8, &bytes_read);
+  if(bytes_read == 8 && memcmp(buf, "BLITTYPE", 8) == 0) {
+    RawTypeMetadata type_meta;
+    f_read(&fh, &type_meta, sizeof(RawTypeMetadata), &bytes_read);
+    memcpy(info.category, type_meta.category, sizeof(info.category));
   }
 
   return result;
