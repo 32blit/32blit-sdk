@@ -58,10 +58,10 @@ namespace display {
   __IO uint32_t dma2d_step_count = 0;
 
   static Pen palette[256];
-  // lo and hi res screen back buffers
-  static const blit::SurfaceTemplate __fb_hires{(uint8_t *)&__fb_start, blit::Size(320, 240), blit::PixelFormat::RGB, nullptr};
-  static const blit::SurfaceTemplate __fb_hires_pal{(uint8_t *)&__fb_start, blit::Size(320, 240), blit::PixelFormat::P, palette};
-  static const blit::SurfaceTemplate __fb_lores{(uint8_t *)&__fb_start, blit::Size(160, 120), blit::PixelFormat::RGB, nullptr};
+
+  // lo and hi res screen size
+  static const blit::Size hires_screen_size(320, 240);
+  static const blit::Size lores_screen_size(160, 120);
 
   static SurfaceInfo cur_surf_info; // used to pass screen info back through API
 
@@ -130,11 +130,11 @@ namespace display {
 
     switch(new_mode) {
       case ScreenMode::lores:
-        new_surf_template.bounds = __fb_lores.bounds;
+        new_surf_template.bounds = lores_screen_size;
         break;
       case ScreenMode::hires:
       case ScreenMode::hires_palette:
-        new_surf_template.bounds = __fb_hires.bounds;
+        new_surf_template.bounds = hires_screen_size;
         break;
     }
 
