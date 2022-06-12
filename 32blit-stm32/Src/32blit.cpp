@@ -13,6 +13,7 @@
 #include "executable.hpp"
 #include "multiplayer.hpp"
 #include "power.hpp"
+#include "quadspi.hpp"
 
 #include "tim.h"
 #include "rng.h"
@@ -652,7 +653,7 @@ bool blit_switch_execution(uint32_t address, bool force_game)
 	// switch to user app in external flash
   qspi_enable_memorymapped_mode();
 
-  auto game_header = ((__IO BlitGameHeader *) (0x90000000 + address));
+  auto game_header = ((__IO BlitGameHeader *) (qspi_flash_address + address));
 
   if(game_header->magic == blit_game_magic) {
 
@@ -732,12 +733,12 @@ RawMetadata *blit_get_running_game_metadata() {
   if(!blit_user_code_running())
     return nullptr;
 
-  auto game_ptr = reinterpret_cast<uint8_t *>(0x90000000 + persist.last_game_offset);
+  auto game_ptr = reinterpret_cast<uint8_t *>(qspi_flash_address + persist.last_game_offset);
 
   auto header = reinterpret_cast<BlitGameHeader *>(game_ptr);
 
   if(header->magic == blit_game_magic) {
-    auto end_ptr = game_ptr + (header->end - 0x90000000);
+    auto end_ptr = game_ptr + (header->end - qspi_flash_address);
     if(memcmp(end_ptr, "BLITMETA", 8) == 0)
       return reinterpret_cast<RawMetadata *>(end_ptr + 10);
   }
