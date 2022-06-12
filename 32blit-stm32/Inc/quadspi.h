@@ -36,7 +36,7 @@ extern QSPI_HandleTypeDef hqspi;
 #define APPLICATION_ADDRESS                  QSPI_BASE
 
 // Flash example
-#define QSPI_FLASH_SIZE                      POSITION_VAL(0x2000000)-1
+#define QSPI_FLASH_SIZE                      __builtin_ctz(0x2000000)-1
 #define QSPI_PAGE_SIZE                       256
 
 /* Reset Operations */
