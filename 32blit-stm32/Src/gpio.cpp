@@ -11,13 +11,9 @@ namespace gpio {
   // configuration for 32blit
   void init()
   {
-    /* GPIO Ports Clock Enable */
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    __HAL_RCC_GPIOD_CLK_ENABLE();
-    __HAL_RCC_GPIOE_CLK_ENABLE();
-    __HAL_RCC_GPIOH_CLK_ENABLE();
+    // enable clocks
+    RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN | RCC_AHB4ENR_GPIOBEN | RCC_AHB4ENR_GPIOCEN | RCC_AHB4ENR_GPIODEN | RCC_AHB4ENR_GPIOEEN | RCC_AHB4ENR_GPIOHEN;
+    (void)RCC->AHB4ENR; // read back
 
     // set initial output states where needed
     write(AMP_SHUTDOWN_GPIO_Port, AMP_SHUTDOWN_Pin, true);
