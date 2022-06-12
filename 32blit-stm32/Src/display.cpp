@@ -106,23 +106,15 @@ namespace display {
   }
 
   SurfaceInfo &set_screen_mode(ScreenMode new_mode) {
-    requested_mode = new_mode;
-    switch(new_mode) {
-      case ScreenMode::lores:
-        cur_surf_info = __fb_lores;
-        break;
-      case ScreenMode::hires:
-        cur_surf_info = __fb_hires;
-        break;
-      case ScreenMode::hires_palette:
-        cur_surf_info = __fb_hires_pal;
-        break;
-    }
+    SurfaceTemplate temp{nullptr, {0, 0}, new_mode == ScreenMode::hires_palette ? PixelFormat::P : PixelFormat::RGB};
 
-    screen = Surface(cur_surf_info.data, cur_surf_info.format, cur_surf_info.bounds);
-    screen.palette = cur_surf_info.palette;
+    // won't fail for the modes used here
+    set_screen_mode_format(new_mode, temp);
 
-    requested_format = screen.format;
+    cur_surf_info.data = temp.data;
+    cur_surf_info.bounds = temp.bounds;
+    cur_surf_info.format = temp.format;
+    cur_surf_info.palette = temp.palette;
 
     return cur_surf_info;
   }
