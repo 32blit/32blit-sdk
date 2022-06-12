@@ -339,29 +339,24 @@ static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
   f_read(&file, buf, 4, &bytes_read);
   std::vector<uint32_t> relocation_offsets;
   size_t cur_reloc = 0;
-  bool has_relocs = false;
 
-  if(memcmp(buf, "RELO", 4) == 0) {
-    uint32_t num_relocs;
-    f_read(&file, (void *)&num_relocs, 4, &bytes_read);
-    relocation_offsets.reserve(num_relocs);
+  if(memcmp(buf, "RELO", 4) != 0)
+    return 0xFFFFFFFF;
 
-    for(auto i = 0u; i < num_relocs; i++) {
-      uint32_t reloc_offset;
-      f_read(&file, (void *)&reloc_offset, 4, &bytes_read);
+  uint32_t num_relocs;
+  f_read(&file, (void *)&num_relocs, 4, &bytes_read);
+  relocation_offsets.reserve(num_relocs);
 
-      relocation_offsets.push_back(reloc_offset - qspi_flash_address);
-    }
+  for(auto i = 0u; i < num_relocs; i++) {
+    uint32_t reloc_offset;
+    f_read(&file, (void *)&reloc_offset, 4, &bytes_read);
 
-    bytes_total -= num_relocs * 4 + 8; // size of relocation data
-    has_relocs = true;
-  } else {
-    f_lseek(&file, 0);
+    relocation_offsets.push_back(reloc_offset - qspi_flash_address);
   }
 
-  if(!has_relocs)
-    flash_offset = 0;
-  else if(flash_offset == 0xFFFFFFFF)
+  bytes_total -= num_relocs * 4 + 8; // size of relocation data
+
+  if(flash_offset == 0xFFFFFFFF)
     flash_offset = get_flash_offset_for_file(bytes_total);
 
   // erase the sectors needed to write the image
