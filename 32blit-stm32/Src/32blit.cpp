@@ -261,37 +261,42 @@ void blit_update_volume() {
 }
 
 static void save_screenshot() {
-  int index = 0;
-  char buf[200];
-  std::string app_name;
-  const std::string screenshots_dir_name = "screenshots";
+  const char *app_name;
+  const char *screenshots_dir_name = "screenshots";
 
-  if(!blit_user_code_running()) {
+  char buf[10];
+
+  // get title
+  if(!blit_user_code_running())
     app_name = "_firmware";
-  } else {
+  else {
     auto meta = blit_get_running_game_metadata();
 
-    if(meta) {
+    if(meta)
       app_name = meta->title;
-    } else {
+    else {
       // fallback to offset
-      app_name = std::to_string(persist.last_game_offset);
+      snprintf(buf, 10, "%li", persist.last_game_offset);
+      app_name = buf;
     }
   }
 
   if(!::directory_exists(screenshots_dir_name))
     ::create_directory(screenshots_dir_name);
 
-  do {
-    snprintf(buf, 200, "%s/%s%i.bmp", screenshots_dir_name.c_str(), app_name.c_str(), index);
+  int index = 0;
+  char screenshot_filename[200];
 
-    if(!::file_exists(buf))
+  do {
+    snprintf(screenshot_filename, 200, "%s/%s%i.bmp", screenshots_dir_name, app_name, index);
+
+    if(!::file_exists(screenshot_filename))
       break;
 
     index++;
   } while(true);
 
-  screen.save(buf);
+  screen.save(screenshot_filename);
 }
 
 void blit_init() {
