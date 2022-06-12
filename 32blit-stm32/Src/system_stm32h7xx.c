@@ -237,7 +237,7 @@ void SystemInit (void)
 #ifdef VECT_TAB_SRAM
   SCB->VTOR = D1_AXISRAM_BASE  | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal D1 AXI-RAM */
 #else
-  SCB->VTOR = APPLICATION_VTOR | VECT_TAB_OFFSET; /* Vector Table Relocation set by APPLICATION_VTOR */
+  SCB->VTOR = FLASH_BANK1_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal FLASH */
 #endif
 
 #endif /*DUAL_CORE && CORE_CM4*/

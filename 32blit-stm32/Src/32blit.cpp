@@ -700,10 +700,6 @@ bool blit_switch_execution(uint32_t address, bool force_game)
 }
 
 bool blit_user_code_running() {
-  // running fully linked code from ext flash
-  if(APPLICATION_VTOR == 0x90000000)
-    return true;
-
   // loaded user-only game from flash
   return user_tick != nullptr;
 }
