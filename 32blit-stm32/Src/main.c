@@ -135,9 +135,8 @@ int main(void)
   //MX_DAC1_Init();
   MX_HRTIM_Init();
   MX_I2C4_Init();
-#if (INITIALISE_QSPI==1)
   MX_QUADSPI_Init();
-#endif
+
   adc::init();
 
   //MX_USB_OTG_HS_USB_Init();
@@ -158,9 +157,7 @@ int main(void)
 
   //NVIC_SetPriority(SysTick_IRQn, 0x0);
 
-#if (INITIALISE_QSPI==1)
   qspi_init();
-#endif
 
   blit_init();
 

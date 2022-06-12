@@ -162,7 +162,6 @@ target_include_directories(BlitHalSTM32
 target_compile_definitions(BlitHalSTM32
 	PRIVATE
 		${DEFINITIONS}
-		-DINITIALISE_QSPI=${INITIALISE_QSPI}
     -DCDC_FIFO_BUFFERS=${CDC_FIFO_BUFFERS}
 )
 

@@ -18,10 +18,7 @@ if (MCU_FLOAT_ABI STREQUAL hard)
     set(MCU_FLAGS "${MCU_FLAGS} -mfpu=${MCU_FPU}")
 endif ()
 
-set(INITIALISE_QSPI 1)
 set(CDC_FIFO_BUFFERS 64)
-
-set(INITIALISE_QSPI_EXT 0)
 set(CDC_FIFO_BUFFERS_EXT 4)
 
 set(COMMON_FLAGS "${MCU_FLAGS} -fsingle-precision-constant -Wall -fdata-sections -ffunction-sections -Wattributes -Wdouble-promotion -Werror=double-promotion -mno-pic-data-is-text-relative -mno-single-pic-base")

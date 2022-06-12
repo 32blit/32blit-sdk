@@ -7,8 +7,8 @@ namespace gpio {
     HAL_GPIO_Init(port, &gpio);
   }
 
-  // initialises all of the pins of the MCU into the correct 
-  // configuration for 32blit    
+  // initialises all of the pins of the MCU into the correct
+  // configuration for 32blit
   void init()
   {
     /* GPIO Ports Clock Enable */
@@ -33,13 +33,10 @@ namespace gpio {
     // usb "swap" pin?
     init_pin(GPIOD, USB_SWAP_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL);
 
-#if (INITIALISE_QSPI==1)
-// Guard against user code changing QSPI pin state set by firmware
     // qspi
     init_pin(GPIOB, GPIO_PIN_2, GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
     init_pin(GPIOE, GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10, GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
     init_pin(GPIOC, GPIO_PIN_11, GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-#endif
 
     // spi1
     init_pin(GPIOA, SD_SPI1_MOSI_Pin, GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF5_SPI1);
@@ -77,7 +74,7 @@ namespace gpio {
     // battery sense
     init_pin(GPIOC, BATTERY_SENSE_Pin, GPIO_MODE_ANALOG, GPIO_NOPULL); // battery sense
 
-    
+
     // "gpio" pin on extension header
     init_pin(GPIOC, EXTENSION_GPIO_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL); // left digital
 
