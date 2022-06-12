@@ -4,7 +4,9 @@
 #include "stm32h7xx_hal.h"
 #include <stdbool.h>
 #include <string.h>
-#include "ff_gen_drv.h"
+
+#include "ff.h"
+#include "diskio.h"
 #include "fatfs_sd.h"
 
 static volatile DSTATUS Stat = STA_NOINIT;	/* Disk Status */
@@ -231,7 +233,7 @@ static bool SD_RxDataBlock(BYTE *buff, uint16_t len)
 }
 
 /* transmit data block */
-#if _USE_WRITE == 1
+#if FF_FS_READONLY == 0
 static bool SD_TxDataBlock(const uint8_t *buff, BYTE token)
 {
 	uint8_t resp;
@@ -294,7 +296,7 @@ static bool SD_TxDataBlock(const uint8_t *buff, BYTE token)
 
 	return FALSE;
 }
-#endif /* _USE_WRITE */
+#endif /*  FF_FS_READONLY */
 
 /* transmit command */
 static BYTE SD_SendCmd(BYTE cmd, uint32_t arg)
@@ -484,7 +486,7 @@ DRESULT SD_disk_read(BYTE pdrv, BYTE* buff, DWORD sector, UINT count)
 }
 
 /* write sector */
-#if _USE_WRITE == 1
+#if FF_FS_READONLY == 0
 DRESULT SD_disk_write(BYTE pdrv, const BYTE* buff, DWORD sector, UINT count)
 {
 	/* pdrv should be 0 */
@@ -537,7 +539,7 @@ DRESULT SD_disk_write(BYTE pdrv, const BYTE* buff, DWORD sector, UINT count)
 
 	return count ? RES_ERROR : RES_OK;
 }
-#endif /* _USE_WRITE */
+#endif /* FF_FS_READONLY */
 
 /* ioctl */
 DRESULT SD_disk_ioctl(BYTE drv, BYTE ctrl, void *buff)

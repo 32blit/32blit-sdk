@@ -21,7 +21,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "dma.h"
-#include "fatfs.h"
 #include "hrtim.h"
 #include "i2c.h"
 #include "jpeg.h"
@@ -145,7 +144,6 @@ int main(void)
   //MX_TIM6_Init();
   MX_TIM15_Init();
   //MX_TIM16_Init();
-  MX_FATFS_Init();
   MX_RNG_Init();
   MX_USB_DEVICE_Init();
   MX_JPEG_Init();

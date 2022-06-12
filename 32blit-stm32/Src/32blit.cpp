@@ -17,7 +17,7 @@
 
 #include "tim.h"
 #include "rng.h"
-#include "fatfs.h"
+#include "ff.h"
 #include "quadspi.h"
 #include "usbd_core.h"
 #include "USBManager.h"
@@ -33,7 +33,6 @@ extern USBD_HandleTypeDef hUsbDeviceHS;
 extern USBManager g_usbManager;
 
 FATFS filesystem;
-extern Disk_drvTypeDef disk;
 static bool fs_mounted = false;
 
 bool exit_game = false;
@@ -209,8 +208,6 @@ void blit_tick() {
       fs_mounted = f_mount(&filesystem, "", 1) == FR_OK;
     else
       fs_mounted = false;
-
-    disk.is_initialized[0] = fs_mounted; // this gets set without checking if the init succeeded, un-set it if the init failed (or the card was removed)
   }
 
   auto time_to_next_tick = do_tick(blit::now());
