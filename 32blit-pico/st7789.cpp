@@ -10,7 +10,12 @@
 #include "pico/time.h"
 
 #include "config.h"
-#include "st7789.pio.h"
+
+#ifdef ST7789_8BIT
+#include "st7789-8bit.pio.h"
+#else
+#include "st7789-spi.pio.h"
+#endif
 
 namespace st7789 {
 
@@ -140,6 +145,15 @@ namespace st7789 {
     bi_decl_if_func_used(bi_1pin_with_name(LCD_BACKLIGHT_PIN, "Display Backlight"));
 #endif
 
+#ifdef ST7789_8BIT
+    // init RD
+    gpio_init(LCD_RD_PIN);
+    gpio_set_dir(LCD_RD_PIN, GPIO_OUT);
+    gpio_put(LCD_RD_PIN, 1);
+
+    bi_decl_if_func_used(bi_1pin_with_name(LCD_RD_PIN, "Display RD"));
+#endif
+
 #ifdef LCD_RESET_PIN
     gpio_set_function(LCD_RESET_PIN, GPIO_FUNC_SIO);
     gpio_set_dir(LCD_RESET_PIN, GPIO_OUT);
@@ -157,25 +171,50 @@ namespace st7789 {
     pio_sm = pio_claim_unused_sm(pio, true);
 
     pio_sm_config cfg = st7789_raw_program_get_default_config(pio_offset);
+
+#ifdef ST7789_8BIT
+    const int out_width = 8;
+
+    // < 15MHz
+#if OVERCLOCK_250
+    sm_config_set_clkdiv(&cfg, 9);
+#else
+    sm_config_set_clkdiv(&cfg, 5);
+#endif
+
+#else // SPI
+    const int out_width = 1;
+
 #if OVERCLOCK_250
     sm_config_set_clkdiv(&cfg, 2); // back to 62.5MHz from overclock
 #endif
+#endif
 
     sm_config_set_out_shift(&cfg, false, true, 8);
-    sm_config_set_out_pins(&cfg, LCD_MOSI_PIN, 1);
+    sm_config_set_out_pins(&cfg, LCD_MOSI_PIN, out_width);
     sm_config_set_fifo_join(&cfg, PIO_FIFO_JOIN_TX);
     sm_config_set_sideset_pins(&cfg, LCD_SCK_PIN);
 
-    pio_gpio_init(pio, LCD_MOSI_PIN);
+    // init pins
+    for(int i = 0; i < out_width; i++)
+      pio_gpio_init(pio, LCD_MOSI_PIN + i);
+
     pio_gpio_init(pio, LCD_SCK_PIN);
-    pio_sm_set_consecutive_pindirs(pio, pio_sm, LCD_MOSI_PIN, 1, true);
+
+    pio_sm_set_consecutive_pindirs(pio, pio_sm, LCD_MOSI_PIN, out_width, true);
     pio_sm_set_consecutive_pindirs(pio, pio_sm, LCD_SCK_PIN, 1, true);
 
     pio_sm_init(pio, pio_sm, pio_offset, &cfg);
     pio_sm_set_enabled(pio, pio_sm, true);
 
+#ifdef ST7789_8BIT
+    // these are really D0/WR
+    bi_decl_if_func_used(bi_pin_mask_with_name(0xFF << LCD_MOSI_PIN, "Display Data"));
+    bi_decl_if_func_used(bi_1pin_with_name(LCD_SCK_PIN, "Display WR"));
+#else
     bi_decl_if_func_used(bi_1pin_with_name(LCD_MOSI_PIN, "Display TX"));
     bi_decl_if_func_used(bi_1pin_with_name(LCD_SCK_PIN, "Display SCK"));
+#endif
 
     // if auto_init_sequence then send initialisation sequence
     // for our standard displays based on the width and height
