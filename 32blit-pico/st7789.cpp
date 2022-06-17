@@ -280,7 +280,11 @@ namespace st7789 {
       }
 
       if(width == 320 && height == 240) {
+#ifdef ST7789_ROTATE_180
+        madctl |= MADCTL::ROW_ORDER | MADCTL::SWAP_XY | MADCTL::SCAN_ORDER;
+#else
         madctl |= MADCTL::COL_ORDER | MADCTL::SWAP_XY | MADCTL::SCAN_ORDER;
+#endif
         set_window(0, 0, 320, 240);
       }
 
