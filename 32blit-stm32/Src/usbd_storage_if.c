@@ -258,9 +258,9 @@ int8_t STORAGE_Read_HS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t bl
   /* USER CODE BEGIN 13 */
 	g_usbManager.LogActivity();
   if (disk_read(lun, buf, blk_addr, blk_len) != RES_OK)
-	  return (USBD_OK);
-  else
-	  return(USBD_FAIL);
+	  return -1;
+
+	return USBD_OK;
   /* USER CODE END 13 */
 }
 
@@ -277,10 +277,9 @@ int8_t STORAGE_Write_HS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t b
   /* USER CODE BEGIN 14 */
 	g_usbManager.LogActivity();
   if (disk_write(lun, buf, blk_addr, blk_len) != RES_OK)
-	  return (USBD_OK);
-  else
-	  return(USBD_FAIL);
-  return (USBD_OK);
+	  return -1;
+
+	return USBD_OK;
   /* USER CODE END 14 */
 }
 
