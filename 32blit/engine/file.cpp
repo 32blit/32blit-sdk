@@ -29,10 +29,11 @@ namespace blit {
    *
    * \return Vector of files/directories
    */
-  std::vector<FileInfo> list_files(const std::string &path) {
+  std::vector<FileInfo> list_files(const std::string &path, std::function<bool(const FileInfo &)> filter) {
     std::vector<FileInfo> ret;
-    api.list_files(path, [&ret](FileInfo &file){
-      ret.push_back(file);
+    api.list_files(path, [&ret, &filter](FileInfo &file){
+      if(!filter || filter(file))
+        ret.push_back(file);
     });
 
     for(auto &buf_file : buf_files) {
