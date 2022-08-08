@@ -33,7 +33,10 @@ void MX_QUADSPI_Init(void)
   hqspi.Init.ClockPrescaler = 2;
   hqspi.Init.FifoThreshold = 1;
   hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
-  hqspi.Init.FlashSize = QSPI_FLASH_SIZE;
+
+  // Use a flash size 2x what we should to avoid "Memory-mapped read of last memory byte fails"
+  // (due to prefetch, it's actually the last 32 bytes)
+  hqspi.Init.FlashSize = QSPI_FLASH_SIZE + 1;
   hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
   hqspi.Init.ClockMode = QSPI_CLOCK_MODE_3;
   hqspi.Init.FlashID = QSPI_FLASH_ID_2;
