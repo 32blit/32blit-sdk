@@ -9,11 +9,11 @@
 using namespace blit;
 using std::floor;
 
-Size screen_size(160, 120);
+constexpr Size screen_size(160, 120);
 
 /* define storage for the framebuffer, spritesheet, and mask */
 Pen    __ss[128 * 128];
-uint8_t __m[320 * 240]; 
+uint8_t __m[screen_size.area()];
 
 /* create surfaces */
 Surface m((uint8_t *)__m, PixelFormat::M, screen_size);
@@ -128,7 +128,7 @@ struct Player {
     return a clipped camera point that doesn't allow the viewport to
     leave the world bounds
   */
-  Point camera() {      
+  Point camera() {
     static Rect b(screen_size.w / 2, screen_size.h / 2, map.bounds.w * 8 - screen.bounds.w, map.bounds.h * 8 - screen.bounds.h);
     return b.clamp(Point(floor(pos.x), floor(pos.y)));
   }
@@ -148,7 +148,6 @@ struct Player {
     static float air_acceleration_x = 0.2f;
     static float ground_drag_x = 0.70f;
     static float air_drag_x = 0.8f;
-    static float duration = 0.01f;
     static float jump_velocity = 4.0f;
     static Vec2 gravity(0, 0.98f / 10.0f);
 
@@ -162,7 +161,7 @@ struct Player {
     else {
       vel.y *= tile_under_ladder() ? 0.80f : 0.95f;
     }
-  
+
 
     // Handle Left/Right collisions
     pos.x += vel.x;
@@ -369,15 +368,13 @@ void init() {
   t.init(animation_timer_callback, 50, -1);
   t.start();
 
-  screen_size.w = 160;
-  screen_size.h = 120;
   //engine::set_screen_mode(screen_mode::hires);
 }
 
 
 void render(uint32_t time) {
   static int32_t x = 0; x++;
-      
+
   uint32_t ms_start = now();
 
   screen.mask = nullptr;
@@ -385,7 +382,7 @@ void render(uint32_t time) {
   screen.pen = Pen(0, 0, 0);
   screen.clear();
 
-  // mask out for lighting    
+  // mask out for lighting
   mshad.alpha = 255;
   mshad.pen = Pen(0);
   mshad.clear();
@@ -395,7 +392,7 @@ void render(uint32_t time) {
   m.clear();
 
   // render lights
-  
+
   for (uint8_t y = 0; y < 24; y++) {
     for (uint8_t x = 0; x < 48; x++) {
       uint32_t ti = map.layers["effects"].tile_at(Point(x, y));
@@ -452,7 +449,6 @@ void render(uint32_t time) {
   for (uint8_t y = 0; y < 24; y++) {
     for (uint8_t x = 0; x < 48; x++) {
       Point pt = world_to_screen(Point(x *   8, y * 8));
-      uint32_t ti = map.tile_index(Point(x, y));
 
       if (map.has_flag(Point(x, y), TileFlags::WATER)) {
         screen.rectangle(Rect(pt.x, pt.y, 8, 8));
@@ -467,7 +463,7 @@ void render(uint32_t time) {
       p++;
     }
   });
-  
+
   // blend over lighting
   screen.mask = &m;
   screen.pen = Pen(39 / 2, 39 / 2, 54 / 2);
@@ -481,7 +477,7 @@ void render(uint32_t time) {
   screen.sprite(139, Point(12, 2));
   screen.sprite(139, Point(22, 2));
 
-  
+
   // draw FPS meter
   uint32_t ms_end = now();
   screen.mask = nullptr;
@@ -490,7 +486,7 @@ void render(uint32_t time) {
     screen.pen = Pen(i * 5, 255 - (i * 5), 0);
     screen.rectangle(Rect(i * 3 + 1, 117, 2, 2));
   }
-  
+
 
   // highlight current player tile
   // point pt2 = player.current_tile();
@@ -670,7 +666,7 @@ void blur(uint8_t passes) {
     }
   }
 
-  // vertical      
+  // vertical
   for (uint8_t pass = 0; pass < passes; pass++) {
     for (uint16_t x = 0; x < m.bounds.w; x++) {
       uint8_t *p = (uint8_t *)m.data + x;
@@ -703,7 +699,7 @@ void blur(uint8_t passes) {
 
       p++;
     }
-    
+
     p = (uint8_t *)m.data + (m.bounds.h * m.bounds.w) - 1 - m.bounds.w;
     for (uint16_t y = 1; y < m.bounds.h - 1; y++) {
       p--;
@@ -813,7 +809,6 @@ void draw_flags() {
   for (uint8_t y = 0; y < 24; y++) {
     for (uint8_t x = 0; x < 48; x++) {
       Point pt = world_to_screen(Point(x * 8, y * 8));
-      uint32_t ti = map.tile_index(Point(x, y));
       uint8_t f = map.get_flags(Point(x, y));
 
       for (uint8_t i = 0; i < 3; i++) {

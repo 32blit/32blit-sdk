@@ -16,8 +16,6 @@ namespace blit {
     v03 = 0.0f; v13 = 0.0f; v23 = 0.0f; v33 = 0.0f;
   }
 
-  Mat4::Mat4(const Mat4 &m) = default;
-
   Mat4 Mat4::identity() {
     Mat4 m;
     m.v00 = 1.0f; m.v11 = 1.0f; m.v22 = 1.0f; m.v33 = 1.0f;

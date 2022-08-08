@@ -7,10 +7,6 @@
 
 using namespace blit;
 
-const uint16_t screen_width = 320;
-const uint16_t screen_height = 240;
-
-
 /* setup */
 void init() {
   /*
@@ -74,7 +70,7 @@ void draw(std::array<Vec2, 4> vecs, std::vector<Mat3> trs) {
 }
 
 void render(uint32_t time_ms) {
-  
+
   screen.pen = Pen(20, 30, 40);
   screen.clear();
 
@@ -86,11 +82,11 @@ void render(uint32_t time_ms) {
   };
 
   draw(
-    vecs,       
+    vecs,
     { Mat3::translation(Vec2(20, 20)),
       Mat3::scale(Vec2(2, 2)),
       Mat3::rotation(angle),
-      Mat3::translation(Vec2(10, 10)) 
+      Mat3::translation(Vec2(10, 10))
     }
   );
   /*
@@ -101,7 +97,7 @@ void render(uint32_t time_ms) {
     mat3::rotation(angle)
   );*/
 
-  
+
 
 //    screen.text("angle: " + std::to_string(int(angle)), minimal_font, rect(0, 0, 160, 10));
 

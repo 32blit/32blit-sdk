@@ -1,8 +1,5 @@
 #pragma once
 
-#undef UNUSED
-#define UNUSED(x) ((void)(__typeof__(x))(x)) // suppress "UNUSED" warnings
-
 #include "32blit.hpp"
 #include "persistence.h"
 #include "executable.hpp"

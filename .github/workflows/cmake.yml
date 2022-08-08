@@ -22,7 +22,7 @@ jobs:
             name: Linux
             cache-key: linux
             release-suffix: LIN64
-            cmake-args: '"-DCMAKE_CXX_CLANG_TIDY=clang-tidy;-header-filter=32blit;-checks=performance-*,portability-*,modernize-*,-modernize-use-trailing-return-type,-modernize-avoid-c-arrays,-modernize-use-nodiscard" -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache'
+            cmake-args: '"-DCMAKE_CXX_CLANG_TIDY=clang-tidy;-header-filter=(32blit|32blit-sdl)/;-checks=performance-*,portability-*,modernize-*,-modernize-use-trailing-return-type,-modernize-avoid-c-arrays,-modernize-use-nodiscard" -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache'
             apt-packages: ccache clang-tidy libsdl2-dev libsdl2-image-dev libsdl2-net-dev python3-setuptools
 
           - os: ubuntu-20.04

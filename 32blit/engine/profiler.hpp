@@ -153,7 +153,7 @@ private:
 class Profiler
 {
 public:
-	typedef std::vector<ProfilerProbe *>						ProfilerProbes;
+	using ProfilerProbes = std::vector<ProfilerProbe *>;
 	enum DisplayMetric {dmMin, dmCur, dmAvg, dmMax};
 
 

@@ -207,7 +207,7 @@ void render(uint32_t time_ms) {
   screen.alpha = 255;
   screen.mask = nullptr;
 
-  uint32_t ms_start = now();
+  //uint32_t ms_start = now();
 
   environment->draw(&screen, Rect(0, 0, 160, 120), effect_callbacks[effect]);
 
@@ -222,7 +222,7 @@ void render(uint32_t time_ms) {
     screen.text(effect_names[i], minimal_font, Rect(5, 19 + (i * 10), 100, 10));
   }
 
-  uint32_t ms_end = now();
+  //uint32_t ms_end = now();
 
   /*
   // draw FPS meter

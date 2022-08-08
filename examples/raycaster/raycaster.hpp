@@ -67,7 +67,7 @@ struct sprite {
 	uint8_t texture;
 	uint8_t color;
 	float distance;
-	const bool operator < (const sprite& rhs) const { return distance > rhs.distance; };
+	bool operator < (const sprite& rhs) const { return distance > rhs.distance; };
 };
 
 struct star {

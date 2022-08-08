@@ -108,8 +108,6 @@ void spark(uint32_t time_ms) {
   if (generate_index >= 500)
     generate_index = 0;
 
-  float w = sinf(time_ms / 1000.0f) * 0.05f;
-
   Vec2 gravity = Vec2(0, 9.8f * 2) * td;
 
   for (auto &p : s) {
@@ -163,8 +161,6 @@ void rain(uint32_t time_ms) {
   rain_generate(s[generate_index++]);
   if (generate_index >= 200)
     generate_index = 0;
-
-  float w = sinf(time_ms / 1000.0f) * 0.05f;
 
   Vec2 gravity = g * td;
 
@@ -233,12 +229,12 @@ void render(uint32_t time_ms) {
 
   //render_smoke();
 
-  uint32_t ms_start = now();
+  //uint32_t ms_start = now();
   spark(time_ms);
   smoke(time_ms);
   rain(time_ms);
   //render_basic_rain();
-  uint32_t ms_end = now();
+  //uint32_t ms_end = now();
 
   // draw grid
   screen.alpha = 255;

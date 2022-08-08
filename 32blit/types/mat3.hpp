@@ -9,7 +9,6 @@ namespace blit {
     float v02, v12, v22;
 
     Mat3();
-    Mat3(const Mat3 &m);
 
     inline  Mat3& operator*= (const Mat3 &m) {
       float r00 = this->v00 * m.v00 + this->v01 * m.v10 + this->v02 * m.v20;

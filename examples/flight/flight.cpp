@@ -11,9 +11,6 @@
 
 using namespace blit;
 
-const uint16_t screen_width = 160;
-const uint16_t screen_height = 120;
-
 // extra space allocated to take mipmaps
 // mipmaps are stored as Pen since they're the blended result of scaling the paletted image data
 uint8_t __sprites[(128 * 128) + (64 * 128 * sizeof(Pen))];
@@ -38,7 +35,7 @@ struct DrawObject {
   object o;
   float dist;
   Vec2 vs;
-  
+
   DrawObject(object obj, float dist, Vec2 vs): o(obj), dist(dist), vs(vs) {}
 
   bool operator< (const DrawObject &other) const {
@@ -109,7 +106,7 @@ void init() {
   }
 }
 
-/* get normalised value off 255 for the dist of object between the above values. 
+/* get normalised value off 255 for the dist of object between the above values.
   So if min is 300 and max is 800, if the distance is 400, we would want to get a scale of the alpha
 */
 float calculateFadeAlpha (const int maxDist, const int minDist, float dist) {
@@ -135,7 +132,7 @@ std::vector<DrawObject> drawObjects (std::vector<object> objects) {
     if(forward.dot(vo) > 0) { // check if object is in front of us
       Vec2 vs = world_to_screen(o.pos, fov, angle, pos, near, far, vp);
       float dist = (o.pos - pos).length();
-      
+
       vect.push_back(DrawObject(o,dist,vs));
     }
   }
@@ -168,7 +165,7 @@ void render(uint32_t time_ms) {
   const int maxClearDistance = 300; // before sprites stop being fully opaque. start to fade out.
 
   for (DrawObject o : drawables) {
-   
+
     if (o.dist < float(maxViewDistance)) { // check if the object is in a reasonable distance
 
       if (o.dist > maxClearDistance) {
@@ -200,7 +197,7 @@ void render(uint32_t time_ms) {
   for (mmp.y = 0; mmp.y < 64; mmp.y++) {
     for (mmp.x = 0; mmp.x < 64; mmp.x++) {
       Point tp = mmp * 2.0f;
-      
+
       int16_t tile_id = map.layers["ground"].tile_at(tp) - 1;
 
       if (tile_id != -1) {
@@ -216,7 +213,7 @@ void render(uint32_t time_ms) {
       }
     }
   }
-  
+
   Vec2 mmpos = (pos / 16.0f) + Vec2(160 - 64, 120 - 64);
   screen.pen = Pen(255, 255, 255);
   screen.pixel(mmpos);
@@ -258,7 +255,7 @@ float lerping(float a, float b, float f) {
 }
 
 void update(uint32_t time) {
-  
+
   static float angle_delta = 0.0f;
   float target_speed;
   float lerp_value = 0.002f;
@@ -268,14 +265,14 @@ void update(uint32_t time) {
 
   angle_delta -= joystick.x / 80.0f ;
 
-  if (pressed(Button::Y)) { 
+  if (pressed(Button::Y)) {
     // boost button
       target_speed = is_off_ground() ? 2.0f : 0.5f;
   } else {
       target_speed = is_off_ground() ? 0.8f : 0.0f;
   }
 
-  if (pressed(Button::X))  { 
+  if (pressed(Button::X))  {
     // break button
     target_speed = is_off_ground() ? 0.5f : 0.0f;
 
@@ -284,8 +281,8 @@ void update(uint32_t time) {
     }
   }
 
-  angle += deg2rad(angle_delta);   
-  Mat3 r = Mat3::rotation(angle);    
+  angle += deg2rad(angle_delta);
+  Mat3 r = Mat3::rotation(angle);
   pos = pos - (vel * r);
 
   if (pressed(Button::A) || (joystick.y > 0.0f)) {

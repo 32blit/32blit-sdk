@@ -8,9 +8,6 @@
 
 using namespace blit;
 
-const uint16_t screen_width = 320;
-const uint16_t screen_height = 240;
-
 /* setup */
 void init() {
   // You gotta load those tasty sprites first

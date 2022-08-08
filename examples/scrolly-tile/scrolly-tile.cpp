@@ -138,10 +138,8 @@ void for_each_tile(tile_callback callback, void *args) {
 
 uint8_t get_tile_at(uint8_t x, uint8_t y) {
     // Get the tile at a given x/y grid coordinate
-    if (x < 0) return TILE_SOLID;
     if (x > 15) return TILE_SOLID;
     if (y > TILES_Y) return 0;
-    if(y < 0) return TILE_SOLID;
     uint16_t index = (y * TILES_X) + x;
     return tiles[index];
 }
@@ -400,7 +398,7 @@ void new_level() {
         update_tiles();
     }
 
-    bool placed_successfully = place_player();
+    place_player();
 }
 
 void new_game() {
@@ -643,6 +641,7 @@ void update(uint32_t time_ms) {
                     break;
                 }
                 // Fall through to air friction
+                [[fallthrough]];
             case air:
                 // Air friction
                 player_velocity.y *= 0.98f;

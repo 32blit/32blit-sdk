@@ -290,7 +290,7 @@ static AVFrame *get_audio_frame(OutputStream *ost)
 static int write_audio_frame(AVFormatContext *oc, OutputStream *ost)
 {
 	AVCodecContext *c;
-	AVPacket pkt = { 0 }; // data and size must be 0;
+	AVPacket pkt = {}; // data and size must be 0;
 	AVFrame *frame;
 	int ret;
 	//int got_packet;
@@ -454,7 +454,7 @@ static int write_video_frame(AVFormatContext *oc, OutputStream *ost)
 	int ret;
 	AVCodecContext *c;
 	AVFrame *frame;
-	AVPacket pkt = { 0 };
+	AVPacket pkt = {};
 	c = ost->enc;
 	frame = get_video_frame(ost);
 	av_init_packet(&pkt);

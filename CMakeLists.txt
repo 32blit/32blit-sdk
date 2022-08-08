@@ -5,8 +5,10 @@ include(32blit-pico/sdk_import.cmake)
 
 project(32blit)
 
-if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd4244")
+if(MSVC)
+    add_compile_options("/W4" "/wd4244" "/wd4324" "/wd4458" "/wd4100")
+else()
+    add_compile_options("-Wall" "-Wextra" "-Wdouble-promotion" "-Wno-unused-parameter")
 endif()
 
 find_package (32BLIT CONFIG REQUIRED PATHS .)

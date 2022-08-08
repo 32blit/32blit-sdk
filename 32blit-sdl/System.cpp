@@ -164,6 +164,7 @@ void blit_send_message(const uint8_t *data, uint16_t length) {
 const Uint32 System::timer_event = SDL_RegisterEvents(2);
 const Uint32 System::loop_event = System::timer_event + 1;
 
+#ifndef __EMSCRIPTEN__
 // Thread bouncers
 static int system_timer_thread(void *ptr) {
 	// Bounce back in to the class.
@@ -176,7 +177,7 @@ static int system_loop_thread(void *ptr) {
 	System *sys = (System *)ptr;
 	return sys->update_thread();
 }
-
+#endif
 
 System::System() {
 	m_input = SDL_CreateMutex();

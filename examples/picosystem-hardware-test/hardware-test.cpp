@@ -42,7 +42,7 @@ void init() {
   gpio_set_dir(VBUS_DETECT_PIN, GPIO_IN);
   gpio_init(CHARGE_STATUS_PIN);
   gpio_set_dir(CHARGE_STATUS_PIN, GPIO_IN);
-  
+
   channels[0].waveforms   = Waveform::SQUARE;
   channels[0].attack_ms   = 16;
   channels[0].decay_ms    = 168;
@@ -57,7 +57,6 @@ void init() {
 }
 
 void render(uint32_t time) {
-  char text_buf[100] = {0};
   bool button_a = buttons & Button::A;
   bool button_b = buttons & Button::B;
   bool button_x = buttons & Button::X;

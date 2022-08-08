@@ -41,6 +41,11 @@ target_include_directories(BlitEngine
 	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+get_filename_component(3RD_PARTY_DIR ../3rd-party ABSOLUTE)
+target_include_directories(BlitEngine
+	PRIVATE ${3RD_PARTY_DIR}
+)
+
 # version variables
 string(TIMESTAMP BUILD_DATE "%Y-%m-%d" UTC)
 if(DEFINED ENV{TRAVIS_TAG})
