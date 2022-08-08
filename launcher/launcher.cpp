@@ -190,7 +190,7 @@ void load_file_list(std::string directory) {
   for(auto &file : files) {
     auto last_dot = file.name.find_last_of('.');
 
-    auto ext = file.name.substr(file.name.find_last_of('.') + 1);
+    auto ext = file.name.substr(last_dot + 1);
 
     for(auto &c : ext)
       c = tolower(c);
