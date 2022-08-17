@@ -89,7 +89,7 @@ void sort_file_list() {
     }
 }
 
-void load_directory_list(std::string directory) {
+void load_directory_list(const std::string &directory) {
   directory_list.clear();
 
   auto dir_filter = [](const FileInfo &info){
@@ -165,7 +165,7 @@ bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata
   return false;
 }
 
-void load_file_list(std::string directory) {
+void load_file_list(const std::string &directory) {
 
   game_list.clear();
 
