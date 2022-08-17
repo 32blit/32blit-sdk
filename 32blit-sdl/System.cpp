@@ -306,9 +306,13 @@ void System::loop() {
   blit::joystick.y = shadow_joystick[1];
   SDL_UnlockMutex(m_input);
 
-  // only render at 50Hz
+  // only render at 50Hz (main loop runs at 100Hz)
+  // however, the emscripten loop (usually) runs at the display refresh rate
   auto time_now = ::now();
-  if(time_now - last_render_time >= 20) {
+#ifndef __EMSCRIPTEN__
+  if(time_now - last_render_time >= 20)
+#endif
+  {
     blit::render(time_now);
     last_render_time = time_now;
   }
