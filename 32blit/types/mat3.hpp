@@ -4,9 +4,9 @@ namespace blit {
   struct Vec2;
 
   struct Mat3 {
-    float v00, v10, v20;
-    float v01, v11, v21;
-    float v02, v12, v22;
+    float v00, v01, v02;
+    float v10, v11, v12;
+    float v20, v21, v22;
 
     Mat3();
 

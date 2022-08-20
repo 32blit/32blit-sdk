@@ -8,9 +8,9 @@
 namespace blit {
 
   Mat3::Mat3() {
-    v00 = 0.0f; v10 = 0.0f; v20 = 0.0f;
-    v01 = 0.0f; v11 = 0.0f; v21 = 0.0f;
-    v02 = 0.0f; v12 = 0.0f; v22 = 0.0f;
+    v00 = 0.0f; v01 = 0.0f; v02 = 0.0f;
+    v10 = 0.0f; v11 = 0.0f; v12 = 0.0f;
+    v20 = 0.0f; v21 = 0.0f; v22 = 0.0f;
   }
 
   Mat3 Mat3::identity() {
@@ -26,8 +26,8 @@ namespace blit {
     Mat3 r = Mat3::identity();
 
     r.v00 = c;
-    r.v01 = s;
-    r.v10 = -s;
+    r.v01 = -s;
+    r.v10 = s;
     r.v11 = c;
 
     return r;
