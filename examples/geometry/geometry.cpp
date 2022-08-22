@@ -202,7 +202,7 @@ std::vector<Vec2> random_convex_polygon(Vec2 origin, float radius) {
 void rotate_polygon(std::vector<Vec2> &points, float angle, Vec2 origin) {
     Mat3 t = Mat3::identity();
     t *= Mat3::translation(origin);
-    t *= Mat3::rotation(angle);
+    t *= Mat3::rotation(-angle);
     t *= Mat3::translation(-origin);
     for (auto &p : points) {
         p *= t;
