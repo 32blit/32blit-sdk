@@ -1,7 +1,7 @@
 #include <cmath>
 #include <cstring>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <list>
 
 #include "launcher.hpp"
@@ -89,7 +89,7 @@ void sort_file_list() {
     }
 }
 
-void load_directory_list(std::string directory) {
+void load_directory_list(const std::string &directory) {
   directory_list.clear();
 
   auto dir_filter = [](const FileInfo &info){
@@ -165,7 +165,7 @@ bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata
   return false;
 }
 
-void load_file_list(std::string directory) {
+void load_file_list(const std::string &directory) {
 
   game_list.clear();
 
@@ -190,7 +190,7 @@ void load_file_list(std::string directory) {
   for(auto &file : files) {
     auto last_dot = file.name.find_last_of('.');
 
-    auto ext = file.name.substr(file.name.find_last_of('.') + 1);
+    auto ext = file.name.substr(last_dot + 1);
 
     for(auto &c : ext)
       c = tolower(c);
