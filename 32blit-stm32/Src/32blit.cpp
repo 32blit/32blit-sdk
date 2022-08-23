@@ -80,6 +80,7 @@ static void init_api_shared() {
     api.channels[i] = AudioChannel();
 
   api.message_received = nullptr;
+  api.i2c_completed = nullptr;
 }
 
 bool g_bConsumerConnected = true;
@@ -389,6 +390,9 @@ void blit_init() {
     blit::api.get_metadata = ::get_metadata;
 
     blit::api.tick_function_changed = false;
+
+    blit::api.i2c_send = i2c::user_send;
+    blit::api.i2c_receive = i2c::user_receive;
 
   display::init();
 
