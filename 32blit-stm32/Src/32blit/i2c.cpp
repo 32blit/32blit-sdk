@@ -194,7 +194,7 @@ namespace i2c {
       {
         auto addr = user_addr;
         user_addr = 0;
-        if(api.i2c_completed)
+        if(api.i2c_completed && !blit_user_code_disabled())
           api.i2c_completed(addr, user_reg, user_buf, user_buf_len);
 
         blit_i2c_delay(16, SEND_ACL);

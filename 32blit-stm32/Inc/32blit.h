@@ -34,6 +34,7 @@ bool blit_user_code_running();
 extern "C" void blit_reset_with_error();
 void blit_enable_user_code();
 void blit_disable_user_code();
+bool blit_user_code_disabled();
 RawMetadata *blit_get_running_game_metadata();
 
 void blit_menu_update(uint32_t time);

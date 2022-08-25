@@ -734,6 +734,10 @@ void blit_disable_user_code() {
   user_code_disabled = true;
 }
 
+bool blit_user_code_disabled() {
+  return user_code_disabled;
+}
+
 RawMetadata *blit_get_running_game_metadata() {
   if(!blit_user_code_running())
     return nullptr;
