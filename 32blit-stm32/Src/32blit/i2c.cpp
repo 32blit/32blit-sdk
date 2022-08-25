@@ -102,7 +102,7 @@ namespace i2c {
       }
       return;
     }
-    if(HAL_I2C_GetState(&hi2c4) != HAL_I2C_STATE_READY){
+    if(HAL_I2C_GetState(&hi2c4) != HAL_I2C_STATE_READY || __HAL_I2C_GET_FLAG(&hi2c4, I2C_FLAG_BUSY)){
       return;
     }
 
