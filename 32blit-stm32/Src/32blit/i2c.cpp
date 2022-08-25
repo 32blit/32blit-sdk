@@ -100,6 +100,7 @@ namespace i2c {
       if(HAL_GetTick() >= i2c_delay_until){
         i2c_state = i2c_next_state;
       }
+      return;
     }
     if(HAL_I2C_GetState(&hi2c4) != HAL_I2C_STATE_READY){
       return;
