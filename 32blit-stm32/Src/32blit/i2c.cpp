@@ -53,7 +53,6 @@ static RunningAverage<float> accel_z(8);
 static I2CState i2c_state = SEND_ACL;
 static uint8_t i2c_buffer[6] = {0};
 static uint8_t i2c_reg = 0;
-static HAL_StatusTypeDef i2c_status = HAL_OK;
 static uint32_t i2c_delay_until = 0;
 static I2CState i2c_next_state = SEND_ACL;
 
@@ -112,20 +111,12 @@ namespace i2c {
         break;
       case SEND_ACL:
         i2c_reg = is_beta_unit ? MSA301_X_ACCEL_RESISTER : (LIS3DH_OUT_X_L | LIS3DH_ADDR_AUTO_INC);
-        i2c_status = HAL_I2C_Master_Transmit_IT(&hi2c4, accel_address, &i2c_reg, 1);
-        if(i2c_status == HAL_OK){
-          i2c_state = RECV_ACL;
-        } else {
-          blit_i2c_delay(16, SEND_ACL);
-        }
+        HAL_I2C_Master_Transmit_IT(&hi2c4, accel_address, &i2c_reg, 1);
+        i2c_state = RECV_ACL;
         break;
       case RECV_ACL:
-        i2c_status = HAL_I2C_Master_Receive_IT(&hi2c4, accel_address, i2c_buffer, 6);
-        if(i2c_status == HAL_OK){
-          i2c_state = PROC_ACL;
-        } else {
-          blit_i2c_delay(16, SEND_ACL);
-        }
+        HAL_I2C_Master_Receive_IT(&hi2c4, accel_address, i2c_buffer, 6);
+        i2c_state = PROC_ACL;
         break;
       case PROC_ACL:
         // LIS3DH & MSA301 - 12-bit left-justified
