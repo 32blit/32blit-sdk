@@ -176,7 +176,11 @@ void render(uint32_t time_ms) {
 
       Rect sr(120, 112, 8, 16);
 
-      screen.blit(sprites, sr, o.vs - Point(4, 15));
+      float scale = 200.0f / o.dist;
+
+      Rect dr(o.vs - Point(4, 15) * scale, sr.size() * scale);
+
+      screen.stretch_blit(sprites, sr, dr);
     }
   }
 
