@@ -126,7 +126,7 @@ std::vector<DrawObject> drawObjects (std::vector<object> objects) {
     Vec2 vo = (o.pos - pos);
     vo.normalize();
     Vec2 forward(0, -1);
-    forward *= Mat3::rotation(-angle);
+    forward *= Mat3::rotation(angle);
 
     // TODO: provide a "is_point_in_frustrum" check
     if(forward.dot(vo) > 0) { // check if object is in front of us
@@ -223,7 +223,7 @@ void render(uint32_t time_ms) {
   screen.pixel(mtpos);
 
   Vec2 forward(0, -10);
-  forward *= Mat3::rotation(-angle);
+  forward *= Mat3::rotation(angle);
   screen.pen = Pen(255, 255, 255, 100);
   screen.line(mmpos, mmpos + forward);
 
@@ -260,10 +260,10 @@ void update(uint32_t time) {
   float target_speed;
   float lerp_value = 0.002f;
 
-  if (pressed(Button::DPAD_LEFT))  { angle_delta += 0.05f; }
-  if (pressed(Button::DPAD_RIGHT)) { angle_delta -= 0.05f; }
+  if (pressed(Button::DPAD_LEFT))  { angle_delta -= 0.05f; }
+  if (pressed(Button::DPAD_RIGHT)) { angle_delta += 0.05f; }
 
-  angle_delta -= joystick.x / 80.0f ;
+  angle_delta += joystick.x / 80.0f ;
 
   if (pressed(Button::Y)) {
     // boost button
@@ -282,7 +282,7 @@ void update(uint32_t time) {
   }
 
   angle += deg2rad(angle_delta);
-  Mat3 r = Mat3::rotation(-angle);
+  Mat3 r = Mat3::rotation(angle);
   pos = pos - (vel * r);
 
   if (pressed(Button::A) || (joystick.y > 0.0f)) {

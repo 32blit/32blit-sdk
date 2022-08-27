@@ -34,7 +34,7 @@ namespace blit {
     Vec2 v(w - pos);
     v.normalize();
     Vec2 f(0, -1);
-    f *= Mat3::rotation(-angle);
+    f *= Mat3::rotation(angle);
 
     float wd = (w - pos).length();
     float dot = f.dot(v);
@@ -72,13 +72,13 @@ namespace blit {
    */
   Vec2 screen_to_world(Vec2 s, float fov, float angle, Vec2 pos, float near, float far, Rect viewport) {
     Vec2 forward(0, -1);
-    forward *= Mat3::rotation(-angle);
+    forward *= Mat3::rotation(angle);
 
     Vec2 left = forward;
-    left *= Mat3::rotation((fov / 2.0f));
+    left *= Mat3::rotation(-(fov / 2.0f));
 
     Vec2 right = forward;
-    right *= Mat3::rotation(-(fov / 2.0f));
+    right *= Mat3::rotation((fov / 2.0f));
 
     float distance = ((far - near) / float(s.y - viewport.y)) + near;
     
