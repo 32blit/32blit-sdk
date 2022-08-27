@@ -154,7 +154,11 @@ void render(uint32_t time_ms) {
 
   screen.alpha = 55;
 
-  screen.blit(water, Rect(0, 0, 64, 64), Point(0, 50));
+  for (uint8_t y = 50; y < 120; y += 64) {
+    for (uint8_t x = 0; x < 160; x += 64) {
+      screen.blit(water, Rect(0, 0, 64, 64), Point(x, y));
+    }
+  }
 
   mode7(&screen, sprites, &map.layers["ground"], fov, angle, pos, near, far, vp);
 
@@ -264,10 +268,15 @@ void update(uint32_t time) {
   float target_speed;
   float lerp_value = 0.002f;
 
-  if (pressed(Button::DPAD_LEFT))  { angle_delta -= 0.05f; }
-  if (pressed(Button::DPAD_RIGHT)) { angle_delta += 0.05f; }
+  if (pressed(Button::DPAD_LEFT))  { angle_delta -= 0.025f; }
+  if (pressed(Button::DPAD_RIGHT)) { angle_delta += 0.025f; }
 
-  angle_delta += joystick.x / 80.0f ;
+  angle_delta += joystick.x / 40.0f;
+
+  // Clamp angle_delta
+  // This stops the user from turning faster by using the DPAD and joystick at the same time
+  if (angle_delta > 0.5f) { angle_delta = 0.5f; }
+  else if (angle_delta < -0.5f) { angle_delta = -0.5f; }
 
   if (pressed(Button::Y)) {
     // boost button
