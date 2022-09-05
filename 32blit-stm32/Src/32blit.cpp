@@ -51,6 +51,7 @@ static int (*user_tick)(uint32_t time) = nullptr;
 static void (*user_render)(uint32_t time) = nullptr;
 static bool user_code_disabled = false;
 
+static bool in_user_code = false;
 static bool game_switch_requested = false;
 
 // flash cache, most of this is hanlded by the firmware. This needs to be here so switch_execution can reset it
@@ -210,11 +211,12 @@ void blit_tick() {
       fs_mounted = false;
   }
 
+  in_user_code = do_tick == user_tick;
   auto time_to_next_tick = do_tick(blit::now());
+  in_user_code = false;
 
   // handle delayed switch
   if(game_switch_requested) {
-    user_tick = nullptr;
     if(!blit_switch_execution(persist.last_game_offset, true)) {
       // new game failed and old game will now be broken
       // reset and let the firmware show the error
@@ -660,8 +662,8 @@ bool blit_switch_execution(uint32_t address, bool force_game)
 
     persist.last_game_offset = address;
 
-    // game possibly running, wait until it isn't
-    if(user_tick && !user_code_disabled) {
+    // game running, wait until it isn't
+    if(in_user_code) {
       game_switch_requested = true;
       return true;
     }
