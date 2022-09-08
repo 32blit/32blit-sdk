@@ -68,7 +68,7 @@ else()
 		set(CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}" "${ANDROID_LIB_DIR}/${ANDROID_ABI}") # won't search outside this
 	endif()
 
-	if(NOT SDL2_LIBRARIES OR NOT SDL2_INCLUDE_DIRS)
+	if(NOT TARGET SDL2::SDL2 AND NOT TARGET SDL2::SDL2-static)
 		find_package(SDL2 REQUIRED)
 	endif()
 
