@@ -6,9 +6,9 @@ function(fetch_sdl2_library directory url filename hash)
             TIMEOUT 120
             EXPECTED_HASH SHA1=${hash}
             TLS_VERIFY ON)
-        message(STATUS "Extracting ${filename}")
     endif()
     if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/${directory})
+        message(STATUS "Extracting ${filename}")
         # tar -xf should work on Windows 10 build 17063 or later (Dec 2017)
         execute_process(COMMAND tar -xf ${filename}
                         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
