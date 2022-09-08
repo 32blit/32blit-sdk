@@ -49,3 +49,7 @@ endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/SDL2-2.24.0/cmake/sdl2-config.cmake)
 get_property(SDL2_DLL TARGET SDL2::SDL2 PROPERTY IMPORTED_LOCATION)
+
+# help cmake to find the other libs
+set(SDL2_image_DIR ${CMAKE_CURRENT_LIST_DIR}/SDL2_image-2.6.2/cmake)
+set(SDL2_net_DIR ${CMAKE_CURRENT_LIST_DIR}/SDL2_net-2.2.0/cmake)
