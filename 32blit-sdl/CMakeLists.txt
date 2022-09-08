@@ -10,6 +10,39 @@ add_library(BlitHalSDL STATIC
 	System.cpp
 )
 
+function (find_sdl_lib lib_name header_name)
+	string(TOUPPER ${lib_name} VAR_PREFIX)
+
+	find_path(${VAR_PREFIX}_INCLUDE_DIR ${header_name}
+		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
+		PATH_SUFFIXES SDL2 include/SDL2 include
+	)
+
+	# vs
+	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+		set(VC_LIB_PATH_SUFFIX lib/x64)
+	else()
+		set(VC_LIB_PATH_SUFFIX lib/x86)
+	endif()
+
+	find_library(${VAR_PREFIX}_LIBRARY
+		NAMES ${lib_name}
+		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
+		PATH_SUFFIXES lib ${VC_LIB_PATH_SUFFIX}
+	)
+
+	# dlls
+	find_file(${VAR_PREFIX}_DLL ${lib_name}.dll
+		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
+		PATH_SUFFIXES bin ${VC_LIB_PATH_SUFFIX}
+	)
+
+	if(NOT ${VAR_PREFIX}_INCLUDE_DIR OR NOT ${VAR_PREFIX}_LIBRARY)
+		message(FATAL_ERROR "${lib_name} not found!")
+	endif()
+
+endfunction()
+
 if(EMSCRIPTEN)
 	target_compile_options(BlitHalSDL
 		PRIVATE -sUSE_SDL=2 -sUSE_SDL_IMAGE=2 -sUSE_SDL_NET=2
@@ -57,56 +90,8 @@ else()
 	endif()
 
 	# find SDL2_image
-	# TODO: may need to be more complicated
-	find_path(SDL2_IMAGE_INCLUDE_DIR SDL_image.h
-		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
-		PATH_SUFFIXES SDL2 include/SDL2 include
-	)
-
-	# vs
-	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-		set(VC_LIB_PATH_SUFFIX lib/x64)
-	else()
-		set(VC_LIB_PATH_SUFFIX lib/x86)
-	endif()
-
-	find_library(SDL2_IMAGE_LIBRARY
-		NAMES SDL2_image
-		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
-		PATH_SUFFIXES lib ${VC_LIB_PATH_SUFFIX}
-	)
-
-	# dlls
-	find_file(SDL2_IMAGE_DLL SDL2_image.dll
-		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
-		PATH_SUFFIXES bin ${VC_LIB_PATH_SUFFIX}
-	)
-
-	#SDL_net
-	find_path(SDL2_NET_INCLUDE_DIR SDL_net.h
-		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
-		PATH_SUFFIXES SDL2 include/SDL2 include
-	)
-
-	find_library(SDL2_NET_LIBRARY
-		NAMES SDL2_net
-		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
-		PATH_SUFFIXES lib ${VC_LIB_PATH_SUFFIX}
-	)
-
-	# dlls
-	find_file(SDL2_NET_DLL SDL2_net.dll
-		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
-		PATH_SUFFIXES bin ${VC_LIB_PATH_SUFFIX}
-	)
-
-	if(NOT SDL2_IMAGE_INCLUDE_DIR OR NOT SDL2_IMAGE_LIBRARY)
-		message(FATAL_ERROR "SDL_image not found!")
-	endif()
-
-	if(NOT SDL2_NET_INCLUDE_DIR OR NOT SDL2_NET_LIBRARY)
-		message(FATAL_ERROR "SDL_net not found!")
-	endif()
+	find_sdl_lib(SDL2_image SDL_image.h)
+	find_sdl_lib(SDL2_net SDL_net.h)
 
 	target_include_directories(BlitHalSDL
 		PRIVATE	${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_NET_INCLUDE_DIR}
