@@ -47,18 +47,5 @@ if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/include)
 
 endif()
 
-set(SDL2_INCLUDE_DIRS "${SDL2_DIR}/include")
-
-if(CMAKE_GENERATOR_PLATFORM)
-    set(SDL2_LIBDIR "${SDL2_DIR}/lib/${CMAKE_GENERATOR_PLATFORM}")
-else()
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        set(SDL2_LIBDIR "${SDL2_DIR}/lib/x64/")
-    else()
-        set(SDL2_LIBDIR "${SDL2_DIR}/lib/x86/")
-    endif()
-endif()
-
-set(SDL2_LIBRARIES "${SDL2_LIBDIR}/SDL2.lib" "${SDL2_LIBDIR}/SDL2main.lib")
-
-set(SDL2_DLL "${SDL2_LIBDIR}/SDL2.dll")
+include(${CMAKE_CURRENT_LIST_DIR}/SDL2-2.24.0/cmake/sdl2-config.cmake)
+get_property(SDL2_DLL TARGET SDL2::SDL2 PROPERTY IMPORTED_LOCATION)
