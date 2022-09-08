@@ -25,24 +25,24 @@ endfunction(fetch_sdl2_library)
 if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/include)
 
     fetch_sdl2_library(
-        SDL2-2.0.12
-        https://www.libsdl.org/release/
-        SDL2-devel-2.0.12-VC.zip
-        6839b6ec345ef754a6585ab24f04e125e88c3392
+        SDL2-2.24.0
+        https://github.com/libsdl-org/SDL/releases/download/release-2.24.0/
+        SDL2-devel-2.24.0-VC.zip
+        8a54459189e88c30ba024ee5f18ce4b1a5d1d9e7
     )
 
     fetch_sdl2_library(
-        SDL2_image-2.0.5
-        https://www.libsdl.org/projects/SDL_image/release/
-        SDL2_image-devel-2.0.5-VC.zip
-        137f86474691f4e12e76e07d58d5920c8d844d5b
+        SDL2_image-2.6.2
+        https://github.com/libsdl-org/SDL_image/releases/download/release-2.6.2/
+        SDL2_image-devel-2.6.2-VC.zip
+        4111affcca1f4b41c2f4b4c445ccf06fe081b5e9
     )
 
     fetch_sdl2_library(
-        SDL2_net-2.0.1
-        https://www.libsdl.org/projects/SDL_net/release/
-        SDL2_net-devel-2.0.1-VC.zip
-        90adcf4d0d17aed26c1e56ade159d90db4b98b54
+        SDL2_net-2.2.0
+        https://github.com/libsdl-org/SDL_net/releases/download/release-2.2.0/
+        SDL2_net-devel-2.2.0-VC.zip
+        c8ff358a5c8338002b05ab6de7ce91ee1c86bd45
     )
 
 endif()
