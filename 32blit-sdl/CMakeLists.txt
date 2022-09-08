@@ -34,23 +34,10 @@ function (find_sdl_lib lib_name header_name)
 		PATH_SUFFIXES SDL2 include/SDL2 include
 	)
 
-	# vs
-	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-		set(VC_LIB_PATH_SUFFIX lib/x64)
-	else()
-		set(VC_LIB_PATH_SUFFIX lib/x86)
-	endif()
-
 	find_library(${VAR_PREFIX}_LIBRARY
 		NAMES ${lib_name}
 		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
-		PATH_SUFFIXES lib ${VC_LIB_PATH_SUFFIX}
-	)
-
-	# dlls
-	find_file(${VAR_PREFIX}_DLL ${lib_name}.dll
-		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
-		PATH_SUFFIXES bin ${VC_LIB_PATH_SUFFIX}
+		PATH_SUFFIXES lib
 	)
 
 	if(NOT ${VAR_PREFIX}_INCLUDE_DIR OR NOT ${VAR_PREFIX}_LIBRARY)
