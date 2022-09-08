@@ -13,6 +13,22 @@ add_library(BlitHalSDL STATIC
 function (find_sdl_lib lib_name header_name)
 	string(TOUPPER ${lib_name} VAR_PREFIX)
 
+	# new enough SDL_image/_net have cmake config support
+	find_package(${lib_name} QUIET)
+	if(TARGET ${lib_name}::${lib_name})
+		set(${VAR_PREFIX}_LIBRARY ${lib_name}::${lib_name} PARENT_SCOPE)
+		set(${VAR_PREFIX}_INCLUDE_DIR "" PARENT_SCOPE)
+
+		if(WIN32)
+			get_property(LIB_DLL TARGET ${lib_name}::${lib_name} PROPERTY IMPORTED_LOCATION)
+			set(${VAR_PREFIX}_DLL ${LIB_DLL} PARENT_SCOPE)
+		endif()
+
+		return()
+	endif()
+
+	message("find_package(${lib_name}) failed, trying manual search...")
+
 	find_path(${VAR_PREFIX}_INCLUDE_DIR ${header_name}
 		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
 		PATH_SUFFIXES SDL2 include/SDL2 include
