@@ -15,10 +15,6 @@ function(fetch_sdl2_library directory url filename hash)
     endif()
     # in future we might be able to use:
     # file(ARCHIVE_EXTRACT INPUT ${filename})
-    file(COPY ${CMAKE_CURRENT_LIST_DIR}/${directory}/include
-        DESTINATION ${CMAKE_CURRENT_LIST_DIR}/)
-    file(COPY ${CMAKE_CURRENT_LIST_DIR}/${directory}/lib
-        DESTINATION ${CMAKE_CURRENT_LIST_DIR}/)
 endfunction(fetch_sdl2_library)
 
 
