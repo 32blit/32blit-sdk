@@ -46,6 +46,10 @@ else()
 
 	# If SDL2 was built using CMake, the generated configuration files define SDL2::* targets instead of the SDL2_* variables
 	if(TARGET SDL2::SDL2)
+		if(NOT TARGET SDL2::SDL2main)
+			add_library(SDL2::SDL2main IMPORTED INTERFACE) # 2.24.0 is missing this target for macOS
+		endif()
+
 		set(SDL2_LIBRARIES SDL2::SDL2main SDL2::SDL2)
 	# handle SDL2 built with only a static library
 	elseif(TARGET SDL2::SDL2-static)
