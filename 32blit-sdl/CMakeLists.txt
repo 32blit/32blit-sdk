@@ -21,14 +21,6 @@ if(EMSCRIPTEN)
 
 	set(EMSCRIPTEN_SHELL ${CMAKE_CURRENT_SOURCE_DIR}/emscripten-shell.html PARENT_SCOPE)
 else()
-	# attempt to find the framework (find_package won't work as there's no config file)
-	if(APPLE)
-		find_library(SDL2_LIBRARIES NAMES SDL2)
-
-		find_path(SDL2_INCLUDE_DIRS NAMES SDL.h
-			PATHS ~/Library/Frameworks /Library/Frameworks
-		)
-	endif()
 
 	# fallback guess for SDL location on Windows
 	if(WIN32 AND NOT SDL2_DIR AND 32BLIT_DIR)
@@ -42,6 +34,10 @@ else()
 
 	if(NOT SDL2_LIBRARIES OR NOT SDL2_INCLUDE_DIRS)
 		find_package(SDL2 REQUIRED)
+	endif()
+
+	if(SDL2_FRAMEWORK_PATH)
+		set(SDL2_FRAMEWORK_PATH ${SDL2_FRAMEWORK_PATH} PARENT_SCOPE)
 	endif()
 
 	# If SDL2 was built using CMake, the generated configuration files define SDL2::* targets instead of the SDL2_* variables
@@ -214,8 +210,8 @@ function(blit_executable NAME SOURCES)
 		set(SEARCH_DIRS)
 
 		# assuming all frameworks installed in the same place
-		if(SDL2_LIBRARIES MATCHES "\.framework$")
-			get_filename_component(FW_PARENT_DIR ${SDL2_LIBRARIES} DIRECTORY)
+		if(SDL2_FRAMEWORK_PATH)
+			get_filename_component(FW_PARENT_DIR ${SDL2_FRAMEWORK_PATH} DIRECTORY)
 			list(APPEND SEARCH_DIRS ${FW_PARENT_DIR})
 		endif()
 
