@@ -218,10 +218,18 @@ function(blit_executable NAME SOURCES)
 	elseif(APPLE)
 		# TODO: this should be run in both cases to handle any other dependencies, but it fails on the SDL frameworks and there currently aren't any other deps...
 
+		set(SEARCH_DIRS)
+
+		# assuming all frameworks installed in the same place
+		if(SDL2_LIBRARIES MATCHES "\.framework$")
+			get_filename_component(FW_PARENT_DIR ${SDL2_LIBRARIES} DIRECTORY)
+			list(APPEND SEARCH_DIRS ${FW_PARENT_DIR})
+		endif()
+
 		file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/fixup.cmake
 			CONTENT "
 				include(BundleUtilities)
-				fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/bin/$<TARGET_FILE_NAME:${NAME}>.app\" \"\" \"\")
+				fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/bin/$<TARGET_FILE_NAME:${NAME}>.app\" \"\" \"${SEARCH_DIRS}\")
 			"
 		)
 
