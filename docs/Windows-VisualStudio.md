@@ -18,7 +18,7 @@ You will need Visual Studio 2019 (preferably version 16.4).
 
 Make sure you install C++ desktop development support.
 
-You will also need to download SDL2 development libraries from the [SDL homepage](https://www.libsdl.org/download-2.0.php). Here find the latest version of the VC development libraries (at the time of this writing SDL2-devel-2.0.10-VC.zip). Additionally, download SDL2_image from [here](https://www.libsdl.org/projects/SDL_image/) (SDL2_image-devel-2.0.5-VC.zip) and SDL2_net from [here](https://www.libsdl.org/projects/SDL_net/) (SDL2_net-devel-2.0.1-VC.zip).
+You will also need to download SDL2 development libraries from the [SDL releases](https://github.com/libsdl-org/SDL/releases/latest). Here find the latest version of the VC development libraries (at the time of this writing SDL2-devel-2.24.0-VC.zip). Additionally, download SDL2_image from [here](https://github.com/libsdl-org/SDL_image/releases/latest) (SDL2_image-devel-2.6.1-VC.zip) and SDL2_net from [here](https://github.com/libsdl-org/SDL_net/releases/latest) (SDL2_net-devel-2.2.0-VC.zip).
 
 Place these in the `vs\sdl\` folder. You will need to merge the include/lib directories. If you are using CMake/Open Folder, these are downloaded automatically.
 
