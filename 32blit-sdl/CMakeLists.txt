@@ -63,11 +63,6 @@ else()
 		set(SDL2_DIR "${32BLIT_DIR}/vs/sdl")
 	endif()
 
-	if(ANDROID AND NOT SDL2_DIR)
-		set(SDL2_DIR "${ANDROID_LIB_DIR}/${ANDROID_ABI}/lib/cmake/SDL2")
-		set(CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}" "${ANDROID_LIB_DIR}/${ANDROID_ABI}") # won't search outside this
-	endif()
-
 	if(NOT TARGET SDL2::SDL2 AND NOT TARGET SDL2::SDL2-static)
 		find_package(SDL2 REQUIRED)
 	endif()
