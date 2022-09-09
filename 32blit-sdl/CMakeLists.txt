@@ -210,14 +210,7 @@ function(blit_executable NAME SOURCES)
 		)
 	endif()
 
-	if(APPLE AND SDL2_LIBRARIES MATCHES "\.framework$")
-	    # install the SDL frameworks
-		install(DIRECTORY ${SDL2_LIBRARIES} DESTINATION "bin/$<TARGET_FILE_NAME:${NAME}>.app/Contents/Frameworks")
-		install(DIRECTORY ${SDL2_IMAGE_LIBRARY} DESTINATION "bin/$<TARGET_FILE_NAME:${NAME}>.app/Contents/Frameworks")
-		install(DIRECTORY ${SDL2_NET_LIBRARY} DESTINATION "bin/$<TARGET_FILE_NAME:${NAME}>.app/Contents/Frameworks")
-	elseif(APPLE)
-		# TODO: this should be run in both cases to handle any other dependencies, but it fails on the SDL frameworks and there currently aren't any other deps...
-
+	if(APPLE)
 		set(SEARCH_DIRS)
 
 		# assuming all frameworks installed in the same place
