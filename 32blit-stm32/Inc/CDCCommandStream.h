@@ -41,6 +41,8 @@ public:
 
   void SetParsingEnabled(bool enabled);
 
+  uint32_t Read(uint8_t *data, uint32_t len);
+
 	// USB Packet fifo
 	uint8_t					*GetFifoWriteBuffer(void);
 	void						ReleaseFifoWriteBuffer(uint8_t uLen);
@@ -72,6 +74,8 @@ private:
 	uint8_t				 m_uFifoWritePos;
 
 	bool					m_bNeedsUSBResume;
+
+  uint8_t m_uCurElementOff = 0;
 
 
 	void 			LogTimeTaken(CDCCommandHandler::StreamResult result, uint32_t uBytesHandled);

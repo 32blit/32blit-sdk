@@ -205,6 +205,45 @@ void CDCCommandStream::SetParsingEnabled(bool enabled)
     m_state = stDisabled;
 }
 
+uint32_t CDCCommandStream::Read(uint8_t *data, uint32_t len)
+{
+  if(m_state != stDisabled)
+    return 0; // can't manually read if we're streaming
+
+  uint32_t off = 0;
+  auto elOff = m_uCurElementOff;
+  bool releasedElement = false;
+
+  while(CDCFifoElement *element = GetFifoReadElement())
+  {
+    auto count = std::min(len - off, uint32_t(element->m_uLen - elOff));
+
+    memcpy(data + off, element->m_data + elOff, count);
+    off += count;
+
+    if(elOff + count == element->m_uLen)
+    {
+      // read entire element
+      ReleaseFifoReadElement();
+      releasedElement = true;
+      elOff = 0;
+    }
+    else
+    {
+      elOff += count;
+      break;
+    }
+  }
+
+  m_uCurElementOff = elOff;
+
+  // resume
+  if(m_bNeedsUSBResume && releasedElement)
+    Resume();
+
+  return off;
+}
+
 uint32_t CDCCommandStream::GetTimeTaken(void)
 {
 	return HAL_GetTick() - m_uDispatchTime;
