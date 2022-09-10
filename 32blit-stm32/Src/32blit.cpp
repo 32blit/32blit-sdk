@@ -15,6 +15,7 @@
 #include "power.hpp"
 #include "quadspi.hpp"
 
+#include "CDCCommandStream.h"
 #include "tim.h"
 #include "rng.h"
 #include "ff.h"
@@ -31,6 +32,7 @@ using namespace blit;
 
 extern USBD_HandleTypeDef hUsbDeviceHS;
 extern USBManager g_usbManager;
+extern CDCCommandStream g_commandStream;
 
 FATFS filesystem;
 static bool fs_mounted = false;
@@ -81,19 +83,27 @@ static void init_api_shared() {
 
   api.message_received = nullptr;
   api.i2c_completed = nullptr;
+
+  // take CDC back
+  g_commandStream.SetParsingEnabled(true);
 }
 
 bool g_bConsumerConnected = true;
-void blit_debug(const char *message) {
-  if(g_usbManager.GetType() == USBManager::usbtCDC)
-  {
+
+static bool set_raw_cdc_enabled(bool enabled) {
+  g_commandStream.SetParsingEnabled(!enabled);
+  return true;
+}
+
+static void cdc_write(const uint8_t *data, uint16_t len) {
+  if(g_usbManager.GetType() == USBManager::usbtCDC) {
     // The mad STM CDC implementation relies on a USB packet being received to set TxState
     // Also calls to CDC_Transmit_HS do not buffer the data so we have to rely on TxState before sending new data.
     // So if there is no consumer running at the other end we will hang, so we need to check for this
     if(g_bConsumerConnected)
     {
       uint32_t tickstart = HAL_GetTick();
-      while(g_bConsumerConnected && CDC_Transmit_HS((uint8_t *)message, strlen(message)) == USBD_BUSY)
+      while(g_bConsumerConnected && CDC_Transmit_HS((uint8_t *)data, len) == USBD_BUSY)
         g_bConsumerConnected = !(HAL_GetTick() > (tickstart + 2));
     }
     else
@@ -102,6 +112,14 @@ void blit_debug(const char *message) {
       g_bConsumerConnected = !(hcdc->TxState != 0);
     }
   }
+}
+
+static uint16_t cdc_read(uint8_t *data, uint16_t len) {
+  return g_commandStream.Read(data, len);
+}
+
+void blit_debug(const char *message) {
+  cdc_write((uint8_t *)message, strlen(message));
 }
 
 void blit_exit(bool is_error) {
@@ -393,6 +411,10 @@ void blit_init() {
 
   blit::api.i2c_send = i2c::user_send;
   blit::api.i2c_receive = i2c::user_receive;
+
+  blit::api.set_raw_cdc_enabled = set_raw_cdc_enabled;
+  blit::api.cdc_write = cdc_write;
+  blit::api.cdc_read = cdc_read;
 
   display::init();
 
