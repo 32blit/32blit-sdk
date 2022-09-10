@@ -18,6 +18,7 @@ void CDCCommandStream::Init(void)
 	m_state = stDetect;
 	m_uHeaderScanPos = 0;
 	m_bNeedsUSBResume = false;
+	uLastResumeTime = HAL_GetTick();
 }
 
 void CDCCommandStream::AddCommandHandler(CDCCommandHandler::CDCFourCC uCommand, CDCCommandHandler *pCommandHandler)
@@ -34,8 +35,6 @@ void CDCCommandStream::LogTimeTaken(CDCCommandHandler::StreamResult result, uint
 
 void CDCCommandStream::Stream(void)
 {
-  static uint32_t uLastResumeTime = HAL_GetTick();
-
   if(m_state == stDisabled)
     return;
 
@@ -47,17 +46,8 @@ void CDCCommandStream::Stream(void)
         Stream(pElement->m_data, pElement->m_uLen);
       ReleaseFifoReadElement();
     }
-    m_bNeedsUSBResume = false;
-	if(USB_GetMode(USB_OTG_HS))
-	{
-		USBH_CDC_Receive(&hUsbHostHS, GetFifoWriteBuffer(), 64);
-	}
-	else
-	{
-		USBD_CDC_SetRxBuffer(&hUsbDeviceHS, GetFifoWriteBuffer());
-		USBD_CDC_ReceivePacket(&hUsbDeviceHS);
-	}
-    uLastResumeTime = HAL_GetTick();
+
+    Resume();
   }
   else
   {
@@ -255,6 +245,21 @@ void CDCCommandStream::ReleaseFifoReadElement(void)
 	m_uFifoReadPos++;
 	if(m_uFifoReadPos == CDC_FIFO_BUFFERS)
 		m_uFifoReadPos = 0;
+}
+
+void CDCCommandStream::Resume()
+{
+  if(USB_GetMode(USB_OTG_HS))
+  {
+    USBH_CDC_Receive(&hUsbHostHS, GetFifoWriteBuffer(), 64);
+  }
+  else
+  {
+    USBD_CDC_SetRxBuffer(&hUsbDeviceHS, GetFifoWriteBuffer());
+    USBD_CDC_ReceivePacket(&hUsbDeviceHS);
+  }
+  m_bNeedsUSBResume = false;
+  uLastResumeTime = HAL_GetTick();
 }
 
 // usb host glue

@@ -65,6 +65,8 @@ private:
 
 	CDCDataStream	m_dataStream;
 
+  uint32_t uLastResumeTime;
+
 	CDCFifoElement m_fifoElements[CDC_FIFO_BUFFERS];
 	uint8_t				 m_uFifoReadPos;
 	uint8_t				 m_uFifoWritePos;
@@ -74,6 +76,7 @@ private:
 
 	void 			LogTimeTaken(CDCCommandHandler::StreamResult result, uint32_t uBytesHandled);
 
+  void Resume();
 };
 
 #endif /* SRC_CDCCOMMANDSTREAM_H_ */
