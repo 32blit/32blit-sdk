@@ -36,6 +36,9 @@ void CDCCommandStream::Stream(void)
 {
   static uint32_t uLastResumeTime = HAL_GetTick();
 
+  if(m_state == stDisabled)
+    return;
+
   if(m_bNeedsUSBResume) // FIFO Full, so empty and resume USB
   {
     while(CDCFifoElement *pElement = GetFifoReadElement())
@@ -202,6 +205,14 @@ uint8_t CDCCommandStream::Stream(uint8_t *data, uint32_t len)
   }
 
 	return m_state != stDetect;
+}
+
+void CDCCommandStream::SetParsingEnabled(bool enabled)
+{
+  if(enabled && m_state == stDisabled)
+    m_state = stDetect;
+  else if(!enabled)
+    m_state = stDisabled;
 }
 
 uint32_t CDCCommandStream::GetTimeTaken(void)

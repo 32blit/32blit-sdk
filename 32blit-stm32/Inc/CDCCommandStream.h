@@ -39,6 +39,8 @@ public:
 	void     Stream(void);
 	uint8_t  Stream(uint8_t *data, uint32_t len);
 
+  void SetParsingEnabled(bool enabled);
+
 	// USB Packet fifo
 	uint8_t					*GetFifoWriteBuffer(void);
 	void						ReleaseFifoWriteBuffer(uint8_t uLen);
@@ -46,7 +48,7 @@ public:
 	void 						ReleaseFifoReadElement(void);
 
 private:
-	typedef enum { stDetect, stDetectCommandWord, stDispatch, stProcessing, stError } StreamState;
+	typedef enum { stDetect, stDetectCommandWord, stDispatch, stProcessing, stError, stDisabled } StreamState;
 
 	StreamState m_state;
 
