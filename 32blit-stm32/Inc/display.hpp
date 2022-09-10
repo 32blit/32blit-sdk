@@ -30,17 +30,6 @@ namespace display {
   SurfaceInfo &set_screen_mode(ScreenMode new_mode);
   void set_screen_palette(const Pen *colours, int num_cols);
   bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_template);
-
-  void flip(const Surface &source);
-
-  void screen_init();
-  void ltdc_init();
-
-  uint32_t get_dma2d_count(void);
-
-  void dma2d_lores_flip_step2(void);
-  void dma2d_lores_flip_step3(void);
-  void dma2d_lores_flip_step4(void);
 }
 
 

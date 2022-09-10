@@ -11,6 +11,18 @@
 extern char __ltdc_start, __ltdc_end;
 extern char __fb_start, __fb_end;
 
+namespace display {
+  void screen_init();
+  void ltdc_init();
+
+  void flip(const Surface &source);
+
+  uint32_t get_dma2d_count();
+
+  void dma2d_lores_flip_step2();
+  void dma2d_lores_flip_step3();
+  void dma2d_lores_flip_step4();
+}
 
 void LTDC_IRQHandler() {
   // check that interrupt triggered was line end event
