@@ -12,16 +12,18 @@ extern char __ltdc_start, __ltdc_end;
 extern char __fb_start, __fb_end;
 
 namespace display {
-  void screen_init();
-  void ltdc_init();
+  static void screen_init();
+  static void ltdc_init();
 
-  void flip(const Surface &source);
+  static void flip(const Surface &source);
 
-  uint32_t get_dma2d_count();
+  static uint32_t get_dma2d_count();
 
-  void dma2d_lores_flip_step2();
-  void dma2d_lores_flip_step3();
-  void dma2d_lores_flip_step4();
+  static void dma2d_lores_flip_step2();
+  static void dma2d_lores_flip_step3();
+  static void dma2d_lores_flip_step4();
+
+	static void update_ltdc_for_mode();
 }
 
 void LTDC_IRQHandler() {
@@ -65,8 +67,6 @@ void DMA2D_IRQHandler(void){
 }
 
 namespace display {
-	void update_ltdc_for_mode();
-
   __IO uint32_t dma2d_step_count = 0;
 
   static Pen palette[256];
@@ -173,7 +173,7 @@ namespace display {
     return true;
   }
 
-  void dma2d_hires_flip(const Surface &source) {
+  static void dma2d_hires_flip(const Surface &source) {
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 3);
     // set the transform type (clear bits 17..16 of control register)
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M_PFC);
@@ -202,7 +202,7 @@ namespace display {
     DMA2D->CR |= DMA2D_CR_START;
   }
 
-  void dma2d_hires_pal_flip(const Surface &source) {
+  static void dma2d_hires_pal_flip(const Surface &source) {
     // copy RGBA at quarter width
     // work as 32bit type to save some bandwidth
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 1);
@@ -238,7 +238,7 @@ namespace display {
     }
   }
 
-  void dma2d_lores_flip(const Surface &source) {
+  static void dma2d_lores_flip(const Surface &source) {
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 160 * 120 * 3);
 
     // palette update
@@ -284,7 +284,7 @@ namespace display {
     DMA2D->CR |= DMA2D_CR_START;
   }
 
-	void dma2d_lores_flip_step2(void){
+	static void dma2d_lores_flip_step2(void){
 		//Step 2.
 			// set the transform type (clear bits 17..16 of control register)
 		MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
@@ -307,7 +307,7 @@ namespace display {
 		DMA2D->CR |= DMA2D_CR_START;
 	}
 
-	void dma2d_lores_flip_step3(void){
+	static void dma2d_lores_flip_step3(void){
 		//step 3.
 		// set the transform type (clear bits 17..16 of control register)
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
@@ -330,7 +330,7 @@ namespace display {
 		DMA2D->CR |= DMA2D_CR_START;
 	}
 
-	void dma2d_lores_flip_step4(void){
+	static void dma2d_lores_flip_step4(void){
 		// set the transform type (clear bits 17..16 of control register)
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
     // set source pixel format (clear bits 3..0 of foreground format register)
@@ -352,7 +352,7 @@ namespace display {
 		DMA2D->CR |= DMA2D_CR_START;
 	}
 
-  void flip(const Surface &source) {
+  static void flip(const Surface &source) {
     // switch colour mode if needed
     if(need_ltdc_mode_update) {
       update_ltdc_for_mode();
@@ -369,14 +369,14 @@ namespace display {
     }
   }
 
-  void screen_init() {
+  static void screen_init() {
     ST7272A_RESET();
    // st7272a_set_bgr();
   }
 
   // configure ltdc peripheral setting up the clocks, pin states, panel
   // parameters, and layers
-  void ltdc_init() {
+  static void ltdc_init() {
 
     // enable ltdc clock
     __HAL_RCC_LTDC_CLK_ENABLE();
@@ -425,7 +425,7 @@ namespace display {
     LTDC->GCR |= LTDC_GCR_LTDCEN;
   }
 
-  void update_ltdc_for_mode() {
+  static void update_ltdc_for_mode() {
     // hires palette is special
     if(mode != ScreenMode::lores && format == PixelFormat::P) {
       LTDC_Layer1->PFCR = LTDC_PIXEL_FORMAT_L8;
@@ -442,7 +442,7 @@ namespace display {
     LTDC->SRCR = LTDC_SRCR_IMR;
   }
 
-	uint32_t get_dma2d_count(void){
+	static uint32_t get_dma2d_count(void){
 		return dma2d_step_count;
 	}
 }
