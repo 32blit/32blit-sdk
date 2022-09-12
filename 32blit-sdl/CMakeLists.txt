@@ -10,6 +10,42 @@ add_library(BlitHalSDL STATIC
 	System.cpp
 )
 
+function (find_sdl_lib lib_name header_name)
+	string(TOUPPER ${lib_name} VAR_PREFIX)
+
+	# new enough SDL_image/_net have cmake config support
+	find_package(${lib_name} QUIET)
+	if(TARGET ${lib_name}::${lib_name})
+		set(${VAR_PREFIX}_LIBRARY ${lib_name}::${lib_name} PARENT_SCOPE)
+		set(${VAR_PREFIX}_INCLUDE_DIR "" PARENT_SCOPE)
+
+		if(WIN32)
+			get_property(LIB_DLL TARGET ${lib_name}::${lib_name} PROPERTY IMPORTED_LOCATION)
+			set(${VAR_PREFIX}_DLL ${LIB_DLL} PARENT_SCOPE)
+		endif()
+
+		return()
+	endif()
+
+	message("find_package(${lib_name}) failed, trying manual search...")
+
+	find_path(${VAR_PREFIX}_INCLUDE_DIR ${header_name}
+		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
+		PATH_SUFFIXES SDL2 include/SDL2 include
+	)
+
+	find_library(${VAR_PREFIX}_LIBRARY
+		NAMES ${lib_name}
+		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
+		PATH_SUFFIXES lib
+	)
+
+	if(NOT ${VAR_PREFIX}_INCLUDE_DIR OR NOT ${VAR_PREFIX}_LIBRARY)
+		message(FATAL_ERROR "${lib_name} not found!")
+	endif()
+
+endfunction()
+
 if(EMSCRIPTEN)
 	target_compile_options(BlitHalSDL
 		PRIVATE -sUSE_SDL=2 -sUSE_SDL_IMAGE=2 -sUSE_SDL_NET=2
@@ -21,31 +57,26 @@ if(EMSCRIPTEN)
 
 	set(EMSCRIPTEN_SHELL ${CMAKE_CURRENT_SOURCE_DIR}/emscripten-shell.html PARENT_SCOPE)
 else()
-	# attempt to find the framework (find_package won't work as there's no config file)
-	if(APPLE)
-		find_library(SDL2_LIBRARIES NAMES SDL2)
-
-		find_path(SDL2_INCLUDE_DIRS NAMES SDL.h
-			PATHS ~/Library/Frameworks /Library/Frameworks
-		)
-	endif()
 
 	# fallback guess for SDL location on Windows
 	if(WIN32 AND NOT SDL2_DIR AND 32BLIT_DIR)
 		set(SDL2_DIR "${32BLIT_DIR}/vs/sdl")
 	endif()
 
-	if(ANDROID AND NOT SDL2_DIR)
-		set(SDL2_DIR "${ANDROID_LIB_DIR}/${ANDROID_ABI}/lib/cmake/SDL2")
-		set(CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}" "${ANDROID_LIB_DIR}/${ANDROID_ABI}") # won't search outside this
+	if(NOT TARGET SDL2::SDL2 AND NOT TARGET SDL2::SDL2-static)
+		find_package(SDL2 REQUIRED)
 	endif()
 
-	if(NOT SDL2_LIBRARIES OR NOT SDL2_INCLUDE_DIRS)
-		find_package(SDL2 REQUIRED)
+	if(SDL2_FRAMEWORK_PATH)
+		set(SDL2_FRAMEWORK_PATH ${SDL2_FRAMEWORK_PATH} PARENT_SCOPE)
 	endif()
 
 	# If SDL2 was built using CMake, the generated configuration files define SDL2::* targets instead of the SDL2_* variables
 	if(TARGET SDL2::SDL2)
+		if(NOT TARGET SDL2::SDL2main)
+			add_library(SDL2::SDL2main IMPORTED INTERFACE) # 2.24.0 is missing this target for macOS
+		endif()
+
 		set(SDL2_LIBRARIES SDL2::SDL2main SDL2::SDL2)
 	# handle SDL2 built with only a static library
 	elseif(TARGET SDL2::SDL2-static)
@@ -57,56 +88,8 @@ else()
 	endif()
 
 	# find SDL2_image
-	# TODO: may need to be more complicated
-	find_path(SDL2_IMAGE_INCLUDE_DIR SDL_image.h
-		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
-		PATH_SUFFIXES SDL2 include/SDL2 include
-	)
-
-	# vs
-	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-		set(VC_LIB_PATH_SUFFIX lib/x64)
-	else()
-		set(VC_LIB_PATH_SUFFIX lib/x86)
-	endif()
-
-	find_library(SDL2_IMAGE_LIBRARY
-		NAMES SDL2_image
-		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
-		PATH_SUFFIXES lib ${VC_LIB_PATH_SUFFIX}
-	)
-
-	# dlls
-	find_file(SDL2_IMAGE_DLL SDL2_image.dll
-		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
-		PATH_SUFFIXES bin ${VC_LIB_PATH_SUFFIX}
-	)
-
-	#SDL_net
-	find_path(SDL2_NET_INCLUDE_DIR SDL_net.h
-		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
-		PATH_SUFFIXES SDL2 include/SDL2 include
-	)
-
-	find_library(SDL2_NET_LIBRARY
-		NAMES SDL2_net
-		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
-		PATH_SUFFIXES lib ${VC_LIB_PATH_SUFFIX}
-	)
-
-	# dlls
-	find_file(SDL2_NET_DLL SDL2_net.dll
-		HINTS ${SDL2_DIR} ${SDL2_DIR}/../../../
-		PATH_SUFFIXES bin ${VC_LIB_PATH_SUFFIX}
-	)
-
-	if(NOT SDL2_IMAGE_INCLUDE_DIR OR NOT SDL2_IMAGE_LIBRARY)
-		message(FATAL_ERROR "SDL_image not found!")
-	endif()
-
-	if(NOT SDL2_NET_INCLUDE_DIR OR NOT SDL2_NET_LIBRARY)
-		message(FATAL_ERROR "SDL_net not found!")
-	endif()
+	find_sdl_lib(SDL2_image SDL_image.h)
+	find_sdl_lib(SDL2_net SDL_net.h)
 
 	target_include_directories(BlitHalSDL
 		PRIVATE	${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_NET_INCLUDE_DIR}
@@ -206,18 +189,19 @@ function(blit_executable NAME SOURCES)
 		)
 	endif()
 
-	if(APPLE AND SDL2_LIBRARIES MATCHES "\.framework$")
-	    # install the SDL frameworks
-		install(DIRECTORY ${SDL2_LIBRARIES} DESTINATION "bin/$<TARGET_FILE_NAME:${NAME}>.app/Contents/Frameworks")
-		install(DIRECTORY ${SDL2_IMAGE_LIBRARY} DESTINATION "bin/$<TARGET_FILE_NAME:${NAME}>.app/Contents/Frameworks")
-		install(DIRECTORY ${SDL2_NET_LIBRARY} DESTINATION "bin/$<TARGET_FILE_NAME:${NAME}>.app/Contents/Frameworks")
-	elseif(APPLE)
-		# TODO: this should be run in both cases to handle any other dependencies, but it fails on the SDL frameworks and there currently aren't any other deps...
+	if(APPLE)
+		set(SEARCH_DIRS)
+
+		# assuming all frameworks installed in the same place
+		if(SDL2_FRAMEWORK_PATH)
+			get_filename_component(FW_PARENT_DIR ${SDL2_FRAMEWORK_PATH} DIRECTORY)
+			list(APPEND SEARCH_DIRS ${FW_PARENT_DIR})
+		endif()
 
 		file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/fixup.cmake
 			CONTENT "
 				include(BundleUtilities)
-				fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/bin/$<TARGET_FILE_NAME:${NAME}>.app\" \"\" \"\")
+				fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/bin/$<TARGET_FILE_NAME:${NAME}>.app\" \"\" \"${SEARCH_DIRS}\")
 			"
 		)
 

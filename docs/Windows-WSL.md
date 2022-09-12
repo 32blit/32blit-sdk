@@ -84,9 +84,9 @@ sudo mkdir -p /opt/local/
 Grab and install the SDL2 mingw development package:
 
 ```shell
-wget https://libsdl.org/release/SDL2-devel-2.0.10-mingw.tar.gz
-tar xzf SDL2-devel-2.0.10-mingw.tar.gz
-sudo cp -r SDL2-2.0.10/x86_64-w64-mingw32 /opt/local/
+wget https://github.com/libsdl-org/SDL/releases/download/release-2.24.0/SDL2-devel-2.24.0-mingw.tar.gz 
+tar xzf SDL2-devel-2.24.0-mingw.tar.gz
+sudo cp -r SDL2-2.24.0/x86_64-w64-mingw32 /opt/local/
 ```
 
 #### SDL2_image
@@ -94,9 +94,9 @@ sudo cp -r SDL2-2.0.10/x86_64-w64-mingw32 /opt/local/
 Grab and install the SDL2_image mingw development package:
 
 ```shell
-wget https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.0.5-mingw.tar.gz
-tar xzf SDL2_image-devel-2.0.5-mingw.tar.gz
-sudo cp -r SDL2_image-2.0.5/x86_64-w64-mingw32 /opt/local/
+wget https://github.com/libsdl-org/SDL_image/releases/download/release-2.6.2/SDL2_image-devel-2.6.2-mingw.tar.gz
+tar xzf SDL2_image-devel-2.6.2-mingw.tar.gz
+sudo cp -r SDL2_image-2.6.2/x86_64-w64-mingw32 /opt/local/
 ```
 
 #### SDL2_net
@@ -104,9 +104,9 @@ sudo cp -r SDL2_image-2.0.5/x86_64-w64-mingw32 /opt/local/
 Grab and install the SDL2_net mingw development package:
 
 ```shell
-wget https://www.libsdl.org/projects/SDL_net/release/SDL2_net-devel-2.0.1-mingw.tar.gz
-tar xzf SDL2_net-devel-2.0.1-mingw.tar.gz
-sudo cp -r SDL2_net-2.0.1/x86_64-w64-mingw32 /opt/local/
+wget https://github.com/libsdl-org/SDL_net/releases/download/release-2.2.0/SDL2_net-devel-2.2.0-mingw.tar.gz
+tar xzf SDL2_net-devel-2.2.0-mingw.tar.gz
+sudo cp -r SDL2_net-2.2.0/x86_64-w64-mingw32 /opt/local/
 ```
 
 ### Building

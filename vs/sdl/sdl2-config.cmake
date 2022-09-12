@@ -6,59 +6,49 @@ function(fetch_sdl2_library directory url filename hash)
             TIMEOUT 120
             EXPECTED_HASH SHA1=${hash}
             TLS_VERIFY ON)
-        message(STATUS "Extracting ${filename}")
     endif()
     if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/${directory})
+        message(STATUS "Extracting ${filename}")
         # tar -xf should work on Windows 10 build 17063 or later (Dec 2017)
         execute_process(COMMAND tar -xf ${filename}
                         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
     endif()
     # in future we might be able to use:
     # file(ARCHIVE_EXTRACT INPUT ${filename})
-    file(COPY ${CMAKE_CURRENT_LIST_DIR}/${directory}/include
-        DESTINATION ${CMAKE_CURRENT_LIST_DIR}/)
-    file(COPY ${CMAKE_CURRENT_LIST_DIR}/${directory}/lib
-        DESTINATION ${CMAKE_CURRENT_LIST_DIR}/)
 endfunction(fetch_sdl2_library)
 
+set(SDL2_VERSION 2.24.0)
+set(SDL2_IMAGE_VERSION 2.6.2)
+set(SDL2_NET_VERSION 2.2.0)
 
 if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/include)
 
     fetch_sdl2_library(
-        SDL2-2.0.12
-        https://www.libsdl.org/release/
-        SDL2-devel-2.0.12-VC.zip
-        6839b6ec345ef754a6585ab24f04e125e88c3392
+        SDL2-${SDL2_VERSION}
+        https://github.com/libsdl-org/SDL/releases/download/release-${SDL2_VERSION}/
+        SDL2-devel-${SDL2_VERSION}-VC.zip
+        8a54459189e88c30ba024ee5f18ce4b1a5d1d9e7
     )
 
     fetch_sdl2_library(
-        SDL2_image-2.0.5
-        https://www.libsdl.org/projects/SDL_image/release/
-        SDL2_image-devel-2.0.5-VC.zip
-        137f86474691f4e12e76e07d58d5920c8d844d5b
+        SDL2_image-${SDL2_IMAGE_VERSION}
+        https://github.com/libsdl-org/SDL_image/releases/download/release-${SDL2_IMAGE_VERSION}/
+        SDL2_image-devel-${SDL2_IMAGE_VERSION}-VC.zip
+        4111affcca1f4b41c2f4b4c445ccf06fe081b5e9
     )
 
     fetch_sdl2_library(
-        SDL2_net-2.0.1
-        https://www.libsdl.org/projects/SDL_net/release/
-        SDL2_net-devel-2.0.1-VC.zip
-        90adcf4d0d17aed26c1e56ade159d90db4b98b54
+        SDL2_net-${SDL2_NET_VERSION}
+        https://github.com/libsdl-org/SDL_net/releases/download/release-${SDL2_NET_VERSION}/
+        SDL2_net-devel-${SDL2_NET_VERSION}-VC.zip
+        c8ff358a5c8338002b05ab6de7ce91ee1c86bd45
     )
 
 endif()
 
-set(SDL2_INCLUDE_DIRS "${SDL2_DIR}/include")
+include(${CMAKE_CURRENT_LIST_DIR}/SDL2-${SDL2_VERSION}/cmake/sdl2-config.cmake)
+get_property(SDL2_DLL TARGET SDL2::SDL2 PROPERTY IMPORTED_LOCATION)
 
-if(CMAKE_GENERATOR_PLATFORM)
-    set(SDL2_LIBDIR "${SDL2_DIR}/lib/${CMAKE_GENERATOR_PLATFORM}")
-else()
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        set(SDL2_LIBDIR "${SDL2_DIR}/lib/x64/")
-    else()
-        set(SDL2_LIBDIR "${SDL2_DIR}/lib/x86/")
-    endif()
-endif()
-
-set(SDL2_LIBRARIES "${SDL2_LIBDIR}/SDL2.lib" "${SDL2_LIBDIR}/SDL2main.lib")
-
-set(SDL2_DLL "${SDL2_LIBDIR}/SDL2.dll")
+# help cmake to find the other libs
+set(SDL2_image_DIR ${CMAKE_CURRENT_LIST_DIR}/SDL2_image-${SDL2_IMAGE_VERSION}/cmake)
+set(SDL2_net_DIR ${CMAKE_CURRENT_LIST_DIR}/SDL2_net-${SDL2_NET_VERSION}/cmake)
