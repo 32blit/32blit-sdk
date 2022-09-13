@@ -134,8 +134,6 @@ namespace blit {
     uint16_t  rows, cols;
 
   private:
-    void init();
-
     static Surface *load_from_bmp(File &file, uint8_t *data, size_t data_size);
     static Surface *load_from_packed(File &file, uint8_t *data, size_t data_size, bool readonly);
 

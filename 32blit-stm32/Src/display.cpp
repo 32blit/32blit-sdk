@@ -11,6 +11,20 @@
 extern char __ltdc_start, __ltdc_end;
 extern char __fb_start, __fb_end;
 
+namespace display {
+  static void screen_init();
+  static void ltdc_init();
+
+  static void flip(const Surface &source);
+
+  static uint32_t get_dma2d_count();
+
+  static void dma2d_lores_flip_step2();
+  static void dma2d_lores_flip_step3();
+  static void dma2d_lores_flip_step4();
+
+	static void update_ltdc_for_mode();
+}
 
 void LTDC_IRQHandler() {
   // check that interrupt triggered was line end event
@@ -53,15 +67,13 @@ void DMA2D_IRQHandler(void){
 }
 
 namespace display {
-	void update_ltdc_for_mode();
-
   __IO uint32_t dma2d_step_count = 0;
 
   static Pen palette[256];
-  // lo and hi res screen back buffers
-  static const blit::SurfaceTemplate __fb_hires{(uint8_t *)&__fb_start, blit::Size(320, 240), blit::PixelFormat::RGB, nullptr};
-  static const blit::SurfaceTemplate __fb_hires_pal{(uint8_t *)&__fb_start, blit::Size(320, 240), blit::PixelFormat::P, palette};
-  static const blit::SurfaceTemplate __fb_lores{(uint8_t *)&__fb_start, blit::Size(160, 120), blit::PixelFormat::RGB, nullptr};
+
+  // lo and hi res screen size
+  static const blit::Size hires_screen_size(320, 240);
+  static const blit::Size lores_screen_size(160, 120);
 
   static SurfaceInfo cur_surf_info; // used to pass screen info back through API
 
@@ -106,23 +118,15 @@ namespace display {
   }
 
   SurfaceInfo &set_screen_mode(ScreenMode new_mode) {
-    requested_mode = new_mode;
-    switch(new_mode) {
-      case ScreenMode::lores:
-        cur_surf_info = __fb_lores;
-        break;
-      case ScreenMode::hires:
-        cur_surf_info = __fb_hires;
-        break;
-      case ScreenMode::hires_palette:
-        cur_surf_info = __fb_hires_pal;
-        break;
-    }
+    SurfaceTemplate temp{nullptr, {0, 0}, new_mode == ScreenMode::hires_palette ? PixelFormat::P : PixelFormat::RGB};
 
-    screen = Surface(cur_surf_info.data, cur_surf_info.format, cur_surf_info.bounds);
-    screen.palette = cur_surf_info.palette;
+    // won't fail for the modes used here
+    set_screen_mode_format(new_mode, temp);
 
-    requested_format = screen.format;
+    cur_surf_info.data = temp.data;
+    cur_surf_info.bounds = temp.bounds;
+    cur_surf_info.format = temp.format;
+    cur_surf_info.palette = temp.palette;
 
     return cur_surf_info;
   }
@@ -138,11 +142,11 @@ namespace display {
 
     switch(new_mode) {
       case ScreenMode::lores:
-        new_surf_template.bounds = __fb_lores.bounds;
+        new_surf_template.bounds = lores_screen_size;
         break;
       case ScreenMode::hires:
       case ScreenMode::hires_palette:
-        new_surf_template.bounds = __fb_hires.bounds;
+        new_surf_template.bounds = hires_screen_size;
         break;
     }
 
@@ -169,7 +173,7 @@ namespace display {
     return true;
   }
 
-  void dma2d_hires_flip(const Surface &source) {
+  static void dma2d_hires_flip(const Surface &source) {
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 3);
     // set the transform type (clear bits 17..16 of control register)
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M_PFC);
@@ -198,7 +202,7 @@ namespace display {
     DMA2D->CR |= DMA2D_CR_START;
   }
 
-  void dma2d_hires_pal_flip(const Surface &source) {
+  static void dma2d_hires_pal_flip(const Surface &source) {
     // copy RGBA at quarter width
     // work as 32bit type to save some bandwidth
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 320 * 240 * 1);
@@ -234,7 +238,7 @@ namespace display {
     }
   }
 
-  void dma2d_lores_flip(const Surface &source) {
+  static void dma2d_lores_flip(const Surface &source) {
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(source.data), 160 * 120 * 3);
 
     // palette update
@@ -280,7 +284,7 @@ namespace display {
     DMA2D->CR |= DMA2D_CR_START;
   }
 
-	void dma2d_lores_flip_step2(void){
+	static void dma2d_lores_flip_step2(void){
 		//Step 2.
 			// set the transform type (clear bits 17..16 of control register)
 		MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
@@ -303,7 +307,7 @@ namespace display {
 		DMA2D->CR |= DMA2D_CR_START;
 	}
 
-	void dma2d_lores_flip_step3(void){
+	static void dma2d_lores_flip_step3(void){
 		//step 3.
 		// set the transform type (clear bits 17..16 of control register)
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
@@ -326,7 +330,7 @@ namespace display {
 		DMA2D->CR |= DMA2D_CR_START;
 	}
 
-	void dma2d_lores_flip_step4(void){
+	static void dma2d_lores_flip_step4(void){
 		// set the transform type (clear bits 17..16 of control register)
     MODIFY_REG(DMA2D->CR, DMA2D_CR_MODE, LL_DMA2D_MODE_M2M);
     // set source pixel format (clear bits 3..0 of foreground format register)
@@ -348,7 +352,7 @@ namespace display {
 		DMA2D->CR |= DMA2D_CR_START;
 	}
 
-  void flip(const Surface &source) {
+  static void flip(const Surface &source) {
     // switch colour mode if needed
     if(need_ltdc_mode_update) {
       update_ltdc_for_mode();
@@ -365,14 +369,14 @@ namespace display {
     }
   }
 
-  void screen_init() {
+  static void screen_init() {
     ST7272A_RESET();
    // st7272a_set_bgr();
   }
 
   // configure ltdc peripheral setting up the clocks, pin states, panel
   // parameters, and layers
-  void ltdc_init() {
+  static void ltdc_init() {
 
     // enable ltdc clock
     __HAL_RCC_LTDC_CLK_ENABLE();
@@ -421,7 +425,7 @@ namespace display {
     LTDC->GCR |= LTDC_GCR_LTDCEN;
   }
 
-  void update_ltdc_for_mode() {
+  static void update_ltdc_for_mode() {
     // hires palette is special
     if(mode != ScreenMode::lores && format == PixelFormat::P) {
       LTDC_Layer1->PFCR = LTDC_PIXEL_FORMAT_L8;
@@ -438,7 +442,7 @@ namespace display {
     LTDC->SRCR = LTDC_SRCR_IMR;
   }
 
-	uint32_t get_dma2d_count(void){
+	static uint32_t get_dma2d_count(void){
 		return dma2d_step_count;
 	}
 }

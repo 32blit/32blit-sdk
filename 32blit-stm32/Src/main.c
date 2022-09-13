@@ -21,7 +21,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "dma.h"
-#include "fatfs.h"
 #include "hrtim.h"
 #include "i2c.h"
 #include "jpeg.h"
@@ -124,7 +123,7 @@ int main(void)
   gpio::init();
   sound::init();
 
-  is_beta_unit = HAL_GPIO_ReadPin(VERSION_GPIO_Port, VERSION_Pin);
+  is_beta_unit = gpio::read(VERSION_GPIO_Port, VERSION_Pin);
 
   //MX_GPIO_Init();
 
@@ -135,9 +134,8 @@ int main(void)
   //MX_DAC1_Init();
   MX_HRTIM_Init();
   MX_I2C4_Init();
-#if (INITIALISE_QSPI==1)
   MX_QUADSPI_Init();
-#endif
+
   adc::init();
 
   //MX_USB_OTG_HS_USB_Init();
@@ -146,7 +144,6 @@ int main(void)
   //MX_TIM6_Init();
   MX_TIM15_Init();
   //MX_TIM16_Init();
-  MX_FATFS_Init();
   MX_RNG_Init();
   MX_USB_DEVICE_Init();
   MX_JPEG_Init();
@@ -158,9 +155,7 @@ int main(void)
 
   //NVIC_SetPriority(SysTick_IRQn, 0x0);
 
-#if (INITIALISE_QSPI==1)
   qspi_init();
-#endif
 
   blit_init();
 

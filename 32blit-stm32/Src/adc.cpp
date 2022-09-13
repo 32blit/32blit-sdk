@@ -36,13 +36,6 @@ namespace adc {
     HAL_ADC_Start_DMA(&hadc3, (uint32_t *)adc3data, ADC_BUFFER_SIZE);
   }
 
-  // this is only used by the old exe switching code
-  void stop() {
-    // Stop the ADC DMA
-    HAL_ADC_Stop_DMA(&hadc1);
-    HAL_ADC_Stop_DMA(&hadc3);
-  }
-
   uint16_t get_value(Value v) {
     switch(v) {
       case Value::joystick_x:

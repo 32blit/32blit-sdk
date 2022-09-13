@@ -7,22 +7,18 @@ namespace gpio {
     HAL_GPIO_Init(port, &gpio);
   }
 
-  // initialises all of the pins of the MCU into the correct 
-  // configuration for 32blit    
+  // initialises all of the pins of the MCU into the correct
+  // configuration for 32blit
   void init()
   {
-    /* GPIO Ports Clock Enable */
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    __HAL_RCC_GPIOD_CLK_ENABLE();
-    __HAL_RCC_GPIOE_CLK_ENABLE();
-    __HAL_RCC_GPIOH_CLK_ENABLE();
+    // enable clocks
+    RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN | RCC_AHB4ENR_GPIOBEN | RCC_AHB4ENR_GPIOCEN | RCC_AHB4ENR_GPIODEN | RCC_AHB4ENR_GPIOEEN | RCC_AHB4ENR_GPIOHEN;
+    (void)RCC->AHB4ENR; // read back
 
     // set initial output states where needed
-    HAL_GPIO_WritePin(AMP_SHUTDOWN_GPIO_Port, AMP_SHUTDOWN_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(GPIOA, LCD_CS_Pin|LCD_RESET_Pin|SD_SPI1_CS_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(USB_SWAP_GPIO_Port, USB_SWAP_Pin, GPIO_PIN_RESET);
+    write(AMP_SHUTDOWN_GPIO_Port, AMP_SHUTDOWN_Pin, true);
+    write(GPIOA, LCD_CS_Pin|LCD_RESET_Pin|SD_SPI1_CS_Pin, false);
+    write(USB_SWAP_GPIO_Port, USB_SWAP_Pin, false);
 
     // usb otg
     init_pin(GPIOB, GPIO_PIN_12 | GPIO_PIN_14 | GPIO_PIN_15, GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, GPIO_AF12_OTG2_FS);
@@ -33,13 +29,10 @@ namespace gpio {
     // usb "swap" pin?
     init_pin(GPIOD, USB_SWAP_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL);
 
-#if (INITIALISE_QSPI==1)
-// Guard against user code changing QSPI pin state set by firmware
     // qspi
     init_pin(GPIOB, GPIO_PIN_2, GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
     init_pin(GPIOE, GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10, GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
     init_pin(GPIOC, GPIO_PIN_11, GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-#endif
 
     // spi1
     init_pin(GPIOA, SD_SPI1_MOSI_Pin, GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF5_SPI1);
@@ -77,7 +70,7 @@ namespace gpio {
     // battery sense
     init_pin(GPIOC, BATTERY_SENSE_Pin, GPIO_MODE_ANALOG, GPIO_NOPULL); // battery sense
 
-    
+
     // "gpio" pin on extension header
     init_pin(GPIOC, EXTENSION_GPIO_Pin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL); // left digital
 
@@ -148,8 +141,8 @@ namespace gpio {
     init_pin(LED_CHG_GREEN_Port, LED_CHG_GREEN_Pin, GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH);
     init_pin(LED_CHG_BLUE_Port, LED_CHG_BLUE_Pin, GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH);
 
-    HAL_GPIO_WritePin(LED_CHG_RED_Port, LED_CHG_RED_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(LED_CHG_GREEN_Port, LED_CHG_GREEN_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(LED_CHG_BLUE_Port, LED_CHG_BLUE_Pin, GPIO_PIN_SET);
+    write(LED_CHG_RED_Port, LED_CHG_RED_Pin, true);
+    write(LED_CHG_GREEN_Port, LED_CHG_GREEN_Pin, true);
+    write(LED_CHG_BLUE_Port, LED_CHG_BLUE_Pin, true);
   }
 }

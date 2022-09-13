@@ -10,17 +10,11 @@
 #include "executable.hpp"
 #include "dialog.hpp"
 #include "power.hpp"
+#include "quadspi.hpp"
 
 #include "engine/api_private.hpp"
 
 using namespace blit;
-
-constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
-constexpr uint32_t qspi_flash_size = 32768 * 1024;
-constexpr uint32_t qspi_flash_address = 0x90000000;
-
-// resevered space for temp/cached files
-constexpr uint32_t qspi_tmp_reserved = 4 * 1024 * 1024;
 
 extern CDCCommandStream g_commandStream;
 
@@ -112,52 +106,54 @@ static bool parse_flash_metadata(uint32_t offset, GameInfo &info) {
 }
 
 static bool parse_file_metadata(FIL &fh, GameInfo &info) {
-  BlitGameHeader header;
   UINT bytes_read;
-  bool result = false;
-  f_lseek(&fh, 0);
-  f_read(&fh, &header, sizeof(header), &bytes_read);
+  uint8_t buf[10];
 
   // skip relocation data
-  int off = 0;
-  if(header.magic == 0x4F4C4552 /* RELO */) {
-    f_lseek(&fh, 4);
-    uint32_t num_relocs;
-    f_read(&fh, (void *)&num_relocs, 4, &bytes_read);
+  f_lseek(&fh, 0);
+  f_read(&fh, buf, 4, &bytes_read);
 
-    off = num_relocs * 4 + 8;
-    f_lseek(&fh, off);
+  if(memcmp(buf, "RELO", 4) != 0)
+    return false;
 
-    // re-read header
-    f_read(&fh, &header, sizeof(header), &bytes_read);
+  uint32_t num_relocs;
+  f_read(&fh, (void *)&num_relocs, 4, &bytes_read);
+
+  int relocs_size = num_relocs * 4 + 8;
+  f_lseek(&fh, relocs_size);
+
+  // read header
+  BlitGameHeader header;
+  f_read(&fh, &header, sizeof(header), &bytes_read);
+
+  if(header.magic != blit_game_magic)
+    return false;
+
+  bool result = false;
+
+  // get metadata
+  f_lseek(&fh, (header.end - qspi_flash_address) + relocs_size);
+  f_read(&fh, buf, 10, &bytes_read);
+
+  if(bytes_read == 10 && memcmp(buf, "BLITMETA", 8) == 0) {
+    // don't bother reading the whole thing since we don't want the images
+    RawMetadata raw_meta;
+    f_read(&fh, &raw_meta, sizeof(RawMetadata), &bytes_read);
+
+    info.size += *reinterpret_cast<uint16_t *>(buf + 8) + 10;
+    info.checksum = raw_meta.crc32;
+    memcpy(info.title, raw_meta.title, sizeof(info.title));
+    memcpy(info.author, raw_meta.author, sizeof(info.author));
+
+    result = true;
   }
 
-  if(header.magic == blit_game_magic) {
-    uint8_t buf[10];
-    f_lseek(&fh, (header.end - qspi_flash_address) + off);
-    f_read(&fh, buf, 10, &bytes_read);
-
-    if(bytes_read == 10 && memcmp(buf, "BLITMETA", 8) == 0) {
-      // don't bother reading the whole thing since we don't want the images
-      RawMetadata raw_meta;
-      f_read(&fh, &raw_meta, sizeof(RawMetadata), &bytes_read);
-
-      info.size += *reinterpret_cast<uint16_t *>(buf + 8) + 10;
-      info.checksum = raw_meta.crc32;
-      memcpy(info.title, raw_meta.title, sizeof(info.title));
-      memcpy(info.author, raw_meta.author, sizeof(info.author));
-
-      result = true;
-    }
-
-    // read category
-    f_read(&fh, buf, 8, &bytes_read);
-    if(bytes_read == 8 && memcmp(buf, "BLITTYPE", 8) == 0) {
-      RawTypeMetadata type_meta;
-      f_read(&fh, &type_meta, sizeof(RawTypeMetadata), &bytes_read);
-      memcpy(info.category, type_meta.category, sizeof(info.category));
-    }
-
+  // read category
+  f_read(&fh, buf, 8, &bytes_read);
+  if(bytes_read == 8 && memcmp(buf, "BLITTYPE", 8) == 0) {
+    RawTypeMetadata type_meta;
+    f_read(&fh, &type_meta, sizeof(RawTypeMetadata), &bytes_read);
+    memcpy(info.category, type_meta.category, sizeof(info.category));
   }
 
   return result;
@@ -345,29 +341,24 @@ static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
   f_read(&file, buf, 4, &bytes_read);
   std::vector<uint32_t> relocation_offsets;
   size_t cur_reloc = 0;
-  bool has_relocs = false;
 
-  if(memcmp(buf, "RELO", 4) == 0) {
-    uint32_t num_relocs;
-    f_read(&file, (void *)&num_relocs, 4, &bytes_read);
-    relocation_offsets.reserve(num_relocs);
+  if(memcmp(buf, "RELO", 4) != 0)
+    return 0xFFFFFFFF;
 
-    for(auto i = 0u; i < num_relocs; i++) {
-      uint32_t reloc_offset;
-      f_read(&file, (void *)&reloc_offset, 4, &bytes_read);
+  uint32_t num_relocs;
+  f_read(&file, (void *)&num_relocs, 4, &bytes_read);
+  relocation_offsets.reserve(num_relocs);
 
-      relocation_offsets.push_back(reloc_offset - qspi_flash_address);
-    }
+  for(auto i = 0u; i < num_relocs; i++) {
+    uint32_t reloc_offset;
+    f_read(&file, (void *)&reloc_offset, 4, &bytes_read);
 
-    bytes_total -= num_relocs * 4 + 8; // size of relocation data
-    has_relocs = true;
-  } else {
-    f_lseek(&file, 0);
+    relocation_offsets.push_back(reloc_offset - qspi_flash_address);
   }
 
-  if(!has_relocs)
-    flash_offset = 0;
-  else if(flash_offset == 0xFFFFFFFF)
+  bytes_total -= num_relocs * 4 + 8; // size of relocation data
+
+  if(flash_offset == 0xFFFFFFFF)
     flash_offset = get_flash_offset_for_file(bytes_total);
 
   // erase the sectors needed to write the image

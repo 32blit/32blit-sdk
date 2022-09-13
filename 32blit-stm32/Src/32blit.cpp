@@ -13,10 +13,11 @@
 #include "executable.hpp"
 #include "multiplayer.hpp"
 #include "power.hpp"
+#include "quadspi.hpp"
 
 #include "tim.h"
 #include "rng.h"
-#include "fatfs.h"
+#include "ff.h"
 #include "quadspi.h"
 #include "usbd_core.h"
 #include "USBManager.h"
@@ -32,7 +33,6 @@ extern USBD_HandleTypeDef hUsbDeviceHS;
 extern USBManager g_usbManager;
 
 FATFS filesystem;
-extern Disk_drvTypeDef disk;
 static bool fs_mounted = false;
 
 bool exit_game = false;
@@ -208,8 +208,6 @@ void blit_tick() {
       fs_mounted = f_mount(&filesystem, "", 1) == FR_OK;
     else
       fs_mounted = false;
-
-    disk.is_initialized[0] = fs_mounted; // this gets set without checking if the init succeeded, un-set it if the init failed (or the card was removed)
   }
 
   auto time_to_next_tick = do_tick(blit::now());
@@ -232,7 +230,7 @@ void blit_tick() {
 }
 
 bool blit_sd_detected() {
-  return HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_11) == 1;
+  return gpio::read(GPIOD, GPIO_PIN_11);
 }
 
 bool blit_sd_mounted() {
@@ -260,38 +258,42 @@ void blit_update_volume() {
 }
 
 static void save_screenshot() {
-  int index = 0;
-  char buf[200];
-  std::string app_name;
-  const std::string screenshots_dir_name = "screenshots";
+  const char *app_name;
+  const char *screenshots_dir_name = "screenshots";
 
-  if(!blit_user_code_running()) {
+  char buf[10];
+
+  // get title
+  if(!blit_user_code_running())
     app_name = "_firmware";
-  } else {
+  else {
     auto meta = blit_get_running_game_metadata();
 
-    if(meta) {
+    if(meta)
       app_name = meta->title;
-    } else {
+    else {
       // fallback to offset
-      app_name = std::to_string(persist.last_game_offset);
+      snprintf(buf, 10, "%li", persist.last_game_offset);
+      app_name = buf;
     }
   }
 
+  if(!::directory_exists(screenshots_dir_name))
+    ::create_directory(screenshots_dir_name);
+
+  int index = 0;
+  char screenshot_filename[200];
+
   do {
-    snprintf(buf, 200, "%s/%s%i.bmp", screenshots_dir_name.c_str(), app_name.c_str(), index);
+    snprintf(screenshot_filename, 200, "%s/%s%i.bmp", screenshots_dir_name, app_name, index);
 
-    if(!::directory_exists(screenshots_dir_name)){
-      ::create_directory(screenshots_dir_name);
-    }
-
-    if(!::file_exists(buf))
+    if(!::file_exists(screenshot_filename))
       break;
 
     index++;
   } while(true);
 
-  screen.save(buf);
+  screen.save(screenshot_filename);
 }
 
 void blit_init() {
@@ -322,11 +324,9 @@ void blit_init() {
       memset(&__ltdc_start, 0, len);
     }
 
-#if (INITIALISE_QSPI==1)
     // don't switch to game if it crashed, or home is held
-    if(persist.reset_target == prtGame && (HAL_GPIO_ReadPin(BUTTON_HOME_GPIO_Port,  BUTTON_HOME_Pin) || persist.reset_error))
+    if(persist.reset_target == prtGame && (gpio::read(BUTTON_HOME_GPIO_Port,  BUTTON_HOME_Pin) || persist.reset_error))
       persist.reset_target = prtFirmware;
-#endif
 
     init_api_shared();
 
@@ -524,7 +524,7 @@ void blit_update_led() {
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   if(htim == &htim2) {
-    bool pressed = HAL_GPIO_ReadPin(BUTTON_HOME_GPIO_Port, BUTTON_HOME_Pin);
+    bool pressed = gpio::read(BUTTON_HOME_GPIO_Port, BUTTON_HOME_Pin);
     if(pressed && blit_user_code_running()) { // if button was pressed and we are inside a game, queue the game exit
       exit_game = true;
     }
@@ -533,7 +533,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-  bool pressed = HAL_GPIO_ReadPin(BUTTON_HOME_GPIO_Port, BUTTON_HOME_Pin);
+  bool pressed = gpio::read(BUTTON_HOME_GPIO_Port, BUTTON_HOME_Pin);
   if(pressed) {
     /*
     The timer will generate a spurious interrupt as soon as it's enabled- apparently to load the compare value.
@@ -567,17 +567,17 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 void blit_process_input() {
   // Read buttons
   blit::buttons =
-    (!HAL_GPIO_ReadPin(DPAD_UP_GPIO_Port,     DPAD_UP_Pin)      ? uint32_t(DPAD_UP)    : 0) |
-    (!HAL_GPIO_ReadPin(DPAD_DOWN_GPIO_Port,   DPAD_DOWN_Pin)    ? uint32_t(DPAD_DOWN)  : 0) |
-    (!HAL_GPIO_ReadPin(DPAD_LEFT_GPIO_Port,   DPAD_LEFT_Pin)    ? uint32_t(DPAD_LEFT)  : 0) |
-    (!HAL_GPIO_ReadPin(DPAD_RIGHT_GPIO_Port,  DPAD_RIGHT_Pin)   ? uint32_t(DPAD_RIGHT) : 0) |
-    (!HAL_GPIO_ReadPin(BUTTON_A_GPIO_Port,    BUTTON_A_Pin)     ? uint32_t(A)          : 0) |
-    (!HAL_GPIO_ReadPin(BUTTON_B_GPIO_Port,    BUTTON_B_Pin)     ? uint32_t(B)          : 0) |
-    (!HAL_GPIO_ReadPin(BUTTON_X_GPIO_Port,    BUTTON_X_Pin)     ? uint32_t(X)          : 0) |
-    (!HAL_GPIO_ReadPin(BUTTON_Y_GPIO_Port,    BUTTON_Y_Pin)     ? uint32_t(Y)          : 0) |
-    (HAL_GPIO_ReadPin(BUTTON_HOME_GPIO_Port,  BUTTON_HOME_Pin)  ? uint32_t(HOME)       : 0) |  // INVERTED LOGIC!
-    (!HAL_GPIO_ReadPin(BUTTON_MENU_GPIO_Port, BUTTON_MENU_Pin)  ? uint32_t(MENU)       : 0) |
-    (!HAL_GPIO_ReadPin(JOYSTICK_BUTTON_GPIO_Port, JOYSTICK_BUTTON_Pin) ? uint32_t(JOYSTICK)   : 0);
+    (!gpio::read(DPAD_UP_GPIO_Port,     DPAD_UP_Pin)      ? uint32_t(DPAD_UP)    : 0) |
+    (!gpio::read(DPAD_DOWN_GPIO_Port,   DPAD_DOWN_Pin)    ? uint32_t(DPAD_DOWN)  : 0) |
+    (!gpio::read(DPAD_LEFT_GPIO_Port,   DPAD_LEFT_Pin)    ? uint32_t(DPAD_LEFT)  : 0) |
+    (!gpio::read(DPAD_RIGHT_GPIO_Port,  DPAD_RIGHT_Pin)   ? uint32_t(DPAD_RIGHT) : 0) |
+    (!gpio::read(BUTTON_A_GPIO_Port,    BUTTON_A_Pin)     ? uint32_t(A)          : 0) |
+    (!gpio::read(BUTTON_B_GPIO_Port,    BUTTON_B_Pin)     ? uint32_t(B)          : 0) |
+    (!gpio::read(BUTTON_X_GPIO_Port,    BUTTON_X_Pin)     ? uint32_t(X)          : 0) |
+    (!gpio::read(BUTTON_Y_GPIO_Port,    BUTTON_Y_Pin)     ? uint32_t(Y)          : 0) |
+    ( gpio::read(BUTTON_HOME_GPIO_Port,  BUTTON_HOME_Pin)  ? uint32_t(HOME)       : 0) |  // INVERTED LOGIC!
+    (!gpio::read(BUTTON_MENU_GPIO_Port, BUTTON_MENU_Pin)  ? uint32_t(MENU)       : 0) |
+    (!gpio::read(JOYSTICK_BUTTON_GPIO_Port, JOYSTICK_BUTTON_Pin) ? uint32_t(JOYSTICK)   : 0);
 
   if(blit::buttons.state)
     power::update_active();
@@ -652,107 +652,52 @@ bool blit_switch_execution(uint32_t address, bool force_game)
   }
 
 	// switch to user app in external flash
-	if(EXTERNAL_LOAD_ADDRESS >= 0x90000000) {
-		qspi_enable_memorymapped_mode();
+  qspi_enable_memorymapped_mode();
 
-    auto game_header = ((__IO BlitGameHeader *) (EXTERNAL_LOAD_ADDRESS + address));
+  auto game_header = ((__IO BlitGameHeader *) (qspi_flash_address + address));
 
-    if(game_header->magic == blit_game_magic) {
+  if(game_header->magic == blit_game_magic) {
 
-      persist.last_game_offset = address;
+    persist.last_game_offset = address;
 
-      // game possibly running, wait until it isn't
-      if(user_tick && !user_code_disabled) {
-        game_switch_requested = true;
-        return true;
-      }
-
-      // avoid starting a game disabled (will break sound and the menu)
-      if(user_code_disabled)
-        blit_enable_user_code();
-
-      cached_file_in_tmp = false;
-      close_open_files();
-
-      // load function pointers
-      auto init = (BlitInitFunction)((uint8_t *)game_header->init + address);
-
-      // set these up early so that blit_user_code_running works in code called from init
-      user_render = (BlitRenderFunction) ((uint8_t *)game_header->render + address);
-      user_tick = (BlitTickFunction) ((uint8_t *)game_header->tick + address);
-
-      if(!init(address)) {
-        user_render = nullptr;
-        user_tick = nullptr;
-
-        qspi_disable_memorymapped_mode();
-
-        return false;
-      }
-
-      blit::render = user_render;
-      do_tick = user_tick;
+    // game possibly running, wait until it isn't
+    if(user_tick && !user_code_disabled) {
+      game_switch_requested = true;
       return true;
     }
-    // anything flashed at a non-zero offset should have a valid header
-    else if(address != 0)
+
+    // avoid starting a game disabled (will break sound and the menu)
+    if(user_code_disabled)
+      blit_enable_user_code();
+
+    cached_file_in_tmp = false;
+    close_open_files();
+
+    // load function pointers
+    auto init = (BlitInitFunction)((uint8_t *)game_header->init + address);
+
+    // set these up early so that blit_user_code_running works in code called from init
+    user_render = (BlitRenderFunction) ((uint8_t *)game_header->render + address);
+    user_tick = (BlitTickFunction) ((uint8_t *)game_header->tick + address);
+
+    if(!init(address)) {
+      user_render = nullptr;
+      user_tick = nullptr;
+
+      qspi_disable_memorymapped_mode();
+
       return false;
+    }
+
+    blit::render = user_render;
+    do_tick = user_tick;
+    return true;
   }
 
-  // old-style soft-reset to app with linked HAL
-  // left for compatibility/testing
-
-  adc::stop();
-
-  // Stop the audio
-  HAL_TIM_Base_Stop_IT(&htim6);
-  HAL_DAC_Stop(&hdac1, DAC_CHANNEL_2);
-
-  // Stop system button timer
-  HAL_TIM_Base_Stop_IT(&htim2);
-
-  // stop USB
-  USBD_Stop(&hUsbDeviceHS);
-
-  // Disable all the interrupts... just to be sure
-  HAL_NVIC_DisableIRQ(LTDC_IRQn);
-  HAL_NVIC_DisableIRQ(ADC_IRQn);
-  HAL_NVIC_DisableIRQ(ADC3_IRQn);
-  HAL_NVIC_DisableIRQ(DMA1_Stream0_IRQn);
-  HAL_NVIC_DisableIRQ(DMA1_Stream1_IRQn);
-  HAL_NVIC_DisableIRQ(TIM6_DAC_IRQn);
-  HAL_NVIC_DisableIRQ(OTG_HS_IRQn);
-  HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
-  HAL_NVIC_DisableIRQ(TIM2_IRQn);
-
-	/* Disable I-Cache */
-	SCB_DisableICache();
-
-	/* Disable D-Cache */
-	SCB_DisableDCache();
-
-	/* Disable Systick interrupt */
-	SysTick->CTRL = 0;
-
-  typedef  void (*pFunction)(void);
-	/* Initialize user application's Stack Pointer & Jump to user application */
-	auto JumpToApplication = (pFunction) (*(__IO uint32_t*) (EXTERNAL_LOAD_ADDRESS + 4));
-	__set_MSP(*(__IO uint32_t*) EXTERNAL_LOAD_ADDRESS);
-	JumpToApplication();
-
-	/* We should never get here as execution is now on user application */
-	while(1)
-	{
-	}
-
-  return true;
+  return false;
 }
 
 bool blit_user_code_running() {
-  // running fully linked code from ext flash
-  if(APPLICATION_VTOR == 0x90000000)
-    return true;
-
   // loaded user-only game from flash
   return user_tick != nullptr;
 }
@@ -789,12 +734,12 @@ RawMetadata *blit_get_running_game_metadata() {
   if(!blit_user_code_running())
     return nullptr;
 
-  auto game_ptr = reinterpret_cast<uint8_t *>(0x90000000 + persist.last_game_offset);
+  auto game_ptr = reinterpret_cast<uint8_t *>(qspi_flash_address + persist.last_game_offset);
 
   auto header = reinterpret_cast<BlitGameHeader *>(game_ptr);
 
   if(header->magic == blit_game_magic) {
-    auto end_ptr = game_ptr + (header->end - 0x90000000);
+    auto end_ptr = game_ptr + (header->end - qspi_flash_address);
     if(memcmp(end_ptr, "BLITMETA", 8) == 0)
       return reinterpret_cast<RawMetadata *>(end_ptr + 10);
   }

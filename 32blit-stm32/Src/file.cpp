@@ -3,7 +3,7 @@
 #include <functional>
 #include <vector>
 
-#include "fatfs.h"
+#include "ff.h"
 
 #include "file.hpp"
 #include "32blit.h"
@@ -167,7 +167,8 @@ bool remove_file(const std::string &path) {
 static char save_path[32]; // max game title length is 24 + ".blit/" + "/"
 
 const char *get_save_path() {
-  std::string app_name;
+  const char *app_name;
+  char buf[10];
 
   if(!directory_exists(".blit"))
     create_directory(".blit");
@@ -181,16 +182,16 @@ const char *get_save_path() {
       app_name = meta->title;
     else {
       // fallback to offset
-      app_name = std::to_string(persist.last_game_offset);
+      snprintf(buf, 10, "%li", persist.last_game_offset);
+      app_name = buf;
     }
   }
 
-  snprintf(save_path, sizeof(save_path), ".blit/%s/", app_name.c_str());
+  snprintf(save_path, sizeof(save_path), ".blit/%s/", app_name);
 
   // make sure it exists
   if(!directory_exists(save_path))
     create_directory(save_path);
-
 
   return save_path;
 }

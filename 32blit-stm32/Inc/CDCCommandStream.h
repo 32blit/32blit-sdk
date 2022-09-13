@@ -50,9 +50,9 @@ private:
 
 	StreamState m_state;
 
-	uint8_t			m_header[4] = { '3', '2', 'B', 'L' };
 	uint8_t			m_uHeaderScanPos = 0;
 	uint8_t			m_uCommandScanPos = 0;
+	uint8_t			m_uRetryCount = 0;
 	CDCCommandHandler::CDCFourCC uCommand = 0;
 
 
@@ -62,9 +62,6 @@ private:
 	uint32_t m_uDispatchTime;
 
 	CDCDataStream	m_dataStream;
-
-	uint8_t m_uRetryCount = 0;
-
 
 	CDCFifoElement m_fifoElements[CDC_FIFO_BUFFERS];
 	uint8_t				 m_uFifoReadPos;

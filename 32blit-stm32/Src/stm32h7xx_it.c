@@ -21,7 +21,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32h7xx_it.h"
-#include "fatfs.h"
 #include "gpio_defs.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -40,7 +39,7 @@ extern void blit_reset_with_error();
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
- 
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -79,7 +78,7 @@ extern I2C_HandleTypeDef hi2c4;
 /* USER CODE END EV */
 
 /******************************************************************************/
-/*           Cortex Processor Interruption and Exception Handlers          */ 
+/*           Cortex Processor Interruption and Exception Handlers          */
 /******************************************************************************/
 /**
   * @brief This function handles Non maskable interrupt.
