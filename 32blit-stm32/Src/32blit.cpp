@@ -15,6 +15,7 @@
 #include "power.hpp"
 #include "quadspi.hpp"
 
+#include "CDCCommandStream.h"
 #include "tim.h"
 #include "rng.h"
 #include "ff.h"
@@ -31,6 +32,7 @@ using namespace blit;
 
 extern USBD_HandleTypeDef hUsbDeviceHS;
 extern USBManager g_usbManager;
+extern CDCCommandStream g_commandStream;
 
 FATFS filesystem;
 static bool fs_mounted = false;
@@ -81,19 +83,28 @@ static void init_api_shared() {
     api.channels[i] = AudioChannel();
 
   api.message_received = nullptr;
+  api.i2c_completed = nullptr;
+
+  // take CDC back
+  g_commandStream.SetParsingEnabled(true);
 }
 
 bool g_bConsumerConnected = true;
-void blit_debug(const char *message) {
-  if(g_usbManager.GetType() == USBManager::usbtCDC)
-  {
+
+static bool set_raw_cdc_enabled(bool enabled) {
+  g_commandStream.SetParsingEnabled(!enabled);
+  return true;
+}
+
+static void cdc_write(const uint8_t *data, uint16_t len) {
+  if(g_usbManager.GetType() == USBManager::usbtCDC) {
     // The mad STM CDC implementation relies on a USB packet being received to set TxState
     // Also calls to CDC_Transmit_HS do not buffer the data so we have to rely on TxState before sending new data.
     // So if there is no consumer running at the other end we will hang, so we need to check for this
     if(g_bConsumerConnected)
     {
       uint32_t tickstart = HAL_GetTick();
-      while(g_bConsumerConnected && CDC_Transmit_HS((uint8_t *)message, strlen(message)) == USBD_BUSY)
+      while(g_bConsumerConnected && CDC_Transmit_HS((uint8_t *)data, len) == USBD_BUSY)
         g_bConsumerConnected = !(HAL_GetTick() > (tickstart + 2));
     }
     else
@@ -102,6 +113,14 @@ void blit_debug(const char *message) {
       g_bConsumerConnected = !(hcdc->TxState != 0);
     }
   }
+}
+
+static uint16_t cdc_read(uint8_t *data, uint16_t len) {
+  return g_commandStream.Read(data, len);
+}
+
+void blit_debug(const char *message) {
+  cdc_write((uint8_t *)message, strlen(message));
 }
 
 void blit_exit(bool is_error) {
@@ -299,98 +318,105 @@ static void save_screenshot() {
 }
 
 void blit_init() {
-    // enable backup sram
-    __HAL_RCC_RTC_ENABLE();
-    __HAL_RCC_BKPRAM_CLK_ENABLE();
-    HAL_PWR_EnableBkUpAccess();
-    HAL_PWREx_EnableBkUpReg();
+  // enable backup sram
+  __HAL_RCC_RTC_ENABLE();
+  __HAL_RCC_BKPRAM_CLK_ENABLE();
+  HAL_PWR_EnableBkUpAccess();
+  HAL_PWREx_EnableBkUpReg();
 
-    // need to wit for sram, I tried a few things I found on the net to wait
-    // based on PWR flags but none seemed to work, a simple delay does work!
-    HAL_Delay(5);
+  // need to wit for sram, I tried a few things I found on the net to wait
+  // based on PWR flags but none seemed to work, a simple delay does work!
+  HAL_Delay(5);
 
-    if(persist.magic_word != persistence_magic_word) {
-      // Set persistent defaults if the magic word does not match
-      persist.magic_word = persistence_magic_word;
-      persist.volume = 0.5f;
-      persist.backlight = 1.0f;
-      persist.selected_menu_item = 0;
-      persist.reset_target = prtFirmware;
-      persist.reset_error = false;
-      persist.last_game_offset = 0;
-      memset(persist.launch_path, 0, sizeof(persist.launch_path));
+  if(persist.magic_word != persistence_magic_word) {
+    // Set persistent defaults if the magic word does not match
+    persist.magic_word = persistence_magic_word;
+    persist.volume = 0.5f;
+    persist.backlight = 1.0f;
+    persist.selected_menu_item = 0;
+    persist.reset_target = prtFirmware;
+    persist.reset_error = false;
+    persist.last_game_offset = 0;
+    memset(persist.launch_path, 0, sizeof(persist.launch_path));
 
-      // clear LTDC buffer to avoid flash of uninitialised data
-      extern char __ltdc_start;
-      int len = 320 * 240 * 2;
-      memset(&__ltdc_start, 0, len);
-    }
+    // clear LTDC buffer to avoid flash of uninitialised data
+    extern char __ltdc_start;
+    int len = 320 * 240 * 2;
+    memset(&__ltdc_start, 0, len);
+  }
 
-    // don't switch to game if it crashed, or home is held
-    if(persist.reset_target == prtGame && (gpio::read(BUTTON_HOME_GPIO_Port,  BUTTON_HOME_Pin) || persist.reset_error))
-      persist.reset_target = prtFirmware;
+  // don't switch to game if it crashed, or home is held
+  if(persist.reset_target == prtGame && (gpio::read(BUTTON_HOME_GPIO_Port,  BUTTON_HOME_Pin) || persist.reset_error))
+    persist.reset_target = prtFirmware;
 
-    init_api_shared();
+  init_api_shared();
 
-    blit_update_volume();
+  blit_update_volume();
 
-    // enable cycle counting
-    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-    DWT->CYCCNT = 0;
-    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+  // enable cycle counting
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CYCCNT = 0;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
-    fs_mounted = f_mount(&filesystem, "", 1) == FR_OK;  // this shouldn't be necessary here right?
+  fs_mounted = f_mount(&filesystem, "", 1) == FR_OK;  // this shouldn't be necessary here right?
 
-    i2c::init();
+  i2c::init();
 
-    blit::api.version_major = api_version_major;
-    blit::api.version_minor = api_version_minor;
+  blit::api.version_major = api_version_major;
+  blit::api.version_minor = api_version_minor;
 
-    blit::api.debug = blit_debug;
-    blit::api.now = HAL_GetTick;
-    blit::api.random = HAL_GetRandom;
-    blit::api.exit = blit_exit;
+  blit::api.debug = blit_debug;
+  blit::api.now = HAL_GetTick;
+  blit::api.random = HAL_GetRandom;
+  blit::api.exit = blit_exit;
 
-    blit::api.set_screen_mode = display::set_screen_mode;
-    blit::api.set_screen_palette = display::set_screen_palette;
-    blit::api.set_screen_mode_format = display::set_screen_mode_format;
+  blit::api.set_screen_mode = display::set_screen_mode;
+  blit::api.set_screen_palette = display::set_screen_palette;
+  blit::api.set_screen_mode_format = display::set_screen_mode_format;
 
-    display::set_screen_mode(blit::lores);
+  display::set_screen_mode(blit::lores);
 
-    blit::update = ::update;
-    blit::render = ::render;
-    blit::init   = ::init;
+  blit::update = ::update;
+  blit::render = ::render;
+  blit::init   = ::init;
 
-    blit::api.open_file = ::open_file;
-    blit::api.read_file = ::read_file;
-    blit::api.write_file = ::write_file;
-    blit::api.close_file = ::close_file;
-    blit::api.get_file_length = ::get_file_length;
-    blit::api.list_files = ::list_files;
-    blit::api.file_exists = ::file_exists;
-    blit::api.directory_exists = ::directory_exists;
-    blit::api.create_directory = ::create_directory;
-    blit::api.rename_file = ::rename_file;
-    blit::api.remove_file = ::remove_file;
-    blit::api.get_save_path = ::get_save_path;
-    blit::api.is_storage_available = blit_sd_mounted;
+  blit::api.open_file = ::open_file;
+  blit::api.read_file = ::read_file;
+  blit::api.write_file = ::write_file;
+  blit::api.close_file = ::close_file;
+  blit::api.get_file_length = ::get_file_length;
+  blit::api.list_files = ::list_files;
+  blit::api.file_exists = ::file_exists;
+  blit::api.directory_exists = ::directory_exists;
+  blit::api.create_directory = ::create_directory;
+  blit::api.rename_file = ::rename_file;
+  blit::api.remove_file = ::remove_file;
+  blit::api.get_save_path = ::get_save_path;
+  blit::api.is_storage_available = blit_sd_mounted;
 
-    blit::api.enable_us_timer = ::enable_us_timer;
-    blit::api.get_us_timer = ::get_us_timer;
-    blit::api.get_max_us_timer = ::get_max_us_timer;
+  blit::api.enable_us_timer = ::enable_us_timer;
+  blit::api.get_us_timer = ::get_us_timer;
+  blit::api.get_max_us_timer = ::get_max_us_timer;
 
-    blit::api.decode_jpeg_buffer = blit_decode_jpeg_buffer;
-    blit::api.decode_jpeg_file = blit_decode_jpeg_file;
+  blit::api.decode_jpeg_buffer = blit_decode_jpeg_buffer;
+  blit::api.decode_jpeg_file = blit_decode_jpeg_file;
 
-    blit::api.get_launch_path = ::get_launch_path;
+  blit::api.get_launch_path = ::get_launch_path;
 
-    blit::api.is_multiplayer_connected = multiplayer::is_connected;
-    blit::api.set_multiplayer_enabled = multiplayer::set_enabled;
-    blit::api.send_message = multiplayer::send_message;
+  blit::api.is_multiplayer_connected = multiplayer::is_connected;
+  blit::api.set_multiplayer_enabled = multiplayer::set_enabled;
+  blit::api.send_message = multiplayer::send_message;
 
-    blit::api.get_metadata = ::get_metadata;
+  blit::api.get_metadata = ::get_metadata;
 
-    blit::api.tick_function_changed = false;
+  blit::api.tick_function_changed = false;
+
+  blit::api.i2c_send = i2c::user_send;
+  blit::api.i2c_receive = i2c::user_receive;
+
+  blit::api.set_raw_cdc_enabled = set_raw_cdc_enabled;
+  blit::api.cdc_write = cdc_write;
+  blit::api.cdc_read = cdc_read;
 
   display::init();
 
@@ -730,6 +756,10 @@ void blit_disable_user_code() {
   blit::render = ::render;
   sound::enabled = false;
   user_code_disabled = true;
+}
+
+bool blit_user_code_disabled() {
+  return user_code_disabled;
 }
 
 RawMetadata *blit_get_running_game_metadata() {

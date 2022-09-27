@@ -39,6 +39,10 @@ public:
 	void     Stream(void);
 	uint8_t  Stream(uint8_t *data, uint32_t len);
 
+  void SetParsingEnabled(bool enabled);
+
+  uint32_t Read(uint8_t *data, uint32_t len);
+
 	// USB Packet fifo
 	uint8_t					*GetFifoWriteBuffer(void);
 	void						ReleaseFifoWriteBuffer(uint8_t uLen);
@@ -46,7 +50,7 @@ public:
 	void 						ReleaseFifoReadElement(void);
 
 private:
-	typedef enum { stDetect, stDetectCommandWord, stDispatch, stProcessing, stError } StreamState;
+	typedef enum { stDetect, stDetectCommandWord, stDispatch, stProcessing, stError, stDisabled } StreamState;
 
 	StreamState m_state;
 
@@ -63,15 +67,20 @@ private:
 
 	CDCDataStream	m_dataStream;
 
+  uint32_t uLastResumeTime;
+
 	CDCFifoElement m_fifoElements[CDC_FIFO_BUFFERS];
 	uint8_t				 m_uFifoReadPos;
 	uint8_t				 m_uFifoWritePos;
 
 	bool					m_bNeedsUSBResume;
 
+  uint8_t m_uCurElementOff = 0;
+
 
 	void 			LogTimeTaken(CDCCommandHandler::StreamResult result, uint32_t uBytesHandled);
 
+  void Resume();
 };
 
 #endif /* SRC_CDCCOMMANDSTREAM_H_ */

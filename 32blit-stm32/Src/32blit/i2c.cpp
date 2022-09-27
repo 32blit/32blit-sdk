@@ -6,6 +6,7 @@
 #include "32blit.h"
 #include "32blit/battery.hpp"
 #include "32blit/i2c.hpp"
+#include "engine/api_private.hpp"
 #include "engine/running_average.hpp"
 
 #include "i2c.h"
@@ -30,7 +31,11 @@ enum I2CState {
   RECV_BAT_STAT,
   SEND_BAT_FAULT,
   RECV_BAT_FAULT,
-  PROC_BAT
+  PROC_BAT,
+
+  SEND_REG_USER,
+  DATA_USER,
+  DONE_USER,
 };
 
 //
@@ -48,9 +53,13 @@ static RunningAverage<float> accel_z(8);
 static I2CState i2c_state = SEND_ACL;
 static uint8_t i2c_buffer[6] = {0};
 static uint8_t i2c_reg = 0;
-static HAL_StatusTypeDef i2c_status = HAL_OK;
 static uint32_t i2c_delay_until = 0;
 static I2CState i2c_next_state = SEND_ACL;
+
+static uint8_t user_addr = 0, user_reg = 0;
+static bool user_recv = false;
+static uint8_t *user_buf = nullptr;
+static uint16_t user_buf_len = 0;
 
 //
 // delay for a given number of ms and transition to another I2CState
@@ -90,8 +99,9 @@ namespace i2c {
       if(HAL_GetTick() >= i2c_delay_until){
         i2c_state = i2c_next_state;
       }
+      return;
     }
-    if(HAL_I2C_GetState(&hi2c4) != HAL_I2C_STATE_READY){
+    if(HAL_I2C_GetState(&hi2c4) != HAL_I2C_STATE_READY || __HAL_I2C_GET_FLAG(&hi2c4, I2C_FLAG_BUSY)){
       return;
     }
 
@@ -101,20 +111,12 @@ namespace i2c {
         break;
       case SEND_ACL:
         i2c_reg = is_beta_unit ? MSA301_X_ACCEL_RESISTER : (LIS3DH_OUT_X_L | LIS3DH_ADDR_AUTO_INC);
-        i2c_status = HAL_I2C_Master_Transmit_IT(&hi2c4, accel_address, &i2c_reg, 1);
-        if(i2c_status == HAL_OK){
-          i2c_state = RECV_ACL;
-        } else {
-          blit_i2c_delay(16, SEND_ACL);
-        }
+        HAL_I2C_Master_Transmit_IT(&hi2c4, accel_address, &i2c_reg, 1);
+        i2c_state = RECV_ACL;
         break;
       case RECV_ACL:
-        i2c_status = HAL_I2C_Master_Receive_IT(&hi2c4, accel_address, i2c_buffer, 6);
-        if(i2c_status == HAL_OK){
-          i2c_state = PROC_ACL;
-        } else {
-          blit_i2c_delay(16, SEND_ACL);
-        }
+        HAL_I2C_Master_Receive_IT(&hi2c4, accel_address, i2c_buffer, 6);
+        i2c_state = PROC_ACL;
         break;
       case PROC_ACL:
         // LIS3DH & MSA301 - 12-bit left-justified
@@ -160,8 +162,62 @@ namespace i2c {
         break;
       case PROC_BAT:
         battery::update_status(i2c_buffer[0], i2c_buffer[1]);
+        i2c_state = SEND_REG_USER;
+        break;
+
+      case SEND_REG_USER:
+        if(user_addr) {
+          HAL_I2C_Master_Transmit_IT(&hi2c4, user_addr << 1, &user_reg, 1);
+          i2c_state = user_buf_len ? DATA_USER : DONE_USER;
+        } else // skip user states
+          blit_i2c_delay(16, SEND_ACL);
+        break;
+
+      case DATA_USER:
+        if(user_recv)
+          HAL_I2C_Master_Receive_IT(&hi2c4, user_addr << 1, user_buf, user_buf_len);
+        else
+          HAL_I2C_Master_Transmit_IT(&hi2c4, user_addr << 1, user_buf, user_buf_len);
+
+        i2c_state = DONE_USER;
+        break;
+
+      case DONE_USER:
+      {
+        auto addr = user_addr;
+        user_addr = 0;
+        if(api.i2c_completed && !blit_user_code_disabled())
+          api.i2c_completed(addr, user_reg, user_buf, user_buf_len);
+
         blit_i2c_delay(16, SEND_ACL);
         break;
+      }
     }
+  }
+
+  bool user_send(uint8_t address, uint8_t reg, const uint8_t *data, uint16_t len) {
+    if(user_addr)
+      return false;
+
+    user_addr = address;
+    user_reg = reg;
+    user_recv = false;
+    user_buf = const_cast<uint8_t *>(data);
+    user_buf_len = len;
+
+    return true;
+  }
+
+  bool user_receive(uint8_t address, uint8_t reg, uint8_t *data, uint16_t len) {
+    if(user_addr)
+      return false;
+
+    user_addr = address;
+    user_reg = reg;
+    user_recv = true;
+    user_buf = data;
+    user_buf_len = len;
+
+    return true;
   }
 }

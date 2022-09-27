@@ -118,6 +118,16 @@ namespace blit {
     bool tick_function_changed;
 
     bool (*set_screen_mode_format)(ScreenMode new_mode, SurfaceTemplate &new_surf_template);
+
+    // raw i2c access
+    bool (*i2c_send)(uint8_t address, uint8_t reg, const uint8_t *data, uint16_t len);
+    bool (*i2c_receive)(uint8_t address, uint8_t reg, uint8_t *data, uint16_t len);
+    void (*i2c_completed)(uint8_t address, uint8_t reg, const uint8_t *data, uint16_t len); // callback when done
+
+    // raw cdc
+    bool (*set_raw_cdc_enabled)(bool enabled);
+    void (*cdc_write)(const uint8_t *data, uint16_t len);
+    uint16_t (*cdc_read)(uint8_t *data, uint16_t len);
   };
   #pragma pack(pop)
 
