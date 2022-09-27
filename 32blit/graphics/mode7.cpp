@@ -75,10 +75,10 @@ namespace blit {
     forward *= Mat3::rotation(angle);
 
     Vec2 left = forward;
-    left *= Mat3::rotation((fov / 2.0f));
+    left *= Mat3::rotation(-(fov / 2.0f));
 
     Vec2 right = forward;
-    right *= Mat3::rotation(-(fov / 2.0f));
+    right *= Mat3::rotation((fov / 2.0f));
 
     float distance = ((far - near) / float(s.y - viewport.y)) + near;
     
