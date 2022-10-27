@@ -129,6 +129,8 @@ static bool parse_file_metadata(FIL &fh, GameInfo &info) {
   if(header.magic != blit_game_magic)
     return false;
 
+  info.size = header.end - qspi_flash_address;
+
   bool result = false;
 
   // get metadata
