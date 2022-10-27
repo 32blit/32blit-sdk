@@ -326,11 +326,9 @@ static void apply_relocs(uint32_t file_offset, uint32_t flash_base_offset, uint8
 }
 
 // Flash a file from the SDCard to external flash
-static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
+static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t file_size, uint32_t flash_offset) {
   FRESULT res;
 
-  // get file length
-  FSIZE_t bytes_total = f_size(&file);
   UINT bytes_read = 0;
   FSIZE_t bytes_flashed = 0;
 
@@ -355,24 +353,22 @@ static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
     relocation_offsets.push_back(reloc_offset - qspi_flash_address);
   }
 
-  bytes_total -= num_relocs * 4 + 8; // size of relocation data
-
   if(flash_offset == 0xFFFFFFFF)
-    flash_offset = get_flash_offset_for_file(bytes_total);
+    flash_offset = get_flash_offset_for_file(file_size);
 
   // failed to find offset
   if(flash_offset == 0xFFFFFFFF)
     return flash_offset;
 
   // erase the sectors needed to write the image
-  erase_qspi_flash(flash_offset, bytes_total);
+  erase_qspi_flash(flash_offset, file_size);
 
-  progress.show("Copying from SD card to flash...", bytes_total);
+  progress.show("Copying from SD card to flash...", file_size);
 
   const int buffer_size = SD_BUFFER_SIZE;
   uint8_t buffer[buffer_size];
 
-  while(bytes_flashed < bytes_total) {
+  while(bytes_flashed < file_size) {
     // limited ram so a bit at a time
     res = f_read(&file, (void *)buffer, buffer_size, &bytes_read);
 
@@ -395,13 +391,13 @@ static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
   // update free space
   for(auto &space : free_space) {
     if(std::get<0>(space) == flash_offset / qspi_flash_sector_size) {
-      auto size = calc_num_blocks(bytes_total);
+      auto size = calc_num_blocks(file_size);
       std::get<0>(space) += size;
       std::get<1>(space) -= size;
     }
   }
 
-  return bytes_flashed == bytes_total ? flash_offset : 0xFFFFFFFF;
+  return bytes_flashed == file_size ? flash_offset : 0xFFFFFFFF;
 }
 
 // runs a .blit file, flashing it if required
@@ -454,7 +450,7 @@ static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
   }
 
   if(launch_offset == 0xFFFFFFFF) {
-    launch_offset = flash_from_sd_to_qspi_flash(file, flash_offset);
+    launch_offset = flash_from_sd_to_qspi_flash(file, bytes_total, flash_offset);
     scan_flash();
   }
 
