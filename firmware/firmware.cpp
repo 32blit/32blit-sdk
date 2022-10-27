@@ -362,12 +362,12 @@ static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t file_size, uint3
 
   progress.show("Copying from SD card to flash...", file_size);
 
-  const int buffer_size = SD_BUFFER_SIZE;
+  const uint32_t buffer_size = SD_BUFFER_SIZE;
   uint8_t buffer[buffer_size];
 
   while(bytes_flashed < file_size) {
     // limited ram so a bit at a time
-    res = f_read(&file, (void *)buffer, buffer_size, &bytes_read);
+    res = f_read(&file, (void *)buffer, std::min(file_size - bytes_flashed, buffer_size), &bytes_read);
 
     if(res != FR_OK)
       break;
@@ -421,11 +421,6 @@ static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
   if(memcmp(buf, "RELO", 4) != 0)
     return 0xFFFFFFFF;
 
-  // get size
-  FSIZE_t bytes_total = f_size(&file);
-  auto num_relocs = *(uint32_t *)(buf + 4);
-  bytes_total -= num_relocs * 4 + 8;
-
   GameInfo meta;
   if(parse_file_metadata(file, meta)) {
 
@@ -436,7 +431,7 @@ static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
         break;
       } else if(strcmp(flash_game.title, meta.title) == 0 && strcmp(flash_game.author, meta.author) == 0) {
         // same game, different version
-        if(calc_num_blocks(flash_game.size) >= calc_num_blocks(bytes_total)) {
+        if(calc_num_blocks(flash_game.size) >= calc_num_blocks(meta.size)) {
           flash_offset = flash_game.offset;
           break;
         }
@@ -448,8 +443,8 @@ static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
       cleanup_duplicates(meta, launch_offset);
   }
 
-  if(launch_offset == 0xFFFFFFFF) {
-    launch_offset = flash_from_sd_to_qspi_flash(file, bytes_total, flash_offset);
+  if(launch_offset == 0xFFFFFFFF && meta.size) {
+    launch_offset = flash_from_sd_to_qspi_flash(file, meta.size, flash_offset);
     scan_flash();
   }
 
