@@ -292,8 +292,7 @@ static uint32_t get_flash_offset_for_file(uint32_t file_size) {
       return std::get<0>(space) * qspi_flash_sector_size;
   }
 
-  // TODO: handle flash full
-  return 0;
+  return 0xFFFFFFFF;
 }
 
 static bool flash_buffer(uint32_t offset, uint8_t *buffer, size_t size) {
@@ -360,6 +359,10 @@ static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
 
   if(flash_offset == 0xFFFFFFFF)
     flash_offset = get_flash_offset_for_file(bytes_total);
+
+  // failed to find offset
+  if(flash_offset == 0xFFFFFFFF)
+    return flash_offset;
 
   // erase the sectors needed to write the image
   erase_qspi_flash(flash_offset, bytes_total);
@@ -1049,6 +1052,11 @@ bool FlashLoader::prepare_for_data() {
     // flash
     cur_reloc = 0;
     flash_start_offset = get_flash_offset_for_file(m_uFilelen);
+
+    if(flash_start_offset == 0xFFFFFFFF) {
+      debugf("Failed to find free space\n\r");
+      return false;
+    }
 
     // erase
     erase_qspi_flash(flash_start_offset, m_uFilelen);
