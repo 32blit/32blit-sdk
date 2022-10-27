@@ -703,7 +703,8 @@ void update(uint32_t time) {
         currentScreen = Screen::screenshot;
       }
       else {
-        launch_current_game();
+        if(!launch_current_game())
+          dialog.show("Error!", "Failed to launch " + selected_game.filename, [](bool){}, false);
       }
     }
   }
