@@ -403,7 +403,8 @@ static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
 
 // runs a .blit file, flashing it if required
 static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
-  if(is_qspi_memorymapped()) {
+  bool qspi_was_mapped = is_qspi_memorymapped();
+  if(qspi_was_mapped) {
     qspi_disable_memorymapped_mode();
     blit_disable_user_code(); // assume user running
   }
@@ -462,6 +463,8 @@ static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
 
     return blit_switch_execution(launch_offset, true);
   }
+  else if(qspi_was_mapped)
+    qspi_enable_memorymapped_mode();
 
   blit_enable_user_code();
 
