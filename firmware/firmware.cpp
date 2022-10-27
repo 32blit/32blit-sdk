@@ -332,15 +332,10 @@ static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t file_size, uint3
   UINT bytes_read = 0;
   FSIZE_t bytes_flashed = 0;
 
-  // check for prepended relocation info
-  char buf[4];
-  f_lseek(&file, 0);
-  f_read(&file, buf, 4, &bytes_read);
+  // get prepended relocation info
+  f_lseek(&file, 4);
   std::vector<uint32_t> relocation_offsets;
   size_t cur_reloc = 0;
-
-  if(memcmp(buf, "RELO", 4) != 0)
-    return 0xFFFFFFFF;
 
   uint32_t num_relocs;
   f_read(&file, (void *)&num_relocs, 4, &bytes_read);
@@ -416,16 +411,18 @@ static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
   if(res != FR_OK)
     return false;
 
-  // get size
-  // this is a little duplicated...
-  FSIZE_t bytes_total = f_size(&file);
+  // check for required relocation info
   char buf[8];
   UINT read;
   f_read(&file, buf, 8, &read);
-  if(memcmp(buf, "RELO", 4) == 0) {
-    auto num_relocs = *(uint32_t *)(buf + 4);
-    bytes_total -= num_relocs * 4 + 8;
-  }
+
+  if(memcmp(buf, "RELO", 4) != 0)
+    return 0xFFFFFFFF;
+
+  // get size
+  FSIZE_t bytes_total = f_size(&file);
+  auto num_relocs = *(uint32_t *)(buf + 4);
+  bytes_total -= num_relocs * 4 + 8;
 
   GameInfo meta;
   if(parse_file_metadata(file, meta)) {
