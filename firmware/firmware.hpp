@@ -41,7 +41,7 @@ struct {
       screen.rectangle(Rect(0, screen.bounds.h - 25, screen.bounds.w, 25));
       screen.pen = Pen(255, 255, 255);
       screen.text(this->message, minimal_font, Point(5, screen.bounds.h - 20));
-      uint32_t progress_width = (uint64_t(this->value) * (screen.bounds.w - 10)) / this->total;
+      uint32_t progress_width = float(this->value) / this->total * (screen.bounds.w - 10);
       screen.rectangle(Rect(5, screen.bounds.h - 10, progress_width, 5));
     }
   }
