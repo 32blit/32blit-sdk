@@ -64,12 +64,12 @@ jobs:
 
     steps:
     - name: Checkout 32Blit SDK
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     # pico sdk/extras for some builds
     - name: Checkout Pico SDK
       if: matrix.pico-sdk
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: raspberrypi/pico-sdk
         path: pico-sdk
@@ -77,13 +77,13 @@ jobs:
 
     - name: Checkout Pico Extras
       if: matrix.pico-sdk
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: raspberrypi/pico-extras
         path: pico-extras
 
     - name: Cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: /home/runner/.ccache
         key: ccache-${{matrix.cache-key}}-${{github.ref}}-${{github.sha}}
