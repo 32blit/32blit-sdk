@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install deps
       run: |
@@ -28,7 +28,7 @@ jobs:
 
     - name: Setup cache
       id: cache-system-libraries
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ${{env.EM_CACHE_FOLDER}}
         key: ${{env.EM_VERSION}}-${{runner.os}}
