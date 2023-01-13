@@ -26,7 +26,7 @@ target_sources(BlitHalPico INTERFACE
 
 pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/st7789.pio)
 
-target_link_libraries(BlitHalPico INTERFACE hardware_dma hardware_pio hardware_pwm hardware_spi pico_stdlib pico_unique_id tinyusb_device)
+target_link_libraries(BlitHalPico INTERFACE hardware_dma hardware_pio hardware_pwm hardware_spi pico_multicore pico_stdlib pico_unique_id tinyusb_device)
 target_include_directories(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR} # for tusb_config
     ${CMAKE_CURRENT_LIST_DIR}/../3rd-party/fatfs
@@ -46,6 +46,7 @@ if(${PICO_BOARD} STREQUAL "vgaboard")
     target_link_libraries(BlitHalPico INTERFACE pico_scanvideo_dpi pico_audio_i2s)
     target_compile_definitions(BlitHalPico INTERFACE
         PICO_SCANVIDEO_PLANE1_VARIABLE_FRAGMENT_DMA=1
+        PICO_SCANVIDEO_MAX_SCANLINE_BUFFER_WORDS=12
         AUDIO_I2S
         DISPLAY_SCANVIDEO
     )

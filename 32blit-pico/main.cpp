@@ -4,6 +4,7 @@
 #include "hardware/structs/rosc.h"
 #include "hardware/vreg.h"
 #include "pico/binary_info.h"
+#include "pico/multicore.h"
 #include "pico/stdlib.h"
 
 #include "audio.hpp"
@@ -102,6 +103,20 @@ void init();
 void render(uint32_t);
 void update(uint32_t);
 
+bool core1_started = false;
+
+void core1_main() {
+  core1_started = true;
+  multicore_lockout_victim_init();
+
+  init_display_core1();
+
+  while(true) {
+    update_display_core1();
+    sleep_us(1);
+  }
+}
+
 int main() {
 #if OVERCLOCK_250
   // Apply a modest overvolt, default is 1.10v.
@@ -171,6 +186,10 @@ int main() {
   init_input();
   init_fs();
   init_usb();
+
+#if defined(DISPLAY_SCANVIDEO)
+  multicore_launch_core1(core1_main);
+#endif
 
   blit::set_screen_mode(ScreenMode::lores);
 

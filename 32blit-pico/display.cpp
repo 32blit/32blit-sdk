@@ -51,6 +51,7 @@ static void vsync_callback(uint gpio, uint32_t events) {
 #endif
 
 #ifdef DISPLAY_SCANVIDEO
+static bool do_render_soon = false; // slightly delayed to handle the queue
 
 static void fill_scanline_buffer(struct scanvideo_scanline_buffer *buffer) {
   static uint32_t postamble[] = {
@@ -76,27 +77,6 @@ static void fill_scanline_buffer(struct scanvideo_scanline_buffer *buffer) {
   buffer->data[10] = (COMPOSABLE_RAW_RUN << 16u) | pixels[2];
   buffer->data[11] = (((w - 3) + 1 - 3) << 16u) | pixels[3]; // note we add one for the black pixel at the end
 }
-
-static int64_t timer_callback(alarm_id_t alarm_id, void *user_data) {
-  static int last_frame = 0;
-  struct scanvideo_scanline_buffer *buffer = scanvideo_begin_scanline_generation(false);
-  while (buffer) {
-    fill_scanline_buffer(buffer);
-    scanvideo_end_scanline_generation(buffer);
-
-    auto next_frame = scanvideo_frame_number(scanvideo_get_next_scanline_id());
-    if(next_frame != last_frame) {
-    //if(scanvideo_in_vblank() && !do_render) {
-      do_render = true;
-      last_frame = next_frame;
-      break;
-    }
-
-    buffer = scanvideo_begin_scanline_generation(false);
-  }
-
-  return 100;
-}
 #endif
 
 void init_display() {
@@ -106,13 +86,6 @@ void init_display() {
   st7789::clear();
 
   have_vsync = st7789::vsync_callback(vsync_callback);
-#endif
-
-#ifdef DISPLAY_SCANVIDEO
-  //scanvideo_setup(&vga_mode_320x240_60); // not quite
-  scanvideo_setup(&vga_mode_160x120_60);
-  scanvideo_timing_enable(true);
-  add_alarm_in_us(100, timer_callback, nullptr, true);
 #endif
 }
 
@@ -146,10 +119,59 @@ void update_display(uint32_t time) {
 
 #elif defined(DISPLAY_SCANVIDEO)
   if(do_render) {
-    screen.data = (uint8_t *)screen_fb + (buf_index ^ 1) * lores_page_size; // only works because there's no "firmware" here
+    if(cur_screen_mode == ScreenMode::lores)
+      screen.data = (uint8_t *)screen_fb + (buf_index ^ 1) * lores_page_size; // only works because there's no "firmware" here
     ::render(time);
-    buf_index ^= 1;
     do_render = false;
+  }
+#endif
+}
+
+void init_display_core1() {
+#ifdef DISPLAY_SCANVIDEO
+  // no mode switching yet
+#if ALLOW_HIRES
+#if DISPLAY_HEIGHT == 160 // extra middle mode
+  scanvideo_setup(&vga_mode_213x160_60);
+#else
+  scanvideo_setup(&vga_mode_320x240_60);
+#endif
+#else
+  scanvideo_setup(&vga_mode_160x120_60);
+#endif
+
+  scanvideo_timing_enable(true);
+#endif
+}
+
+void update_display_core1() {
+#ifdef DISPLAY_SCANVIDEO
+  struct scanvideo_scanline_buffer *buffer = scanvideo_begin_scanline_generation(true);
+  while (buffer) {
+    fill_scanline_buffer(buffer);
+    scanvideo_end_scanline_generation(buffer);
+
+    const int height = screen.bounds.h;
+
+    if(scanvideo_scanline_number(buffer->scanline_id) == height - 1 && !do_render) {
+      // swap buffers at the end of the frame, but don't start a render yet
+      // (the last few lines of the old buffer are still in the queue)
+      if(cur_screen_mode == ScreenMode::lores) {
+        do_render_soon = true;
+        buf_index ^= 1;
+      } else {
+        // hires is single buffered and disabled by default
+        // rendering correctly is the user's problem
+        do_render = true;
+      }
+      break;
+    } else if(do_render_soon && scanvideo_scanline_number(buffer->scanline_id) == PICO_SCANVIDEO_SCANLINE_BUFFER_COUNT - 1) {
+      // should be safe to reuse old buffer now
+      do_render = do_render_soon;
+      do_render_soon = false;
+    }
+
+    buffer = scanvideo_begin_scanline_generation(false);
   }
 #endif
 }
