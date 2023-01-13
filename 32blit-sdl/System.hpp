@@ -41,6 +41,8 @@ class System {
 
 		bool running = false;
 
+		Uint32 last_render_time = 0;
+
 		// shadow input
 		Uint32 shadow_buttons = 0;
 		float shadow_joystick[2] = {0, 0};

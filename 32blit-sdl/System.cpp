@@ -251,12 +251,12 @@ void System::run() {
 }
 
 int System::timer_thread() {
-	// Signal the system loop every 20 msec.
+	// Signal the system loop every 10 msec.
 	int dropped = 0;
 	SDL_Event event = {};
 	event.type = timer_event;
 
-	while (SDL_SemWaitTimeout(s_timer_stop, 20)) {
+	while (SDL_SemWaitTimeout(s_timer_stop, 10)) {
 		if (SDL_SemValue(s_loop_update)) {
 			dropped++;
 			if(dropped > 100) {
@@ -296,20 +296,31 @@ int System::update_thread() {
 	return 0;
 }
 
-void System::loop()
-{
-	SDL_LockMutex(m_input);
-	blit::buttons = shadow_buttons;
-	blit::tilt.x = shadow_tilt[0];
-	blit::tilt.y = shadow_tilt[1];
-	blit::tilt.z = shadow_tilt[2];
-	blit::joystick.x = shadow_joystick[0];
-	blit::joystick.y = shadow_joystick[1];
-	SDL_UnlockMutex(m_input);
-	blit::tick(::now());
+void System::loop() {
+  SDL_LockMutex(m_input);
+  blit::buttons = shadow_buttons;
+  blit::tilt.x = shadow_tilt[0];
+  blit::tilt.y = shadow_tilt[1];
+  blit::tilt.z = shadow_tilt[2];
+  blit::joystick.x = shadow_joystick[0];
+  blit::joystick.y = shadow_joystick[1];
+  SDL_UnlockMutex(m_input);
+
+  // only render at 50Hz (main loop runs at 100Hz)
+  // however, the emscripten loop (usually) runs at the display refresh rate
+  auto time_now = ::now();
+#ifndef __EMSCRIPTEN__
+  if(time_now - last_render_time >= 20)
+#endif
+  {
+    blit::render(time_now);
+    last_render_time = time_now;
+  }
+
+  blit::tick(::now());
   blit_input->rumble_controllers(blit::vibration);
-  blit::render(::now());
-	blit_multiplayer->update();
+
+  blit_multiplayer->update();
 }
 
 Uint32 System::mode() {
