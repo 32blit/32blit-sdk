@@ -129,6 +129,8 @@ static bool parse_file_metadata(FIL &fh, GameInfo &info) {
   if(header.magic != blit_game_magic)
     return false;
 
+  info.size = header.end - qspi_flash_address;
+
   bool result = false;
 
   // get metadata
@@ -292,8 +294,7 @@ static uint32_t get_flash_offset_for_file(uint32_t file_size) {
       return std::get<0>(space) * qspi_flash_sector_size;
   }
 
-  // TODO: handle flash full
-  return 0;
+  return 0xFFFFFFFF;
 }
 
 static bool flash_buffer(uint32_t offset, uint8_t *buffer, size_t size) {
@@ -327,23 +328,16 @@ static void apply_relocs(uint32_t file_offset, uint32_t flash_base_offset, uint8
 }
 
 // Flash a file from the SDCard to external flash
-static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
+static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t file_size, uint32_t flash_offset) {
   FRESULT res;
 
-  // get file length
-  FSIZE_t bytes_total = f_size(&file);
   UINT bytes_read = 0;
   FSIZE_t bytes_flashed = 0;
 
-  // check for prepended relocation info
-  char buf[4];
-  f_lseek(&file, 0);
-  f_read(&file, buf, 4, &bytes_read);
+  // get prepended relocation info
+  f_lseek(&file, 4);
   std::vector<uint32_t> relocation_offsets;
   size_t cur_reloc = 0;
-
-  if(memcmp(buf, "RELO", 4) != 0)
-    return 0xFFFFFFFF;
 
   uint32_t num_relocs;
   f_read(&file, (void *)&num_relocs, 4, &bytes_read);
@@ -356,22 +350,24 @@ static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
     relocation_offsets.push_back(reloc_offset - qspi_flash_address);
   }
 
-  bytes_total -= num_relocs * 4 + 8; // size of relocation data
-
   if(flash_offset == 0xFFFFFFFF)
-    flash_offset = get_flash_offset_for_file(bytes_total);
+    flash_offset = get_flash_offset_for_file(file_size);
+
+  // failed to find offset
+  if(flash_offset == 0xFFFFFFFF)
+    return flash_offset;
 
   // erase the sectors needed to write the image
-  erase_qspi_flash(flash_offset, bytes_total);
+  erase_qspi_flash(flash_offset, file_size);
 
-  progress.show("Copying from SD card to flash...", bytes_total);
+  progress.show("Copying from SD card to flash...", file_size);
 
-  const int buffer_size = SD_BUFFER_SIZE;
+  const uint32_t buffer_size = SD_BUFFER_SIZE;
   uint8_t buffer[buffer_size];
 
-  while(bytes_flashed < bytes_total) {
+  while(bytes_flashed < file_size) {
     // limited ram so a bit at a time
-    res = f_read(&file, (void *)buffer, buffer_size, &bytes_read);
+    res = f_read(&file, (void *)buffer, std::min(file_size - bytes_flashed, buffer_size), &bytes_read);
 
     if(res != FR_OK)
       break;
@@ -392,18 +388,19 @@ static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t flash_offset) {
   // update free space
   for(auto &space : free_space) {
     if(std::get<0>(space) == flash_offset / qspi_flash_sector_size) {
-      auto size = calc_num_blocks(bytes_total);
+      auto size = calc_num_blocks(file_size);
       std::get<0>(space) += size;
       std::get<1>(space) -= size;
     }
   }
 
-  return bytes_flashed == bytes_total ? flash_offset : 0xFFFFFFFF;
+  return bytes_flashed == file_size ? flash_offset : 0xFFFFFFFF;
 }
 
 // runs a .blit file, flashing it if required
 static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
-  if(is_qspi_memorymapped()) {
+  bool qspi_was_mapped = is_qspi_memorymapped();
+  if(qspi_was_mapped) {
     qspi_disable_memorymapped_mode();
     blit_disable_user_code(); // assume user running
   }
@@ -416,16 +413,13 @@ static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
   if(res != FR_OK)
     return false;
 
-  // get size
-  // this is a little duplicated...
-  FSIZE_t bytes_total = f_size(&file);
+  // check for required relocation info
   char buf[8];
   UINT read;
   f_read(&file, buf, 8, &read);
-  if(memcmp(buf, "RELO", 4) == 0) {
-    auto num_relocs = *(uint32_t *)(buf + 4);
-    bytes_total -= num_relocs * 4 + 8;
-  }
+
+  if(memcmp(buf, "RELO", 4) != 0)
+    return 0xFFFFFFFF;
 
   GameInfo meta;
   if(parse_file_metadata(file, meta)) {
@@ -437,7 +431,7 @@ static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
         break;
       } else if(strcmp(flash_game.title, meta.title) == 0 && strcmp(flash_game.author, meta.author) == 0) {
         // same game, different version
-        if(calc_num_blocks(flash_game.size) >= calc_num_blocks(bytes_total)) {
+        if(calc_num_blocks(flash_game.size) >= calc_num_blocks(meta.size)) {
           flash_offset = flash_game.offset;
           break;
         }
@@ -449,8 +443,8 @@ static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
       cleanup_duplicates(meta, launch_offset);
   }
 
-  if(launch_offset == 0xFFFFFFFF) {
-    launch_offset = flash_from_sd_to_qspi_flash(file, flash_offset);
+  if(launch_offset == 0xFFFFFFFF && meta.size) {
+    launch_offset = flash_from_sd_to_qspi_flash(file, meta.size, flash_offset);
     scan_flash();
   }
 
@@ -462,6 +456,8 @@ static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
 
     return blit_switch_execution(launch_offset, true);
   }
+  else if(qspi_was_mapped)
+    qspi_enable_memorymapped_mode();
 
   blit_enable_user_code();
 
@@ -1046,6 +1042,11 @@ bool FlashLoader::prepare_for_data() {
     // flash
     cur_reloc = 0;
     flash_start_offset = get_flash_offset_for_file(m_uFilelen);
+
+    if(flash_start_offset == 0xFFFFFFFF) {
+      debugf("Failed to find free space\n\r");
+      return false;
+    }
 
     // erase
     erase_qspi_flash(flash_start_offset, m_uFilelen);

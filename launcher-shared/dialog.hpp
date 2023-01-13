@@ -9,9 +9,11 @@ struct Dialog {
   AnswerFunc on_answer;
   bool is_question;
 
+  static constexpr Rect dialog_rect{45, 77, 230, 85};
+
   void show(std::string title, std::string message, AnswerFunc on_answer, bool is_question = true) {
     this->title = title;
-    this->message = message;
+    this->message = screen.wrap_text(message, dialog_rect.w - 12, minimal_font);
     this->on_answer = on_answer;
     this->is_question = is_question;
   }
@@ -56,7 +58,6 @@ struct Dialog {
     if(title.empty())
       return;
 
-    const Rect dialog_rect(45, 77, 230, 85);
     const int header_height = 16;
 
     screen.pen = Pen(235, 245, 255);
