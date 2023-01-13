@@ -60,9 +60,10 @@ int32_t read_file(void *fh, uint32_t offset, uint32_t length, char *buffer) {
   auto file = (SDL_RWops *)fh;
 
   if(file && SDL_RWseek(file, offset, RW_SEEK_SET) != -1) {
+    SDL_ClearError();
     size_t bytes_read = SDL_RWread(file, buffer, 1, length);
 
-    if(bytes_read > 0)
+    if(!SDL_GetError()[0])
       return (int32_t)bytes_read;
   }
 
