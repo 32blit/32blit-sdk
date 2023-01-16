@@ -8,6 +8,8 @@
 #include "pico/binary_info.h"
 #include "pico/multicore.h"
 
+#include "binary_info.hpp"
+
 static const uint32_t storage_size = PICO_FLASH_SIZE_BYTES / 4;
 static const uint32_t storage_offset = PICO_FLASH_SIZE_BYTES - storage_size;
 
@@ -18,7 +20,7 @@ void get_storage_size(uint16_t &block_size, uint32_t &num_blocks) {
   num_blocks = storage_size / FLASH_SECTOR_SIZE;
 
   bi_decl(bi_block_device(
-    BINARY_INFO_MAKE_TAG('3', 'B'),
+    BINARY_INFO_TAG_32BLIT,
     "32Blit",
     XIP_BASE + storage_offset,
     storage_size,

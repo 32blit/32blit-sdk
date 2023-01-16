@@ -8,6 +8,7 @@
 #include "pico/stdlib.h"
 
 #include "audio.hpp"
+#include "binary_info.hpp"
 #include "config.h"
 #include "display.hpp"
 #include "file.hpp"
@@ -74,24 +75,35 @@ static GameMetadata get_metadata() {
   extern binary_info_t *__binary_info_start, *__binary_info_end;
 
   for(auto tag_ptr = &__binary_info_start; tag_ptr != &__binary_info_end ; tag_ptr++) {
-    if((*tag_ptr)->type != BINARY_INFO_TYPE_ID_AND_STRING || (*tag_ptr)->tag != BINARY_INFO_TAG_RASPBERRY_PI)
+    if((*tag_ptr)->type != BINARY_INFO_TYPE_ID_AND_STRING)
       continue;
 
     auto id_str_tag = (binary_info_id_and_string_t *)*tag_ptr;
 
-    switch(id_str_tag->id) {
-      case BINARY_INFO_ID_RP_PROGRAM_NAME:
-        ret.title = id_str_tag->value;
-        break;
-      case BINARY_INFO_ID_RP_PROGRAM_VERSION_STRING:
-        ret.version = id_str_tag->value;
-        break;
-      case BINARY_INFO_ID_RP_PROGRAM_URL:
-        ret.url = id_str_tag->value;
-        break;
-      case BINARY_INFO_ID_RP_PROGRAM_DESCRIPTION:
-        ret.description = id_str_tag->value;
-        break;
+    if((*tag_ptr)->tag == BINARY_INFO_TAG_RASPBERRY_PI) {
+      switch(id_str_tag->id) {
+        case BINARY_INFO_ID_RP_PROGRAM_NAME:
+          ret.title = id_str_tag->value;
+          break;
+        case BINARY_INFO_ID_RP_PROGRAM_VERSION_STRING:
+          ret.version = id_str_tag->value;
+          break;
+        case BINARY_INFO_ID_RP_PROGRAM_URL:
+          ret.url = id_str_tag->value;
+          break;
+        case BINARY_INFO_ID_RP_PROGRAM_DESCRIPTION:
+          ret.description = id_str_tag->value;
+          break;
+      }
+    } else if((*tag_ptr)->tag == BINARY_INFO_TAG_32BLIT) {
+      switch(id_str_tag->id) {
+        case BINARY_INFO_ID_32BLIT_AUTHOR:
+          ret.author = id_str_tag->value;
+          break;
+        case BINARY_INFO_ID_32BLIT_CATEGORY:
+          ret.category = id_str_tag->value;
+          break;
+      }
     }
 
   }
