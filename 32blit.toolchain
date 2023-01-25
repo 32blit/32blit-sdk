@@ -35,8 +35,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # stdlibs
 set(STDLIB_HASHTYPE "SHA256")
 set(STDLIB_PATH ${CMAKE_CURRENT_LIST_DIR}/stdlib)
-set(STDLIB_URL https://github.com/32blit/stdlibs/releases/download/newlib-3.3.0-gcc-9.2.0/stdlibs.zip)
-set(STDLIB_HASH "${STDLIB_HASHTYPE}=0431fa7b3fe5e463424078546560b06490890abf4967745ac85b8b6b430d1941")
+set(STDLIB_URL https://github.com/32blit/stdlibs/releases/download/newlib-4.2.0-gcc-12.2.0/stdlibs.zip)
+set(STDLIB_HASH "${STDLIB_HASHTYPE}=27cb9b1a2545c86139351cbc8b9db7182ba751bead13f71eae5dcab95f8080b6")
 
 if(${CMAKE_VERSION} VERSION_LESS "3.18")
     find_program(UNZIP NAMES unzip)
