@@ -51,14 +51,24 @@ target_compile_options(BlitHalPico INTERFACE
     -Wno-ignored-qualifiers # pico-sdk generates a lot of these
 )
 
-set(CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/board/${PICO_BOARD}/config.cmake)
+if(DEFINED PICO_ADDON)
+    # for boards that don't have a board in the pico sdk
+    # (usually because they are an add-on for a regular pico)
+    set(CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/board/${PICO_ADDON}/config.cmake)
+else()
+    set(CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/board/${PICO_BOARD}/config.cmake)
+endif()
 
 if(EXISTS ${CONFIG_PATH})
-    include(${CMAKE_CURRENT_LIST_DIR}/board/${PICO_BOARD}/config.cmake)
+    include(${CONFIG_PATH})
     message("Using board config \"${BLIT_BOARD_NAME}\"")
 else()
     include(${CMAKE_CURRENT_LIST_DIR}/board/pico/config.cmake)
-    message(WARNING "Using default config for \"${PICO_BOARD}\"...")
+    if(DEFINED PICO_ADDON)
+        message(WARNING "Using default config for \"${PICO_BOARD}\", add-on \"${PICO_ADDON}\"...")
+    else()
+        message(WARNING "Using default config for \"${PICO_BOARD}\"...")
+    endif()
 endif()
 
 # default drivers
