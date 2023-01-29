@@ -1,6 +1,7 @@
 #include "display.hpp"
 
 #include "hardware/clocks.h"
+#include "hardware/dma.h"
 #include "pico/time.h"
 #include "pico/scanvideo.h"
 #include "pico/scanvideo/composable_scanline.h"
@@ -43,7 +44,9 @@ static void fill_scanline_buffer(struct scanvideo_scanline_buffer *buffer) {
 }
 
 void init_display() {
-
+  // channel 0 get claimed later, channel 3 doesn't get claimed, but does get used
+  // reserve them so out claims don't conflict
+  dma_claim_mask(1 << 0 | 1 << 3);
 }
 
 void update_display(uint32_t time) {
@@ -56,6 +59,8 @@ void update_display(uint32_t time) {
 }
 
 void init_display_core1() {
+  dma_unclaim_mask(1 << 0 | 1 << 3);
+
   // no mode switching yet
 #if ALLOW_HIRES
 #if DISPLAY_HEIGHT == 160 // extra middle mode
