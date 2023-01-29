@@ -25,8 +25,8 @@ static uint16_t screen_fb[DISPLAY_WIDTH * DISPLAY_HEIGHT];
 static uint16_t screen_fb[lores_page_size]; // double-buffered
 #endif
 
-static const blit::SurfaceTemplate lores_screen{(uint8_t *)screen_fb, Size(DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2), blit::PixelFormat::RGB565, nullptr};
-static const blit::SurfaceTemplate hires_screen{(uint8_t *)screen_fb, Size(DISPLAY_WIDTH, DISPLAY_HEIGHT), blit::PixelFormat::RGB565, nullptr};
+static const Size lores_screen_size(DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2);
+static const Size hires_screen_size(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
 static ScreenMode cur_screen_mode = ScreenMode::lores;
 // double buffering for lores
@@ -201,12 +201,12 @@ bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_templ
 
   switch(new_mode) {
     case ScreenMode::lores:
-      new_surf_template.bounds = lores_screen.bounds;
+      new_surf_template.bounds = lores_screen_size;
       break;
     case ScreenMode::hires:
     case ScreenMode::hires_palette:
 #if ALLOW_HIRES
-      new_surf_template.bounds = hires_screen.bounds;
+      new_surf_template.bounds = hires_screen_size;
       break;
 #else
       return false; // no hires for scanvideo
