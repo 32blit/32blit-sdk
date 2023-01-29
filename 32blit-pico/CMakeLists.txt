@@ -10,12 +10,22 @@ set(PICO_SDK_VERSION_MAJOR ${PICO_SDK_VERSION_MAJOR} PARENT_SCOPE)
 set(PICO_SDK_VERSION_MINOR ${PICO_SDK_VERSION_MINOR} PARENT_SCOPE)
 set(PICO_SDK_VERSION_REVISION ${PICO_SDK_VERSION_REVISION} PARENT_SCOPE)
 
+# driver helper
+# can override driver choice by pre-setting BLIT_x_DRIVER
+function(blit_driver DRV NAME)
+    set(var BLIT_${DRV}_DRIVER)
+    string(TOUPPER ${var} var)
+
+    if(NOT ${var})
+        set(${var} ${NAME} PARENT_SCOPE)
+    endif()
+endfunction()
+
 add_library(BlitHalPico INTERFACE)
 target_sources(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/../3rd-party/fatfs/ff.c
     ${CMAKE_CURRENT_LIST_DIR}/../3rd-party/fatfs/ffunicode.c
 
-    ${CMAKE_CURRENT_LIST_DIR}/audio.cpp
     ${CMAKE_CURRENT_LIST_DIR}/display.cpp
     ${CMAKE_CURRENT_LIST_DIR}/file.cpp
     ${CMAKE_CURRENT_LIST_DIR}/input.cpp
@@ -52,6 +62,20 @@ else()
     message(WARNING "Using default config for \"${PICO_BOARD}\"...")
 endif()
 
+# default drivers
+if(NOT BLIT_AUDIO_DRIVER)
+    set(BLIT_AUDIO_DRIVER "none")
+endif()
+
+# driver dependencies
+if(BLIT_AUDIO_DRIVER STREQUAL "i2s")
+    set(BLIT_REQUIRE_PICO_EXTRAS TRUE)
+    list(APPEND BLIT_BOARD_LIBRARIES pico_audio_i2s)
+elseif(BLIT_AUDIO_DRIVER STREQUAL "pwm")
+    set(BLIT_REQUIRE_PICO_EXTRAS TRUE)
+    list(APPEND BLIT_BOARD_LIBRARIES pico_audio_pwm)
+endif()
+
 # late SDK init
 # (pico_sdk_init needs to be after importing extras, which we don't know if we'll need until now)
 if(BLIT_REQUIRE_PICO_EXTRAS)
@@ -63,9 +87,15 @@ pico_sdk_init()
 # generate PIO headers (has to be after SDK init)
 pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/st7789.pio)
 
+# driver sources
+target_sources(BlitHalPico INTERFACE
+    ${CMAKE_CURRENT_LIST_DIR}/audio_${BLIT_AUDIO_DRIVER}.cpp
+)
+
 target_compile_definitions(BlitHalPico INTERFACE ${BLIT_BOARD_DEFINITIONS})
 target_link_libraries(BlitHalPico INTERFACE ${BLIT_BOARD_LIBRARIES})
 
+# functions
 function(blit_executable_common NAME)
     target_link_libraries(${NAME} BlitEngine)
 
