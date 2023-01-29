@@ -42,52 +42,14 @@ target_compile_options(BlitHalPico INTERFACE
     -Wno-ignored-qualifiers # pico-sdk generates a lot of these
 )
 
-if(${PICO_BOARD} STREQUAL "vgaboard")
-    message("Using VGA board...")
-    target_link_libraries(BlitHalPico INTERFACE pico_scanvideo_dpi pico_audio_i2s)
-    target_compile_definitions(BlitHalPico INTERFACE
-        PICO_SCANVIDEO_PLANE1_VARIABLE_FRAGMENT_DMA=1
-        PICO_SCANVIDEO_MAX_SCANLINE_BUFFER_WORDS=12
-        AUDIO_I2S
-        DISPLAY_SCANVIDEO
-    )
-    set(REQUIRE_PICO_EXTRAS TRUE) # scanvideo/audio_i2s
-elseif(${PICO_BOARD} STREQUAL "pimoroni_picosystem")
-    message("Using picosystem...")
-    target_compile_definitions(BlitHalPico INTERFACE
-        DISPLAY_ST7789
-        INPUT_GPIO
-        LED_R_PIN=PICOSYSTEM_LED_R_PIN
-        LED_G_PIN=PICOSYSTEM_LED_G_PIN
-        LED_B_PIN=PICOSYSTEM_LED_B_PIN
-        USB_PRODUCT_STR="PicoSystem"
-    )
-    if(AUDIO_PWM)
-        target_link_libraries(BlitHalPico INTERFACE pico_audio_pwm)
-        target_compile_definitions(BlitHalPico INTERFACE
-            PICO_AUDIO_PWM_MONO_PIN=PICOSYSTEM_AUDIO_PIN
-            PICO_AUDIO_PWM_PIO=1
-            AUDIO_PWM
-        )
-        set(REQUIRE_PICO_EXTRAS TRUE) # audio_pwm
-    else()
-        target_compile_definitions(BlitHalPico INTERFACE
-            AUDIO_BEEP_PIN=PICOSYSTEM_AUDIO_PIN
-            AUDIO_BEEP
-        )
-    endif()
+set(CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/board/${PICO_BOARD}/config.cmake)
+
+if(EXISTS ${CONFIG_PATH})
+    include(${CMAKE_CURRENT_LIST_DIR}/board/${PICO_BOARD}/config.cmake)
+    message("Using board config \"${BLIT_BOARD_NAME}\"")
 else()
+    include(${CMAKE_CURRENT_LIST_DIR}/board/pico/config.cmake)
     message(WARNING "Using default config for \"${PICO_BOARD}\"...")
-    target_link_libraries(BlitHalPico INTERFACE pico_audio_i2s)
-    # messy explorer-based setup
-    target_compile_definitions(BlitHalPico INTERFACE
-        PICO_AUDIO_I2S_DATA_PIN=6
-        PICO_AUDIO_I2S_CLOCK_PIN_BASE=20
-        AUDIO_I2S
-        DISPLAY_ST7789
-        INPUT_GPIO
-    )
-    set(REQUIRE_PICO_EXTRAS TRUE) # audio_i2s
 endif()
 
 # late SDK init
@@ -100,6 +62,9 @@ pico_sdk_init()
 
 # generate PIO headers (has to be after SDK init)
 pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/st7789.pio)
+
+target_compile_definitions(BlitHalPico INTERFACE ${BLIT_BOARD_DEFINITIONS})
+target_link_libraries(BlitHalPico INTERFACE ${BLIT_BOARD_LIBRARIES})
 
 function(blit_executable_common NAME)
     target_link_libraries(${NAME} BlitEngine)
