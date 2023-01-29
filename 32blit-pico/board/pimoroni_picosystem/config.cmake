@@ -2,7 +2,6 @@ set(BLIT_BOARD_NAME "PicoSystem")
 
 set(BLIT_BOARD_DEFINITIONS
     AUDIO_BEEP_PIN=PICOSYSTEM_AUDIO_PIN
-    INPUT_GPIO
     LED_R_PIN=PICOSYSTEM_LED_R_PIN
     LED_G_PIN=PICOSYSTEM_LED_G_PIN
     LED_B_PIN=PICOSYSTEM_LED_B_PIN
@@ -15,3 +14,4 @@ set(BLIT_BOARD_DEFINITIONS
 
 blit_driver(audio beep)
 blit_driver(display st7789)
+blit_driver(input picosystem)

@@ -28,7 +28,6 @@ target_sources(BlitHalPico INTERFACE
 
     ${CMAKE_CURRENT_LIST_DIR}/display.cpp
     ${CMAKE_CURRENT_LIST_DIR}/file.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/input.cpp
     ${CMAKE_CURRENT_LIST_DIR}/led.cpp
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
     ${CMAKE_CURRENT_LIST_DIR}/storage.cpp
@@ -69,6 +68,9 @@ endif()
 if(NOT BLIT_DISPLAY_DRIVER)
     set(BLIT_DISPLAY_DRIVER "none")
 endif()
+if(NOT BLIT_INPUT_DRIVER)
+    set(BLIT_INPUT_DRIVER "none")
+endif()
 
 # driver dependencies
 if(BLIT_AUDIO_DRIVER STREQUAL "i2s")
@@ -101,6 +103,7 @@ pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/st7789.pio)
 target_sources(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/audio_${BLIT_AUDIO_DRIVER}.cpp
     ${CMAKE_CURRENT_LIST_DIR}/display_${BLIT_DISPLAY_DRIVER}.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/input_${BLIT_INPUT_DRIVER}.cpp
 )
 
 target_compile_definitions(BlitHalPico INTERFACE ${BLIT_BOARD_DEFINITIONS})

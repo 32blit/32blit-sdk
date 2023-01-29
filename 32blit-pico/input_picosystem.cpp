@@ -1,3 +1,4 @@
+// GPIO dpad + ABXY
 #include "input.hpp"
 
 #include "hardware/gpio.h"
@@ -7,10 +8,7 @@
 #include "engine/api_private.hpp"
 #include "engine/input.hpp"
 
-#ifdef INPUT_GPIO
-
 enum class ButtonIO {
-#ifdef PIMORONI_PICOSYSTEM
   UP = 23,
   DOWN = 20,
   LEFT = 22,
@@ -20,17 +18,6 @@ enum class ButtonIO {
   B = 19,
   X = 17,
   Y = 16,
-#else
-  UP = 2,
-  DOWN = 3,
-  LEFT = 4,
-  RIGHT = 5,
-
-  A = 12,
-  B = 13,
-  X = 14,
-  Y = 15,
-#endif
 };
 
 static void init_button(ButtonIO b) {
@@ -43,10 +30,8 @@ static void init_button(ButtonIO b) {
 inline bool get_button(ButtonIO b) {
   return !gpio_get(static_cast<int>(b));
 }
-#endif
 
 void init_input() {
-#ifdef INPUT_GPIO
   init_button(ButtonIO::UP);
   init_button(ButtonIO::DOWN);
   init_button(ButtonIO::LEFT);
@@ -66,13 +51,11 @@ void init_input() {
   BUTTON_DECL(X)
   BUTTON_DECL(Y)
   #undef BUTTON_DECL
-#endif
 }
 
 void update_input() {
   using namespace blit;
 
-#ifdef INPUT_GPIO
   api.buttons = (get_button(ButtonIO::LEFT)  ? uint32_t(Button::DPAD_LEFT) : 0)
               | (get_button(ButtonIO::RIGHT) ? uint32_t(Button::DPAD_RIGHT) : 0)
               | (get_button(ButtonIO::UP)    ? uint32_t(Button::DPAD_UP) : 0)
@@ -81,5 +64,4 @@ void update_input() {
               | (get_button(ButtonIO::B)     ? uint32_t(Button::B) : 0)
               | (get_button(ButtonIO::X)     ? uint32_t(Button::X) : 0)
               | (get_button(ButtonIO::Y)     ? uint32_t(Button::Y) : 0);
-#endif
 }
