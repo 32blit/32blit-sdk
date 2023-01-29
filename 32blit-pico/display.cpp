@@ -2,183 +2,24 @@
 
 #include "config.h"
 
-#ifdef DISPLAY_ST7789
-#include "st7789.hpp"
-#elif defined(DISPLAY_SCANVIDEO)
-#include "hardware/clocks.h"
-#include "pico/time.h"
-#include "pico/scanvideo.h"
-#include "pico/scanvideo/composable_scanline.h"
-#endif
-
 using namespace blit;
 
 static SurfaceInfo cur_surf_info;
 
-// height rounded up to handle the 135px display
-// this is in bytes
-static const int lores_page_size = (DISPLAY_WIDTH / 2) * ((DISPLAY_HEIGHT + 1) / 2) * 2;
-
 #if ALLOW_HIRES
-static uint16_t screen_fb[DISPLAY_WIDTH * DISPLAY_HEIGHT];
+uint16_t screen_fb[DISPLAY_WIDTH * DISPLAY_HEIGHT];
 #else
-static uint16_t screen_fb[lores_page_size]; // double-buffered
+uint16_t screen_fb[lores_page_size]; // double-buffered
 #endif
 
 static const Size lores_screen_size(DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2);
 static const Size hires_screen_size(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
-static ScreenMode cur_screen_mode = ScreenMode::lores;
+ScreenMode cur_screen_mode = ScreenMode::lores;
 // double buffering for lores
 static volatile int buf_index = 0;
 
 static volatile bool do_render = true;
-
-// user render function
-void render(uint32_t);
-
-#ifdef DISPLAY_ST7789
-static bool have_vsync = false;
-static bool backlight_enabled = false;
-static uint32_t last_render = 0;
-
-static void vsync_callback(uint gpio, uint32_t events) {
-  if(!do_render && !st7789::dma_is_busy()) {
-    st7789::update();
-    do_render = true;
-  }
-}
-#endif
-
-#ifdef DISPLAY_SCANVIDEO
-static bool do_render_soon = false; // slightly delayed to handle the queue
-
-static void fill_scanline_buffer(struct scanvideo_scanline_buffer *buffer) {
-  static uint32_t postamble[] = {
-    0x0000u | (COMPOSABLE_EOL_ALIGN << 16)
-  };
-
-  int w = screen.bounds.w;
-
-  buffer->data[0] = 4;
-  buffer->data[1] = host_safe_hw_ptr(buffer->data + 8);
-  buffer->data[2] = (w - 4) / 2; // first four pixels are handled separately
-  uint16_t *pixels = screen_fb + buf_index * (160 * 120) + scanvideo_scanline_number(buffer->scanline_id) * w;
-  buffer->data[3] = host_safe_hw_ptr(pixels + 4);
-  buffer->data[4] = count_of(postamble);
-  buffer->data[5] = host_safe_hw_ptr(postamble);
-  buffer->data[6] = 0;
-  buffer->data[7] = 0;
-  buffer->data_used = 8;
-
-  // 3 pixel run followed by main run, consuming the first 4 pixels
-  buffer->data[8] = (pixels[0] << 16u) | COMPOSABLE_RAW_RUN;
-  buffer->data[9] = (pixels[1] << 16u) | 0;
-  buffer->data[10] = (COMPOSABLE_RAW_RUN << 16u) | pixels[2];
-  buffer->data[11] = (((w - 3) + 1 - 3) << 16u) | pixels[3]; // note we add one for the black pixel at the end
-}
-#endif
-
-void init_display() {
-#ifdef DISPLAY_ST7789
-  st7789::frame_buffer = screen_fb;
-  st7789::init();
-  st7789::clear();
-
-  have_vsync = st7789::vsync_callback(vsync_callback);
-#endif
-}
-
-void update_display(uint32_t time) {
-
-#ifdef DISPLAY_ST7789
-  if((do_render || (!have_vsync && time - last_render >= 20)) && (cur_screen_mode == ScreenMode::lores || !st7789::dma_is_busy())) {
-    if(cur_screen_mode == ScreenMode::lores) {
-      buf_index ^= 1;
-
-      screen.data = (uint8_t *)screen_fb + (buf_index) * lores_page_size;
-      st7789::frame_buffer = (uint16_t *)screen.data;
-    }
-
-    ::render(time);
-
-    if(!have_vsync) {
-      while(st7789::dma_is_busy()) {} // may need to wait for lores.
-      st7789::update();
-    }
-
-    if(last_render && !backlight_enabled) {
-      // the first render should have made it to the screen at this point
-      st7789::set_backlight(255);
-      backlight_enabled = true;
-    }
-
-    last_render = time;
-    do_render = false;
-  }
-
-#elif defined(DISPLAY_SCANVIDEO)
-  if(do_render) {
-    if(cur_screen_mode == ScreenMode::lores)
-      screen.data = (uint8_t *)screen_fb + (buf_index ^ 1) * lores_page_size; // only works because there's no "firmware" here
-    ::render(time);
-    do_render = false;
-  }
-#endif
-}
-
-void init_display_core1() {
-#ifdef DISPLAY_SCANVIDEO
-  // no mode switching yet
-#if ALLOW_HIRES
-#if DISPLAY_HEIGHT == 160 // extra middle mode
-  scanvideo_setup(&vga_mode_213x160_60);
-#else
-  scanvideo_setup(&vga_mode_320x240_60);
-#endif
-#else
-  scanvideo_setup(&vga_mode_160x120_60);
-#endif
-
-  scanvideo_timing_enable(true);
-#endif
-}
-
-void update_display_core1() {
-#ifdef DISPLAY_SCANVIDEO
-  struct scanvideo_scanline_buffer *buffer = scanvideo_begin_scanline_generation(true);
-  while (buffer) {
-    fill_scanline_buffer(buffer);
-    scanvideo_end_scanline_generation(buffer);
-
-    const int height = screen.bounds.h;
-
-    if(scanvideo_scanline_number(buffer->scanline_id) == height - 1 && !do_render) {
-      // swap buffers at the end of the frame, but don't start a render yet
-      // (the last few lines of the old buffer are still in the queue)
-      if(cur_screen_mode == ScreenMode::lores) {
-        do_render_soon = true;
-        buf_index ^= 1;
-      } else {
-        // hires is single buffered and disabled by default
-        // rendering correctly is the user's problem
-        do_render = true;
-      }
-      break;
-    } else if(do_render_soon && scanvideo_scanline_number(buffer->scanline_id) == PICO_SCANVIDEO_SCANLINE_BUFFER_COUNT - 1) {
-      // should be safe to reuse old buffer now
-      do_render = do_render_soon;
-      do_render_soon = false;
-    }
-
-    buffer = scanvideo_begin_scanline_generation(false);
-  }
-#endif
-}
-
-bool display_render_needed() {
-  return do_render;
-}
 
 // blit api
 
@@ -213,15 +54,7 @@ bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_templ
 #endif
   }
 
-#ifdef DISPLAY_ST7789
-  if(have_vsync)
-    do_render = true; // prevent starting an update during switch
-
-  st7789::set_pixel_double(new_mode == ScreenMode::lores);
-
-  if(new_mode == ScreenMode::hires)
-    st7789::frame_buffer = screen_fb;
-#endif
+  display_mode_changed(new_mode);
 
   // don't support any other formats for various reasons (RAM, no format conversion, pixel double PIO)
   if(new_surf_template.format != PixelFormat::RGB565)

@@ -66,6 +66,9 @@ endif()
 if(NOT BLIT_AUDIO_DRIVER)
     set(BLIT_AUDIO_DRIVER "none")
 endif()
+if(NOT BLIT_DISPLAY_DRIVER)
+    set(BLIT_DISPLAY_DRIVER "none")
+endif()
 
 # driver dependencies
 if(BLIT_AUDIO_DRIVER STREQUAL "i2s")
@@ -74,6 +77,11 @@ if(BLIT_AUDIO_DRIVER STREQUAL "i2s")
 elseif(BLIT_AUDIO_DRIVER STREQUAL "pwm")
     set(BLIT_REQUIRE_PICO_EXTRAS TRUE)
     list(APPEND BLIT_BOARD_LIBRARIES pico_audio_pwm)
+endif()
+
+if(BLIT_DISPLAY_DRIVER STREQUAL "scanvideo")
+    set(BLIT_REQUIRE_PICO_EXTRAS TRUE)
+    list(APPEND BLIT_BOARD_LIBRARIES pico_scanvideo_dpi)
 endif()
 
 # late SDK init
@@ -90,6 +98,7 @@ pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/st7789.pio)
 # driver sources
 target_sources(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/audio_${BLIT_AUDIO_DRIVER}.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/display_${BLIT_DISPLAY_DRIVER}.cpp
 )
 
 target_compile_definitions(BlitHalPico INTERFACE ${BLIT_BOARD_DEFINITIONS})

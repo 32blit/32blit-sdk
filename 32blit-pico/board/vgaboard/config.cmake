@@ -6,8 +6,5 @@ set(BLIT_BOARD_DEFINITIONS
     DISPLAY_SCANVIDEO
 )
 
-set(BLIT_BOARD_LIBRARIES pico_scanvideo_dpi)
-
-set(BLIT_REQUIRE_PICO_EXTRAS TRUE) # scanvideo
-
 blit_driver(audio i2s)
+blit_driver(display scanvideo)
