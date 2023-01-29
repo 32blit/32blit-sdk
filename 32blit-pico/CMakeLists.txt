@@ -2,7 +2,7 @@ set(CMAKE_C_STANDARD 11)
 
 # Initialise the Pico SDK
 include (pico_sdk_import.cmake)
-include (pico_extras_import.cmake)
+
 pico_sdk_init()
 
 set(32BLIT_PICO 1 PARENT_SCOPE)
@@ -55,6 +55,7 @@ if(${PICO_BOARD} STREQUAL "vgaboard")
         AUDIO_I2S
         DISPLAY_SCANVIDEO
     )
+    set(REQUIRE_PICO_EXTRAS TRUE) # scanvideo/audio_i2s
 elseif(${PICO_BOARD} STREQUAL "pimoroni_picosystem")
     message("Using picosystem...")
     target_compile_definitions(BlitHalPico INTERFACE
@@ -72,6 +73,7 @@ elseif(${PICO_BOARD} STREQUAL "pimoroni_picosystem")
             PICO_AUDIO_PWM_PIO=1
             AUDIO_PWM
         )
+        set(REQUIRE_PICO_EXTRAS TRUE) # audio_pwm
     else()
         target_compile_definitions(BlitHalPico INTERFACE
             AUDIO_BEEP_PIN=PICOSYSTEM_AUDIO_PIN
@@ -89,8 +91,12 @@ else()
         DISPLAY_ST7789
         INPUT_GPIO
     )
+    set(REQUIRE_PICO_EXTRAS TRUE) # audio_i2s
 endif()
 
+if(REQUIRE_PICO_EXTRAS)
+    include(pico_extras_import.cmake)
+endif()
 
 function(blit_executable_common NAME)
     target_link_libraries(${NAME} BlitEngine)
