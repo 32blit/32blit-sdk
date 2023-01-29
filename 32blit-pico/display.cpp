@@ -183,34 +183,15 @@ bool display_render_needed() {
 // blit api
 
 SurfaceInfo &set_screen_mode(ScreenMode mode) {
-  switch(mode) {
-    case ScreenMode::lores:
-      cur_surf_info = lores_screen;
-      break;
+  SurfaceTemplate temp{nullptr, {0, 0}, mode == ScreenMode::hires_palette ? PixelFormat::P : PixelFormat::RGB565};
 
-    case ScreenMode::hires:
-#if ALLOW_HIRES
-      cur_surf_info = hires_screen;
-#else
-      return cur_surf_info;
-#endif
-      break;
-
-    case ScreenMode::hires_palette:
-      return cur_surf_info; // unsupported
+  // may fail for hires/palette
+  if(set_screen_mode_format(mode, temp)) {
+    cur_surf_info.data = temp.data;
+    cur_surf_info.bounds = temp.bounds;
+    cur_surf_info.format = temp.format;
+    cur_surf_info.palette = temp.palette;
   }
-
-#ifdef DISPLAY_ST7789
-  if(have_vsync)
-    do_render = true; // prevent starting an update during switch
-
-  st7789::set_pixel_double(mode == ScreenMode::lores);
-
-  if(mode == ScreenMode::hires)
-    st7789::frame_buffer = screen_fb;
-#endif
-
-  cur_screen_mode = mode;
 
   return cur_surf_info;
 }
