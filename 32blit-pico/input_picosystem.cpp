@@ -9,15 +9,15 @@
 #include "engine/input.hpp"
 
 enum class ButtonIO {
-  UP = 23,
-  DOWN = 20,
-  LEFT = 22,
-  RIGHT = 21,
+  UP = PICOSYSTEM_SW_UP_PIN,
+  DOWN = PICOSYSTEM_SW_DOWN_PIN,
+  LEFT = PICOSYSTEM_SW_LEFT_PIN,
+  RIGHT = PICOSYSTEM_SW_RIGHT_PIN,
 
-  A = 18,
-  B = 19,
-  X = 17,
-  Y = 16,
+  A = PICOSYSTEM_SW_A_PIN,
+  B = PICOSYSTEM_SW_B_PIN,
+  X = PICOSYSTEM_SW_X_PIN,
+  Y = PICOSYSTEM_SW_Y_PIN,
 };
 
 static void init_button(ButtonIO b) {
