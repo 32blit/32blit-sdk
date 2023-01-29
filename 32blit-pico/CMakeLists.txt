@@ -32,7 +32,6 @@ target_sources(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
     ${CMAKE_CURRENT_LIST_DIR}/storage.cpp
     ${CMAKE_CURRENT_LIST_DIR}/st7789.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/usb.cpp
     ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
 )
 
@@ -81,6 +80,9 @@ endif()
 if(NOT BLIT_INPUT_DRIVER)
     set(BLIT_INPUT_DRIVER "none")
 endif()
+if(NOT BLIT_USB_DRIVER)
+    set(BLIT_USB_DRIVER "device")
+endif()
 
 # driver dependencies
 if(BLIT_AUDIO_DRIVER STREQUAL "i2s")
@@ -99,6 +101,11 @@ elseif(BLIT_DISPLAY_DRIVER STREQUAL "st7789")
     list(APPEND BLIT_BOARD_DEFINITIONS DISPLAY_ST7789) # config defaults use this, also some games are using it for picosystem detection
 endif()
 
+if(BLIT_USB_DRIVER STREQUAL "host")
+    list(APPEND BLIT_BOARD_DEFINITIONS USB_HOST)
+    list(APPEND BLIT_BOARD_LIBRARIES tinyusb_host)
+endif()
+
 # late SDK init
 # (pico_sdk_init needs to be after importing extras, which we don't know if we'll need until now)
 if(BLIT_REQUIRE_PICO_EXTRAS)
@@ -115,6 +122,7 @@ target_sources(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/audio_${BLIT_AUDIO_DRIVER}.cpp
     ${CMAKE_CURRENT_LIST_DIR}/display_${BLIT_DISPLAY_DRIVER}.cpp
     ${CMAKE_CURRENT_LIST_DIR}/input_${BLIT_INPUT_DRIVER}.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/usb_${BLIT_USB_DRIVER}.cpp
 )
 
 if(BLIT_ENABLE_CORE1)
