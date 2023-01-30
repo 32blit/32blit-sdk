@@ -199,7 +199,7 @@ int main() {
   init_fs();
   init_usb();
 
-#if defined(DISPLAY_SCANVIDEO)
+#if defined(ENABLE_CORE1)
   multicore_launch_core1(core1_main);
 #endif
 
