@@ -82,6 +82,8 @@ endif()
 if(BLIT_DISPLAY_DRIVER STREQUAL "scanvideo")
     set(BLIT_REQUIRE_PICO_EXTRAS TRUE)
     list(APPEND BLIT_BOARD_LIBRARIES pico_scanvideo_dpi)
+elseif(BLIT_DISPLAY_DRIVER STREQUAL "st7789")
+    list(APPEND BLIT_BOARD_DEFINITIONS DISPLAY_ST7789) # config defaults use this, also some games are using it for picosystem detection
 endif()
 
 # late SDK init
