@@ -903,7 +903,7 @@ void render_sprites(uint32_t time) {
 			} else if(psprite.type == SPRAY) {
 				screen.alpha = 128 - (128 * factor);
 			}
-			screen.stretch_blit_sprite(bounds, dest, transform);
+			screen.stretch_blit(screen.sprites, bounds, dest, transform);
 			if(psprite.type == PLANT) {
 				screen.sprites->palette[11] = Pen(0x15, 0x98, 0x5d, 200);
 				screen.sprites->palette[12] = Pen(0x00, 0x7f, 0x43, 200);
