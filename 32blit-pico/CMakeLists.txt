@@ -3,8 +3,6 @@ set(CMAKE_C_STANDARD 11)
 # Initialise the Pico SDK
 include (pico_sdk_import.cmake)
 
-pico_sdk_init()
-
 set(32BLIT_PICO 1 PARENT_SCOPE)
 
 # prevent find_package errors in pico_add_uf2_output later
@@ -28,8 +26,6 @@ target_sources(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/usb.cpp
     ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
 )
-
-pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/st7789.pio)
 
 target_link_libraries(BlitHalPico INTERFACE hardware_dma hardware_pio hardware_pwm hardware_spi pico_multicore pico_stdlib pico_unique_id tinyusb_device)
 target_include_directories(BlitHalPico INTERFACE
@@ -94,9 +90,16 @@ else()
     set(REQUIRE_PICO_EXTRAS TRUE) # audio_i2s
 endif()
 
-if(REQUIRE_PICO_EXTRAS)
+# late SDK init
+# (pico_sdk_init needs to be after importing extras, which we don't know if we'll need until now)
+if(BLIT_REQUIRE_PICO_EXTRAS)
     include(pico_extras_import.cmake)
 endif()
+
+pico_sdk_init()
+
+# generate PIO headers (has to be after SDK init)
+pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/st7789.pio)
 
 function(blit_executable_common NAME)
     target_link_libraries(${NAME} BlitEngine)
