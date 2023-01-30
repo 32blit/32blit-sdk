@@ -21,7 +21,7 @@ For local builds:
  - SDL2 + SDL2_image + SDL2_net
 
 For 32Blit device builds:
- - Arm Embedded GCC (`gcc-arm-none-eabi`, versions 7.x-9.x should work)
+ - Arm Embedded GCC (`gcc-arm-none-eabi`, versions 8.x-12.x should work)
 
 New enough versions of these exist in at least Debian "buster" and Ubuntu 20.04.
 
