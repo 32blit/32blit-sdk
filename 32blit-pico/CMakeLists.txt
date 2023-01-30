@@ -38,7 +38,6 @@ target_sources(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/file.cpp
     ${CMAKE_CURRENT_LIST_DIR}/led.cpp
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/storage.cpp
     ${CMAKE_CURRENT_LIST_DIR}/multiplayer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/st7789.cpp
     ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
@@ -99,6 +98,9 @@ endif()
 if(NOT BLIT_INPUT_DRIVER)
     set(BLIT_INPUT_DRIVER "none")
 endif()
+if(NOT BLIT_STORAGE_DRIVER)
+    set(BLIT_STORAGE_DRIVER "flash")
+endif()
 if(NOT BLIT_USB_DRIVER)
     set(BLIT_USB_DRIVER "device")
 endif()
@@ -145,6 +147,7 @@ target_sources(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/audio_${BLIT_AUDIO_DRIVER}.cpp
     ${CMAKE_CURRENT_LIST_DIR}/display_${BLIT_DISPLAY_DRIVER}.cpp
     ${CMAKE_CURRENT_LIST_DIR}/input_${BLIT_INPUT_DRIVER}.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/storage_${BLIT_STORAGE_DRIVER}.cpp
     ${CMAKE_CURRENT_LIST_DIR}/usb_${BLIT_USB_DRIVER}.cpp
 )
 

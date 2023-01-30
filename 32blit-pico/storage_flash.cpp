@@ -1,4 +1,4 @@
-// raw storage interface, currently flash
+// raw flash storage interface
 #include "storage.hpp"
 
 #include <cstring>
