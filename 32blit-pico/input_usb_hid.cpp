@@ -5,14 +5,19 @@
 
 #include "pico/binary_info.h"
 
+#include "class/hid/hid.h"
+
 #include "engine/api_private.hpp"
 #include "engine/input.hpp"
 
 // from USB code
 extern uint32_t hid_gamepad_id;
+extern bool hid_keyboard_detected;
 extern uint8_t hid_joystick[2];
 extern uint8_t hid_hat;
 extern uint32_t hid_buttons;
+extern uint8_t hid_keys[6];
+
 struct GamepadMapping {
   uint32_t id; // vid:pid
   uint8_t a, b, x, y;
@@ -44,9 +49,68 @@ void init_input() {
 void update_input() {
   using namespace blit;
 
+  // keyboard
+  if(hid_keyboard_detected) {
+    uint32_t new_buttons = 0;
+
+    for(int i = 0; i < 6; i++) {
+      switch(hid_keys[i]) {
+        case HID_KEY_ARROW_UP:
+        case HID_KEY_W:
+          new_buttons |= uint32_t(Button::DPAD_UP);
+          break;
+        case HID_KEY_ARROW_DOWN:
+        case HID_KEY_S:
+          new_buttons |= uint32_t(Button::DPAD_DOWN);
+          break;
+        case HID_KEY_ARROW_LEFT:
+        case HID_KEY_A:
+          new_buttons |= uint32_t(Button::DPAD_LEFT);
+          break;
+        case HID_KEY_ARROW_RIGHT:
+        case HID_KEY_D:
+          new_buttons |= uint32_t(Button::DPAD_RIGHT);
+          break;
+
+        case HID_KEY_Z:
+        case HID_KEY_U:
+          new_buttons |= uint32_t(Button::A);
+          break;
+        case HID_KEY_X:
+        case HID_KEY_I:
+          new_buttons |= uint32_t(Button::B);
+          break;
+        case HID_KEY_C:
+        case HID_KEY_O:
+          new_buttons |= uint32_t(Button::X);
+          break;
+        case HID_KEY_V:
+        case HID_KEY_P:
+          new_buttons |= uint32_t(Button::Y);
+          break;
+
+        case HID_KEY_1:
+          new_buttons |= uint32_t(Button::HOME);
+          break;
+
+        case HID_KEY_2:
+        case HID_KEY_ESCAPE:
+          new_buttons |= uint32_t(Button::MENU);
+          break;
+
+        case HID_KEY_3:
+          new_buttons |= uint32_t(Button::JOYSTICK);
+          break;
+      }
+    }
+
+    api.buttons = new_buttons;
+  }
+
   if(!hid_gamepad_id)
     return;
 
+  // gamepad
   auto mapping = gamepad_mappings;
   while(mapping->id && mapping->id != hid_gamepad_id)
     mapping++;

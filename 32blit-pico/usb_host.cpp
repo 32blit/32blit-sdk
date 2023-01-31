@@ -14,9 +14,11 @@ static uint16_t buttons_offset = 0, num_buttons = 0;
 static uint16_t hat_offset = 0, stick_offset = 0;
 
 uint32_t hid_gamepad_id = 0;
+bool hid_keyboard_detected = false;
 uint8_t hid_joystick[2]{0x80, 0x80};
 uint8_t hid_hat = 8;
 uint32_t hid_buttons = 0;
+uint8_t hid_keys[6]{};
 
 void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const* desc_report, uint16_t desc_len) {
   uint16_t vid = 0, pid = 0;
@@ -24,7 +26,15 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const* desc_re
 
   printf("Mount %i %i, %04x:%04x\n", dev_addr, instance, vid, pid);
 
-  hid_gamepad_id = (vid << 16) | pid;
+  auto protocol = tuh_hid_interface_protocol(dev_addr, instance);
+
+  hid_keyboard_detected = protocol == HID_ITF_PROTOCOL_KEYBOARD;
+
+  // don't attempt to use a keyboard/mouse as a gamepad
+  if(protocol != HID_ITF_PROTOCOL_NONE) {
+    tuh_hid_receive_report(dev_addr, instance);
+    return;
+  }
 
   // basic and probably wrong report descriptor parsing
   auto desc_end = desc_report + desc_len;
@@ -34,6 +44,8 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const* desc_re
   int usage_page = -1;
   int usage = -1;
   int report_count = 0, report_size = 0;
+
+  bool found_any = false;
 
   int bit_offset = 0;
 
@@ -50,12 +62,15 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const* desc_re
         if(usage_page == HID_USAGE_PAGE_DESKTOP && usage == HID_USAGE_DESKTOP_X) {
           stick_offset = bit_offset;
           hid_report_id = report_id; // assume everything is in the same report as the stick... and that the first x/y is the stick
+          found_any = true;
         } else if(usage_page == HID_USAGE_PAGE_DESKTOP && usage == HID_USAGE_DESKTOP_HAT_SWITCH) {
           hat_offset = bit_offset;
+          found_any = true;
         } else if(usage_page == HID_USAGE_PAGE_BUTTON && !(*p & HID_CONSTANT)) {
           // assume this is "the buttons"
           buttons_offset = bit_offset;
           num_buttons = report_count;
+          found_any = true;
         }
 
         usage = -1;
@@ -83,15 +98,37 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const* desc_re
     p += len;
   }
 
+  // don't bother requesting reports we can't parse
+  if(!found_any)
+    return;
+
+  hid_gamepad_id = (vid << 16) | pid;
+
   if(!tuh_hid_receive_report(dev_addr, instance)) {
     printf("Cound not request report!\n");
   }
+}
+
+void tuh_hid_umount_cb(uint8_t dev_addr, uint8_t instance) {
+  hid_keyboard_detected = false;
+  hid_gamepad_id = 0;
 }
 
 // should this be here or in input.cpp?
 void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t const* report, uint16_t len) {
 
   auto report_data = hid_report_id == -1 ? report : report + 1;
+
+  auto protocol = tuh_hid_interface_protocol(dev_addr, instance);
+
+  if(protocol == HID_ITF_PROTOCOL_KEYBOARD) {
+    hid_keyboard_detected = true;
+    auto keyboard_report = (hid_keyboard_report_t const*) report;
+    memcpy(hid_keys, keyboard_report->keycode, 6);
+
+    tuh_hid_receive_report(dev_addr, instance);
+    return;
+  }
 
   // check report id if we have one
   if(hid_report_id == -1 || report[0] == hid_report_id) {
