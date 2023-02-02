@@ -10,7 +10,6 @@ function(blit_executable_common NAME)
 		COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${NAME}> ${NAME}.hex
 		COMMAND ${CMAKE_OBJCOPY} -O binary -S $<TARGET_FILE:${NAME}> ${NAME}.bin
 		COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${NAME}>
-		COMMAND ${CMAKE_READELF} -S $<TARGET_FILE:${NAME}>
 	)
 endfunction()
 
