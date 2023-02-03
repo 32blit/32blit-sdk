@@ -7,10 +7,8 @@ function(blit_executable_common NAME)
 	set_property(TARGET ${NAME} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Map=${NAME}.map,--cref")
 	add_custom_command(TARGET ${NAME} POST_BUILD
 		COMMENT "Building ${NAME}.bin"
-		COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${NAME}> ${NAME}.hex
 		COMMAND ${CMAKE_OBJCOPY} -O binary -S $<TARGET_FILE:${NAME}> ${NAME}.bin
 		COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${NAME}>
-		COMMAND ${CMAKE_READELF} -S $<TARGET_FILE:${NAME}>
 	)
 endfunction()
 
