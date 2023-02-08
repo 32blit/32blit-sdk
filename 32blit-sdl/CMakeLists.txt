@@ -178,7 +178,7 @@ function(blit_executable NAME SOURCES)
 	if(EMSCRIPTEN)
 		set_target_properties(${NAME} PROPERTIES
 			SUFFIX ".html"
-			LINK_FLAGS "-sENVIRONMENT=web -sSDL2_IMAGE_FORMATS=['jpg'] --shell-file ${EMSCRIPTEN_SHELL} -s'EXTRA_EXPORTED_RUNTIME_METHODS=[\"addRunDependency\", \"removeRunDependency\"]' -sTOTAL_STACK=1MB"
+			LINK_FLAGS "-sENVIRONMENT=web -sSDL2_IMAGE_FORMATS=['jpg'] --shell-file ${EMSCRIPTEN_SHELL} -s'EXPORTED_RUNTIME_METHODS=[\"addRunDependency\", \"removeRunDependency\"]' -sTOTAL_STACK=1MB"
 			LINK_DEPENDS ${EMSCRIPTEN_SHELL}
 		)
 
