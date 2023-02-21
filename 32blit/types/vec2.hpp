@@ -81,6 +81,7 @@ namespace blit {
      * \param o `vec2`
      */
     float   angle(Vec2 o);
+    float   angle_to(Vec2 o);
 
     static Vec2   normalize(Vec2 &v) { float d = v.length(); return Vec2(v.x /= d, v.y /= d); }
   };
