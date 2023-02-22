@@ -114,7 +114,7 @@ void load_directory_list(const std::string &directory) {
   int x = 0;
   for(auto &dir : directory_list) {
     dir.x = x;
-    dir.w = screen.measure_text(dir.name == "/" ? "ROOT" : dir.name, minimal_font).w;
+    dir.w = screen.measure_text(dir.name == "/" ? "ROOT" : dir.name, launcher_font).w;
 
     x += dir.w + 10;
   }
@@ -478,7 +478,7 @@ void render(uint32_t time) {
   }
 
   // adjust alignment rect for vertical spacing
-  const int text_align_height = ROW_HEIGHT + minimal_font.spacing_y;
+  const int text_align_height = ROW_HEIGHT + launcher_font.spacing_y;
 
   // list folders
   if(!directory_list.empty()) {
@@ -491,7 +491,7 @@ void render(uint32_t time) {
         screen.pen = theme.color_text;
 
       int x = 120 + 95 + directory.x - directory_list_scroll_offset;
-      screen.text(directory.name == "/" ? "ROOT" : directory.name, minimal_font, Rect(x, 5, 190, text_align_height), true, TextAlign::center_v);
+      screen.text(directory.name == "/" ? "ROOT" : directory.name, launcher_font, Rect(x, 5, 190, text_align_height), true, TextAlign::center_v);
     }
 
     screen.clip = Rect(Point(0, 0), screen.bounds);
