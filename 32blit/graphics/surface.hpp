@@ -191,11 +191,6 @@ namespace blit {
 
     void stretch_blit_vspan(Surface *src, Point uv, uint16_t sc, Point p, int16_t dc);
 
-    [[deprecated]]
-    void blit(Surface *src, Rect r, Point p, bool hflip) {
-      blit(src, r, p, hflip ? SpriteTransform::HORIZONTAL : 0);
-    }
-
     void custom_blend(Surface *src, Rect r, Point p, std::function<void(uint8_t *psrc, uint8_t *pdest, int16_t c)> f);
     void custom_modify(Rect r, std::function<void(uint8_t *p, int16_t c)> f);
     void watermark();
@@ -211,16 +206,6 @@ namespace blit {
     Rect sprite_bounds(uint16_t index);
     Rect sprite_bounds(const Point &p);
     Rect sprite_bounds(const Rect &r);
-
-    [[deprecated]]
-    void blit_sprite(const Rect &src, const Point &p, uint8_t t = 0) {
-      blit(sprites, src, p, t);
-    }
-
-    [[deprecated]]
-    void stretch_blit_sprite(const Rect &src, const Rect &r, uint8_t t = 0) {
-      stretch_blit(sprites, src, r, t);
-    }
 
     void sprite(const Rect &sprite, const Point &position, uint8_t transform = 0);
     void sprite(const Point &sprite, const Point &position, uint8_t transform = 0);
