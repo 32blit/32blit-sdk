@@ -7,6 +7,11 @@ pico_sdk_init()
 
 set(32BLIT_PICO 1 PARENT_SCOPE)
 
+# prevent find_package errors in pico_add_uf2_output later
+set(PICO_SDK_VERSION_MAJOR ${PICO_SDK_VERSION_MAJOR} PARENT_SCOPE)
+set(PICO_SDK_VERSION_MINOR ${PICO_SDK_VERSION_MINOR} PARENT_SCOPE)
+set(PICO_SDK_VERSION_REVISION ${PICO_SDK_VERSION_REVISION} PARENT_SCOPE)
+
 add_library(BlitHalPico INTERFACE)
 target_sources(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/../3rd-party/fatfs/ff.c
