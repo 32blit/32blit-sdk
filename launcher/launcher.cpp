@@ -315,6 +315,9 @@ void load_current_game_metadata() {
 }
 
 bool launch_current_game() {
+  if(!api.launch)
+    return false;
+
   return api.launch(selected_game.filename.c_str());
 }
 
