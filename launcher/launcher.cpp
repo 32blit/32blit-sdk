@@ -545,7 +545,7 @@ void render(uint32_t time) {
         screen.blit(selected_game_metadata.splash, Rect(Point(0, 0), selected_game_metadata.splash->bounds), game_info_offset);
 
       screen.pen = theme.color_accent;
-      std::string wrapped_title = screen.wrap_text(selected_game_metadata.title, screen.bounds.w - game_info_offset.x - 10, minimal_font);
+      std::string wrapped_title = screen.wrap_text(selected_game_metadata.title, screen.bounds.w - game_info_offset.x - 10, launcher_font);
 
       Size title_size = screen.measure_text(wrapped_title, launcher_font);
       screen.text(wrapped_title, launcher_font, Point(game_info_offset.x, game_info_offset.y + 104));
