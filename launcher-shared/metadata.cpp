@@ -1,6 +1,6 @@
 #include <cstring>
 
-#include "graphics/sprite.hpp"
+#include "graphics/surface.hpp"
 
 #include "metadata.hpp"
 #include "executable.hpp"

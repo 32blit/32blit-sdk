@@ -5,7 +5,6 @@
 #include <string>
 
 #include "font.hpp"
-#include "sprite.hpp"
 #include "surface.hpp"
 
 #include "../engine/file.hpp"
