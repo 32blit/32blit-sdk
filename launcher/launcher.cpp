@@ -18,9 +18,15 @@
 
 #include "credits.hpp"
 
-Dialog dialog;
-
 using namespace blit;
+
+struct PathSave {
+  char last_path[512];
+};
+
+static const int path_save_slot = 256;
+
+Dialog dialog;
 
 const Font launcher_font(font8x8);
 
@@ -315,6 +321,11 @@ void load_current_game_metadata() {
 }
 
 bool launch_current_game() {
+  // save last file launched
+  PathSave save{};
+  strncpy(save.last_path, selected_game.filename.c_str(), sizeof(save.last_path) - 1);
+  write_save(save, path_save_slot);
+
   if(!api.launch)
     return false;
 
@@ -384,6 +395,43 @@ void init() {
 
   scan_flash();
   init_lists();
+
+  // restore previously selected file
+  PathSave save;
+  save.last_path[0] = 0;
+
+  if(read_save(save, path_save_slot)) {
+    auto path = std::string_view(save.last_path);
+    auto slash = path.find_first_of('/');
+
+    std::string_view dir;
+
+    if(slash == std::string_view::npos)
+      dir = "/";
+    else
+      dir = path.substr(0, slash);
+
+    // select dir
+    for(auto it = directory_list.begin(); it != directory_list.end(); ++it) {
+      if(it->name == dir) {
+        if(it != current_directory)
+          load_file_list(it->name);
+
+        current_directory = it;
+        break;
+      }
+    }
+
+    // select file
+    for(auto it = game_list.begin(); it != game_list.end(); ++it) {
+      if(it->filename == path) {
+        selected_menu_item = it - game_list.begin();
+        break;
+      }
+    }
+
+    load_current_game_metadata();
+  }
 
   credits::prepare();
 }
