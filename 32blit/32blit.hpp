@@ -22,7 +22,6 @@
 #include "graphics/font.hpp"
 #include "graphics/jpeg.hpp"
 #include "graphics/mode7.hpp"
-#include "graphics/sprite.hpp"
 #include "graphics/surface.hpp"
 #include "graphics/tilemap.hpp"
 #include "math/constants.hpp"

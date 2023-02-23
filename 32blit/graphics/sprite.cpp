@@ -4,7 +4,6 @@
 #include <cstring>
 
 #include "surface.hpp"
-#include "sprite.hpp"
 
 #include "../engine/file.hpp"
 

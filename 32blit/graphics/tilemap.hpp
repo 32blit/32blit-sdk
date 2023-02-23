@@ -6,7 +6,6 @@
 #include "../types/size.hpp"
 #include "../types/point.hpp"
 #include "../types/mat3.hpp"
-#include "../graphics/sprite.hpp"
 
 namespace blit {
 
