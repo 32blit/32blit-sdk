@@ -18,9 +18,15 @@
 
 #include "credits.hpp"
 
-Dialog dialog;
-
 using namespace blit;
+
+struct PathSave {
+  char last_path[512];
+};
+
+static const int path_save_slot = 256;
+
+Dialog dialog;
 
 const Font launcher_font(font8x8);
 
@@ -114,7 +120,7 @@ void load_directory_list(const std::string &directory) {
   int x = 0;
   for(auto &dir : directory_list) {
     dir.x = x;
-    dir.w = screen.measure_text(dir.name == "/" ? "ROOT" : dir.name, minimal_font).w;
+    dir.w = screen.measure_text(dir.name == "/" ? "ROOT" : dir.name, launcher_font).w;
 
     x += dir.w + 10;
   }
@@ -315,6 +321,14 @@ void load_current_game_metadata() {
 }
 
 bool launch_current_game() {
+  // save last file launched
+  PathSave save{};
+  strncpy(save.last_path, selected_game.filename.c_str(), sizeof(save.last_path) - 1);
+  write_save(save, path_save_slot);
+
+  if(!api.launch)
+    return false;
+
   return api.launch(selected_game.filename.c_str());
 }
 
@@ -381,6 +395,43 @@ void init() {
 
   scan_flash();
   init_lists();
+
+  // restore previously selected file
+  PathSave save;
+  save.last_path[0] = 0;
+
+  if(read_save(save, path_save_slot)) {
+    auto path = std::string_view(save.last_path);
+    auto slash = path.find_first_of('/');
+
+    std::string_view dir;
+
+    if(slash == std::string_view::npos)
+      dir = "/";
+    else
+      dir = path.substr(0, slash);
+
+    // select dir
+    for(auto it = directory_list.begin(); it != directory_list.end(); ++it) {
+      if(it->name == dir) {
+        if(it != current_directory)
+          load_file_list(it->name);
+
+        current_directory = it;
+        break;
+      }
+    }
+
+    // select file
+    for(auto it = game_list.begin(); it != game_list.end(); ++it) {
+      if(it->filename == path) {
+        selected_menu_item = it - game_list.begin();
+        break;
+      }
+    }
+
+    load_current_game_metadata();
+  }
 
   credits::prepare();
 }
@@ -478,7 +529,7 @@ void render(uint32_t time) {
   }
 
   // adjust alignment rect for vertical spacing
-  const int text_align_height = ROW_HEIGHT + minimal_font.spacing_y;
+  const int text_align_height = ROW_HEIGHT + launcher_font.spacing_y;
 
   // list folders
   if(!directory_list.empty()) {
@@ -491,7 +542,7 @@ void render(uint32_t time) {
         screen.pen = theme.color_text;
 
       int x = 120 + 95 + directory.x - directory_list_scroll_offset;
-      screen.text(directory.name == "/" ? "ROOT" : directory.name, minimal_font, Rect(x, 5, 190, text_align_height), true, TextAlign::center_v);
+      screen.text(directory.name == "/" ? "ROOT" : directory.name, launcher_font, Rect(x, 5, 190, text_align_height), true, TextAlign::center_v);
     }
 
     screen.clip = Rect(Point(0, 0), screen.bounds);
@@ -545,7 +596,7 @@ void render(uint32_t time) {
         screen.blit(selected_game_metadata.splash, Rect(Point(0, 0), selected_game_metadata.splash->bounds), game_info_offset);
 
       screen.pen = theme.color_accent;
-      std::string wrapped_title = screen.wrap_text(selected_game_metadata.title, screen.bounds.w - game_info_offset.x - 10, minimal_font);
+      std::string wrapped_title = screen.wrap_text(selected_game_metadata.title, screen.bounds.w - game_info_offset.x - 10, launcher_font);
 
       Size title_size = screen.measure_text(wrapped_title, launcher_font);
       screen.text(wrapped_title, launcher_font, Point(game_info_offset.x, game_info_offset.y + 104));
@@ -569,9 +620,9 @@ void render(uint32_t time) {
     screen.pen = theme.color_text;
 
     if(/*current_directory->name != "FLASH" &&*/ !blit::is_storage_available())
-      screen.text("No SD Card\nDetected.", minimal_font, Point(screen.bounds.w / 2, screen.bounds.h / 2), true, TextAlign::center_center);
+      screen.text("No SD Card\nDetected.", launcher_font, Point(screen.bounds.w / 2, screen.bounds.h / 2), true, TextAlign::center_center);
     else
-      screen.text("No Games Found.", minimal_font, Point(screen.bounds.w / 2, screen.bounds.h / 2), true, TextAlign::center_center);
+      screen.text("No Games Found.", launcher_font, Point(screen.bounds.w / 2, screen.bounds.h / 2), true, TextAlign::center_center);
   }
 
   if (currentScreen == Screen::credits) {
