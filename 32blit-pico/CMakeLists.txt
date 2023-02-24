@@ -2,8 +2,6 @@ set(CMAKE_C_STANDARD 11)
 
 # Initialise the Pico SDK
 include (pico_sdk_import.cmake)
-include (pico_extras_import.cmake)
-pico_sdk_init()
 
 set(32BLIT_PICO 1 PARENT_SCOPE)
 
@@ -12,15 +10,24 @@ set(PICO_SDK_VERSION_MAJOR ${PICO_SDK_VERSION_MAJOR} PARENT_SCOPE)
 set(PICO_SDK_VERSION_MINOR ${PICO_SDK_VERSION_MINOR} PARENT_SCOPE)
 set(PICO_SDK_VERSION_REVISION ${PICO_SDK_VERSION_REVISION} PARENT_SCOPE)
 
+# driver helper
+# can override driver choice by pre-setting BLIT_x_DRIVER
+function(blit_driver DRV NAME)
+    set(var BLIT_${DRV}_DRIVER)
+    string(TOUPPER ${var} var)
+
+    if(NOT ${var})
+        set(${var} ${NAME} PARENT_SCOPE)
+    endif()
+endfunction()
+
 add_library(BlitHalPico INTERFACE)
 target_sources(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/../3rd-party/fatfs/ff.c
     ${CMAKE_CURRENT_LIST_DIR}/../3rd-party/fatfs/ffunicode.c
 
-    ${CMAKE_CURRENT_LIST_DIR}/audio.cpp
     ${CMAKE_CURRENT_LIST_DIR}/display.cpp
     ${CMAKE_CURRENT_LIST_DIR}/file.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/input.cpp
     ${CMAKE_CURRENT_LIST_DIR}/led.cpp
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
     ${CMAKE_CURRENT_LIST_DIR}/storage.cpp
@@ -28,8 +35,6 @@ target_sources(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/usb.cpp
     ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
 )
-
-pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/st7789.pio)
 
 target_link_libraries(BlitHalPico INTERFACE hardware_dma hardware_pio hardware_pwm hardware_spi pico_multicore pico_stdlib pico_unique_id tinyusb_device)
 target_include_directories(BlitHalPico INTERFACE
@@ -46,52 +51,80 @@ target_compile_options(BlitHalPico INTERFACE
     -Wno-ignored-qualifiers # pico-sdk generates a lot of these
 )
 
-if(${PICO_BOARD} STREQUAL "vgaboard")
-    message("Using VGA board...")
-    target_link_libraries(BlitHalPico INTERFACE pico_scanvideo_dpi pico_audio_i2s)
-    target_compile_definitions(BlitHalPico INTERFACE
-        PICO_SCANVIDEO_PLANE1_VARIABLE_FRAGMENT_DMA=1
-        PICO_SCANVIDEO_MAX_SCANLINE_BUFFER_WORDS=12
-        AUDIO_I2S
-        DISPLAY_SCANVIDEO
-    )
-elseif(${PICO_BOARD} STREQUAL "pimoroni_picosystem")
-    message("Using picosystem...")
-    target_compile_definitions(BlitHalPico INTERFACE
-        DISPLAY_ST7789
-        INPUT_GPIO
-        LED_R_PIN=PICOSYSTEM_LED_R_PIN
-        LED_G_PIN=PICOSYSTEM_LED_G_PIN
-        LED_B_PIN=PICOSYSTEM_LED_B_PIN
-        USB_PRODUCT_STR="PicoSystem"
-    )
-    if(AUDIO_PWM)
-        target_link_libraries(BlitHalPico INTERFACE pico_audio_pwm)
-        target_compile_definitions(BlitHalPico INTERFACE
-            PICO_AUDIO_PWM_MONO_PIN=PICOSYSTEM_AUDIO_PIN
-            PICO_AUDIO_PWM_PIO=1
-            AUDIO_PWM
-        )
-    else()
-        target_compile_definitions(BlitHalPico INTERFACE
-            AUDIO_BEEP_PIN=PICOSYSTEM_AUDIO_PIN
-            AUDIO_BEEP
-        )
-    endif()
+if(DEFINED PICO_ADDON)
+    # for boards that don't have a board in the pico sdk
+    # (usually because they are an add-on for a regular pico)
+    set(CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/board/${PICO_ADDON}/config.cmake)
 else()
-    message(WARNING "Using default config for \"${PICO_BOARD}\"...")
-    target_link_libraries(BlitHalPico INTERFACE pico_audio_i2s)
-    # messy explorer-based setup
-    target_compile_definitions(BlitHalPico INTERFACE
-        PICO_AUDIO_I2S_DATA_PIN=6
-        PICO_AUDIO_I2S_CLOCK_PIN_BASE=20
-        AUDIO_I2S
-        DISPLAY_ST7789
-        INPUT_GPIO
-    )
+    set(CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/board/${PICO_BOARD}/config.cmake)
 endif()
 
+if(EXISTS ${CONFIG_PATH})
+    include(${CONFIG_PATH})
+    message("Using board config \"${BLIT_BOARD_NAME}\"")
+else()
+    include(${CMAKE_CURRENT_LIST_DIR}/board/pico/config.cmake)
+    if(DEFINED PICO_ADDON)
+        message(WARNING "Using default config for \"${PICO_BOARD}\", add-on \"${PICO_ADDON}\"...")
+    else()
+        message(WARNING "Using default config for \"${PICO_BOARD}\"...")
+    endif()
+endif()
 
+# default drivers
+if(NOT BLIT_AUDIO_DRIVER)
+    set(BLIT_AUDIO_DRIVER "none")
+endif()
+if(NOT BLIT_DISPLAY_DRIVER)
+    set(BLIT_DISPLAY_DRIVER "none")
+endif()
+if(NOT BLIT_INPUT_DRIVER)
+    set(BLIT_INPUT_DRIVER "none")
+endif()
+
+# driver dependencies
+if(BLIT_AUDIO_DRIVER STREQUAL "i2s")
+    set(BLIT_REQUIRE_PICO_EXTRAS TRUE)
+    list(APPEND BLIT_BOARD_LIBRARIES pico_audio_i2s)
+elseif(BLIT_AUDIO_DRIVER STREQUAL "pwm")
+    set(BLIT_REQUIRE_PICO_EXTRAS TRUE)
+    list(APPEND BLIT_BOARD_LIBRARIES pico_audio_pwm)
+endif()
+
+if(BLIT_DISPLAY_DRIVER STREQUAL "scanvideo")
+    set(BLIT_REQUIRE_PICO_EXTRAS TRUE)
+    set(BLIT_ENABLE_CORE1 TRUE)
+    list(APPEND BLIT_BOARD_LIBRARIES pico_scanvideo_dpi)
+elseif(BLIT_DISPLAY_DRIVER STREQUAL "st7789")
+    list(APPEND BLIT_BOARD_DEFINITIONS DISPLAY_ST7789) # config defaults use this, also some games are using it for picosystem detection
+endif()
+
+# late SDK init
+# (pico_sdk_init needs to be after importing extras, which we don't know if we'll need until now)
+if(BLIT_REQUIRE_PICO_EXTRAS)
+    include(pico_extras_import.cmake)
+endif()
+
+pico_sdk_init()
+
+# generate PIO headers (has to be after SDK init)
+pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/st7789.pio)
+
+# driver sources
+target_sources(BlitHalPico INTERFACE
+    ${CMAKE_CURRENT_LIST_DIR}/audio_${BLIT_AUDIO_DRIVER}.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/display_${BLIT_DISPLAY_DRIVER}.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/input_${BLIT_INPUT_DRIVER}.cpp
+)
+
+if(BLIT_ENABLE_CORE1)
+    list(APPEND BLIT_BOARD_DEFINITIONS ENABLE_CORE1)
+endif()
+
+target_compile_definitions(BlitHalPico INTERFACE ${BLIT_BOARD_DEFINITIONS})
+target_link_libraries(BlitHalPico INTERFACE ${BLIT_BOARD_LIBRARIES})
+
+# functions
 function(blit_executable_common NAME)
     target_link_libraries(${NAME} BlitEngine)
 
