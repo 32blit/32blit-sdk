@@ -62,12 +62,23 @@ jobs:
         embuilder.py build sdl2 sdl2-image-jpg sdl2-net
         cmake --build . --config $BUILD_TYPE -j 2
 
+    - name: Prepare Site
+      run: |
+        mkdir -p site/examples
+        cp ../build/examples/*/*.{js,wasm} site/examples
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{github.event.repository.name}}-${{github.sha}}-web
+        path: site
+
     # build the docs
     - name: Build Docs
+      if: github.ref == 'refs/heads/master' # github.event_name == 'release'
       run: |
         cd 32blit && doxygen doxygen.conf && cd ..
         cp -r 32blit/documentation/html/* site
-        cp ../build/examples/*/*.{js,wasm} site/examples
 
     - name: Deploy to GitHub Pages
       if: github.ref == 'refs/heads/master' # github.event_name == 'release'
