@@ -98,22 +98,39 @@ bool tud_msc_is_writable_cb(uint8_t lun) {
 static bool multiplayer_enabled = false;
 static bool peer_connected = false;
 
-static char cur_header[8];
+static uint8_t cur_header[8];
 static int header_pos = 0;
 
 static uint16_t mp_buffer_len, mp_buffer_off;
 static uint8_t *mp_buffer = nullptr;
 
-static void send_all(const void *buffer, uint32_t len) {
-  uint32_t done = tud_cdc_write(buffer, len);
+bool usb_cdc_connected() {
+  // tud_cdc_connected returns false with STM32 USB host
+  return tud_ready(); //tud_cdc_connected();
+}
+
+uint16_t usb_cdc_read(uint8_t *data, uint16_t len) {
+  return tud_cdc_read(data, len);
+}
+
+uint32_t usb_cdc_read_available() {
+  return tud_cdc_available();
+}
+
+void usb_cdc_write(const uint8_t *data, uint16_t len) {
+  uint32_t done = tud_cdc_write(data, len);
 
   while(done < len) {
     tud_task();
     if(!tud_ready())
       break;
 
-    done += tud_cdc_write((const char *)buffer + done, len - done);
+    done += tud_cdc_write(data + done, len - done);
   }
+}
+
+void usb_cdc_flush_write() {
+  tud_cdc_write_flush();
 }
 
 static void send_handshake(bool is_reply = false) {
@@ -122,8 +139,8 @@ static void send_handshake(bool is_reply = false) {
     val = is_reply ? 2 : 1;
 
   uint8_t buf[]{'3', '2', 'B', 'L', 'M', 'L', 'T','I', val};
-  send_all(buf, 9);
-  tud_cdc_write_flush();
+  usb_cdc_write(buf, 9);
+  usb_cdc_flush_write();
 }
 
 void init_usb() {
@@ -133,14 +150,14 @@ void init_usb() {
 void update_usb() {
   tud_task();
 
-  if(!tud_ready()) { // tud_cdc_connected returns false with STM USB host
+  if(!usb_cdc_connected()) { // tud_cdc_connected returns false with STM USB host
     peer_connected = false;
   }
 
-  while(tud_cdc_available()) {
+  while(usb_cdc_read_available()) {
     // match header
     if(header_pos < 8) {
-      cur_header[header_pos] = tud_cdc_read_char();
+      usb_cdc_read(cur_header + header_pos, 1);
 
       const char *expected = "32BL";
       if(header_pos >= 4 || cur_header[header_pos] == expected[header_pos])
@@ -151,7 +168,7 @@ void update_usb() {
 
       // get USER packet
       if(mp_buffer) {
-        mp_buffer_off += tud_cdc_read(mp_buffer + mp_buffer_off, mp_buffer_len - mp_buffer_off);
+        mp_buffer_off += usb_cdc_read(mp_buffer + mp_buffer_off, mp_buffer_len - mp_buffer_off);
 
         if(mp_buffer_off == mp_buffer_len) {
           if(blit::api.message_received)
@@ -167,7 +184,9 @@ void update_usb() {
       // got header
       if(memcmp(cur_header + 4, "MLTI", 4) == 0) {
         // handshake packet
-        peer_connected = tud_cdc_read_char() != 0;
+        uint8_t b;
+        usb_cdc_read(&b, 1);
+        peer_connected = b != 0;
 
         if(peer_connected)
           send_handshake(true);
@@ -175,10 +194,10 @@ void update_usb() {
         // done
         header_pos = 0;
       } else if(memcmp(cur_header + 4, "USER", 4) == 0) {
-        if(tud_cdc_available() < 2)
+        if(usb_cdc_read_available() < 2)
           break;
 
-        tud_cdc_read(&mp_buffer_len, 2);
+        usb_cdc_read((uint8_t *)&mp_buffer_len, 2);
         mp_buffer_off = 0;
         mp_buffer = new uint8_t[mp_buffer_len];
 
@@ -195,7 +214,7 @@ void usb_debug(const char *message) {
     return;
 
   auto len = strlen(message);
-  send_all(message, len);
+  usb_cdc_write((uint8_t *)message, len);
 }
 
 bool is_multiplayer_connected() {
@@ -216,9 +235,9 @@ void send_multiplayer_message(const uint8_t *data, uint16_t len) {
   uint8_t buf[]{'3', '2', 'B', 'L', 'U', 'S', 'E','R',
     uint8_t(len & 0xFF), uint8_t(len >> 8)
   };
-  send_all(buf, 10);
+  usb_cdc_write(buf, 10);
 
-  send_all((uint8_t *)data, len);
+  usb_cdc_write((uint8_t *)data, len);
 
-  tud_cdc_write_flush();
+  usb_cdc_flush_write();
 }
