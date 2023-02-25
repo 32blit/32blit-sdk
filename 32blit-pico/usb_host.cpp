@@ -1,6 +1,6 @@
 #include "usb.hpp"
 
-#include <cstring>
+#include "multiplayer.hpp"
 
 #include "tusb.h"
 
@@ -159,12 +159,23 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t cons
 }
 #endif
 
+// cdc
+static uint8_t cdc_index = 0; // TODO: multiple devices?
+
+void tuh_cdc_mount_cb(uint8_t idx) {
+  cdc_index = idx;
+
+  send_multiplayer_handshake();
+}
+
 void init_usb() {
   tusb_init();
 }
 
 void update_usb() {
   tuh_task();
+
+  // TODO: resend multiplayer handshake
 }
 
 void usb_debug(const char *message) {
@@ -172,19 +183,29 @@ void usb_debug(const char *message) {
 }
 
 bool usb_cdc_connected() {
-  return false;
+  return tuh_cdc_mounted(cdc_index);
 }
 
 uint16_t usb_cdc_read(uint8_t *data, uint16_t len) {
-  return 0;
+  return tuh_cdc_read(cdc_index, data, len);
 }
 
 uint32_t usb_cdc_read_available() {
-  return 0;
+  return tuh_cdc_read_available(cdc_index);
 }
 
 void usb_cdc_write(const uint8_t *data, uint16_t len) {
+  uint32_t done = tuh_cdc_write(cdc_index,data, len);
+
+  while(done < len) {
+    tuh_task();
+    if(!tuh_cdc_mounted(cdc_index))
+      break;
+
+    done += tuh_cdc_write(cdc_index, data + done, len - done);
+  }
 }
 
 void usb_cdc_flush_write() {
+  tuh_cdc_write_flush(cdc_index);
 }
