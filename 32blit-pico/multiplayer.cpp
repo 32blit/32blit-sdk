@@ -14,7 +14,7 @@ static int header_pos = 0;
 static uint16_t mp_buffer_len, mp_buffer_off;
 static uint8_t *mp_buffer = nullptr;
 
-static void send_handshake(bool is_reply = false) {
+void send_multiplayer_handshake(bool is_reply) {
   uint8_t val = 0;
   if(multiplayer_enabled)
     val = is_reply ? 2 : 1;
@@ -64,7 +64,7 @@ void update_multiplayer() {
         peer_connected = b != 0;
 
         if(peer_connected)
-          send_handshake(true);
+          send_multiplayer_handshake(true);
 
         // done
         header_pos = 0;
@@ -92,7 +92,7 @@ void set_multiplayer_enabled(bool enabled) {
   multiplayer_enabled = enabled;
 
   if(!enabled)
-    send_handshake();
+    send_multiplayer_handshake();
 }
 
 void send_multiplayer_message(const uint8_t *data, uint16_t len) {
