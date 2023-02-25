@@ -14,6 +14,7 @@
 #include "file.hpp"
 #include "input.hpp"
 #include "led.hpp"
+#include "multiplayer.hpp"
 #include "usb.hpp"
 
 #include "engine/api_private.hpp"
@@ -205,6 +206,7 @@ int main() {
     update_audio(now);
     update_led();
     update_usb();
+    update_multiplayer();
 
     if(ms_to_next_update > 1 && !display_render_needed())
       best_effort_wfe_or_timeout(make_timeout_time_ms(ms_to_next_update - 1));

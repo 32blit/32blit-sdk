@@ -171,14 +171,20 @@ void usb_debug(const char *message) {
 
 }
 
-// multiplayer could be supported with USB host, but we'd need a hub
-// (host code is used for hid)
-bool is_multiplayer_connected() {
+bool usb_cdc_connected() {
   return false;
 }
 
-void set_multiplayer_enabled(bool enabled) {
+uint16_t usb_cdc_read(uint8_t *data, uint16_t len) {
+  return 0;
 }
 
-void send_multiplayer_message(const uint8_t *data, uint16_t len) {
+uint32_t usb_cdc_read_available() {
+  return 0;
+}
+
+void usb_cdc_write(const uint8_t *data, uint16_t len) {
+}
+
+void usb_cdc_flush_write() {
 }
