@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.9)
 project (picosystem-hardware-test)
 find_package (32BLIT CONFIG REQUIRED PATHS ../..)
 
-if(NOT 32BLIT_PICO)
+if(NOT PICO_BOARD STREQUAL "pimoroni_picosystem")
     # Hooks into the Pico SDK to get battery charge and VBUS status
     return()
 endif()
