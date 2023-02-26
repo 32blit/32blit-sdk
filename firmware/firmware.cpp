@@ -692,7 +692,7 @@ void render(uint32_t time) {
 
     screen.pen = Pen(255, 255, 255);
     screen.text(
-      "Please flash a launcher!\n\nUse \"32blit flash launcher.blit\"\nor place launcher.blit on your SD card.",
+      "Please flash a launcher!\n\nUse \"32blit install launcher.blit\"\nor place launcher.blit on your SD card.",
       minimal_font, Point(screen.bounds.w / 2, screen.bounds.h / 2), true, TextAlign::center_center
     );
   }
