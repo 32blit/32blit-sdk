@@ -3,11 +3,14 @@
 
 #include "pico/audio_pwm.h"
 #include "hardware/clocks.h"
+#include "hardware/dma.h"
 #include "hardware/pio.h"
 
 #define AUDIO_SAMPLE_FREQ 22050
 
 #include "audio/audio.hpp"
+
+#define audio_pio __CONCAT(pio, PICO_AUDIO_I2S_PIO)
 
 static audio_buffer_pool *audio_pool = nullptr;
 
@@ -26,11 +29,18 @@ void init_audio() {
   struct audio_buffer_pool *producer_pool = audio_new_producer_pool(&producer_format, 4, 441);
   const struct audio_format *output_format;
 
+  uint8_t dma_channel = dma_claim_unused_channel(true);
+  uint8_t pio_sm = pio_claim_unused_sm(audio_pio, true);
+
+  // audio_i2s_setup claims
+  dma_channel_unclaim(dma_channel);
+  pio_sm_unclaim(audio_pio, pio_sm);
+
   struct audio_pwm_channel_config audio_pwm_config = {
     .core = {
       .base_pin = PICO_AUDIO_PWM_MONO_PIN,
-      .dma_channel = 1,
-      .pio_sm = 1,
+      .dma_channel = dma_channel,
+      .pio_sm = pio_sm,
     },
     .pattern = 3,
   };
