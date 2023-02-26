@@ -47,6 +47,9 @@ void init_display() {
   // channel 0 get claimed later, channel 3 doesn't get claimed, but does get used
   // reserve them so out claims don't conflict
   dma_claim_mask(1 << 0 | 1 << 3);
+
+  // PIO SMs that get claimed later
+  pio_claim_sm_mask(pio0, 1 << 0 | 1 << 3);
 }
 
 void update_display(uint32_t time) {
@@ -60,6 +63,8 @@ void update_display(uint32_t time) {
 
 void init_display_core1() {
   dma_unclaim_mask(1 << 0 | 1 << 3);
+  pio_sm_unclaim(pio0,  0);
+  pio_sm_unclaim(pio0,  3);
 
   // no mode switching yet
 #if ALLOW_HIRES
