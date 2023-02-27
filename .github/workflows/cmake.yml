@@ -76,6 +76,12 @@ jobs:
     - name: Checkout 32Blit SDK
       uses: actions/checkout@v3
 
+    - name: Checkout Examples
+      uses: actions/checkout@v3
+      with:
+        repository: 32blit/32blit-examples
+        path: examples
+
     # pico sdk/extras for some builds
     - name: Checkout Pico SDK
       if: matrix.pico-sdk
@@ -138,7 +144,8 @@ jobs:
       run: ci/install_sdl_mingw.sh
 
     - name: Create Build Environment
-      run: cmake -E make_directory ${{runner.workspace}}/build
+      run: |
+        cmake -E make_directory ${{runner.workspace}}/build
 
     - name: Set Tag Variable
       if: github.event_name == 'release'
@@ -166,19 +173,11 @@ jobs:
         cmake --build . --config $BUILD_TYPE -j 2
         ccache --show-stats || true
 
-    #- name: Test
-    #  working-directory: ${{runner.workspace}}/build
-    #  shell: bash
-      # Execute tests defined by the CMake configuration.
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-    #  run: ctest -C $BUILD_TYPE
-
     - name: Prepare Artifact
       if: github.event_name != 'release'
-      working-directory: ${{runner.workspace}}/build
       shell: bash
       run: |
-        cmake --build . --config $BUILD_TYPE --target install
+        cmake --build $RUNNER_WORKSPACE/build --config $BUILD_TYPE --target install
 
     - name: Upload Artifact
       if: github.event_name != 'release'
