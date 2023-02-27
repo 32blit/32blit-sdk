@@ -37,7 +37,7 @@ jobs:
             name: PicoSystem
             cache-key: picosystem
             release-suffix: PicoSystem
-            cmake-args: -D32BLIT_DIR=$GITHUB_WORKSPACE -DPICO_SDK_PATH=$GITHUB_WORKSPACE/pico-sdk -DPICO_BOARD=pimoroni_picosystem -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+            cmake-args: -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/pico.toolchain -DPICO_SDK_PATH=$GITHUB_WORKSPACE/pico-sdk -DPICO_BOARD=pimoroni_picosystem -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
             apt-packages: ccache gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib python3-setuptools
 
           - os: ubuntu-20.04
