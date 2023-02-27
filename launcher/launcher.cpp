@@ -391,6 +391,13 @@ void init() {
   set_screen_mode(ScreenMode::hires);
   screen.clear();
 
+  // shrink the filename column on narrower screens
+  if(screen.bounds.w < game_actions_offset.x + 24) {
+    int diff = (game_actions_offset.x + 24) - screen.bounds.w;
+    game_info_offset.x -= diff;
+    game_actions_offset.x -= diff;
+  }
+
   selected_menu_item = 0;
 
   init_theme();
