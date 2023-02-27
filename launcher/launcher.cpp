@@ -537,7 +537,8 @@ void render(uint32_t time) {
 
   // list folders
   if(!directory_list.empty()) {
-    screen.clip = Rect(120, 5, 190, text_align_height);
+    int width = screen.bounds.w - game_info_offset.x - 10;
+    screen.clip = Rect(game_info_offset.x, 5, width, text_align_height);
 
     for(auto &directory : directory_list) {
       if(directory.name == current_directory->name)
@@ -545,14 +546,14 @@ void render(uint32_t time) {
       else
         screen.pen = theme.color_text;
 
-      int x = 120 + 95 + directory.x - directory_list_scroll_offset;
+      int x = 120 + (width / 2) + directory.x - directory_list_scroll_offset;
       screen.text(directory.name == "/" ? "ROOT" : directory.name, launcher_font, Rect(x, 5, 190, text_align_height), true, TextAlign::center_v);
     }
 
     screen.clip = Rect(Point(0, 0), screen.bounds);
   }
 
-  int y = 115 - file_list_scroll_offset.y;
+  int y = (screen.bounds.h / 2) - 5 - file_list_scroll_offset.y;
   int i = 0;
 
   // list games
@@ -561,13 +562,15 @@ void render(uint32_t time) {
     screen.rectangle(Rect(0, 0, game_info_offset.x - 10, screen.bounds.h));
 
     screen.clip = Rect(0, 0, game_info_offset.x - 20, screen.bounds.h);
+    int title_w = screen.clip.w - file_list_scroll_offset.x;
+
     for(auto &file : game_list) {
       if(i++ == selected_menu_item)
         screen.pen = theme.color_accent;
       else
         screen.pen = theme.color_text;
 
-      screen.text(file.title, launcher_font, Rect(file_list_scroll_offset.x, y, 90, text_align_height), true, TextAlign::center_v);
+      screen.text(file.title, launcher_font, Rect(file_list_scroll_offset.x, y, title_w, text_align_height), true, TextAlign::center_v);
       y += ROW_HEIGHT;
     }
     screen.clip = Rect(Point(0, 0), screen.bounds);
