@@ -1,5 +1,0 @@
-cmake_minimum_required(VERSION 3.9)
-project (logo)
-find_package (32BLIT CONFIG REQUIRED PATHS ../..)
-blit_executable (logo logo.cpp)
-blit_metadata (logo metadata.yml)

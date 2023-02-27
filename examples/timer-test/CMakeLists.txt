@@ -1,5 +1,0 @@
-cmake_minimum_required(VERSION 3.9)
-project (timer-test)
-find_package (32BLIT CONFIG REQUIRED PATHS ../..)
-blit_executable (timer-test timer-test.cpp)
-blit_metadata (timer-test metadata.yml)
