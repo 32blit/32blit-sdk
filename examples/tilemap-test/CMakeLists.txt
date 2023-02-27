@@ -1,6 +1,0 @@
-cmake_minimum_required(VERSION 3.9)
-project (tilemap-test)
-find_package (32BLIT CONFIG REQUIRED PATHS ../..)
-blit_executable (tilemap-test tilemap-test.cpp)
-blit_assets_yaml (tilemap-test assets.yml)
-blit_metadata (tilemap-test metadata.yml)

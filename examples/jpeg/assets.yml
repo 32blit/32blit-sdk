@@ -1,4 +1,0 @@
-assets.cpp:
-  test.jpeg:
-    name: asset_jpeg
-    type: raw/binary
