@@ -204,7 +204,6 @@ void load_file_list(const std::string &directory) {
       c = tolower(c);
 
     if(ext == "blit") {
-
       GameInfo game;
       game.type = GameType::game;
       game.title = file.name.substr(0, file.name.length() - 5);
@@ -466,11 +465,9 @@ void swoosh(uint32_t time, float t1, float t2, float s1, float s2, int t0, int o
     int range = y2 - y1;
 
     for(auto y = 0; y <= range; y++) {
-      if(y > range / 2){
+      if(y > range / 2) {
         screen.pen.a = alpha - (alpha * y / range);
-      }
-      else
-      {
+      } else {
         screen.pen.a = alpha * y / range;
       }
       // This is an optimisation, not an aesthetic choice!
@@ -595,9 +592,7 @@ void render(uint32_t time) {
           screen.sprite(1, Point(game_actions_offset.x, game_actions_offset.y + 12));
           screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R90);
         }
-      }
-      else
-      {
+      } else {
         // view screenshot fullscreen
         screen.sprite(4, Point(game_actions_offset.x, game_actions_offset.y + 12));
         screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R90);
@@ -631,8 +626,7 @@ void render(uint32_t time) {
       snprintf(buf, 20, "%i block%s", num_blocks, num_blocks == 1 ? "" : "s");
       screen.text(buf, minimal_font, Point(game_info_offset.x, screen.bounds.h - 16));
     }
-  }
-  else {
+  } else {
     screen.pen = theme.color_text;
 
     if(/*current_directory->name != "FLASH" &&*/ !blit::is_storage_available())
@@ -693,16 +687,14 @@ void update(uint32_t time) {
 
   auto old_menu_item = selected_menu_item;
 
-  if(button_up)
-  {
+  if(button_up) {
     selected_menu_item--;
     if(selected_menu_item < 0) {
       selected_menu_item = total_items - 1;
     }
   }
 
-  if(button_down)
-  {
+  if(button_down) {
     selected_menu_item++;
     if(selected_menu_item > total_items - 1) {
       selected_menu_item = 0;
@@ -764,12 +756,10 @@ void update(uint32_t time) {
   }
 
   if(!game_list.empty()) {
-    if(button_a)
-    {
+    if(button_a) {
       if(selected_game.type == GameType::screenshot && !selected_game.can_launch) {
         currentScreen = Screen::screenshot;
-      }
-      else {
+      } else {
         if(!launch_current_game())
           dialog.show("Error!", "Failed to launch " + selected_game.filename, [](bool){}, false);
       }
