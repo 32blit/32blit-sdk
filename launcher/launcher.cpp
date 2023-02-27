@@ -58,7 +58,9 @@ AutoRepeat ar_button_down(250, 600);
 AutoRepeat ar_button_left(0, 0);
 AutoRepeat ar_button_right(0, 0);
 
+#ifndef PICO_BUILD
 uint8_t screenshot_buf[320 * 240 * 3];
+#endif
 
 int calc_num_blocks(uint32_t size) {
   return (size - 1) / qspi_flash_sector_size + 1;
@@ -293,6 +295,7 @@ void load_current_game_metadata() {
       loaded = parse_file_metadata(selected_game.filename, selected_game_metadata, true);
   }
 
+#ifndef PICO_BUILD
   if(selected_game.type == GameType::screenshot) {
     if(selected_game.filename != current_screenshot) {
       // Free any old buffers
@@ -312,6 +315,7 @@ void load_current_game_metadata() {
       screenshot = nullptr;
     }
   }
+#endif
 
   // no valid metadata, reset
   if(!loaded) {
