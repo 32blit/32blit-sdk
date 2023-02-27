@@ -82,52 +82,6 @@ void insertion_sort(Iterator first, Iterator last, Compare comp) {
   }
 }
 
-void sort_file_list() {
-    using Iterator = std::vector<GameInfo>::iterator;
-    using Compare = bool(const GameInfo &, const GameInfo &);
-
-    if (file_sort == SortBy::name) {
-      // Sort by filename
-      insertion_sort<Iterator, Compare>(game_list.begin(), game_list.end(), [](const auto &a, const auto &b) { return a.title < b.title; });
-    }
-
-    if (file_sort == SortBy::size) {
-      // Sort by filesize
-      insertion_sort<Iterator, Compare>(game_list.begin(), game_list.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
-    }
-}
-
-void load_directory_list(const std::string &directory) {
-  directory_list.clear();
-
-  auto dir_filter = [](const FileInfo &info){
-    if(!(info.flags & FileFlags::directory))
-      return false;
-
-    if(info.name.compare("System Volume Information") == 0 || info.name[0] == '.')
-      return false;
-
-    return true;
-  };
-
-  for(auto &folder : ::list_files(directory, dir_filter))
-    directory_list.push_back({folder.name, 0, 0});
-
-  directory_list.sort([](const auto &a, const auto &b) { return a.name > b.name; });
-
-  directory_list.push_front({"/", 0, 0});
-  directory_list.push_front({"flash:", 0, 0});
-
-  // measure positions
-  int x = 0;
-  for(auto &dir : directory_list) {
-    dir.x = x;
-    dir.w = screen.measure_text(dir.name == "/" ? "ROOT" : dir.name, launcher_font).w;
-
-    x += dir.w + 10;
-  }
-}
-
 bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata, bool unpack_images = false) {
   blit::File f(filename);
 
@@ -171,6 +125,21 @@ bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata
   }
 
   return false;
+}
+
+void sort_file_list() {
+    using Iterator = std::vector<GameInfo>::iterator;
+    using Compare = bool(const GameInfo &, const GameInfo &);
+
+    if (file_sort == SortBy::name) {
+      // Sort by filename
+      insertion_sort<Iterator, Compare>(game_list.begin(), game_list.end(), [](const auto &a, const auto &b) { return a.title < b.title; });
+    }
+
+    if (file_sort == SortBy::size) {
+      // Sort by filesize
+      insertion_sort<Iterator, Compare>(game_list.begin(), game_list.end(), [](const auto &a, const auto &b) { return a.size < b.size; });
+    }
 }
 
 void load_file_list(const std::string &directory) {
@@ -268,6 +237,37 @@ void load_file_list(const std::string &directory) {
   sort_file_list();
 }
 
+void load_directory_list(const std::string &directory) {
+  directory_list.clear();
+
+  auto dir_filter = [](const FileInfo &info){
+    if(!(info.flags & FileFlags::directory))
+      return false;
+
+    if(info.name.compare("System Volume Information") == 0 || info.name[0] == '.')
+      return false;
+
+    return true;
+  };
+
+  for(auto &folder : ::list_files(directory, dir_filter))
+    directory_list.push_back({folder.name, 0, 0});
+
+  directory_list.sort([](const auto &a, const auto &b) { return a.name > b.name; });
+
+  directory_list.push_front({"/", 0, 0});
+  directory_list.push_front({"flash:", 0, 0});
+
+  // measure positions
+  int x = 0;
+  for(auto &dir : directory_list) {
+    dir.x = x;
+    dir.w = screen.measure_text(dir.name == "/" ? "ROOT" : dir.name, launcher_font).w;
+
+    x += dir.w + 10;
+  }
+}
+
 void load_current_game_metadata() {
   static std::string current_screenshot = "";
   bool loaded = false;
@@ -335,6 +335,20 @@ bool launch_current_game() {
   return api.launch(selected_game.filename.c_str());
 }
 
+void delete_current_game() {
+  dialog.show("Confirm", "Really delete " + selected_game.title + "?", [](bool yes){
+    if(yes) {
+      if(selected_game.filename.compare(0, 7, "flash:/") == 0)
+        api.erase_game(std::stoi(selected_game.filename.substr(7)) * qspi_flash_sector_size);
+
+      ::remove_file(selected_game.filename);
+
+      load_file_list(current_directory->name);
+      load_current_game_metadata();
+    }
+  });
+}
+
 void init_lists() {
   load_directory_list("/");
   current_directory = directory_list.begin();
@@ -370,20 +384,6 @@ void scan_flash() {
     offset += calc_num_blocks(size) * qspi_flash_sector_size;
   }
 #endif
-}
-
-void delete_current_game() {
-  dialog.show("Confirm", "Really delete " + selected_game.title + "?", [](bool yes){
-    if(yes) {
-      if(selected_game.filename.compare(0, 7, "flash:/") == 0)
-        api.erase_game(std::stoi(selected_game.filename.substr(7)) * qspi_flash_sector_size);
-
-      ::remove_file(selected_game.filename);
-
-      load_file_list(current_directory->name);
-      load_current_game_metadata();
-    }
-  });
 }
 
 void init() {
