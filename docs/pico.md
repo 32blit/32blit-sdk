@@ -5,7 +5,7 @@ The Pico port brings the 32blit SDK to PicoSystem and other RP2040-based devices
 Since RP2040 is slower and less capable than 32blit's STM32H750 there are some limitations, but most of the 32blit SDK conceniences work well.
 
 - [Why use 32blit SDK on PicoSystem?](#why-use-32blit-sdk-on-picosystem)
-- [Building The SDK & Examples](#building-the-sdk--examples)
+- [Building The SDK \& Examples](#building-the-sdk--examples)
   - [Fetch Pico SDK Automatically (Quick-Start)](#fetch-pico-sdk-automatically-quick-start)
   - [Existing Pico SDK (Advanced)](#existing-pico-sdk-advanced)
 - [Starting Your Own 32blit SDK Project](#starting-your-own-32blit-sdk-project)
@@ -13,7 +13,7 @@ Since RP2040 is slower and less capable than 32blit's STM32H750 there are some l
   - [Building](#building)
   - [Copying to your PicoSystem](#copying-to-your-picosystem)
   - [Extra configuration](#extra-configuration)
-- [API Limitations & Board Details](#api-limitations--board-details)
+- [API Limitations \& Board Details](#api-limitations--board-details)
   - [Unsupported Features](#unsupported-features)
   - [Limitations](#limitations)
   - [Board-specific details](#board-specific-details)
@@ -73,10 +73,12 @@ You can use Pico SDK's fetch-from-git feature and build like so:
 
 ```
 git clone https://github.com/32blit/32blit-sdk
-cd 32blit-sdk
+git clone https://github.com/32blit/32blit-examples
+
+cd 32blit-examples
 mkdir build.pico
 cd build.pico
-cmake .. -D32BLIT_DIR=`pwd`/.. -DPICO_SDK_FETCH_FROM_GIT=true -DPICO_EXTRAS_FETCH_FROM_GIT=true -DPICO_BOARD=pimoroni_picosystem
+cmake .. -D32BLIT_DIR=`pwd`/../../32blit-sdk -DPICO_SDK_FETCH_FROM_GIT=true -DPICO_EXTRAS_FETCH_FROM_GIT=true -DPICO_BOARD=pimoroni_picosystem
 ```
 
 And then run `make` as usual.
@@ -93,10 +95,12 @@ To build the examples for a PicoSystem:
 
 ```
 git clone https://github.com/32blit/32blit-sdk
-cd 32blit-sdk
+git clone https://github.com/32blit/32blit-examples
+
+cd 32blit-examples
 mkdir build.pico
 cd build.pico
-cmake .. -D32BLIT_DIR=`pwd`/.. -DPICO_SDK_PATH=/path/to/pico-sdk -DPICO_BOARD=pimoroni_picosystem
+cmake .. -D32BLIT_DIR=`pwd`/../../32blit-sdk -DPICO_SDK_PATH=/path/to/pico-sdk -DPICO_BOARD=pimoroni_picosystem
 ```
 
 And then run `make` as usual.

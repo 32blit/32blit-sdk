@@ -4,8 +4,8 @@ These instructions cover building 32blit on Windows (without WSL).
 
 - [Prerequisites](#prerequisites)
 - [Using Visual Studio](#using-visual-studio)
-- [Building & Running on 32Blit](#building--running-on-32blit)
-- [Building & Running Locally](#building--running-locally)
+- [Building \& Running on 32Blit](#building--running-on-32blit)
+- [Building \& Running Locally](#building--running-locally)
   - [Build Everything](#build-everything)
 
 ## Prerequisites
@@ -46,13 +46,21 @@ nmake
 
 ## Building & Running Locally
 
+Clone the examples repository:
+```
+git clone https://github.com/32blit/32blit-examples
+
+cd 32blit-examples
+```
+
 Set up the 32Blit Makefile from the root of the repository with the following commands:
 
 ```shell
 mkdir build
 cd build
-cmake -G"NMake Makefiles" ..
+cmake -G"NMake Makefiles" -D32BLIT_DIR=../../32blit-sdk ..
 ```
+(Assuming 32blit-sdk is cloned next to 32blit-examples)
 
 Now to make any example, type:
 

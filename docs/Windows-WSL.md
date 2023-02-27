@@ -84,7 +84,7 @@ sudo mkdir -p /opt/local/
 Grab and install the SDL2 mingw development package:
 
 ```shell
-wget https://github.com/libsdl-org/SDL/releases/download/release-2.24.0/SDL2-devel-2.24.0-mingw.tar.gz 
+wget https://github.com/libsdl-org/SDL/releases/download/release-2.24.0/SDL2-devel-2.24.0-mingw.tar.gz
 tar xzf SDL2-devel-2.24.0-mingw.tar.gz
 sudo cp -r SDL2-2.24.0/x86_64-w64-mingw32 /opt/local/
 ```
@@ -111,13 +111,21 @@ sudo cp -r SDL2_net-2.2.0/x86_64-w64-mingw32 /opt/local/
 
 ### Building
 
+Clone the examples repository:
+```
+git clone https://github.com/32blit/32blit-examples
+
+cd 32blit-examples
+```
+
 Finally, set up the 32Blit Makefile from the root of the repository with the following commands:
 
 ```shell
 mkdir build.mingw
 cd build.mingw
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../mingw.toolchain
+cmake .. -DCMAKE_TOOLCHAIN_FILE=../../32blit-sdk/mingw.toolchain
 ```
+(Assuming 32blit-sdk is cloned next to 32blit-examples)
 
 #### Single Example
 

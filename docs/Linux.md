@@ -45,13 +45,22 @@ If you want to run code on 32Blit, you should now refer to [Building & Running O
 
 ## Building & Running Locally
 
+
+Clone the examples repository:
+```
+git clone https://github.com/32blit/32blit-examples
+
+cd 32blit-examples
+```
+
 Set up the 32Blit Makefile from the root of the repository with the following commands:
 
 ```shell
 mkdir build
 cd build
-cmake ..
+cmake -D32BLIT_DIR=../../32blit-sdk ..
 ```
+(Assuming 32blit-sdk is cloned next to 32blit-examples)
 
 Now to make any example, type:
 

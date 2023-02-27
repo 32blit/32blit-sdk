@@ -36,13 +36,21 @@ You should also make sure you have a cross-compile environment set up on your co
 
 To build an example for 32blit using `arm-none-eabi-gcc` you must prepare the Makefile with CMake using the provided toolchain file.
 
-From the root of the repository:
+Clone the examples repository:
+```
+git clone https://github.com/32blit/32blit-examples
+
+cd 32blit-examples
+```
+
+From the root of the examples repository:
 
 ```
 mkdir build.stm32
 cd build.stm32
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../32blit.toolchain
+cmake .. -DCMAKE_TOOLCHAIN_FILE=../../32blit-sdk/32blit.toolchain
 ```
+(Assuming 32blit-sdk is cloned next to 32blit-examples)
 
 And then run `make examplename` to build an example.
 
@@ -122,7 +130,7 @@ You can either press Menu and select "Exit Game" or long-press Menu to exit.
 
 ### Flasher Can't Find 32Blit Port
 
-If `make example.flash` fails with `Unable to find 32Blit`, re-run `cmake` with `-DFLASH_PORT=[PORT PATH]`.  
+If `make example.flash` fails with `Unable to find 32Blit`, re-run `cmake` with `-DFLASH_PORT=[PORT PATH]`.
 
 Port-detection does not work if your device is in DFU mode. Either reset it to get it out, or it it's stuck in DFU mode (or just boots into a black screen), you may need to reflash the firmware.
 
