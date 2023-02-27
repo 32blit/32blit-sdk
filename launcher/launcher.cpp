@@ -442,7 +442,9 @@ void init() {
 
 void swoosh(uint32_t time, float t1, float t2, float s1, float s2, int t0, int offset_y=120, int size=60, int alpha=64) {
   constexpr int swoosh_resolution = 32;
-  for(auto x = 0; x < screen.bounds.w / swoosh_resolution; x++) {
+  int w = (screen.bounds.w + swoosh_resolution - 1) / swoosh_resolution;
+
+  for(auto x = 0; x < w; x++) {
     float t_a = (x / s1) + float(time + t0) / t1;
     float t_b = (x / s2) + float(time + t0) / t2;
 
