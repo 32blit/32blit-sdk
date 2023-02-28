@@ -671,6 +671,7 @@ void update(uint32_t time) {
   if(dialog.update())
     return;
 
+  // update/close credits
   if (current_screen == Screen::credits) {
     credits::update(time);
 
@@ -685,11 +686,13 @@ void update(uint32_t time) {
     return;
   }
 
+  // display credits
   if (button_menu) {
     credits::reset_scrolling();
     current_screen = Screen::credits;
   }
 
+  // scroll through file list
   int total_items = (int)game_list.size();
 
   auto old_menu_item = selected_menu_item;
@@ -714,7 +717,7 @@ void update(uint32_t time) {
       current_screen = Screen::main;
     }
   } else {
-    // switch between flash and SD lists
+    // scroll through directories
     if(button_left) {
       if(current_directory == directory_list.begin())
         current_directory = --directory_list.end();
@@ -729,6 +732,7 @@ void update(uint32_t time) {
       }
     }
 
+    // reload file list if dir changed
     if(button_left || button_right) {
       load_file_list(current_directory->name);
 
@@ -736,6 +740,7 @@ void update(uint32_t time) {
       old_menu_item = -1;
     }
 
+    // toggle sort mode
     if (button_y) {
       file_sort = file_sort == SortBy::name ? SortBy::size : SortBy::name;
       sort_file_list();
@@ -746,6 +751,9 @@ void update(uint32_t time) {
   file_list_scroll_offset.y += ((selected_menu_item * ROW_HEIGHT) - file_list_scroll_offset.y) / 5.0f;
 
   directory_list_scroll_offset += (current_directory->x + current_directory->w / 2 - directory_list_scroll_offset) / 5.0f;
+
+  if(game_list.empty())
+    return;
 
   // load metadata for selected item
   if(selected_menu_item != old_menu_item) {
@@ -758,19 +766,17 @@ void update(uint32_t time) {
   }
 
   // delete current game / screenshot
-  if (button_x && !game_list.empty()) {
+  if(button_x) {
     delete_current_game();
   }
 
   // launch game / show screenshot fullscreen
-  if(!game_list.empty()) {
-    if(button_a) {
-      if(selected_game.type == GameType::screenshot && !selected_game.can_launch) {
-        current_screen = Screen::screenshot;
-      } else {
-        if(!launch_current_game())
-          dialog.show("Error!", "Failed to launch " + selected_game.filename, [](bool){}, false);
-      }
+  if(button_a) {
+    if(selected_game.type == GameType::screenshot && !selected_game.can_launch) {
+      current_screen = Screen::screenshot;
+    } else {
+      if(!launch_current_game())
+        dialog.show("Error!", "Failed to launch " + selected_game.filename, [](bool){}, false);
     }
   }
 }
