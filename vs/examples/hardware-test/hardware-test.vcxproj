@@ -154,10 +154,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\examples\hardware-test\hardware-test.hpp" />
+    <ClInclude Include="..\..\..\utilities\hardware-test\hardware-test.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\hardware-test\hardware-test.cpp" />
+    <ClCompile Include="..\..\..\utilities\hardware-test\hardware-test.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
