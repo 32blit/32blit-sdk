@@ -270,7 +270,6 @@ void load_directory_list(const std::string &directory) {
 }
 
 void load_current_game_metadata() {
-  static std::string current_screenshot = "";
   bool loaded = false;
 
   if(!game_list.empty()) {
@@ -297,16 +296,14 @@ void load_current_game_metadata() {
 
 #ifndef PICO_BUILD
   if(selected_game.type == GameType::screenshot) {
-    if(selected_game.filename != current_screenshot) {
-      // Free any old buffers
-      if(screenshot) {
-        delete[] screenshot->palette;
-        delete screenshot;
-        screenshot = nullptr;
-      }
-      // Load the new screenshot
-      screenshot = Surface::load(selected_game.filename, screenshot_buf, sizeof(screenshot_buf));
+    // Free any old buffers
+    if(screenshot) {
+      delete[] screenshot->palette;
+      delete screenshot;
+      screenshot = nullptr;
     }
+    // Load the new screenshot
+    screenshot = Surface::load(selected_game.filename, screenshot_buf, sizeof(screenshot_buf));
   } else {
     // Not showing a screenshot, free the buffers
     if(screenshot) {
