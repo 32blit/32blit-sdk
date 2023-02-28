@@ -503,6 +503,14 @@ static void render_directory_list() {
     return;
 
   int width = screen.bounds.w - game_info_offset.x - 10;
+
+  // darken behind if showing screenshot
+  if(screenshot) {
+    screen.pen = theme.color_background;
+    screen.pen.a = 150;
+    screen.rectangle(Rect(game_info_offset.x - 10, 0, width + 20, 20));
+  }
+
   screen.clip = Rect(game_info_offset.x, 5, width, text_align_height);
 
   for(auto &directory : directory_list) {
@@ -526,7 +534,13 @@ static void render_file_list() {
     return;
 
   // background
-  screen.pen = theme.color_overlay;
+  if(screenshot) {
+    // darken if showing screenshot
+    screen.pen = theme.color_background;
+    screen.pen.a = 150;
+  } else
+    screen.pen = theme.color_overlay;
+
   screen.rectangle(Rect(0, 0, game_info_offset.x - 10, screen.bounds.h));
 
   screen.clip = Rect(0, 0, game_info_offset.x - 20, screen.bounds.h);
@@ -609,26 +623,14 @@ void render(uint32_t time) {
   }
 
   // display image preview
-  if(!game_list.empty() && selected_game.type == GameType::screenshot && screenshot) {
+  if(!game_list.empty() && screenshot)
     render_screenshot();
 
-    if(current_screen == Screen::screenshot) {
-      // displaying screenshot, show back action
-      screen.sprite(5, Point(game_actions_offset.x, game_actions_offset.y + 12));
-      screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R180);
-      render_fps(us_start);
-      return;
-    }
-
-    // Darken behind the file/directory menus so they're visible
-    screen.pen = theme.color_background;
-    screen.pen.a = 150;
-    screen.rectangle(Rect(game_info_offset.x - 10, 0, screen.bounds.w - game_info_offset.x + 10, 20));
-    screen.rectangle(Rect(0, 0, game_info_offset.x - 10, screen.bounds.h));
+  // don't display lists over fullscreen screenshot
+  if(current_screen != Screen::screenshot) {
+    render_directory_list();
+    render_file_list();
   }
-
-  render_directory_list();
-  render_file_list();
 
   // current file info/actions
   if(!game_list.empty()) {
@@ -643,6 +645,10 @@ void render(uint32_t time) {
           screen.sprite(1, Point(game_actions_offset.x, game_actions_offset.y + 12));
           screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R90);
         }
+      } else if (current_screen == Screen::screenshot) {
+        // exit fullscreen
+        screen.sprite(5, Point(game_actions_offset.x, game_actions_offset.y + 12));
+        screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R180);
       } else {
         // view screenshot fullscreen
         screen.sprite(4, Point(game_actions_offset.x, game_actions_offset.y + 12));
