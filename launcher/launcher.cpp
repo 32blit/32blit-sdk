@@ -26,7 +26,7 @@ struct PathSave {
 
 static const int path_save_slot = 256;
 
-Dialog dialog;
+static Dialog dialog;
 
 const Font launcher_font(font8x8);
 
@@ -34,41 +34,41 @@ constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 
 static Screen current_screen = Screen::main;
 
-bool show_fps = false;
-bool sd_detected = true;
-Vec2 file_list_scroll_offset(10.0f, 0.0f);
-Point game_info_offset(120, 20);
-Point game_actions_offset(game_info_offset.x + 128 + 8, 28);
-float directory_list_scroll_offset = 0.0f;
+static bool show_fps = false;
+static bool sd_detected = true;
+static Vec2 file_list_scroll_offset(10.0f, 0.0f);
+static Point game_info_offset(120, 20);
+static Point game_actions_offset(game_info_offset.x + 128 + 8, 28);
+static float directory_list_scroll_offset = 0.0f;
 
-std::vector<GameInfo> game_list;
-std::list<DirectoryInfo> directory_list;
-std::list<DirectoryInfo>::iterator current_directory;
+static std::vector<GameInfo> game_list;
+static std::list<DirectoryInfo> directory_list;
+static std::list<DirectoryInfo>::iterator current_directory;
 
-SortBy file_sort = SortBy::name;
+static SortBy file_sort = SortBy::name;
 
-GameInfo selected_game;
-BlitGameMetadata selected_game_metadata;
+static GameInfo selected_game;
+static BlitGameMetadata selected_game_metadata;
 
-Surface *spritesheet;
-Surface *screenshot;
+static Surface *spritesheet;
+static Surface *screenshot;
 
-AutoRepeat ar_button_up(250, 600);
-AutoRepeat ar_button_down(250, 600);
-AutoRepeat ar_button_left(0, 0);
-AutoRepeat ar_button_right(0, 0);
+static AutoRepeat ar_button_up(250, 600);
+static AutoRepeat ar_button_down(250, 600);
+static AutoRepeat ar_button_left(0, 0);
+static AutoRepeat ar_button_right(0, 0);
 
 #ifndef PICO_BUILD
-uint8_t screenshot_buf[320 * 240 * 3];
+static uint8_t screenshot_buf[320 * 240 * 3];
 #endif
 
-int calc_num_blocks(uint32_t size) {
+static int calc_num_blocks(uint32_t size) {
   return (size - 1) / qspi_flash_sector_size + 1;
 }
 
 // insertion sort
 template <class Iterator, class Compare>
-void insertion_sort(Iterator first, Iterator last, Compare comp) {
+static void insertion_sort(Iterator first, Iterator last, Compare comp) {
   if(last - first < 2)
     return;
 
@@ -82,7 +82,7 @@ void insertion_sort(Iterator first, Iterator last, Compare comp) {
   }
 }
 
-bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata, bool unpack_images = false) {
+static bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata, bool unpack_images = false) {
   blit::File f(filename);
 
   if(!f.is_open())
@@ -127,7 +127,7 @@ bool parse_file_metadata(const std::string &filename, BlitGameMetadata &metadata
   return false;
 }
 
-void sort_file_list() {
+static void sort_file_list() {
     using Iterator = std::vector<GameInfo>::iterator;
     using Compare = bool(const GameInfo &, const GameInfo &);
 
@@ -142,7 +142,7 @@ void sort_file_list() {
     }
 }
 
-void load_file_list(const std::string &directory) {
+static void load_file_list(const std::string &directory) {
 
   game_list.clear();
 
@@ -238,7 +238,7 @@ void load_file_list(const std::string &directory) {
   sort_file_list();
 }
 
-void load_directory_list(const std::string &directory) {
+static void load_directory_list(const std::string &directory) {
   directory_list.clear();
 
   auto dir_filter = [](const FileInfo &info){
@@ -269,7 +269,7 @@ void load_directory_list(const std::string &directory) {
   }
 }
 
-void load_current_game_metadata() {
+static void load_current_game_metadata() {
   bool loaded = false;
 
   if(!game_list.empty()) {
@@ -321,7 +321,7 @@ void load_current_game_metadata() {
   }
 }
 
-bool launch_current_game() {
+static bool launch_current_game() {
   // save last file launched
   PathSave save{};
   strncpy(save.last_path, selected_game.filename.c_str(), sizeof(save.last_path) - 1);
@@ -333,7 +333,7 @@ bool launch_current_game() {
   return api.launch(selected_game.filename.c_str());
 }
 
-void delete_current_game() {
+static void delete_current_game() {
   dialog.show("Confirm", "Really delete " + selected_game.title + "?", [](bool yes){
     if(yes) {
       if(selected_game.filename.compare(0, 7, "flash:/") == 0)
@@ -347,7 +347,7 @@ void delete_current_game() {
   });
 }
 
-void init_lists() {
+static void init_lists() {
   load_directory_list("/");
   current_directory = directory_list.begin();
 
@@ -356,7 +356,7 @@ void init_lists() {
   load_current_game_metadata();
 }
 
-void scan_flash() {
+static void scan_flash() {
 #ifdef TARGET_32BLIT_HW
   const uint32_t qspi_flash_sector_size = 64 * 1024;
   const uint32_t qspi_flash_size = 32768 * 1024;
@@ -444,7 +444,7 @@ void init() {
   credits::prepare();
 }
 
-void swoosh(uint32_t time, float t1, float t2, float s1, float s2, int t0, int offset_y=120, int size=60, int alpha=64) {
+static void swoosh(uint32_t time, float t1, float t2, float s1, float s2, int t0, int offset_y=120, int size=60, int alpha=64) {
   constexpr int swoosh_resolution = 32;
   int w = (screen.bounds.w + swoosh_resolution - 1) / swoosh_resolution;
 
@@ -474,7 +474,7 @@ void swoosh(uint32_t time, float t1, float t2, float s1, float s2, int t0, int o
   }
 }
 
-void render_fps(uint32_t us_start) {
+static void render_fps(uint32_t us_start) {
   if(!show_fps) return;
   // draw FPS meter
   uint32_t us_end = now_us();
