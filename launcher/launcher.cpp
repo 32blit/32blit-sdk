@@ -204,6 +204,7 @@ void load_file_list(const std::string &directory) {
 
     if(!api.get_type_handler_metadata) continue;
 
+    // check for installed handler
     auto handler_meta = api.get_type_handler_metadata(ext.c_str());
 
     if(handler_meta) {
@@ -215,7 +216,7 @@ void load_file_list(const std::string &directory) {
       game.size = file.size;
       game.can_launch = true;
 
-      // check got a metadata file
+      // check for a metadata file (fall back to handler's metadata)
       BlitGameMetadata meta;
       auto meta_filename = game.filename + ".blmeta";
       if(parse_file_metadata(meta_filename, meta))
@@ -503,6 +504,7 @@ void render(uint32_t time) {
   screen.pen = theme.color_background;
   screen.clear();
 
+  // display background swoosh if not displaying a screenshot or the credits
   if(currentScreen != Screen::screenshot && currentScreen != Screen::credits && selected_game.type != GameType::screenshot) {
     screen.pen = Pen(255, 255, 255);
     swoosh(time, 5100.0f, 3900.0f, 1900.0f, 900.0f, 3500);
@@ -512,10 +514,13 @@ void render(uint32_t time) {
     swoosh(time, 5100.0f, 3900.0f, 900.0f, 1100.0f, 5000);
   }
 
+  // display image preview
   if(!game_list.empty() && selected_game.type == GameType::screenshot && screenshot) {
     if(screenshot->bounds.w == screen.bounds.w) {
+      // full screen image
       screen.blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Point(0, 0));
     } else if(screenshot->bounds == Size(128, 128)) {
+      // standard spritesheet size, show in info column
       screen.pen = Pen(0, 0, 0, 255);
       screen.rectangle(Rect(game_info_offset, Size(128, 128)));
       screen.blit(screenshot, Rect(Point(0, 0), screenshot->bounds), game_info_offset);
@@ -524,7 +529,7 @@ void render(uint32_t time) {
     }
 
     if(currentScreen == Screen::screenshot) {
-      // back
+      // displaying screenshot, show back action
       screen.sprite(5, Point(game_actions_offset.x, game_actions_offset.y + 12));
       screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R180);
       render_fps(us_start);
@@ -580,6 +585,8 @@ void render(uint32_t time) {
       y += ROW_HEIGHT;
     }
     screen.clip = Rect(Point(0, 0), screen.bounds);
+
+    // info / actions
 
     // delete
     screen.sprite(2, Point(game_actions_offset.x, game_actions_offset.y));
@@ -755,6 +762,7 @@ void update(uint32_t time) {
     delete_current_game();
   }
 
+  // launch game / show screenshot fullscreen
   if(!game_list.empty()) {
     if(button_a) {
       if(selected_game.type == GameType::screenshot && !selected_game.can_launch) {
