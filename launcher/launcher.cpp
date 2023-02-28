@@ -636,7 +636,7 @@ void render(uint32_t time) {
   } else {
     screen.pen = theme.color_text;
 
-    if(/*current_directory->name != "FLASH" &&*/ !blit::is_storage_available())
+    if(current_directory->name != "flash:" && !blit::is_storage_available())
       screen.text("No SD Card\nDetected.", launcher_font, Point(screen.bounds.w / 2, screen.bounds.h / 2), true, TextAlign::center_center);
     else
       screen.text("No Games Found.", launcher_font, Point(screen.bounds.w / 2, screen.bounds.h / 2), true, TextAlign::center_center);
