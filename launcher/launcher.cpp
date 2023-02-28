@@ -230,7 +230,7 @@ void load_file_list(const std::string &directory) {
 
   int total_items = (int)game_list.size();
   if(selected_menu_item >= total_items)
-    selected_menu_item = total_items - 1;
+    selected_menu_item = std::max(0, total_items - 1);
 
   // probably doesn't do anything...
   game_list.shrink_to_fit();
