@@ -494,6 +494,103 @@ void render_fps(uint32_t us_start) {
   screen.text(std::to_string(us_elapsed), minimal_font, Point(0, screen.bounds.h - 12));
 }
 
+static void render_directory_list() {
+  // adjust alignment rect for vertical spacing
+  const int text_align_height = ROW_HEIGHT + launcher_font.spacing_y;
+
+  // list folders
+  if(directory_list.empty())
+    return;
+
+  int width = screen.bounds.w - game_info_offset.x - 10;
+  screen.clip = Rect(game_info_offset.x, 5, width, text_align_height);
+
+  for(auto &directory : directory_list) {
+    if(directory.name == current_directory->name)
+      screen.pen = theme.color_accent;
+    else
+      screen.pen = theme.color_text;
+
+    int x = 120 + (width / 2) + directory.x - directory_list_scroll_offset;
+    screen.text(directory.name == "/" ? "ROOT" : directory.name, launcher_font, Rect(x, 5, width, text_align_height), true, TextAlign::center_v);
+  }
+
+  screen.clip = Rect(Point(0, 0), screen.bounds);
+}
+
+static void render_file_list() {
+  // adjust alignment rect for vertical spacing
+  const int text_align_height = ROW_HEIGHT + launcher_font.spacing_y;
+
+  if(game_list.empty())
+    return;
+
+  // background
+  screen.pen = theme.color_overlay;
+  screen.rectangle(Rect(0, 0, game_info_offset.x - 10, screen.bounds.h));
+
+  screen.clip = Rect(0, 0, game_info_offset.x - 20, screen.bounds.h);
+  int title_w = screen.clip.w - file_list_scroll_offset.x;
+
+  int y = (screen.bounds.h / 2) - 5 - file_list_scroll_offset.y;
+  int i = 0;
+
+  for(auto &file : game_list) {
+    if(i++ == selected_menu_item)
+      screen.pen = theme.color_accent;
+    else
+      screen.pen = theme.color_text;
+
+    screen.text(file.title, launcher_font, Rect(file_list_scroll_offset.x, y, title_w, text_align_height), true, TextAlign::center_v);
+    y += ROW_HEIGHT;
+  }
+  screen.clip = Rect(Point(0, 0), screen.bounds);
+}
+
+static void render_screenshot() {
+  if(screenshot->bounds.w == screen.bounds.w) {
+    // full screen image
+    screen.blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Point(0, 0));
+  } else if(screenshot->bounds == Size(128, 128)) {
+    // standard spritesheet size, show in info column
+    screen.pen = Pen(0, 0, 0, 255);
+    screen.rectangle(Rect(game_info_offset, Size(128, 128)));
+    screen.blit(screenshot, Rect(Point(0, 0), screenshot->bounds), game_info_offset);
+  } else {
+    screen.stretch_blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Rect(Point(0, 0), screen.bounds));
+  }
+}
+
+static void render_game_info() {
+  // run game / launch file
+  screen.sprite(1, Point(game_actions_offset.x, game_actions_offset.y + 12));
+  screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R90);
+
+  // game info
+  if(selected_game_metadata.splash)
+    screen.blit(selected_game_metadata.splash, Rect(Point(0, 0), selected_game_metadata.splash->bounds), game_info_offset);
+
+  screen.pen = theme.color_accent;
+  std::string wrapped_title = screen.wrap_text(selected_game_metadata.title, screen.bounds.w - game_info_offset.x - 10, launcher_font);
+
+  Size title_size = screen.measure_text(wrapped_title, launcher_font);
+  screen.text(wrapped_title, launcher_font, Point(game_info_offset.x, game_info_offset.y + 104));
+
+  Rect desc_rect(game_info_offset.x, game_info_offset.y + 108 + title_size.h, screen.bounds.w - game_info_offset.x - 10, 64);
+
+  screen.pen = theme.color_text;
+  std::string wrapped_desc = screen.wrap_text(selected_game_metadata.description, desc_rect.w, launcher_font);
+  screen.text(wrapped_desc, launcher_font, desc_rect);
+
+  screen.text(selected_game_metadata.author, minimal_font, Point(game_info_offset.x, screen.bounds.h - 32));
+  screen.text(selected_game_metadata.version, minimal_font, Point(game_info_offset.x, screen.bounds.h - 24));
+
+  int num_blocks = calc_num_blocks(selected_game.size);
+  char buf[20];
+  snprintf(buf, 20, "%i block%s", num_blocks, num_blocks == 1 ? "" : "s");
+  screen.text(buf, minimal_font, Point(game_info_offset.x, screen.bounds.h - 16));
+}
+
 void render(uint32_t time) {
   uint32_t us_start = now_us();
   screen.sprites = spritesheet;
@@ -513,17 +610,7 @@ void render(uint32_t time) {
 
   // display image preview
   if(!game_list.empty() && selected_game.type == GameType::screenshot && screenshot) {
-    if(screenshot->bounds.w == screen.bounds.w) {
-      // full screen image
-      screen.blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Point(0, 0));
-    } else if(screenshot->bounds == Size(128, 128)) {
-      // standard spritesheet size, show in info column
-      screen.pen = Pen(0, 0, 0, 255);
-      screen.rectangle(Rect(game_info_offset, Size(128, 128)));
-      screen.blit(screenshot, Rect(Point(0, 0), screenshot->bounds), game_info_offset);
-    } else {
-      screen.stretch_blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Rect(Point(0, 0), screen.bounds));
-    }
+    render_screenshot();
 
     if(current_screen == Screen::screenshot) {
       // displaying screenshot, show back action
@@ -540,51 +627,11 @@ void render(uint32_t time) {
     screen.rectangle(Rect(0, 0, game_info_offset.x - 10, screen.bounds.h));
   }
 
-  // adjust alignment rect for vertical spacing
-  const int text_align_height = ROW_HEIGHT + launcher_font.spacing_y;
+  render_directory_list();
+  render_file_list();
 
-  // list folders
-  if(!directory_list.empty()) {
-    int width = screen.bounds.w - game_info_offset.x - 10;
-    screen.clip = Rect(game_info_offset.x, 5, width, text_align_height);
-
-    for(auto &directory : directory_list) {
-      if(directory.name == current_directory->name)
-        screen.pen = theme.color_accent;
-      else
-        screen.pen = theme.color_text;
-
-      int x = 120 + (width / 2) + directory.x - directory_list_scroll_offset;
-      screen.text(directory.name == "/" ? "ROOT" : directory.name, launcher_font, Rect(x, 5, 190, text_align_height), true, TextAlign::center_v);
-    }
-
-    screen.clip = Rect(Point(0, 0), screen.bounds);
-  }
-
-  int y = (screen.bounds.h / 2) - 5 - file_list_scroll_offset.y;
-  int i = 0;
-
-  // list games
+  // current file info/actions
   if(!game_list.empty()) {
-    screen.pen = theme.color_overlay;
-    screen.rectangle(Rect(0, 0, game_info_offset.x - 10, screen.bounds.h));
-
-    screen.clip = Rect(0, 0, game_info_offset.x - 20, screen.bounds.h);
-    int title_w = screen.clip.w - file_list_scroll_offset.x;
-
-    for(auto &file : game_list) {
-      if(i++ == selected_menu_item)
-        screen.pen = theme.color_accent;
-      else
-        screen.pen = theme.color_text;
-
-      screen.text(file.title, launcher_font, Rect(file_list_scroll_offset.x, y, title_w, text_align_height), true, TextAlign::center_v);
-      y += ROW_HEIGHT;
-    }
-    screen.clip = Rect(Point(0, 0), screen.bounds);
-
-    // info / actions
-
     // delete
     screen.sprite(2, Point(game_actions_offset.x, game_actions_offset.y));
     screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y));
@@ -602,33 +649,7 @@ void render(uint32_t time) {
         screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R90);
       }
     } else {
-      // run game / launch file
-      screen.sprite(1, Point(game_actions_offset.x, game_actions_offset.y + 12));
-      screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R90);
-
-      // game info
-      if(selected_game_metadata.splash)
-        screen.blit(selected_game_metadata.splash, Rect(Point(0, 0), selected_game_metadata.splash->bounds), game_info_offset);
-
-      screen.pen = theme.color_accent;
-      std::string wrapped_title = screen.wrap_text(selected_game_metadata.title, screen.bounds.w - game_info_offset.x - 10, launcher_font);
-
-      Size title_size = screen.measure_text(wrapped_title, launcher_font);
-      screen.text(wrapped_title, launcher_font, Point(game_info_offset.x, game_info_offset.y + 104));
-
-      Rect desc_rect(game_info_offset.x, game_info_offset.y + 108 + title_size.h, screen.bounds.w - game_info_offset.x - 10, 64);
-
-      screen.pen = theme.color_text;
-      std::string wrapped_desc = screen.wrap_text(selected_game_metadata.description, desc_rect.w, launcher_font);
-      screen.text(wrapped_desc, launcher_font, desc_rect);
-
-      screen.text(selected_game_metadata.author, minimal_font, Point(game_info_offset.x, screen.bounds.h - 32));
-      screen.text(selected_game_metadata.version, minimal_font, Point(game_info_offset.x, screen.bounds.h - 24));
-
-      int num_blocks = calc_num_blocks(selected_game.size);
-      char buf[20];
-      snprintf(buf, 20, "%i block%s", num_blocks, num_blocks == 1 ? "" : "s");
-      screen.text(buf, minimal_font, Point(game_info_offset.x, screen.bounds.h - 16));
+      render_game_info();
     }
   } else {
     screen.pen = theme.color_text;
