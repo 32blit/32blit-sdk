@@ -32,7 +32,7 @@ const Font launcher_font(font8x8);
 
 constexpr uint32_t qspi_flash_sector_size = 64 * 1024;
 
-static Screen currentScreen = Screen::main;
+static Screen current_screen = Screen::main;
 
 bool show_fps = false;
 bool sd_detected = true;
@@ -505,7 +505,7 @@ void render(uint32_t time) {
   screen.clear();
 
   // display background swoosh if not displaying a screenshot or the credits
-  if(currentScreen != Screen::screenshot && currentScreen != Screen::credits && selected_game.type != GameType::screenshot) {
+  if(current_screen != Screen::screenshot && current_screen != Screen::credits && selected_game.type != GameType::screenshot) {
     screen.pen = Pen(255, 255, 255);
     swoosh(time, 5100.0f, 3900.0f, 1900.0f, 900.0f, 3500);
     screen.pen = theme.color_accent;
@@ -528,7 +528,7 @@ void render(uint32_t time) {
       screen.stretch_blit(screenshot, Rect(Point(0, 0), screenshot->bounds), Rect(Point(0, 0), screen.bounds));
     }
 
-    if(currentScreen == Screen::screenshot) {
+    if(current_screen == Screen::screenshot) {
       // displaying screenshot, show back action
       screen.sprite(5, Point(game_actions_offset.x, game_actions_offset.y + 12));
       screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R180);
@@ -642,7 +642,7 @@ void render(uint32_t time) {
       screen.text("No Games Found.", launcher_font, Point(screen.bounds.w / 2, screen.bounds.h / 2), true, TextAlign::center_center);
   }
 
-  if (currentScreen == Screen::credits) {
+  if (current_screen == Screen::credits) {
     credits::render();
   }
 
@@ -668,11 +668,11 @@ void update(uint32_t time) {
   bool button_left = ar_button_left.next(time, buttons.state & Button::DPAD_LEFT || joystick.x < -0.5f);
   bool button_right = ar_button_right.next(time, buttons.state & Button::DPAD_RIGHT || joystick.x > 0.5f);
 
-  if (currentScreen == Screen::credits) {
+  if (current_screen == Screen::credits) {
     credits::update(time);
 
     if (button_menu) {
-      currentScreen = Screen::main;
+      current_screen = Screen::main;
     }
 
     if(button_y) {
@@ -684,7 +684,7 @@ void update(uint32_t time) {
 
   if (button_menu) {
     credits::reset_scrolling();
-    currentScreen = Screen::credits;
+    current_screen = Screen::credits;
   }
 
   if(dialog.update())
@@ -708,10 +708,10 @@ void update(uint32_t time) {
     }
   }
 
-  if(currentScreen == Screen::screenshot) {
+  if(current_screen == Screen::screenshot) {
     // b to exit full screen screenshot view
     if(button_b) {
-      currentScreen = Screen::main;
+      current_screen = Screen::main;
     }
   } else {
     // switch between flash and SD lists
@@ -753,8 +753,8 @@ void update(uint32_t time) {
   }
 
   // paranoid bail out if you're browsing screenshots full screen and come across a game
-  if(selected_game.type != GameType::screenshot && currentScreen == Screen::screenshot) {
-    currentScreen = Screen::main;
+  if(selected_game.type != GameType::screenshot && current_screen == Screen::screenshot) {
+    current_screen = Screen::main;
   }
 
   // delete current game / screenshot
@@ -766,7 +766,7 @@ void update(uint32_t time) {
   if(!game_list.empty()) {
     if(button_a) {
       if(selected_game.type == GameType::screenshot && !selected_game.can_launch) {
-        currentScreen = Screen::screenshot;
+        current_screen = Screen::screenshot;
       } else {
         if(!launch_current_game())
           dialog.show("Error!", "Failed to launch " + selected_game.filename, [](bool){}, false);
