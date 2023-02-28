@@ -668,6 +668,9 @@ void update(uint32_t time) {
   bool button_left = ar_button_left.next(time, buttons.state & Button::DPAD_LEFT || joystick.x < -0.5f);
   bool button_right = ar_button_right.next(time, buttons.state & Button::DPAD_RIGHT || joystick.x > 0.5f);
 
+  if(dialog.update())
+    return;
+
   if (current_screen == Screen::credits) {
     credits::update(time);
 
@@ -686,9 +689,6 @@ void update(uint32_t time) {
     credits::reset_scrolling();
     current_screen = Screen::credits;
   }
-
-  if(dialog.update())
-    return;
 
   int total_items = (int)game_list.size();
 
