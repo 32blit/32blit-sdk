@@ -251,7 +251,7 @@ void blit_tick() {
 }
 
 bool blit_sd_detected() {
-  return gpio::read(GPIOD, GPIO_PIN_11);
+  return gpio::read(SD_DETECT_GPIO_Port, SD_DETECT_Pin);
 }
 
 bool blit_sd_mounted() {
