@@ -23,9 +23,7 @@ if(32BLIT_HW)
     add_subdirectory(32blit-stm32/firmware-update)
 endif()
 
-if(NOT 32BLIT_PICO)
-    add_subdirectory(launcher)
-endif()
+add_subdirectory(launcher)
 
 # if the examples are there, build them too
 if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/examples/CMakeLists.txt)
