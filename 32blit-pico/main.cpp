@@ -4,6 +4,7 @@
 #include "hardware/clocks.h"
 #include "hardware/i2c.h"
 #include "hardware/structs/rosc.h"
+#include "hardware/structs/scb.h"
 #include "hardware/vreg.h"
 #include "hardware/timer.h"
 #include "pico/binary_info.h"
@@ -27,6 +28,8 @@
 #include "engine/api_private.hpp"
 
 using namespace blit;
+
+const unsigned int game_block_size = 64 * 1024; // this is the 32blit's flash erase size, some parts of the API depend on this...
 
 static blit::AudioChannel channels[CHANNEL_COUNT];
 
@@ -103,9 +106,44 @@ static GameMetadata get_metadata() {
   return ret;
 }
 
-static void list_installed_games(std::function<void(const uint8_t *, uint32_t, uint32_t)> callback) {
-  const unsigned int game_block_size = 64 * 1024; // this is the 32blit's flash erase size, some parts of the API depend on this...
+static bool launch(const char *path) {
+  if(strncmp(path, "flash:/", 7) == 0) {
+    int offset = atoi(path + 7) * game_block_size;
 
+    // TODO: check valid
+    auto addr = XIP_BASE + offset + 256;
+
+    // disable all irqs
+    irq_set_mask_enabled(~0u, false);
+
+    // set VTOR
+    scb_hw->vtor = addr;
+
+    asm volatile(
+      "ldr r0, [%0]\n"
+      "ldr r1, [%0, #4]\n"
+      "msr msp, r0\n" // set SP
+      "bx r1" // branch to reset
+      :
+      : "r" (addr)
+      : "r0", "r1"
+    );
+    // not reached
+  }
+
+  return false;
+}
+
+static blit::CanLaunchResult can_launch(const char *path) {
+  if(strncmp(path, "flash:/", 7) == 0) {
+    // assume anything flashed is compatible for now
+    return blit::CanLaunchResult::Success;
+  }
+
+  return blit::CanLaunchResult::UnknownType;
+}
+
+static void list_installed_games(std::function<void(const uint8_t *, uint32_t, uint32_t)> callback) {
   for(uint32_t off = 0; off < PICO_FLASH_SIZE_BYTES;) {
     auto header = (BlitGameHeader *)(XIP_NOCACHE_NOALLOC_BASE + off);
 
@@ -168,7 +206,7 @@ static const blit::APIConst blit_api_const {
   nullptr, // decode_jpeg_buffer
   nullptr, // decode_jpeg_file
 
-  nullptr, // launch
+  ::launch,
   nullptr, // erase_game
   nullptr, // get_type_handler_metadata
 
@@ -193,7 +231,7 @@ static const blit::APIConst blit_api_const {
   nullptr, // cdc_read
 
   ::list_installed_games,
-  nullptr, // can_launch
+  ::can_launch,
 };
 
 static blit::APIData blit_api_data;
