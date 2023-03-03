@@ -15,6 +15,12 @@
 
 extern Input *blit_input;
 
+// blit API
+namespace blit {
+  API real_api;
+  API &api = real_api;
+}
+
 int System::width = System::max_width;
 int System::height = System::max_height;
 
