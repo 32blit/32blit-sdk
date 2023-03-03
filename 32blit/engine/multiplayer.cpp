@@ -18,5 +18,5 @@ namespace blit {
     api.send_message(data, len);
   }
 
-  void (*&message_received)(const uint8_t *data, uint16_t len) = api.message_received;
+  void (*&message_received)(const uint8_t *data, uint16_t len) = api_data.message_received;
 }
