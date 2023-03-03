@@ -47,6 +47,7 @@ target_link_libraries(BlitHalPico INTERFACE
     pico_multicore pico_stdlib pico_unique_id pico_rand
     tinyusb_device
     FatFsBlitAPI
+    LauncherShared
 )
 
 target_include_directories(BlitHalPico INTERFACE
@@ -178,6 +179,7 @@ set(BLIT_BOARD_DEFINITIONS ${BLIT_BOARD_DEFINITIONS} PARENT_SCOPE)
 # some file paths we need later
 set(LINKER_SCRIPT ${CMAKE_CURRENT_LIST_DIR}/memmap_blit.ld PARENT_SCOPE)
 set(STARTUP_SRC ${CMAKE_CURRENT_LIST_DIR}/startup.S PARENT_SCOPE)
+set(LAUNCHERSHARED_DIR ${CMAKE_CURRENT_LIST_DIR}/../launcher-shared PARENT_SCOPE)
 
 # functions
 function(blit_executable NAME)
@@ -189,6 +191,11 @@ function(blit_executable NAME)
     target_link_libraries(${NAME} BlitHalPico BlitEngine)
 
     # standalone .uf2
+    # TODO: import pico hal if standalone build
+	if(NOT TARGET LauncherShared)
+        add_subdirectory(${LAUNCHERSHARED_DIR} launcher-shared)
+    endif()
+
     add_executable(${NAME}-standalone)
     target_link_libraries(${NAME}-standalone ${NAME})
 
