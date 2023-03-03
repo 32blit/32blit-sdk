@@ -690,6 +690,10 @@ static void start_launcher() {
 }
 
 void init() {
+  // bit of a hack, but we know it's writable
+  // ... or is the fact part of the "const" api is set much later, the bigger hack?
+  auto &api = *(APIConst *)&blit::api;
+
   api.launch = launch_file_from_sd;
   api.erase_game = erase_flash_game;
   api.get_type_handler_metadata = get_type_handler_metadata;

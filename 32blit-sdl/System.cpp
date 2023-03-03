@@ -16,9 +16,14 @@
 extern Input *blit_input;
 
 // blit API
+static blit::AudioChannel channels[CHANNEL_COUNT];
+
+static blit::APIConst blit_api_const;
+static blit::APIData blit_api_data;
+
 namespace blit {
-  API real_api;
-  API &api = real_api;
+  const APIConst &api = blit_api_const;
+  APIData &api_data = blit_api_data;
 }
 
 int System::width = System::max_width;
@@ -214,45 +219,47 @@ void System::run() {
 
 	start = std::chrono::steady_clock::now();
 
-	blit::api.now = ::now;
-	blit::api.random = ::blit_random;
-	blit::api.debug = ::blit_debug;
-	blit::api.set_screen_mode = ::set_screen_mode;
-	blit::api.set_screen_palette = ::set_screen_palette;
-  blit::api.set_screen_mode_format = ::set_screen_mode_format;
+  blit_api_const.channels = channels;
+
+	blit_api_const.now = ::now;
+	blit_api_const.random = ::blit_random;
+	blit_api_const.debug = ::blit_debug;
+	blit_api_const.set_screen_mode = ::set_screen_mode;
+	blit_api_const.set_screen_palette = ::set_screen_palette;
+  blit_api_const.set_screen_mode_format = ::set_screen_mode_format;
 	blit::update = ::update;
 	blit::render = ::render;
 
 	setup_base_path();
 
-	blit::api.open_file = ::open_file;
-	blit::api.read_file = ::read_file;
-	blit::api.write_file = ::write_file;
-	blit::api.close_file = ::close_file;
-	blit::api.get_file_length = ::get_file_length;
-	blit::api.list_files = ::list_files;
-	blit::api.file_exists = ::file_exists;
-	blit::api.directory_exists = ::directory_exists;
-	blit::api.create_directory = ::create_directory;
-	blit::api.rename_file = ::rename_file;
-	blit::api.remove_file = ::remove_file;
-	blit::api.get_save_path = ::get_save_path;
-	blit::api.is_storage_available = ::is_storage_available;
+	blit_api_const.open_file = ::open_file;
+	blit_api_const.read_file = ::read_file;
+	blit_api_const.write_file = ::write_file;
+	blit_api_const.close_file = ::close_file;
+	blit_api_const.get_file_length = ::get_file_length;
+	blit_api_const.list_files = ::list_files;
+	blit_api_const.file_exists = ::file_exists;
+	blit_api_const.directory_exists = ::directory_exists;
+	blit_api_const.create_directory = ::create_directory;
+	blit_api_const.rename_file = ::rename_file;
+	blit_api_const.remove_file = ::remove_file;
+	blit_api_const.get_save_path = ::get_save_path;
+	blit_api_const.is_storage_available = ::is_storage_available;
 
-	blit::api.enable_us_timer = ::enable_us_timer;
-	blit::api.get_us_timer = ::get_us_timer;
-	blit::api.get_max_us_timer = ::get_max_us_timer;
+	blit_api_const.enable_us_timer = ::enable_us_timer;
+	blit_api_const.get_us_timer = ::get_us_timer;
+	blit_api_const.get_max_us_timer = ::get_max_us_timer;
 
-	blit::api.decode_jpeg_buffer = blit_decode_jpeg_buffer;
-	blit::api.decode_jpeg_file = blit_decode_jpeg_file;
+	blit_api_const.decode_jpeg_buffer = blit_decode_jpeg_buffer;
+	blit_api_const.decode_jpeg_file = blit_decode_jpeg_file;
 
-  blit::api.get_launch_path = ::get_launch_path;
+  blit_api_const.get_launch_path = ::get_launch_path;
 
-	blit::api.is_multiplayer_connected = blit_is_multiplayer_connected;
-	blit::api.set_multiplayer_enabled = blit_set_multiplayer_enabled;
-	blit::api.send_message = blit_send_message;
+	blit_api_const.is_multiplayer_connected = blit_is_multiplayer_connected;
+	blit_api_const.set_multiplayer_enabled = blit_set_multiplayer_enabled;
+	blit_api_const.send_message = blit_send_message;
 
-  blit::api.get_metadata = ::get_metadata;
+  blit_api_const.get_metadata = ::get_metadata;
 
 	blit::set_screen_mode(blit::lores);
 

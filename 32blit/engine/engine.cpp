@@ -107,7 +107,7 @@ namespace blit {
     }
 
     // skip time where this wasn't the active tick function (menu/game switches)
-    if (api.tick_function_changed) {
+    if (api_data.tick_function_changed) {
       auto skipped_time = time - last_tick_time;
       last_tick_time = time;
 
@@ -121,7 +121,7 @@ namespace blit {
         tween->paused += skipped_time;
       }
 
-      api.tick_function_changed = false;
+      api_data.tick_function_changed = false;
     }
 
     // update timers
@@ -132,11 +132,11 @@ namespace blit {
     pending_update_time += (time - last_tick_time);
     while (pending_update_time >= update_rate_ms) {
       // button state changes
-      uint32_t changed = api.buttons.state ^ last_state;
+      uint32_t changed = api_data.buttons.state ^ last_state;
 
-      api.buttons.pressed = changed & api.buttons.state;
-      api.buttons.released = changed & last_state;
-      last_state = api.buttons.state;
+      api_data.buttons.pressed = changed & api_data.buttons.state;
+      api_data.buttons.released = changed & last_state;
+      last_state = api_data.buttons.state;
 
       update(time - pending_update_time); // create fake timestamp that would have been accurate for the update event
       pending_update_time -= update_rate_ms;
