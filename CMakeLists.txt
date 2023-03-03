@@ -12,9 +12,10 @@ else()
 endif()
 
 find_package (32BLIT CONFIG REQUIRED PATHS .)
-add_subdirectory(utilities)
 
 add_subdirectory(launcher-shared)
+
+add_subdirectory(utilities)
 
 if(32BLIT_HW)
     add_subdirectory(32blit-stm32)
