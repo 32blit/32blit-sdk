@@ -173,27 +173,61 @@ target_link_libraries(BlitHalPico INTERFACE ${BLIT_BOARD_LIBRARIES})
 
 # for enabling stdio_usb
 set(BLIT_USB_DRIVER ${BLIT_USB_DRIVER} PARENT_SCOPE)
+# some file paths we need later
+set(LINKER_SCRIPT ${CMAKE_CURRENT_LIST_DIR}/memmap_blit.ld PARENT_SCOPE)
+set(STARTUP_SRC ${CMAKE_CURRENT_LIST_DIR}/startup.S PARENT_SCOPE)
 
 # functions
 function(blit_executable NAME)
     message(STATUS "Processing ${NAME}")
     blit_executable_args(${ARGN})
 
-    add_executable(${NAME} ${SOURCES})
+    add_library(${NAME} STATIC ${SOURCES})
     target_compile_definitions(${NAME} PRIVATE PICO_EMBED_XIP_SETUP=1)
     target_link_libraries(${NAME} BlitHalPico BlitEngine)
 
-    pico_enable_stdio_uart(${NAME} 1)
+    # standalone .uf2
+    add_executable(${NAME}-standalone)
+    target_link_libraries(${NAME}-standalone ${NAME})
+
+    pico_enable_stdio_uart(${NAME}-standalone 1)
     if(NOT BLIT_USB_DRIVER STREQUAL "host")
-        pico_enable_stdio_usb(${NAME} 1)
+        pico_enable_stdio_usb(${NAME}-standalone 1)
         # re-enable baud rate reset (we don't define our own tud_cdc_line_coding_cb)
         # we have to set all the defines to compile? (something broken with the defaults?)
-        target_compile_definitions(${NAME} PRIVATE PICO_STDIO_USB_ENABLE_RESET_VIA_BAUD_RATE=1 PICO_STDIO_USB_RESET_MAGIC_BAUD_RATE=1200 PICO_STDIO_USB_RESET_BOOTSEL_INTERFACE_DISABLE_MASK=0)
+        target_compile_definitions(${NAME}-standalone PRIVATE PICO_STDIO_USB_ENABLE_RESET_VIA_BAUD_RATE=1 PICO_STDIO_USB_RESET_MAGIC_BAUD_RATE=1200 PICO_STDIO_USB_RESET_BOOTSEL_INTERFACE_DISABLE_MASK=0)
     endif()
 
-    pico_add_extra_outputs(${NAME})
+    pico_add_extra_outputs(${NAME}-standalone)
 
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.uf2
+    # loadable .blit
+    add_executable(${NAME}-bl)
+    target_link_libraries(${NAME}-bl ${NAME})
+
+    pico_set_linker_script(${NAME}-bl ${LINKER_SCRIPT})
+    target_sources(${NAME}-bl PRIVATE ${STARTUP_SRC})
+
+    pico_enable_stdio_uart(${NAME}-bl 1)
+    pico_enable_stdio_usb(${NAME}-bl 0)
+
+    pico_add_bin_output(${NAME}-bl)
+
+    # Ideally we want the .blit filename to match the .elf, but TARGET_FILE_BASE_NAME isn't always available
+	# (This only affects the firmware updater as it's the only thing setting a custom OUTPUT_NAME)
+	if(${CMAKE_VERSION} VERSION_LESS "3.15.0")
+        set(BLIT_FILENAME ${NAME}.blit)
+    else()
+        set(BLIT_FILENAME $<TARGET_FILE_BASE_NAME:${NAME}>.blit)
+    endif()
+
+    # no relocs, just copy it
+    set(BIN_NAME "$<IF:$<BOOL:$<TARGET_PROPERTY:${NAME}-bl,OUTPUT_NAME>>,$<TARGET_PROPERTY:${NAME}-bl,OUTPUT_NAME>,$<TARGET_PROPERTY:${NAME}-bl,NAME>>.bin")
+    add_custom_command(TARGET ${NAME}-bl POST_BUILD
+        COMMENT "Building ${NAME}.blit"
+        COMMAND cp ${BIN_NAME} ${BLIT_FILENAME}
+    )
+
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}-standalone.uf2
         DESTINATION bin
     )
 endfunction()
@@ -228,7 +262,22 @@ function(blit_metadata TARGET FILE)
     )
 
     # add the generated source
-    target_sources(${TARGET} PRIVATE ${METADATA_SOURCE})
+    target_sources(${TARGET}-standalone PRIVATE ${METADATA_SOURCE})
+
+    # real .blit metadata
+	if(${CMAKE_VERSION} VERSION_LESS "3.15.0")
+        set(BLIT_FILENAME ${TARGET}.blit)
+    else()
+        set(BLIT_FILENAME $<TARGET_FILE_BASE_NAME:${TARGET}>.blit)
+    endif()
+
+    add_custom_command(
+        TARGET ${TARGET}-bl POST_BUILD
+        COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${32BLIT_TOOLS_EXECUTABLE} metadata --config ${FILE} --file ${CMAKE_CURRENT_BINARY_DIR}/${BLIT_FILENAME}
+    )
+
+    # force relink on change so that the post-build commands are rerun
+    set_property(TARGET ${TARGET}-bl APPEND PROPERTY LINK_DEPENDS ${FILE} ${METADATA_DEPENDS})
 
     # avoid the fallback to target name
     target_compile_definitions(${TARGET} PRIVATE PICO_NO_BI_PROGRAM_NAME=1)
