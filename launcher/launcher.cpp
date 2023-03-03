@@ -619,7 +619,7 @@ void render(uint32_t time) {
     screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y));
 
     if(selected_game.type == GameType::screenshot) {
-      if(screenshot->bounds == Size(128, 128)) {
+      if(screenshot && screenshot->bounds == Size(128, 128)) {
         if(selected_game.can_launch){
           // edit (in sprite editor, presumably)
           screen.sprite(1, Point(game_actions_offset.x, game_actions_offset.y + 12));
@@ -629,7 +629,7 @@ void render(uint32_t time) {
         // exit fullscreen
         screen.sprite(5, Point(game_actions_offset.x, game_actions_offset.y + 12));
         screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R180);
-      } else {
+      } else if(screenshot) {
         // view screenshot fullscreen
         screen.sprite(4, Point(game_actions_offset.x, game_actions_offset.y + 12));
         screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R90);
