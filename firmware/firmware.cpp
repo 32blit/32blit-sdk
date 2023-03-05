@@ -510,6 +510,10 @@ static void erase_flash_game(uint32_t offset) {
   if(offset & (qspi_flash_sector_size - 1))
     return;
 
+  // reject beyond end of flash
+  if(offset >= qspi_flash_size)
+    return;
+
   // attempt to get size, falling back to a single sector
   int erase_size = 1;
   for(auto &game : game_list) {
