@@ -1,3 +1,5 @@
+cmake_policy(SET CMP0079 NEW) # target_link_libraries() allows use with targets in other directories.
+
 set(CMAKE_C_STANDARD 11)
 
 # Initialise the Pico SDK
@@ -9,6 +11,9 @@ set(32BLIT_PICO 1 PARENT_SCOPE)
 set(PICO_SDK_VERSION_MAJOR ${PICO_SDK_VERSION_MAJOR} PARENT_SCOPE)
 set(PICO_SDK_VERSION_MINOR ${PICO_SDK_VERSION_MINOR} PARENT_SCOPE)
 set(PICO_SDK_VERSION_REVISION ${PICO_SDK_VERSION_REVISION} PARENT_SCOPE)
+
+# make sure BlitEngine is built with the right exception flags
+target_link_libraries(BlitEngine pico_cxx_options)
 
 # driver helper
 # can override driver choice by pre-setting BLIT_x_DRIVER
