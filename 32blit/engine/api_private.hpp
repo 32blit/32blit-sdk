@@ -14,6 +14,13 @@
 #include "../types/vec2.hpp"
 #include "../types/vec3.hpp"
 
+// compatibility with API layout before const/data split
+#ifdef BLIT_API_SPLIT_COMPAT
+#define COMPAT_PAD(type, name, size) type name[size]
+#else
+#define COMPAT_PAD(type, name, size)
+#endif
+
 namespace blit {
 
   using AllocateCallback = uint8_t *(*)(size_t);
@@ -66,7 +73,7 @@ namespace blit {
     uint16_t version_major;
     uint16_t version_minor;
 
-    uint8_t pad[48]; // was data
+    COMPAT_PAD(uint8_t, pad, 48); // was data
 
     AudioChannel *channels;
 
@@ -114,21 +121,21 @@ namespace blit {
     bool (*is_multiplayer_connected)();
     void (*set_multiplayer_enabled)(bool enabled);
     void (*send_message)(const uint8_t *data, uint16_t len);
-    uintptr_t pad2; // was message_recieved
+    COMPAT_PAD(uintptr_t, pad2, 1); // was message_recieved
 
     const uint8_t *(*flash_to_tmp)(const std::string &filename, uint32_t &size);
     void (*tmp_file_closed)(const uint8_t *ptr);
 
     GameMetadata (*get_metadata)();
 
-    uint8_t pad3; // was data
+    COMPAT_PAD(uint8_t, pad3, 1); // was data
 
     bool (*set_screen_mode_format)(ScreenMode new_mode, SurfaceTemplate &new_surf_template);
 
     // raw i2c access
     bool (*i2c_send)(uint8_t address, uint8_t reg, const uint8_t *data, uint16_t len);
     bool (*i2c_receive)(uint8_t address, uint8_t reg, uint8_t *data, uint16_t len);
-    uintptr_t pad4; // was i2c_completed
+    COMPAT_PAD(uintptr_t, pad4, 1); // was i2c_completed
 
     // raw cdc
     bool (*set_raw_cdc_enabled)(bool enabled);
@@ -153,26 +160,30 @@ namespace blit {
     Vec3 tilt;
     Pen LED;
 
-    uintptr_t pad2[32];
+    COMPAT_PAD(uintptr_t, pad2, 32);
 
     // multiplayer
     void (*message_received)(const uint8_t *data, uint16_t len); // set by user
 
-    uintptr_t pad3[3];
+    COMPAT_PAD(uintptr_t, pad3, 3);
 
     bool tick_function_changed;
 
-    uintptr_t pad4[3];
+    COMPAT_PAD(uintptr_t, pad4, 3);
 
     // raw i2c access
     void (*i2c_completed)(uint8_t address, uint8_t reg, const uint8_t *data, uint16_t len); // callback when done
 
-    uintptr_t pad5[5];
+    COMPAT_PAD(uintptr_t, pad5, 5);
   };
 
   #pragma pack(pop)
 
+#ifdef BLIT_API_SPLIT_COMPAT
   static_assert(sizeof(APIConst) == sizeof(APIData));
+#else
+  static_assert(sizeof(APIData) <= 256);
+#endif
 
   extern const APIConst &api;
   extern APIData &api_data;

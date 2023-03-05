@@ -102,7 +102,7 @@ static GameMetadata get_metadata() {
 // blit API
 static const blit::APIConst blit_api_const {
   blit::api_version_major, blit::api_version_minor,
-  {},
+
   ::channels,
 
   ::set_screen_mode,
@@ -143,20 +143,16 @@ static const blit::APIConst blit_api_const {
   ::is_multiplayer_connected,
   ::set_multiplayer_enabled,
   ::send_multiplayer_message,
-  0,
 
   nullptr, // flash_to_tmp
   nullptr, // tmp_file_closed
 
   ::get_metadata,
 
-  0,
-
   ::set_screen_mode_format,
 
   nullptr, // i2c_send
   nullptr, // i2c_recieve
-  0,
 
   nullptr, // set_raw_cdc_enabled
   nullptr, // cdc_write
