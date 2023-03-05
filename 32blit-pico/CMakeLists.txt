@@ -15,6 +15,9 @@ set(PICO_SDK_VERSION_REVISION ${PICO_SDK_VERSION_REVISION} PARENT_SCOPE)
 # make sure BlitEngine is built with the right exception flags
 target_link_libraries(BlitEngine pico_cxx_options)
 
+# also enable function/data sectons
+target_compile_options(BlitEngine PRIVATE -ffunction-sections -fdata-sections)
+
 # driver helper
 # can override driver choice by pre-setting BLIT_x_DRIVER
 function(blit_driver DRV NAME)
