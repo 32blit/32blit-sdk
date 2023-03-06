@@ -1,10 +1,10 @@
-#include <stdio.h>
-#include <random>
+#include <cstdio>
 
 #include "hardware/structs/rosc.h"
 #include "hardware/vreg.h"
 #include "pico/binary_info.h"
 #include "pico/multicore.h"
+#include "pico/rand.h"
 #include "pico/stdlib.h"
 
 #include "audio.hpp"
@@ -26,24 +26,8 @@ static uint32_t now() {
   return to_ms_since_boot(get_absolute_time());
 }
 
-static uint32_t get_random_seed() {
-  uint32_t seed = 0;
-
-  // use the hardware random bit to seed
-  for(int i = 0; i < 32; i++) {
-    seed <<= 1;
-    seed |= rosc_hw->randombit & 1;
-    sleep_us(1); // don't read too fast
-  }
-
-  return seed;
-}
-
 static uint32_t random() {
-  static std::mt19937 random_generator(get_random_seed());
-  static std::uniform_int_distribution<uint32_t> random_distribution;
-
-	return random_distribution(random_generator);
+	return get_rand_32();
 }
 
 static void debug(const char *message) {
