@@ -6,7 +6,7 @@
 .section .header, "a"
 
 .word 0x54494C42
-.word _Z6renderm // render
+.word do_render // render
 .word _ZN4blit4tickEm // tick
 .word _entry_point // init
 .word __flash_binary_size

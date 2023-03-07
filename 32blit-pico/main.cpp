@@ -186,6 +186,10 @@ static void list_installed_games(std::function<void(const uint8_t *, uint32_t, u
   }
 }
 
+static uint8_t *get_screen_data() {
+  return screen.data;
+}
+
 // blit API
 [[gnu::section(".rodata.api_const")]]
 static const blit::APIConst blit_api_const {
@@ -248,6 +252,8 @@ static const blit::APIConst blit_api_const {
 
   ::list_installed_games,
   ::can_launch,
+
+  ::get_screen_data
 };
 
 [[gnu::section(".bss.api_data")]]
