@@ -1,6 +1,22 @@
 #include "engine/engine.hpp"
 #include "engine/api_private.hpp"
 
+#include "config.h"
+
+#ifndef BLIT_BOARD_PIMORONI_PICOVISION
+
+#if ALLOW_HIRES && DOUBLE_BUFFERED_HIRES
+static const int fb_size = DISPLAY_WIDTH * DISPLAY_HEIGHT * 2;
+#elif ALLOW_HIRES
+static const int fb_size = DISPLAY_WIDTH * DISPLAY_HEIGHT;
+#else
+// height rounded up to handle the 135px display
+static const int fb_size = (DISPLAY_WIDTH / 2) * ((DISPLAY_HEIGHT + 1) / 2) * 2; // double-buffered
+#endif
+
+static uint16_t screen_fb[fb_size];
+#endif
+
 extern void init();
 extern void update(uint32_t time);
 extern void render(uint32_t time);
@@ -47,6 +63,10 @@ extern "C" bool do_init() {
 
   blit::update = update;
   blit::render = render;
+
+#ifndef BLIT_BOARD_PIMORONI_PICOVISION
+  blit::api.set_framebuffer((uint8_t *)screen_fb, sizeof(screen_fb));
+#endif
 
   blit::set_screen_mode(blit::ScreenMode::lores);
 
