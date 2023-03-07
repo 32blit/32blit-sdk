@@ -32,6 +32,8 @@ const unsigned int game_block_size = 64 * 1024; // this is the 32blit's flash er
 
 static blit::AudioChannel channels[CHANNEL_COUNT];
 
+static int (*do_tick)(uint32_t time) = blit::tick;
+
 // override terminate handler to save ~20-30k
 namespace __cxxabiv1 {
   std::terminate_handler __terminate_handler = std::abort;
@@ -121,7 +123,7 @@ static bool launch(const char *path) {
         return false;
 
       blit::render = header->render;
-      // FIXME: tick
+      do_tick = header->tick;
 
       return true;
     }
@@ -348,7 +350,7 @@ int main() {
     auto now = ::now();
     update_display(now);
     update_input();
-    int ms_to_next_update = tick(::now());
+    int ms_to_next_update = do_tick(::now());
     update_led();
     update_usb();
     update_multiplayer();
