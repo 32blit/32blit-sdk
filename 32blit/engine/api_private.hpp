@@ -149,6 +149,7 @@ namespace blit {
 
     // low level framebuffer
     uint8_t *(*get_screen_data)(); // used to get current screen.data before render if firmware does page-flipping
+    void (*set_framebuffer)(uint8_t *data, uint32_t max_size); // pass framebuffer over if allocated on the "user" side of the API
   };
 
   struct APIData {
@@ -176,7 +177,7 @@ namespace blit {
     // raw i2c access
     void (*i2c_completed)(uint8_t address, uint8_t reg, const uint8_t *data, uint16_t len); // callback when done
 
-    COMPAT_PAD(uintptr_t, pad5, 6);
+    COMPAT_PAD(uintptr_t, pad5, 7);
   };
 
 #ifdef BLIT_API_SPLIT_COMPAT
