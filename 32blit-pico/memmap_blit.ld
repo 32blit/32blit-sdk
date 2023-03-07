@@ -24,9 +24,9 @@
 MEMORY
 {
     FLASH(rx) : ORIGIN = 0x10080000, LENGTH = 2048k
-    RAM(rwx) : ORIGIN =  0x20000000, LENGTH = 256k
-    SCRATCH_X(rwx) : ORIGIN = 0x20040000, LENGTH = 4k
-    SCRATCH_Y(rwx) : ORIGIN = 0x20041000, LENGTH = 4k
+    RAM(rwx) : ORIGIN =  0x20020800, LENGTH = 126k
+    /*SCRATCH_X(rwx) : ORIGIN = 0x20040000, LENGTH = 4k
+    SCRATCH_Y(rwx) : ORIGIN = 0x20041000, LENGTH = 4k*/
 }
 
 ENTRY(_entry_point)
@@ -186,7 +186,7 @@ SECTIONS
     } > RAM
 
     /* Start and end symbols must be word-aligned */
-    .scratch_x : {
+    /*.scratch_x : {
         __scratch_x_start__ = .;
         *(.scratch_x.*)
         . = ALIGN(4);
@@ -200,7 +200,7 @@ SECTIONS
         . = ALIGN(4);
         __scratch_y_end__ = .;
     } > SCRATCH_Y AT > FLASH
-    __scratch_y_source__ = LOADADDR(.scratch_y);
+    __scratch_y_source__ = LOADADDR(.scratch_y);*/
 
     .bss  : {
         . = ALIGN(4);
@@ -228,14 +228,14 @@ SECTIONS
     /* by default we put core 0 stack at the end of scratch Y, so that if core 1
      * stack is not used then all of SCRATCH_X is free.
      */
-    .stack1_dummy (COPY):
+    /*.stack1_dummy (COPY):
     {
         *(.stack1*)
     } > SCRATCH_X
     .stack_dummy (COPY):
     {
         *(.stack*)
-    } > SCRATCH_Y
+    } > SCRATCH_Y*/
 
     .flash_end : {
         LONG(0x12345678) /*workaround for __flash_binary_end pointing past the end*/
@@ -244,14 +244,14 @@ SECTIONS
 
     /* stack limit is poorly named, but historically is maximum heap ptr */
     __StackLimit = ORIGIN(RAM) + LENGTH(RAM);
-    __StackOneTop = ORIGIN(SCRATCH_X) + LENGTH(SCRATCH_X);
+    /*__StackOneTop = ORIGIN(SCRATCH_X) + LENGTH(SCRATCH_X);
     __StackTop = ORIGIN(SCRATCH_Y) + LENGTH(SCRATCH_Y);
     __StackOneBottom = __StackOneTop - SIZEOF(.stack1_dummy);
     __StackBottom = __StackTop - SIZEOF(.stack_dummy);
-    PROVIDE(__stack = __StackTop);
+    PROVIDE(__stack = __StackTop);*/
 
     /* Check if data + heap + stack exceeds RAM limit */
-    ASSERT(__StackLimit >= __HeapLimit, "region RAM overflowed")
+    /*ASSERT(__StackLimit >= __HeapLimit, "region RAM overflowed")*/
 
     ASSERT( __binary_info_header_end - __logical_binary_start <= 256, "Binary info must be in first 256 bytes of the binary")
     /* todo assert on extra code */
