@@ -178,7 +178,7 @@ set(BLIT_BOARD_DEFINITIONS ${BLIT_BOARD_DEFINITIONS} PARENT_SCOPE)
 
 # some file paths we need later
 set(LINKER_SCRIPT ${CMAKE_CURRENT_LIST_DIR}/memmap_blit.ld PARENT_SCOPE)
-set(STARTUP_SRC ${CMAKE_CURRENT_LIST_DIR}/startup.S PARENT_SCOPE)
+set(STARTUP_SRC ${CMAKE_CURRENT_LIST_DIR}/startup.S ${CMAKE_CURRENT_LIST_DIR}/startup.cpp PARENT_SCOPE)
 set(LAUNCHERSHARED_DIR ${CMAKE_CURRENT_LIST_DIR}/../launcher-shared PARENT_SCOPE)
 
 # functions
@@ -187,8 +187,8 @@ function(blit_executable NAME)
     blit_executable_args(${ARGN})
 
     add_library(${NAME} STATIC ${SOURCES})
+    target_link_libraries(${NAME} BlitEngine pico_platform_headers)
     target_compile_definitions(${NAME} PRIVATE PICO_EMBED_XIP_SETUP=1)
-    target_link_libraries(${NAME} BlitHalPico BlitEngine)
 
     # standalone .uf2
     # TODO: import pico hal if standalone build
@@ -197,7 +197,7 @@ function(blit_executable NAME)
     endif()
 
     add_executable(${NAME}-standalone)
-    target_link_libraries(${NAME}-standalone ${NAME})
+    target_link_libraries(${NAME}-standalone ${NAME} BlitHalPico)
 
     pico_enable_stdio_uart(${NAME}-standalone 1)
     if(NOT BLIT_USB_DRIVER STREQUAL "host")
@@ -212,9 +212,11 @@ function(blit_executable NAME)
     # loadable .blit
     add_executable(${NAME}-bl)
     target_compile_definitions(${NAME}-bl PRIVATE ${BLIT_BOARD_DEFINITIONS}) # need these for framebuffer config
-    target_link_libraries(${NAME}-bl ${NAME})
+    target_compile_options(${NAME}-bl PRIVATE -ffunction-sections -fdata-sections)
+    target_link_libraries(${NAME}-bl ${NAME} pico_bit_ops pico_cxx_options pico_divider pico_double pico_int64_ops pico_float pico_malloc pico_mem_ops)
+    target_link_options(${NAME}-bl PRIVATE --specs=nosys.specs LINKER:--script=${LINKER_SCRIPT} LINKER:--gc-sections)
+    set_property(TARGET ${NAME}-bl APPEND PROPERTY LINK_DEPENDS ${LINKER_SCRIPT})
 
-    pico_set_linker_script(${NAME}-bl ${LINKER_SCRIPT})
     target_sources(${NAME}-bl PRIVATE ${STARTUP_SRC})
 
     pico_enable_stdio_uart(${NAME}-bl 1)
