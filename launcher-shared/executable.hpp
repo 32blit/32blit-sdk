@@ -3,7 +3,7 @@
 
 constexpr uint32_t blit_game_magic = 0x54494C42; // "BLIT"
 
-#ifdef TARGET_32BLIT_HW
+#if defined(TARGET_32BLIT_HW) || defined(PICO_BUILD) // TODO: generic "is hardware" define?
 using BlitRenderFunction = void(*)(uint32_t);
 using BlitTickFunction = int(*)(uint32_t);
 using BlitInitFunction = bool(*)(uint32_t);
