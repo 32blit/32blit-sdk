@@ -173,6 +173,8 @@ target_link_libraries(BlitHalPico INTERFACE ${BLIT_BOARD_LIBRARIES})
 
 # for enabling stdio_usb
 set(BLIT_USB_DRIVER ${BLIT_USB_DRIVER} PARENT_SCOPE)
+set(BLIT_BOARD_DEFINITIONS ${BLIT_BOARD_DEFINITIONS} PARENT_SCOPE)
+
 # some file paths we need later
 set(LINKER_SCRIPT ${CMAKE_CURRENT_LIST_DIR}/memmap_blit.ld PARENT_SCOPE)
 set(STARTUP_SRC ${CMAKE_CURRENT_LIST_DIR}/startup.S PARENT_SCOPE)
@@ -202,6 +204,7 @@ function(blit_executable NAME)
 
     # loadable .blit
     add_executable(${NAME}-bl)
+    target_compile_definitions(${NAME}-bl PRIVATE ${BLIT_BOARD_DEFINITIONS}) # need these for framebuffer config
     target_link_libraries(${NAME}-bl ${NAME})
 
     pico_set_linker_script(${NAME}-bl ${LINKER_SCRIPT})
