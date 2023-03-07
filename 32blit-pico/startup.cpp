@@ -54,3 +54,8 @@ extern "C" bool do_init() {
 
   return true;
 }
+
+extern "C" void do_render(uint32_t time) {
+  blit::screen.data = blit::api.get_screen_data();
+  render(time);
+}
