@@ -233,6 +233,7 @@ static const blit::APIConst blit_api_const {
   nullptr, // can_launch
 
   nullptr, // get_screen_data
+  nullptr, // set_framebuffer
 };
 
 static blit::APIData blit_api_data;
