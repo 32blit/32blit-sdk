@@ -61,7 +61,12 @@ if (NOT DEFINED BLIT_ONCE)
 	# common helpers
 	function(blit_executable_args)
 		set(SOURCES)
-		set(INTERNAL_FLASH FALSE)
+
+		if(DEFINED BLIT_EXECUTABLE_INTERNAL_FLASH)
+			set(INTERNAL_FLASH ${BLIT_EXECUTABLE_INTERNAL_FLASH})
+		else()
+			set(INTERNAL_FLASH FALSE)
+		endif()
 
 		foreach(arg IN LISTS ARGN)
 			if(arg STREQUAL "INTERNAL_FLASH")
