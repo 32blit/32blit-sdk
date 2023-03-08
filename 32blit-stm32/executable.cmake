@@ -1,4 +1,5 @@
 set(MCU_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}")
+set(HAL_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 set(USER_STARTUP ${CMAKE_CURRENT_LIST_DIR}/startup_user.s ${CMAKE_CURRENT_LIST_DIR}/startup_user.cpp)
 
@@ -17,6 +18,11 @@ function(blit_executable NAME)
 	blit_executable_args(${ARGN})
 
 	if(INTERNAL_FLASH)
+		# make sure the HAL is built (external projects)
+		if(NOT TARGET BlitHalSTM32)
+			add_subdirectory(${HAL_DIR} 32blit-stm32)
+		endif()
+
 		blit_executable_int_flash(${NAME} ${SOURCES})
 		return()
 	endif()
