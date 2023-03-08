@@ -1,3 +1,5 @@
+cmake_policy(SET CMP0079 NEW) # target_link_libraries() allows use with targets in other directories.
+
 set(CMAKE_C_STANDARD 11)
 
 # Initialise the Pico SDK
@@ -9,6 +11,12 @@ set(32BLIT_PICO 1 PARENT_SCOPE)
 set(PICO_SDK_VERSION_MAJOR ${PICO_SDK_VERSION_MAJOR} PARENT_SCOPE)
 set(PICO_SDK_VERSION_MINOR ${PICO_SDK_VERSION_MINOR} PARENT_SCOPE)
 set(PICO_SDK_VERSION_REVISION ${PICO_SDK_VERSION_REVISION} PARENT_SCOPE)
+
+# make sure BlitEngine is built with the right exception flags
+target_link_libraries(BlitEngine pico_cxx_options)
+
+# also enable function/data sectons
+target_compile_options(BlitEngine PRIVATE -ffunction-sections -fdata-sections)
 
 # driver helper
 # can override driver choice by pre-setting BLIT_x_DRIVER
@@ -133,6 +141,7 @@ endfunction()
 function(blit_executable_int_flash NAME SOURCES)
     add_executable(${NAME} ${SOURCES} ${ARGN})
     target_link_libraries(${NAME} BlitHalPico BlitEngine)
+    target_link_options(${NAME} PUBLIC -specs=nano.specs -u _printf_float)
 
     pico_enable_stdio_uart(${NAME} 1)
     pico_enable_stdio_usb(${NAME} 0)
