@@ -61,11 +61,18 @@ if (NOT DEFINED BLIT_ONCE)
 	# common helpers
 	function(blit_executable_args)
 		set(SOURCES)
+		set(INTERNAL_FLASH FALSE)
+
 		foreach(arg IN LISTS ARGN)
-			list(APPEND SOURCES ${arg})
+			if(arg STREQUAL "INTERNAL_FLASH")
+				set(${arg} TRUE)
+			else()
+				list(APPEND SOURCES ${arg})
+			endif()
 		endforeach()
 
 		set(SOURCES ${SOURCES} PARENT_SCOPE)
+		set(INTERNAL_FLASH ${INTERNAL_FLASH} PARENT_SCOPE)
 	endfunction()
 
 	if (32BLIT_HW)

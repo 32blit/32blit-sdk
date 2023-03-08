@@ -16,6 +16,11 @@ function(blit_executable NAME)
 	message(STATUS "Processing ${NAME}")
 	blit_executable_args(${ARGN})
 
+	if(INTERNAL_FLASH)
+		blit_executable_int_flash(${NAME} ${SOURCES})
+		return()
+	endif()
+
 	set_source_files_properties(${USER_STARTUP} PROPERTIES LANGUAGE CXX)
 	add_executable(${NAME} ${USER_STARTUP} ${SOURCES})
 
