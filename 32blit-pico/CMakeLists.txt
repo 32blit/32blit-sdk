@@ -139,6 +139,7 @@ function(blit_executable_common NAME)
 endfunction()
 
 function(blit_executable_int_flash NAME SOURCES)
+    message(STATUS "Processing ${NAME}")
     add_executable(${NAME} ${SOURCES} ${ARGN})
     target_link_libraries(${NAME} BlitHalPico BlitEngine)
     target_link_options(${NAME} PUBLIC -specs=nano.specs -u _printf_float)
@@ -158,11 +159,22 @@ function(blit_executable NAME SOURCES)
 endfunction()
 
 function(blit_metadata TARGET FILE)
+    if(NOT IS_ABSOLUTE ${FILE})
+        set(FILE ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
+    endif()
+
     # cause cmake to reconfigure whenever the asset list changes
-    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${FILE})
 
     # get the inputs/outputs for the asset tool (at configure time)
-    execute_process(COMMAND ${PYTHON_EXECUTABLE} -m ttblit cmake --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --cmake ${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
+    execute_process(
+        COMMAND ${PYTHON_EXECUTABLE} -m ttblit cmake --config ${FILE} --cmake ${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake
+        RESULT_VARIABLE TOOL_RESULT
+    )
+    if(${TOOL_RESULT})
+        message(FATAL_ERROR "Reading metadata config failed!\n")
+    endif()
+
     include(${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
 
     # create metadata/binary info source at build time
@@ -170,8 +182,8 @@ function(blit_metadata TARGET FILE)
 
     add_custom_command(
         OUTPUT ${METADATA_SOURCE}
-        COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit metadata --force --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --pico-bi ${METADATA_SOURCE}
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${FILE}
+        COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit metadata --force --config ${FILE} --pico-bi ${METADATA_SOURCE}
+        DEPENDS ${FILE}
     )
 
     # add the generated source
