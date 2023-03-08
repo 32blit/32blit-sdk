@@ -35,6 +35,8 @@ static blit::AudioChannel channels[CHANNEL_COUNT];
 
 static int (*do_tick)(uint32_t time) = blit::tick;
 
+static uint32_t requested_launch_offset = 0;
+
 // override terminate handler to save ~20-30k
 namespace __cxxabiv1 {
   std::terminate_handler __terminate_handler = std::abort;
@@ -110,7 +112,7 @@ static GameMetadata get_metadata() {
 
 static bool launch(const char *path) {
   if(strncmp(path, "flash:/", 7) == 0) {
-    int offset = atoi(path + 7) * game_block_size;
+    uint32_t offset = atoi(path + 7) * game_block_size;
 
     auto header = (BlitGameHeader *)(XIP_NOCACHE_NOALLOC_BASE + offset);
     // check header magic + device
@@ -118,12 +120,7 @@ static bool launch(const char *path) {
       return false;
 
     if(header->init) {
-      if(!header->init(0))
-        return false;
-
-      blit::render = header->render;
-      do_tick = header->tick;
-
+      requested_launch_offset = offset;
       return true;
     }
 
@@ -158,6 +155,19 @@ static blit::CanLaunchResult can_launch(const char *path) {
   }
 
   return blit::CanLaunchResult::UnknownType;
+}
+
+static void delayed_launch() {
+  auto header = (BlitGameHeader *)(XIP_NOCACHE_NOALLOC_BASE + requested_launch_offset);
+  requested_launch_offset = 0;
+
+  if(!header->init(0)) {
+    debugf("failed to init game!\n");
+    return;
+  }
+
+  blit::render = header->render;
+  do_tick = header->tick;
 }
 
 static void list_installed_games(std::function<void(const uint8_t *, uint32_t, uint32_t)> callback) {
@@ -367,6 +377,10 @@ int main() {
     update_led();
     update_usb();
     update_multiplayer();
+
+    // do requested launch when no user code is running
+    if(requested_launch_offset)
+      delayed_launch();
 
     if(ms_to_next_update > 1 && !display_render_needed())
       best_effort_wfe_or_timeout(make_timeout_time_ms(ms_to_next_update - 1));
