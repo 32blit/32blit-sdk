@@ -1,4 +1,4 @@
-list(APPEND SOURCES
+add_library(BlitHalSTM32 OBJECT
 	startup_stm32h750xx.s
 	Src/main.c
 	Src/stm32h7xx_it.c
@@ -118,8 +118,6 @@ set_source_files_properties(
 
 	PROPERTIES LANGUAGE CXX
 )
-
-add_library(BlitHalSTM32 OBJECT ${SOURCES})
 
 set(INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/Inc
