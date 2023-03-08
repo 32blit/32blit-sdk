@@ -49,7 +49,7 @@ jobs:
           - os: macos-latest
             name: macOS
             cache-key: macos
-            cmake-args: -DCMAKE_OSX_ARCHITECTURES=x86_64\;arm64
+            cmake-args: -DCMAKE_OSX_ARCHITECTURES=x86_64\;arm64 -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
           - os: windows-latest
             name: Visual Studio
@@ -85,7 +85,7 @@ jobs:
     - name: Cache
       uses: actions/cache@v3
       with:
-        path: /home/runner/.ccache
+        path: ~/.ccache
         key: ccache-${{matrix.cache-key}}-${{github.ref}}-${{github.sha}}
         restore-keys: |
           ccache-${{matrix.cache-key}}-${{github.ref}}
@@ -103,6 +103,8 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         ci/install_sdl_macos.sh
+        brew install ccache
+        echo "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
         python3 -m pip install 32blit requests
 
     # Windows (VS) deps
