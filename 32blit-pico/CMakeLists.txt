@@ -131,6 +131,7 @@ function(blit_executable_common NAME)
 endfunction()
 
 function(blit_executable_int_flash NAME SOURCES)
+    message(STATUS "Processing ${NAME}")
     add_executable(${NAME} ${SOURCES} ${ARGN})
     target_link_libraries(${NAME} BlitHalPico BlitEngine)
 
