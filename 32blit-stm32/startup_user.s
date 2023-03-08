@@ -54,6 +54,8 @@
   .section  .text.do_init
   .weak  do_init
   .type  do_init, %function
+  .global Reset_Handler
+Reset_Handler: // avoid warning about this not existing
 do_init:
   push {r4, lr}
   mov r4, r0
