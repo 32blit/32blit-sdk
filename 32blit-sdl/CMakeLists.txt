@@ -144,12 +144,14 @@ if(DEFINED VIDEO_CAPTURE AND VIDEO_CAPTURE)
 	)
 endif()
 
-function(blit_executable NAME SOURCES)
+function(blit_executable NAME)
 	message(STATUS "Processing ${NAME}")
+	blit_executable_args(${ARGN})
+
 	if(ANDROID)
-		add_library(${NAME} SHARED ${SOURCES} ${ARGN})
+		add_library(${NAME} SHARED ${SOURCES})
 	else()
-		add_executable(${NAME} MACOSX_BUNDLE ${SOURCES} ${ARGN})
+		add_executable(${NAME} MACOSX_BUNDLE ${SOURCES})
 	endif()
 
 	install(TARGETS ${NAME}
@@ -172,7 +174,7 @@ function(blit_executable NAME SOURCES)
     		COMMAND ${CMAKE_COMMAND} -E copy_if_different
 			"${DLL}"
 			$<TARGET_FILE_DIR:${NAME}>
-		)  
+		)
 	endforeach()
 
 	if(EMSCRIPTEN)

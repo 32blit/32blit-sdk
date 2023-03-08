@@ -12,10 +12,12 @@ function(blit_executable_common NAME)
 	)
 endfunction()
 
-function(blit_executable NAME SOURCES)
+function(blit_executable NAME)
 	message(STATUS "Processing ${NAME}")
+	blit_executable_args(${ARGN})
+
 	set_source_files_properties(${USER_STARTUP} PROPERTIES LANGUAGE CXX)
-	add_executable(${NAME} ${USER_STARTUP} ${SOURCES} ${ARGN})
+	add_executable(${NAME} ${USER_STARTUP} ${SOURCES})
 
 	# Ideally we want the .blit filename to match the .elf, but TARGET_FILE_BASE_NAME isn't always available
 	# (This only affects the firmware updater as it's the only thing setting a custom OUTPUT_NAME)
