@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <vector>
 
+#include "api_version.h"
 #include "engine.hpp"
 #include "file.hpp"
 #include "../audio/audio.hpp"
@@ -17,7 +18,7 @@ namespace blit {
 
   using AllocateCallback = uint8_t *(*)(size_t);
 
-  constexpr uint16_t api_version_major = 0, api_version_minor = 2;
+  constexpr uint16_t api_version_major = BLIT_API_VERSION_MAJOR, api_version_minor = BLIT_API_VERSION_MINOR;
 
   // template for screen modes
   struct SurfaceTemplate {
