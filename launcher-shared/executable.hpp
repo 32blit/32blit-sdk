@@ -13,6 +13,12 @@ using BlitTickFunction = uint32_t;
 using BlitInitFunction = uint32_t;
 #endif
 
+enum class BlitDevice : uint8_t {
+  STM32H7_32BlitOld = 0, // 32blit hw, old header
+  STM32H7_32Blit = 1, // 32blit hw
+  RP2040 = 2, // any RP2040-based device
+};
+
 // should match the layout in startup_user.s
 struct BlitGameHeader {
   uint32_t magic;
@@ -22,7 +28,13 @@ struct BlitGameHeader {
   BlitInitFunction init;
 
   uint32_t end;
-  uint32_t start;
+
+  BlitDevice device_id;
+  uint8_t unused[3];
+
+  // if device_id != 0
+  uint16_t api_version_major;
+  uint16_t api_version_minor;
 };
 
 // missing the "BLITMETA" header and size
