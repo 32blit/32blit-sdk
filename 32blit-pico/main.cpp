@@ -182,12 +182,6 @@ static uint8_t *get_screen_data() {
   return screen.data;
 }
 
-void disable_user_code() {
-  // TODO: handle re-enabling
-  do_tick = blit::tick;
-  blit::render = ::render;
-}
-
 // blit API
 [[gnu::section(".rodata.api_const")]]
 static const blit::APIConst blit_api_const {
@@ -267,6 +261,12 @@ namespace blit {
 void init();
 void render(uint32_t);
 void update(uint32_t);
+
+void disable_user_code() {
+  // TODO: handle re-enabling
+  do_tick = blit::tick;
+  blit::render = ::render;
+}
 
 bool core1_started = false;
 
