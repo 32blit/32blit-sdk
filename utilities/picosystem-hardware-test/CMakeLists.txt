@@ -8,5 +8,5 @@ find_package (32BLIT CONFIG REQUIRED PATHS ../..)
     return()
 #endif()
 
-blit_executable (picosystem-hardware-test hardware-test.cpp)
+blit_executable (picosystem-hardware-test hardware-test.cpp PICO_STANDALONE_UF2)
 blit_metadata (picosystem-hardware-test metadata.yml)
