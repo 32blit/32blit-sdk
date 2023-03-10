@@ -186,62 +186,66 @@ function(blit_executable NAME)
     message(STATUS "Processing ${NAME}")
     blit_executable_args(${ARGN})
 
-    add_library(${NAME} STATIC ${SOURCES})
+    add_executable(${NAME} ${SOURCES})
     target_link_libraries(${NAME} BlitEngine pico_platform_headers)
-    target_compile_definitions(${NAME} PRIVATE PICO_EMBED_XIP_SETUP=1)
 
-    # standalone .uf2
-    # TODO: import pico hal if standalone build
-	if(NOT TARGET LauncherShared)
-        add_subdirectory(${LAUNCHERSHARED_DIR} launcher-shared)
+    if(PICO_STANDALONE_UF2)
+        # standalone .uf2
+        # TODO: import pico hal if standalone build
+        if(NOT TARGET LauncherShared)
+            add_subdirectory(${LAUNCHERSHARED_DIR} launcher-shared)
+        endif()
+
+        pico_enable_stdio_uart(${NAME} 1)
+        if(NOT BLIT_USB_DRIVER STREQUAL "host")
+            pico_enable_stdio_usb(${NAME} 1)
+            # re-enable baud rate reset (we don't define our own tud_cdc_line_coding_cb)
+            # we have to set all the defines to compile? (something broken with the defaults?)
+            target_compile_definitions(${NAME} PRIVATE PICO_STDIO_USB_ENABLE_RESET_VIA_BAUD_RATE=1 PICO_STDIO_USB_RESET_MAGIC_BAUD_RATE=1200 PICO_STDIO_USB_RESET_BOOTSEL_INTERFACE_DISABLE_MASK=0)
+        endif()
+
+        target_compile_definitions(${NAME} PRIVATE BLIT_PICO_STANDALONE=1 PICO_EMBED_XIP_SETUP=1)
+        target_link_libraries(${NAME} BlitHalPico)
+
+        pico_add_extra_outputs(${NAME})
+
+        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.uf2
+            DESTINATION bin
+        )
+    elseif(PICO_BLIT)
+        # loadable .blit
+        set_property(TARGET ${NAME} PROPERTY BLIT_PICO_BLIT TRUE)
+
+        target_compile_definitions(${NAME} PRIVATE ${BLIT_BOARD_DEFINITIONS}) # need these for framebuffer config
+        target_compile_options(${NAME} PRIVATE -ffunction-sections -fdata-sections)
+        target_link_libraries(${NAME} pico_bit_ops pico_cxx_options pico_divider pico_double pico_int64_ops pico_float pico_malloc pico_mem_ops)
+        target_link_options(${NAME} PRIVATE --specs=nosys.specs LINKER:--script=${LINKER_SCRIPT} LINKER:--gc-sections)
+        set_property(TARGET ${NAME} APPEND PROPERTY LINK_DEPENDS ${LINKER_SCRIPT})
+
+        target_sources(${NAME} PRIVATE ${STARTUP_SRC})
+
+        pico_add_bin_output(${NAME})
+
+        # Ideally we want the .blit filename to match the .elf, but TARGET_FILE_BASE_NAME isn't always available
+        # (This only affects the firmware updater as it's the only thing setting a custom OUTPUT_NAME)
+        if(${CMAKE_VERSION} VERSION_LESS "3.15.0")
+            set(BLIT_FILENAME ${NAME}.blit)
+        else()
+            set(BLIT_FILENAME $<TARGET_FILE_BASE_NAME:${NAME}>.blit)
+        endif()
+
+        # no relocs, just copy it
+        set(BIN_NAME "$<IF:$<BOOL:$<TARGET_PROPERTY:${NAME},OUTPUT_NAME>>,$<TARGET_PROPERTY:${NAME},OUTPUT_NAME>,$<TARGET_PROPERTY:${NAME},NAME>>.bin")
+        add_custom_command(TARGET ${NAME} POST_BUILD
+            VERBATIM
+            COMMENT "Building ${NAME}.blit"
+            COMMAND cp ${BIN_NAME} ${BLIT_FILENAME}
+        )
+
+        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${BLIT_FILENAME}
+            DESTINATION bin
+        )
     endif()
-
-    add_executable(${NAME}-standalone)
-    target_link_libraries(${NAME}-standalone ${NAME} BlitHalPico)
-
-    pico_enable_stdio_uart(${NAME}-standalone 1)
-    if(NOT BLIT_USB_DRIVER STREQUAL "host")
-        pico_enable_stdio_usb(${NAME}-standalone 1)
-        # re-enable baud rate reset (we don't define our own tud_cdc_line_coding_cb)
-        # we have to set all the defines to compile? (something broken with the defaults?)
-        target_compile_definitions(${NAME}-standalone PRIVATE PICO_STDIO_USB_ENABLE_RESET_VIA_BAUD_RATE=1 PICO_STDIO_USB_RESET_MAGIC_BAUD_RATE=1200 PICO_STDIO_USB_RESET_BOOTSEL_INTERFACE_DISABLE_MASK=0)
-    endif()
-
-    pico_add_extra_outputs(${NAME}-standalone)
-
-    # loadable .blit
-    add_executable(${NAME}-bl)
-    target_compile_definitions(${NAME}-bl PRIVATE ${BLIT_BOARD_DEFINITIONS}) # need these for framebuffer config
-    target_compile_options(${NAME}-bl PRIVATE -ffunction-sections -fdata-sections)
-    target_link_libraries(${NAME}-bl ${NAME} pico_bit_ops pico_cxx_options pico_divider pico_double pico_int64_ops pico_float pico_malloc pico_mem_ops)
-    target_link_options(${NAME}-bl PRIVATE --specs=nosys.specs LINKER:--script=${LINKER_SCRIPT} LINKER:--gc-sections)
-    set_property(TARGET ${NAME}-bl APPEND PROPERTY LINK_DEPENDS ${LINKER_SCRIPT})
-
-    target_sources(${NAME}-bl PRIVATE ${STARTUP_SRC})
-
-    pico_enable_stdio_uart(${NAME}-bl 1)
-    pico_enable_stdio_usb(${NAME}-bl 0)
-
-    pico_add_bin_output(${NAME}-bl)
-
-    # Ideally we want the .blit filename to match the .elf, but TARGET_FILE_BASE_NAME isn't always available
-	# (This only affects the firmware updater as it's the only thing setting a custom OUTPUT_NAME)
-	if(${CMAKE_VERSION} VERSION_LESS "3.15.0")
-        set(BLIT_FILENAME ${NAME}.blit)
-    else()
-        set(BLIT_FILENAME $<TARGET_FILE_BASE_NAME:${NAME}>.blit)
-    endif()
-
-    # no relocs, just copy it
-    set(BIN_NAME "$<IF:$<BOOL:$<TARGET_PROPERTY:${NAME}-bl,OUTPUT_NAME>>,$<TARGET_PROPERTY:${NAME}-bl,OUTPUT_NAME>,$<TARGET_PROPERTY:${NAME}-bl,NAME>>.bin")
-    add_custom_command(TARGET ${NAME}-bl POST_BUILD
-        COMMENT "Building ${NAME}.blit"
-        COMMAND cp ${BIN_NAME} ${BLIT_FILENAME}
-    )
-
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}-standalone.uf2
-        DESTINATION bin
-    )
 endfunction()
 
 function(blit_metadata TARGET FILE)
@@ -263,36 +267,41 @@ function(blit_metadata TARGET FILE)
 
     include(${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
 
-    # create metadata/binary info source at build time
-    set(METADATA_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_binary_info.cpp")
+    get_property(PICO_BLIT TARGET ${TARGET} PROPERTY BLIT_PICO_BLIT)
 
-    add_custom_command(
-        OUTPUT ${METADATA_SOURCE}
-        COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${32BLIT_TOOLS_EXECUTABLE} metadata --force --config ${FILE} --pico-bi ${METADATA_SOURCE}
-        DEPENDS ${FILE}
-        VERBATIM
-    )
+    if(NOT PICO_BLIT)
+        # create metadata/binary info source at build time
+        set(METADATA_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_binary_info.cpp")
 
-    # add the generated source
-    target_sources(${TARGET}-standalone PRIVATE ${METADATA_SOURCE})
+        add_custom_command(
+            OUTPUT ${METADATA_SOURCE}
+            COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${32BLIT_TOOLS_EXECUTABLE} metadata --force --config ${FILE} --pico-bi ${METADATA_SOURCE}
+            DEPENDS ${FILE}
+            VERBATIM
+        )
 
-    # real .blit metadata
-	if(${CMAKE_VERSION} VERSION_LESS "3.15.0")
-        set(BLIT_FILENAME ${TARGET}.blit)
+        # add the generated source
+        target_sources(${TARGET} PRIVATE ${METADATA_SOURCE})
+
+        # avoid the fallback to target name
+        target_compile_definitions(${TARGET} PRIVATE PICO_NO_BI_PROGRAM_NAME=1)
     else()
-        set(BLIT_FILENAME $<TARGET_FILE_BASE_NAME:${TARGET}>.blit)
+        # real .blit metadata
+        if(${CMAKE_VERSION} VERSION_LESS "3.15.0")
+            set(BLIT_FILENAME ${TARGET}.blit)
+        else()
+            set(BLIT_FILENAME $<TARGET_FILE_BASE_NAME:${TARGET}>.blit)
+        endif()
+
+        add_custom_command(
+            TARGET ${TARGET} POST_BUILD
+            COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${32BLIT_TOOLS_EXECUTABLE} metadata --config ${FILE} --file ${CMAKE_CURRENT_BINARY_DIR}/${BLIT_FILENAME}
+            VERBATIM
+        )
+
+        # force relink on change so that the post-build commands are rerun
+        set_property(TARGET ${TARGET} APPEND PROPERTY LINK_DEPENDS ${FILE} ${METADATA_DEPENDS})
     endif()
-
-    add_custom_command(
-        TARGET ${TARGET}-bl POST_BUILD
-        COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${32BLIT_TOOLS_EXECUTABLE} metadata --config ${FILE} --file ${CMAKE_CURRENT_BINARY_DIR}/${BLIT_FILENAME}
-    )
-
-    # force relink on change so that the post-build commands are rerun
-    set_property(TARGET ${TARGET}-bl APPEND PROPERTY LINK_DEPENDS ${FILE} ${METADATA_DEPENDS})
-
-    # avoid the fallback to target name
-    target_compile_definitions(${TARGET} PRIVATE PICO_NO_BI_PROGRAM_NAME=1)
 
 endfunction()
 

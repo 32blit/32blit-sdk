@@ -75,15 +75,39 @@ if (NOT DEFINED BLIT_ONCE)
 	function(blit_executable_args)
 		set(SOURCES)
 
+		# enable one of the pico builds if neither set
+		if(NOT BLIT_EXECUTABLE_PICO_STANDALONE_UF2 AND NOT BLIT_EXECUTABLE_PICO_BLIT)
+			set(BLIT_EXECUTABLE_PICO_STANDALONE_UF2 TRUE)
+		endif()
+
+		# global overrides
 		if(DEFINED BLIT_EXECUTABLE_INTERNAL_FLASH)
 			set(INTERNAL_FLASH ${BLIT_EXECUTABLE_INTERNAL_FLASH})
 		else()
 			set(INTERNAL_FLASH FALSE)
 		endif()
 
+		if(DEFINED BLIT_EXECUTABLE_PICO_STANDALONE_UF2)
+			set(PICO_STANDALONE_UF2 ${BLIT_EXECUTABLE_PICO_STANDALONE_UF2})
+		else()
+			set(PICO_STANDALONE_UF2 FALSE)
+		endif()
+
+		if(DEFINED BLIT_EXECUTABLE_PICO_BLIT)
+			set(PICO_BLIT ${BLIT_EXECUTABLE_PICO_BLIT})
+		else()
+			set(PICO_BLIT FALSE)
+		endif()
+
 		foreach(arg IN LISTS ARGN)
 			if(arg STREQUAL "INTERNAL_FLASH")
 				set(${arg} TRUE)
+			elseif(arg STREQUAL "PICO_STANDALONE_UF2")
+				set(${arg} TRUE)
+				set(PICO_BLIT FALSE) # can't build both
+			elseif(arg STREQUAL "PICO_BLIT")
+				set(${arg} TRUE)
+				set(PICO_STANDALONE_UF2 FALSE)
 			else()
 				list(APPEND SOURCES ${arg})
 			endif()
@@ -91,6 +115,8 @@ if (NOT DEFINED BLIT_ONCE)
 
 		set(SOURCES ${SOURCES} PARENT_SCOPE)
 		set(INTERNAL_FLASH ${INTERNAL_FLASH} PARENT_SCOPE)
+		set(PICO_STANDALONE_UF2 ${PICO_STANDALONE_UF2} PARENT_SCOPE)
+		set(PICO_BLIT ${PICO_BLIT} PARENT_SCOPE)
 	endfunction()
 
 	if (32BLIT_HW)
