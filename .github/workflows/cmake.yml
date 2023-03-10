@@ -43,13 +43,15 @@ jobs:
           - os: ubuntu-20.04
             name: MinGW
             cache-key: mingw
+            artifact-suffix: MinGW
             cmake-args: -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/mingw.toolchain -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSDL2_DIR=$GITHUB_WORKSPACE/SDL2/cmake -DSDL2_image_DIR=$GITHUB_WORKSPACE/SDL2_image/cmake -DSDL2_net_DIR=$GITHUB_WORKSPACE/SDL2_net/cmake
             apt-packages: ccache g++-mingw-w64 python3-setuptools
 
           - os: macos-latest
             name: macOS
             cache-key: macos
-            cmake-args: -DCMAKE_OSX_ARCHITECTURES=x86_64\;arm64
+            artifact-suffix: macOS
+            cmake-args: -DCMAKE_OSX_ARCHITECTURES=x86_64\;arm64 -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
           - os: windows-latest
             name: Visual Studio
@@ -60,7 +62,7 @@ jobs:
     runs-on: ${{matrix.os}}
 
     env:
-      RELEASE_FILE: ${{github.event.repository.name}}-${{github.event.release.tag_name || github.sha}}-${{matrix.release-suffix}}
+      RELEASE_FILE: ${{github.event.repository.name}}-${{github.event.release.tag_name || github.sha}}-${{matrix.release-suffix || matrix.artifact-suffix}}
 
     steps:
     - name: Checkout 32Blit SDK
@@ -85,7 +87,7 @@ jobs:
     - name: Cache
       uses: actions/cache@v3
       with:
-        path: /home/runner/.ccache
+        path: ~/.ccache
         key: ccache-${{matrix.cache-key}}-${{github.ref}}-${{github.sha}}
         restore-keys: |
           ccache-${{matrix.cache-key}}-${{github.ref}}
@@ -103,6 +105,8 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         ci/install_sdl_macos.sh
+        brew install ccache
+        echo "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
         python3 -m pip install 32blit requests
 
     # Windows (VS) deps
