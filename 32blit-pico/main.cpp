@@ -4,7 +4,6 @@
 #include "hardware/clocks.h"
 #include "hardware/i2c.h"
 #include "hardware/structs/rosc.h"
-#include "hardware/structs/scb.h"
 #include "hardware/vreg.h"
 #include "hardware/timer.h"
 #include "pico/binary_info.h"
@@ -119,30 +118,11 @@ static bool launch(const char *path) {
     if(header->magic != blit_game_magic || header->device_id != BlitDevice::RP2040)
       return false;
 
-    if(header->init) {
-      requested_launch_offset = offset;
-      return true;
-    }
+    if(!header->init || !header->render || !header->tick)
+      return false;
 
-    // TODO: check valid
-    auto addr = XIP_BASE + offset + 256;
-
-    // disable all irqs
-    irq_set_mask_enabled(~0u, false);
-
-    // set VTOR
-    scb_hw->vtor = addr;
-
-    asm volatile(
-      "ldr r0, [%0]\n"
-      "ldr r1, [%0, #4]\n"
-      "msr msp, r0\n" // set SP
-      "bx r1" // branch to reset
-      :
-      : "r" (addr)
-      : "r0", "r1"
-    );
-    // not reached
+    requested_launch_offset = offset;
+    return true;
   }
 
   return false;
