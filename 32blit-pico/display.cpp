@@ -20,10 +20,6 @@ static const Size lores_screen_size(DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2);
 static const Size hires_screen_size(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
 ScreenMode cur_screen_mode = ScreenMode::lores;
-// double buffering for lores
-static volatile int buf_index = 0;
-
-static volatile bool do_render = true;
 
 // blit api
 
