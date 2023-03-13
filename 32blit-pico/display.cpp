@@ -58,6 +58,8 @@ bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_templ
   if(new_surf_template.format == (PixelFormat)-1)
     new_surf_template.format = DEFAULT_SCREEN_FORMAT;
 
+  int min_buffers = 1;
+
   switch(new_mode) {
     case ScreenMode::lores:
       if(new_surf_template.bounds.empty())
@@ -65,11 +67,21 @@ bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_templ
       else
         new_surf_template.bounds /= 2;
 
+#ifdef BUILD_LOADER
+      if(new_surf_template.bounds.w > max_fb_bounds.w / 2)
+        new_surf_template.bounds.w = max_fb_bounds.w / 2;
+#endif
+      min_buffers = 2;
       break;
     case ScreenMode::hires:
     case ScreenMode::hires_palette:
       if(new_surf_template.bounds.empty())
         new_surf_template.bounds = hires_screen_size;
+
+#ifdef BUILD_LOADER
+      if(new_surf_template.bounds.w > max_fb_bounds.w)
+        new_surf_template.bounds.w = max_fb_bounds.w;
+#endif
       break;
   }
 
@@ -77,7 +89,7 @@ bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_templ
   auto fb_size = uint32_t(new_surf_template.bounds.area()) * pixel_format_stride[int(new_surf_template.format)];
 // TODO: more generic "doesn't have a framebuffer"?
 #ifndef BLIT_BOARD_PIMORONI_PICOVISION
-  if(max_fb_size < fb_size)
+  if(max_fb_size < fb_size * min_buffers)
     return false;
 #endif
 
