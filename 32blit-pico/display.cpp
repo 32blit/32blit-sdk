@@ -4,6 +4,10 @@
 
 using namespace blit;
 
+// height rounded up to handle the 135px display
+// this is in bytes
+static const int lores_page_size = (DISPLAY_WIDTH / 2) * ((DISPLAY_HEIGHT + 1) / 2) * 2;
+
 SurfaceInfo cur_surf_info;
 
 bool fb_double_buffer = true;
@@ -20,6 +24,13 @@ static const Size lores_screen_size(DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2);
 static const Size hires_screen_size(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
 ScreenMode cur_screen_mode = ScreenMode::lores;
+
+int get_display_page_size() {
+  if(cur_screen_mode == blit::ScreenMode::lores) // paletted is half the size
+    return blit::screen.format == blit::PixelFormat::P ? lores_page_size / 2 : lores_page_size;
+  else // paletted hires
+    return DISPLAY_WIDTH * DISPLAY_HEIGHT;
+}
 
 // blit api
 

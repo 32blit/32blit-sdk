@@ -35,7 +35,7 @@ void update_display(uint32_t time) {
     if(fb_double_buffer) {
       buf_index ^= 1;
 
-      screen.data = (uint8_t *)screen_fb + (buf_index) * lores_page_size;
+      screen.data = (uint8_t *)screen_fb + (buf_index) * get_display_page_size();
       st7789::frame_buffer = (uint16_t *)screen.data;
     }
 

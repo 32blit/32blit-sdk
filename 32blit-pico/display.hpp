@@ -4,10 +4,6 @@
 #include "engine/api_private.hpp"
 #include "config.h"
 
-// height rounded up to handle the 135px display
-// this is in bytes
-static const int lores_page_size = (DISPLAY_WIDTH / 2) * ((DISPLAY_HEIGHT + 1) / 2) * 2;
-
 extern blit::SurfaceInfo cur_surf_info;
 extern blit::ScreenMode cur_screen_mode;
 
@@ -17,6 +13,7 @@ extern bool fb_double_buffer;
 extern uint16_t screen_fb[];
 #endif
 
+int get_display_page_size();
 void init_display();
 void update_display(uint32_t time);
 
