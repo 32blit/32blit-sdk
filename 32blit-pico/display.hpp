@@ -8,6 +8,7 @@
 // this is in bytes
 static const int lores_page_size = (DISPLAY_WIDTH / 2) * ((DISPLAY_HEIGHT + 1) / 2) * 2;
 
+extern blit::SurfaceInfo cur_surf_info;
 extern blit::ScreenMode cur_screen_mode;
 
 extern bool fb_double_buffer;
