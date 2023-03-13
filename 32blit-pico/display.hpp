@@ -33,4 +33,4 @@ bool set_screen_mode_format(blit::ScreenMode new_mode, blit::SurfaceTemplate &ne
 
 void set_screen_palette(const blit::Pen *colours, int num_cols);
 
-void set_framebuffer(uint8_t *data, uint32_t max_size);
+void set_framebuffer(uint8_t *data, uint32_t max_size, blit::Size max_bounds);
