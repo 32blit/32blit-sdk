@@ -65,7 +65,7 @@ extern "C" bool do_init() {
   blit::render = render;
 
 #ifndef BLIT_BOARD_PIMORONI_PICOVISION
-  blit::api.set_framebuffer((uint8_t *)screen_fb, sizeof(screen_fb));
+  blit::api.set_framebuffer((uint8_t *)screen_fb, sizeof(screen_fb), {DISPLAY_WIDTH, DISPLAY_HEIGHT});
 #endif
 
   blit::set_screen_mode(blit::ScreenMode::lores);

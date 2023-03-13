@@ -149,7 +149,7 @@ namespace blit {
 
     // low level framebuffer
     uint8_t *(*get_screen_data)(); // used to get current screen.data before render if firmware does page-flipping
-    void (*set_framebuffer)(uint8_t *data, uint32_t max_size); // pass framebuffer over if allocated on the "user" side of the API
+    void (*set_framebuffer)(uint8_t *data, uint32_t max_size, Size max_bounds); // pass framebuffer over if allocated on the "user" side of the API
   };
 
   struct APIData {
