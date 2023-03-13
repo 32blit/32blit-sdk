@@ -51,7 +51,7 @@ void init_display() {
 
 void update_display(uint32_t time) {
   if(do_render) {
-    if(cur_screen_mode == ScreenMode::lores)
+    if(fb_double_buffer)
       screen.data = (uint8_t *)screen_fb + (buf_index ^ 1) * lores_page_size; // only works because there's no "firmware" here
     ::render(time);
     do_render = false;
@@ -89,7 +89,7 @@ void update_display_core1() {
     if(scanvideo_scanline_number(buffer->scanline_id) == height - 1 && !do_render) {
       // swap buffers at the end of the frame, but don't start a render yet
       // (the last few lines of the old buffer are still in the queue)
-      if(cur_screen_mode == ScreenMode::lores) {
+      if(fb_double_buffer) {
         do_render_soon = true;
         buf_index ^= 1;
       } else {
@@ -125,4 +125,6 @@ bool display_mode_supported(blit::ScreenMode new_mode, const blit::SurfaceTempla
 }
 
 void display_mode_changed(blit::ScreenMode new_mode, blit::SurfaceTemplate &new_surf_template) {
+  if(!fb_double_buffer)
+    buf_index = 0;
 }
