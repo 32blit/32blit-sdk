@@ -1,0 +1,17 @@
+.program i2s
+; sideset bck, lrclk
+.side_set 2
+    set x, 14      side 0b11
+
+; 16 bits for LRCLK=1
+; 2 16-bit values, R is first/highest
+loop1:
+    out pins, 1    side 0b10
+    jmp x--, loop1 side 0b11
+    out pins, 1    side 0b00 ; last bit and switch LRCLK
+    set x, 14      side 0b01 ; prepare for next word
+
+loop0:
+    out pins, 1    side 0b00
+    jmp x--, loop0 side 0b01
+    out pins, 1    side 0b10 ; last bit and switch LRCLK

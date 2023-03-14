@@ -1,5 +1,8 @@
 #pragma once
 
+#define AUDIO_I2S_DATA_PIN 26
+#define AUDIO_I2S_CLOCK_PIN_BASE 27
+
 #define DEFAULT_SCREEN_FORMAT PixelFormat::BGR555
 
 // native
