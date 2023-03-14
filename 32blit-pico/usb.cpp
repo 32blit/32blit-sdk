@@ -191,12 +191,18 @@ class CDCProgCommand final : public CDCCommand {
 static CDCHandshakeCommand handshake_command;
 static CDCUserCommand user_command;
 
+#if defined(BUILD_LOADER) && !defined(USB_HOST)
+#define FLASH_COMMANDS
 static CDCProgCommand prog_command;
+#endif
 
 const std::tuple<uint32_t, CDCCommand *> cdc_commands[]{
   {to_cmd_id("MLTI"), &handshake_command},
   {to_cmd_id("USER"), &user_command},
+
+#ifdef FLASH_COMMANDS
   {to_cmd_id("PROG"), &prog_command},
+#endif
 };
 
 void usb_cdc_update() {
