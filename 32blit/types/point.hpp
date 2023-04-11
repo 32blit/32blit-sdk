@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "mat3.hpp"
 #include "vec2.hpp"
 
