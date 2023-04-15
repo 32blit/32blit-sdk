@@ -399,12 +399,6 @@ static uint32_t flash_from_sd_to_qspi_flash(FIL &file, uint32_t file_size, uint3
 
 // runs a .blit file, flashing it if required
 static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
-  bool qspi_was_mapped = is_qspi_memorymapped();
-  if(qspi_was_mapped) {
-    qspi_disable_memorymapped_mode();
-    blit_disable_user_code(); // assume user running
-  }
-
   uint32_t launch_offset = 0xFFFFFFFF;
   uint32_t flash_offset = launch_offset;
 
@@ -418,8 +412,16 @@ static bool launch_game_from_sd(const char *path, bool auto_delete = false) {
   UINT read;
   f_read(&file, buf, 8, &read);
 
-  if(memcmp(buf, "RELO", 4) != 0)
-    return 0xFFFFFFFF;
+  if(memcmp(buf, "RELO", 4) != 0) {
+    f_close(&file);
+    return false;
+  }
+
+  bool qspi_was_mapped = is_qspi_memorymapped();
+  if(qspi_was_mapped) {
+    qspi_disable_memorymapped_mode();
+    blit_disable_user_code(); // assume user running
+  }
 
   GameInfo meta;
   if(parse_file_metadata(file, meta)) {
