@@ -126,7 +126,6 @@ static void send_handshake(bool is_reply = false) {
   tud_cdc_write_flush();
 }
 
-
 void init_usb() {
   tusb_init();
 }

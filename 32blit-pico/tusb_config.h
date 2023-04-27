@@ -56,12 +56,22 @@
 #endif
 
 // Device mode with rhport and speed defined by board.mk
+#ifdef USB_HOST
+#if   BOARD_DEVICE_RHPORT_NUM == 0
+  #define CFG_TUSB_RHPORT0_MODE     (OPT_MODE_HOST | BOARD_DEVICE_RHPORT_SPEED)
+#elif BOARD_DEVICE_RHPORT_NUM == 1
+  #define CFG_TUSB_RHPORT1_MODE     (OPT_MODE_HOST | BOARD_DEVICE_RHPORT_SPEED)
+#else
+  #error "Incorrect RHPort configuration"
+#endif
+#else
 #if   BOARD_DEVICE_RHPORT_NUM == 0
   #define CFG_TUSB_RHPORT0_MODE     (OPT_MODE_DEVICE | BOARD_DEVICE_RHPORT_SPEED)
 #elif BOARD_DEVICE_RHPORT_NUM == 1
   #define CFG_TUSB_RHPORT1_MODE     (OPT_MODE_DEVICE | BOARD_DEVICE_RHPORT_SPEED)
 #else
   #error "Incorrect RHPort configuration"
+#endif
 #endif
 
 // This example doesn't use an RTOS
@@ -91,6 +101,31 @@
 // DEVICE CONFIGURATION
 //--------------------------------------------------------------------
 
+#ifdef USB_HOST
+
+// Size of buffer to hold descriptors and other data used for enumeration
+#define CFG_TUH_ENUMERATION_BUFSIZE 256
+
+#define CFG_TUH_HUB                 0
+#define CFG_TUH_CDC                 0
+#ifdef INPUT_USB_HID
+#define CFG_TUH_HID                 4 // typical keyboard + mouse device can have 3-4 HID interfaces
+#else
+#define CFG_TUH_HID                 0
+#endif
+#define CFG_TUH_MSC                 0
+#define CFG_TUH_VENDOR              0
+
+// max device support (excluding hub device)
+// 1 hub typically has 4 ports
+#define CFG_TUH_DEVICE_MAX          (CFG_TUH_HUB ? 4 : 1)
+
+//------------- HID -------------//
+
+#define CFG_TUH_HID_EP_BUFSIZE      64
+
+#else
+
 #ifndef CFG_TUD_ENDPOINT0_SIZE
 #define CFG_TUD_ENDPOINT0_SIZE    64
 #endif
@@ -111,6 +146,7 @@
 
 // MSC Buffer size of Device Mass storage
 #define CFG_TUD_MSC_EP_BUFSIZE   512
+#endif
 
 #ifdef __cplusplus
  }
