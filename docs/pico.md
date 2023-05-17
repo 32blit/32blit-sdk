@@ -5,18 +5,22 @@ The Pico port brings the 32blit SDK to PicoSystem and other RP2040-based devices
 Since RP2040 is slower and less capable than 32blit's STM32H750 there are some limitations, but most of the 32blit SDK conceniences work well.
 
 - [Why use 32blit SDK on PicoSystem?](#why-use-32blit-sdk-on-picosystem)
-- [Building The SDK & Examples](#building-the-sdk--examples)
+- [Building The SDK \& Examples](#building-the-sdk--examples)
   - [Fetch Pico SDK Automatically (Quick-Start)](#fetch-pico-sdk-automatically-quick-start)
+    - [Building Examples](#building-examples)
   - [Existing Pico SDK (Advanced)](#existing-pico-sdk-advanced)
 - [Starting Your Own 32blit SDK Project](#starting-your-own-32blit-sdk-project)
   - [Coniguring PicoSystem builds](#coniguring-picosystem-builds)
   - [Building](#building)
   - [Copying to your PicoSystem](#copying-to-your-picosystem)
   - [Extra configuration](#extra-configuration)
-- [API Limitations & Board Details](#api-limitations--board-details)
+- [API Limitations \& Board Details](#api-limitations--board-details)
   - [Unsupported Features](#unsupported-features)
   - [Limitations](#limitations)
   - [Board-specific details](#board-specific-details)
+- [Troubleshooting](#troubleshooting)
+  - [fatal error: tusb.h: No such file or directory](#fatal-error-tusbh-no-such-file-or-directory)
+
 
 ## Why use 32blit SDK on PicoSystem?
 
@@ -67,19 +71,49 @@ export PATH=$PATH:~/.local/bin
 
 You might also want to add this to the bottom of your `~/.bashrc`.
 
+And finally you should fetch the 32blit SDK and examples:
+
+```
+git clone https://github.com/32blit/32blit-sdk
+git clone https://github.com/32blit/32blit-examples
+```
+
 ### Fetch Pico SDK Automatically (Quick-Start)
 
 You can use Pico SDK's fetch-from-git feature and build like so:
 
 ```
-git clone https://github.com/32blit/32blit-sdk
 cd 32blit-sdk
 mkdir build.pico
 cd build.pico
 cmake .. -D32BLIT_DIR=`pwd`/.. -DPICO_SDK_FETCH_FROM_GIT=true -DPICO_EXTRAS_FETCH_FROM_GIT=true -DPICO_BOARD=pimoroni_picosystem
 ```
 
-And then run `make` as usual.
+The 32blit SDK includes only `picosystem-hardware-test` which you can make with:
+
+```
+make picosystem-hardware-test
+```
+
+
+#### Building Examples
+
+The [32blit-examples](https://github.com/32blit/32blit-examples) repository includes a series of demos showcasing various 32blit SDK features.
+
+In order to compile examples against pico-sdk, your directory tree should look something like:
+
+- root_dir
+    - 32blit-sdk
+    - 32blit-examples
+
+For example:
+
+```
+cd 32blit-examples
+mkdir build.pico
+cd build.pico
+cmake .. -D32BLIT_DIR=`pwd`/.. -DPICO_SDK_FETCH_FROM_GIT=true -DPICO_EXTRAS_FETCH_FROM_GIT=true -DPICO_BOARD=pimoroni_picosystem
+```
 
 Now you can start hacking on an existing example, or skip to [Starting Your Own 32blit SDK Project](#starting-your-own-32blit-sdk-project).
 
@@ -89,11 +123,18 @@ This requires a working Pico SDK setup ([Getting started with Raspberry Pi Pico]
 
 To build for a pico-based device you need to specify both the 32blit and Pico SDK paths, and the device/board you are building for.
 
+Your directory tree should look something like:
+
+- root_dir
+    - 32blit-sdk
+    - 32blit-examples
+    - pico-sdk
+    - pico-extras
+
 To build the examples for a PicoSystem:
 
 ```
-git clone https://github.com/32blit/32blit-sdk
-cd 32blit-sdk
+cd 32blit-examples
 mkdir build.pico
 cd build.pico
 cmake .. -D32BLIT_DIR=`pwd`/.. -DPICO_SDK_PATH=/path/to/pico-sdk -DPICO_BOARD=pimoroni_picosystem
@@ -217,3 +258,9 @@ The RP2040/Pico port supports PicoSystem and VGA board. Below is a table showing
 * ‡ - makes a best-effort attempt to play any `SQUARE` waveforms (single-channel)
 * § - 362K main RAM, 64K D3 RAM, 127K DTCMRAM, 30K ITCMRAM
 * ¶ - setting `ALLOW_HIRES=0` allocates a doubled buffered 120x120 16bit framebuffer (56.25k) and disables the hires screen mode.
+
+# Troubleshooting
+
+## fatal error: tusb.h: No such file or directory
+
+You forgot to `git submodule update --init` in your local copy of `pico-sdk`.
