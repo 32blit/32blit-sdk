@@ -182,6 +182,7 @@ int main() {
   init_input();
   init_fs();
   init_usb();
+  init_audio();
 
 #if defined(ENABLE_CORE1)
   multicore_launch_core1(core1_main);
@@ -191,8 +192,6 @@ int main() {
 
   blit::render = ::render;
   blit::update = ::update;
-
-  init_audio();
 
   // user init
   ::init();

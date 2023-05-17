@@ -1,10 +1,14 @@
 #include "audio.hpp"
 #include "config.h"
 
+#include "hardware/dma.h"
+#include "hardware/pio.h"
 #include "pico/audio_i2s.h"
 #define AUDIO_SAMPLE_FREQ 44100
 
 #include "audio/audio.hpp"
+
+#define audio_pio __CONCAT(pio, PICO_AUDIO_I2S_PIO)
 
 static audio_buffer_pool *audio_pool = nullptr;
 
@@ -23,11 +27,18 @@ void init_audio() {
   struct audio_buffer_pool *producer_pool = audio_new_producer_pool(&producer_format, 4, 441);
   const struct audio_format *output_format;
 
+  uint8_t dma_channel = dma_claim_unused_channel(true);
+  uint8_t pio_sm = pio_claim_unused_sm(audio_pio, true);
+
+  // audio_i2s_setup claims
+  dma_channel_unclaim(dma_channel);
+  pio_sm_unclaim(audio_pio, pio_sm);
+
   struct audio_i2s_config config = {
     .data_pin = PICO_AUDIO_I2S_DATA_PIN,
     .clock_pin_base = PICO_AUDIO_I2S_CLOCK_PIN_BASE,
-    .dma_channel = 1,
-    .pio_sm = 1,
+    .dma_channel = dma_channel,
+    .pio_sm = pio_sm,
   };
 
   output_format = audio_i2s_setup(&audio_format, &config);
