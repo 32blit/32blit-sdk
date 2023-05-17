@@ -58,6 +58,28 @@ if (NOT DEFINED BLIT_ONCE)
 		target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 	endfunction()
 
+	# common helpers
+	function(blit_executable_args)
+		set(SOURCES)
+
+		if(DEFINED BLIT_EXECUTABLE_INTERNAL_FLASH)
+			set(INTERNAL_FLASH ${BLIT_EXECUTABLE_INTERNAL_FLASH})
+		else()
+			set(INTERNAL_FLASH FALSE)
+		endif()
+
+		foreach(arg IN LISTS ARGN)
+			if(arg STREQUAL "INTERNAL_FLASH")
+				set(${arg} TRUE)
+			else()
+				list(APPEND SOURCES ${arg})
+			endif()
+		endforeach()
+
+		set(SOURCES ${SOURCES} PARENT_SCOPE)
+		set(INTERNAL_FLASH ${INTERNAL_FLASH} PARENT_SCOPE)
+	endfunction()
+
 	if (32BLIT_HW)
 		set(FLASH_PORT "AUTO" CACHE STRING "Port to use for flash")
 

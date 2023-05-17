@@ -150,9 +150,11 @@ function(blit_executable_common NAME)
 
 endfunction()
 
-function(blit_executable_int_flash NAME SOURCES)
+function(blit_executable NAME)
     message(STATUS "Processing ${NAME}")
-    add_executable(${NAME} ${SOURCES} ${ARGN})
+    blit_executable_args(${ARGN})
+
+    add_executable(${NAME} ${SOURCES})
     target_link_libraries(${NAME} BlitHalPico BlitEngine)
     target_link_options(${NAME} PUBLIC -specs=nano.specs -u _printf_float)
 
@@ -164,10 +166,6 @@ function(blit_executable_int_flash NAME SOURCES)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.uf2
         DESTINATION bin
     )
-endfunction()
-
-function(blit_executable NAME SOURCES)
-    blit_executable_int_flash(${NAME} ${SOURCES} ${ARGN})
 endfunction()
 
 function(blit_metadata TARGET FILE)

@@ -1,4 +1,5 @@
 set(MCU_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}")
+set(HAL_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 set(USER_STARTUP ${CMAKE_CURRENT_LIST_DIR}/startup_user.s ${CMAKE_CURRENT_LIST_DIR}/startup_user.cpp)
 
@@ -12,10 +13,22 @@ function(blit_executable_common NAME)
 	)
 endfunction()
 
-function(blit_executable NAME SOURCES)
+function(blit_executable NAME)
 	message(STATUS "Processing ${NAME}")
+	blit_executable_args(${ARGN})
+
+	if(INTERNAL_FLASH)
+		# make sure the HAL is built (external projects)
+		if(NOT TARGET BlitHalSTM32)
+			add_subdirectory(${HAL_DIR} 32blit-stm32)
+		endif()
+
+		blit_executable_int_flash(${NAME} ${SOURCES})
+		return()
+	endif()
+
 	set_source_files_properties(${USER_STARTUP} PROPERTIES LANGUAGE CXX)
-	add_executable(${NAME} ${USER_STARTUP} ${SOURCES} ${ARGN})
+	add_executable(${NAME} ${USER_STARTUP} ${SOURCES})
 
 	# Ideally we want the .blit filename to match the .elf, but TARGET_FILE_BASE_NAME isn't always available
 	# (This only affects the firmware updater as it's the only thing setting a custom OUTPUT_NAME)
