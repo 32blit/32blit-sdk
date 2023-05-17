@@ -128,6 +128,9 @@ namespace blit {
     bool (*set_raw_cdc_enabled)(bool enabled);
     void (*cdc_write)(const uint8_t *data, uint16_t len);
     uint16_t (*cdc_read)(uint8_t *data, uint16_t len);
+
+    // another launcher API
+    void (*list_installed_games)(std::function<void(const uint8_t *, uint32_t, uint32_t)> callback);
   };
   #pragma pack(pop)
 

@@ -551,6 +551,11 @@ static void *get_type_handler_metadata(const char *filetype) {
   return nullptr;
 }
 
+static void list_installed_games(std::function<void(const uint8_t *, uint32_t, uint32_t)> callback) {
+  for(auto &game : game_list)
+    callback((const uint8_t *)(qspi_flash_address + game.offset), game.offset / qspi_flash_sector_size, game.size);
+}
+
 static const uint8_t *flash_to_tmp(const std::string &filename, uint32_t &size) {
   // one file at a time
   // TODO: this could be improved
@@ -635,6 +640,8 @@ void init() {
 
   api.flash_to_tmp = flash_to_tmp;
   api.tmp_file_closed = tmp_file_closed;
+
+  api.list_installed_games = list_installed_games;
 
   scan_flash();
   flash_scanned = true;
