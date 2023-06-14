@@ -52,10 +52,10 @@ function(blit_executable NAME)
 
 	add_custom_command(TARGET ${NAME} POST_BUILD
 		COMMENT "Building ${NAME}.blit"
-		COMMAND ${PYTHON_EXECUTABLE} -m ttblit relocs --elf-file $<TARGET_FILE:${NAME}> --bin-file ${NAME}.bin --output ${BLIT_FILENAME}
+		COMMAND ${32BLIT_TOOLS_EXECUTABLE} relocs --elf-file $<TARGET_FILE:${NAME}> --bin-file ${NAME}.bin --output ${BLIT_FILENAME}
 	)
 
-	add_custom_target(${NAME}.flash DEPENDS ${NAME} COMMAND ${PYTHON_EXECUTABLE} -m ttblit install --port=${FLASH_PORT} --launch ${CMAKE_CURRENT_BINARY_DIR}/${BLIT_FILENAME})
+	add_custom_target(${NAME}.flash DEPENDS ${NAME} COMMAND ${32BLIT_TOOLS_EXECUTABLE} install --port=${FLASH_PORT} --launch ${CMAKE_CURRENT_BINARY_DIR}/${BLIT_FILENAME})
 endfunction()
 
 function(blit_metadata TARGET FILE)
@@ -68,7 +68,7 @@ function(blit_metadata TARGET FILE)
 
 	# get the inputs/outputs for the asset tool (at configure time)
 	execute_process(
-		COMMAND ${PYTHON_EXECUTABLE} -m ttblit cmake --config ${FILE} --cmake ${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake
+		COMMAND ${32BLIT_TOOLS_EXECUTABLE} cmake --config ${FILE} --cmake ${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake
 		RESULT_VARIABLE TOOL_RESULT
 	)
 	if(${TOOL_RESULT})
@@ -85,7 +85,7 @@ function(blit_metadata TARGET FILE)
 
 	add_custom_command(
 		TARGET ${TARGET} POST_BUILD
-		COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit metadata --config ${FILE} --file ${CMAKE_CURRENT_BINARY_DIR}/${BLIT_FILENAME}
+		COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${32BLIT_TOOLS_EXECUTABLE} metadata --config ${FILE} --file ${CMAKE_CURRENT_BINARY_DIR}/${BLIT_FILENAME}
 	)
 
 	# force relink on change so that the post-build commands are rerun
