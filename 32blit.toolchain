@@ -50,6 +50,9 @@ if(EXISTS ${STDLIB_PATH}/stdlibs.zip)
     file(${STDLIB_HASHTYPE} ${STDLIB_PATH}/stdlibs.zip FOUND_HASH)
 endif()
 if(NOT EXISTS ${STDLIB_PATH}/stdlibs.zip OR NOT STDLIB_HASH STREQUAL "${STDLIB_HASHTYPE}=${FOUND_HASH}")
+    # remove old files before downloading
+    file(REMOVE_RECURSE ${STDLIB_PATH}/pic/ ${STDLIB_PATH}/no-pic/)
+
     message("Downloading stdlibs...")
 endif()
 
