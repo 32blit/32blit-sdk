@@ -339,7 +339,7 @@ void System::update_texture(SDL_Texture *texture) {
   auto stride = (is_lores ? width / 2 : width) * blit::pixel_format_stride[int(cur_format)];
 
   if(cur_format == blit::PixelFormat::P) {
-    uint8_t col_fb[width * height * 3];
+    uint8_t col_fb[max_width * max_height * 3];
 
     auto in = framebuffer, out = col_fb;
     auto size = is_lores ? (width / 2) * (height / 2) : width * height;
