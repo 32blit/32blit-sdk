@@ -26,7 +26,9 @@ void blit_debug(const char *message) {
 
 // blit screenmode callback
 blit::ScreenMode _mode = blit::ScreenMode::lores;
+static blit::ScreenMode requested_mode = blit::ScreenMode::lores;
 static blit::PixelFormat cur_format = blit::PixelFormat::RGB;
+static blit::PixelFormat requested_format = blit::PixelFormat::RGB;
 
 blit::SurfaceInfo cur_surf_info;
 
@@ -59,8 +61,8 @@ static bool set_screen_mode_format(blit::ScreenMode new_mode, blit::SurfaceTempl
       return false;
   }
 
-  _mode = new_mode;
-  cur_format = new_surf_template.format;
+  requested_mode = new_mode;
+  requested_format = new_surf_template.format;
 
   return true;
 }
@@ -308,6 +310,11 @@ void System::loop() {
   {
     blit::render(time_now);
     last_render_time = time_now;
+
+    if(_mode != requested_mode || cur_format != requested_format) {
+      _mode = requested_mode;
+      cur_format = requested_format;
+    }
   }
 
   blit::tick(::now());
