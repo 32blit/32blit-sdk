@@ -15,8 +15,11 @@
 
 extern Input *blit_input;
 
+int System::width = System::max_width;
+int System::height = System::max_height;
+
 // blit framebuffer memory
-static uint8_t framebuffer[System::width * System::height * 3];
+static uint8_t framebuffer[System::max_width * System::max_height * 3];
 static blit::Pen palette[256];
 
 // blit debug callback
