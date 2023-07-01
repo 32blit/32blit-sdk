@@ -144,6 +144,7 @@ void em_loop() {
 
 int main(int argc, char *argv[]) {
   int x = SDL_WINDOWPOS_UNDEFINED, y = SDL_WINDOWPOS_UNDEFINED;
+  bool fullscreen = false;
 
   std::cout << metadata_title << " " << metadata_version << std::endl;
   std::cout << "Powered by 32Blit SDL2 runtime - github.com/32blit/32blit-sdk" << std::endl << std::endl;
@@ -174,7 +175,9 @@ int main(int argc, char *argv[]) {
         }
       }
       i++;
-		} else if(arg_str == "--credits") {
+		} else if(arg_str == "--fullscreen")
+			fullscreen = true;
+    else if(arg_str == "--credits") {
 			std::cout << "32Blit was made possible by:" << std::endl;
 			std::cout << std::endl;
 			for(auto name : contributors) {
@@ -226,7 +229,7 @@ int main(int argc, char *argv[]) {
 		metadata_title,
 		x, y,
 		System::width*2, System::height*2,
-		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI
+		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)
 	);
 
 	if (window == nullptr) {
