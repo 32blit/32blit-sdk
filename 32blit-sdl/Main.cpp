@@ -143,8 +143,7 @@ void em_loop() {
 #endif
 
 int main(int argc, char *argv[]) {
-  int x, y;
-  bool custom_window_position = false;
+  int x = SDL_WINDOWPOS_UNDEFINED, y = SDL_WINDOWPOS_UNDEFINED;
 
   std::cout << metadata_title << " " << metadata_version << std::endl;
   std::cout << "Powered by 32Blit SDL2 runtime - github.com/32blit/32blit-sdk" << std::endl << std::endl;
@@ -165,9 +164,7 @@ int main(int argc, char *argv[]) {
 		else if(arg_str == "--listen")
 			mp_mode = Multiplayer::Mode::Listen;
 		else if(arg_str == "--position") {
-			if(SDL_sscanf(argv[i+1], "%d,%d", &x, &y) == 2) {
-			    custom_window_position = true;
-			}
+			SDL_sscanf(argv[i+1], "%d,%d", &x, &y);
 		}
 		else if(arg_str == "--credits") {
 			std::cout << "32Blit was made possible by:" << std::endl;
@@ -218,7 +215,7 @@ int main(int argc, char *argv[]) {
 
 	window = SDL_CreateWindow(
 		metadata_title,
-		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+		x, y,
 		System::width*2, System::height*2,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI
 	);
@@ -228,10 +225,6 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	SDL_SetWindowMinimumSize(window, System::width, System::height);
-
-	if(custom_window_position) {
-		SDL_SetWindowPosition(window, x, y);
-	}
 
   blit_system = new System();
   blit_input = new Input(blit_system);
