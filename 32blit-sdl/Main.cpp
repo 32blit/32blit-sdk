@@ -165,8 +165,16 @@ int main(int argc, char *argv[]) {
 			mp_mode = Multiplayer::Mode::Listen;
 		else if(arg_str == "--position") {
 			SDL_sscanf(argv[i+1], "%d,%d", &x, &y);
-		}
-		else if(arg_str == "--credits") {
+		}	else if(arg_str == "--size" && i + 1 < argc) {
+      int w, h;
+			if(SDL_sscanf(argv[i+1], "%d,%d", &w, &h) == 2) {
+        if(w * y < System::max_width * System::max_height) {
+          System::width = w;
+          System::height = h;
+        }
+      }
+      i++;
+		} else if(arg_str == "--credits") {
 			std::cout << "32Blit was made possible by:" << std::endl;
 			std::cout << std::endl;
 			for(auto name : contributors) {
@@ -199,6 +207,7 @@ int main(int argc, char *argv[]) {
 			std::cout << " --connect <addr>     -- Connect to a listening game instance." << std::endl;
 			std::cout << " --listen             -- Listen for incoming connections." << std::endl;
 			std::cout << " --position x,y       -- Set window position." << std::endl;
+      std::cout << " --size w,h           -- Set display size. (max 320x240)" << std::endl;
 			std::cout << " --launch_path <file> -- Emulates the file associations on the console." << std::endl;
 			std::cout << " --credits            -- Print contributor credits and exit." << std::endl;
 			std::cout << " --info               -- Print metadata info and exit." << std::endl << std::endl;
