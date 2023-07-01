@@ -19,10 +19,6 @@ extern Input *blit_input;
 static uint8_t framebuffer[System::width * System::height * 3];
 static blit::Pen palette[256];
 
-static const blit::SurfaceTemplate __fb_hires{framebuffer, blit::Size(System::width, System::height), blit::PixelFormat::RGB, nullptr};
-static const blit::SurfaceTemplate __fb_hires_pal{framebuffer, blit::Size(System::width, System::height), blit::PixelFormat::P, palette};
-static const blit::SurfaceTemplate __fb_lores{framebuffer, blit::Size(System::width / 2, System::height / 2), blit::PixelFormat::RGB, nullptr};
-
 // blit debug callback
 void blit_debug(const char *message) {
 	std::cout << message;
@@ -43,11 +39,11 @@ static bool set_screen_mode_format(blit::ScreenMode new_mode, blit::SurfaceTempl
 
   switch(new_mode) {
     case blit::ScreenMode::lores:
-      new_surf_template.bounds = __fb_lores.bounds;
+      new_surf_template.bounds = blit::Size(System::width / 2, System::height / 2);
       break;
     case blit::ScreenMode::hires:
     case blit::ScreenMode::hires_palette:
-      new_surf_template.bounds = __fb_hires.bounds;
+      new_surf_template.bounds = blit::Size(System::width, System::height);
       break;
   }
 
