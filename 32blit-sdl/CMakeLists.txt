@@ -221,7 +221,7 @@ function(blit_metadata TARGET FILE)
 
 	# parse the metadata to variables
 	execute_process(
-		COMMAND ${PYTHON_EXECUTABLE} -m ttblit cmake --config ${FILE} --cmake ${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake
+		COMMAND ${32BLIT_TOOLS_EXECUTABLE} cmake --config ${FILE} --cmake ${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake
 		RESULT_VARIABLE TOOL_RESULT
 	)
 	if(${TOOL_RESULT})
@@ -244,7 +244,7 @@ function(blit_metadata TARGET FILE)
 
 		add_custom_command(
 			OUTPUT ${ICON}
-			COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit metadata --force --config ${FILE} --icns ${ICON}
+			COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${32BLIT_TOOLS_EXECUTABLE} metadata --force --config ${FILE} --icns ${ICON}
 			DEPENDS ${METADATA_DEPENDS} ${FILE}
 		)
 

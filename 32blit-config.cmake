@@ -10,6 +10,17 @@ if (NOT DEFINED BLIT_ONCE)
 	# make sure that the tools are installed
 	execute_process(COMMAND ${PYTHON_EXECUTABLE} -m ttblit version RESULT_VARIABLE VERSION_STATUS OUTPUT_VARIABLE TOOLS_VERSION ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
 
+	if(${VERSION_STATUS})
+		# check for the executable if the module isn't found
+		find_program(32BLIT_TOOLS_EXECUTABLE 32blit)
+		if(32BLIT_TOOLS_EXECUTABLE)
+			# get the version
+			execute_process(COMMAND ${32BLIT_TOOLS_EXECUTABLE} version RESULT_VARIABLE VERSION_STATUS OUTPUT_VARIABLE TOOLS_VERSION ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+		endif()
+	else()
+		set(32BLIT_TOOLS_EXECUTABLE ${PYTHON_EXECUTABLE} -m ttblit)
+	endif()
+
 	# get just the python command to output to the user
 	get_filename_component(PYTHON_USER_EXECUTABLE "${PYTHON_EXECUTABLE}" NAME)
 
@@ -37,7 +48,7 @@ if (NOT DEFINED BLIT_ONCE)
 
 		# get the inputs/outputs for the asset tool (at configure time)
 		execute_process(
-		    COMMAND ${PYTHON_EXECUTABLE} -m ttblit --debug cmake --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --output ${CMAKE_CURRENT_BINARY_DIR} --cmake ${CMAKE_CURRENT_BINARY_DIR}/assets.cmake
+		    COMMAND ${32BLIT_TOOLS_EXECUTABLE} --debug cmake --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --output ${CMAKE_CURRENT_BINARY_DIR} --cmake ${CMAKE_CURRENT_BINARY_DIR}/assets.cmake
             RESULT_VARIABLE TOOL_RESULT
 		)
 		if(${TOOL_RESULT})
@@ -49,7 +60,7 @@ if (NOT DEFINED BLIT_ONCE)
 		# do asset packing (at build time)
 		add_custom_command(
 			OUTPUT ${ASSET_OUTPUTS}
-			COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit --debug  pack --force --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --output ${CMAKE_CURRENT_BINARY_DIR}
+			COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${32BLIT_TOOLS_EXECUTABLE} --debug  pack --force --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --output ${CMAKE_CURRENT_BINARY_DIR}
 			DEPENDS ${ASSET_DEPENDS} ${CMAKE_CURRENT_SOURCE_DIR}/${FILE}
 		)
 
