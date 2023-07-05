@@ -15,13 +15,12 @@
 
 extern Input *blit_input;
 
-// blit framebuffer memory
-static uint8_t framebuffer[System::width * System::height * 3];
-static blit::Pen palette[256];
+int System::width = System::max_width;
+int System::height = System::max_height;
 
-static const blit::SurfaceTemplate __fb_hires{framebuffer, blit::Size(System::width, System::height), blit::PixelFormat::RGB, nullptr};
-static const blit::SurfaceTemplate __fb_hires_pal{framebuffer, blit::Size(System::width, System::height), blit::PixelFormat::P, palette};
-static const blit::SurfaceTemplate __fb_lores{framebuffer, blit::Size(System::width / 2, System::height / 2), blit::PixelFormat::RGB, nullptr};
+// blit framebuffer memory
+static uint8_t framebuffer[System::max_width * System::max_height * 3];
+static blit::Pen palette[256];
 
 // blit debug callback
 void blit_debug(const char *message) {
@@ -30,26 +29,11 @@ void blit_debug(const char *message) {
 
 // blit screenmode callback
 blit::ScreenMode _mode = blit::ScreenMode::lores;
+static blit::ScreenMode requested_mode = blit::ScreenMode::lores;
 static blit::PixelFormat cur_format = blit::PixelFormat::RGB;
+static blit::PixelFormat requested_format = blit::PixelFormat::RGB;
 
 blit::SurfaceInfo cur_surf_info;
-blit::SurfaceInfo &set_screen_mode(blit::ScreenMode new_mode) {
-	_mode = new_mode;
-  switch(_mode) {
-    case blit::ScreenMode::lores:
-      cur_surf_info = __fb_lores;
-      break;
-    case blit::ScreenMode::hires:
-      cur_surf_info = __fb_hires;
-      break;
-    case blit::ScreenMode::hires_palette:
-      cur_surf_info = __fb_hires_pal;
-      break;
-  }
-
-  cur_format = cur_surf_info.format;
-	return cur_surf_info;
-}
 
 static void set_screen_palette(const blit::Pen *colours, int num_cols) {
 	memcpy(palette, colours, num_cols * sizeof(blit::Pen));
@@ -60,11 +44,11 @@ static bool set_screen_mode_format(blit::ScreenMode new_mode, blit::SurfaceTempl
 
   switch(new_mode) {
     case blit::ScreenMode::lores:
-      new_surf_template.bounds = __fb_lores.bounds;
+      new_surf_template.bounds = blit::Size(System::width / 2, System::height / 2);
       break;
     case blit::ScreenMode::hires:
     case blit::ScreenMode::hires_palette:
-      new_surf_template.bounds = __fb_hires.bounds;
+      new_surf_template.bounds = blit::Size(System::width, System::height);
       break;
   }
 
@@ -80,10 +64,24 @@ static bool set_screen_mode_format(blit::ScreenMode new_mode, blit::SurfaceTempl
       return false;
   }
 
-  _mode = new_mode;
-  cur_format = new_surf_template.format;
+  requested_mode = new_mode;
+  requested_format = new_surf_template.format;
 
   return true;
+}
+
+blit::SurfaceInfo &set_screen_mode(blit::ScreenMode new_mode) {
+  blit::SurfaceTemplate temp{nullptr, {0, 0}, new_mode == blit::ScreenMode::hires_palette ? blit::PixelFormat::P : blit::PixelFormat::RGB};
+
+  // won't fail for the modes used here
+  set_screen_mode_format(new_mode, temp);
+
+  cur_surf_info.data = temp.data;
+  cur_surf_info.bounds = temp.bounds;
+  cur_surf_info.format = temp.format;
+  cur_surf_info.palette = temp.palette;
+
+  return cur_surf_info;
 }
 
 // blit timer callback
@@ -315,6 +313,11 @@ void System::loop() {
   {
     blit::render(time_now);
     last_render_time = time_now;
+
+    if(_mode != requested_mode || cur_format != requested_format) {
+      _mode = requested_mode;
+      cur_format = requested_format;
+    }
   }
 
   blit::tick(::now());
@@ -336,7 +339,7 @@ void System::update_texture(SDL_Texture *texture) {
   auto stride = (is_lores ? width / 2 : width) * blit::pixel_format_stride[int(cur_format)];
 
   if(cur_format == blit::PixelFormat::P) {
-    uint8_t col_fb[width * height * 3];
+    uint8_t col_fb[max_width * max_height * 3];
 
     auto in = framebuffer, out = col_fb;
     auto size = is_lores ? (width / 2) * (height / 2) : width * height;

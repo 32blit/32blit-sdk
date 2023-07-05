@@ -143,8 +143,8 @@ void em_loop() {
 #endif
 
 int main(int argc, char *argv[]) {
-  int x, y;
-  bool custom_window_position = false;
+  int x = SDL_WINDOWPOS_UNDEFINED, y = SDL_WINDOWPOS_UNDEFINED;
+  bool fullscreen = false;
 
   std::cout << metadata_title << " " << metadata_version << std::endl;
   std::cout << "Powered by 32Blit SDL2 runtime - github.com/32blit/32blit-sdk" << std::endl << std::endl;
@@ -165,11 +165,19 @@ int main(int argc, char *argv[]) {
 		else if(arg_str == "--listen")
 			mp_mode = Multiplayer::Mode::Listen;
 		else if(arg_str == "--position") {
-			if(SDL_sscanf(argv[i+1], "%d,%d", &x, &y) == 2) {
-			    custom_window_position = true;
-			}
-		}
-		else if(arg_str == "--credits") {
+			SDL_sscanf(argv[i+1], "%d,%d", &x, &y);
+		}	else if(arg_str == "--size" && i + 1 < argc) {
+      int w, h;
+			if(SDL_sscanf(argv[i+1], "%d,%d", &w, &h) == 2) {
+        if(w * y < System::max_width * System::max_height) {
+          System::width = w;
+          System::height = h;
+        }
+      }
+      i++;
+		} else if(arg_str == "--fullscreen")
+			fullscreen = true;
+    else if(arg_str == "--credits") {
 			std::cout << "32Blit was made possible by:" << std::endl;
 			std::cout << std::endl;
 			for(auto name : contributors) {
@@ -202,6 +210,7 @@ int main(int argc, char *argv[]) {
 			std::cout << " --connect <addr>     -- Connect to a listening game instance." << std::endl;
 			std::cout << " --listen             -- Listen for incoming connections." << std::endl;
 			std::cout << " --position x,y       -- Set window position." << std::endl;
+      std::cout << " --size w,h           -- Set display size. (max 320x240)" << std::endl;
 			std::cout << " --launch_path <file> -- Emulates the file associations on the console." << std::endl;
 			std::cout << " --credits            -- Print contributor credits and exit." << std::endl;
 			std::cout << " --info               -- Print metadata info and exit." << std::endl << std::endl;
@@ -218,9 +227,9 @@ int main(int argc, char *argv[]) {
 
 	window = SDL_CreateWindow(
 		metadata_title,
-		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+		x, y,
 		System::width*2, System::height*2,
-		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI
+		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)
 	);
 
 	if (window == nullptr) {
@@ -228,10 +237,6 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	SDL_SetWindowMinimumSize(window, System::width, System::height);
-
-	if(custom_window_position) {
-		SDL_SetWindowPosition(window, x, y);
-	}
 
   blit_system = new System();
   blit_input = new Input(blit_system);

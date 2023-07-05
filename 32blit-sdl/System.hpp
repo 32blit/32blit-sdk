@@ -3,8 +3,11 @@ class System {
 		static const Uint32 timer_event;
 		static const Uint32 loop_event;
 
-		static const int width = 320;
-		static const int height = 240;
+    static const int max_width = 320;
+    static const int max_height = 240;
+
+		static int width;
+		static int height;
 
 		System();
 		~System();

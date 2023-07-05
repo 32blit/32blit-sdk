@@ -33,7 +33,7 @@ namespace blit {
       return;
     }
 
-    for (uint8_t y = cr.y; y < cr.y + cr.h; y++) {
+    for (int32_t y = cr.y; y < cr.y + cr.h; y++) {
       pbf(&pen, this, o, cr.w);
       o += bounds.w;
     }
