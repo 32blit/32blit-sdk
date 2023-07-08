@@ -12,6 +12,7 @@
 static int hid_report_id = -1;
 static uint16_t buttons_offset = 0, num_buttons = 0;
 static uint16_t hat_offset = 0xFFFF, stick_offset = 0;
+static uint8_t axis_size = 8;
 
 uint32_t hid_gamepad_id = 0;
 bool hid_keyboard_detected = false;
@@ -19,6 +20,29 @@ uint8_t hid_joystick[2]{0x80, 0x80};
 uint8_t hid_hat = 8;
 uint32_t hid_buttons = 0;
 uint8_t hid_keys[6]{};
+
+static void switch_pro_mount(uint8_t dev_addr, uint8_t instance) {
+  uint8_t data = 2; // handshake
+#if TUSB_VERSION_MINOR >= 16
+  tuh_hid_send_report(dev_addr, instance, 0x80, &data, 1);
+#endif
+  // report descriptor is inaccurate
+  hid_report_id = 0x30;
+  buttons_offset = 2 * 8;
+  num_buttons = 24;
+  stick_offset = 5 * 8;
+  axis_size = 12;
+  hat_offset = 0xFFFF; // no hat, only buttons
+}
+
+static void switch_pro_report(uint8_t dev_addr, uint8_t instance, uint8_t const* report, uint16_t len) {
+  if(report[0] == 0x81 && report[1] == 2) { // handshake
+    uint8_t data = 4; // disable bluetooth / enable usb
+#if TUSB_VERSION_MINOR >= 16
+    tuh_hid_send_report(dev_addr, instance, 0x80, &data, 1);
+#endif
+  }
+}
 
 void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const* desc_report, uint16_t desc_len) {
   uint16_t vid = 0, pid = 0;
@@ -35,6 +59,9 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const* desc_re
     tuh_hid_receive_report(dev_addr, instance);
     return;
   }
+
+  hat_offset = 0xFFFF;
+  axis_size = 8;
 
   // basic and probably wrong report descriptor parsing
   auto desc_end = desc_report + desc_len;
@@ -104,6 +131,10 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const* desc_re
 
   hid_gamepad_id = (vid << 16) | pid;
 
+  // switch pro controller
+  if(hid_gamepad_id == 0x057E2009)
+    switch_pro_mount(dev_addr, instance);
+
   if(!tuh_hid_receive_report(dev_addr, instance)) {
     printf("Cound not request report!\n");
   }
@@ -130,6 +161,10 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t cons
     return;
   }
 
+  // switch pro controller setup
+  if(hid_gamepad_id == 0x057E2009)
+    switch_pro_report(dev_addr, instance, report, len);
+
   // check report id if we have one
   if(hid_report_id == -1 || report[0] == hid_report_id) {
     // I hope these are reasonably aligned
@@ -138,8 +173,20 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t cons
     else
       hid_hat = 8;
 
-    hid_joystick[0] = report_data[stick_offset / 8];
-    hid_joystick[1] = report_data[stick_offset / 8 + 1];
+    if(axis_size == 8) {
+      hid_joystick[0] = report_data[stick_offset / 8];
+      hid_joystick[1] = report_data[stick_offset / 8 + 1];
+    } else if(axis_size == 12) {
+      uint16_t x = report_data[stick_offset / 8] | (report_data[stick_offset / 8 + 1] & 0xF) << 8;
+      uint16_t y = report_data[stick_offset / 8 + 1] >> 4 | (report_data[stick_offset / 8 + 2]) << 4;
+      // take the high bits
+      hid_joystick[0] = x >> 4;
+      hid_joystick[1] = y >> 4;
+
+      // FIXME: needs calibration for switch pro controller
+      if(hid_gamepad_id == 0x057E2009)
+        hid_joystick[1] = 0xFF - hid_joystick[1];
+    }
 
     // get up to 32 buttons
     hid_buttons = 0;
