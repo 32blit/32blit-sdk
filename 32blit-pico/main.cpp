@@ -32,7 +32,9 @@ static uint32_t random() {
 }
 
 static void debug(const char *message) {
-  fputs(message, stdout);
+  auto p = message;
+  while(*p)
+    putchar(*p++);
 
   usb_debug(message);
 }

@@ -13,9 +13,6 @@ static volatile int buf_index = 0;
 
 static volatile bool do_render = true;
 
-// user render function
-void render(uint32_t);
-
 static bool do_render_soon = false; // slightly delayed to handle the queue
 
 static void fill_scanline_buffer(struct scanvideo_scanline_buffer *buffer) {
