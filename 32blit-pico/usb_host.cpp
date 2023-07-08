@@ -11,7 +11,7 @@
 
 static int hid_report_id = -1;
 static uint16_t buttons_offset = 0, num_buttons = 0;
-static uint16_t hat_offset = 0, stick_offset = 0;
+static uint16_t hat_offset = 0xFFFF, stick_offset = 0;
 
 uint32_t hid_gamepad_id = 0;
 bool hid_keyboard_detected = false;
@@ -133,7 +133,10 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t cons
   // check report id if we have one
   if(hid_report_id == -1 || report[0] == hid_report_id) {
     // I hope these are reasonably aligned
-    hid_hat = (report_data[hat_offset / 8] >> (hat_offset % 8)) & 0xF;
+    if(hat_offset != 0xFFFF)
+      hid_hat = (report_data[hat_offset / 8] >> (hat_offset % 8)) & 0xF;
+    else
+      hid_hat = 8;
 
     hid_joystick[0] = report_data[stick_offset / 8];
     hid_joystick[1] = report_data[stick_offset / 8 + 1];
