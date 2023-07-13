@@ -114,7 +114,10 @@ elseif(BLIT_AUDIO_DRIVER STREQUAL "pwm")
     list(APPEND BLIT_BOARD_LIBRARIES pico_audio_pwm)
 endif()
 
-if(BLIT_DISPLAY_DRIVER STREQUAL "scanvideo")
+if(BLIT_DISPLAY_DRIVER STREQUAL "picovision")
+    include(pimoroni_pico_import.cmake)
+    list(APPEND BLIT_BOARD_LIBRARIES dv_display)
+elseif(BLIT_DISPLAY_DRIVER STREQUAL "scanvideo")
     set(BLIT_REQUIRE_PICO_EXTRAS TRUE)
     set(BLIT_ENABLE_CORE1 TRUE)
     list(APPEND BLIT_BOARD_LIBRARIES pico_scanvideo_dpi)
@@ -146,6 +149,14 @@ pico_sdk_init()
 # generate PIO headers (has to be after SDK init)
 pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/st7789.pio)
 pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/spi.pio)
+
+# include picovision drivers
+if(BLIT_DISPLAY_DRIVER STREQUAL "picovision")
+    include(common/pimoroni_i2c)
+    include(drivers/aps6404/aps6404)
+    include(drivers/dv_display/dv_display)
+    target_include_directories(BlitHalPico INTERFACE ${PIMORONI_PICO_PATH}) # this should probably be fixed
+endif()
 
 # driver sources
 target_sources(BlitHalPico INTERFACE
