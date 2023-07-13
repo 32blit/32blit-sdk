@@ -62,13 +62,13 @@ target_compile_options(BlitHalPico INTERFACE
 if(DEFINED PICO_ADDON)
     # for boards that don't have a board in the pico sdk
     # (usually because they are an add-on for a regular pico)
-    set(CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/board/${PICO_ADDON}/config.cmake)
+    set(CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/board/${PICO_ADDON})
 else()
-    set(CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/board/${PICO_BOARD}/config.cmake)
+    set(CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/board/${PICO_BOARD})
 endif()
 
-if(EXISTS ${CONFIG_PATH})
-    include(${CONFIG_PATH})
+if(EXISTS ${CONFIG_PATH}/config.cmake)
+    include(${CONFIG_PATH}/config.cmake)
     message("Using board config \"${BLIT_BOARD_NAME}\"")
 else()
     include(${CMAKE_CURRENT_LIST_DIR}/board/pico/config.cmake)
@@ -77,6 +77,10 @@ else()
     else()
         message(WARNING "Using default config for \"${PICO_BOARD}\"...")
     endif()
+endif()
+
+if(EXISTS ${CONFIG_PATH}/config.h)
+    list(APPEND BLIT_BOARD_DEFINITIONS "BLIT_BOARD_CONFIG=\"${CONFIG_PATH}/config.h\"")
 endif()
 
 # default drivers

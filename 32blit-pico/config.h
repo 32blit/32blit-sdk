@@ -1,4 +1,7 @@
 #pragma once
+
+#include BLIT_BOARD_CONFIG
+
 // these are the defaults
 
 #ifndef ALLOW_HIRES
