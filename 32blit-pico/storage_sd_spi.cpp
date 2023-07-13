@@ -10,12 +10,6 @@
 
 #include "spi.pio.h"
 
-// vga board pins
-#define SD_SCK   5
-#define SD_MOSI 18
-#define SD_MISO 19
-#define SD_CS   22
-
 #define SD_TIMEOUT 10
 
 static PIO sd_pio = pio1;
