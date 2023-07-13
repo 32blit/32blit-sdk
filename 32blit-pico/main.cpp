@@ -109,9 +109,11 @@ void core1_main() {
   multicore_lockout_victim_init();
 
   init_display_core1();
+  init_audio();
 
   while(true) {
     update_display_core1();
+    update_audio(::now());
     sleep_us(1);
   }
 }
@@ -185,7 +187,9 @@ int main() {
   init_input();
   init_fs();
   init_usb();
+#if !defined(ENABLE_CORE1)
   init_audio();
+#endif
 
 #if defined(ENABLE_CORE1)
   multicore_launch_core1(core1_main);
@@ -204,7 +208,9 @@ int main() {
     update_display(now);
     update_input();
     int ms_to_next_update = tick(::now());
+#if !defined(ENABLE_CORE1)
     update_audio(now);
+#endif
     update_led();
     update_usb();
     update_multiplayer();
