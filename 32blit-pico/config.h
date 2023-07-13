@@ -5,11 +5,7 @@
 // these are the defaults
 
 #ifndef ALLOW_HIRES
-#ifdef DISPLAY_ST7789
 #define ALLOW_HIRES 1
-#else
-#define ALLOW_HIRES 0 // hires is currently not supported for VGA/DVI
-#endif
 #endif
 
 #ifndef DISPLAY_WIDTH
