@@ -19,6 +19,8 @@ void update_display_core1();
 
 bool display_render_needed();
 
+bool display_mode_supported(blit::ScreenMode new_mode, const blit::SurfaceTemplate &new_surf_template);
+
 void display_mode_changed(blit::ScreenMode new_mode);
 
 blit::SurfaceInfo &set_screen_mode(blit::ScreenMode mode);

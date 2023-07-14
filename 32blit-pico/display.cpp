@@ -54,11 +54,10 @@ bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_templ
 #endif
   }
 
-  display_mode_changed(new_mode);
-
-  // don't support any other formats for various reasons (RAM, no format conversion, pixel double PIO)
-  if(new_surf_template.format != PixelFormat::RGB565)
+  if(!display_mode_supported(new_mode, new_surf_template))
     return false;
+
+  display_mode_changed(new_mode);
 
   cur_screen_mode = new_mode;
 

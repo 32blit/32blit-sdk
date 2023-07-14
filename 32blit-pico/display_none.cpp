@@ -18,5 +18,9 @@ bool display_render_needed() {
   return false;
 }
 
+bool display_mode_supported(blit::ScreenMode new_mode, const blit::SurfaceTemplate &new_surf_template) {
+  return false;
+}
+
 void display_mode_changed(blit::ScreenMode new_mode) {
 }
