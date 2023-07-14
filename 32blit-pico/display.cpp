@@ -60,7 +60,7 @@ bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_templ
   if(!display_mode_supported(new_mode, new_surf_template))
     return false;
 
-  display_mode_changed(new_mode);
+  display_mode_changed(new_mode, new_surf_template);
 
   cur_screen_mode = new_mode;
 
