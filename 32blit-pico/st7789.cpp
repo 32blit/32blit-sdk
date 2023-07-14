@@ -69,22 +69,6 @@ namespace st7789 {
 
   static uint16_t win_w, win_h; // window size
 
-#ifdef PIMORONI_PICOSYSTEM
-  #define CS        PICOSYSTEM_LCD_CSN_PIN
-  #define DC        PICOSYSTEM_LCD_DC_PIN
-  #define SCK       PICOSYSTEM_LCD_SCLK_PIN
-  #define MOSI      PICOSYSTEM_LCD_MOSI_PIN
-  #define BACKLIGHT PICOSYSTEM_BACKLIGHT_PIN
-  #define VSYNC     PICOSYSTEM_LCD_VSYNC_PIN
-  #define RESET     PICOSYSTEM_LCD_RESET_PIN
-#else
-  #define CS        PICO_DEFAULT_SPI_CSN_PIN
-  #define DC        16
-  #define SCK       PICO_DEFAULT_SPI_SCK_PIN
-  #define MOSI      PICO_DEFAULT_SPI_TX_PIN
-  #define BACKLIGHT 20
-#endif
-
   static bool write_mode = false; // in RAMWR
   static bool pixel_double = false;
   static uint16_t *upd_frame_buffer = nullptr;
@@ -126,44 +110,44 @@ namespace st7789 {
 
   void init(bool auto_init_sequence) {
     // configure pins
-    gpio_set_function(DC, GPIO_FUNC_SIO);
-    gpio_set_dir(DC, GPIO_OUT);
+    gpio_set_function(LCD_DC_PIN, GPIO_FUNC_SIO);
+    gpio_set_dir(LCD_DC_PIN, GPIO_OUT);
 
-    gpio_set_function(CS, GPIO_FUNC_SIO);
-    gpio_set_dir(CS, GPIO_OUT);
+    gpio_set_function(LCD_CS_PIN, GPIO_FUNC_SIO);
+    gpio_set_dir(LCD_CS_PIN, GPIO_OUT);
 
-    bi_decl_if_func_used(bi_1pin_with_name(DC, "Display D/C"));
-    bi_decl_if_func_used(bi_1pin_with_name(CS, "Display CS"));
+    bi_decl_if_func_used(bi_1pin_with_name(LCD_DC_PIN, "Display D/C"));
+    bi_decl_if_func_used(bi_1pin_with_name(LCD_CS_PIN, "Display CS"));
 
     // if supported by the display then the vsync pin is
     // toggled high during vertical blanking period
-#ifdef VSYNC
-    gpio_set_function(VSYNC, GPIO_FUNC_SIO);
-    gpio_set_dir(VSYNC, GPIO_IN);
-    gpio_set_pulls(VSYNC, false, true);
+#ifdef LCD_VSYNC_PIN
+    gpio_set_function(LCD_VSYNC_PIN, GPIO_FUNC_SIO);
+    gpio_set_dir(LCD_VSYNC_PIN, GPIO_IN);
+    gpio_set_pulls(LCD_VSYNC_PIN, false, true);
 
-    bi_decl_if_func_used(bi_1pin_with_name(VSYNC, "Display TE/VSync"));
+    bi_decl_if_func_used(bi_1pin_with_name(LCD_VSYNC_PIN, "Display TE/VSync"));
 #endif
 
     // if a backlight pin is provided then set it up for
     // pwm control
-#ifdef BACKLIGHT
+#ifdef LCD_BACKLIGHT_PIN
     pwm_config pwm_cfg = pwm_get_default_config();
-    pwm_set_wrap(pwm_gpio_to_slice_num(BACKLIGHT), 65535);
-    pwm_init(pwm_gpio_to_slice_num(BACKLIGHT), &pwm_cfg, true);
-    gpio_set_function(BACKLIGHT, GPIO_FUNC_PWM);
+    pwm_set_wrap(pwm_gpio_to_slice_num(LCD_BACKLIGHT_PIN), 65535);
+    pwm_init(pwm_gpio_to_slice_num(LCD_BACKLIGHT_PIN), &pwm_cfg, true);
+    gpio_set_function(LCD_BACKLIGHT_PIN, GPIO_FUNC_PWM);
 
-    bi_decl_if_func_used(bi_1pin_with_name(BACKLIGHT, "Display Backlight"));
+    bi_decl_if_func_used(bi_1pin_with_name(LCD_BACKLIGHT_PIN, "Display Backlight"));
 #endif
 
-#ifdef RESET
-    gpio_set_function(RESET, GPIO_FUNC_SIO);
-    gpio_set_dir(RESET, GPIO_OUT);
-    gpio_put(RESET, 0);
+#ifdef LCD_RESET_PIN
+    gpio_set_function(LCD_RESET_PIN, GPIO_FUNC_SIO);
+    gpio_set_dir(LCD_RESET_PIN, GPIO_OUT);
+    gpio_put(LCD_RESET_PIN, 0);
     sleep_ms(100);
-    gpio_put(RESET, 1);
+    gpio_put(LCD_RESET_PIN, 1);
 
-    bi_decl_if_func_used(bi_1pin_with_name(RESET, "Display Reset"));
+    bi_decl_if_func_used(bi_1pin_with_name(LCD_RESET_PIN, "Display Reset"));
 #endif
 
     // setup PIO
@@ -176,21 +160,22 @@ namespace st7789 {
 #if OVERCLOCK_250
     sm_config_set_clkdiv(&cfg, 2); // back to 62.5MHz from overclock
 #endif
-    sm_config_set_out_shift(&cfg, false, true, 8);
-    sm_config_set_out_pins(&cfg, MOSI, 1);
-    sm_config_set_fifo_join(&cfg, PIO_FIFO_JOIN_TX);
-    sm_config_set_sideset_pins(&cfg, SCK);
 
-    pio_gpio_init(pio, MOSI);
-    pio_gpio_init(pio, SCK);
-    pio_sm_set_consecutive_pindirs(pio, pio_sm, MOSI, 1, true);
-    pio_sm_set_consecutive_pindirs(pio, pio_sm, SCK, 1, true);
+    sm_config_set_out_shift(&cfg, false, true, 8);
+    sm_config_set_out_pins(&cfg, LCD_MOSI_PIN, 1);
+    sm_config_set_fifo_join(&cfg, PIO_FIFO_JOIN_TX);
+    sm_config_set_sideset_pins(&cfg, LCD_SCK_PIN);
+
+    pio_gpio_init(pio, LCD_MOSI_PIN);
+    pio_gpio_init(pio, LCD_SCK_PIN);
+    pio_sm_set_consecutive_pindirs(pio, pio_sm, LCD_MOSI_PIN, 1, true);
+    pio_sm_set_consecutive_pindirs(pio, pio_sm, LCD_SCK_PIN, 1, true);
 
     pio_sm_init(pio, pio_sm, pio_offset, &cfg);
     pio_sm_set_enabled(pio, pio_sm, true);
 
-    bi_decl_if_func_used(bi_1pin_with_name(MOSI, "Display TX"));
-    bi_decl_if_func_used(bi_1pin_with_name(SCK, "Display SCK"));
+    bi_decl_if_func_used(bi_1pin_with_name(LCD_MOSI_PIN, "Display TX"));
+    bi_decl_if_func_used(bi_1pin_with_name(LCD_SCK_PIN, "Display SCK"));
 
     // if auto_init_sequence then send initialisation sequence
     // for our standard displays based on the width and height
@@ -293,21 +278,21 @@ namespace st7789 {
       write_mode = false;
     }
 
-    gpio_put(CS, 0);
+    gpio_put(LCD_CS_PIN, 0);
 
-    gpio_put(DC, 0); // command mode
+    gpio_put(LCD_DC_PIN, 0); // command mode
     pio_put_byte(pio, pio_sm, command);
 
     if(data) {
       pio_wait(pio, pio_sm);
-      gpio_put(DC, 1); // data mode
+      gpio_put(LCD_DC_PIN, 1); // data mode
 
       for(size_t i = 0; i < len; i++)
         pio_put_byte(pio, pio_sm, data[i]);
     }
 
     pio_wait(pio, pio_sm);
-    gpio_put(CS, 1);
+    gpio_put(LCD_CS_PIN, 1);
   }
 
   void update(bool dont_block) {
@@ -331,18 +316,18 @@ namespace st7789 {
   }
 
   void set_backlight(uint8_t brightness) {
-#ifdef BACKLIGHT
+#ifdef LCD_BACKLIGHT_PIN
     // gamma correct the provided 0-255 brightness value onto a
     // 0-65535 range for the pwm counter
     float gamma = 2.8;
     uint16_t value = (uint16_t)(pow((float)(brightness) / 255.0f, gamma) * 65535.0f + 0.5f);
-    pwm_set_gpio_level(BACKLIGHT, value);
+    pwm_set_gpio_level(LCD_BACKLIGHT_PIN, value);
 #endif
   }
 
   bool vsync_callback(gpio_irq_callback_t callback) {
-#ifdef VSYNC
-    gpio_set_irq_enabled_with_callback(VSYNC, GPIO_IRQ_EDGE_RISE, true, callback);
+#ifdef LCD_VSYNC_PIN
+    gpio_set_irq_enabled_with_callback(LCD_VSYNC_PIN, GPIO_IRQ_EDGE_RISE, true, callback);
     return true;
 #else
     return false;
@@ -394,13 +379,13 @@ namespace st7789 {
 
     // setup for writing
     uint8_t r = reg::RAMWR;
-    gpio_put(CS, 0);
+    gpio_put(LCD_CS_PIN, 0);
 
-    gpio_put(DC, 0); // command mode
+    gpio_put(LCD_DC_PIN, 0); // command mode
     pio_put_byte(pio, pio_sm, r);
     pio_wait(pio, pio_sm);
 
-    gpio_put(DC, 1); // data mode
+    gpio_put(LCD_DC_PIN, 1); // data mode
 
     pio_sm_set_enabled(pio, pio_sm, false);
     pio_sm_restart(pio, pio_sm);

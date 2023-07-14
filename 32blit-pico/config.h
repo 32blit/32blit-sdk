@@ -1,12 +1,11 @@
 #pragma once
+
+#include BLIT_BOARD_CONFIG
+
 // these are the defaults
 
 #ifndef ALLOW_HIRES
-#ifdef DISPLAY_ST7789
 #define ALLOW_HIRES 1
-#else
-#define ALLOW_HIRES 0 // hires is currently not supported for VGA/DVI
-#endif
 #endif
 
 #ifndef DISPLAY_WIDTH
@@ -19,6 +18,26 @@
 
 #ifndef DISPLAY_HEIGHT
 #define DISPLAY_HEIGHT 240
+#endif
+
+#ifndef LCD_CS_PIN
+#define LCD_CS_PIN PICO_DEFAULT_SPI_CSN_PIN
+#endif
+
+#ifndef LCD_DC_PIN
+#define LCD_DC_PIN 16
+#endif
+
+#ifndef LCD_SCK_PIN
+#define LCD_SCK_PIN PICO_DEFAULT_SPI_SCK_PIN
+#endif
+
+#ifndef LCD_MOSI_PIN
+#define LCD_MOSI_PIN PICO_DEFAULT_SPI_TX_PIN
+#endif
+
+#ifndef LCD_BACKLIGHT_PIN
+#define LCD_BACKLIGHT_PIN 20
 #endif
 
 #ifndef OVERCLOCK_250
