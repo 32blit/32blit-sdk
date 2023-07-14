@@ -42,6 +42,9 @@ static void set_screen_palette(const blit::Pen *colours, int num_cols) {
 static bool set_screen_mode_format(blit::ScreenMode new_mode, blit::SurfaceTemplate &new_surf_template) {
   new_surf_template.data = framebuffer;
 
+  if(new_surf_template.format == (blit::PixelFormat)-1)
+    new_surf_template.format = blit::PixelFormat::RGB;
+
   switch(new_mode) {
     case blit::ScreenMode::lores:
       new_surf_template.bounds = blit::Size(System::width / 2, System::height / 2);

@@ -140,6 +140,9 @@ namespace display {
   bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_template) {
     new_surf_template.data = (uint8_t *)&__fb_start;
 
+    if(new_surf_template.format == (blit::PixelFormat)-1)
+      new_surf_template.format = blit::PixelFormat::RGB;
+
     switch(new_mode) {
       case ScreenMode::lores:
         new_surf_template.bounds = lores_screen_size;

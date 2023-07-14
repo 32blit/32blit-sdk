@@ -40,6 +40,9 @@ SurfaceInfo &set_screen_mode(ScreenMode mode) {
 bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_template) {
   new_surf_template.data = (uint8_t *)screen_fb;
 
+  if(new_surf_template.format == (PixelFormat)-1)
+    new_surf_template.format = DEFAULT_SCREEN_FORMAT;
+
   switch(new_mode) {
     case ScreenMode::lores:
       new_surf_template.bounds = lores_screen_size;
