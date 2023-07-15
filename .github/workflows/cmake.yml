@@ -41,6 +41,14 @@ jobs:
             apt-packages: ccache gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib python3-setuptools
 
           - os: ubuntu-20.04
+            pico-sdk: true
+            name: PicoVision
+            cache-key: picovision
+            release-suffix: PicoVision
+            cmake-args: -D32BLIT_DIR=$GITHUB_WORKSPACE -DPICO_SDK_PATH=$GITHUB_WORKSPACE/pico-sdk -DPICO_BOARD=pico_w -DPICO_ADDON=pimoroni_picovision -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+            apt-packages: ccache gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib python3-setuptools
+
+          - os: ubuntu-20.04
             name: MinGW
             cache-key: mingw
             artifact-suffix: MinGW
