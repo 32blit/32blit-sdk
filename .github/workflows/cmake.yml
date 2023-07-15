@@ -84,6 +84,15 @@ jobs:
         repository: raspberrypi/pico-extras
         path: pico-extras
 
+    # PicoVision needs the RAM driver and the firmware
+    - name: Checkout PicoVision
+      if: matrix.name == 'PicoVision'
+      uses: actions/checkout@v3
+      with:
+        repository: pimoroni/picovision
+        ref: dd3415ad2218267d0bd67008effd4f60860e0c22
+        path: picovision
+
     - name: Cache
       uses: actions/cache@v3
       with:
