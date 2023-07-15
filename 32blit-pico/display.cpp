@@ -6,7 +6,9 @@ using namespace blit;
 
 static SurfaceInfo cur_surf_info;
 
-#if ALLOW_HIRES
+#if defined(BLIT_BOARD_PIMORONI_PICOVISION)
+static const uint16_t *screen_fb = nullptr;
+#elif ALLOW_HIRES
 uint16_t screen_fb[DISPLAY_WIDTH * DISPLAY_HEIGHT];
 #else
 uint16_t screen_fb[lores_page_size]; // double-buffered

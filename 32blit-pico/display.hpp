@@ -9,7 +9,9 @@
 static const int lores_page_size = (DISPLAY_WIDTH / 2) * ((DISPLAY_HEIGHT + 1) / 2) * 2;
 
 extern blit::ScreenMode cur_screen_mode;
+#ifndef BLIT_BOARD_PIMORONI_PICOVISION
 extern uint16_t screen_fb[];
+#endif
 
 void init_display();
 void update_display(uint32_t time);
