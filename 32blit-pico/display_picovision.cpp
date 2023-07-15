@@ -106,7 +106,12 @@ static void pen_rgba_rgb555_picovision(const blit::Pen* pen, const blit::Surface
     if (a >= 255) {
       // no alpha, just copy
       uint32_t val = pen555 | pen555 << 16;
-      ram.write_repeat(base_address + off * 2, val, c * 2);
+      do {
+        auto step = std::min(c, UINT32_C(512));
+        ram.write_repeat(base_address + off * 2, val, step * 2);
+        off += step;
+        c -= step;
+      } while(c);
     }
     else {
       // alpha, blend
