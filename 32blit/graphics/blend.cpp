@@ -348,27 +348,6 @@ namespace blit {
     uint8_t* d = dest->data + (doff * 3);
     uint8_t* m = dest->mask ? dest->mask->data + doff : nullptr;
 
-    // solid fill/blend
-    if(!m && src_step == 0 && cnt > 1) {
-      Pen *pen = src->palette ? &src->palette[*s] : (Pen *)s;
-
-      uint16_t a = src->format == PixelFormat::RGB ? 255 : pen->a;
-
-      if(!a) return;
-
-      a = alpha(a, dest->alpha);
-
-      if (a >= 255) {
-        // no alpha, just copy
-        copy_rgba_rgb(pen, d, cnt);
-      }
-      else {
-        // alpha, blend
-        blend_rgba_rgb(pen, d, a, cnt);
-      }
-      return;
-    }
-
     do {
       Pen *pen = src->palette ? &src->palette[*s] : (Pen *)s;
 
@@ -393,27 +372,6 @@ namespace blit {
     uint8_t* s = src->palette ? src->data + soff : src->data + (soff * src->pixel_stride);
     uint8_t* d = dest->data + (doff * 2);
     uint8_t* m = dest->mask ? dest->mask->data + doff : nullptr;
-
-    // solid fill/blend
-    if(!m && src_step == 0 && cnt > 1) {
-      Pen *pen = src->palette ? &src->palette[*s] : (Pen *)s;
-
-      uint16_t a = src->format == PixelFormat::RGB ? 255 : pen->a;
-
-      if(!a) return;
-
-      a = alpha(a, dest->alpha);
-
-      if (a >= 255) {
-        // no alpha, just copy
-        copy_rgba_rgb565(pen, d, cnt);
-      }
-      else {
-        // alpha, blend
-        blend_rgba_rgb565(pen, d, a, cnt);
-      }
-      return;
-    }
 
     auto d16 = (uint16_t *)d;
 
