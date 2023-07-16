@@ -35,6 +35,10 @@ static volatile bool do_render = true;
 
 static uint16_t blend_buf[256];
 
+static uint32_t batch_start_addr = 0, batch_next_off = ~0u;
+static uint16_t *batch_ptr = nullptr;
+static const uint16_t *batch_end = blend_buf + std::size(blend_buf);
+
 static void vsync_callback(uint gpio, uint32_t events){
   if(!do_render) {
     ram_bank ^= 1;
@@ -67,7 +71,16 @@ inline void unpack_rgb555(uint16_t rgb555, uint8_t &r, uint8_t &g, uint8_t &b) {
   b =  rgb555        & 0x1F; b = b << 3;
 }
 
+static void flush_batch() {
+  if(batch_ptr)
+    ram.write(batch_start_addr, (uint32_t *)blend_buf, (batch_ptr - blend_buf) * 2);
+
+  batch_ptr = nullptr;
+  batch_next_off = ~0u;
+}
+
 inline void blend_rgba_rgb555(const blit::Pen* s, uint32_t off, uint8_t a, uint32_t c) {
+  flush_batch();
   do {
     auto step = std::min(c, uint32_t(std::size(blend_buf)));
 
@@ -101,17 +114,39 @@ static void pen_rgba_rgb555_picovision(const blit::Pen* pen, const blit::Surface
   off *= h_repeat;
   c *= h_repeat;
 
+  // batching
+  constexpr size_t cache_size = std::size(blend_buf);
+  if(batch_next_off != off || batch_ptr + c > batch_end) {
+    flush_batch();
+
+    batch_start_addr = base_address + off * 2;
+    batch_next_off = off;
+    batch_ptr = blend_buf;
+  }
+
   if (!m) {
     // no mask
     if (a >= 255) {
       // no alpha, just copy
-      uint32_t val = pen555 | pen555 << 16;
-      do {
-        auto step = std::min(c, UINT32_C(512));
-        ram.write_repeat(base_address + off * 2, val, step * 2);
-        off += step;
-        c -= step;
-      } while(c);
+      if(c >= cache_size) {
+        // big fill, skip the batch buf
+        flush_batch();
+
+        uint32_t val = pen555 | pen555 << 16;
+        do {
+          auto step = std::min(c, UINT32_C(512));
+          ram.write_repeat(base_address + off * 2, val, step * 2);
+          off += step;
+          c -= step;
+        } while(c);
+      } else {
+        // write to cache buf
+        batch_next_off += c;
+
+        do {
+          *batch_ptr++ = pen555;
+        } while(--c);
+      }
     }
     else {
       // alpha, blend
@@ -134,6 +169,8 @@ static void blit_rgba_rgb555_picovision(const blit::Surface* src, uint32_t soff,
 
   doff *= h_repeat;
   cnt *= h_repeat;
+
+  flush_batch();
 
   do {
     auto step = std::min(cnt, uint32_t(std::size(blend_buf)));
@@ -251,6 +288,8 @@ void update_display(uint32_t time) {
     return;
   
   blit::render(time);
+
+  flush_batch();
 
   ram.wait_for_finish_blocking();
 
