@@ -101,18 +101,9 @@ inline void blend_rgba_rgb555(const blit::Pen* s, uint32_t off, uint8_t a, uint3
   } while(c);
 }
 
-template<int h_repeat = 1>
-static void pen_rgba_rgb555_picovision(const blit::Pen* pen, const blit::Surface* dest, uint32_t off, uint32_t c) {
-  if(!pen->a) return;
-
-  uint8_t* m = dest->mask ? dest->mask->data + off : nullptr;
-
-  uint16_t a = alpha(pen->a, dest->alpha);
-
-  auto pen555 = pack_rgb555(pen->r, pen->g, pen->b);
-
-  off *= h_repeat;
-  c *= h_repeat;
+[[gnu::always_inline]]
+inline void copy_rgba_rgb555(const blit::Pen* s, uint32_t off, uint32_t c) {
+  auto pen555 = pack_rgb555(s->r, s->g, s->b);
 
   // batching
   constexpr size_t cache_size = std::size(blend_buf);
@@ -124,29 +115,43 @@ static void pen_rgba_rgb555_picovision(const blit::Pen* pen, const blit::Surface
     batch_ptr = blend_buf;
   }
 
+  if(c >= cache_size) {
+    // big fill, skip the batch buf
+    flush_batch();
+
+    uint32_t val = pen555 | pen555 << 16;
+    do {
+      auto step = std::min(c, UINT32_C(512));
+      ram.write_repeat(base_address + off * 2, val, step * 2);
+      off += step;
+      c -= step;
+    } while(c);
+  } else {
+    // write to cache buf
+    batch_next_off += c;
+
+    do {
+      *batch_ptr++ = pen555;
+    } while(--c);
+  }
+}
+
+template<int h_repeat = 1>
+static void pen_rgba_rgb555_picovision(const blit::Pen* pen, const blit::Surface* dest, uint32_t off, uint32_t c) {
+  if(!pen->a) return;
+
+  uint8_t* m = dest->mask ? dest->mask->data + off : nullptr;
+
+  uint16_t a = alpha(pen->a, dest->alpha);
+
+  off *= h_repeat;
+  c *= h_repeat;
+
   if (!m) {
     // no mask
     if (a >= 255) {
       // no alpha, just copy
-      if(c >= cache_size) {
-        // big fill, skip the batch buf
-        flush_batch();
-
-        uint32_t val = pen555 | pen555 << 16;
-        do {
-          auto step = std::min(c, UINT32_C(512));
-          ram.write_repeat(base_address + off * 2, val, step * 2);
-          off += step;
-          c -= step;
-        } while(c);
-      } else {
-        // write to cache buf
-        batch_next_off += c;
-
-        do {
-          *batch_ptr++ = pen555;
-        } while(--c);
-      }
+      copy_rgba_rgb555(pen, off, c);
     }
     else {
       // alpha, blend
