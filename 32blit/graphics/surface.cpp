@@ -424,7 +424,8 @@ namespace blit {
           new_x += x_step;
         }
 
-        bbf(src, src_offset + (x >> fix_shift) * src_step, this, dest_offset, num, 0);
+        auto pen = src->get_pixel(src_offset + (x >> fix_shift) * src_step);
+        pbf(&pen, this, dest_offset, num);
         dest_offset += num;
 
         x = new_x;
@@ -516,7 +517,8 @@ namespace blit {
           new_x += scale_x;
         }
 
-        bbf(src, src_offset + (x >> fix_shift), this, dest_offset, num, 0);
+        auto pen = src->get_pixel(src_offset + (x >> fix_shift));
+        pbf(&pen, this, dest_offset, num);
         dest_offset += num;
 
         x = new_x;
