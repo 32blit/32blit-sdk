@@ -60,22 +60,27 @@ namespace blit {
     case PixelFormat::RGBA: {
       pbf = RGBA_RGBA;
       bbf = RGBA_RGBA;
+      pgf = get_pen_rgba;
     }break;
     case PixelFormat::RGB: {
       pbf = RGBA_RGB;
       bbf = RGBA_RGB;
+      pgf = get_pen_rgb;
     }break;
     case PixelFormat::P: {
       pbf = P_P;
       bbf = P_P;
+      pgf = get_pen_p;
     }break;
     case PixelFormat::M: {
       pbf = M_M;
       bbf = M_M;
+      pgf = get_pen_m;
     }break;
     case PixelFormat::RGB565: {
       pbf = RGBA_RGB565;
       bbf = RGBA_RGB565;
+      pgf = get_pen_rgb565;
     }break;
     }
   }

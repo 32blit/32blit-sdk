@@ -128,6 +128,7 @@ namespace blit {
     // blend functions
     blit::PenBlendFunc              pbf;
     blit::BlitBlendFunc             bbf;
+    blit::PenGetFunc                pgf;
 
     std::vector<Surface *>          mipmaps;                  // TODO: probably too niche/specific to attach directly to surface
 
@@ -163,6 +164,9 @@ namespace blit {
     __attribute__((always_inline)) inline uint32_t offset(int32_t x, int32_t y) { return x + y * bounds.w; }
 
     void generate_mipmaps(uint8_t depth);
+
+    Pen get_pixel(uint32_t offset) {return pgf(this, offset);}
+    Pen get_pixel(Point p) {return pgf(this, offset(p));}
 
     void clear();
     void pixel(const Point &p);

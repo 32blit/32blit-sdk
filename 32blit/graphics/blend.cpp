@@ -459,4 +459,33 @@ namespace blit {
       s += src_step;
     } while (--cnt);
   }
+
+  Pen get_pen_rgb(const Surface *surf, uint32_t offset) {
+    auto ptr = surf->data + offset * 3;
+    return {ptr[0], ptr[1], ptr[2]};
+  }
+
+  Pen get_pen_rgba(const Surface *surf, uint32_t offset) {
+    auto ptr = surf->data + offset * 4;
+    return *(Pen *)ptr;
+  }
+
+  Pen get_pen_p(const Surface *surf, uint32_t offset) {
+    auto ptr = surf->data + offset;
+    return surf->palette[*ptr];
+  }
+
+  Pen get_pen_m(const Surface *surf, uint32_t offset) {
+    auto ptr = surf->data + offset;
+    return {*ptr}; // mask is just alpha
+  }
+
+  Pen get_pen_rgb565(const Surface *surf, uint32_t offset) {
+    auto ptr = surf->data + offset * 2;
+
+    auto rgb565 = *(uint16_t *)ptr;
+    uint8_t r, g, b;
+    unpack_rgb565(rgb565, r, g, b);
+    return {r, g, b};
+  }
 }
