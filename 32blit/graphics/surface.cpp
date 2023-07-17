@@ -60,22 +60,27 @@ namespace blit {
     case PixelFormat::RGBA: {
       pbf = RGBA_RGBA;
       bbf = RGBA_RGBA;
+      pgf = get_pen_rgba;
     }break;
     case PixelFormat::RGB: {
       pbf = RGBA_RGB;
       bbf = RGBA_RGB;
+      pgf = get_pen_rgb;
     }break;
     case PixelFormat::P: {
       pbf = P_P;
       bbf = P_P;
+      pgf = get_pen_p;
     }break;
     case PixelFormat::M: {
       pbf = M_M;
       bbf = M_M;
+      pgf = get_pen_m;
     }break;
     case PixelFormat::RGB565: {
       pbf = RGBA_RGB565;
       bbf = RGBA_RGB565;
+      pgf = get_pen_rgb565;
     }break;
     }
   }
@@ -419,7 +424,8 @@ namespace blit {
           new_x += x_step;
         }
 
-        bbf(src, src_offset + (x >> fix_shift) * src_step, this, dest_offset, num, 0);
+        auto pen = src->get_pixel(src_offset + (x >> fix_shift) * src_step);
+        pbf(&pen, this, dest_offset, num);
         dest_offset += num;
 
         x = new_x;
@@ -511,7 +517,8 @@ namespace blit {
           new_x += scale_x;
         }
 
-        bbf(src, src_offset + (x >> fix_shift), this, dest_offset, num, 0);
+        auto pen = src->get_pixel(src_offset + (x >> fix_shift));
+        pbf(&pen, this, dest_offset, num);
         dest_offset += num;
 
         x = new_x;

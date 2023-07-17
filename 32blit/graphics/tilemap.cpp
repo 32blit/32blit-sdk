@@ -222,8 +222,8 @@ namespace blit {
           count++;
         } while(c && (wc.x >> fix_shift) == wcx && (wc.y >> fix_shift) == wcy);
 
-        int soff = src->offset(u, v);
-        dest->bbf(src, soff, dest, doff, count, 0);
+        auto pen = src->get_pixel({u, v});
+        dest->pbf(&pen, dest, doff, count);
 
         doff += count;
 
