@@ -12,16 +12,18 @@
 #include "storage.hpp"
 
 static FATFS fs;
+static bool initialised = false;
 
 std::vector<void *> open_files;
 
 // fatfs io funcs
 DSTATUS disk_initialize(BYTE pdrv) {
-  return RES_OK;
+  initialised = storage_init();
+  return initialised ? RES_OK : STA_NOINIT;
 }
 
 DSTATUS disk_status(BYTE pdrv) {
-  return RES_OK; // FIXME: NOINIT?
+  return initialised ? RES_OK : STA_NOINIT;
 }
 
 DRESULT disk_read(BYTE pdrv, BYTE *buff, LBA_t sector, UINT count) {
@@ -57,6 +59,8 @@ DRESULT disk_ioctl(BYTE pdrv, BYTE cmd, void* buff) {
 void init_fs() {
   auto res = f_mount(&fs, "", 1);
 
+  // auto-format flash, but not SD cards
+#ifndef STORAGE_SD
   if(res == FR_NO_FILESYSTEM) {
     printf("No filesystem found, formatting...\n");
 
@@ -71,6 +75,7 @@ void init_fs() {
 
     res = f_mount(&fs, "", 1);
   }
+#endif
 
   if(res != FR_OK)
     printf("Failed to mount filesystem! (%i)\n", res);

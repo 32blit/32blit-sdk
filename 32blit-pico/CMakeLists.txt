@@ -38,7 +38,6 @@ target_sources(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/file.cpp
     ${CMAKE_CURRENT_LIST_DIR}/led.cpp
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/storage.cpp
     ${CMAKE_CURRENT_LIST_DIR}/multiplayer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/st7789.cpp
     ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
@@ -99,6 +98,9 @@ endif()
 if(NOT BLIT_INPUT_DRIVER)
     set(BLIT_INPUT_DRIVER "none")
 endif()
+if(NOT BLIT_STORAGE_DRIVER)
+    set(BLIT_STORAGE_DRIVER "flash")
+endif()
 if(NOT BLIT_USB_DRIVER)
     set(BLIT_USB_DRIVER "device")
 endif()
@@ -124,6 +126,10 @@ if(BLIT_INPUT_DRIVER STREQUAL "usb_hid")
     list(APPEND BLIT_BOARD_DEFINITIONS INPUT_USB_HID)
 endif()
 
+if(BLIT_STORAGE_DRIVER STREQUAL "sd_spi")
+    list(APPEND BLIT_BOARD_DEFINITIONS STORAGE_SD)
+endif()
+
 if(BLIT_USB_DRIVER STREQUAL "host")
     list(APPEND BLIT_BOARD_DEFINITIONS USB_HOST)
     list(APPEND BLIT_BOARD_LIBRARIES tinyusb_host)
@@ -139,12 +145,14 @@ pico_sdk_init()
 
 # generate PIO headers (has to be after SDK init)
 pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/st7789.pio)
+pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/spi.pio)
 
 # driver sources
 target_sources(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/audio_${BLIT_AUDIO_DRIVER}.cpp
     ${CMAKE_CURRENT_LIST_DIR}/display_${BLIT_DISPLAY_DRIVER}.cpp
     ${CMAKE_CURRENT_LIST_DIR}/input_${BLIT_INPUT_DRIVER}.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/storage_${BLIT_STORAGE_DRIVER}.cpp
     ${CMAKE_CURRENT_LIST_DIR}/usb_${BLIT_USB_DRIVER}.cpp
 )
 
