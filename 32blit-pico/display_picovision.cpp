@@ -214,6 +214,16 @@ static void blit_rgba_rgb555_picovision(const blit::Surface* src, uint32_t soff,
   } while(cnt);
 }
 
+template<int h_repeat = 1>
+static blit::Pen get_pen_rgb555_picovision(const blit::Surface *surf, uint32_t offset) {
+  uint32_t tmp;
+  ram.read_blocking(base_address + offset * h_repeat * 2, &tmp, 1);
+
+  uint8_t r, g, b;
+  unpack_rgb555(tmp, r, g, b);
+  return {r, g, b};
+}
+
 static void write_frame_setup(uint16_t width, uint16_t height, blit::PixelFormat format, uint8_t h_repeat, uint8_t v_repeat) {
   constexpr int buf_size = 32;
   uint32_t buf[buf_size];
@@ -359,9 +369,11 @@ void display_mode_changed(blit::ScreenMode new_mode, blit::SurfaceTemplate &new_
   if(new_surf_template.bounds.w <= 160) {
     new_surf_template.pen_blend = pen_rgba_rgb555_picovision<2>;
     new_surf_template.blit_blend = blit_rgba_rgb555_picovision<2>;
+    new_surf_template.pen_get = get_pen_rgb555_picovision<2>;
   } else {
     new_surf_template.pen_blend = pen_rgba_rgb555_picovision;
     new_surf_template.blit_blend = blit_rgba_rgb555_picovision;
+    new_surf_template.pen_get = get_pen_rgb555_picovision;
   }
 
   need_mode_change = 2; // make sure to update both banks

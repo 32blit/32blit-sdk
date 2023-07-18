@@ -28,6 +28,7 @@ namespace blit {
 
     PenBlendFunc pen_blend = nullptr;
     BlitBlendFunc blit_blend = nullptr;
+    PenGetFunc pen_get = nullptr;
   };
 
   // subset of Surface for API compat

@@ -36,6 +36,9 @@ namespace blit {
     if(new_screen.blit_blend)
       screen.bbf = new_screen.blit_blend;
 
+    if(new_screen.pen_get)
+      screen.pgf = new_screen.pen_get;
+
     return true;
   }
 
