@@ -35,6 +35,7 @@ static blit::AudioChannel channels[CHANNEL_COUNT];
 static int (*do_tick)(uint32_t time) = blit::tick;
 
 static uint32_t requested_launch_offset = 0;
+static uint32_t current_game_offset = 0;
 
 // override terminate handler to save ~20-30k
 namespace __cxxabiv1 {
@@ -67,8 +68,46 @@ const char *get_launch_path()  {
   return nullptr;
 }
 
+RawMetadata *get_running_game_metadata() {
+#ifdef BUILD_LOADER
+  if(!current_game_offset)
+    return nullptr;
+
+  auto game_ptr = reinterpret_cast<uint8_t *>(XIP_NOCACHE_NOALLOC_BASE + current_game_offset);
+
+  auto header = reinterpret_cast<BlitGameHeader *>(game_ptr);
+
+  if(header->magic == blit_game_magic) {
+    auto end_ptr = game_ptr + header->end;
+    if(memcmp(end_ptr, "BLITMETA", 8) == 0)
+      return reinterpret_cast<RawMetadata *>(end_ptr + 10);
+  }
+
+#endif
+  return nullptr;
+}
+
 static GameMetadata get_metadata() {
   GameMetadata ret;
+
+  // check for blit metadata
+  if(auto meta = get_running_game_metadata()) {
+    // this is identical to the 32blit-stm code
+    ret.title = meta->title;
+    ret.author = meta->author;
+    ret.description = meta->description;
+    ret.version = meta->version;
+
+    if(memcmp(meta + 1, "BLITTYPE", 8) == 0) {
+      auto type_meta = reinterpret_cast<RawTypeMetadata *>(reinterpret_cast<char *>(meta) + sizeof(*meta) + 8);
+      ret.url = type_meta->url;
+      ret.category = type_meta->category;
+    } else {
+      ret.url = "";
+      ret.category = "none";
+    }
+    return ret;
+  }
 
   // parse binary info
   extern binary_info_t *__binary_info_start, *__binary_info_end;
@@ -139,10 +178,16 @@ static blit::CanLaunchResult can_launch(const char *path) {
 
 static void delayed_launch() {
   auto header = (BlitGameHeader *)(XIP_NOCACHE_NOALLOC_BASE + requested_launch_offset);
+
+  // save in case launch fails
+  uint32_t last_game_offset = current_game_offset;
+
+  current_game_offset = requested_launch_offset;
   requested_launch_offset = 0;
 
   if(!header->init(0)) {
     debugf("failed to init game!\n");
+    current_game_offset = last_game_offset;
     return;
   }
 
