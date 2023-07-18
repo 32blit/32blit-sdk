@@ -177,6 +177,52 @@ static void pen_rgba_rgb555_picovision(const blit::Pen* pen, const blit::Surface
 }
 
 template<int h_repeat = 1>
+static void blit_rgb555(uint16_t *s, const blit::Surface* dest, uint32_t doff, uint32_t cnt, int32_t src_step) {
+  if(h_repeat == 1 && src_step == 1 && !dest->mask && dest->alpha == 255) {
+    // copy
+    ram.write(base_address + doff * 2, (uint32_t *)s, cnt * 2);
+    return;
+  }
+
+  do {
+    auto step = std::min(cnt, uint32_t(std::size(blend_buf)));
+
+    auto *ptr = blend_buf;
+
+    if(dest->alpha < 255) {
+      // read and blend
+      ram.read_blocking(base_address + doff * 2, (uint32_t*)blend_buf, (step + 1) >> 1);
+
+      for(unsigned i = 0; i < step; i += h_repeat) {
+        uint8_t r, g, b, sr, sg, sb;
+        uint8_t a = dest->alpha;
+        unpack_rgb555(*s, sr, sg, sb);
+        unpack_rgb555(*ptr, r, g, b);
+        auto col = pack_rgb555(blend(sr, r, a), blend(sg, g, a), blend(sb, b, a));
+
+        for(int j = 0; j < h_repeat; j++)
+          *ptr++ = col;
+
+        s += src_step;
+      }
+    } else {
+      ram.wait_for_finish_blocking(); // make sure to always wait
+    
+      for(unsigned i = 0; i < step; i += h_repeat) {
+        for(int j = 0; j < h_repeat; j++)
+          *ptr++ = *s;
+
+        s += src_step;
+      }
+    }
+
+    ram.write(base_address + doff * 2, (uint32_t *)blend_buf, step * 2);
+    doff += step;
+    cnt -= step;
+  } while(cnt);
+}
+
+template<int h_repeat = 1>
 static void blit_rgba_rgb555_picovision(const blit::Surface* src, uint32_t soff, const blit::Surface* dest, uint32_t doff, uint32_t cnt, int32_t src_step) {
   uint8_t* s = src->palette ? src->data + soff : src->data + (soff * src->pixel_stride);
   uint8_t* m = dest->mask ? dest->mask->data + doff : nullptr;
@@ -185,6 +231,9 @@ static void blit_rgba_rgb555_picovision(const blit::Surface* src, uint32_t soff,
   cnt *= h_repeat;
 
   flush_batch();
+
+  if(src->format == blit::PixelFormat::BGR555)
+    return blit_rgb555<h_repeat>((uint16_t *)s, dest, doff, cnt, src_step);
 
   do {
     auto step = std::min(cnt, uint32_t(std::size(blend_buf)));
