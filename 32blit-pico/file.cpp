@@ -10,6 +10,7 @@
 
 #include "file.hpp"
 #include "storage.hpp"
+#include "executable.hpp"
 
 static FATFS fs;
 static bool initialised = false;
@@ -81,6 +82,8 @@ void init_fs() {
 
 static char save_path[32]; // max game title length is 24 + ".blit/" + "/"
 
+RawMetadata *get_running_game_metadata();
+
 const char *get_save_path() {
   const char *app_name = "_unknown";
 
@@ -89,18 +92,22 @@ const char *get_save_path() {
 
   app_name = "_unknown";
 
-  // fint the program name in the binary info
-  extern binary_info_t *__binary_info_start, *__binary_info_end;
+  if(auto meta = get_running_game_metadata())
+    app_name = meta->title;
+  else {
+    // find the program name in the binary info
+    extern binary_info_t *__binary_info_start, *__binary_info_end;
 
-  for(auto tag_ptr = &__binary_info_start; tag_ptr != &__binary_info_end ; tag_ptr++) {
-    if((*tag_ptr)->type != BINARY_INFO_TYPE_ID_AND_STRING || (*tag_ptr)->tag != BINARY_INFO_TAG_RASPBERRY_PI)
-      continue;
+    for(auto tag_ptr = &__binary_info_start; tag_ptr != &__binary_info_end ; tag_ptr++) {
+      if((*tag_ptr)->type != BINARY_INFO_TYPE_ID_AND_STRING || (*tag_ptr)->tag != BINARY_INFO_TAG_RASPBERRY_PI)
+        continue;
 
-    auto id_str_tag = (binary_info_id_and_string_t *)*tag_ptr;
+      auto id_str_tag = (binary_info_id_and_string_t *)*tag_ptr;
 
-    if(id_str_tag->id == BINARY_INFO_ID_RP_PROGRAM_NAME) {
-      app_name = id_str_tag->value;
-      break;
+      if(id_str_tag->id == BINARY_INFO_ID_RP_PROGRAM_NAME) {
+        app_name = id_str_tag->value;
+        break;
+      }
     }
   }
 
