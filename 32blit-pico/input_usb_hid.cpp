@@ -30,6 +30,7 @@ struct GamepadMapping {
 static const GamepadMapping gamepad_mappings[]{
   {0x15320705,  0,  1,  3,  4, NO, NO, NO, NO, 16, 15, 13}, // Razer Raiju Mobile
   {0x20D6A711,  2,  1,  3,  0, NO, NO, NO, NO,  8, 12, 10}, // PowerA wired Switch pro controller
+  {0x2DC89018,  0,  1,  3,  4, NO, NO, NO, NO, 10, 11, NO}, // 8BitDo Zero 2
   {0x00000000,  0,  1,  2,  3, NO, NO, NO, NO,  4,  5,  6}  // probably wrong fallback
 };
 
