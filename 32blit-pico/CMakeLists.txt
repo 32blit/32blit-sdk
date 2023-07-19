@@ -164,11 +164,6 @@ target_compile_definitions(BlitHalPico INTERFACE ${BLIT_BOARD_DEFINITIONS})
 target_link_libraries(BlitHalPico INTERFACE ${BLIT_BOARD_LIBRARIES})
 
 # functions
-function(blit_executable_common NAME)
-    target_link_libraries(${NAME} BlitEngine)
-
-endfunction()
-
 function(blit_executable NAME)
     message(STATUS "Processing ${NAME}")
     blit_executable_args(${ARGN})
