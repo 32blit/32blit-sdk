@@ -45,12 +45,18 @@ bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_templ
 
   switch(new_mode) {
     case ScreenMode::lores:
-      new_surf_template.bounds = lores_screen_size;
+      if(new_surf_template.bounds.empty())
+        new_surf_template.bounds = lores_screen_size;
+      else
+        new_surf_template.bounds /= 2;
+
       break;
     case ScreenMode::hires:
     case ScreenMode::hires_palette:
 #if ALLOW_HIRES
-      new_surf_template.bounds = hires_screen_size;
+      if(new_surf_template.bounds.empty())
+        new_surf_template.bounds = hires_screen_size;
+
       break;
 #else
       return false; // no hires for scanvideo
