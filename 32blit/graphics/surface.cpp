@@ -82,6 +82,11 @@ namespace blit {
       bbf = RGBA_RGB565;
       pgf = get_pen_rgb565;
     }break;
+    default: {
+      pbf = nullptr;
+      bbf = nullptr;
+      pgf = nullptr;
+    }break;
     }
   }
 
