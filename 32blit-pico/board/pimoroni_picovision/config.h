@@ -1,5 +1,7 @@
 #pragma once
 
+#define DEFAULT_SCREEN_FORMAT PixelFormat::BGR555
+
 // native
 #define SD_CLK  10
 #define SD_CMD  11
