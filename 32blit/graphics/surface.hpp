@@ -73,11 +73,13 @@ namespace blit {
   };
 
   enum class PixelFormat {
-    RGB = 0,   // red, green, blue (8-bits per channel)
-    RGBA = 1,  // red, green, blue, alpha (8-bits per channel)
-    P = 2,     // palette entry (8-bits) into attached palette
-    M = 3,     // mask (8-bits, single channel)
-    RGB565 = 4
+    RGB = 0,    // red, green, blue (8-bits per channel)
+    RGBA = 1,   // red, green, blue, alpha (8-bits per channel)
+    P = 2,      // palette entry (8-bits) into attached palette
+    M = 3,      // mask (8-bits, single channel)
+
+    // supported as the screen format
+    RGB565 = 4, // red (5-bits), green (6-bits), blue (5bits)
   };
 
   static const uint8_t pixel_format_stride[] = {
