@@ -13,6 +13,7 @@
 
 #include "audio.hpp"
 #include "binary_info.hpp"
+#include "blit-launch.hpp"
 #include "config.h"
 #include "display.hpp"
 #include "file.hpp"
@@ -22,20 +23,13 @@
 #include "storage.hpp"
 #include "usb.hpp"
 
-#include "executable.hpp"
-
 #include "engine/api_private.hpp"
 
 using namespace blit;
 
-const unsigned int game_block_size = 64 * 1024; // this is the 32blit's flash erase size, some parts of the API depend on this...
-
 static blit::AudioChannel channels[CHANNEL_COUNT];
 
-static int (*do_tick)(uint32_t time) = blit::tick;
-
-static uint32_t requested_launch_offset = 0;
-static uint32_t current_game_offset = 0;
+int (*do_tick)(uint32_t time) = blit::tick;
 
 // override terminate handler to save ~20-30k
 namespace __cxxabiv1 {
@@ -65,25 +59,6 @@ static uint32_t get_max_us_timer() {
 }
 
 const char *get_launch_path()  {
-  return nullptr;
-}
-
-RawMetadata *get_running_game_metadata() {
-#ifdef BUILD_LOADER
-  if(!current_game_offset)
-    return nullptr;
-
-  auto game_ptr = reinterpret_cast<uint8_t *>(XIP_NOCACHE_NOALLOC_BASE + current_game_offset);
-
-  auto header = reinterpret_cast<BlitGameHeader *>(game_ptr);
-
-  if(header->magic == blit_game_magic) {
-    auto end_ptr = game_ptr + header->end;
-    if(memcmp(end_ptr, "BLITMETA", 8) == 0)
-      return reinterpret_cast<RawMetadata *>(end_ptr + 10);
-  }
-
-#endif
   return nullptr;
 }
 
@@ -148,81 +123,6 @@ static GameMetadata get_metadata() {
   return ret;
 }
 
-static bool launch(const char *path) {
-  if(strncmp(path, "flash:/", 7) == 0) {
-    uint32_t offset = atoi(path + 7) * game_block_size;
-
-    auto header = (BlitGameHeader *)(XIP_NOCACHE_NOALLOC_BASE + offset);
-    // check header magic + device
-    if(header->magic != blit_game_magic || header->device_id != BlitDevice::RP2040)
-      return false;
-
-    if(!header->init || !header->render || !header->tick)
-      return false;
-
-    requested_launch_offset = offset;
-    return true;
-  }
-
-  return false;
-}
-
-static blit::CanLaunchResult can_launch(const char *path) {
-  if(strncmp(path, "flash:/", 7) == 0) {
-    // assume anything flashed is compatible for now
-    return blit::CanLaunchResult::Success;
-  }
-
-  return blit::CanLaunchResult::UnknownType;
-}
-
-static void delayed_launch() {
-  auto header = (BlitGameHeader *)(XIP_NOCACHE_NOALLOC_BASE + requested_launch_offset);
-
-  // save in case launch fails
-  uint32_t last_game_offset = current_game_offset;
-
-  current_game_offset = requested_launch_offset;
-  requested_launch_offset = 0;
-
-  if(!header->init(0)) {
-    debugf("failed to init game!\n");
-    current_game_offset = last_game_offset;
-    return;
-  }
-
-  blit::render = header->render;
-  do_tick = header->tick;
-}
-
-static void list_installed_games(std::function<void(const uint8_t *, uint32_t, uint32_t)> callback) {
-  for(uint32_t off = 0; off < PICO_FLASH_SIZE_BYTES;) {
-    auto header = (BlitGameHeader *)(XIP_NOCACHE_NOALLOC_BASE + off);
-
-    // check header magic + device
-    if(header->magic != blit_game_magic || header->device_id != BlitDevice::RP2040) {
-      off += game_block_size;
-      continue;
-    }
-
-    auto size = header->end;
-
-    // check metadata
-    auto meta_offset = off + size;
-    if(memcmp((char *)(XIP_NOCACHE_NOALLOC_BASE + meta_offset), "BLITMETA", 8) != 0) {
-      off += ((size - 1) / game_block_size + 1) * game_block_size;
-      continue;
-    }
-
-    // add metadata size
-    size += *(uint16_t *)(XIP_NOCACHE_NOALLOC_BASE + meta_offset + 8) + 10;
-
-    callback((const uint8_t *)(XIP_NOCACHE_NOALLOC_BASE + off), off / game_block_size, size);
-
-    off += ((size - 1) / game_block_size + 1) * game_block_size;
-  }
-}
-
 static uint8_t *get_screen_data() {
   return screen.data;
 }
@@ -263,7 +163,7 @@ static const blit::APIConst blit_api_const {
   nullptr, // decode_jpeg_buffer
   nullptr, // decode_jpeg_file
 
-  ::launch,
+  ::launch_file,
   nullptr, // erase_game
   nullptr, // get_type_handler_metadata
 
@@ -410,8 +310,7 @@ int main() {
     update_multiplayer();
 
     // do requested launch when no user code is running
-    if(requested_launch_offset)
-      delayed_launch();
+    delayed_launch();
 
     if(ms_to_next_update > 1 && !display_render_needed())
       best_effort_wfe_or_timeout(make_timeout_time_ms(ms_to_next_update - 1));
