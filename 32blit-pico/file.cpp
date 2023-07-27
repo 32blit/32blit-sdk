@@ -8,6 +8,7 @@
 #include "ff.h"
 #include "diskio.h"
 
+#include "blit-launch.hpp"
 #include "file.hpp"
 #include "storage.hpp"
 #include "executable.hpp"
@@ -81,8 +82,6 @@ void init_fs() {
 }
 
 static char save_path[32]; // max game title length is 24 + ".blit/" + "/"
-
-RawMetadata *get_running_game_metadata();
 
 const char *get_save_path() {
   const char *app_name = "_unknown";
