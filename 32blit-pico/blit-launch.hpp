@@ -12,3 +12,21 @@ blit::CanLaunchResult can_launch(const char *path);
 void delayed_launch();
 
 void list_installed_games(std::function<void(const uint8_t *, uint32_t, uint32_t)> callback);
+
+class BlitWriter final {
+public:
+  void init(uint32_t file_len);
+
+  bool write(const uint8_t *buf, uint32_t len);
+
+  uint32_t get_remaining() const;
+  uint32_t get_flash_offset() const;
+
+private:
+  bool prepare_write(const uint8_t *buf);
+
+  uint32_t file_len;
+  uint32_t file_offset;
+
+  uint32_t flash_offset;
+};
