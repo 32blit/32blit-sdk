@@ -1,6 +1,9 @@
 #include <cstring>
 
 #include "pico/stdlib.h"
+#include "hardware/flash.h"
+#include "hardware/sync.h"
+#include "pico/multicore.h"
 
 #include "blit-launch.hpp"
 #include "file.hpp"
@@ -10,6 +13,10 @@
 // code related to blit files and launching
 
 extern int (*do_tick)(uint32_t time);
+
+void disable_user_code();
+
+extern bool core1_started;
 
 static const unsigned int game_block_size = 64 * 1024; // this is the 32blit's flash erase size, some parts of the API depend on this...
 
@@ -111,4 +118,78 @@ void list_installed_games(std::function<void(const uint8_t *, uint32_t, uint32_t
 
     off += ((size - 1) / game_block_size + 1) * game_block_size;
   }
+}
+
+void BlitWriter::init(uint32_t file_len) {
+  this->file_len = file_len;
+  file_offset = flash_offset = 0;
+}
+
+bool BlitWriter::write(const uint8_t *buf, uint32_t len) {
+  if(!flash_offset) {
+    if(!prepare_write(buf))
+      return false;
+  }
+
+  if(file_offset >= file_len)
+    return false;
+
+  // write page
+  auto status = save_and_disable_interrupts();
+
+  if(core1_started)
+    multicore_lockout_start_blocking(); // pause core1
+
+  // assuming len <= page size and buf size == page size
+  flash_range_program(flash_offset + file_offset, buf, FLASH_PAGE_SIZE);
+
+  if(core1_started)
+    multicore_lockout_end_blocking(); // resume core1
+
+  restore_interrupts(status);
+
+  file_offset += len;
+
+  return true;
+}
+
+uint32_t BlitWriter::get_remaining() const {
+  return file_len - file_offset;
+}
+
+uint32_t BlitWriter::get_flash_offset() const {
+  return flash_offset;
+}
+
+bool BlitWriter::prepare_write(const uint8_t *buf) {
+    auto header = (BlitGameHeader *)buf;
+
+    if(header->magic != blit_game_magic || header->device_id != BlitDevice::RP2040) {
+      blit::debugf("Invalid blit header!");
+      return false;
+    }
+
+    // currently non-relocatable, so base address is stored after header
+    flash_offset = *(uint32_t *)(buf + sizeof(BlitGameHeader));
+    flash_offset &= 0xFFFFFF;
+
+    printf("PROG: flash off %lu\n", flash_offset);
+
+    disable_user_code();
+
+    // erase flash
+    auto status = save_and_disable_interrupts();
+
+    if(core1_started)
+      multicore_lockout_start_blocking(); // pause core1
+
+    auto erase_size = ((file_len - 1) / FLASH_SECTOR_SIZE) + 1;
+    flash_range_erase(flash_offset, erase_size * FLASH_SECTOR_SIZE);
+
+    if(core1_started)
+      multicore_lockout_end_blocking(); // resume core1
+
+    restore_interrupts(status);
+
+    return true;
 }

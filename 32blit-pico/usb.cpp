@@ -3,20 +3,15 @@
 #include <tuple>
 
 #include "hardware/flash.h"
-#include "hardware/sync.h"
-#include "pico/multicore.h"
 
 #include "usb.hpp"
+#include "blit-launch.hpp"
 #include "multiplayer.hpp"
 
 #include "engine/engine.hpp"
 #include "executable.hpp"
 
 void init();
-
-void disable_user_code();
-
-extern bool core1_started;
 
 static uint8_t cur_header[8];
 static int header_pos = 0;
@@ -33,7 +28,6 @@ class CDCProgCommand final : public CDCCommand {
   void init() override {
     parse_state = ParseState::Filename;
     buf_off = 0;
-    file_offset = flash_offset = 0;
   }
 
   Status update() override {
@@ -66,10 +60,12 @@ class CDCProgCommand final : public CDCCommand {
 
           // end of string
           if(buf[buf_off] == 0) {
-            file_len = strtoul((const char *)buf, nullptr, 10);
+            auto file_len = strtoul((const char *)buf, nullptr, 10);
             printf("PROG: len %lu\n", file_len);
             parse_state = ParseState::Data;
             buf_off = 0;
+
+            writer.init(file_len);
             continue;
           }
 
@@ -84,7 +80,7 @@ class CDCProgCommand final : public CDCCommand {
 
         case ParseState::Data: {
           // read data
-          auto max = std::min(FLASH_PAGE_SIZE - buf_off, file_len - file_offset);
+          auto max = std::min(uint32_t(FLASH_PAGE_SIZE), writer.get_remaining()) - buf_off;
           auto read = usb_cdc_read(buf + buf_off, max);
 
           if(!read)
@@ -93,33 +89,17 @@ class CDCProgCommand final : public CDCCommand {
           buf_off += read;
 
           // got full page or final part of file
-          if(buf_off == FLASH_PAGE_SIZE || file_offset + buf_off == file_len) {
-            if(!flash_offset) {
-              if(!prepare_write())
-                return Status::Error;
-            }
+          if(buf_off == FLASH_PAGE_SIZE || buf_off == writer.get_remaining()) {
+            if(!writer.write(buf, buf_off))
+              return Status::Error;
 
-            // write page
-            auto status = save_and_disable_interrupts();
-
-            if(core1_started)
-              multicore_lockout_start_blocking(); // pause core1
-
-            flash_range_program(flash_offset + file_offset, buf, FLASH_PAGE_SIZE);
-
-            if(core1_started)
-              multicore_lockout_end_blocking(); // resume core1
-
-            restore_interrupts(status);
-
-            file_offset += buf_off;
             buf_off = 0;
           }
 
           // end of file
-          if(file_offset == file_len) {
+          if(writer.get_remaining() == 0) {
             // send response
-            auto block = flash_offset >> 16;
+            auto block = writer.get_flash_offset() >> 16;
             uint8_t res_data[]{'3', '2', 'B', 'L', '_', '_', 'O', 'K', uint8_t(block), uint8_t(block >> 8)};
             usb_cdc_write(res_data, sizeof(res_data));
             usb_cdc_flush_write();
@@ -138,40 +118,6 @@ class CDCProgCommand final : public CDCCommand {
     return Status::Continue;
   }
 
-
-  bool prepare_write() {
-    auto header = (BlitGameHeader *)buf;
-
-    if(header->magic != blit_game_magic || header->device_id != BlitDevice::RP2040) {
-      blit::debugf("Invalid blit header!");
-      return false;
-    }
-
-    // corrently non-relocatable, so base address is stored after header
-    flash_offset = *(uint32_t *)(buf + sizeof(BlitGameHeader));
-    flash_offset &= 0xFFFFFF;
-
-    printf("PROG: flash off %lu\n", flash_offset);
-
-    disable_user_code();
-
-    // erase flash
-    auto status = save_and_disable_interrupts();
-
-    if(core1_started)
-      multicore_lockout_start_blocking(); // pause core1
-
-    auto erase_size = ((file_len - 1) / FLASH_SECTOR_SIZE) + 1;
-    flash_range_erase(flash_offset, erase_size * FLASH_SECTOR_SIZE);
-
-    if(core1_started)
-      multicore_lockout_end_blocking(); // resume core1
-
-    restore_interrupts(status);
-
-    return true;
-  }
-
   enum class ParseState {
     Filename,
     Length,
@@ -182,10 +128,7 @@ class CDCProgCommand final : public CDCCommand {
   uint8_t buf[buf_size];
   uint32_t buf_off = 0;
 
-  uint32_t file_len;
-  uint32_t file_offset;
-
-  uint32_t flash_offset;
+  BlitWriter writer;
 };
 
 static CDCHandshakeCommand handshake_command;
