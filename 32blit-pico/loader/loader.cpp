@@ -13,6 +13,14 @@ void init() {
       done = api.launch(path.c_str());
     }
   });
+
+  if(!done) {
+    // fall back to launcher in storage
+    // TODO: auto-update
+    if(file_exists("launcher.blit")) {
+      api.launch("launcher.blit");
+    }
+  }
 }
 
 void render(uint32_t time) {
