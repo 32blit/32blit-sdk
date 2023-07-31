@@ -173,8 +173,6 @@ target_compile_definitions(amazing-lores-game PRIVATE ALLOW_HIRES=0)
 
 These features of the 32blit API are currently unsupported on any pico-based device:
 
-- Joystick
-- `HOME` and `MENU` buttons
 - Accelerometer
 - Vibration
 - Paletted screen mode
@@ -187,9 +185,8 @@ Additionally some supported features have limitations:
 
 - The `screen` surface is RGB565 instead of RGB888
 - `hires` screen mode is not double-buffered, usually resulting in a lower framerate
-- `get_metadata` is missing the `author` and `category` fields
-- `blit::random` is not a hardware generator
-- Multiplayer has no host support
+- `blit::random` is `pico_rand`
+- Multiplayer has fixed host/device role
 - Using the MP3 decoder is probably not a good idea
 
 ### Board-specific details
@@ -202,12 +199,12 @@ The RP2040/Pico port supports PicoSystem and VGA board. Below is a table showing
 | CPU        | 480MHz                       | 250MHz †                    | 250MHz †
 | RAM        | 583K §                       | 151K to 207K (lores only ¶) | ~189K
 | FPU        | Yes                          | No                          | No
-| Buttons    | 6 + reset                    | 4 + power                   | HID Gamepad (WIP)
-| Joystick   | Yes                          | No                          | HID Gamepad (WIP)
+| Buttons    | 6 + reset                    | 4 + power                   | HID Gamepad (up to 6)
+| Joystick   | Yes                          | No                          | HID Gamepad
 | Tilt       | Yes                          | No                          | No
 | Sound      | 8CH mini speaker             | 1CH piezo booper ‡          | 8CH 3.5mm jack (i2s DAC)
-| Storage    | 32MB XiP QSPI + 128K Flash   | 12MB XiP QSPI               | 1.5MB XiP QSPI
-|            | SD card for data             | 4MB QSPI for data (FAT)     | 512K QSPI for data (FAT)
+| Storage    | 32MB XiP QSPI + 128K Flash   | 12MB XiP QSPI               | 2MB XiP QSPI
+|            | SD card for data             | 4MB QSPI for data (FAT)     | SD card for data
 | Screen     | 320x240 (160x120 lores)      | 240x240 (120x120 lores)     | 160x120 only
 | Firmware   | Yes                          | No                          | No
 | Launcher   | Browse + Launch Games        | No                          | No
