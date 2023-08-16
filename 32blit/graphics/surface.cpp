@@ -542,24 +542,34 @@ namespace blit {
    * \param dc
    */
   void Surface::stretch_blit_vspan(Surface *src, Point uv, uint16_t sc, Point p, int16_t dc) {
-    float v = uv.y;
-    float vs = float(sc) / float(dc);
+    // clip
+    int32_t clip_y = std::max(clip.y, p.y);
+    int32_t clip_h = std::min(clip.y + clip.h, p.y + dc) - clip_y;
 
-    if (p.y < clip.y) {
-      dc += clip.y - p.y;
-      v += (vs * float(-(p.y - clip.y)));
-      p.y = clip.y;
-    }
+    if (clip_h <= 0)
+      return; // after clipping there is nothing to draw
 
-    if (dc <= 0) {
-      return;
-    }
+    static const int fix_shift = 16;
 
-    int16_t max_y = std::min(p.y + dc, clip.y + clip.h);
-    for (; p.y < max_y; p.y++) {
-      bbf(src, src->offset(Point(uv.x, v)), this, offset(p), 1, 1);
-      v += vs;
-    }
+    int scale_v = (sc << fix_shift) / dc;
+
+    int top = (clip_y - p.y) * scale_v;
+
+    uint32_t dest_offset = offset(p.x, clip_y);
+    uint32_t src_offset;
+
+    int y_count = clip_h;
+    int v = top;
+
+    do {
+      src_offset = src->offset(uv.x, uv.y + (v >> fix_shift));
+
+      auto pen = src->get_pixel(src_offset);
+      pbf(&pen, this, dest_offset, 1);
+
+      dest_offset += bounds.w;
+      v += scale_v;
+    } while (--y_count);
   }
 
   /**
