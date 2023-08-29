@@ -6,6 +6,8 @@
 #include "hardware/pwm.h"
 #include "pico/binary_info.h"
 
+#include "config.h"
+
 #include "engine/api_private.hpp"
 
 #if defined(LED_R_PIN) && defined(LED_G_PIN) && defined(LED_B_PIN)
