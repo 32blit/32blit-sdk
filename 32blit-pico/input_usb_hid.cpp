@@ -21,14 +21,20 @@ extern uint8_t hid_keys[6];
 struct GamepadMapping {
   uint32_t id; // vid:pid
   uint8_t a, b, x, y;
+  uint8_t up, down, left, right; // if no hat
   uint8_t menu, home, joystick;
 };
 
+#define NO 0xFF
+
 static const GamepadMapping gamepad_mappings[]{
-  {0x15320705,  0,  1,  3,  4,  16, 15, 13}, // Razer Raiju Mobile
-  {0x20D6A711,  2,  1,  3,  0,  8,  12, 10}, // PowerA wired Switch pro controller
-  {0x00000000,  0,  1,  2,  3,  4,   5,  6}  // probably wrong fallback
+  {0x15320705,  0,  1,  3,  4, NO, NO, NO, NO, 16, 15, 13}, // Razer Raiju Mobile
+  {0x20D6A711,  2,  1,  3,  0, NO, NO, NO, NO,  8, 12, 10}, // PowerA wired Switch pro controller
+  {0x2DC89018,  0,  1,  3,  4, NO, NO, NO, NO, 10, 11, NO}, // 8BitDo Zero 2
+  {0x00000000,  0,  1,  2,  3, NO, NO, NO, NO,  4,  5,  6}  // probably wrong fallback
 };
+
+#undef NO
 
 // hat -> dpad
 const uint32_t dpad_map[]{
@@ -116,6 +122,10 @@ void update_input() {
     mapping++;
 
   api.buttons = dpad_map[hid_hat > 8 ? 8 : hid_hat]
+              | (hid_buttons & (1 << mapping->left)     ? uint32_t(Button::DPAD_LEFT) : 0)
+              | (hid_buttons & (1 << mapping->right)    ? uint32_t(Button::DPAD_RIGHT) : 0)
+              | (hid_buttons & (1 << mapping->up)       ? uint32_t(Button::DPAD_UP) : 0)
+              | (hid_buttons & (1 << mapping->down)     ? uint32_t(Button::DPAD_DOWN) : 0)
               | (hid_buttons & (1 << mapping->a)        ? uint32_t(Button::A) : 0)
               | (hid_buttons & (1 << mapping->b)        ? uint32_t(Button::B) : 0)
               | (hid_buttons & (1 << mapping->x)        ? uint32_t(Button::X) : 0)
