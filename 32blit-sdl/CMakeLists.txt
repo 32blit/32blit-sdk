@@ -174,6 +174,7 @@ function(blit_executable NAME)
     		COMMAND ${CMAKE_COMMAND} -E copy_if_different
 			"${DLL}"
 			$<TARGET_FILE_DIR:${NAME}>
+			VERBATIM
 		)
 	endforeach()
 
@@ -246,6 +247,7 @@ function(blit_metadata TARGET FILE)
 			OUTPUT ${ICON}
 			COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${32BLIT_TOOLS_EXECUTABLE} metadata --force --config ${FILE} --icns ${ICON}
 			DEPENDS ${METADATA_DEPENDS} ${FILE}
+			VERBATIM
 		)
 
 		target_sources(${TARGET} PRIVATE ${ICON})

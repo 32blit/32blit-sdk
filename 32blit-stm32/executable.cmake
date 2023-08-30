@@ -10,6 +10,7 @@ function(blit_executable_common NAME)
 		COMMENT "Building ${NAME}.bin"
 		COMMAND ${CMAKE_OBJCOPY} -O binary -S $<TARGET_FILE:${NAME}> ${NAME}.bin
 		COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${NAME}>
+		VERBATIM
 	)
 endfunction()
 
@@ -53,6 +54,7 @@ function(blit_executable NAME)
 	add_custom_command(TARGET ${NAME} POST_BUILD
 		COMMENT "Building ${NAME}.blit"
 		COMMAND ${32BLIT_TOOLS_EXECUTABLE} relocs --elf-file $<TARGET_FILE:${NAME}> --bin-file ${NAME}.bin --output ${BLIT_FILENAME}
+		VERBATIM
 	)
 
 	add_custom_target(${NAME}.flash DEPENDS ${NAME} COMMAND ${32BLIT_TOOLS_EXECUTABLE} install --port=${FLASH_PORT} --launch ${CMAKE_CURRENT_BINARY_DIR}/${BLIT_FILENAME})
@@ -86,6 +88,7 @@ function(blit_metadata TARGET FILE)
 	add_custom_command(
 		TARGET ${TARGET} POST_BUILD
 		COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${32BLIT_TOOLS_EXECUTABLE} metadata --config ${FILE} --file ${CMAKE_CURRENT_BINARY_DIR}/${BLIT_FILENAME}
+		VERBATIM
 	)
 
 	# force relink on change so that the post-build commands are rerun

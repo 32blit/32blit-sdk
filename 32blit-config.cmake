@@ -62,6 +62,7 @@ if (NOT DEFINED BLIT_ONCE)
 			OUTPUT ${ASSET_OUTPUTS}
 			COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${32BLIT_TOOLS_EXECUTABLE} --debug  pack --force --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --output ${CMAKE_CURRENT_BINARY_DIR}
 			DEPENDS ${ASSET_DEPENDS} ${CMAKE_CURRENT_SOURCE_DIR}/${FILE}
+			VERBATIM
 		)
 
 		# add the outputs as dependencies of the project (also compile any cpp files)

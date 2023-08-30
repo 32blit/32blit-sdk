@@ -208,6 +208,7 @@ function(blit_metadata TARGET FILE)
         OUTPUT ${METADATA_SOURCE}
         COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${32BLIT_TOOLS_EXECUTABLE} metadata --force --config ${FILE} --pico-bi ${METADATA_SOURCE}
         DEPENDS ${FILE}
+        VERBATIM
     )
 
     # add the generated source
