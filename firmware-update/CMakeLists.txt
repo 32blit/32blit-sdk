@@ -3,6 +3,7 @@ add_custom_command(
     COMMAND ${32BLIT_TOOLS_EXECUTABLE} raw --force --input_file $<TARGET_FILE_DIR:firmware>/firmware.bin --symbol_name firmware_data  --output_file firmware.hpp
     OUTPUT firmware.hpp
     DEPENDS firmware
+    VERBATIM
 )
 
 blit_executable(firmware-update firmware-update.cpp firmware.hpp)
