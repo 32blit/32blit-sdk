@@ -68,6 +68,11 @@ void update_audio(uint32_t time) {
 
     auto max_samples = cur_buffer->max_sample_count - cur_buffer->sample_count;
 
+#ifdef AUDIO_MAX_SAMPLE_UPDATE
+    if(max_samples > AUDIO_MAX_SAMPLE_UPDATE)
+      max_samples = AUDIO_MAX_SAMPLE_UPDATE;
+#endif
+
     for(uint32_t i = 0; i < max_samples; i += 2) {
       int val = (int)blit::get_audio_frame() - 0x8000;
       *samples++ = val;
