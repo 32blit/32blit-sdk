@@ -26,7 +26,7 @@ void init_audio() {
     .sample_stride = 2
   };
 
-  struct audio_buffer_pool *producer_pool = audio_new_producer_pool(&producer_format, 4, 441);
+  struct audio_buffer_pool *producer_pool = audio_new_producer_pool(&producer_format, 4, 256);
   const struct audio_format *output_format;
 
   uint8_t dma_channel = dma_claim_unused_channel(true);
