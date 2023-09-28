@@ -12,6 +12,8 @@
 
 static audio_buffer_pool *audio_pool = nullptr;
 
+static struct audio_buffer *cur_buffer = nullptr;
+
 void init_audio() {
   static audio_format_t audio_format = {
     .sample_freq = AUDIO_SAMPLE_FREQ,
@@ -24,7 +26,7 @@ void init_audio() {
     .sample_stride = 2
   };
 
-  struct audio_buffer_pool *producer_pool = audio_new_producer_pool(&producer_format, 4, 441);
+  struct audio_buffer_pool *producer_pool = audio_new_producer_pool(&producer_format, 4, 256);
   const struct audio_format *output_format;
 
   uint8_t dma_channel = dma_claim_unused_channel(true);
@@ -54,18 +56,34 @@ void init_audio() {
 }
 
 void update_audio(uint32_t time) {
-  // audio
-  struct audio_buffer *buffer = take_audio_buffer(audio_pool, false);
-  if(buffer) {
-    auto samples = (int16_t *) buffer->buffer->bytes;
+  // attempt to get new buffer
+  if(!cur_buffer) {
+    cur_buffer = take_audio_buffer(audio_pool, false);
+    if(cur_buffer)
+      cur_buffer->sample_count = 0;
+  }
 
-    for(uint32_t i = 0; i < buffer->max_sample_count; i += 2) {
+  if(cur_buffer) {
+    auto samples = ((int16_t *)cur_buffer->buffer->bytes) + cur_buffer->sample_count;
+
+    auto max_samples = cur_buffer->max_sample_count - cur_buffer->sample_count;
+
+#ifdef AUDIO_MAX_SAMPLE_UPDATE
+    if(max_samples > AUDIO_MAX_SAMPLE_UPDATE)
+      max_samples = AUDIO_MAX_SAMPLE_UPDATE;
+#endif
+
+    for(uint32_t i = 0; i < max_samples; i += 2) {
       int val = (int)blit::get_audio_frame() - 0x8000;
       *samples++ = val;
       *samples++ = val;
     }
 
-    buffer->sample_count = buffer->max_sample_count;
-    give_audio_buffer(audio_pool, buffer);
+    cur_buffer->sample_count += max_samples;
+
+    if(cur_buffer->sample_count == cur_buffer->max_sample_count) {
+      give_audio_buffer(audio_pool, cur_buffer);
+      cur_buffer = nullptr;
+    }
   }
 }
