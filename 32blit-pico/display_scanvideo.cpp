@@ -112,5 +112,17 @@ bool display_render_needed() {
   return do_render;
 }
 
-void display_mode_changed(blit::ScreenMode new_mode) {
+bool display_mode_supported(blit::ScreenMode new_mode, const blit::SurfaceTemplate &new_surf_template) {
+  if(new_surf_template.format != blit::PixelFormat::RGB565)
+    return false;
+
+  blit::Size expected_bounds(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+
+  if(new_surf_template.bounds == expected_bounds || new_surf_template.bounds == expected_bounds / 2)
+    return true;
+
+  return false;
+}
+
+void display_mode_changed(blit::ScreenMode new_mode, blit::SurfaceTemplate &new_surf_template) {
 }

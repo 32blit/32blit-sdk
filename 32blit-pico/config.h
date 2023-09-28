@@ -8,6 +8,10 @@
 #define ALLOW_HIRES 1
 #endif
 
+#ifndef DEFAULT_SCREEN_FORMAT
+#define DEFAULT_SCREEN_FORMAT PixelFormat::RGB565
+#endif
+
 #ifndef DISPLAY_WIDTH
 #ifdef DISPLAY_ST7789
 #define DISPLAY_WIDTH 240

@@ -24,7 +24,7 @@ static volatile bool do_render = true;
 // blit api
 
 SurfaceInfo &set_screen_mode(ScreenMode mode) {
-  SurfaceTemplate temp{nullptr, {0, 0}, mode == ScreenMode::hires_palette ? PixelFormat::P : PixelFormat::RGB565};
+  SurfaceTemplate temp{nullptr, {0, 0}, mode == ScreenMode::hires_palette ? PixelFormat::P : DEFAULT_SCREEN_FORMAT};
 
   // may fail for hires/palette
   if(set_screen_mode_format(mode, temp)) {
@@ -40,25 +40,33 @@ SurfaceInfo &set_screen_mode(ScreenMode mode) {
 bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_template) {
   new_surf_template.data = (uint8_t *)screen_fb;
 
+  if(new_surf_template.format == (PixelFormat)-1)
+    new_surf_template.format = DEFAULT_SCREEN_FORMAT;
+
   switch(new_mode) {
     case ScreenMode::lores:
-      new_surf_template.bounds = lores_screen_size;
+      if(new_surf_template.bounds.empty())
+        new_surf_template.bounds = lores_screen_size;
+      else
+        new_surf_template.bounds /= 2;
+
       break;
     case ScreenMode::hires:
     case ScreenMode::hires_palette:
 #if ALLOW_HIRES
-      new_surf_template.bounds = hires_screen_size;
+      if(new_surf_template.bounds.empty())
+        new_surf_template.bounds = hires_screen_size;
+
       break;
 #else
       return false; // no hires for scanvideo
 #endif
   }
 
-  display_mode_changed(new_mode);
-
-  // don't support any other formats for various reasons (RAM, no format conversion, pixel double PIO)
-  if(new_surf_template.format != PixelFormat::RGB565)
+  if(!display_mode_supported(new_mode, new_surf_template))
     return false;
+
+  display_mode_changed(new_mode, new_surf_template);
 
   cur_screen_mode = new_mode;
 
