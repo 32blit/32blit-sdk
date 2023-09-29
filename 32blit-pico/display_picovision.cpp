@@ -253,7 +253,7 @@ static void write_frame_setup(uint16_t width, uint16_t height, blit::PixelFormat
     int step = std::min(buf_size, height - y);
     for(int i = 0; i < step; i++) {
       uint32_t line_addr = base_address + (y + i) * width * blit::pixel_format_stride[int(format)];
-      buf[i] = dv_format << 28 | h_repeat << 24 | line_addr;
+      buf[i] = dv_format << 27 | h_repeat << 24 | line_addr;
     }
 
     ram.write(frame_table_addr, buf, step * 4);

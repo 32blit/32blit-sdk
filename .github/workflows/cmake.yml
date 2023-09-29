@@ -98,7 +98,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         repository: pimoroni/picovision
-        ref: dd3415ad2218267d0bd67008effd4f60860e0c22
+        ref: 03df7694ed4fb396c1d12adf90d0150ada6baedc
         path: picovision
 
     - name: Cache
