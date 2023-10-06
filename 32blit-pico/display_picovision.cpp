@@ -38,11 +38,11 @@ static int cur_resolution = 0;
 
 static volatile bool do_render = true;
 
-static uint16_t blend_buf[256];
+static uint16_t blend_buf[512];
 
 static uint32_t batch_start_addr = 0, batch_next_off = ~0u;
 static uint16_t *batch_ptr = nullptr;
-static const uint16_t *batch_end = blend_buf + std::size(blend_buf);
+static uint16_t *batch_start = nullptr, *batch_end = blend_buf + std::size(blend_buf) / 2;
 
 static void vsync_callback(uint gpio, uint32_t events){
   if(!do_render) {
@@ -78,7 +78,7 @@ inline void unpack_rgb555(uint16_t rgb555, uint8_t &r, uint8_t &g, uint8_t &b) {
 
 static void flush_batch() {
   if(batch_ptr)
-    ram.write(batch_start_addr, (uint32_t *)blend_buf, (batch_ptr - blend_buf) * 2);
+    ram.write(batch_start_addr, (uint32_t *)batch_start, (batch_ptr - batch_start) * 2);
 
   batch_ptr = nullptr;
   batch_next_off = ~0u;
@@ -110,7 +110,7 @@ inline void blend_rgba_rgb555(const blit::Pen* s, uint32_t off, uint8_t a, uint3
 inline void copy_rgba_rgb555(const blit::Pen* s, uint32_t off, uint32_t c) {
   auto pen555 = pack_rgb555(s->r, s->g, s->b);
 
-  constexpr size_t cache_size = std::size(blend_buf);
+  constexpr size_t cache_size = std::size(blend_buf) / 2;
 
   if(c >= cache_size) {
     // big fill, skip the batch buf
@@ -130,7 +130,10 @@ inline void copy_rgba_rgb555(const blit::Pen* s, uint32_t off, uint32_t c) {
 
       batch_start_addr = base_address + off * 2;
       batch_next_off = off;
-      batch_ptr = blend_buf;
+
+      // double-buffered
+      batch_ptr = batch_start = batch_start == blend_buf ? blend_buf + cache_size : blend_buf;
+      batch_end = batch_ptr + cache_size;
     }
 
     // write to cache buf
