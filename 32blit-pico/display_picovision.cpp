@@ -110,15 +110,7 @@ inline void blend_rgba_rgb555(const blit::Pen* s, uint32_t off, uint8_t a, uint3
 inline void copy_rgba_rgb555(const blit::Pen* s, uint32_t off, uint32_t c) {
   auto pen555 = pack_rgb555(s->r, s->g, s->b);
 
-  // batching
   constexpr size_t cache_size = std::size(blend_buf);
-  if(batch_next_off != off || batch_ptr + c > batch_end) {
-    flush_batch();
-
-    batch_start_addr = base_address + off * 2;
-    batch_next_off = off;
-    batch_ptr = blend_buf;
-  }
 
   if(c >= cache_size) {
     // big fill, skip the batch buf
@@ -132,6 +124,15 @@ inline void copy_rgba_rgb555(const blit::Pen* s, uint32_t off, uint32_t c) {
       c -= step;
     } while(c);
   } else {
+    // batching
+    if(batch_next_off != off || batch_ptr + c > batch_end) {
+      flush_batch();
+
+      batch_start_addr = base_address + off * 2;
+      batch_next_off = off;
+      batch_ptr = blend_buf;
+    }
+
     // write to cache buf
     batch_next_off += c;
 
