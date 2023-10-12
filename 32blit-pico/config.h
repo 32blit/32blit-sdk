@@ -10,6 +10,83 @@
 #define ALLOW_HIRES 1
 #endif
 
+#ifndef BUTTON_LEFT_PIN
+#define BUTTON_LEFT_PIN -1
+#define BUTTON_LEFT_BI_DECL
+#else
+#define BUTTON_LEFT_BI_DECL BUTTON_BI_DECL(BUTTON_LEFT_PIN, Left)
+#endif
+
+#ifndef BUTTON_RIGHT_PIN
+#define BUTTON_RIGHT_PIN -1
+#define BUTTON_RIGHT_BI_DECL
+#else
+#define BUTTON_RIGHT_BI_DECL BUTTON_BI_DECL(BUTTON_RIGHT_PIN, Right)
+#endif
+
+#ifndef BUTTON_UP_PIN
+#define BUTTON_UP_PIN -1
+#define BUTTON_UP_BI_DECL
+#else
+#define BUTTON_UP_BI_DECL BUTTON_BI_DECL(BUTTON_UP_PIN, Up)
+#endif
+
+#ifndef BUTTON_DOWN_PIN
+#define BUTTON_DOWN_PIN -1
+#define BUTTON_DOWN_BI_DECL
+#else
+#define BUTTON_DOWN_BI_DECL BUTTON_BI_DECL(BUTTON_DOWN_PIN, Down)
+#endif
+
+#ifndef BUTTON_A_PIN
+#define BUTTON_A_PIN -1
+#define BUTTON_A_BI_DECL
+#else
+#define BUTTON_A_BI_DECL BUTTON_BI_DECL(BUTTON_A_PIN, A)
+#endif
+
+#ifndef BUTTON_B_PIN
+#define BUTTON_B_PIN -1
+#define BUTTON_B_BI_DECL
+#else
+#define BUTTON_B_BI_DECL BUTTON_BI_DECL(BUTTON_B_PIN, B)
+#endif
+
+#ifndef BUTTON_X_PIN
+#define BUTTON_X_PIN -1
+#define BUTTON_X_BI_DECL
+#else
+#define BUTTON_X_BI_DECL BUTTON_BI_DECL(BUTTON_X_PIN, X)
+#endif
+
+#ifndef BUTTON_Y_PIN
+#define BUTTON_Y_PIN -1
+#define BUTTON_Y_BI_DECL
+#else
+#define BUTTON_Y_BI_DECL BUTTON_BI_DECL(BUTTON_Y_PIN, Y)
+#endif
+
+#ifndef BUTTON_MENU_PIN
+#define BUTTON_MENU_PIN -1
+#define BUTTON_MENU_BI_DECL
+#else
+#define BUTTON_MENU_BI_DECL BUTTON_BI_DECL(BUTTON_MENU_PIN, Menu)
+#endif
+
+#ifndef BUTTON_HOME_PIN
+#define BUTTON_HOME_PIN -1
+#define BUTTON_HOME_BI_DECL
+#else
+#define BUTTON_HOME_BI_DECL BUTTON_BI_DECL(BUTTON_HOME_PIN, Home)
+#endif
+
+#ifndef BUTTON_JOYSTICK_PIN
+#define BUTTON_JOYSTICK_PIN -1
+#define BUTTON_JOYSTICK_BI_DECL
+#else
+#define BUTTON_JOYSTICK_BI_DECL BUTTON_BI_DECL(BUTTON_JOYSTICK_PIN, Joystick)
+#endif
+
 #ifndef DEFAULT_SCREEN_FORMAT
 #define DEFAULT_SCREEN_FORMAT PixelFormat::RGB565
 #endif
