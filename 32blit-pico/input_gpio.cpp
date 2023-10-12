@@ -26,15 +26,35 @@ static constexpr int button_io[] {
   BUTTON_JOYSTICK_PIN,
 };
 
-static void init_button(int pin) {
+static constexpr bool button_active[] {
+  BUTTON_LEFT_ACTIVE_HIGH,
+  BUTTON_RIGHT_ACTIVE_HIGH,
+  BUTTON_UP_ACTIVE_HIGH,
+  BUTTON_DOWN_ACTIVE_HIGH,
+
+  BUTTON_A_ACTIVE_HIGH,
+  BUTTON_B_ACTIVE_HIGH,
+  BUTTON_X_ACTIVE_HIGH,
+  BUTTON_Y_ACTIVE_HIGH,
+
+  BUTTON_HOME_ACTIVE_HIGH,
+  BUTTON_MENU_ACTIVE_HIGH,
+  BUTTON_JOYSTICK_ACTIVE_HIGH,
+};
+
+static void init_button(int pin, bool active_high) {
   gpio_set_function(pin, GPIO_FUNC_SIO);
   gpio_set_dir(pin, GPIO_IN);
-  gpio_pull_up(pin);
+
+  if(active_high)
+    gpio_pull_down(pin);
+  else
+    gpio_pull_up(pin);
 }
 
 void init_input() {
   for(size_t i = 0; i < std::size(button_io); i++)
-    init_button(button_io[i]);
+    init_button(button_io[i], button_active[i]);
 
   // declare pins
   #define BUTTON_BI_DECL(pin, btn) bi_decl(bi_1pin_with_name(pin, #btn" Button"));
@@ -57,14 +77,14 @@ void update_input() {
 
   uint32_t new_buttons = 0;
 
-  for(std::size_t i = 0; i < std::size(button_io); i++) {
+  for(size_t i = 0; i < std::size(button_io); i++) {
     // pin not defined, skip
     if(button_io[i] == -1)
       continue;
     
     bool pin_state = !!(io & (1 << button_io[i]));
 
-    if(pin_state == false) // active low
+    if(pin_state == button_active[i])
       new_buttons |= 1 << i;
   }
 
