@@ -1,8 +1,19 @@
 #pragma once
 
+#define BUTTON_UP_PIN   22
+#define BUTTON_DOWN_PIN  6
+#define BUTTON_A_PIN     7
+#define BUTTON_B_PIN     8
+#define BUTTON_X_PIN     9 // C
+#define BUTTON_Y_PIN    23 // USER_SW
+
+#define BUTTON_UP_ACTIVE_HIGH   true
+#define BUTTON_DOWN_ACTIVE_HIGH true
+#define BUTTON_A_ACTIVE_HIGH    true
+#define BUTTON_B_ACTIVE_HIGH    true
+#define BUTTON_X_ACTIVE_HIGH    true
+
 #define DISPLAY_WIDTH 320
-
-
 
 #define ST7789_8BIT
 #define ST7789_ROTATE_180
