@@ -25,6 +25,8 @@
   ******************************************************************************
 */
 
+#include "engine/api_version.h"
+
   .syntax unified
   .cpu cortex-m7
   .fpu softvfp
@@ -132,7 +134,9 @@ g_pfnVectors:
   .word  _ZN4blit4tickEm
   .word  do_init
   .word _flash_end
-  .word flash_start // temp
+  .word 1 // device_id = 1 + padding
+  .hword BLIT_API_VERSION_MAJOR
+  .hword BLIT_API_VERSION_MINOR
 
 /*
 .weak      render

@@ -126,7 +126,7 @@ static bool parse_file_metadata(FIL &fh, GameInfo &info) {
   BlitGameHeader header;
   f_read(&fh, &header, sizeof(header), &bytes_read);
 
-  if(header.magic != blit_game_magic)
+  if(header.magic != blit_game_magic || (header.device_id != BlitDevice::STM32BlitOld && header.device_id != BlitDevice::STM32Blit))
     return false;
 
   info.size = header.end - qspi_flash_address;
@@ -184,7 +184,7 @@ static bool read_flash_game_header(uint32_t offset, BlitGameHeader &header) {
   if(qspi_read_buffer(offset, reinterpret_cast<uint8_t *>(&header), sizeof(header)) != QSPI_OK)
     return false;
 
-  if(header.magic != blit_game_magic)
+  if(header.magic != blit_game_magic || (header.device_id != BlitDevice::STM32BlitOld && header.device_id != BlitDevice::STM32Blit))
     return false;
 
   // make sure end/size is sensible

@@ -1,7 +1,7 @@
 set(MCU_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}")
 set(HAL_DIR ${CMAKE_CURRENT_LIST_DIR})
 
-set(USER_STARTUP ${CMAKE_CURRENT_LIST_DIR}/startup_user.s ${CMAKE_CURRENT_LIST_DIR}/startup_user.cpp)
+set(USER_STARTUP ${CMAKE_CURRENT_LIST_DIR}/startup_user.S ${CMAKE_CURRENT_LIST_DIR}/startup_user.cpp)
 
 function(blit_executable_common NAME)
 	target_link_libraries(${NAME} BlitEngine)
