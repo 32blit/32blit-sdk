@@ -30,6 +30,15 @@ namespace blit {
     screen = Surface(new_screen.data, new_screen.format, new_screen.bounds);
     screen.palette = new_screen.palette;
 
+    if(new_screen.pen_blend)
+      screen.pbf = new_screen.pen_blend;
+    
+    if(new_screen.blit_blend)
+      screen.bbf = new_screen.blit_blend;
+
+    if(new_screen.pen_get)
+      screen.pgf = new_screen.pen_get;
+
     return true;
   }
 

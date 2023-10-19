@@ -114,7 +114,9 @@ elseif(BLIT_AUDIO_DRIVER STREQUAL "pwm")
     list(APPEND BLIT_BOARD_LIBRARIES pico_audio_pwm)
 endif()
 
-if(BLIT_DISPLAY_DRIVER STREQUAL "scanvideo")
+if(BLIT_DISPLAY_DRIVER STREQUAL "picovision")
+    list(APPEND BLIT_BOARD_LIBRARIES hardware_i2c aps6404 swd_load)
+elseif(BLIT_DISPLAY_DRIVER STREQUAL "scanvideo")
     set(BLIT_REQUIRE_PICO_EXTRAS TRUE)
     set(BLIT_ENABLE_CORE1 TRUE)
     list(APPEND BLIT_BOARD_LIBRARIES pico_scanvideo_dpi)
@@ -146,6 +148,11 @@ pico_sdk_init()
 # generate PIO headers (has to be after SDK init)
 pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/st7789.pio)
 pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/spi.pio)
+
+# include picovision drivers
+if(BLIT_DISPLAY_DRIVER STREQUAL "picovision")
+    include(picovision_import.cmake)
+endif()
 
 # driver sources
 target_sources(BlitHalPico INTERFACE

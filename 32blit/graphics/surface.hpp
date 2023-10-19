@@ -80,6 +80,7 @@ namespace blit {
 
     // supported as the screen format
     RGB565 = 4, // red (5-bits), green (6-bits), blue (5bits)
+    BGR555 = 5, // blue (5-bits), green (5-bits), red (5bits)
   };
 
   static const uint8_t pixel_format_stride[] = {
@@ -87,7 +88,8 @@ namespace blit {
     4,             // RGBA
     1,             // P
     1,             // M
-    2              // RGB565
+    2,             // RGB565
+    2,             // BGR555
   };
 
 #pragma pack(push, 1)

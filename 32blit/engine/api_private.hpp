@@ -17,7 +17,7 @@ namespace blit {
 
   using AllocateCallback = uint8_t *(*)(size_t);
 
-  constexpr uint16_t api_version_major = 0, api_version_minor = 1;
+  constexpr uint16_t api_version_major = 0, api_version_minor = 2;
 
   // template for screen modes
   struct SurfaceTemplate {
@@ -25,6 +25,10 @@ namespace blit {
     Size bounds;
     PixelFormat format;
     Pen *palette = nullptr;
+
+    PenBlendFunc pen_blend = nullptr;
+    BlitBlendFunc blit_blend = nullptr;
+    PenGetFunc pen_get = nullptr;
   };
 
   // subset of Surface for API compat
