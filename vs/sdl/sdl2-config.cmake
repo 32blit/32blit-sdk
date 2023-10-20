@@ -5,7 +5,12 @@ function(fetch_sdl2_library directory url filename hash)
             SHOW_PROGRESS
             TIMEOUT 120
             EXPECTED_HASH SHA1=${hash}
-            TLS_VERIFY ON)
+            TLS_VERIFY ON
+            STATUS status
+            LOG logs
+        )
+
+        message("download status ${status} logs ${logs}")
     endif()
     if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/${directory})
         message(STATUS "Extracting ${filename}")
