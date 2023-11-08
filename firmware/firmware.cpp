@@ -568,6 +568,45 @@ static void list_installed_games(std::function<void(const uint8_t *, uint32_t, u
     callback((const uint8_t *)(qspi_flash_address + game.offset), game.offset / qspi_flash_sector_size, game.size);
 }
 
+static CanLaunchResult can_launch(const char *path) {
+  if(strncmp(path, "flash:/", 7) == 0) {
+    // assume anything flashed is compatible for now
+    return CanLaunchResult::Success;
+  }
+
+  // get the extension
+  std::string_view sv(path);
+  auto last_dot = sv.find_last_of('.');
+  auto ext = last_dot == std::string::npos ? "" : std::string(sv.substr(last_dot + 1));
+  for(auto &c : ext)
+    c = tolower(c);
+
+  if(ext == "blit") {
+    BlitGameHeader header;
+    uint32_t header_offset;
+    FIL file;
+    FRESULT res = f_open(&file, path, FA_READ);
+    if(res != FR_OK)
+      return CanLaunchResult::InvalidFile;
+
+    if(parse_file_header(file, header, header_offset)) {
+      f_close(&file);
+      return CanLaunchResult::Success;
+    }
+
+    f_close(&file);
+    return CanLaunchResult::IncompatibleBlit;
+  }
+
+  // not a blit file, so we need to check for handlers
+  for(auto &handler : handlers) {
+    if(strncmp(ext.c_str(), handler.type, 4) == 0)
+      return CanLaunchResult::Success;
+  }
+
+  return CanLaunchResult::UnknownType;
+}
+
 static const uint8_t *flash_to_tmp(const std::string &filename, uint32_t &size) {
   // one file at a time
   // TODO: this could be improved
@@ -654,6 +693,7 @@ void init() {
   api.tmp_file_closed = tmp_file_closed;
 
   api.list_installed_games = list_installed_games;
+  api.can_launch = can_launch;
 
   scan_flash();
   flash_scanned = true;
