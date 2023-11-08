@@ -146,20 +146,30 @@ static void load_file_list(const std::string &directory) {
 
   game_list.clear();
 
-  auto files = list_files(directory, [](auto &file) {
+  auto files = list_files(directory, [&](auto &file) {
     if(file.flags & FileFlags::directory)
-      return false;
-
-    if(file.name.length() < 6) // minimum length for single-letter game (a.blit)
       return false;
 
     if(file.name[0] == '.') // hidden file
       return false;
 
-    if(file.name.find_last_of('.') == std::string::npos) // no extension
-      return false;
+    auto path = directory == "/" ? file.name : directory + "/" + file.name;
+    auto res = api.can_launch(path.c_str());
 
-    return true;
+    if(res == CanLaunchResult::UnknownType) {
+      // special case for images
+      auto last_dot = file.name.find_last_of('.');
+
+      auto ext = last_dot == std::string::npos ? "" : file.name.substr(last_dot + 1);
+
+      for(auto &c : ext)
+        c = tolower(c);
+
+      if(ext == "bmp" || ext == "blim")
+        return true;
+    }
+
+    return res == CanLaunchResult::Success;
   });
 
   game_list.reserve(files.size()); // worst case
@@ -202,30 +212,24 @@ static void load_file_list(const std::string &directory) {
       continue;
     }
 
-    if(!api.get_type_handler_metadata) continue;
+    // it's launch-able so there must be a handler
+    GameInfo game;
+    game.type = GameType::file;
+    game.filename = directory == "/" ? file.name : directory + "/" + file.name;
+    strncpy(game.ext, ext.c_str(), 5);
+    game.ext[4] = 0;
+    game.size = file.size;
+    game.can_launch = true;
 
-    // check for installed handler
-    auto handler_meta = api.get_type_handler_metadata(ext.c_str());
+    // check for a metadata file (fall back to handler's metadata)
+    BlitGameMetadata meta;
+    auto meta_filename = game.filename + ".blmeta";
+    if(parse_file_metadata(meta_filename, meta))
+      game.title = meta.title;
+    else
+      game.title = file.name;
 
-    if(handler_meta) {
-      GameInfo game;
-      game.type = GameType::file;
-      game.filename = directory == "/" ? file.name : directory + "/" + file.name;
-      strncpy(game.ext, ext.c_str(), 5);
-      game.ext[4] = 0;
-      game.size = file.size;
-      game.can_launch = true;
-
-      // check for a metadata file (fall back to handler's metadata)
-      BlitGameMetadata meta;
-      auto meta_filename = game.filename + ".blmeta";
-      if(parse_file_metadata(meta_filename, meta))
-        game.title = meta.title;
-      else
-        game.title = file.name;
-
-      game_list.push_back(game);
-    }
+    game_list.push_back(game);
   }
 
   int total_items = (int)game_list.size();
