@@ -182,52 +182,37 @@ static void load_file_list(const std::string &directory) {
     for(auto &c : ext)
       c = tolower(c);
 
+    GameInfo game;
+    game.title = file.name.substr(0, file.name.length() - ext.length() - 1);
+    game.filename = directory == "/" ? file.name : directory + "/" + file.name;
+    game.size = file.size;
+
     if(ext == "blit") {
-      GameInfo game;
       game.type = GameType::game;
-      game.title = file.name.substr(0, file.name.length() - 5);
-      game.filename = directory == "/" ? file.name : directory + "/" + file.name;
-      game.size = file.size;
 
       // check for metadata
       BlitGameMetadata meta;
-      if(parse_file_metadata(game.filename, meta)) {
+      if(parse_file_metadata(game.filename, meta))
         game.title = meta.title;
-      }
 
-      game_list.push_back(game);
-      continue;
-    }
-
-    if(ext == "bmp" || ext == "blim") {
-      GameInfo game;
+    } else  if(ext == "bmp" || ext == "blim") {
       game.type = GameType::screenshot;
-      game.title = file.name.substr(0, file.name.length() - ext.length() - 1);
-      game.filename = directory == "/" ? file.name : directory + "/" + file.name;
-      game.size = file.size;
 
       // Special case check for an installed handler for these types, ie: a sprite editor
       game.can_launch = api.get_type_handler_metadata && api.get_type_handler_metadata(ext.c_str());
-      game_list.push_back(game);
-      continue;
+    } else {
+      // it's launch-able so there must be a handler
+      game.type = GameType::file;
+      strncpy(game.ext, ext.c_str(), 5);
+      game.ext[4] = 0;
+      game.can_launch = true;
+
+      // check for a metadata file (fall back to handler's metadata)
+      BlitGameMetadata meta;
+      auto meta_filename = game.filename + ".blmeta";
+      if(parse_file_metadata(meta_filename, meta))
+        game.title = meta.title;
     }
-
-    // it's launch-able so there must be a handler
-    GameInfo game;
-    game.type = GameType::file;
-    game.filename = directory == "/" ? file.name : directory + "/" + file.name;
-    strncpy(game.ext, ext.c_str(), 5);
-    game.ext[4] = 0;
-    game.size = file.size;
-    game.can_launch = true;
-
-    // check for a metadata file (fall back to handler's metadata)
-    BlitGameMetadata meta;
-    auto meta_filename = game.filename + ".blmeta";
-    if(parse_file_metadata(meta_filename, meta))
-      game.title = meta.title;
-    else
-      game.title = file.name;
 
     game_list.push_back(game);
   }
