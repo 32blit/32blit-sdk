@@ -105,7 +105,7 @@ static bool parse_flash_metadata(uint32_t offset, GameInfo &info) {
   return true;
 }
 
-static bool parse_file_metadata(FIL &fh, GameInfo &info) {
+static bool parse_file_header(FIL &fh, BlitGameHeader &header, uint32_t &header_offset) {
   UINT bytes_read;
   uint8_t buf[10];
 
@@ -119,14 +119,26 @@ static bool parse_file_metadata(FIL &fh, GameInfo &info) {
   uint32_t num_relocs;
   f_read(&fh, (void *)&num_relocs, 4, &bytes_read);
 
-  int relocs_size = num_relocs * 4 + 8;
-  f_lseek(&fh, relocs_size);
+  header_offset = num_relocs * 4 + 8;
+  f_lseek(&fh, header_offset);
 
   // read header
-  BlitGameHeader header;
   f_read(&fh, &header, sizeof(header), &bytes_read);
 
   if(header.magic != blit_game_magic)
+    return false;
+
+  return true;
+}
+
+static bool parse_file_metadata(FIL &fh, GameInfo &info) {
+  UINT bytes_read;
+  uint8_t buf[10];
+
+  // read header
+  BlitGameHeader header;
+  uint32_t relocs_size;
+  if(!parse_file_header(fh, header, relocs_size))
     return false;
 
   info.size = header.end - qspi_flash_address;
