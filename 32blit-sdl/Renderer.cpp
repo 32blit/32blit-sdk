@@ -16,7 +16,7 @@ Renderer::Renderer(SDL_Window *window, int width, int height) : sys_width(width)
 		std::cerr << "could not create renderer: " << SDL_GetError() << std::endl;
 	}
 
-	current = fb_hires_texture;
+  current = fb_texture;
 
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
@@ -28,17 +28,13 @@ Renderer::Renderer(SDL_Window *window, int width, int height) : sys_width(width)
 	SDL_RenderClear(renderer);
 	SDL_RenderPresent(renderer);
 
-  fb_lores_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, sys_width/2, sys_height/2);
-	fb_hires_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, sys_width, sys_height);
-  fb_lores_565_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_BGR565, SDL_TEXTUREACCESS_STREAMING, sys_width/2, sys_height/2);
-  fb_hires_565_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_BGR565, SDL_TEXTUREACCESS_STREAMING, sys_width, sys_height);
+  fb_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, sys_width, sys_height);
+  fb_565_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_BGR565, SDL_TEXTUREACCESS_STREAMING, sys_width, sys_height);
 }
 
 Renderer::~Renderer() {
-	SDL_DestroyTexture(fb_lores_texture);
-	SDL_DestroyTexture(fb_hires_texture);
-	SDL_DestroyTexture(fb_lores_565_texture);
-	SDL_DestroyTexture(fb_hires_565_texture);
+	SDL_DestroyTexture(fb_texture);
+	SDL_DestroyTexture(fb_565_texture);
 	SDL_DestroyRenderer(renderer);
 }
 
@@ -70,11 +66,7 @@ void Renderer::resize(int width, int height) {
 void Renderer::update(System *sys) {
   auto format = blit::PixelFormat(sys->format());
 
-	if (sys->mode() == 0) {
-		current = format == blit::PixelFormat::RGB565 ? fb_lores_565_texture : fb_lores_texture;
-	} else {
-		current = format == blit::PixelFormat::RGB565 ? fb_hires_565_texture : fb_hires_texture;
-	}
+	current = format == blit::PixelFormat::RGB565 ? fb_565_texture : fb_texture;
 
   if(is_lores != (sys->mode() == 0)) {
     is_lores = sys->mode() == 0;
@@ -97,11 +89,6 @@ void Renderer::present() {
   dest.y = 0;
   dest.w = sys_width;
   dest.h = sys_height;
-
-  if (is_lores) {
-    dest.w /= 2;
-    dest.h /= 2;
-  }
 
 	_render(nullptr, &dest);
 	SDL_RenderPresent(renderer);
