@@ -45,15 +45,22 @@ static bool set_screen_mode_format(blit::ScreenMode new_mode, blit::SurfaceTempl
   if(new_surf_template.format == (blit::PixelFormat)-1)
     new_surf_template.format = blit::PixelFormat::RGB;
 
+  blit::Size default_bounds(System::width, System::height);
+
+  if(new_surf_template.bounds.empty())
+    new_surf_template.bounds = default_bounds;
+
   switch(new_mode) {
     case blit::ScreenMode::lores:
-      new_surf_template.bounds = blit::Size(System::width / 2, System::height / 2);
+      new_surf_template.bounds /= 2;
       break;
     case blit::ScreenMode::hires:
     case blit::ScreenMode::hires_palette:
-      new_surf_template.bounds = blit::Size(System::width, System::height);
       break;
   }
+
+  if(new_surf_template.bounds != default_bounds && new_surf_template.bounds != default_bounds / 2)
+    return false;
 
   switch(new_surf_template.format) {
     case blit::PixelFormat::RGB:
