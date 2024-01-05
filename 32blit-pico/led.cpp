@@ -55,6 +55,7 @@ void init_led() {
   pio_sm = pio_claim_unused_sm(pio, true);
   if(pio_sm > -1) {
     ws2812_program_init(pio, pio_sm, pio_offset, LED_WS2812_PIN, 800000, true);
+    pio_sm_put_blocking(pio, 0, 0);
   } else {
     printf("LED_WS2812: could not find a free pio sm\r\n");
   }
