@@ -24,7 +24,7 @@ static void put_pixel(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
   if(pio_sm < 0) return;
   uint32_t color =
           (((uint32_t)((r * a) >> 8) << 8)
-          | ((uint32_t)((g * a) >> 8)  << 16)
+          | ((uint32_t)((g * a) >> 8) << 16)
           | (uint32_t)((b * a) >> 8)) << 8u;
   if(color != last_color) {
     pio_sm_put_blocking(pio0, 0, color);
@@ -52,13 +52,15 @@ void init_led() {
 #elif defined(LED_WS2812_PIN)
   PIO pio = pio0;
   uint pio_offset = pio_add_program(pio, &ws2812_program);
-  pio_sm = pio_claim_unused_sm(pio, true);
+  pio_sm = pio_claim_unused_sm(pio, false);
   if(pio_sm > -1) {
     ws2812_program_init(pio, pio_sm, pio_offset, LED_WS2812_PIN, 800000, true);
     pio_sm_put_blocking(pio, 0, 0);
   } else {
     printf("LED_WS2812: could not find a free pio sm\r\n");
   }
+
+  bi_decl(bi_1pin_with_name(LED_WS2812_PIN, "NeoPixel RGB LED (WS2812)"));
 #endif
 }
 
