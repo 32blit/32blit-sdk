@@ -146,7 +146,8 @@ endif()
 pico_sdk_init()
 
 # generate PIO headers (has to be after SDK init)
-pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/st7789.pio)
+pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/st7789-spi.pio)
+pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/st7789-8bit.pio)
 pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/spi.pio)
 
 # include picovision drivers
