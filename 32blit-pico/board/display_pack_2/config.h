@@ -1,6 +1,7 @@
 #pragma once
 
 #define DISPLAY_WIDTH 320
+#define LCD_ROTATION 90
 
 #define LED_INVERTED
 #define LED_R_PIN 6

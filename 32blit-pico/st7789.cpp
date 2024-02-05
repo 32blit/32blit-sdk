@@ -20,20 +20,25 @@
 namespace st7789 {
 
   enum MADCTL : uint8_t {
-    ROW_ORDER   = 0b10000000,
-    COL_ORDER   = 0b01000000,
+    // writing to internal memory
+    ROW_ORDER   = 0b10000000,  // MY / y flip
+    COL_ORDER   = 0b01000000,  // MX / x flip
     SWAP_XY     = 0b00100000,  // AKA "MV"
+  
+    // scanning out from internal memory
     SCAN_ORDER  = 0b00010000,
     RGB         = 0b00001000,
     HORIZ_ORDER = 0b00000100
   };
 
-  #define ROT_240_240_0      0
-  #define ROT_240_240_90     MADCTL::SWAP_XY | MADCTL::HORIZ_ORDER | MADCTL::COL_ORDER
-  #define ROT_240_240_180    MADCTL::SCAN_ORDER | MADCTL::HORIZ_ORDER | MADCTL::COL_ORDER | MADCTL::ROW_ORDER
-  #define ROT_240_240_270    MADCTL::SWAP_XY | MADCTL::HORIZ_ORDER | MADCTL::ROW_ORDER
+  static const uint8_t rotations[]{
+    0,                                                                                // 0
+    MADCTL::HORIZ_ORDER | MADCTL::SWAP_XY | MADCTL::COL_ORDER,                        // 90
+    MADCTL::HORIZ_ORDER | MADCTL::SCAN_ORDER | MADCTL::COL_ORDER | MADCTL::ROW_ORDER, // 180
+    MADCTL::SCAN_ORDER | MADCTL::SWAP_XY | MADCTL::ROW_ORDER                          // 270
+  };
 
-   enum reg {
+  enum reg {
     SWRESET   = 0x01,
     TEOFF     = 0x34,
     TEON      = 0x35,
@@ -268,23 +273,16 @@ namespace st7789 {
       sleep_ms(100);
 
       // setup correct addressing window
-      uint8_t madctl = MADCTL::RGB;
+      uint8_t madctl = MADCTL::RGB | rotations[LCD_ROTATION / 90];
       if(width == 240 && height == 240) {
-        madctl |= MADCTL::HORIZ_ORDER;
         set_window(0, 0, 240, 240);
       }
 
       if(width == 240 && height == 135) {
-        madctl |= MADCTL::COL_ORDER | MADCTL::SWAP_XY | MADCTL::SCAN_ORDER;
         set_window(40, 53, 240, 135);
       }
 
       if(width == 320 && height == 240) {
-#ifdef ST7789_ROTATE_180
-        madctl |= MADCTL::ROW_ORDER | MADCTL::SWAP_XY | MADCTL::SCAN_ORDER;
-#else
-        madctl |= MADCTL::COL_ORDER | MADCTL::SWAP_XY | MADCTL::SCAN_ORDER;
-#endif
         set_window(0, 0, 320, 240);
       }
 
