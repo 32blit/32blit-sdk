@@ -5,7 +5,7 @@
 
 
 #define ST7789_8BIT
-#define ST7789_ROTATE_180
+#define LCD_ROTATION 270
 #define LCD_CS_PIN 10
 #define LCD_DC_PIN 11
 #define LCD_SCK_PIN 12 // WR

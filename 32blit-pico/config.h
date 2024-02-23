@@ -46,6 +46,10 @@
 #define LCD_BACKLIGHT_PIN 20
 #endif
 
+#ifndef LCD_ROTATION
+#define LCD_ROTATION 0
+#endif
+
 #ifndef OVERCLOCK_250
 #define OVERCLOCK_250 1
 #endif
