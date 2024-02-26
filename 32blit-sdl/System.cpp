@@ -45,15 +45,22 @@ static bool set_screen_mode_format(blit::ScreenMode new_mode, blit::SurfaceTempl
   if(new_surf_template.format == (blit::PixelFormat)-1)
     new_surf_template.format = blit::PixelFormat::RGB;
 
+  blit::Size default_bounds(System::width, System::height);
+
+  if(new_surf_template.bounds.empty())
+    new_surf_template.bounds = default_bounds;
+
   switch(new_mode) {
     case blit::ScreenMode::lores:
-      new_surf_template.bounds = blit::Size(System::width / 2, System::height / 2);
+      new_surf_template.bounds /= 2;
       break;
     case blit::ScreenMode::hires:
     case blit::ScreenMode::hires_palette:
-      new_surf_template.bounds = blit::Size(System::width, System::height);
       break;
   }
+
+  if(new_surf_template.bounds != default_bounds && new_surf_template.bounds != default_bounds / 2)
+    return false;
 
   switch(new_surf_template.format) {
     case blit::PixelFormat::RGB:
@@ -339,13 +346,15 @@ Uint32 System::format() {
 
 void System::update_texture(SDL_Texture *texture) {
   bool is_lores = _mode == blit::ScreenMode::lores;
-  auto stride = (is_lores ? width / 2 : width) * blit::pixel_format_stride[int(cur_format)];
+
+  SDL_Rect dest_rect{0, 0, is_lores ? width / 2 : width, is_lores ? height / 2 : height};
+  auto stride = dest_rect.w * blit::pixel_format_stride[int(cur_format)];
 
   if(cur_format == blit::PixelFormat::P) {
     uint8_t col_fb[max_width * max_height * 3];
 
     auto in = framebuffer, out = col_fb;
-    auto size = is_lores ? (width / 2) * (height / 2) : width * height;
+    auto size = dest_rect.w * dest_rect.h;
 
     for(int i = 0; i < size; i++) {
       uint8_t index = *(in++);
@@ -354,9 +363,9 @@ void System::update_texture(SDL_Texture *texture) {
       (*out++) = palette[index].b;
     }
 
-    SDL_UpdateTexture(texture, nullptr, col_fb, stride * 3);
+    SDL_UpdateTexture(texture, &dest_rect, col_fb, stride * 3);
   } else
-    SDL_UpdateTexture(texture, nullptr, framebuffer, stride);
+    SDL_UpdateTexture(texture, &dest_rect, framebuffer, stride);
 }
 
 void System::notify_redraw() {

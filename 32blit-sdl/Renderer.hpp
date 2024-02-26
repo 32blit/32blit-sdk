@@ -23,9 +23,7 @@ class Renderer {
 		Mode mode = KeepPixels;
 		SDL_Renderer *renderer = nullptr;
 
-		SDL_Texture *fb_lores_texture = nullptr;
-		SDL_Texture *fb_hires_texture = nullptr;
-		SDL_Texture *fb_lores_565_texture = nullptr;
-		SDL_Texture *fb_hires_565_texture = nullptr;
+		SDL_Texture *fb_texture = nullptr;
+		SDL_Texture *fb_565_texture = nullptr;
 		SDL_Texture *current = nullptr;
 };

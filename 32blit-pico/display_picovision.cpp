@@ -22,11 +22,15 @@ static constexpr uint I2C_SCL = 7;
 static constexpr uint I2C_ADDR = 0x0D;
 static constexpr uint I2C_REG_SET_RES = 0xFC;
 static constexpr uint I2C_REG_START = 0xFD;
+static constexpr uint I2C_REG_STOP = 0xFF;
 
 static constexpr uint32_t base_address = 0x10000;
 
 static const blit::Size resolutions[]{
   {640, 480},
+  {720, 480},
+  {720, 400},
+  {720, 576},
 };
 
 static pimoroni::APS6404 ram(CS, D0, pio1);
@@ -384,6 +388,23 @@ void update_display(uint32_t time) {
     auto &cur_surf_info = blit::screen;
 
     auto new_res = find_resolution(cur_surf_info.bounds);
+
+    // resolution switch
+    if(new_res != cur_resolution) {
+      // if display was already enabled, we're too late so stop and restart
+      if(display_enabled) {
+        uint8_t buf[2] = {I2C_REG_STOP, 1};
+        i2c_write_blocking(i2c1, I2C_ADDR, buf, 2, false);
+
+        display_enabled = false;
+
+        sleep_ms(50); // wait a bit
+      }
+
+      uint8_t buf[2] = {I2C_REG_SET_RES, uint8_t(new_res)};
+      i2c_write_blocking(i2c1, I2C_ADDR, buf, 2, false);
+      cur_resolution = new_res;
+    }
 
     auto &base_bounds = resolutions[new_res];
 
