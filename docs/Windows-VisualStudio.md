@@ -5,9 +5,8 @@ You can use Visual Studio 2019 to examine the samples (compile them and run them
 See [Building & Running On 32Blit](32blit.md) if you want to compile examples/projects to run on 32Blit.
 
 - [Requirements](#requirements)
-- [Option 1: Use the solution file](#option-1-use-the-solution-file)
+- [Building with Visual Studio's built-in CMake support](#building-with-visual-studios-built-in-cmake-support)
   - [Get started with your own game](#get-started-with-your-own-game)
-- [Option 2: Use Visual Studio's built-in CMake support](#option-2-use-visual-studios-built-in-cmake-support)
   - [Building your own game](#building-your-own-game)
   - [Building for 32Blit](#building-for-32blit)
 - [Troubleshooting](#troubleshooting)
@@ -22,20 +21,7 @@ You will also need to download SDL2 development libraries from the [SDL releases
 
 Place these in the `vs\sdl\` folder. You will need to merge the include/lib directories. If you are using CMake/Open Folder, these are downloaded automatically.
 
-
-There are two methods of building with Visual Studio:
-
-## Option 1: Use the solution file
-
-This should be the most familiar option for existing Visual Studio users.
-
-The solutions and projects are made to use toolset version c142.
-
-The solution file is located at `vs\32blit.sln`. It contains two static linked libraries, _32blit_ and _32blit-sdl_ and all the examples that will compile to .EXE.
-
-## Option 2: Use Visual Studio's built-in CMake support
-
-This has the advantage of being closer to the build for the device.
+## Building with Visual Studio's built-in CMake support
 
 1. Open Visual Studio
 

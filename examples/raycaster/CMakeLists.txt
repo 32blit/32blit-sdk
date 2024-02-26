@@ -1,7 +1,0 @@
-cmake_minimum_required(VERSION 3.9)
-project (raycaster)
-find_package (32BLIT CONFIG REQUIRED PATHS ../..)
-blit_executable (raycaster raycaster.cpp)
-blit_assets_yaml(raycaster assets.yml)
-blit_metadata (raycaster metadata.yml)
-target_compile_definitions(raycaster PRIVATE ALLOW_HIRES=0)

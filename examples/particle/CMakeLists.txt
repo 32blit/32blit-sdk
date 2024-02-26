@@ -1,5 +1,0 @@
-cmake_minimum_required(VERSION 3.9)
-project (particle)
-find_package (32BLIT CONFIG REQUIRED PATHS ../..)
-blit_executable (particle particle.cpp)
-blit_metadata (particle metadata.yml)
