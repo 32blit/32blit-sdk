@@ -53,6 +53,13 @@ namespace blit {
     Pen *palette = nullptr;
   };
 
+  enum class CanLaunchResult {
+    Success = 0,
+    UnknownType,       /// no known handler for this file
+    InvalidFile,      /// file is not valid/doesn't exist
+    IncompatibleBlit, /// file is incompatible with this device
+  };
+
   #pragma pack(push, 4)
   struct API {
     uint16_t version_major;
@@ -135,6 +142,9 @@ namespace blit {
 
     // another launcher API
     void (*list_installed_games)(std::function<void(const uint8_t *, uint32_t, uint32_t)> callback);
+    // if launch is expected to succeed on this file
+    // files this returns success for should be .blit files or have a registered handler (get_type_handler_metadata should return valid metadata)
+    CanLaunchResult (*can_launch)(const char *path);
   };
   #pragma pack(pop)
 
