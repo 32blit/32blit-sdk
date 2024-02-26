@@ -5,4 +5,4 @@ set(BLIT_BOARD_DEFINITIONS
 )
 
 blit_driver(display st7789)
-blit_driver(input tufty)
+blit_driver(input gpio)
