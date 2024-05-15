@@ -9,12 +9,14 @@ function(fetch_sdl2_library directory url filename hash)
     endif()
     if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/${directory})
         message(STATUS "Extracting ${filename}")
-        # tar -xf should work on Windows 10 build 17063 or later (Dec 2017)
-        execute_process(COMMAND tar -xf ${filename}
-                        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+        if(${CMAKE_VERSION} VERSION_LESS "3.18")
+            # tar -xf should work on Windows 10 build 17063 or later (Dec 2017)
+            execute_process(COMMAND tar -xf ${filename}
+                            WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+        else()
+            file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_LIST_DIR}/${filename} DESTINATION ${CMAKE_CURRENT_LIST_DIR})
+        endif()
     endif()
-    # in future we might be able to use:
-    # file(ARCHIVE_EXTRACT INPUT ${filename})
 endfunction(fetch_sdl2_library)
 
 set(SDL2_VERSION 2.24.0)
