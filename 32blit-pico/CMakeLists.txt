@@ -222,4 +222,7 @@ function(blit_metadata TARGET FILE)
     # add the generated source
     target_sources(${TARGET} PRIVATE ${METADATA_SOURCE})
 
+    # avoid the fallback to target name
+    target_compile_definitions(${TARGET} PRIVATE PICO_NO_BI_PROGRAM_NAME=1)
+
 endfunction()
