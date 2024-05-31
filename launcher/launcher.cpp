@@ -169,7 +169,8 @@ static void load_file_list(const std::string &directory) {
         return true;
     }
 
-    return res == CanLaunchResult::Success;
+    // will filter incompatible later
+    return res == CanLaunchResult::Success || res == CanLaunchResult::IncompatibleBlit;
   });
 
   game_list.reserve(files.size()); // worst case
@@ -189,6 +190,7 @@ static void load_file_list(const std::string &directory) {
 
     if(ext == "blit") {
       game.type = GameType::game;
+      game.can_launch = api.can_launch(game.filename.c_str()) == CanLaunchResult::Success;
 
       // check for metadata
       BlitGameMetadata meta;
@@ -546,8 +548,10 @@ static void render_screenshot() {
 
 static void render_game_info() {
   // run game / launch file
-  screen.sprite(1, Point(game_actions_offset.x, game_actions_offset.y + 12));
-  screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R90);
+  if(selected_game.can_launch) {
+    screen.sprite(1, Point(game_actions_offset.x, game_actions_offset.y + 12));
+    screen.sprite(0, Point(game_actions_offset.x + 10, game_actions_offset.y + 12), SpriteTransform::R90);
+  }
 
   // game info
   if(selected_game_metadata.splash)
@@ -572,6 +576,11 @@ static void render_game_info() {
   char buf[20];
   snprintf(buf, 20, "%i block%s", num_blocks, num_blocks == 1 ? "" : "s");
   screen.text(buf, minimal_font, Point(game_info_offset.x, screen.bounds.h - 16));
+
+  if(!selected_game.can_launch) {
+    screen.pen = {255, 0, 0};
+    screen.text("INCOMPATIBLE", minimal_font, Point(screen.bounds.w - 10, screen.bounds.h - 16), true, TextAlign::top_right);
+  }
 }
 
 void render(uint32_t time) {
@@ -767,7 +776,7 @@ void update(uint32_t time) {
   if(button_a) {
     if(selected_game.type == GameType::screenshot && !selected_game.can_launch) {
       current_screen = Screen::screenshot;
-    } else {
+    } else if(selected_game.can_launch) {
       if(!launch_current_game())
         dialog.show("Error!", "Failed to launch " + selected_game.filename, [](bool){}, false);
     }
