@@ -589,13 +589,18 @@ static CanLaunchResult can_launch(const char *path) {
     if(res != FR_OK)
       return CanLaunchResult::InvalidFile;
 
-    if(parse_file_header(file, header, header_offset)) {
-      f_close(&file);
-      return CanLaunchResult::Success;
-    }
-
+    bool parsed_header = parse_file_header(file, header, header_offset);
     f_close(&file);
-    return CanLaunchResult::IncompatibleBlit;
+
+    // failed to parse, or wrong device id
+    if(!parsed_header || (header.device_id != BlitDevice::STM32H7_32BlitOld && header.device_id != BlitDevice::STM32H7_32Blit))
+      return CanLaunchResult::IncompatibleBlit;
+
+    // check API version (unless old header)
+    if(header.device_id == BlitDevice::STM32H7_32Blit && (header.api_version_major != BLIT_API_VERSION_MAJOR || header.api_version_minor > BLIT_API_VERSION_MINOR))
+      return CanLaunchResult::IncompatibleBlit;
+
+    return CanLaunchResult::Success;
   }
 
   // not a blit file, so we need to check for handlers
