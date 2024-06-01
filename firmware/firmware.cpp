@@ -125,7 +125,7 @@ static bool parse_file_header(FIL &fh, BlitGameHeader &header, uint32_t &header_
   // read header
   f_read(&fh, &header, sizeof(header), &bytes_read);
 
-  if(header.magic != blit_game_magic)
+  if(header.magic != blit_game_magic || (header.device_id != BlitDevice::STM32H7_32BlitOld && header.device_id != BlitDevice::STM32H7_32Blit))
     return false;
 
   return true;
@@ -196,7 +196,7 @@ static bool read_flash_game_header(uint32_t offset, BlitGameHeader &header) {
   if(qspi_read_buffer(offset, reinterpret_cast<uint8_t *>(&header), sizeof(header)) != QSPI_OK)
     return false;
 
-  if(header.magic != blit_game_magic)
+  if(header.magic != blit_game_magic || (header.device_id != BlitDevice::STM32H7_32BlitOld && header.device_id != BlitDevice::STM32H7_32Blit))
     return false;
 
   // make sure end/size is sensible
@@ -589,13 +589,18 @@ static CanLaunchResult can_launch(const char *path) {
     if(res != FR_OK)
       return CanLaunchResult::InvalidFile;
 
-    if(parse_file_header(file, header, header_offset)) {
-      f_close(&file);
-      return CanLaunchResult::Success;
-    }
-
+    bool parsed_header = parse_file_header(file, header, header_offset);
     f_close(&file);
-    return CanLaunchResult::IncompatibleBlit;
+
+    // failed to parse, or wrong device id
+    if(!parsed_header || (header.device_id != BlitDevice::STM32H7_32BlitOld && header.device_id != BlitDevice::STM32H7_32Blit))
+      return CanLaunchResult::IncompatibleBlit;
+
+    // check API version (unless old header)
+    if(header.device_id == BlitDevice::STM32H7_32Blit && (header.api_version_major != BLIT_API_VERSION_MAJOR || header.api_version_minor > BLIT_API_VERSION_MINOR))
+      return CanLaunchResult::IncompatibleBlit;
+
+    return CanLaunchResult::Success;
   }
 
   // not a blit file, so we need to check for handlers
