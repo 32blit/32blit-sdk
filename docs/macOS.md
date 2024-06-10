@@ -6,9 +6,10 @@ These instructions cover building 32blit on macOS.
   - [Python3](#python3)
     - [Installing python3](#installing-python3)
     - [Installing pip3 dependecies](#installing-pip3-dependecies)
+    - [Verifying install](#verifying-install)
   - [Installing `gcc-arm-none-eabi`](#installing-gcc-arm-none-eabi)
-- [Building & Running on 32Blit](#building--running-on-32blit)
-- [Building & Running Locally](#building--running-locally)
+- [Building \& Running on 32Blit](#building--running-on-32blit)
+- [Building \& Running Locally](#building--running-locally)
   - [Build Everything](#build-everything)
 - [Troubleshooting](#troubleshooting)
 
@@ -87,13 +88,21 @@ You'll need to install `SDL2`, `SDL2 Image` and `SDL2 Net`
 brew install sdl2 sdl2_image sdl2_net
 ```
 
+Clone the examples repository:
+```
+git clone https://github.com/32blit/32blit-examples
+
+cd 32blit-examples
+```
+
 Then, set up the 32Blit Makefile from the root of the repository with the following commands:
 
 ```shell
 mkdir build
 cd build
-cmake ..
+cmake -D32BLIT_DIR=../../32blit-sdk ..
 ```
+(Assuming 32blit-sdk is cloned next to 32blit-examples)
 
 Now to make any example, type:
 

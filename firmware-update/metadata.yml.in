@@ -2,9 +2,9 @@ title: Firmware Updater
 description: Updates firmware to ${FIRMWARE_VERSION}
 author: pimoroni
 splash:
-  file: ../examples/no-image.png
+  file: assets/no-image.png
 icon:
-  file: ../examples/no-icon.png
+  file: assets/no-icon.png
 version: ${FIRMWARE_VERSION}
 url: https://github.com/32blit/32blit-sdk
 category: firmware

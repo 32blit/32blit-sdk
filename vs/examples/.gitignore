@@ -1,9 +1,0 @@
-#
-# VS specific gitignore
-#
-
-#
-# Text project asset is named differently
-#
-font_asset.cpp
-font_asset.hpp

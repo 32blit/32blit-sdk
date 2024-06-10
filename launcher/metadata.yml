@@ -2,9 +2,9 @@ title: Launcher
 description: Launches things.
 author: pimoroni
 splash:
-  file: ../examples/no-image.png
+  file: assets/no-image.png
 icon:
-  file: ../examples/no-icon.png
+  file: assets/no-icon.png
 version: v1.0.0
 url: https://github.com/32blit/32blit-sdk
 category: launcher
