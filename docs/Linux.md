@@ -45,9 +45,22 @@ If you want to run code on 32Blit, you should now refer to [Building & Running O
 
 ## Building & Running Locally
 
-Set up the 32Blit Makefile from the root of the repository with the following commands:
+First you need something to build. The [32blit-examples](https://github.com/32blit/32blit-examples) repository includes a series of demos showcasing various 32blit SDK features. These instructions will assume you're building those and have cloned or extracted that repository alongside 32blit-sdk:
 
 ```shell
+git clone https://github.com/32blit/32blit-examples
+```
+
+Your directory tree should look something like:
+
+- root_dir
+    - 32blit-sdk
+    - 32blit-examples
+
+Create a build directory and configure the examples. The 32blit-sdk should be automatically detected:
+
+```shell
+cd 32blit-examples
 mkdir build
 cd build
 cmake ..
