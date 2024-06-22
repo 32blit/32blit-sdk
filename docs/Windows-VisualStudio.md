@@ -76,19 +76,11 @@ There is also a skeleton game project created for you at https://github.com/32bl
 
 ### Building for 32Blit
 
-1. Make sure the "Embedded and IoT development tools" component is installed from the `Linux development with C++` VS Workload.
+1. Make sure the "Embedded and IoT development tools" component is installed from the `Linux development with C++` VS Workload and you have [an Arm toolchain](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads) installed.
 
 2. Open the CMake Settings: `Project` > `CMake Settings`..
 
-3. Press "Add a new configuration..." and select "IoT-Release".
-
-4. Scroll down to "CMake toolchain file" and browse to `32blit.toolchain`
-
-5. (Optional) Change configuration name to something like "32Blit-Release"
-
-6. Save.
-
-7. Press "Edit JSON", scroll down to the new configuration and delete the contents of the `variables` array. The result should look like this:
+3. Press "Edit JSON" and add a new entry to the "configurations" list like this (make sure to set the path to the toolchain file):
 ```jsonc
     // other configs...
     {
@@ -104,19 +96,17 @@ There is also a skeleton game project created for you at https://github.com/32bl
       "variables": [],
       "intelliSenseMode": "linux-gcc-arm",
       "cmakeToolchain": "[path...]/32blit-sdk/32blit.toolchain",
-      "environments": [ { "PATH": "${env.PATH}" } ]
+      "environments": [ { "PATH": "${env.PATH}" } ] // this is a workaround for finding the toolchain
     }
     //...
 ```
 
-8. Select the new config and build!
+4. Save.
+
+5. Select the new config and build!
 
 ## Troubleshooting
 
 ### Cannot open include file: 'SDL.h': No such file or directory
 
 If you see errors such as `Cannot open include file: 'SDL.h': No such file or directory` and `cannot open file 'SDL2.lib'` you've probably extracted the SDL development libraries into "SDL2-2.24.0" rather than extracting the individual folders inside. Inside your "sdl" folder you should have the folders "docs", "include" and "lib" not "SDL2-2.24.0".
-
-### `cmd.exe` not recognised
-
-Building for 32blit can fail with `'cmd.exe' is not recognized as an internal or external command, operable program or batch file`. This is a bug in Visual Studio (reported https://developercommunity.visualstudio.com/t/CMake-with-the-IoT-toolchain-fails-wit/1429737) which can be fixed by adding the `"environments": [ { "PATH": "${env.PATH}" } ]` line to the CMake config.
