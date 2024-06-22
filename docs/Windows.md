@@ -8,8 +8,6 @@ These instructions cover building 32blit on Windows (without WSL).
 - [Building & Running Locally](#building--running-locally)
   - [Build Everything](#build-everything)
 
-To build using Visual Studio [see here](Windows-VisualStudio.md). The rest of these instructions cover command-line builds.
-
 ## Prerequisites
 
 - Windows Terminal - grab it from the Windows Store
@@ -45,6 +43,8 @@ You should now be able to run `32blit.exe`, you can test your connection to your
 ```
 
 ## Building & Running
+
+To build using Visual Studio [see here](Windows-VisualStudio.md). The rest of these instructions cover command-line builds.
 
 ### On 32Blit
 
