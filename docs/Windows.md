@@ -18,7 +18,7 @@ To build using Visual Studio [see here](Windows-VisualStudio.md). The rest of th
 - The [GNU Arm Embedded Toolchain](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads) (For 32blit device builds, use the 9-2020-q2-update version). Make sure to select the "Add path to environment variable" at the end of the setup.
  - At least the [Visual Studio build tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022) (For local builds, select "Desktop development with C++"). This includes CMake and NMake.
 
-If you have Visual Studio installed you can Modify the installation and select "C++/CLI support for vXXX build tools (Latest)"
+If you have Visual Studio installed you can Modify the installation and select "MSVC vXXX - VS 2022 C++ x64/x86 build tools (Latest)" and "C++ CMake tools for Windows"
 
 ## Setting Up
 
