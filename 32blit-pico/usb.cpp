@@ -188,8 +188,9 @@ void usb_cdc_update() {
 
       if(!cur_command)
         printf("got: %c%c%c%c%c%c%c%c\n", cur_header[0], cur_header[1], cur_header[2], cur_header[3], cur_header[4], cur_header[5], cur_header[6], cur_header[7]);
+      else
+        cur_command->init();
 
-      cur_command->init();
       header_pos = 0;
     }
   }
