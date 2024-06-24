@@ -179,7 +179,7 @@ set(BLIT_USB_DRIVER ${BLIT_USB_DRIVER} PARENT_SCOPE)
 set(BLIT_BOARD_DEFINITIONS ${BLIT_BOARD_DEFINITIONS} PARENT_SCOPE)
 
 # some file paths we need later
-set(LINKER_SCRIPT ${CMAKE_CURRENT_LIST_DIR}/memmap_blit.ld PARENT_SCOPE)
+set(LINKER_SCRIPT ${CMAKE_CURRENT_LIST_DIR}/memmap_blit.ld.in PARENT_SCOPE)
 set(STARTUP_SRC ${CMAKE_CURRENT_LIST_DIR}/startup.S ${CMAKE_CURRENT_LIST_DIR}/startup.cpp PARENT_SCOPE)
 set(LAUNCHERSHARED_DIR ${CMAKE_CURRENT_LIST_DIR}/../launcher-shared PARENT_SCOPE)
 
@@ -218,11 +218,23 @@ function(blit_executable NAME)
         # loadable .blit
         set_property(TARGET ${NAME} PROPERTY BLIT_PICO_BLIT TRUE)
 
+        # calculate and verify flash offset
+        math(EXPR offset_mod "${PICO_BLIT_OFFSET_KB} % 64")
+        if(${PICO_BLIT_OFFSET_KB} LESS 256 OR offset_mod)
+            message(FATAL_ERROR "Blit offset should be >= 256k and a multiple of 64k")
+        endif()
+
+        math(EXPR FLASH_OFFSET_BYTES "${PICO_BLIT_OFFSET_KB} * 1024")
+
+        # customise linker script
+        configure_file(${LINKER_SCRIPT} memmap_blit.ld)
+        set(LINKER_SCRIPT_OUT ${CMAKE_CURRENT_BINARY_DIR}/memmap_blit.ld)
+
         target_compile_definitions(${NAME} PRIVATE ${BLIT_BOARD_DEFINITIONS}) # need these for framebuffer config
         target_compile_options(${NAME} PRIVATE -ffunction-sections -fdata-sections)
         target_link_libraries(${NAME} pico_bit_ops pico_cxx_options pico_divider pico_double pico_int64_ops pico_float pico_malloc pico_mem_ops)
-        target_link_options(${NAME} PRIVATE --specs=nosys.specs LINKER:--script=${LINKER_SCRIPT} LINKER:--gc-sections)
-        set_property(TARGET ${NAME} APPEND PROPERTY LINK_DEPENDS ${LINKER_SCRIPT})
+        target_link_options(${NAME} PRIVATE --specs=nosys.specs LINKER:--script=${LINKER_SCRIPT_OUT} LINKER:--gc-sections)
+        set_property(TARGET ${NAME} APPEND PROPERTY LINK_DEPENDS ${LINKER_SCRIPT_OUT})
 
         target_sources(${NAME} PRIVATE ${STARTUP_SRC})
 
