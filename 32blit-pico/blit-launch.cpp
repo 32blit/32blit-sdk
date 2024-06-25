@@ -171,13 +171,10 @@ void list_installed_games(std::function<void(const uint8_t *, uint32_t, uint32_t
 
     // check metadata
     auto meta_offset = off + size;
-    if(memcmp((char *)(XIP_NOCACHE_NOALLOC_BASE + meta_offset), "BLITMETA", 8) != 0) {
-      off += ((size - 1) / game_block_size + 1) * game_block_size;
-      continue;
+    if(memcmp((char *)(XIP_NOCACHE_NOALLOC_BASE + meta_offset), "BLITMETA", 8) == 0) {
+      // add metadata size
+      size += *(uint16_t *)(XIP_NOCACHE_NOALLOC_BASE + meta_offset + 8) + 10;
     }
-
-    // add metadata size
-    size += *(uint16_t *)(XIP_NOCACHE_NOALLOC_BASE + meta_offset + 8) + 10;
 
     callback((const uint8_t *)(XIP_NOCACHE_NOALLOC_BASE + off), off / game_block_size, size);
 
