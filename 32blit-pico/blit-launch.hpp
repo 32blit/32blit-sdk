@@ -5,6 +5,9 @@
 #include "executable.hpp"
 #include "engine/api_private.hpp"
 
+// this is the 32blit's flash erase size, some parts of the API depend on this...
+static constexpr unsigned int game_block_size = 64 * 1024;
+
 RawMetadata *get_running_game_metadata();
 
 bool launch_file(const char *path);

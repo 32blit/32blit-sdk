@@ -19,8 +19,6 @@ void disable_user_code();
 
 extern bool core1_started;
 
-static const unsigned int game_block_size = 64 * 1024; // this is the 32blit's flash erase size, some parts of the API depend on this...
-
 static uint32_t requested_launch_offset = 0;
 static uint32_t current_game_offset = 0;
 
