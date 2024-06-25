@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <tuple>
 
 #include "hardware/flash.h"
@@ -131,12 +132,50 @@ class CDCProgCommand final : public CDCCommand {
   BlitWriter writer;
 };
 
+class CDCListCommand final : public CDCCommand {
+  void init() override {
+  }
+
+  Status update() override {
+    blit::api.list_installed_games([](const uint8_t *ptr, uint32_t block, uint32_t size) {
+      // bit of a mismatch between the API and the CDC API
+      // this wants offset in bytes and the size WITHOUT metadata
+      uint32_t offset_bytes = block * game_block_size;
+      uint32_t header_size = ((BlitGameHeader *)ptr)->end & 0x1FFFFFF;
+
+      usb_cdc_write((uint8_t *)&offset_bytes, sizeof(uint32_t));
+      usb_cdc_write((uint8_t *)&header_size, sizeof(uint32_t));
+      usb_cdc_flush_write();
+
+      // write metadata if found
+      auto meta = ptr + header_size;
+
+      if(memcmp(meta, "BLITMETA", 8) == 0) {
+        auto meta_size = *(uint16_t *)(meta + 8);
+        usb_cdc_write(meta, meta_size + 10);
+      } else {
+        // no meta, write header + 0 len
+        usb_cdc_write((const uint8_t *)"BLITMETA\0", 10);
+      }
+      usb_cdc_flush_write();
+    });
+
+    // end marker
+    uint32_t end = 0xFFFFFFFF;
+    usb_cdc_write((uint8_t *)&end, sizeof(uint32_t));
+    usb_cdc_flush_write();
+  
+    return Status::Done;
+  }
+};
+
 static CDCHandshakeCommand handshake_command;
 static CDCUserCommand user_command;
 
 #if defined(BUILD_LOADER) && !defined(USB_HOST)
 #define FLASH_COMMANDS
 static CDCProgCommand prog_command;
+static CDCListCommand list_command;
 #endif
 
 const std::tuple<uint32_t, CDCCommand *> cdc_commands[]{
@@ -145,6 +184,7 @@ const std::tuple<uint32_t, CDCCommand *> cdc_commands[]{
 
 #ifdef FLASH_COMMANDS
   {to_cmd_id("PROG"), &prog_command},
+  {to_cmd_id("__LS"), &list_command},
 #endif
 };
 
