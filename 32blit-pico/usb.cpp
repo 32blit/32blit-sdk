@@ -12,18 +12,23 @@
 #include "engine/engine.hpp"
 #include "executable.hpp"
 
+#define MAX_FILENAME 256+1
+#define MAX_FILELEN 16+1
+
 void init();
 
 static uint8_t cur_header[8];
 static int header_pos = 0;
 static CDCCommand *cur_command = nullptr;
 
+// shared between multiple command handlers
+// which is okay as only one will be active at once
+static const size_t cdc_parse_buffer_size = std::max((unsigned)std::max(MAX_FILELEN, MAX_FILENAME), FLASH_PAGE_SIZE);
+static uint8_t cdc_parse_buffer[cdc_parse_buffer_size];
+
 static constexpr uint32_t to_cmd_id(const char str[4]) {
   return str[0] | str[1] << 8 | str[2] << 16 | str[3] << 24;
 }
-
-#define MAX_FILENAME 256+1
-#define MAX_FILELEN 16+1
 
 class CDCProgCommand final : public CDCCommand {
   void init() override {
@@ -32,6 +37,8 @@ class CDCProgCommand final : public CDCCommand {
   }
 
   Status update() override {
+    auto buf = cdc_parse_buffer;
+  
     while(true) {
       switch(parse_state) {
         case ParseState::Filename: {
@@ -125,8 +132,6 @@ class CDCProgCommand final : public CDCCommand {
     Data
   } parse_state = ParseState::Filename;
 
-  static const size_t buf_size = std::max((unsigned)std::max(MAX_FILELEN, MAX_FILENAME), FLASH_PAGE_SIZE);
-  uint8_t buf[buf_size];
   uint32_t buf_off = 0;
 
   BlitWriter writer;
