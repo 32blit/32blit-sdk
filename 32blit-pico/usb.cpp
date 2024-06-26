@@ -174,6 +174,38 @@ class CDCListCommand final : public CDCCommand {
   }
 };
 
+class CDCLaunchCommand final : public CDCCommand {
+  void init() override {
+    buf_off = 0;
+  }
+
+  Status update() override {
+    auto buf = cdc_parse_buffer;
+  
+    while(true) {
+        if(!usb_cdc_read(buf + buf_off, 1))
+          return Status::Continue;
+
+        // end of string
+        if(buf[buf_off] == 0) {
+          buf_off = 0;
+          blit::api.launch((const char *)buf);
+          return Status::Done;
+        }
+
+        buf_off++;
+
+        // too long
+        if(buf_off == MAX_FILENAME)
+          return Status::Error;
+    }
+
+    return Status::Continue;
+  }
+
+  uint32_t buf_off = 0;
+};
+
 static CDCHandshakeCommand handshake_command;
 static CDCUserCommand user_command;
 
@@ -181,6 +213,7 @@ static CDCUserCommand user_command;
 #define FLASH_COMMANDS
 static CDCProgCommand prog_command;
 static CDCListCommand list_command;
+static CDCLaunchCommand launch_command;
 #endif
 
 const std::tuple<uint32_t, CDCCommand *> cdc_commands[]{
@@ -190,6 +223,7 @@ const std::tuple<uint32_t, CDCCommand *> cdc_commands[]{
 #ifdef FLASH_COMMANDS
   {to_cmd_id("PROG"), &prog_command},
   {to_cmd_id("__LS"), &list_command},
+  {to_cmd_id("LNCH"), &launch_command},
 #endif
 };
 
