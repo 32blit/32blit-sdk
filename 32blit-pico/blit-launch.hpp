@@ -16,6 +16,8 @@ void delayed_launch();
 
 void list_installed_games(std::function<void(const uint8_t *, uint32_t, uint32_t)> callback);
 
+void erase_game(uint32_t offset);
+
 class BlitWriter final {
 public:
   void init(uint32_t file_len);

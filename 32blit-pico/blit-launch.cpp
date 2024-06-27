@@ -193,6 +193,39 @@ void list_installed_games(std::function<void(const uint8_t *, uint32_t, uint32_t
   }
 }
 
+void erase_game(uint32_t offset) {
+#ifdef BUILD_LOADER
+  // check alignment
+  if(offset & (game_block_size - 1))
+    return;
+  
+  // check in bounds
+  // TODO: prevent erasing fs if flash storage is used?
+  if(offset >= PICO_FLASH_SIZE_BYTES)
+    return;
+
+  auto size = get_installed_file_size(offset);
+
+  // fall back to one block if size unknown
+  auto num_blocks = size == 0 ? 1 : calc_num_blocks(size);
+
+  // do erase
+  auto status = save_and_disable_interrupts();
+
+  if(core1_started)
+    multicore_lockout_start_blocking(); // pause core1
+
+  // the real erase size is smaller than the one baked into the API...
+  static_assert(game_block_size % FLASH_SECTOR_SIZE == 0);
+  flash_range_erase(offset, num_blocks * game_block_size);
+
+  if(core1_started)
+    multicore_lockout_end_blocking(); // resume core1
+
+  restore_interrupts(status);
+#endif
+}
+
 void BlitWriter::init(uint32_t file_len) {
   this->file_len = file_len;
   file_offset = flash_offset = 0;
