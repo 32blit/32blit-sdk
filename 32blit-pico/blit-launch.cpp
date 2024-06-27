@@ -155,28 +155,41 @@ void delayed_launch() {
   do_tick = header->tick;
 }
 
+static uint32_t get_installed_file_size(uint32_t offset) {
+  auto header = (BlitGameHeader *)(XIP_NOCACHE_NOALLOC_BASE + offset);
+
+  // check header magic + device
+  if(header->magic != blit_game_magic || header->device_id != BlitDevice::RP2040)
+    return 0;
+
+  auto size = header->end;
+
+  // check metadata
+  auto meta_offset = offset + size;
+  if(memcmp((char *)(XIP_NOCACHE_NOALLOC_BASE + meta_offset), "BLITMETA", 8) == 0) {
+    // add metadata size
+    size += *(uint16_t *)(XIP_NOCACHE_NOALLOC_BASE + meta_offset + 8) + 10;
+  }
+
+  return size;
+}
+
+static uint32_t calc_num_blocks(uint32_t size) {
+  return (size - 1) / game_block_size + 1;
+}
+
 void list_installed_games(std::function<void(const uint8_t *, uint32_t, uint32_t)> callback) {
   for(uint32_t off = 0; off < PICO_FLASH_SIZE_BYTES;) {
-    auto header = (BlitGameHeader *)(XIP_NOCACHE_NOALLOC_BASE + off);
+    auto size = get_installed_file_size(off);
 
-    // check header magic + device
-    if(header->magic != blit_game_magic || header->device_id != BlitDevice::RP2040) {
+    if(!size) {
       off += game_block_size;
       continue;
     }
 
-    auto size = header->end;
-
-    // check metadata
-    auto meta_offset = off + size;
-    if(memcmp((char *)(XIP_NOCACHE_NOALLOC_BASE + meta_offset), "BLITMETA", 8) == 0) {
-      // add metadata size
-      size += *(uint16_t *)(XIP_NOCACHE_NOALLOC_BASE + meta_offset + 8) + 10;
-    }
-
     callback((const uint8_t *)(XIP_NOCACHE_NOALLOC_BASE + off), off / game_block_size, size);
 
-    off += ((size - 1) / game_block_size + 1) * game_block_size;
+    off += calc_num_blocks(size) * game_block_size;
   }
 }
 
