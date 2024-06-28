@@ -206,6 +206,35 @@ class CDCLaunchCommand final : public CDCCommand {
   uint32_t buf_off = 0;
 };
 
+class CDCEraseCommand final : public CDCCommand {
+  void init() override {
+    buf_off = 0;
+  }
+
+  Status update() override {
+    auto buf = cdc_parse_buffer;
+  
+    while(true) {
+        if(!usb_cdc_read(buf + buf_off, 1))
+          return Status::Continue;
+
+        buf_off++;
+
+        // end of word
+        if(buf_off == 4) {
+          buf_off = 0;
+          blit::api.erase_game(*(uint32_t *)buf);
+          return Status::Done;
+        }
+    }
+
+    return Status::Continue;
+  }
+
+  uint32_t buf_off = 0;
+};
+
+
 static CDCHandshakeCommand handshake_command;
 static CDCUserCommand user_command;
 
@@ -214,6 +243,7 @@ static CDCUserCommand user_command;
 static CDCProgCommand prog_command;
 static CDCListCommand list_command;
 static CDCLaunchCommand launch_command;
+static CDCEraseCommand erase_command;
 #endif
 
 const std::tuple<uint32_t, CDCCommand *> cdc_commands[]{
@@ -224,6 +254,7 @@ const std::tuple<uint32_t, CDCCommand *> cdc_commands[]{
   {to_cmd_id("PROG"), &prog_command},
   {to_cmd_id("__LS"), &list_command},
   {to_cmd_id("LNCH"), &launch_command},
+  {to_cmd_id("ERSE"), &erase_command},
 #endif
 };
 
