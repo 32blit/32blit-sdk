@@ -21,66 +21,95 @@ static uint8_t cur_header[8];
 static int header_pos = 0;
 static CDCCommand *cur_command = nullptr;
 
-// shared between multiple command handlers
-// which is okay as only one will be active at once
-static const size_t cdc_parse_buffer_size = std::max((unsigned)std::max(MAX_FILELEN, MAX_FILENAME), FLASH_PAGE_SIZE);
-static uint8_t cdc_parse_buffer[cdc_parse_buffer_size];
-
 static constexpr uint32_t to_cmd_id(const char str[4]) {
   return str[0] | str[1] << 8 | str[2] << 16 | str[3] << 24;
 }
 
+class CDCParseBuffer final {
+public:
+  void reset() {
+    offset = 0;
+  }
+
+  uint8_t *get_data() {
+    return buffer;
+  }
+
+  uint8_t *get_current_ptr() {
+    return buffer + offset;
+  }
+
+  void add_read(uint32_t count) {
+    offset += count;
+    assert(offset <= buffer_size);
+  }
+
+  uint32_t get_offset() const {
+    return offset;
+  }
+
+private:
+  static const size_t buffer_size = std::max((unsigned)std::max(MAX_FILELEN, MAX_FILENAME), FLASH_PAGE_SIZE);
+  uint8_t buffer[buffer_size];
+
+  uint32_t offset = 0;
+};
+
 class CDCProgCommand final : public CDCCommand {
+public:
+  CDCProgCommand(CDCParseBuffer &buf) : buf(buf) {}
+
   void init() override {
     parse_state = ParseState::Filename;
-    buf_off = 0;
+    buf.reset();
   }
 
   Status update() override {
-    auto buf = cdc_parse_buffer;
-  
+
     while(true) {
       switch(parse_state) {
         case ParseState::Filename: {
-          if(!usb_cdc_read(buf + buf_off, 1))
+          auto buf_ptr = buf.get_current_ptr();
+          if(!usb_cdc_read(buf_ptr, 1))
             return Status::Continue;
 
           // end of string
-          if(buf[buf_off] == 0) {
-            printf("PROG: file %s\n", buf);
+          if(*buf_ptr == 0) {
+            printf("PROG: file %s\n", buf.get_data());
             parse_state = ParseState::Length;
-            buf_off = 0;
+            buf.reset();
             continue;
           }
 
-          buf_off++;
+          buf.add_read(1);
 
           // too long
-          if(buf_off == MAX_FILENAME)
+          if(buf.get_offset() == MAX_FILENAME)
             return Status::Error;
 
           break;
         }
 
         case ParseState::Length: {
-          if(!usb_cdc_read(buf + buf_off, 1))
+          auto buf_ptr = buf.get_current_ptr();
+          if(!usb_cdc_read(buf_ptr, 1))
             return Status::Continue;
 
           // end of string
-          if(buf[buf_off] == 0) {
-            auto file_len = strtoul((const char *)buf, nullptr, 10);
+          if(*buf_ptr == 0) {
+            auto file_len = strtoul((const char *)buf.get_data(), nullptr, 10);
             printf("PROG: len %lu\n", file_len);
             parse_state = ParseState::Data;
-            buf_off = 0;
+            buf.reset();
 
             writer.init(file_len);
             continue;
           }
 
-          buf_off++;
+          buf.add_read(1);
 
           // too long
-          if(buf_off == MAX_FILELEN)
+          if(buf.get_offset() == MAX_FILELEN)
             return Status::Error;
 
           break;
@@ -88,20 +117,21 @@ class CDCProgCommand final : public CDCCommand {
 
         case ParseState::Data: {
           // read data
-          auto max = std::min(uint32_t(FLASH_PAGE_SIZE), writer.get_remaining()) - buf_off;
-          auto read = usb_cdc_read(buf + buf_off, max);
+          auto max = std::min(uint32_t(FLASH_PAGE_SIZE), writer.get_remaining()) - buf.get_offset();
+          auto read = usb_cdc_read(buf.get_current_ptr(), max);
 
           if(!read)
             return Status::Continue;
 
-          buf_off += read;
+          buf.add_read(read);
 
           // got full page or final part of file
+          auto buf_off = buf.get_offset();
           if(buf_off == FLASH_PAGE_SIZE || buf_off == writer.get_remaining()) {
-            if(!writer.write(buf, buf_off))
+            if(!writer.write(buf.get_data(), buf_off))
               return Status::Error;
 
-            buf_off = 0;
+            buf.reset();
           }
 
           // end of file
@@ -132,7 +162,7 @@ class CDCProgCommand final : public CDCCommand {
     Data
   } parse_state = ParseState::Filename;
 
-  uint32_t buf_off = 0;
+  CDCParseBuffer &buf;
 
   BlitWriter writer;
 };
@@ -175,55 +205,57 @@ class CDCListCommand final : public CDCCommand {
 };
 
 class CDCLaunchCommand final : public CDCCommand {
+public:
+  CDCLaunchCommand(CDCParseBuffer &buf) : buf(buf) {}
+
   void init() override {
-    buf_off = 0;
+    buf.reset();
   }
 
   Status update() override {
-    auto buf = cdc_parse_buffer;
-  
     while(true) {
-        if(!usb_cdc_read(buf + buf_off, 1))
+        auto buf_ptr = buf.get_current_ptr();
+        if(!usb_cdc_read(buf_ptr, 1))
           return Status::Continue;
 
         // end of string
-        if(buf[buf_off] == 0) {
-          buf_off = 0;
-          blit::api.launch((const char *)buf);
+        if(*buf_ptr == 0) {
+          blit::api.launch((const char *)buf.get_data());
           return Status::Done;
         }
 
-        buf_off++;
+        buf.add_read(1);
 
         // too long
-        if(buf_off == MAX_FILENAME)
+        if(buf.get_offset() == MAX_FILENAME)
           return Status::Error;
     }
 
     return Status::Continue;
   }
 
-  uint32_t buf_off = 0;
+  CDCParseBuffer &buf;
 };
 
 class CDCEraseCommand final : public CDCCommand {
+public:
+  CDCEraseCommand(CDCParseBuffer &buf) : buf(buf) {}
+
   void init() override {
-    buf_off = 0;
+    buf.reset();
   }
 
   Status update() override {
-    auto buf = cdc_parse_buffer;
-  
     while(true) {
-        if(!usb_cdc_read(buf + buf_off, 1))
+        auto buf_ptr = buf.get_current_ptr();
+        if(!usb_cdc_read(buf_ptr, 1))
           return Status::Continue;
 
-        buf_off++;
+        buf.add_read(1);
 
         // end of word
-        if(buf_off == 4) {
-          buf_off = 0;
-          blit::api.erase_game(*(uint32_t *)buf);
+        if(buf.get_offset() == 4) {
+          blit::api.erase_game(*(uint32_t *)buf.get_data());
           return Status::Done;
         }
     }
@@ -231,7 +263,7 @@ class CDCEraseCommand final : public CDCCommand {
     return Status::Continue;
   }
 
-  uint32_t buf_off = 0;
+  CDCParseBuffer &buf;
 };
 
 
@@ -240,10 +272,11 @@ static CDCUserCommand user_command;
 
 #if defined(BUILD_LOADER) && !defined(USB_HOST)
 #define FLASH_COMMANDS
-static CDCProgCommand prog_command;
+static CDCParseBuffer parse_buffer;
+static CDCProgCommand prog_command(parse_buffer);
 static CDCListCommand list_command;
-static CDCLaunchCommand launch_command;
-static CDCEraseCommand erase_command;
+static CDCLaunchCommand launch_command(parse_buffer);
+static CDCEraseCommand erase_command(parse_buffer);
 #endif
 
 const std::tuple<uint32_t, CDCCommand *> cdc_commands[]{
