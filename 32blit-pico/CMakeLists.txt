@@ -31,9 +31,6 @@ endfunction()
 
 add_library(BlitHalPico INTERFACE)
 target_sources(BlitHalPico INTERFACE
-    ${CMAKE_CURRENT_LIST_DIR}/../3rd-party/fatfs/ff.c
-    ${CMAKE_CURRENT_LIST_DIR}/../3rd-party/fatfs/ffunicode.c
-
     ${CMAKE_CURRENT_LIST_DIR}/display.cpp
     ${CMAKE_CURRENT_LIST_DIR}/file.cpp
     ${CMAKE_CURRENT_LIST_DIR}/led.cpp
@@ -43,10 +40,15 @@ target_sources(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
 )
 
-target_link_libraries(BlitHalPico INTERFACE hardware_dma hardware_pio hardware_pwm hardware_spi pico_multicore pico_stdlib pico_unique_id pico_rand tinyusb_device)
+target_link_libraries(BlitHalPico INTERFACE
+    hardware_dma hardware_pio hardware_pwm hardware_spi
+    pico_multicore pico_stdlib pico_unique_id pico_rand
+    tinyusb_device
+    FatFs
+)
+
 target_include_directories(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR} # for tusb_config
-    ${CMAKE_CURRENT_LIST_DIR}/../3rd-party/fatfs
 )
 
 target_compile_definitions(BlitHalPico INTERFACE
