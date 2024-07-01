@@ -7,13 +7,9 @@
 #include "audio/audio.hpp"
 #include "engine/api_private.hpp"
 
-blit::AudioChannel channels[CHANNEL_COUNT];
-
 static void _audio_callback(void *userdata, uint8_t *stream, int len);
 
 Audio::Audio() {
-    blit::api.channels = channels;
-
     SDL_AudioSpec desired = {}, audio_spec = {};
 
     desired.freq = _sample_rate;

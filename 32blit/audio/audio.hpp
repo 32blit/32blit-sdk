@@ -127,7 +127,7 @@ namespace blit {
 	    }
   };
 
-  extern AudioChannel *&channels;
+  extern AudioChannel * const &channels;
 
   uint16_t get_audio_frame();
   bool is_audio_playing();
