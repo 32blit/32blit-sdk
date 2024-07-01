@@ -21,6 +21,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Checkout Examples
+      uses: actions/checkout@v3
+      with:
+        repository: 32blit/32blit-examples
+        path: 32blit-examples
+
     - name: Install deps
       run: |
         sudo apt update && sudo apt install doxygen graphviz python3-setuptools
@@ -50,7 +56,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: emcmake cmake $GITHUB_WORKSPACE -D32BLIT_DIR=$GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG"
+      run: emcmake cmake $GITHUB_WORKSPACE/32blit-examples -D32BLIT_DIR=$GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG"
 
     # Problem matching
     - uses: ammaraskar/gcc-problem-matcher@master
@@ -65,7 +71,7 @@ jobs:
     - name: Prepare Site
       run: |
         mkdir -p site/examples
-        cp ../build/examples/*/*.{js,wasm} site/examples
+        cp ../build/*/*.{js,wasm} site/examples
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v3

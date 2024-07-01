@@ -42,7 +42,7 @@ The `32blit-stm32` directory contains the STM32 HAL for 32blit, compatible with 
 
 ## Examples / Projects
 
-The `examples` directory contains example projects, these can be built into both SDL or STM32 binaries and cover a range of techniques from simple concepts to complete games.
+The [32blit-examples](https://github.com/32blit/32blit-examples) repository contains example projects, these can be built into both SDL or STM32 binaries and cover a range of techniques from simple concepts to complete games.
 
 Refer to the OS/platform specific documentation files in the `docs/` folder for instructions on how to compile and run these examples.
 

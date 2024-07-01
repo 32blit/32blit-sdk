@@ -12,6 +12,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Checkout Examples
+      uses: actions/checkout@v3
+      with:
+        repository: 32blit/32blit-examples
+        path: examples
+
     - name: Install deps
       shell: bash
       run: |

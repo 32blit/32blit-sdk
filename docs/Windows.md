@@ -44,6 +44,18 @@ You should now be able to run `32blit.exe`, you can test your connection to your
 
 ## Building & Running
 
+First you need something to build. The [32blit-examples](https://github.com/32blit/32blit-examples) repository includes a series of demos showcasing various 32blit SDK features. These instructions will assume you're building those and have cloned or extracted that repository alongside 32blit-sdk:
+
+```shell
+git clone https://github.com/32blit/32blit-examples
+```
+
+Your directory tree should look something like:
+
+- root_dir
+    - 32blit-sdk
+    - 32blit-examples
+
 To build using Visual Studio [see here](Windows-VisualStudio.md). The rest of these instructions cover command-line builds.
 
 ### On 32Blit
@@ -51,6 +63,7 @@ To build using Visual Studio [see here](Windows-VisualStudio.md). The rest of th
 If you want to run code on 32Blit, you should now refer to [Building & Running On 32Blit](32blit.md). On Windows you will need to add `-G"NMake Makefiles"` to your cmake commands, for example:
 
 ```
+cd 32blit-examples
 mkdir build.stm32
 cd build.stm32
 cmake -G"NMake Makefiles" -DCMAKE_TOOLCHAIN_FILE=../32blit.toolchain ..
@@ -72,9 +85,11 @@ cmake --build . --target raycaster.flash
 
 ### Locally (Windows .exe)
 
-Set up the 32Blit Makefile from the root of the repository with the following commands:
+
+Create a build directory and configure the examples. The 32blit-sdk should be automatically detected:
 
 ```shell
+cd 32blit-examples
 mkdir build
 cd build
 cmake -G"NMake Makefiles" ..
