@@ -1,3 +1,5 @@
+add_subdirectory(../32blit-shared ../32blit-shared)
+
 add_library(BlitHalSTM32 OBJECT
 	startup_stm32h750xx.s
 	Src/main.c
@@ -131,7 +133,9 @@ set(INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/Utilities
 	${CMAKE_CURRENT_SOURCE_DIR}/../32blit
 	${CMAKE_CURRENT_SOURCE_DIR}/../launcher-shared
+	# these are because the firmware doesn't inherit include paths
 	${CMAKE_CURRENT_SOURCE_DIR}/../3rd-party/fatfs
+	${CMAKE_CURRENT_SOURCE_DIR}/../32blit-shared/fatfs-blit-api
 )
 set(HAL_INCLUDE_DIRS ${INCLUDE_DIRS} PARENT_SCOPE)
 
@@ -154,7 +158,7 @@ target_compile_definitions(BlitHalSTM32
     -DCDC_FIFO_BUFFERS=${CDC_FIFO_BUFFERS}
 )
 
-target_link_libraries(BlitHalSTM32 FatFs)
+target_link_libraries(BlitHalSTM32 FatFsBlitAPI)
 
 target_compile_options(BlitHalSTM32 PUBLIC "$<$<CONFIG:RELEASE>:-Os>")
 target_compile_options(BlitHalSTM32 PUBLIC "$<$<CONFIG:Debug>:-finline-functions-called-once>") # need at least some inlining, otherwise build is too big
