@@ -6,6 +6,11 @@
 
 std::vector<void *> open_files;
 
+[[gnu::weak]]
+bool is_filesystem_access_disabled() {
+  return false;
+}
+
 bool get_files_open() {
   return open_files.size() > 0;
 }
@@ -16,6 +21,9 @@ void close_open_files() {
 }
 
 void *open_file(const std::string &file, int mode) {
+  if(is_filesystem_access_disabled())
+    return nullptr;
+
   FIL *f = new FIL();
 
   BYTE ff_mode = 0;
@@ -97,6 +105,9 @@ uint32_t get_file_length(void *fh) {
 }
 
 void list_files(const std::string &path, std::function<void(blit::FileInfo &)> callback) {
+  if(is_filesystem_access_disabled())
+    return;
+
   DIR dir;
 
   if(f_opendir(&dir, path.c_str()) != FR_OK)
