@@ -40,6 +40,7 @@ if (NOT DEFINED BLIT_ONCE)
 		add_definitions("-DWIN32")
 	endif()
 
+	add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/3rd-party 3rd-party)
 	add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/32blit 32blit)
 
 	function (blit_assets_yaml TARGET FILE)

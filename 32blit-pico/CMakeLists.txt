@@ -13,10 +13,12 @@ set(PICO_SDK_VERSION_MINOR ${PICO_SDK_VERSION_MINOR} PARENT_SCOPE)
 set(PICO_SDK_VERSION_REVISION ${PICO_SDK_VERSION_REVISION} PARENT_SCOPE)
 
 # make sure BlitEngine is built with the right exception flags
-target_link_libraries(BlitEngine pico_cxx_options)
+target_link_libraries(BlitEngine PUBLIC pico_cxx_options)
 
 # also enable function/data sectons
 target_compile_options(BlitEngine PRIVATE -ffunction-sections -fdata-sections)
+
+add_subdirectory(../32blit-shared ../32blit-shared)
 
 # driver helper
 # can override driver choice by pre-setting BLIT_x_DRIVER
@@ -31,9 +33,6 @@ endfunction()
 
 add_library(BlitHalPico INTERFACE)
 target_sources(BlitHalPico INTERFACE
-    ${CMAKE_CURRENT_LIST_DIR}/../3rd-party/fatfs/ff.c
-    ${CMAKE_CURRENT_LIST_DIR}/../3rd-party/fatfs/ffunicode.c
-
     ${CMAKE_CURRENT_LIST_DIR}/display.cpp
     ${CMAKE_CURRENT_LIST_DIR}/file.cpp
     ${CMAKE_CURRENT_LIST_DIR}/led.cpp
@@ -43,10 +42,15 @@ target_sources(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
 )
 
-target_link_libraries(BlitHalPico INTERFACE hardware_dma hardware_pio hardware_pwm hardware_spi pico_multicore pico_stdlib pico_unique_id pico_rand tinyusb_device)
+target_link_libraries(BlitHalPico INTERFACE
+    hardware_dma hardware_pio hardware_pwm hardware_spi
+    pico_multicore pico_stdlib pico_unique_id pico_rand
+    tinyusb_device
+    FatFsBlitAPI
+)
+
 target_include_directories(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR} # for tusb_config
-    ${CMAKE_CURRENT_LIST_DIR}/../3rd-party/fatfs
 )
 
 target_compile_definitions(BlitHalPico INTERFACE
