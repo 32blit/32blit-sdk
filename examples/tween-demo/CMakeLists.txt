@@ -1,5 +1,0 @@
-cmake_minimum_required(VERSION 3.9)
-project (tween-demo)
-find_package (32BLIT CONFIG REQUIRED PATHS ../..)
-blit_executable (tween-demo tween-demo.cpp)
-blit_metadata (tween-demo metadata.yml)
