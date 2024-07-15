@@ -1,3 +1,5 @@
+add_subdirectory(../32blit-shared ../32blit-shared)
+
 add_library(BlitHalSTM32 OBJECT
 	startup_stm32h750xx.s
 	Src/main.c
@@ -39,9 +41,6 @@ add_library(BlitHalSTM32 OBJECT
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_jpeg.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_hcd.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_usb.c
-	../3rd-party/fatfs/ff.c
-	../3rd-party/fatfs/ffsystem.c
-	../3rd-party/fatfs/ffunicode.c
 	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c
 	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c
 	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c
@@ -134,7 +133,9 @@ set(INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/Utilities
 	${CMAKE_CURRENT_SOURCE_DIR}/../32blit
 	${CMAKE_CURRENT_SOURCE_DIR}/../launcher-shared
+	# these are because the firmware doesn't inherit include paths
 	${CMAKE_CURRENT_SOURCE_DIR}/../3rd-party/fatfs
+	${CMAKE_CURRENT_SOURCE_DIR}/../32blit-shared/fatfs-blit-api
 )
 set(HAL_INCLUDE_DIRS ${INCLUDE_DIRS} PARENT_SCOPE)
 
@@ -146,8 +147,6 @@ set(DEFINITIONS
 )
 set(HAL_DEFINITIONS ${DEFINITIONS} PARENT_SCOPE)
 
-set_source_files_properties(Middlewares/Third_Party/FatFs/src/ff.c PROPERTIES COMPILE_FLAGS "-Wno-misleading-indentation")
-
 target_include_directories(BlitHalSTM32
 	PRIVATE
 		${INCLUDE_DIRS}
@@ -158,6 +157,8 @@ target_compile_definitions(BlitHalSTM32
 		${DEFINITIONS}
     -DCDC_FIFO_BUFFERS=${CDC_FIFO_BUFFERS}
 )
+
+target_link_libraries(BlitHalSTM32 FatFsBlitAPI)
 
 target_compile_options(BlitHalSTM32 PUBLIC "$<$<CONFIG:RELEASE>:-Os>")
 target_compile_options(BlitHalSTM32 PUBLIC "$<$<CONFIG:Debug>:-finline-functions-called-once>") # need at least some inlining, otherwise build is too big
