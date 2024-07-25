@@ -89,6 +89,12 @@ namespace blit {
     }break;
     }
   }
+  
+  Surface::~Surface()
+  {
+      if (_bNewData) delete[] data;
+      if (_bNewPalette) delete[] palette;
+  }
 
   /**
    * Loads a packed or raw image asset into a `Surface`
@@ -666,6 +672,7 @@ namespace blit {
     if (format == PixelFormat::P || !is_raw) {
       // load palette
       ret->palette = new Pen[256];
+      ret->_bNewPalette = true;
       file.read(offset, palette_entry_count * 4, (char *)ret->palette);
       offset += palette_entry_count * 4;
     }
@@ -675,7 +682,10 @@ namespace blit {
         ret->data = (uint8_t *)file.get_ptr() + offset;
       else {
         if(!ret->data)
-          ret->data = new uint8_t[needed_size];
+        {
+            ret->data = new uint8_t[needed_size];
+            ret->_bNewData = true;
+        }
         file.read(offset, image.width * image.height * pixel_format_stride[image.format], (char *)ret->data);
       }
 
@@ -683,7 +693,10 @@ namespace blit {
     }
 
     if(!ret->data)
-      ret->data = new uint8_t[needed_size];
+    {
+        ret->data = new uint8_t[needed_size];
+        ret->_bNewData = true;
+    }
 
     // avoid allocating if in flash
     const uint8_t *image_data, *end;
@@ -785,6 +798,7 @@ namespace blit {
       // unpacked, no longer needed
       delete[] ret->palette;
       ret->palette = nullptr;
+      ret->_bNewPalette = false;
     }
 
     if (!file.get_ptr()) {
