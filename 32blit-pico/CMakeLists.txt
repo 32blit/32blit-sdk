@@ -13,7 +13,7 @@ set(PICO_SDK_VERSION_MINOR ${PICO_SDK_VERSION_MINOR} PARENT_SCOPE)
 set(PICO_SDK_VERSION_REVISION ${PICO_SDK_VERSION_REVISION} PARENT_SCOPE)
 
 # make sure BlitEngine is built with the right exception flags
-target_link_libraries(BlitEngine PUBLIC pico_cxx_options)
+target_link_libraries(BlitEngine PUBLIC pico_cxx_options pico_base_headers)
 
 # also enable function/data sectons
 target_compile_options(BlitEngine PRIVATE -ffunction-sections -fdata-sections)
