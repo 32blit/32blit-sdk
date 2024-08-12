@@ -128,6 +128,6 @@ bool display_mode_supported(blit::ScreenMode new_mode, const blit::SurfaceTempla
 void display_mode_changed(blit::ScreenMode new_mode, blit::SurfaceTemplate &new_surf_template) {
   auto display_buf_base = (uint8_t *)screen_fb;
 
-  bool use_second_buf = fb_double_buffer && screen.data == display_buf_base;
+  bool use_second_buf = fb_double_buffer && (!screen.data || screen.data == display_buf_base);
   cur_display_buffer = use_second_buf ? display_buf_base + get_display_page_size() : display_buf_base;
 }
