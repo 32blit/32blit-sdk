@@ -48,12 +48,33 @@ static const uint8_t rotations[]{
   MADCTL::SCAN_ORDER | MADCTL::SWAP_XY | MADCTL::ROW_ORDER                          // 270
 };
 
-enum reg {
-  SWRESET   = 0x01,
-  TEOFF     = 0x34,
-  TEON      = 0x35,
-  MADCTL    = 0x36,
-  COLMOD    = 0x3A,
+// standard commands
+enum MIPIDCS
+{
+  Nop              = 0x00,
+  SoftReset        = 0x01,
+  GetAddressMode   = 0x0B,
+  GetPixelFormat   = 0x0C,
+  EnterSleepMode   = 0x10,
+  ExitSleepMode    = 0x11,
+  ExitInvertMode   = 0x20,
+  EnterInvertMode  = 0x21,
+  DisplayOff       = 0x28,
+  DisplayOn        = 0x29,
+  SetColumnAddress = 0x2A,
+  SetRowAddress    = 0x2B,
+  WriteMemoryStart = 0x2C,
+  SetTearOff       = 0x34,
+  SetTearOn        = 0x35,
+  SetAddressMode   = 0x36,
+  SetPixelFormat   = 0x3A,
+  SetTearScanline  = 0x44,
+};
+
+enum ST7789Reg
+{
+  RAMCTRL   = 0xB0,
+  PORCTRL   = 0xB2,
   GCTRL     = 0xB7,
   VCOMS     = 0xBB,
   LCMCTRL   = 0xC0,
@@ -62,19 +83,8 @@ enum reg {
   VDVS      = 0xC4,
   FRCTRL2   = 0xC6,
   PWCTRL1   = 0xD0,
-  PORCTRL   = 0xB2,
   PVGAMCTRL = 0xE0,
   NVGAMCTRL = 0xE1,
-  INVOFF    = 0x20,
-  SLPOUT    = 0x11,
-  DISPON    = 0x29,
-  GAMSET    = 0x26,
-  DISPOFF   = 0x28,
-  RAMWR     = 0x2C,
-  INVON     = 0x21,
-  CASET     = 0x2A,
-  RASET     = 0x2B,
-  STE       = 0x44
 };
 
 static PIO pio = pio0;
@@ -161,64 +171,63 @@ static void set_window(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
   uint32_t cols = __builtin_bswap32((x << 16) | (x + w - 1));
   uint32_t rows = __builtin_bswap32((y << 16) | (y + h - 1));
 
-  command(reg::CASET, 4, (const char *)&cols);
-  command(reg::RASET, 4, (const char *)&rows);
+  command(MIPIDCS::SetColumnAddress, 4, (const char *)&cols);
+  command(MIPIDCS::SetRowAddress, 4, (const char *)&rows);
 
   win_w = w;
   win_h = h;
 }
 
 static void st7789_init_sequence() {
-  command(reg::SWRESET);
+  command(MIPIDCS::SoftReset);
 
   sleep_ms(150);
 
-  command(reg::TEON,      1, "\x00");  // enable frame sync signal if used
-  command(reg::COLMOD,    1, "\x05");  // 16 bits per pixel
+  command(MIPIDCS::SetTearOn,      1, "\x00");  // enable frame sync signal if used
+  command(MIPIDCS::SetPixelFormat, 1, "\x05");  // 16 bits per pixel
 
   if(DISPLAY_WIDTH == 240 && DISPLAY_HEIGHT == 240) {
-    command(reg::PORCTRL, 5, "\x0c\x0c\x00\x33\x33");
-    command(reg::GCTRL, 1, "\x14");
-    command(reg::VCOMS, 1, "\x37");
-    command(reg::LCMCTRL, 1, "\x2c");
-    command(reg::VDVVRHEN, 1, "\x01");
-    command(reg::VRHS, 1, "\x12");
-    command(reg::VDVS, 1, "\x20");
-    command(reg::PWCTRL1, 2, "\xa4\xa1");
+    command(ST7789Reg::PORCTRL, 5, "\x0c\x0c\x00\x33\x33");
+    command(ST7789Reg::GCTRL, 1, "\x14");
+    command(ST7789Reg::VCOMS, 1, "\x37");
+    command(ST7789Reg::LCMCTRL, 1, "\x2c");
+    command(ST7789Reg::VDVVRHEN, 1, "\x01");
+    command(ST7789Reg::VRHS, 1, "\x12");
+    command(ST7789Reg::VDVS, 1, "\x20");
+    command(ST7789Reg::PWCTRL1, 2, "\xa4\xa1");
 
-    command(reg::PVGAMCTRL, 14, "\xD0\x08\x11\x08\x0c\x15\x39\x33\x50\x36\x13\x14\x29\x2d");
-    command(reg::NVGAMCTRL, 14, "\xD0\x08\x10\x08\x06\x06\x39\x44\x51\x0b\x16\x14\x2f\x31");
+    command(ST7789Reg::PVGAMCTRL, 14, "\xD0\x08\x11\x08\x0c\x15\x39\x33\x50\x36\x13\x14\x29\x2d");
+    command(ST7789Reg::NVGAMCTRL, 14, "\xD0\x08\x10\x08\x06\x06\x39\x44\x51\x0b\x16\x14\x2f\x31");
 
 
     // trigger "vsync" slightly earlier to avoid tearing while pixel-doubling
     // (this is still outside of the visible part of the screen)
-    command(reg::STE, 2, "\x01\x2C");
+    command(MIPIDCS::SetTearScanline, 2, "\x01\x2C");
   }
 
   if(DISPLAY_WIDTH == 320 && DISPLAY_HEIGHT == 240) {
-    command(reg::PORCTRL, 5, "\x0c\x0c\x00\x33\x33");
-    command(reg::GCTRL, 1, "\x35");
-    command(reg::VCOMS, 1, "\x1f");
-    command(reg::LCMCTRL, 1, "\x2c");
-    command(reg::VDVVRHEN, 1, "\x01");
-    command(reg::VRHS, 1, "\x12");
-    command(reg::VDVS, 1, "\x20");
-    command(reg::PWCTRL1, 2, "\xa4\xa1");
+    command(ST7789Reg::PORCTRL, 5, "\x0c\x0c\x00\x33\x33");
+    command(ST7789Reg::GCTRL, 1, "\x35");
+    command(ST7789Reg::VCOMS, 1, "\x1f");
+    command(ST7789Reg::LCMCTRL, 1, "\x2c");
+    command(ST7789Reg::VDVVRHEN, 1, "\x01");
+    command(ST7789Reg::VRHS, 1, "\x12");
+    command(ST7789Reg::VDVS, 1, "\x20");
+    command(ST7789Reg::PWCTRL1, 2, "\xa4\xa1");
     command(0xd6, 1, "\xa1"); // ???
-    command(reg::PVGAMCTRL, 14, "\xD0\x08\x11\x08\x0C\x15\x39\x33\x50\x36\x13\x14\x29\x2D");
-    command(reg::NVGAMCTRL, 14, "\xD0\x08\x10\x08\x06\x06\x39\x44\x51\x0B\x16\x14\x2F\x31");
+    command(ST7789Reg::PVGAMCTRL, 14, "\xD0\x08\x11\x08\x0C\x15\x39\x33\x50\x36\x13\x14\x29\x2D");
+    command(ST7789Reg::NVGAMCTRL, 14, "\xD0\x08\x10\x08\x06\x06\x39\x44\x51\x0B\x16\x14\x2F\x31");
   }
 
-  command(reg::FRCTRL2, 1, "\x15"); // 50Hz
+  command(ST7789Reg::FRCTRL2, 1, "\x15"); // 50Hz
 
-  command(reg::INVON);   // set inversion mode
-  command(reg::SLPOUT);  // leave sleep mode
-  command(reg::DISPON);  // turn display on
+  command(MIPIDCS::EnterInvertMode);   // set inversion mode
+  command(MIPIDCS::ExitSleepMode);  // leave sleep mode
+  command(MIPIDCS::DisplayOn);  // turn display on
 
   sleep_ms(100);
 
   // setup correct addressing window
-  uint8_t madctl = MADCTL::RGB | rotations[LCD_ROTATION / 90];
   if(DISPLAY_WIDTH == 240 && DISPLAY_HEIGHT == 240) {
     set_window(0, 0, 240, 240);
   }
@@ -231,14 +240,15 @@ static void st7789_init_sequence() {
     set_window(0, 0, 320, 240);
   }
 
-  command(reg::MADCTL,    1, (char *)&madctl);
+  uint8_t madctl = MADCTL::RGB | rotations[LCD_ROTATION / 90];
+  command(MIPIDCS::SetAddressMode, 1, (char *)&madctl);
 }
 
 static void prepare_write() {
   pio_wait(pio, pio_sm);
 
   // setup for writing
-  uint8_t r = reg::RAMWR;
+  uint8_t r = MIPIDCS::WriteMemoryStart;
   gpio_put(LCD_CS_PIN, 0);
 
   gpio_put(LCD_DC_PIN, 0); // command mode
