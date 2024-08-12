@@ -10,6 +10,14 @@
 #define ALLOW_HIRES 1
 #endif
 
+#ifndef DOUBLE_BUFFERED_HIRES
+#ifdef PICO_RP2350
+#define DOUBLE_BUFFERED_HIRES 1
+#else
+#define DOUBLE_BUFFERED_HIRES 0
+#endif
+#endif
+
 #ifndef BUTTON_LEFT_PIN
 #define BUTTON_LEFT_PIN -1
 #define BUTTON_LEFT_BI_DECL

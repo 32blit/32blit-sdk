@@ -8,16 +8,22 @@ using namespace blit;
 // this is in bytes
 static const int lores_page_size = (DISPLAY_WIDTH / 2) * ((DISPLAY_HEIGHT + 1) / 2) * 2;
 
+#if ALLOW_HIRES && DOUBLE_BUFFERED_HIRES
+static const int fb_size = DISPLAY_WIDTH * DISPLAY_HEIGHT * 2;
+#elif ALLOW_HIRES
+static const int fb_size = DISPLAY_WIDTH * DISPLAY_HEIGHT;
+#else
+static const int fb_size = lores_page_size; // double-buffered
+#endif
+
 SurfaceInfo cur_surf_info;
 
 bool fb_double_buffer = true;
 
 #if defined(BLIT_BOARD_PIMORONI_PICOVISION)
 static const uint16_t *screen_fb = nullptr;
-#elif ALLOW_HIRES
-uint16_t screen_fb[DISPLAY_WIDTH * DISPLAY_HEIGHT];
 #else
-uint16_t screen_fb[lores_page_size]; // double-buffered
+uint16_t screen_fb[fb_size];
 #endif
 
 static const Size lores_screen_size(DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2);
