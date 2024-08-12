@@ -98,4 +98,7 @@ if (NOT PICO_SDK_PATH)
     set(PICO_SDK_PATH ${CMAKE_CURRENT_LIST_DIR}/../pico-sdk)
 endif()
 
+# we need to do this as pico_sdk_init happens later than usual
+list(APPEND CMAKE_MODULE_PATH ${PICO_SDK_PATH}/cmake)
+
 set(32BLIT_DIR ${CMAKE_CURRENT_LIST_DIR} CACHE PATH "Path to 32blit.cmake")
