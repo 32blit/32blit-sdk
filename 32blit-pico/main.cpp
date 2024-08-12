@@ -1,5 +1,6 @@
 #include <cstdio>
 
+#include "hardware/clocks.h"
 #include "hardware/structs/rosc.h"
 #include "hardware/vreg.h"
 #include "hardware/timer.h"
