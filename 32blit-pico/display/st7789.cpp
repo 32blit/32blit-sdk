@@ -83,10 +83,6 @@ static uint pio_offset = 0, pio_double_offset = 0;
 
 static uint32_t dma_channel = 0;
 
-// screen properties
-static const uint16_t width = DISPLAY_WIDTH;
-static const uint16_t height = DISPLAY_HEIGHT;
-
 static uint16_t win_w, win_h; // window size
 
 static bool write_mode = false; // in RAMWR
@@ -97,7 +93,7 @@ static uint16_t *upd_frame_buffer = nullptr;
 static uint16_t *frame_buffer = nullptr;
 
 // pixel double scanline counter
-static volatile int cur_scanline = 240;
+static volatile int cur_scanline = DISPLAY_HEIGHT;
 
 // PIO helpers
 static void pio_put_byte(PIO pio, uint sm, uint8_t b) {
@@ -180,7 +176,7 @@ static void st7789_init_sequence() {
   command(reg::TEON,      1, "\x00");  // enable frame sync signal if used
   command(reg::COLMOD,    1, "\x05");  // 16 bits per pixel
 
-  if(width == 240 && height == 240) {
+  if(DISPLAY_WIDTH == 240 && DISPLAY_HEIGHT == 240) {
     command(reg::PORCTRL, 5, "\x0c\x0c\x00\x33\x33");
     command(reg::GCTRL, 1, "\x14");
     command(reg::VCOMS, 1, "\x37");
@@ -199,7 +195,7 @@ static void st7789_init_sequence() {
     command(reg::STE, 2, "\x01\x2C");
   }
 
-  if(width == 320 && height == 240) {
+  if(DISPLAY_WIDTH == 320 && DISPLAY_HEIGHT == 240) {
     command(reg::PORCTRL, 5, "\x0c\x0c\x00\x33\x33");
     command(reg::GCTRL, 1, "\x35");
     command(reg::VCOMS, 1, "\x1f");
@@ -223,15 +219,15 @@ static void st7789_init_sequence() {
 
   // setup correct addressing window
   uint8_t madctl = MADCTL::RGB | rotations[LCD_ROTATION / 90];
-  if(width == 240 && height == 240) {
+  if(DISPLAY_WIDTH == 240 && DISPLAY_HEIGHT == 240) {
     set_window(0, 0, 240, 240);
   }
 
-  if(width == 240 && height == 135) {
+  if(DISPLAY_WIDTH == 240 && DISPLAY_HEIGHT == 135) {
     set_window(40, 53, 240, 135);
   }
 
-  if(width == 320 && height == 240) {
+  if(DISPLAY_WIDTH == 320 && DISPLAY_HEIGHT == 240) {
     set_window(0, 0, 320, 240);
   }
 
@@ -457,7 +453,7 @@ void init_display() {
   channel_config_set_transfer_data_size(&config, DMA_SIZE_16);
   channel_config_set_dreq(&config, pio_get_dreq(pio, pio_sm, true));
   dma_channel_configure(
-    dma_channel, &config, &pio->txf[pio_sm], frame_buffer, width * height, false);
+    dma_channel, &config, &pio->txf[pio_sm], frame_buffer, DISPLAY_WIDTH * DISPLAY_HEIGHT, false);
 
   irq_add_shared_handler(DMA_IRQ_0, st7789_dma_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
   irq_set_enabled(DMA_IRQ_0, true);
