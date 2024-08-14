@@ -125,6 +125,7 @@ namespace st7789 {
 
     gpio_set_function(LCD_CS_PIN, GPIO_FUNC_SIO);
     gpio_set_dir(LCD_CS_PIN, GPIO_OUT);
+    gpio_put(LCD_CS_PIN, 1);
 
     bi_decl_if_func_used(bi_1pin_with_name(LCD_DC_PIN, "Display D/C"));
     bi_decl_if_func_used(bi_1pin_with_name(LCD_CS_PIN, "Display CS"));
