@@ -1,5 +1,0 @@
-cmake_minimum_required(VERSION 3.9)
-project (scrolly-tile)
-find_package (32BLIT CONFIG REQUIRED PATHS ../..)
-blit_executable (scrolly-tile scrolly-tile.cpp)
-blit_metadata (scrolly-tile metadata.yml)

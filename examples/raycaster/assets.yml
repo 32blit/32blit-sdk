@@ -1,5 +1,0 @@
-assets.cpp:
-  ../../assets/gadgetoid_raycaster.png:
-    name: asset_raycaster
-  ../../assets/wasp_raycaster.png:
-    name: asset_wasp

@@ -30,6 +30,13 @@ The solutions and projects are made to use toolset version c142.
 
 The solution file is located at `vs\32blit.sln`. It contains two static linked libraries, _32blit_ and _32blit-sdl_ and all the examples that will compile to .EXE.
 
+For the solution file to work, you will need to clone the examples repo as `examples` inside the SDK.
+
+```shell
+cd 32blit-sdk
+git clone https://github.com/32blit/32blit-examples examples
+```
+
 You will also need to download SDL2 development libraries from the [SDL releases](https://github.com/libsdl-org/SDL/releases/latest). Here find the latest version of the VC development libraries (at the time of this writing SDL2-devel-2.24.0-VC.zip). Additionally, download SDL2_image from [here](https://github.com/libsdl-org/SDL_image/releases/latest) (SDL2_image-devel-2.6.1-VC.zip) and SDL2_net from [here](https://github.com/libsdl-org/SDL_net/releases/latest) (SDL2_net-devel-2.2.0-VC.zip).
 
 Place these in the `vs\sdl\` folder. You will need to merge the include/lib folders. If you are using CMake/Open Folder, these are downloaded automatically.
@@ -38,9 +45,21 @@ Place these in the `vs\sdl\` folder. You will need to merge the include/lib fold
 
 This has the advantage of being closer to the build for the device.
 
+First you need something to build. The [32blit-examples](https://github.com/32blit/32blit-examples) repository includes a series of demos showcasing various 32blit SDK features. These instructions will assume you're building those and have cloned or extracted that repository alongside 32blit-sdk:
+
+```shell
+git clone https://github.com/32blit/32blit-examples
+```
+
+Your directory tree should look something like:
+
+- root_dir
+    - 32blit-sdk
+    - 32blit-examples
+
 1. Open Visual Studio
 
-2. `File` > `Open` > `Folder` and open the folder where you cloned this repo. (Alternatively, if you haven't cloned the repo yet, use `File` -> `Clone or check out code`)
+2. `File` > `Open` > `Folder` and open the folder where you cloned the examples repo. (Alternatively, if you haven't cloned the repo yet, use `File` -> `Clone or check out code`)
 
 3. Build!
 

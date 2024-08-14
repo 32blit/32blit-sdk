@@ -1,4 +1,0 @@
-assets.cpp:
-  assets/demo.map:
-    name: demo_map
-    type: raw/binary

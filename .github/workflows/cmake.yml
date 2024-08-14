@@ -37,7 +37,7 @@ jobs:
             name: PicoSystem
             cache-key: picosystem
             release-suffix: PicoSystem
-            cmake-args: -D32BLIT_DIR=$GITHUB_WORKSPACE -DPICO_SDK_PATH=$GITHUB_WORKSPACE/pico-sdk -DPICO_BOARD=pimoroni_picosystem -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+            cmake-args: -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/pico.toolchain -DPICO_SDK_PATH=$GITHUB_WORKSPACE/pico-sdk -DPICO_BOARD=pimoroni_picosystem -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
             apt-packages: ccache gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib python3-setuptools
 
           - os: ubuntu-20.04
@@ -75,6 +75,12 @@ jobs:
     steps:
     - name: Checkout 32Blit SDK
       uses: actions/checkout@v3
+
+    - name: Checkout Examples
+      uses: actions/checkout@v3
+      with:
+        repository: 32blit/32blit-examples
+        path: examples
 
     # pico sdk/extras for some builds
     - name: Checkout Pico SDK
@@ -138,7 +144,8 @@ jobs:
       run: ci/install_sdl_mingw.sh
 
     - name: Create Build Environment
-      run: cmake -E make_directory ${{runner.workspace}}/build
+      run: |
+        cmake -E make_directory ${{runner.workspace}}/build
 
     - name: Set Tag Variable
       if: github.event_name == 'release'
@@ -166,19 +173,11 @@ jobs:
         cmake --build . --config $BUILD_TYPE -j 2
         ccache --show-stats || true
 
-    #- name: Test
-    #  working-directory: ${{runner.workspace}}/build
-    #  shell: bash
-      # Execute tests defined by the CMake configuration.
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-    #  run: ctest -C $BUILD_TYPE
-
     - name: Prepare Artifact
       if: github.event_name != 'release'
-      working-directory: ${{runner.workspace}}/build
       shell: bash
       run: |
-        cmake --build . --config $BUILD_TYPE --target install
+        cmake --build $RUNNER_WORKSPACE/build --config $BUILD_TYPE --target install
 
     - name: Upload Artifact
       if: github.event_name != 'release'

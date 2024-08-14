@@ -12,7 +12,7 @@ else()
 endif()
 
 find_package (32BLIT CONFIG REQUIRED PATHS .)
-add_subdirectory(examples)
+add_subdirectory(utilities)
 
 add_subdirectory(launcher-shared)
 
@@ -24,6 +24,11 @@ endif()
 
 if(NOT 32BLIT_PICO)
     add_subdirectory(launcher)
+endif()
+
+# if the examples are there, build them too
+if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/examples/CMakeLists.txt)
+    add_subdirectory(examples)
 endif()
 
 # include dist files in install

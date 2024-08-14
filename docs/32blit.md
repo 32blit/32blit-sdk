@@ -34,14 +34,27 @@ You should also make sure you have a cross-compile environment set up on your co
 
 ### Building An Example
 
+First you need something to build. The [32blit-examples](https://github.com/32blit/32blit-examples) repository includes a series of demos showcasing various 32blit SDK features. These instructions will assume you're building those and have cloned or extracted that repository alongside 32blit-sdk:
+
+```shell
+git clone https://github.com/32blit/32blit-examples
+```
+
+Your directory tree should look something like:
+
+- root_dir
+    - 32blit-sdk
+    - 32blit-examples
+
 To build an example for 32blit using `arm-none-eabi-gcc` you must prepare the Makefile with CMake using the provided toolchain file.
 
 From the root of the repository:
 
 ```
+cd 32blit-examples
 mkdir build.stm32
 cd build.stm32
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../32blit.toolchain
+cmake .. -DCMAKE_TOOLCHAIN_FILE=../../32blit-sdk/32blit.toolchain
 ```
 
 And then run `make examplename` to build an example.
