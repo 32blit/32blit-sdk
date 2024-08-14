@@ -179,6 +179,10 @@
 #define LCD_ROTATION 0
 #endif
 
+#ifndef LCD_MAX_CLOCK
+#define LCD_MAX_CLOCK 62500000
+#endif
+
 #ifndef OVERCLOCK_250
 #define OVERCLOCK_250 1
 #endif
