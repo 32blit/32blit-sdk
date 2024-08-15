@@ -15,7 +15,7 @@
 
 #define DISPLAY_ST7789
 
-#define ST7789_8BIT
+#define DBI_8BIT
 #define LCD_ROTATION 270
 #define LCD_CS_PIN 10
 #define LCD_DC_PIN 11

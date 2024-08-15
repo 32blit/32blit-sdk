@@ -12,7 +12,7 @@
 
 #include "config.h"
 
-#ifdef ST7789_8BIT
+#ifdef DBI_8BIT
 #include "dbi-8bit.pio.h"
 #else
 #include "dbi-spi.pio.h"
@@ -395,7 +395,7 @@ void init_display() {
   bi_decl_if_func_used(bi_1pin_with_name(LCD_BACKLIGHT_PIN, "Display Backlight"));
 #endif
 
-#ifdef ST7789_8BIT
+#ifdef DBI_8BIT
   // init RD
   gpio_init(LCD_RD_PIN);
   gpio_set_dir(LCD_RD_PIN, GPIO_OUT);
@@ -422,7 +422,7 @@ void init_display() {
 
   pio_sm_config cfg = dbi_raw_program_get_default_config(pio_offset);
 
-#ifdef ST7789_8BIT
+#ifdef DBI_8BIT
   const int out_width = 8;
 #else // SPI
   const int out_width = 1;
@@ -448,7 +448,7 @@ void init_display() {
   pio_sm_init(pio, pio_sm, pio_offset, &cfg);
   pio_sm_set_enabled(pio, pio_sm, true);
 
-#ifdef ST7789_8BIT
+#ifdef DBI_8BIT
   // these are really D0/WR
   bi_decl_if_func_used(bi_pin_mask_with_name(0xFF << LCD_MOSI_PIN, "Display Data"));
   bi_decl_if_func_used(bi_1pin_with_name(LCD_SCK_PIN, "Display WR"));
