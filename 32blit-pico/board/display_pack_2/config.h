@@ -6,6 +6,12 @@
 #define BUTTON_Y_PIN 15
 
 #define DISPLAY_WIDTH 320
+
+// these are the defaults on a pico, but may not be on other boards
+#define LCD_CS_PIN 17
+#define LCD_SCK_PIN 18
+#define LCD_MOSI_PIN 19
+
 #define LCD_ROTATION 90
 
 #define LED_INVERTED

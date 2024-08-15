@@ -210,7 +210,11 @@ int main() {
   int alarm_num = hardware_alarm_claim_unused(true);
   hardware_alarm_set_callback(alarm_num, alarm_callback);
   hardware_alarm_set_target(alarm_num, make_timeout_time_ms(5));
+#ifdef PICO_RP2350
+  irq_set_priority(TIMER0_IRQ_0 + alarm_num, PICO_LOWEST_IRQ_PRIORITY);
+#else
   irq_set_priority(TIMER_IRQ_0 + alarm_num, PICO_LOWEST_IRQ_PRIORITY);
+#endif
 #endif
 
   blit::set_screen_mode(ScreenMode::lores);
