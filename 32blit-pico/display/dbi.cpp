@@ -13,9 +13,9 @@
 #include "config.h"
 
 #ifdef ST7789_8BIT
-#include "st7789-8bit.pio.h"
+#include "dbi-8bit.pio.h"
 #else
-#include "st7789-spi.pio.h"
+#include "dbi-spi.pio.h"
 #endif
 
 using namespace blit;
@@ -143,7 +143,7 @@ static void command(uint8_t command, size_t len = 0, const char *data = nullptr)
 
     // switch back to raw
     pio_sm_restart(pio, pio_sm);
-    pio_sm_set_wrap(pio, pio_sm, pio_offset + st7789_raw_wrap_target, pio_offset + st7789_raw_wrap);
+    pio_sm_set_wrap(pio, pio_sm, pio_offset + dbi_raw_wrap_target, pio_offset + dbi_raw_wrap);
     pio_sm_exec(pio, pio_sm, pio_encode_jmp(pio_offset));
 
     pio_sm_set_enabled(pio, pio_sm, true);
@@ -265,7 +265,7 @@ static void prepare_write() {
 
   if(pixel_double) {
     // switch program
-    pio_sm_set_wrap(pio, pio_sm, pio_double_offset + st7789_pixel_double_wrap_target, pio_double_offset + st7789_pixel_double_wrap);
+    pio_sm_set_wrap(pio, pio_sm, pio_double_offset + dbi_pixel_double_wrap_target, pio_double_offset + dbi_pixel_double_wrap);
 
     // 32 bits, no autopull
     pio->sm[pio_sm].shiftctrl &= ~(PIO_SM0_SHIFTCTRL_PULL_THRESH_BITS | PIO_SM0_SHIFTCTRL_AUTOPULL_BITS);
@@ -415,12 +415,12 @@ void init_display() {
 #endif
 
   // setup PIO
-  pio_offset = pio_add_program(pio, &st7789_raw_program);
-  pio_double_offset = pio_add_program(pio, &st7789_pixel_double_program);
+  pio_offset = pio_add_program(pio, &dbi_raw_program);
+  pio_double_offset = pio_add_program(pio, &dbi_pixel_double_program);
 
   pio_sm = pio_claim_unused_sm(pio, true);
 
-  pio_sm_config cfg = st7789_raw_program_get_default_config(pio_offset);
+  pio_sm_config cfg = dbi_raw_program_get_default_config(pio_offset);
 
 #ifdef ST7789_8BIT
   const int out_width = 8;
