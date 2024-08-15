@@ -183,7 +183,10 @@ static void st7789_init_sequence() {
 
   sleep_ms(150);
 
+#ifdef LCD_VSYNC_PIN
   command(MIPIDCS::SetTearOn,      1, "\x00");  // enable frame sync signal if used
+#endif
+
   command(MIPIDCS::SetPixelFormat, 1, "\x05");  // 16 bits per pixel
 
   if(DISPLAY_WIDTH == 240 && DISPLAY_HEIGHT == 240) {
