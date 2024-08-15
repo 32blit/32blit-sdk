@@ -6,7 +6,6 @@
 #define BUTTON_Y_PIN 15
 
 #define DISPLAY_ST7789
-#define DISPLAY_WIDTH 320
 
 // these are the defaults on a pico, but may not be on other boards
 #define LCD_CS_PIN 17

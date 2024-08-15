@@ -144,11 +144,7 @@
 #endif
 
 #ifndef DISPLAY_WIDTH
-#ifdef DISPLAY_ST7789
-#define DISPLAY_WIDTH 240
-#else
 #define DISPLAY_WIDTH 320
-#endif
 #endif
 
 #ifndef DISPLAY_HEIGHT
