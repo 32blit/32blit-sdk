@@ -118,7 +118,7 @@ static void pio_wait(PIO pio, uint sm) {
 }
 
 // used for pixel doubling
-static void __isr st7789_dma_irq_handler() {
+static void __isr dbi_dma_irq_handler() {
   if(dma_channel_get_irq0_status(dma_channel)) {
     dma_channel_acknowledge_irq0(dma_channel);
 
@@ -178,7 +178,7 @@ static void set_window(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
   win_h = h;
 }
 
-static void st7789_init_sequence() {
+static void send_init_sequence() {
   command(MIPIDCS::SoftReset);
 
   sleep_ms(150);
@@ -458,7 +458,7 @@ void init_display() {
 #endif
 
   // send initialisation sequence for our standard displays based on the width and height
-  st7789_init_sequence();
+  send_init_sequence();
 
   // initialise dma channel for transmitting pixel data to screen
   dma_channel = dma_claim_unused_channel(true);
@@ -468,7 +468,7 @@ void init_display() {
   dma_channel_configure(
     dma_channel, &config, &pio->txf[pio_sm], frame_buffer, DISPLAY_WIDTH * DISPLAY_HEIGHT, false);
 
-  irq_add_shared_handler(DMA_IRQ_0, st7789_dma_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+  irq_add_shared_handler(DMA_IRQ_0, dbi_dma_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
   irq_set_enabled(DMA_IRQ_0, true);
 
   clear();
