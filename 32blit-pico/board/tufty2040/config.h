@@ -13,6 +13,7 @@
 #define BUTTON_B_ACTIVE_HIGH    true
 #define BUTTON_X_ACTIVE_HIGH    true
 
+#define DISPLAY_ST7789
 #define DISPLAY_WIDTH 320
 
 #define ST7789_8BIT
