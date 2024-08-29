@@ -10,6 +10,14 @@
 #define ALLOW_HIRES 1
 #endif
 
+#ifndef DOUBLE_BUFFERED_HIRES
+#ifdef PICO_RP2350
+#define DOUBLE_BUFFERED_HIRES 1
+#else
+#define DOUBLE_BUFFERED_HIRES 0
+#endif
+#endif
+
 #ifndef BUTTON_LEFT_PIN
 #define BUTTON_LEFT_PIN -1
 #define BUTTON_LEFT_BI_DECL
@@ -136,11 +144,7 @@
 #endif
 
 #ifndef DISPLAY_WIDTH
-#ifdef DISPLAY_ST7789
-#define DISPLAY_WIDTH 240
-#else
 #define DISPLAY_WIDTH 320
-#endif
 #endif
 
 #ifndef DISPLAY_HEIGHT
@@ -169,6 +173,10 @@
 
 #ifndef LCD_ROTATION
 #define LCD_ROTATION 0
+#endif
+
+#ifndef LCD_MAX_CLOCK
+#define LCD_MAX_CLOCK 62500000
 #endif
 
 #ifndef OVERCLOCK_250

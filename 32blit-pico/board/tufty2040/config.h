@@ -13,7 +13,7 @@
 #define BUTTON_B_ACTIVE_HIGH    true
 #define BUTTON_X_ACTIVE_HIGH    true
 
-#define DISPLAY_WIDTH 320
+#define DISPLAY_ST7789
 
 #define ST7789_8BIT
 #define LCD_ROTATION 270
@@ -24,5 +24,6 @@
 #define LCD_MOSI_PIN 14 // DB0
 #define LCD_BACKLIGHT_PIN 2
 // #define LCD_VSYNC_PIN 11 // shared
+#define LCD_MAX_CLOCK 15000000
 
 // there is a white LED

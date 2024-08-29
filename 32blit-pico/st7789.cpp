@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <math.h>
 
+#include "hardware/clocks.h"
 #include "hardware/dma.h"
 #include "hardware/irq.h"
 #include "hardware/pwm.h"
@@ -125,6 +126,7 @@ namespace st7789 {
 
     gpio_set_function(LCD_CS_PIN, GPIO_FUNC_SIO);
     gpio_set_dir(LCD_CS_PIN, GPIO_OUT);
+    gpio_put(LCD_CS_PIN, 1);
 
     bi_decl_if_func_used(bi_1pin_with_name(LCD_DC_PIN, "Display D/C"));
     bi_decl_if_func_used(bi_1pin_with_name(LCD_CS_PIN, "Display CS"));
@@ -179,21 +181,12 @@ namespace st7789 {
 
 #ifdef ST7789_8BIT
     const int out_width = 8;
-
-    // < 15MHz
-#if OVERCLOCK_250
-    sm_config_set_clkdiv(&cfg, 9);
-#else
-    sm_config_set_clkdiv(&cfg, 5);
-#endif
-
 #else // SPI
     const int out_width = 1;
+#endif
 
-#if OVERCLOCK_250
-    sm_config_set_clkdiv(&cfg, 2); // back to 62.5MHz from overclock
-#endif
-#endif
+    const int clkdiv = std::ceil(clock_get_hz(clk_sys) / float(LCD_MAX_CLOCK * 2));
+    sm_config_set_clkdiv(&cfg, clkdiv);
 
     sm_config_set_out_shift(&cfg, false, true, 8);
     sm_config_set_out_pins(&cfg, LCD_MOSI_PIN, out_width);
