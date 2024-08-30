@@ -10,7 +10,7 @@
 
 #include "audio/audio.hpp"
 
-#define audio_pio __CONCAT(pio, PICO_AUDIO_I2S_PIO)
+#define audio_pio __CONCAT(pio, PICO_AUDIO_PWM_PIO)
 
 static audio_buffer_pool *audio_pool = nullptr;
 
