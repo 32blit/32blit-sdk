@@ -189,6 +189,8 @@ static void send_init_sequence() {
 
   command(MIPIDCS::SetPixelFormat, 1, "\x05");  // 16 bits per pixel
 
+  int window_x = 0, window_y = 0;
+
   if(DISPLAY_WIDTH == 240 && DISPLAY_HEIGHT == 240) {
     command(ST7789Reg::PORCTRL, 5, "\x0c\x0c\x00\x33\x33");
     command(ST7789Reg::GCTRL, 1, "\x14");
@@ -230,21 +232,16 @@ static void send_init_sequence() {
 
   sleep_ms(100);
 
-  // setup correct addressing window
-  if(DISPLAY_WIDTH == 240 && DISPLAY_HEIGHT == 240) {
-    set_window(0, 0, 240, 240);
-  }
-
-  if(DISPLAY_WIDTH == 240 && DISPLAY_HEIGHT == 135) {
-    set_window(40, 53, 240, 135);
-  }
-
-  if(DISPLAY_WIDTH == 320 && DISPLAY_HEIGHT == 240) {
-    set_window(0, 0, 320, 240);
-  }
-
   uint8_t madctl = MADCTL::RGB | rotations[LCD_ROTATION / 90];
   command(MIPIDCS::SetAddressMode, 1, (char *)&madctl);
+
+  // setup correct addressing window
+  if(DISPLAY_WIDTH == 240 && DISPLAY_HEIGHT == 135) {
+    window_x = 40;
+    window_y = 53;
+  }
+
+  set_window(window_x, window_y, DISPLAY_WIDTH, DISPLAY_HEIGHT);
 }
 
 static void prepare_write() {
