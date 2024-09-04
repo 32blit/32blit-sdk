@@ -3,7 +3,11 @@ target_link_libraries(blit-loader BlitHalPico BlitEngine)
 target_link_options(blit-loader PUBLIC -specs=nano.specs -u _printf_float)
 target_compile_definitions(blit-loader PRIVATE BUILD_LOADER PICO_EMBED_XIP_SETUP=1)
 
-pico_set_linker_script(blit-loader ${CMAKE_CURRENT_LIST_DIR}/../memmap_blit_loader.ld)
+if(PICO_PLATFORM MATCHES "^rp2350")
+    pico_set_linker_script(blit-loader ${CMAKE_CURRENT_LIST_DIR}/../memmap_blit_loader_2350.ld)
+else()
+    pico_set_linker_script(blit-loader ${CMAKE_CURRENT_LIST_DIR}/../memmap_blit_loader.ld)
+endif()
 
 pico_enable_stdio_uart(blit-loader 1)
 pico_enable_stdio_usb(blit-loader 0)
