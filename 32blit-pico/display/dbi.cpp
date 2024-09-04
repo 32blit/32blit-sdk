@@ -255,6 +255,9 @@ static void prepare_write() {
 static void update() {
   dma_channel_wait_for_finish_blocking(dma_channel);
 
+  if(!frame_buffer)
+    return;
+
   // update window if needed
   auto expected_win = cur_surf_info.bounds * (pixel_double ? 2 : 1);
 
