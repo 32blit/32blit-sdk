@@ -75,11 +75,3 @@ data_cpy_table:
 .word __data_end__
 
 .word 0 // null terminator
-
-// panic stub
-.type panic,%function
-.thumb_func
-.global panic
-panic:
-    bkpt
-    bx lr
