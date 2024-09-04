@@ -232,7 +232,11 @@ function(blit_executable NAME)
 
         target_compile_definitions(${NAME} PRIVATE ${BLIT_BOARD_DEFINITIONS}) # need these for framebuffer config
         target_compile_options(${NAME} PRIVATE -ffunction-sections -fdata-sections)
-        target_link_libraries(${NAME} pico_bit_ops pico_cxx_options pico_divider pico_double pico_int64_ops pico_float pico_malloc pico_mem_ops)
+
+        # minimal pico-sdk libs
+        target_link_libraries(${NAME} boot_picobin_headers pico_bit_ops pico_cxx_options pico_divider pico_double pico_int64_ops pico_float pico_malloc pico_mem_ops pico_runtime_headers)
+        target_compile_definitions(${NAME} PRIVATE PICO_TIME_DEFAULT_ALARM_POOL_DISABLED) # avoid pulling timer and irq code
+
         target_link_options(${NAME} PRIVATE --specs=nosys.specs LINKER:--script=${LINKER_SCRIPT_OUT} LINKER:--gc-sections)
         set_property(TARGET ${NAME} APPEND PROPERTY LINK_DEPENDS ${LINKER_SCRIPT_OUT})
 
