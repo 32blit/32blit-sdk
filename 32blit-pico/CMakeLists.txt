@@ -236,6 +236,7 @@ function(blit_executable NAME)
 
         target_compile_definitions(${NAME} PRIVATE ${BLIT_BOARD_DEFINITIONS}) # need these for framebuffer config
         target_compile_options(${NAME} PRIVATE -ffunction-sections -fdata-sections)
+        set_source_files_properties(${STARTUP_SRC} PROPERTIES COMPILE_DEFINITIONS DEVICE_ID=2)
 
         # minimal pico-sdk libs
         target_link_libraries(${NAME} boot_picobin_headers pico_bit_ops pico_clib_interface pico_cxx_options pico_divider pico_double pico_int64_ops pico_float pico_malloc pico_mem_ops pico_runtime_headers)
