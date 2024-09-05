@@ -8,6 +8,11 @@ include (pico_sdk_import.cmake)
 
 set(32BLIT_PICO 1 PARENT_SCOPE)
 
+if(PICO_PLATFORM MATCHES "^rp2350")
+    set(32BLIT_PICO_2350 1)
+    set(32BLIT_PICO_2350 ${32BLIT_PICO_2350} PARENT_SCOPE)
+endif()
+
 # prevent find_package errors in pico_add_uf2_output later
 set(PICO_SDK_VERSION_MAJOR ${PICO_SDK_VERSION_MAJOR} PARENT_SCOPE)
 set(PICO_SDK_VERSION_MINOR ${PICO_SDK_VERSION_MINOR} PARENT_SCOPE)
@@ -179,7 +184,7 @@ set(BLIT_USB_DRIVER ${BLIT_USB_DRIVER} PARENT_SCOPE)
 set(BLIT_BOARD_DEFINITIONS ${BLIT_BOARD_DEFINITIONS} PARENT_SCOPE)
 
 # some file paths we need later
-if(PICO_PLATFORM MATCHES "^rp2350")
+if(32BLIT_PICO_2350)
     set(LINKER_SCRIPT ${CMAKE_CURRENT_LIST_DIR}/memmap_blit_2350.ld.in PARENT_SCOPE)
 else()
     set(LINKER_SCRIPT ${CMAKE_CURRENT_LIST_DIR}/memmap_blit.ld.in PARENT_SCOPE)
@@ -236,7 +241,13 @@ function(blit_executable NAME)
 
         target_compile_definitions(${NAME} PRIVATE ${BLIT_BOARD_DEFINITIONS}) # need these for framebuffer config
         target_compile_options(${NAME} PRIVATE -ffunction-sections -fdata-sections)
-        set_source_files_properties(${STARTUP_SRC} PROPERTIES COMPILE_DEFINITIONS DEVICE_ID=2)
+
+        # set device id in header, these should match the BlitDevice enum
+        if(32BLIT_PICO_2350)
+            set_source_files_properties(${STARTUP_SRC} PROPERTIES COMPILE_DEFINITIONS DEVICE_ID=3)
+        else()
+            set_source_files_properties(${STARTUP_SRC} PROPERTIES COMPILE_DEFINITIONS DEVICE_ID=2)
+        endif()
 
         # minimal pico-sdk libs
         target_link_libraries(${NAME} boot_picobin_headers pico_bit_ops pico_clib_interface pico_cxx_options pico_divider pico_double pico_int64_ops pico_float pico_malloc pico_mem_ops pico_runtime_headers)
