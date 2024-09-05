@@ -13,8 +13,10 @@
 
 #ifdef PICO_RP2350
 #define DEVICE_ID BlitDevice::RP2350
+#define FLASH_BASE XIP_NOCACHE_NOALLOC_NOTRANSLATE_BASE
 #else
 #define DEVICE_ID BlitDevice::RP2040
+#define FLASH_BASE XIP_NOCACHE_NOALLOC_BASE
 #endif
 
 // code related to blit files and launching
@@ -33,7 +35,7 @@ RawMetadata *get_running_game_metadata() {
   if(!current_game_offset)
     return nullptr;
 
-  auto game_ptr = reinterpret_cast<uint8_t *>(XIP_NOCACHE_NOALLOC_BASE + current_game_offset);
+  auto game_ptr = reinterpret_cast<uint8_t *>(FLASH_BASE + current_game_offset);
 
   auto header = reinterpret_cast<BlitGameHeader *>(game_ptr);
 
@@ -91,7 +93,7 @@ bool launch_file(const char *path) {
     flash_offset = writer.get_flash_offset();
   }
 
-  auto header = (BlitGameHeader *)(XIP_NOCACHE_NOALLOC_BASE + flash_offset);
+  auto header = (BlitGameHeader *)(FLASH_BASE + flash_offset);
   // check header magic + device
   if(header->magic != blit_game_magic || header->device_id != DEVICE_ID)
     return false;
@@ -143,7 +145,7 @@ void delayed_launch() {
   if(!requested_launch_offset)
     return;
 
-  auto header = (BlitGameHeader *)(XIP_NOCACHE_NOALLOC_BASE + requested_launch_offset);
+  auto header = (BlitGameHeader *)(FLASH_BASE + requested_launch_offset);
 
   // save in case launch fails
   uint32_t last_game_offset = current_game_offset;
@@ -162,7 +164,7 @@ void delayed_launch() {
 }
 
 static uint32_t get_installed_file_size(uint32_t offset) {
-  auto header = (BlitGameHeader *)(XIP_NOCACHE_NOALLOC_BASE + offset);
+  auto header = (BlitGameHeader *)(FLASH_BASE + offset);
 
   // check header magic + device
   if(header->magic != blit_game_magic || header->device_id != DEVICE_ID)
@@ -172,9 +174,9 @@ static uint32_t get_installed_file_size(uint32_t offset) {
 
   // check metadata
   auto meta_offset = offset + size;
-  if(memcmp((char *)(XIP_NOCACHE_NOALLOC_BASE + meta_offset), "BLITMETA", 8) == 0) {
+  if(memcmp((char *)(FLASH_BASE + meta_offset), "BLITMETA", 8) == 0) {
     // add metadata size
-    size += *(uint16_t *)(XIP_NOCACHE_NOALLOC_BASE + meta_offset + 8) + 10;
+    size += *(uint16_t *)(FLASH_BASE + meta_offset + 8) + 10;
   }
 
   return size;
@@ -193,7 +195,7 @@ void list_installed_games(std::function<void(const uint8_t *, uint32_t, uint32_t
       continue;
     }
 
-    callback((const uint8_t *)(XIP_NOCACHE_NOALLOC_BASE + off), off / game_block_size, size);
+    callback((const uint8_t *)(FLASH_BASE + off), off / game_block_size, size);
 
     off += calc_num_blocks(size) * game_block_size;
   }
