@@ -276,34 +276,34 @@ uint32_t BlitWriter::get_flash_offset() const {
 }
 
 bool BlitWriter::prepare_write(const uint8_t *buf) {
-    auto header = (BlitGameHeader *)buf;
+  auto header = (BlitGameHeader *)buf;
 
-    if(header->magic != blit_game_magic || header->device_id != DEVICE_ID) {
-      blit::debugf("Invalid blit header!");
-      return false;
-    }
+  if(header->magic != blit_game_magic || header->device_id != DEVICE_ID) {
+    blit::debugf("Invalid blit header!");
+    return false;
+  }
 
-    // currently non-relocatable, so base address is stored after header
-    flash_offset = *(uint32_t *)(buf + sizeof(BlitGameHeader));
-    flash_offset &= 0xFFFFFF;
+  // currently non-relocatable, so base address is stored after header
+  flash_offset = *(uint32_t *)(buf + sizeof(BlitGameHeader));
+  flash_offset &= 0xFFFFFF;
 
-    printf("PROG: flash off %lu\n", flash_offset);
+  printf("PROG: flash off %lu\n", flash_offset);
 
-    disable_user_code();
+  disable_user_code();
 
-    // erase flash
-    auto status = save_and_disable_interrupts();
+  // erase flash
+  auto status = save_and_disable_interrupts();
 
-    if(core1_started)
-      multicore_lockout_start_blocking(); // pause core1
+  if(core1_started)
+    multicore_lockout_start_blocking(); // pause core1
 
-    auto erase_size = ((file_len - 1) / FLASH_SECTOR_SIZE) + 1;
-    flash_range_erase(flash_offset, erase_size * FLASH_SECTOR_SIZE);
+  auto erase_size = ((file_len - 1) / FLASH_SECTOR_SIZE) + 1;
+  flash_range_erase(flash_offset, erase_size * FLASH_SECTOR_SIZE);
 
-    if(core1_started)
-      multicore_lockout_end_blocking(); // resume core1
+  if(core1_started)
+    multicore_lockout_end_blocking(); // resume core1
 
-    restore_interrupts(status);
+  restore_interrupts(status);
 
-    return true;
+  return true;
 }
