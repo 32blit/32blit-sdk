@@ -5,6 +5,10 @@
 #include "hardware/sync.h"
 #include "pico/multicore.h"
 
+#ifdef PICO_RP2350
+#include "hardware/structs/qmi.h"
+#endif
+
 #include "blit-launch.hpp"
 #include "file.hpp"
 
@@ -51,6 +55,44 @@ static uint32_t get_installed_file_size(uint32_t offset) {
 
 static uint32_t calc_num_blocks(uint32_t size) {
   return (size - 1) / game_block_size + 1;
+}
+
+static uint32_t find_flash_offset(uint32_t requested_size) {
+  uint32_t free_off = 0; // 0 is invalid as that's where the loader is
+
+  // FIXME: avoid flash storage
+
+  for(uint32_t off = 256 * 1024; off < PICO_FLASH_SIZE_BYTES;) {
+    auto size = get_installed_file_size(off);
+
+    if(!size) {
+      // empty, store offset
+      if(!free_off)
+        free_off = off;
+
+      off += game_block_size;
+      continue;
+    }
+
+    if(free_off) {
+      // end of free space, check if large enough
+      auto found_space = off - free_off;
+
+      if(found_space >= requested_size)
+        return free_off;
+
+      free_off = 0;
+    }
+
+    // skip to end
+    off += calc_num_blocks(size) * game_block_size;
+  }
+
+  // last chance
+  if(free_off && PICO_FLASH_SIZE_BYTES - free_off >= requested_size)
+    return free_off;
+
+  return 0;
 }
 
 // 32blit API
@@ -172,6 +214,18 @@ void delayed_launch() {
 
   auto header = (BlitGameHeader *)(FLASH_BASE + requested_launch_offset);
 
+#ifdef PICO_RP2350
+  uint32_t header_offset = *(uint32_t *)(FLASH_BASE + requested_launch_offset + sizeof(BlitGameHeader));
+  if(header_offset != requested_launch_offset) {
+    // setup translation
+    qmi_hw->atrans[1] = 0x400 << QMI_ATRANS1_SIZE_LSB // TODO: use (rounded) blit size
+                      | (requested_launch_offset >> 12) << QMI_ATRANS1_BASE_LSB;
+
+    // FIXME: invalidate cache
+    // FIXME: handle previous blit also using translation on failure
+  }
+#endif
+
   // save in case launch fails
   uint32_t last_game_offset = current_game_offset;
 
@@ -289,6 +343,13 @@ bool BlitWriter::prepare_write(const uint8_t *buf) {
   // currently non-relocatable, so base address is stored after header
   flash_offset = *(uint32_t *)(buf + sizeof(BlitGameHeader));
   flash_offset &= 0xFFFFFF;
+
+#ifdef PICO_RP2350
+  if(flash_offset == 4 * 1024 * 1024) {
+    // we can use address translation for this, so flash in any free space
+    flash_offset = find_flash_offset(file_len);
+  }
+#endif
 
   printf("PROG: flash off %lu\n", flash_offset);
 
