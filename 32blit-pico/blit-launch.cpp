@@ -30,6 +30,31 @@ extern bool core1_started;
 static uint32_t requested_launch_offset = 0;
 static uint32_t current_game_offset = 0;
 
+static uint32_t get_installed_file_size(uint32_t offset) {
+  auto header = (BlitGameHeader *)(FLASH_BASE + offset);
+
+  // check header magic + device
+  if(header->magic != blit_game_magic || header->device_id != DEVICE_ID)
+    return 0;
+
+  auto size = header->end;
+
+  // check metadata
+  auto meta_offset = offset + size;
+  if(memcmp((char *)(FLASH_BASE + meta_offset), "BLITMETA", 8) == 0) {
+    // add metadata size
+    size += *(uint16_t *)(FLASH_BASE + meta_offset + 8) + 10;
+  }
+
+  return size;
+}
+
+static uint32_t calc_num_blocks(uint32_t size) {
+  return (size - 1) / game_block_size + 1;
+}
+
+// 32blit API
+
 RawMetadata *get_running_game_metadata() {
 #ifdef BUILD_LOADER
   if(!current_game_offset)
@@ -163,29 +188,6 @@ void delayed_launch() {
   do_tick = header->tick;
 }
 
-static uint32_t get_installed_file_size(uint32_t offset) {
-  auto header = (BlitGameHeader *)(FLASH_BASE + offset);
-
-  // check header magic + device
-  if(header->magic != blit_game_magic || header->device_id != DEVICE_ID)
-    return 0;
-
-  auto size = header->end;
-
-  // check metadata
-  auto meta_offset = offset + size;
-  if(memcmp((char *)(FLASH_BASE + meta_offset), "BLITMETA", 8) == 0) {
-    // add metadata size
-    size += *(uint16_t *)(FLASH_BASE + meta_offset + 8) + 10;
-  }
-
-  return size;
-}
-
-static uint32_t calc_num_blocks(uint32_t size) {
-  return (size - 1) / game_block_size + 1;
-}
-
 void list_installed_games(std::function<void(const uint8_t *, uint32_t, uint32_t)> callback) {
   for(uint32_t off = 0; off < PICO_FLASH_SIZE_BYTES;) {
     auto size = get_installed_file_size(off);
@@ -234,6 +236,7 @@ void erase_game(uint32_t offset) {
 #endif
 }
 
+// .blit file writer
 void BlitWriter::init(uint32_t file_len) {
   this->file_len = file_len;
   file_offset = flash_offset = 0;
