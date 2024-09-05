@@ -11,6 +11,12 @@
 #include "engine/engine.hpp"
 #include "engine/file.hpp"
 
+#ifdef PICO_RP2350
+#define DEVICE_ID BlitDevice::RP2350
+#else
+#define DEVICE_ID BlitDevice::RP2040
+#endif
+
 // code related to blit files and launching
 
 extern int (*do_tick)(uint32_t time);
@@ -87,7 +93,7 @@ bool launch_file(const char *path) {
 
   auto header = (BlitGameHeader *)(XIP_NOCACHE_NOALLOC_BASE + flash_offset);
   // check header magic + device
-  if(header->magic != blit_game_magic || header->device_id != BlitDevice::RP2040)
+  if(header->magic != blit_game_magic || header->device_id != DEVICE_ID)
     return false;
 
   if(!header->init || !header->render || !header->tick)
@@ -120,7 +126,7 @@ blit::CanLaunchResult can_launch(const char *path) {
 
     auto bytes_read = read_file(file, 0, sizeof(header), (char *)&header);
 
-    if(bytes_read == sizeof(header) && header.magic == blit_game_magic && header.device_id == BlitDevice::RP2040) {
+    if(bytes_read == sizeof(header) && header.magic == blit_game_magic && header.device_id == DEVICE_ID) {
       close_file(file);
       return blit::CanLaunchResult::Success;
     }
@@ -159,7 +165,7 @@ static uint32_t get_installed_file_size(uint32_t offset) {
   auto header = (BlitGameHeader *)(XIP_NOCACHE_NOALLOC_BASE + offset);
 
   // check header magic + device
-  if(header->magic != blit_game_magic || header->device_id != BlitDevice::RP2040)
+  if(header->magic != blit_game_magic || header->device_id != DEVICE_ID)
     return 0;
 
   auto size = header->end;
@@ -270,7 +276,7 @@ uint32_t BlitWriter::get_flash_offset() const {
 bool BlitWriter::prepare_write(const uint8_t *buf) {
     auto header = (BlitGameHeader *)buf;
 
-    if(header->magic != blit_game_magic || header->device_id != BlitDevice::RP2040) {
+    if(header->magic != blit_game_magic || header->device_id != DEVICE_ID) {
       blit::debugf("Invalid blit header!");
       return false;
     }
