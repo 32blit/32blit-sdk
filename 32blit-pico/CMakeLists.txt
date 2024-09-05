@@ -229,7 +229,12 @@ function(blit_executable NAME)
 
         # calculate and verify flash offset
         if(NOT PICO_BLIT_OFFSET_KB)
-            set(PICO_BLIT_OFFSET_KB 512)
+            if(32BLIT_PICO_2350)
+                # if we build the file for a 4MB offset, we can use address translation
+                set(PICO_BLIT_OFFSET_KB 4096)
+            else()
+                set(PICO_BLIT_OFFSET_KB 512)
+            endif()
         endif()
 
         math(EXPR offset_mod "${PICO_BLIT_OFFSET_KB} % 64")
