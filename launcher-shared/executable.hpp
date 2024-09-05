@@ -17,6 +17,7 @@ enum class BlitDevice : uint8_t {
   STM32H7_32BlitOld = 0, // 32blit hw, old header
   STM32H7_32Blit = 1, // 32blit hw
   RP2040 = 2, // any RP2040-based device
+  RP2350 = 3,
 };
 
 // should match the layout in startup_user.s
