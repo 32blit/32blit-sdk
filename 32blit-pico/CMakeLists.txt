@@ -228,6 +228,10 @@ function(blit_executable NAME)
         set_property(TARGET ${NAME} PROPERTY BLIT_PICO_BLIT TRUE)
 
         # calculate and verify flash offset
+        if(NOT PICO_BLIT_OFFSET_KB)
+            set(PICO_BLIT_OFFSET_KB 512)
+        endif()
+
         math(EXPR offset_mod "${PICO_BLIT_OFFSET_KB} % 64")
         if(${PICO_BLIT_OFFSET_KB} LESS 256 OR offset_mod)
             message(FATAL_ERROR "Blit offset should be >= 256k and a multiple of 64k")
