@@ -52,7 +52,7 @@ void init_audio() {
   }
 
   // PWM PIO program assumes 48MHz
-  pio_sm_set_clkdiv(pio1, 1, clock_get_hz(clk_sys) / 48000000.0f);
+  pio_sm_set_clkdiv(audio_pio, pio_sm, clock_get_hz(clk_sys) / 48000000.0f);
 
   [[maybe_unused]] bool ok = audio_pwm_default_connect(producer_pool, false);
   assert(ok);
