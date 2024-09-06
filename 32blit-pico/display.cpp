@@ -4,18 +4,6 @@
 
 using namespace blit;
 
-// height rounded up to handle the 135px display
-// this is in bytes
-static const int lores_page_size = (DISPLAY_WIDTH / 2) * ((DISPLAY_HEIGHT + 1) / 2) * 2;
-
-#if ALLOW_HIRES && DOUBLE_BUFFERED_HIRES
-static const int fb_size = DISPLAY_WIDTH * DISPLAY_HEIGHT * 2;
-#elif ALLOW_HIRES
-static const int fb_size = DISPLAY_WIDTH * DISPLAY_HEIGHT;
-#else
-static const int fb_size = lores_page_size; // double-buffered
-#endif
-
 SurfaceInfo cur_surf_info;
 
 bool fb_double_buffer = true;
@@ -25,8 +13,8 @@ uint16_t *screen_fb = nullptr;
 static uint32_t max_fb_size = 0;
 static Size max_fb_bounds(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 #else
-uint16_t screen_fb[fb_size];
-static const uint32_t max_fb_size = fb_size;
+uint16_t screen_fb[FRAMEBUFFER_SIZE];
+static const uint32_t max_fb_size = FRAMEBUFFER_SIZE;
 #endif
 
 static const Size lores_screen_size(DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2);
