@@ -218,10 +218,14 @@ void delayed_launch() {
   uint32_t header_offset = *(uint32_t *)(FLASH_BASE + requested_launch_offset + sizeof(BlitGameHeader));
   if(header_offset != requested_launch_offset) {
     // setup translation
-    qmi_hw->atrans[1] = 0x400 << QMI_ATRANS1_SIZE_LSB // TODO: use (rounded) blit size
+    uint32_t size = 4 * 1024 * 1024; // TODO: use (rounded) blit size
+    qmi_hw->atrans[1] = (size >> 12) << QMI_ATRANS1_SIZE_LSB
                       | (requested_launch_offset >> 12) << QMI_ATRANS1_BASE_LSB;
 
-    // FIXME: invalidate cache
+    // invalidate cache
+    for(uint32_t off = 0; off < size; off += 8)
+      *(uint8_t *)(XIP_MAINTENANCE_BASE + 4 * 1024 * 1024 + off + 2/*invalidate by addr*/) = 0;
+
     // FIXME: handle previous blit also using translation on failure
   }
 #endif
