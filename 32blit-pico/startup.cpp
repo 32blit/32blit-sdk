@@ -4,17 +4,7 @@
 #include "config.h"
 
 #ifndef BLIT_BOARD_PIMORONI_PICOVISION
-
-#if ALLOW_HIRES && DOUBLE_BUFFERED_HIRES
-static const int fb_size = DISPLAY_WIDTH * DISPLAY_HEIGHT * 2;
-#elif ALLOW_HIRES
-static const int fb_size = DISPLAY_WIDTH * DISPLAY_HEIGHT;
-#else
-// height rounded up to handle the 135px display
-static const int fb_size = (DISPLAY_WIDTH / 2) * ((DISPLAY_HEIGHT + 1) / 2) * 2; // double-buffered
-#endif
-
-static uint16_t screen_fb[fb_size];
+static uint16_t screen_fb[FRAMEBUFFER_SIZE];
 #endif
 
 extern void init();
