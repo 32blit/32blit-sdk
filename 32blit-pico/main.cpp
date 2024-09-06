@@ -31,6 +31,8 @@ static blit::AudioChannel channels[CHANNEL_COUNT];
 
 int (*do_tick)(uint32_t time) = blit::tick;
 
+static alarm_id_t home_hold_alarm_id = 0;
+
 // override terminate handler to save ~20-30k
 namespace __cxxabiv1 {
   std::terminate_handler __terminate_handler = std::abort;
@@ -213,6 +215,30 @@ void disable_user_code() {
   blit::render = ::render;
 }
 
+[[maybe_unused]]
+static int64_t home_hold_callback(alarm_id_t id, void *user_data) {
+  home_hold_alarm_id = 0;
+
+  ::init(); // re-initialising the loader is effectively a reset
+
+  return 0;
+}
+
+static void check_home_button() {
+#ifdef BUILD_LOADER
+  if((api_data.buttons & Button::HOME) && !home_hold_alarm_id) {
+    // start timer for exit/reset
+    home_hold_alarm_id = add_alarm_in_ms(1000, home_hold_callback, nullptr, false);
+    debugf("home down at %i alarm %i\n", ::now(), home_hold_alarm_id);
+  } else if(!(api_data.buttons & Button::HOME) && home_hold_alarm_id) {
+    // released, cancel timer
+    debugf("home up at %i alarm %i\n", ::now(), home_hold_alarm_id);
+    cancel_alarm(home_hold_alarm_id);
+    home_hold_alarm_id = 0;
+  }
+#endif
+}
+
 bool core1_started = false;
 
 #ifdef ENABLE_CORE1
@@ -303,8 +329,12 @@ int main() {
   while(true) {
     auto now = ::now();
     update_display(now);
+
     update_input();
+    check_home_button();
+
     int ms_to_next_update = do_tick(::now());
+
     update_led();
     update_usb();
     update_multiplayer();
