@@ -19,10 +19,10 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Checkout Examples
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: 32blit/32blit-examples
         path: 32blit-examples
@@ -34,13 +34,13 @@ jobs:
 
     - name: Setup cache
       id: cache-system-libraries
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ${{env.EM_CACHE_FOLDER}}
         key: ${{env.EM_VERSION}}-${{runner.os}}
 
     - name: Setup Emscripten
-      uses: mymindstorm/setup-emsdk@v12
+      uses: mymindstorm/setup-emsdk@v14
       with:
         version: ${{env.EM_VERSION}}
         actions-cache-folder: ${{env.EM_CACHE_FOLDER}}
@@ -74,7 +74,7 @@ jobs:
         cp ../build/*/*.{js,wasm} site/examples
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{github.event.repository.name}}-${{github.sha}}-web
         path: site
@@ -88,7 +88,7 @@ jobs:
 
     - name: Deploy to GitHub Pages
       if: github.ref == 'refs/heads/master' # github.event_name == 'release'
-      uses: crazy-max/ghaction-github-pages@v3
+      uses: crazy-max/ghaction-github-pages@v4
       with:
         target_branch: gh-pages
         build_dir: site

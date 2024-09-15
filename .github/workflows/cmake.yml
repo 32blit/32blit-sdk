@@ -74,10 +74,10 @@ jobs:
 
     steps:
     - name: Checkout 32Blit SDK
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Checkout Examples
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: 32blit/32blit-examples
         path: examples
@@ -85,7 +85,7 @@ jobs:
     # pico sdk/extras for some builds
     - name: Checkout Pico SDK
       if: matrix.pico-sdk
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: raspberrypi/pico-sdk
         path: pico-sdk
@@ -93,7 +93,7 @@ jobs:
 
     - name: Checkout Pico Extras
       if: matrix.pico-sdk
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: raspberrypi/pico-extras
         path: pico-extras
@@ -101,14 +101,14 @@ jobs:
     # PicoVision needs the RAM driver and the firmware
     - name: Checkout PicoVision
       if: matrix.name == 'PicoVision'
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: pimoroni/picovision
         ref: 03df7694ed4fb396c1d12adf90d0150ada6baedc
         path: picovision
 
     - name: Cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.ccache
         key: ccache-${{matrix.cache-key}}-${{github.ref}}-${{github.sha}}
@@ -181,7 +181,7 @@ jobs:
 
     - name: Upload Artifact
       if: github.event_name != 'release'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{env.RELEASE_FILE}}
         path: ${{runner.workspace}}/build/install
