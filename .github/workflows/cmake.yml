@@ -23,14 +23,14 @@ jobs:
             cache-key: linux
             release-suffix: LIN64
             cmake-args: '"-DCMAKE_CXX_CLANG_TIDY=clang-tidy;-header-filter=(32blit|32blit-sdl)/;-checks=performance-*,portability-*,modernize-*,-modernize-use-trailing-return-type,-modernize-avoid-c-arrays,-modernize-use-nodiscard" -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache'
-            apt-packages: ccache clang-tidy libsdl2-dev libsdl2-image-dev libsdl2-net-dev python3-setuptools
+            apt-packages: ccache clang-tidy libsdl2-dev libsdl2-image-dev libsdl2-net-dev pipx python3-requests
 
           - os: ubuntu-22.04
             name: STM32
             cache-key: stm32
             release-suffix: STM32
             cmake-args: -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/32blit.toolchain -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-            apt-packages: ccache gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib python3-setuptools
+            apt-packages: ccache gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib pipx python3-requests
 
           - os: ubuntu-22.04
             pico-sdk: true
@@ -38,7 +38,7 @@ jobs:
             cache-key: picosystem
             release-suffix: PicoSystem
             cmake-args: -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/pico.toolchain -DPICO_SDK_PATH=$GITHUB_WORKSPACE/pico-sdk -DPICO_BOARD=pimoroni_picosystem -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-            apt-packages: ccache gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib python3-setuptools
+            apt-packages: ccache gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib pipx python3-requests
 
           - os: ubuntu-22.04
             pico-sdk: true
@@ -46,14 +46,14 @@ jobs:
             cache-key: picovision
             release-suffix: PicoVision
             cmake-args: -D32BLIT_DIR=$GITHUB_WORKSPACE -DPICO_SDK_PATH=$GITHUB_WORKSPACE/pico-sdk -DPICO_BOARD=pico_w -DPICO_ADDON=pimoroni_picovision -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-            apt-packages: ccache gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib python3-setuptools
+            apt-packages: ccache gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib pipx python3-requests
 
           - os: ubuntu-22.04
             name: MinGW
             cache-key: mingw
             artifact-suffix: MinGW
             cmake-args: -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/mingw.toolchain -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSDL2_DIR=$GITHUB_WORKSPACE/SDL2/cmake -DSDL2_image_DIR=$GITHUB_WORKSPACE/SDL2_image/cmake -DSDL2_net_DIR=$GITHUB_WORKSPACE/SDL2_net/cmake
-            apt-packages: ccache g++-mingw-w64 python3-setuptools
+            apt-packages: ccache g++-mingw-w64 pipx python3-requests
 
           - os: macos-13
             name: macOS
@@ -121,7 +121,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt update && sudo apt install ${{matrix.apt-packages}}
-        pip3 install 32blit requests
+        pipx install 32blit
 
     # macOS deps
     - name: Install deps
