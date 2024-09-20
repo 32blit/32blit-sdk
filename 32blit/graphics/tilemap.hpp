@@ -48,12 +48,15 @@ namespace blit {
 
     int empty_tile_id = -1;
 
+    int load_flags = 0;
+
     enum LoadFlags {
       COPY_TILES = (1 << 0),
       COPY_TRANSFORMS = (1 << 1)
     };
 
     TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites);
+    virtual ~TileMap();
 
     static TileMap *load_tmx(const uint8_t *asset, Surface *sprites, int layer = 0, int flags = COPY_TILES | COPY_TRANSFORMS);
 

@@ -16,6 +16,14 @@ namespace blit {
   TileMap::TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites) : bounds(bounds), tiles(tiles), transforms(transforms), sprites(sprites) {
   }
 
+  TileMap::~TileMap() {
+    if(load_flags & LoadFlags::COPY_TILES)
+      delete[] tiles;
+
+    if(load_flags & LoadFlags::COPY_TRANSFORMS)
+      delete[] transforms;
+  }
+
   TileMap *TileMap::load_tmx(const uint8_t *asset, Surface *sprites, int layer, int flags) {
     auto map_struct = reinterpret_cast<const TMX *>(asset);
 
@@ -55,6 +63,7 @@ namespace blit {
 
     auto ret = new TileMap(tile_data, transform_data, Size(map_struct->width, map_struct->height), sprites);
     ret->empty_tile_id = map_struct->empty_tile;
+    ret->load_flags = flags;
 
     return ret;
   }
