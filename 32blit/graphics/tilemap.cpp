@@ -23,7 +23,7 @@ namespace blit {
       return nullptr;
 
     // only 8 bit tiles supported
-    if(map_struct->flags & TMX_16Bit)
+    if(map_struct->flags & TMX_16BIT)
       return nullptr;
 
     // power of two bounds required
@@ -33,7 +33,7 @@ namespace blit {
     auto layer_size = map_struct->width * map_struct->height;
 
     uint8_t *tile_data;
-    if(flags & copy_tiles) {
+    if(flags & COPY_TILES) {
       tile_data = new uint8_t[layer_size];
       memcpy(tile_data, map_struct->data + layer_size * layer, layer_size);
     } else {
@@ -44,12 +44,12 @@ namespace blit {
 
     uint8_t *transform_data = nullptr;
 
-    if(flags & copy_transforms) {
+    if(flags & COPY_TRANSFORMS) {
       transform_data = new uint8_t[layer_size]();
 
-      if(map_struct->flags & TMX_Transforms)
+      if(map_struct->flags & TMX_TRANSFORMS)
         memcpy(transform_data, transform_base + layer_size * layer, layer_size);
-    } else if(map_struct->flags & TMX_Transforms) {
+    } else if(map_struct->flags & TMX_TRANSFORMS) {
       transform_data = const_cast<uint8_t *>(transform_base + layer_size * layer);
     }
 
