@@ -249,4 +249,88 @@ namespace blit {
     } while (c);
   }
 
+  /// Create an empty map
+  TiledMap::TiledMap(Size bounds, unsigned num_layers, Surface *sprites) : num_layers(num_layers) {
+    layers = new TileMap *[num_layers];
+    for(unsigned i = 0; i < num_layers; i++) {
+      layers[i] = new TileMap(nullptr, nullptr, bounds, sprites);
+    }
+  }
+
+  /// Create from a map asset generated with `output_struct=true`
+  TiledMap::TiledMap(const uint8_t *asset, Surface *sprites, int flags) : layers(nullptr) {
+    auto map_struct = reinterpret_cast<const TMX *>(asset);
+
+    // header check
+    if(memcmp(map_struct, "MTMX", 4) != 0 || map_struct->header_length != sizeof(TMX))
+      return;
+
+    num_layers = map_struct->layers;
+
+    // load each layer
+    layers = new TileMap *[num_layers];
+
+    for(unsigned i = 0; i < num_layers; i++) {
+      layers[i] = TileMap::load_tmx(asset, sprites, i, flags);
+    }
+  }
+
+  TiledMap::~TiledMap() {
+    for(unsigned i = 0; i < num_layers; i++)
+      delete layers[i];
+
+    delete[] layers;
+  }
+
+  /// Draw map to a viewport in `dest`
+  void TiledMap::draw(Surface *dest, Rect viewport) {
+    for(unsigned i = 0; i < num_layers; i++) {
+      if(layers[i])
+        layers[i]->draw(dest, viewport);
+    }
+  }
+
+  void TiledMap::draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback) {
+    for(unsigned i = 0; i < num_layers; i++) {
+      if(layers[i])
+        layers[i]->draw(dest, viewport, scanline_callback);
+    }
+  }
+
+  /// Get a layer of the map, or `nullptr` if the index doesn't exist
+  TileMap* TiledMap::get_layer(unsigned index) {
+    if(index < num_layers)
+      return layers[index];
+
+    return nullptr;
+  }
+
+  /// Get map bounds
+  Size TiledMap::get_bounds() const {
+    if(!num_layers || !layers[0])
+      return {0, 0};
+
+    // all layers have the same bounds
+    return layers[0]->bounds;
+  }
+
+  void TiledMap::set_scroll_position(Point scroll_position) {
+    set_transform(Mat3::translation(Vec2(scroll_position)));
+  }
+
+  void TiledMap::set_scroll_position(unsigned layer, Point scroll_position) {
+    set_transform(layer, Mat3::translation(Vec2(scroll_position)));
+  }
+
+  void TiledMap::set_transform(Mat3 transform) {
+    for(unsigned i = 0; i < num_layers; i++) {
+      if(layers[i])
+        layers[i]->transform = transform;
+    }
+  }
+
+  void TiledMap::set_transform(unsigned layer, Mat3 transform) {
+    if(layer < num_layers && layers[layer])
+      layers[layer]->transform = transform;
+  }
 }

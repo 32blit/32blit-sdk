@@ -71,4 +71,42 @@ namespace blit {
     void texture_span(Surface *dest, Point s, unsigned int c, Vec2 swc, Vec2 ewc);
   };
 
+  /// Multi-layered tile map
+  class TiledMap {
+  public:
+      enum LoadFlags {
+      COPY_TILES = (1 << 0),
+      COPY_TRANSFORMS = (1 << 1)
+    };
+    
+    TiledMap(Size bounds, unsigned num_layers, Surface *sprites);
+    TiledMap(const uint8_t *asset, Surface *sprites, int flags = COPY_TILES | COPY_TRANSFORMS);
+
+    virtual ~TiledMap();
+
+    /// Draw map to `screen`
+    void draw() {draw(&screen, Rect({0, 0}, screen.bounds));}
+
+    void draw(Surface *dest, Rect viewport);
+
+    void draw(std::function<Mat3(uint8_t)> scanline_callback) {draw(&screen, Rect({0, 0}, screen.bounds), scanline_callback);}
+    void draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback);
+
+    unsigned get_num_layers() const {return num_layers;}
+
+    TileMap *get_layer(unsigned index);
+
+    Size get_bounds() const;
+
+    void set_scroll_position(Point scroll_position);
+    void set_scroll_position(unsigned layer, Point scroll_position);
+
+    void set_transform(Mat3 transform);
+    void set_transform(unsigned layer, Mat3 transform);
+
+  private:
+    unsigned num_layers = 0;
+    TileMap **layers;
+  };
+
 }
