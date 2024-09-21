@@ -107,8 +107,12 @@ namespace blit {
     if(map_struct->flags & TMX_16BIT)
       return nullptr;
 
+    bool is_16bit = map_struct->flags & TMX_16BIT;
 
     auto layer_size = map_struct->width * map_struct->height;
+
+    if(is_16bit)
+      layer_size *= 2;
 
     uint8_t *tile_data;
     if(flags & COPY_TILES) {
@@ -119,6 +123,7 @@ namespace blit {
     }
 
     auto transform_base = map_struct->data + layer_size * map_struct->layers;
+    auto transform_layer_size = map_struct->width * map_struct->height;
 
     uint8_t *transform_data = nullptr;
 
@@ -126,9 +131,9 @@ namespace blit {
       transform_data = new uint8_t[layer_size]();
 
       if(map_struct->flags & TMX_TRANSFORMS)
-        memcpy(transform_data, transform_base + layer_size * layer, layer_size);
+        memcpy(transform_data, transform_base + transform_layer_size * layer, transform_layer_size);
     } else if(map_struct->flags & TMX_TRANSFORMS) {
-      transform_data = const_cast<uint8_t *>(transform_base + layer_size * layer);
+      transform_data = const_cast<uint8_t *>(transform_base + transform_layer_size * layer);
     }
 
     auto ret = new SimpleTileLayer(tile_data, transform_data, Size(map_struct->width, map_struct->height), sprites);
@@ -206,7 +211,12 @@ namespace blit {
     if((map_struct->width & (map_struct->width - 1)) || (map_struct->height & (map_struct->height - 1)))
       return nullptr;
 
+    bool is_16bit = map_struct->flags & TMX_16BIT;
+
     auto layer_size = map_struct->width * map_struct->height;
+
+    if(is_16bit)
+      layer_size *= 2;
 
     uint8_t *tile_data;
     if(flags & COPY_TILES) {
@@ -217,6 +227,7 @@ namespace blit {
     }
 
     auto transform_base = map_struct->data + layer_size * map_struct->layers;
+    auto transform_layer_size = map_struct->width * map_struct->height;
 
     uint8_t *transform_data = nullptr;
 
@@ -224,9 +235,9 @@ namespace blit {
       transform_data = new uint8_t[layer_size]();
 
       if(map_struct->flags & TMX_TRANSFORMS)
-        memcpy(transform_data, transform_base + layer_size * layer, layer_size);
+        memcpy(transform_data, transform_base + transform_layer_size * layer, transform_layer_size);
     } else if(map_struct->flags & TMX_TRANSFORMS) {
-      transform_data = const_cast<uint8_t *>(transform_base + layer_size * layer);
+      transform_data = const_cast<uint8_t *>(transform_base + transform_layer_size * layer);
     }
 
     auto ret = new TransformedTileLayer(tile_data, transform_data, Size(map_struct->width, map_struct->height), sprites);
