@@ -10,7 +10,7 @@ namespace blit {
    *
    * \param[in] tiles
    * \param[in] transforms
-   * \param[in] bounds Map bounds, must be a power of two
+   * \param[in] bounds Map bounds
    * \param[in] sprites
    */
   TileLayer::TileLayer(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites) : bounds(bounds), tiles(tiles), transforms(transforms), sprites(sprites) {
@@ -31,12 +31,12 @@ namespace blit {
    * \param[in] y
    */
   int32_t TileLayer::offset(int16_t x, int16_t y) {
-    int32_t cx = ((uint32_t)x) & (bounds.w - 1);
-    int32_t cy = ((uint32_t)y) & (bounds.h - 1);
-
-    if ((x ^ cx) | (y ^ cy)) {
+    if (x < 0 || y < 0 || x >= bounds.w || y >= bounds.h) {
       if (repeat_mode == DEFAULT_FILL)
         return default_tile_id;
+
+      int32_t cx = x % bounds.w + (x < 0 ? bounds.w : 0);
+      int32_t cy = y % bounds.h + (y < 0 ? bounds.h : 0);
 
       if (repeat_mode == REPEAT)
         return cx + cy * bounds.w;
@@ -53,7 +53,7 @@ namespace blit {
       return -1;
     }
 
-    return cx + cy * bounds.w;
+    return x + y * bounds.w;
   }
 
   /**
@@ -91,7 +91,7 @@ namespace blit {
    *
    * \param[in] tiles
    * \param[in] transforms
-   * \param[in] bounds Map bounds, must be a power of two
+   * \param[in] bounds Map bounds
    * \param[in] sprites
    */
   SimpleTileLayer::SimpleTileLayer(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites) : TileLayer(tiles, transforms, bounds, sprites){
@@ -107,9 +107,6 @@ namespace blit {
     if(map_struct->flags & TMX_16BIT)
       return nullptr;
 
-    // power of two bounds required
-    if((map_struct->width & (map_struct->width - 1)) || (map_struct->height & (map_struct->height - 1)))
-      return nullptr;
 
     auto layer_size = map_struct->width * map_struct->height;
 
@@ -310,7 +307,7 @@ namespace blit {
       int16_t wcx = wc.x >> fix_shift;
       int16_t wcy = wc.y >> fix_shift;
 
-      int32_t toff = offset(wcx >> 3, wcy >> 3);
+      int32_t toff = fast_offset(wcx >> 3, wcy >> 3);
 
       if (toff != -1 && tiles[toff] != empty_tile_id) {
         uint8_t tile_id = tiles[toff];
@@ -356,6 +353,34 @@ namespace blit {
       } while(c && (wc.x >> (fix_shift + 3)) == wcx >> 3 && (wc.y >> (fix_shift + 3)) == wcy >> 3);
 
     } while (c);
+  }
+
+  int32_t TransformedTileLayer::fast_offset(int16_t x, int16_t y) {
+    // this is the reason for the power of two size restriction
+    // (doing divides every pixel would hurt performance quite a bit)
+    int32_t cx = ((uint32_t)x) & (bounds.w - 1);
+    int32_t cy = ((uint32_t)y) & (bounds.h - 1);
+
+    if ((x ^ cx) | (y ^ cy)) {
+      if (repeat_mode == DEFAULT_FILL)
+        return default_tile_id;
+
+      if (repeat_mode == REPEAT)
+        return cx + cy * bounds.w;
+
+      if(repeat_mode == CLAMP_TO_EDGE) {
+        if(x != cx)
+          cx = x < 0 ? 0 : bounds.w - 1;
+        if(y != cy)
+          cy = y < 0 ? 0 : bounds.h - 1;
+
+        return cx + cy * bounds.w;
+      }
+
+      return -1;
+    }
+
+    return cx + cy * bounds.w;
   }
 
   /// Create an empty map
