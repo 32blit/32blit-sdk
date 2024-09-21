@@ -157,8 +157,8 @@ namespace blit {
     Point start = (viewport.tl() + scroll_offset) / 8;
     Point end = (viewport.br() + scroll_offset) / 8;
 
-    for(int y = start.y; y <= end.y; y++) {
-      for(int x = start.x; x <= end.x; x++) {
+    for(int y = start.y - 1; y <= end.y; y++) {
+      for(int x = start.x - 1; x <= end.x; x++) {
         auto tile_offset = offset(x, y);
 
         // out-of-bounds or empty tile
