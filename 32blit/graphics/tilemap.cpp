@@ -192,10 +192,10 @@ namespace blit {
    * \param[in] bounds Map bounds, must be a power of two
    * \param[in] sprites
    */
-  TileMap::TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites) : TileLayer(tiles, transforms, bounds, sprites){
+  TransformedTileLayer::TransformedTileLayer(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites) : TileLayer(tiles, transforms, bounds, sprites){
   }
 
-  TileMap *TileMap::load_tmx(const uint8_t *asset, Surface *sprites, int layer, int flags) {
+  TransformedTileLayer *TransformedTileLayer::load_tmx(const uint8_t *asset, Surface *sprites, int layer, int flags) {
     auto map_struct = reinterpret_cast<const TMX *>(asset);
 
     if(memcmp(map_struct, "MTMX", 4) != 0 || map_struct->header_length != sizeof(TMX))
@@ -232,7 +232,7 @@ namespace blit {
       transform_data = const_cast<uint8_t *>(transform_base + layer_size * layer);
     }
 
-    auto ret = new TileMap(tile_data, transform_data, Size(map_struct->width, map_struct->height), sprites);
+    auto ret = new TransformedTileLayer(tile_data, transform_data, Size(map_struct->width, map_struct->height), sprites);
     ret->empty_tile_id = map_struct->empty_tile;
     ret->load_flags = flags;
 
@@ -246,7 +246,7 @@ namespace blit {
    * \param[in] viewport Clipping rectangle.
    * \param[in] scanline_callback Functon called on every scanline, accepts the scanline y position, should return a transformation matrix.
    */
-  void TileMap::draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback) {
+  void TransformedTileLayer::draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback) {
     //bool not_scaled = (from.w - to.w) | (from.h - to.h);
 
     viewport = dest->clip.intersection(viewport);
@@ -297,7 +297,7 @@ namespace blit {
    * \param[in] swc
    * \param[in] ewc
    */
-  void TileMap::texture_span(Surface *dest, Point s, unsigned int c, Vec2 swc, Vec2 ewc) {
+  void TransformedTileLayer::texture_span(Surface *dest, Point s, unsigned int c, Vec2 swc, Vec2 ewc) {
     Surface *src = sprites;
 
     static const int fix_shift = 16;
@@ -363,7 +363,7 @@ namespace blit {
     layers = new TileLayer *[num_layers];
     for(unsigned i = 0; i < num_layers; i++) {
       if(flags & LAYER_TRANSFORMS)
-        layers[i] = new TileMap(nullptr, nullptr, bounds, sprites);
+        layers[i] = new TransformedTileLayer(nullptr, nullptr, bounds, sprites);
       else
         layers[i] = new SimpleTileLayer(nullptr, nullptr, bounds, sprites);
 
@@ -386,7 +386,7 @@ namespace blit {
 
     for(unsigned i = 0; i < num_layers; i++) {
       if(flags & LAYER_TRANSFORMS)
-        layers[i] = TileMap::load_tmx(asset, sprites, i, flags);
+        layers[i] = TransformedTileLayer::load_tmx(asset, sprites, i, flags);
       else
         layers[i] = SimpleTileLayer::load_tmx(asset, sprites, i, flags);
     }
@@ -410,7 +410,7 @@ namespace blit {
   void TiledMap::draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback) {
     for(unsigned i = 0; i < num_layers; i++) {
       if(layers[i] && (layers[i]->load_flags & LAYER_TRANSFORMS))
-        static_cast<TileMap *>(layers[i])->draw(dest, viewport, scanline_callback);
+        static_cast<TransformedTileLayer *>(layers[i])->draw(dest, viewport, scanline_callback);
     }
   }
 

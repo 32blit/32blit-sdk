@@ -73,10 +73,10 @@ namespace blit {
     void draw(Surface *dest, Rect viewport) override;
   };
 
-  struct TileMap : public TileLayer {
-    TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites);
+  struct TransformedTileLayer : public TileLayer {
+    TransformedTileLayer(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites);
 
-    static TileMap *load_tmx(const uint8_t *asset, Surface *sprites, int layer = 0, int flags = COPY_TILES | COPY_TRANSFORMS);
+    static TransformedTileLayer *load_tmx(const uint8_t *asset, Surface *sprites, int layer = 0, int flags = COPY_TILES | COPY_TRANSFORMS);
 
     void draw(Surface *dest, Rect viewport) override {draw(dest, viewport, nullptr);}
     void draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback);
@@ -118,4 +118,5 @@ namespace blit {
     TileLayer **layers;
   };
 
+  using TileMap [[deprecated("Use TransformedTileLayer (or TiledMap)")]] = TransformedTileLayer;
 }
