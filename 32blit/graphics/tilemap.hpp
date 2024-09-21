@@ -9,8 +9,9 @@
 
 namespace blit {
   enum MapLoadFlags {
-    COPY_TILES      = (1 << 0),
-    COPY_TRANSFORMS = (1 << 1)
+    COPY_TILES       = (1 << 0), /// copy tile data
+    COPY_TRANSFORMS  = (1 << 1), /// copy per-tile transform data
+    LAYER_TRANSFORMS = (1 << 2), /// each layer can be transformed (optionally per-line), otherwise only scrolling is supported
   };
   
   enum TMXFlags {
@@ -32,7 +33,7 @@ namespace blit {
   };
   #pragma pack(pop)
 
-
+  // A `tilemap` describes a grid of tiles with optional transforms
   struct TileLayer {
     Size bounds;
 
@@ -64,7 +65,14 @@ namespace blit {
     uint8_t transform_at(const Point &p);
   };
 
-  // A `tilemap` describes a grid of tiles with optional transforms
+  struct SimpleTileLayer : public TileLayer {
+    SimpleTileLayer(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites);
+
+    static SimpleTileLayer *load_tmx(const uint8_t *asset, Surface *sprites, int layer = 0, int flags = COPY_TILES | COPY_TRANSFORMS);
+
+    void draw(Surface *dest, Rect viewport) override;
+  };
+
   struct TileMap : public TileLayer {
     TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites);
 
@@ -80,7 +88,7 @@ namespace blit {
   /// Multi-layered tile map
   class TiledMap {
   public:
-    TiledMap(Size bounds, unsigned num_layers, Surface *sprites);
+    TiledMap(Size bounds, unsigned num_layers, Surface *sprites, int flags = 0);
     TiledMap(const uint8_t *asset, Surface *sprites, int flags = COPY_TILES | COPY_TRANSFORMS);
 
     virtual ~TiledMap();

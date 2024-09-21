@@ -86,6 +86,104 @@ namespace blit {
     return 0;
   }
 
+ /**
+   * Create a new tilemap
+   *
+   * \param[in] tiles
+   * \param[in] transforms
+   * \param[in] bounds Map bounds, must be a power of two
+   * \param[in] sprites
+   */
+  SimpleTileLayer::SimpleTileLayer(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites) : TileLayer(tiles, transforms, bounds, sprites){
+  }
+
+  SimpleTileLayer *SimpleTileLayer::load_tmx(const uint8_t *asset, Surface *sprites, int layer, int flags) {
+    auto map_struct = reinterpret_cast<const TMX *>(asset);
+
+    if(memcmp(map_struct, "MTMX", 4) != 0 || map_struct->header_length != sizeof(TMX))
+      return nullptr;
+
+    // only 8 bit tiles supported
+    if(map_struct->flags & TMX_16BIT)
+      return nullptr;
+
+    // power of two bounds required
+    if((map_struct->width & (map_struct->width - 1)) || (map_struct->height & (map_struct->height - 1)))
+      return nullptr;
+
+    auto layer_size = map_struct->width * map_struct->height;
+
+    uint8_t *tile_data;
+    if(flags & COPY_TILES) {
+      tile_data = new uint8_t[layer_size];
+      memcpy(tile_data, map_struct->data + layer_size * layer, layer_size);
+    } else {
+      tile_data = const_cast<uint8_t *>(map_struct->data + layer_size * layer);
+    }
+
+    auto transform_base = map_struct->data + layer_size * map_struct->layers;
+
+    uint8_t *transform_data = nullptr;
+
+    if(flags & COPY_TRANSFORMS) {
+      transform_data = new uint8_t[layer_size]();
+
+      if(map_struct->flags & TMX_TRANSFORMS)
+        memcpy(transform_data, transform_base + layer_size * layer, layer_size);
+    } else if(map_struct->flags & TMX_TRANSFORMS) {
+      transform_data = const_cast<uint8_t *>(transform_base + layer_size * layer);
+    }
+
+    auto ret = new SimpleTileLayer(tile_data, transform_data, Size(map_struct->width, map_struct->height), sprites);
+    ret->empty_tile_id = map_struct->empty_tile;
+    ret->load_flags = flags;
+
+    return ret;
+  }
+
+  /**
+   * Draw tilemap to a specified destination surface, with clipping.
+   *
+   * \param[in] dest Destination surface.
+   * \param[in] viewport Clipping rectangle.
+   */
+  void SimpleTileLayer::draw(Surface *dest, Rect viewport) {
+    viewport = dest->clip.intersection(viewport);
+    Rect old_clip = dest->clip;
+    dest->clip = viewport;
+
+    Point scroll_offset(transform.v02, transform.v12);
+
+    Point start = (viewport.tl() + scroll_offset) / 8;
+    Point end = (viewport.br() + scroll_offset) / 8;
+
+    for(int y = start.y; y <= end.y; y++) {
+      for(int x = start.x; x <= end.x; x++) {
+        auto tile_offset = offset(x, y);
+
+        // out-of-bounds or empty tile
+        if(tile_offset == -1 || tiles[tile_offset] == empty_tile_id)
+          continue;
+
+        int transform = transforms ? transforms[tile_offset] : 0;
+        int sprite_transform = 0;
+
+        // tilemap/sprite transform bits don't match
+        if(transform & 0b001)
+          sprite_transform |= SpriteTransform::XYSWAP;
+        if(transform & 0b010)
+          sprite_transform |= SpriteTransform::VERTICAL;
+        if(transform & 0b100)
+          sprite_transform |= SpriteTransform::HORIZONTAL;
+
+        Rect src_rect = sprites->sprite_bounds(tiles[tile_offset]);
+        dest->blit(sprites, src_rect, {x * 8 - scroll_offset.x, y * 8 - scroll_offset.y}, sprite_transform);
+      }
+    }
+
+    dest->clip = old_clip;
+  }
+
   /**
    * Create a new tilemap
    *
@@ -261,10 +359,15 @@ namespace blit {
   }
 
   /// Create an empty map
-  TiledMap::TiledMap(Size bounds, unsigned num_layers, Surface *sprites) : num_layers(num_layers) {
+  TiledMap::TiledMap(Size bounds, unsigned num_layers, Surface *sprites, int flags) : num_layers(num_layers) {
     layers = new TileLayer *[num_layers];
     for(unsigned i = 0; i < num_layers; i++) {
-      layers[i] = new TileMap(nullptr, nullptr, bounds, sprites);
+      if(flags & LAYER_TRANSFORMS)
+        layers[i] = new TileMap(nullptr, nullptr, bounds, sprites);
+      else
+        layers[i] = new SimpleTileLayer(nullptr, nullptr, bounds, sprites);
+
+      layers[i]->load_flags = flags;
     }
   }
 
@@ -282,7 +385,10 @@ namespace blit {
     layers = new TileLayer *[num_layers];
 
     for(unsigned i = 0; i < num_layers; i++) {
-      layers[i] = TileMap::load_tmx(asset, sprites, i, flags);
+      if(flags & LAYER_TRANSFORMS)
+        layers[i] = TileMap::load_tmx(asset, sprites, i, flags);
+      else
+        layers[i] = SimpleTileLayer::load_tmx(asset, sprites, i, flags);
     }
   }
 
@@ -303,7 +409,7 @@ namespace blit {
 
   void TiledMap::draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback) {
     for(unsigned i = 0; i < num_layers; i++) {
-      if(layers[i])
+      if(layers[i] && (layers[i]->load_flags & LAYER_TRANSFORMS))
         static_cast<TileMap *>(layers[i])->draw(dest, viewport, scanline_callback);
     }
   }
