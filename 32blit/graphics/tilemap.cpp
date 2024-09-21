@@ -17,10 +17,10 @@ namespace blit {
   }
 
   TileMap::~TileMap() {
-    if(load_flags & LoadFlags::COPY_TILES)
+    if(load_flags & MapLoadFlags::COPY_TILES)
       delete[] tiles;
 
-    if(load_flags & LoadFlags::COPY_TRANSFORMS)
+    if(load_flags & MapLoadFlags::COPY_TRANSFORMS)
       delete[] transforms;
   }
 

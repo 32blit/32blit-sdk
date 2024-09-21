@@ -8,7 +8,11 @@
 #include "../types/mat3.hpp"
 
 namespace blit {
-
+  enum MapLoadFlags {
+    COPY_TILES      = (1 << 0),
+    COPY_TRANSFORMS = (1 << 1)
+  };
+  
   enum TMXFlags {
     TMX_16BIT      = (1 << 0), /// tile data is 16-bit
     TMX_TRANSFORMS = (1 << 1)  /// transform data is included after the tile data
@@ -50,11 +54,6 @@ namespace blit {
 
     int load_flags = 0;
 
-    enum LoadFlags {
-      COPY_TILES = (1 << 0),
-      COPY_TRANSFORMS = (1 << 1)
-    };
-
     TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites);
     virtual ~TileMap();
 
@@ -74,11 +73,6 @@ namespace blit {
   /// Multi-layered tile map
   class TiledMap {
   public:
-      enum LoadFlags {
-      COPY_TILES = (1 << 0),
-      COPY_TRANSFORMS = (1 << 1)
-    };
-    
     TiledMap(Size bounds, unsigned num_layers, Surface *sprites);
     TiledMap(const uint8_t *asset, Surface *sprites, int flags = COPY_TILES | COPY_TRANSFORMS);
 
