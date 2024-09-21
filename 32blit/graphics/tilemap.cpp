@@ -6,22 +6,95 @@
 namespace blit {
 
   /**
-   * Create a new tilemap.
+   * Create a new tile layer.
    *
    * \param[in] tiles
    * \param[in] transforms
    * \param[in] bounds Map bounds, must be a power of two
    * \param[in] sprites
    */
-  TileMap::TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites) : bounds(bounds), tiles(tiles), transforms(transforms), sprites(sprites) {
+  TileLayer::TileLayer(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites) : bounds(bounds), tiles(tiles), transforms(transforms), sprites(sprites) {
   }
 
-  TileMap::~TileMap() {
+  TileLayer::~TileLayer() {
     if(load_flags & MapLoadFlags::COPY_TILES)
       delete[] tiles;
 
     if(load_flags & MapLoadFlags::COPY_TRANSFORMS)
       delete[] transforms;
+  }
+
+  /**
+   * TODO: Document
+   *
+   * \param[in] x
+   * \param[in] y
+   */
+  int32_t TileLayer::offset(int16_t x, int16_t y) {
+    int32_t cx = ((uint32_t)x) & (bounds.w - 1);
+    int32_t cy = ((uint32_t)y) & (bounds.h - 1);
+
+    if ((x ^ cx) | (y ^ cy)) {
+      if (repeat_mode == DEFAULT_FILL)
+        return default_tile_id;
+
+      if (repeat_mode == REPEAT)
+        return cx + cy * bounds.w;
+
+      if(repeat_mode == CLAMP_TO_EDGE) {
+        if(x != cx)
+          cx = x < 0 ? 0 : bounds.w - 1;
+        if(y != cy)
+          cy = y < 0 ? 0 : bounds.h - 1;
+
+        return cx + cy * bounds.w;
+      }
+
+      return -1;
+    }
+
+    return cx + cy * bounds.w;
+  }
+
+  /**
+   * Get flags for a specific tile.
+   *
+   * \param[in] p Point denoting the tile x/y position in the map.
+   * \return Bitmask of flags for specified tile.
+   */
+  uint8_t TileLayer::tile_at(const Point &p) {
+    int32_t o = offset(p.x, p.y);
+
+    if(o != -1)
+      return tiles[o];
+
+    return 0;
+  }
+
+  /**
+   * Get transform for a specific tile.
+   *
+   * \param[in] p Point denoting the tile x/y position in the map.
+   * \return Bitmask of transforms for specified tile.
+   */
+  uint8_t TileLayer::transform_at(const Point &p) {
+    int32_t o = offset(p.x, p.y);
+
+    if (o != -1 && transforms)
+      return transforms[o];
+
+    return 0;
+  }
+
+  /**
+   * Create a new tilemap
+   *
+   * \param[in] tiles
+   * \param[in] transforms
+   * \param[in] bounds Map bounds, must be a power of two
+   * \param[in] sprites
+   */
+  TileMap::TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites) : TileLayer(tiles, transforms, bounds, sprites){
   }
 
   TileMap *TileMap::load_tmx(const uint8_t *asset, Surface *sprites, int layer, int flags) {
@@ -66,68 +139,6 @@ namespace blit {
     ret->load_flags = flags;
 
     return ret;
-  }
-
-  /**
-   * TODO: Document
-   *
-   * \param[in] x
-   * \param[in] y
-   */
-  int32_t TileMap::offset(int16_t x, int16_t y) {
-    int32_t cx = ((uint32_t)x) & (bounds.w - 1);
-    int32_t cy = ((uint32_t)y) & (bounds.h - 1);
-
-    if ((x ^ cx) | (y ^ cy)) {
-      if (repeat_mode == DEFAULT_FILL)
-        return default_tile_id;
-
-      if (repeat_mode == REPEAT)
-        return cx + cy * bounds.w;
-
-      if(repeat_mode == CLAMP_TO_EDGE) {
-        if(x != cx)
-          cx = x < 0 ? 0 : bounds.w - 1;
-        if(y != cy)
-          cy = y < 0 ? 0 : bounds.h - 1;
-
-        return cx + cy * bounds.w;
-      }
-
-      return -1;
-    }
-
-    return cx + cy * bounds.w;
-  }
-
-  /**
-   * Get flags for a specific tile.
-   *
-   * \param[in] p Point denoting the tile x/y position in the map.
-   * \return Bitmask of flags for specified tile.
-   */
-  uint8_t TileMap::tile_at(const Point &p) {
-    int32_t o = offset(p.x, p.y);
-
-    if(o != -1)
-      return tiles[o];
-
-    return 0;
-  }
-
-  /**
-   * Get transform for a specific tile.
-   *
-   * \param[in] p Point denoting the tile x/y position in the map.
-   * \return Bitmask of transforms for specified tile.
-   */
-  uint8_t TileMap::transform_at(const Point &p) {
-    int32_t o = offset(p.x, p.y);
-
-    if (o != -1 && transforms)
-      return transforms[o];
-
-    return 0;
   }
 
   /**
@@ -251,7 +262,7 @@ namespace blit {
 
   /// Create an empty map
   TiledMap::TiledMap(Size bounds, unsigned num_layers, Surface *sprites) : num_layers(num_layers) {
-    layers = new TileMap *[num_layers];
+    layers = new TileLayer *[num_layers];
     for(unsigned i = 0; i < num_layers; i++) {
       layers[i] = new TileMap(nullptr, nullptr, bounds, sprites);
     }
@@ -268,7 +279,7 @@ namespace blit {
     num_layers = map_struct->layers;
 
     // load each layer
-    layers = new TileMap *[num_layers];
+    layers = new TileLayer *[num_layers];
 
     for(unsigned i = 0; i < num_layers; i++) {
       layers[i] = TileMap::load_tmx(asset, sprites, i, flags);
@@ -293,12 +304,12 @@ namespace blit {
   void TiledMap::draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback) {
     for(unsigned i = 0; i < num_layers; i++) {
       if(layers[i])
-        layers[i]->draw(dest, viewport, scanline_callback);
+        static_cast<TileMap *>(layers[i])->draw(dest, viewport, scanline_callback);
     }
   }
 
   /// Get a layer of the map, or `nullptr` if the index doesn't exist
-  TileMap* TiledMap::get_layer(unsigned index) {
+  TileLayer* TiledMap::get_layer(unsigned index) {
     if(index < num_layers)
       return layers[index];
 

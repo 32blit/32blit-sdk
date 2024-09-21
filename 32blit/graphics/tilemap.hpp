@@ -33,14 +33,13 @@ namespace blit {
   #pragma pack(pop)
 
 
-  // A `tilemap` describes a grid of tiles with optional transforms
-  struct TileMap {
-    Size          bounds;
+  struct TileLayer {
+    Size bounds;
 
-    uint8_t      *tiles;
-    uint8_t      *transforms;
-    Surface  *sprites;
-    Mat3          transform = Mat3::identity();
+    uint8_t *tiles;
+    uint8_t *transforms;
+    Surface *sprites;
+    Mat3 transform = Mat3::identity();
 
     enum {
       NONE = 0,           // draw nothing
@@ -48,23 +47,31 @@ namespace blit {
       DEFAULT_FILL = 2,   // fill with default tile
       CLAMP_TO_EDGE = 3,  // repeats the tile at the edge
     } repeat_mode = NONE; // determines what to do when drawing outside of the layer bounds.
-    uint8_t       default_tile_id;
+    uint8_t default_tile_id;
 
     int empty_tile_id = -1;
 
     int load_flags = 0;
 
+    TileLayer(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites);
+    virtual ~TileLayer();
+
+    virtual void draw(Surface *dest, Rect viewport) = 0;
+
+    inline int32_t offset(const Point &p) {return offset(p.x, p.y);}
+    int32_t offset(int16_t x, int16_t y);
+    uint8_t tile_at(const Point &p);
+    uint8_t transform_at(const Point &p);
+  };
+
+  // A `tilemap` describes a grid of tiles with optional transforms
+  struct TileMap : public TileLayer {
     TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites);
-    virtual ~TileMap();
 
     static TileMap *load_tmx(const uint8_t *asset, Surface *sprites, int layer = 0, int flags = COPY_TILES | COPY_TRANSFORMS);
 
-    inline int32_t offset(const Point &p) {return offset(p.x, p.y);} // __attribute__((always_inline));
-    int32_t offset(int16_t x, int16_t y); // __attribute__((always_inline));
-    uint8_t tile_at(const Point &p); // __attribute__((always_inline));
-    uint8_t transform_at(const Point &p); // __attribute__((always_inline));
-
-    void draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback = nullptr);
+    void draw(Surface *dest, Rect viewport) override {draw(dest, viewport, nullptr);}
+    void draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback);
 
   //  void mipmap_texture_span(surface *dest, point s, uint16_t c, vec2 swc, vec2 ewc);
     void texture_span(Surface *dest, Point s, unsigned int c, Vec2 swc, Vec2 ewc);
@@ -88,7 +95,7 @@ namespace blit {
 
     unsigned get_num_layers() const {return num_layers;}
 
-    TileMap *get_layer(unsigned index);
+    TileLayer *get_layer(unsigned index);
 
     Size get_bounds() const;
 
@@ -100,7 +107,7 @@ namespace blit {
 
   private:
     unsigned num_layers = 0;
-    TileMap **layers;
+    TileLayer **layers;
   };
 
 }
