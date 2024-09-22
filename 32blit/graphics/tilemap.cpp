@@ -62,11 +62,15 @@ namespace blit {
    * \param[in] p Point denoting the tile x/y position in the map.
    * \return Bitmask of flags for specified tile.
    */
-  uint8_t TileLayer::tile_at(const Point &p) {
+  uint16_t TileLayer::tile_at(const Point &p) {
     int32_t o = offset(p.x, p.y);
 
-    if(o != -1)
-      return tiles[o];
+    if(o != -1) {
+      if(load_flags & TILES_16BIT)
+        return ((uint16_t *)tiles)[o];
+      else
+        return tiles[o];
+    }
 
     return 0;
   }
@@ -103,16 +107,14 @@ namespace blit {
     if(memcmp(map_struct, "MTMX", 4) != 0 || map_struct->header_length != sizeof(TMX))
       return nullptr;
 
-    // only 8 bit tiles supported
-    if(map_struct->flags & TMX_16BIT)
-      return nullptr;
-
     bool is_16bit = map_struct->flags & TMX_16BIT;
 
     auto layer_size = map_struct->width * map_struct->height;
 
-    if(is_16bit)
+    if(is_16bit) {
       layer_size *= 2;
+      flags |= TILES_16BIT;
+    }
 
     uint8_t *tile_data;
     if(flags & COPY_TILES) {
@@ -128,7 +130,7 @@ namespace blit {
     uint8_t *transform_data = nullptr;
 
     if(flags & COPY_TRANSFORMS) {
-      transform_data = new uint8_t[layer_size]();
+      transform_data = new uint8_t[transform_layer_size]();
 
       if(map_struct->flags & TMX_TRANSFORMS)
         memcpy(transform_data, transform_base + transform_layer_size * layer, transform_layer_size);
@@ -163,8 +165,19 @@ namespace blit {
       for(int x = start.x - 1; x <= end.x; x++) {
         auto tile_offset = offset(x, y);
 
-        // out-of-bounds or empty tile
-        if(tile_offset == -1 || tiles[tile_offset] == empty_tile_id)
+        // out-of-bounds
+        if(tile_offset == -1)
+          continue;
+
+        int tile_id;
+
+        if(load_flags & TILES_16BIT)
+          tile_id = ((uint16_t *)tiles)[tile_offset];
+        else
+          tile_id = tiles[tile_offset];
+
+        // empty tile
+        if(tile_id == empty_tile_id)
           continue;
 
         int transform = transforms ? transforms[tile_offset] : 0;
@@ -178,7 +191,7 @@ namespace blit {
         if(transform & 0b100)
           sprite_transform |= SpriteTransform::HORIZONTAL;
 
-        Rect src_rect = sprites->sprite_bounds(tiles[tile_offset]);
+        Rect src_rect = sprites->sprite_bounds(tile_id);
         dest->blit(sprites, src_rect, {x * 8 - scroll_offset.x, y * 8 - scroll_offset.y}, sprite_transform);
       }
     }
@@ -203,10 +216,6 @@ namespace blit {
     if(memcmp(map_struct, "MTMX", 4) != 0 || map_struct->header_length != sizeof(TMX))
       return nullptr;
 
-    // only 8 bit tiles supported
-    if(map_struct->flags & TMX_16BIT)
-      return nullptr;
-
     // power of two bounds required
     if((map_struct->width & (map_struct->width - 1)) || (map_struct->height & (map_struct->height - 1)))
       return nullptr;
@@ -215,8 +224,10 @@ namespace blit {
 
     auto layer_size = map_struct->width * map_struct->height;
 
-    if(is_16bit)
+    if(is_16bit) {
       layer_size *= 2;
+      flags |= TILES_16BIT;
+    }
 
     uint8_t *tile_data;
     if(flags & COPY_TILES) {
@@ -232,7 +243,7 @@ namespace blit {
     uint8_t *transform_data = nullptr;
 
     if(flags & COPY_TRANSFORMS) {
-      transform_data = new uint8_t[layer_size]();
+      transform_data = new uint8_t[transform_layer_size]();
 
       if(map_struct->flags & TMX_TRANSFORMS)
         memcpy(transform_data, transform_base + transform_layer_size * layer, transform_layer_size);
@@ -272,7 +283,10 @@ namespace blit {
         ewc *= transform;
       }
 
-      texture_span(dest, Point(viewport.x, y), viewport.w, swc, ewc);
+      if(load_flags & TILES_16BIT)
+        texture_span<uint16_t>(dest, Point(viewport.x, y), viewport.w, swc, ewc);
+      else
+        texture_span<uint8_t>(dest, Point(viewport.x, y), viewport.w, swc, ewc);
     }
   }
 
@@ -305,6 +319,7 @@ namespace blit {
    * \param[in] swc
    * \param[in] ewc
    */
+  template<class tile_id_type>
   void TransformedTileLayer::texture_span(Surface *dest, Point s, unsigned int c, Vec2 swc, Vec2 ewc) {
     Surface *src = sprites;
 
@@ -320,8 +335,8 @@ namespace blit {
 
       int32_t toff = fast_offset(wcx >> 3, wcy >> 3);
 
-      if (toff != -1 && tiles[toff] != empty_tile_id) {
-        uint8_t tile_id = tiles[toff];
+      if (toff != -1 && ((tile_id_type *)tiles)[toff] != empty_tile_id) {
+        uint8_t tile_id = ((tile_id_type *)tiles)[toff];
         uint8_t transform = transforms ? transforms[toff] : 0;
 
         // coordinate within sprite
