@@ -70,6 +70,7 @@ namespace blit {
     SimpleTileLayer(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites);
 
     static SimpleTileLayer *load_tmx(const uint8_t *asset, Surface *sprites, int layer = 0, int flags = COPY_TILES | COPY_TRANSFORMS);
+    static SimpleTileLayer *load_tmx(File &file, Surface *sprites, int layer = 0, int flags = COPY_TILES | COPY_TRANSFORMS);
 
     void draw(Surface *dest, Rect viewport) override;
   };
@@ -78,6 +79,7 @@ namespace blit {
     TransformedTileLayer(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites);
 
     static TransformedTileLayer *load_tmx(const uint8_t *asset, Surface *sprites, int layer = 0, int flags = COPY_TILES | COPY_TRANSFORMS);
+    static TransformedTileLayer *load_tmx(File &file, Surface *sprites, int layer = 0, int flags = COPY_TILES | COPY_TRANSFORMS);
 
     void draw(Surface *dest, Rect viewport) override {draw(dest, viewport, nullptr);}
     void draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback);
@@ -97,6 +99,7 @@ namespace blit {
   public:
     TiledMap(Size bounds, unsigned num_layers, Surface *sprites, int flags = 0);
     TiledMap(const uint8_t *asset, Surface *sprites, int flags = COPY_TILES | COPY_TRANSFORMS);
+    TiledMap(const std::string &filename, Surface *sprites, int flags = COPY_TILES | COPY_TRANSFORMS);
 
     virtual ~TiledMap();
 
@@ -122,7 +125,7 @@ namespace blit {
 
   private:
     unsigned num_layers = 0;
-    TileLayer **layers;
+    TileLayer **layers = nullptr;
   };
 
   using TileMap [[deprecated("Use TransformedTileLayer (or TiledMap)")]] = TransformedTileLayer;

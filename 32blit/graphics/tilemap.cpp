@@ -5,9 +5,7 @@
 
 namespace blit {
   // TMX load helper
-  static bool load_tmx_layer_data(const uint8_t *asset, bool require_pot, int layer, int &flags, uint8_t *&tile_data, uint8_t *&transform_data) {
-    auto map_struct = reinterpret_cast<const TMX *>(asset);
-
+  static bool load_tmx_layer_data(const TMX *map_struct, File &file, bool require_pot, int layer, int &flags, uint8_t *&tile_data, uint8_t *&transform_data) {
     if(memcmp(map_struct, "MTMX", 4) != 0 || map_struct->header_length != sizeof(TMX))
       return false;
 
@@ -26,24 +24,34 @@ namespace blit {
 
     if(flags & COPY_TILES) {
       tile_data = new uint8_t[layer_size];
-      memcpy(tile_data, map_struct->data + layer_size * layer, layer_size);
-    } else {
-      tile_data = const_cast<uint8_t *>(map_struct->data + layer_size * layer);
+      file.read(map_struct->header_length + layer_size * layer, layer_size, (char *)tile_data);
+    } else if(file.get_ptr()) {
+      tile_data = const_cast<uint8_t *>(file.get_ptr() + map_struct->header_length + layer_size * layer);
     }
 
-    auto transform_base = map_struct->data + layer_size * map_struct->layers;
+    auto transform_base = map_struct->header_length + layer_size * map_struct->layers;
     auto transform_layer_size = map_struct->width * map_struct->height;
 
     if(flags & COPY_TRANSFORMS) {
       transform_data = new uint8_t[transform_layer_size]();
 
       if(map_struct->flags & TMX_TRANSFORMS)
-        memcpy(transform_data, transform_base + transform_layer_size * layer, transform_layer_size);
-    } else if(map_struct->flags & TMX_TRANSFORMS) {
-      transform_data = const_cast<uint8_t *>(transform_base + transform_layer_size * layer);
+        file.read(transform_base + transform_layer_size * layer, transform_layer_size, (char *)transform_data);
+    } else if((map_struct->flags & TMX_TRANSFORMS) && file.get_ptr()) {
+      transform_data = const_cast<uint8_t *>(file.get_ptr() + transform_base + transform_layer_size * layer);
     }
 
     return true;
+  }
+
+  static uint32_t calc_tmx_size(const TMX *map_struct) {
+    // the TMX header contains many things, but a total size is not one of them
+    int tile_id_size = (map_struct->flags & TMX_16BIT) ? 2 : 1;
+    int transform_size = (map_struct->flags & TMX_TRANSFORMS) ? 1 : 0;
+
+    return map_struct->header_length
+         + map_struct->layers * map_struct->width * map_struct->height * tile_id_size
+         + map_struct->layers * map_struct->width * map_struct->height * transform_size;
   }
 
   /**
@@ -143,16 +151,24 @@ namespace blit {
   }
 
   SimpleTileLayer *SimpleTileLayer::load_tmx(const uint8_t *asset, Surface *sprites, int layer, int flags) {
-    auto map_struct = reinterpret_cast<const TMX *>(asset);
+    File map_file(asset, calc_tmx_size((TMX*)asset));
+
+    return load_tmx(map_file, sprites, layer, flags);
+  }
+
+  SimpleTileLayer *SimpleTileLayer::load_tmx(File &file, Surface *sprites, int layer, int flags) {
+    TMX map_struct;
+
+    file.read(0, sizeof(map_struct), (char *)&map_struct);
 
     uint8_t *tile_data = nullptr;
     uint8_t *transform_data = nullptr;
 
-    if(!load_tmx_layer_data(asset, false, layer, flags, tile_data, transform_data))
+    if(!load_tmx_layer_data(&map_struct, file, false, layer, flags, tile_data, transform_data))
       return nullptr;
 
-    auto ret = new SimpleTileLayer(tile_data, transform_data, Size(map_struct->width, map_struct->height), sprites);
-    ret->empty_tile_id = map_struct->empty_tile;
+    auto ret = new SimpleTileLayer(tile_data, transform_data, Size(map_struct.width, map_struct.height), sprites);
+    ret->empty_tile_id = map_struct.empty_tile;
     ret->load_flags = flags;
 
     return ret;
@@ -224,16 +240,24 @@ namespace blit {
   }
 
   TransformedTileLayer *TransformedTileLayer::load_tmx(const uint8_t *asset, Surface *sprites, int layer, int flags) {
-    auto map_struct = reinterpret_cast<const TMX *>(asset);
+    File map_file(asset, calc_tmx_size((TMX*)asset));
+
+    return load_tmx(map_file, sprites, layer, flags);
+  }
+
+  TransformedTileLayer *TransformedTileLayer::load_tmx(File &file, Surface *sprites, int layer, int flags) {
+    TMX map_struct;
+
+    file.read(0, sizeof(map_struct), (char *)&map_struct);
 
     uint8_t *tile_data = nullptr;
     uint8_t *transform_data = nullptr;
 
-    if(!load_tmx_layer_data(asset, true, layer, flags, tile_data, transform_data))
+    if(!load_tmx_layer_data(&map_struct, file, true, layer, flags, tile_data, transform_data))
       return nullptr;
 
-    auto ret = new TransformedTileLayer(tile_data, transform_data, Size(map_struct->width, map_struct->height), sprites);
-    ret->empty_tile_id = map_struct->empty_tile;
+    auto ret = new TransformedTileLayer(tile_data, transform_data, Size(map_struct.width, map_struct.height), sprites);
+    ret->empty_tile_id = map_struct.empty_tile;
     ret->load_flags = flags;
 
     return ret;
@@ -407,7 +431,7 @@ namespace blit {
   }
 
   /// Create from a map asset generated with `output_struct=true`
-  TiledMap::TiledMap(const uint8_t *asset, Surface *sprites, int flags) : layers(nullptr) {
+  TiledMap::TiledMap(const uint8_t *asset, Surface *sprites, int flags) {
     auto map_struct = reinterpret_cast<const TMX *>(asset);
 
     // header check
@@ -424,6 +448,34 @@ namespace blit {
         layers[i] = TransformedTileLayer::load_tmx(asset, sprites, i, flags);
       else
         layers[i] = SimpleTileLayer::load_tmx(asset, sprites, i, flags);
+    }
+  }
+
+  /// Create from a map file generated with `output_struct=true`
+  TiledMap::TiledMap(const std::string &filename, Surface *sprites, int flags) {
+    File map_file(filename);
+
+    if(!map_file.is_open())
+      return;
+
+    TMX map_struct;
+
+    map_file.read(0, sizeof(map_struct), (char *)&map_struct);
+
+    // header check
+    if(memcmp(map_struct.head, "MTMX", 4) != 0 || map_struct.header_length != sizeof(TMX))
+      return;
+
+    num_layers = map_struct.layers;
+
+    // load each layer
+    layers = new TileLayer *[num_layers];
+
+    for(unsigned i = 0; i < num_layers; i++) {
+      if(flags & LAYER_TRANSFORMS)
+        layers[i] = TransformedTileLayer::load_tmx(map_file, sprites, i, flags);
+      else
+        layers[i] = SimpleTileLayer::load_tmx(map_file, sprites, i, flags);
     }
   }
 
