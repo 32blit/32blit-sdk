@@ -83,8 +83,11 @@ namespace blit {
     void draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback);
 
     void mipmap_texture_span(Surface *dest, Point s, uint16_t c, Vec2 swc, Vec2 ewc);
-    template<class index_type>
     void texture_span(Surface *dest, Point s, unsigned int c, Vec2 swc, Vec2 ewc, Surface *src = nullptr, unsigned int mipmap_index = 0);
+    
+  private:
+    template<class index_type>
+    void do_texture_span(Surface *dest, Point s, unsigned int c, Vec2 swc, Vec2 ewc, Surface *src, unsigned int mipmap_index);
 
     int32_t fast_offset(int16_t x, int16_t y);
   };

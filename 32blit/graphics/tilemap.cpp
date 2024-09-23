@@ -283,10 +283,7 @@ namespace blit {
         ewc *= transform;
       }
 
-      if(load_flags & TILES_16BIT)
-        texture_span<uint16_t>(dest, Point(viewport.x, y), viewport.w, swc, ewc);
-      else
-        texture_span<uint8_t>(dest, Point(viewport.x, y), viewport.w, swc, ewc);
+      texture_span(dest, Point(viewport.x, y), viewport.w, swc, ewc);
     }
   }
 
@@ -300,17 +297,11 @@ namespace blit {
     mipmap_index = mipmap_index >= sprites->mipmaps.size() ? sprites->mipmaps.size() - 1 : mipmap_index;
 
     dest->alpha = 255;
-    if(load_flags & TILES_16BIT)
-      texture_span<uint16_t>(dest, s, c, swc, ewc, sprites->mipmaps[mipmap_index], mipmap_index);
-    else
-      texture_span<uint8_t>(dest, s, c, swc, ewc, sprites->mipmaps[mipmap_index], mipmap_index);
+    texture_span(dest, s, c, swc, ewc, sprites->mipmaps[mipmap_index], mipmap_index);
 
     if (++mipmap_index < sprites->mipmaps.size()) {
       dest->alpha = blend;
-      if(load_flags & TILES_16BIT)
-        texture_span<uint16_t>(dest, s, c, swc, ewc, sprites->mipmaps[mipmap_index], mipmap_index);
-      else
-        texture_span<uint8_t>(dest, s, c, swc, ewc, sprites->mipmaps[mipmap_index], mipmap_index);
+      texture_span(dest, s, c, swc, ewc, sprites->mipmaps[mipmap_index], mipmap_index);
     }
   }
 
@@ -323,8 +314,15 @@ namespace blit {
    * \param[in] swc
    * \param[in] ewc
    */
-  template<class tile_id_type>
   void TransformedTileLayer::texture_span(Surface *dest, Point s, unsigned int c, Vec2 swc, Vec2 ewc, Surface *src, unsigned int mipmap_index) {
+    if(load_flags & TILES_16BIT)
+      do_texture_span<uint16_t>(dest, s, c, swc, ewc, src, mipmap_index);
+    else
+      do_texture_span<uint8_t>(dest, s, c, swc, ewc, src, mipmap_index);
+  }
+
+  template<class tile_id_type>
+  void TransformedTileLayer::do_texture_span(Surface *dest, Point s, unsigned int c, Vec2 swc, Vec2 ewc, Surface *src, unsigned int mipmap_index) {
     if(!src)
       src = sprites;
 
