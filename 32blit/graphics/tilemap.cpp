@@ -290,25 +290,29 @@ namespace blit {
     }
   }
 
-  /*
-  void tilemap::mipmap_texture_span(surface *dest, point s, uint16_t c, vec2 swc, vec2 ewc) {
+  void TransformedTileLayer::mipmap_texture_span(Surface *dest, Point s, uint16_t c, Vec2 swc, Vec2 ewc) {
     // calculate the mipmap index to use for drawing
     float span_length = (ewc - swc).length();
     float mipmap = ((span_length / float(c)) / 2.0f);
-    int16_t mipmap_index = floor(mipmap);
-    uint8_t blend = (mipmap - floor(mipmap)) * 255;
+    uint16_t mipmap_index = floorf(mipmap);
+    uint8_t blend = (mipmap - floorf(mipmap)) * 255;
 
-    mipmap_index = mipmap_index >= (int)sprites->s.mipmaps.size() ? sprites->s.mipmaps.size() - 1 : mipmap_index;
-    mipmap_index = mipmap_index < 0 ? 0 : mipmap_index;
+    mipmap_index = mipmap_index >= sprites->mipmaps.size() ? sprites->mipmaps.size() - 1 : mipmap_index;
 
     dest->alpha = 255;
-    texture_span(dest, s, c, swc, ewc, mipmap_index);
+    if(load_flags & TILES_16BIT)
+      texture_span<uint16_t>(dest, s, c, swc, ewc, sprites->mipmaps[mipmap_index], mipmap_index);
+    else
+      texture_span<uint8_t>(dest, s, c, swc, ewc, sprites->mipmaps[mipmap_index], mipmap_index);
 
-    if (++mipmap_index < sprites->s.mipmaps.size()) {
+    if (++mipmap_index < sprites->mipmaps.size()) {
       dest->alpha = blend;
-      texture_span(dest, s, c, swc, ewc, mipmap_index);
+      if(load_flags & TILES_16BIT)
+        texture_span<uint16_t>(dest, s, c, swc, ewc, sprites->mipmaps[mipmap_index], mipmap_index);
+      else
+        texture_span<uint8_t>(dest, s, c, swc, ewc, sprites->mipmaps[mipmap_index], mipmap_index);
     }
-  }*/
+  }
 
   /**
    * TODO: Document
@@ -320,8 +324,9 @@ namespace blit {
    * \param[in] ewc
    */
   template<class tile_id_type>
-  void TransformedTileLayer::texture_span(Surface *dest, Point s, unsigned int c, Vec2 swc, Vec2 ewc) {
-    Surface *src = sprites;
+  void TransformedTileLayer::texture_span(Surface *dest, Point s, unsigned int c, Vec2 swc, Vec2 ewc, Surface *src, unsigned int mipmap_index) {
+    if(!src)
+      src = sprites;
 
     static const int fix_shift = 16;
 
@@ -363,7 +368,7 @@ namespace blit {
           count++;
         } while(c && (wc.x >> fix_shift) == wcx && (wc.y >> fix_shift) == wcy);
 
-        auto pen = src->get_pixel({u, v});
+        auto pen = src->get_pixel({u >> mipmap_index, v >> mipmap_index});
         dest->pbf(&pen, dest, doff, count);
 
         doff += count;
