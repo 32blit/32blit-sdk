@@ -4,6 +4,47 @@
 #include "tilemap.hpp"
 
 namespace blit {
+  // TMX load helper
+  static bool load_tmx_layer_data(const uint8_t *asset, bool require_pot, int layer, int &flags, uint8_t *&tile_data, uint8_t *&transform_data) {
+    auto map_struct = reinterpret_cast<const TMX *>(asset);
+
+    if(memcmp(map_struct, "MTMX", 4) != 0 || map_struct->header_length != sizeof(TMX))
+      return false;
+
+    // check power of two bounds if required
+    if(require_pot && ((map_struct->width & (map_struct->width - 1)) || (map_struct->height & (map_struct->height - 1))))
+      return false;
+
+    bool is_16bit = map_struct->flags & TMX_16BIT;
+
+    auto layer_size = map_struct->width * map_struct->height;
+
+    if(is_16bit) {
+      layer_size *= 2;
+      flags |= TILES_16BIT;
+    }
+
+    if(flags & COPY_TILES) {
+      tile_data = new uint8_t[layer_size];
+      memcpy(tile_data, map_struct->data + layer_size * layer, layer_size);
+    } else {
+      tile_data = const_cast<uint8_t *>(map_struct->data + layer_size * layer);
+    }
+
+    auto transform_base = map_struct->data + layer_size * map_struct->layers;
+    auto transform_layer_size = map_struct->width * map_struct->height;
+
+    if(flags & COPY_TRANSFORMS) {
+      transform_data = new uint8_t[transform_layer_size]();
+
+      if(map_struct->flags & TMX_TRANSFORMS)
+        memcpy(transform_data, transform_base + transform_layer_size * layer, transform_layer_size);
+    } else if(map_struct->flags & TMX_TRANSFORMS) {
+      transform_data = const_cast<uint8_t *>(transform_base + transform_layer_size * layer);
+    }
+
+    return true;
+  }
 
   /**
    * Create a new tile layer.
@@ -104,39 +145,11 @@ namespace blit {
   SimpleTileLayer *SimpleTileLayer::load_tmx(const uint8_t *asset, Surface *sprites, int layer, int flags) {
     auto map_struct = reinterpret_cast<const TMX *>(asset);
 
-    if(memcmp(map_struct, "MTMX", 4) != 0 || map_struct->header_length != sizeof(TMX))
-      return nullptr;
-
-    bool is_16bit = map_struct->flags & TMX_16BIT;
-
-    auto layer_size = map_struct->width * map_struct->height;
-
-    if(is_16bit) {
-      layer_size *= 2;
-      flags |= TILES_16BIT;
-    }
-
-    uint8_t *tile_data;
-    if(flags & COPY_TILES) {
-      tile_data = new uint8_t[layer_size];
-      memcpy(tile_data, map_struct->data + layer_size * layer, layer_size);
-    } else {
-      tile_data = const_cast<uint8_t *>(map_struct->data + layer_size * layer);
-    }
-
-    auto transform_base = map_struct->data + layer_size * map_struct->layers;
-    auto transform_layer_size = map_struct->width * map_struct->height;
-
+    uint8_t *tile_data = nullptr;
     uint8_t *transform_data = nullptr;
 
-    if(flags & COPY_TRANSFORMS) {
-      transform_data = new uint8_t[transform_layer_size]();
-
-      if(map_struct->flags & TMX_TRANSFORMS)
-        memcpy(transform_data, transform_base + transform_layer_size * layer, transform_layer_size);
-    } else if(map_struct->flags & TMX_TRANSFORMS) {
-      transform_data = const_cast<uint8_t *>(transform_base + transform_layer_size * layer);
-    }
+    if(!load_tmx_layer_data(asset, false, layer, flags, tile_data, transform_data))
+      return nullptr;
 
     auto ret = new SimpleTileLayer(tile_data, transform_data, Size(map_struct->width, map_struct->height), sprites);
     ret->empty_tile_id = map_struct->empty_tile;
@@ -213,43 +226,11 @@ namespace blit {
   TransformedTileLayer *TransformedTileLayer::load_tmx(const uint8_t *asset, Surface *sprites, int layer, int flags) {
     auto map_struct = reinterpret_cast<const TMX *>(asset);
 
-    if(memcmp(map_struct, "MTMX", 4) != 0 || map_struct->header_length != sizeof(TMX))
-      return nullptr;
-
-    // power of two bounds required
-    if((map_struct->width & (map_struct->width - 1)) || (map_struct->height & (map_struct->height - 1)))
-      return nullptr;
-
-    bool is_16bit = map_struct->flags & TMX_16BIT;
-
-    auto layer_size = map_struct->width * map_struct->height;
-
-    if(is_16bit) {
-      layer_size *= 2;
-      flags |= TILES_16BIT;
-    }
-
-    uint8_t *tile_data;
-    if(flags & COPY_TILES) {
-      tile_data = new uint8_t[layer_size];
-      memcpy(tile_data, map_struct->data + layer_size * layer, layer_size);
-    } else {
-      tile_data = const_cast<uint8_t *>(map_struct->data + layer_size * layer);
-    }
-
-    auto transform_base = map_struct->data + layer_size * map_struct->layers;
-    auto transform_layer_size = map_struct->width * map_struct->height;
-
+    uint8_t *tile_data = nullptr;
     uint8_t *transform_data = nullptr;
 
-    if(flags & COPY_TRANSFORMS) {
-      transform_data = new uint8_t[transform_layer_size]();
-
-      if(map_struct->flags & TMX_TRANSFORMS)
-        memcpy(transform_data, transform_base + transform_layer_size * layer, transform_layer_size);
-    } else if(map_struct->flags & TMX_TRANSFORMS) {
-      transform_data = const_cast<uint8_t *>(transform_base + transform_layer_size * layer);
-    }
+    if(!load_tmx_layer_data(asset, true, layer, flags, tile_data, transform_data))
+      return nullptr;
 
     auto ret = new TransformedTileLayer(tile_data, transform_data, Size(map_struct->width, map_struct->height), sprites);
     ret->empty_tile_id = map_struct->empty_tile;
