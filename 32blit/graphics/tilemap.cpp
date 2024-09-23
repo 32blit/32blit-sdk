@@ -299,7 +299,7 @@ namespace blit {
     dest->alpha = 255;
     texture_span(dest, s, c, swc, ewc, sprites->mipmaps[mipmap_index], mipmap_index);
 
-    if (++mipmap_index < sprites->mipmaps.size()) {
+    if (++mipmap_index < sprites->mipmaps.size() && blend) {
       dest->alpha = blend;
       texture_span(dest, s, c, swc, ewc, sprites->mipmaps[mipmap_index], mipmap_index);
     }
