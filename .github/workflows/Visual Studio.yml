@@ -10,10 +10,10 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Checkout Examples
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: 32blit/32blit-examples
         path: examples
@@ -25,7 +25,7 @@ jobs:
         python -m pip install 32blit
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.1.3
+      uses: microsoft/setup-msbuild@v2
 
     - name: Build
       run: msbuild.exe vs/32blit.sln
