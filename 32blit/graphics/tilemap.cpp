@@ -449,6 +449,21 @@ namespace blit {
       else
         layers[i] = SimpleTileLayer::load_tmx(asset, sprites, i, flags);
     }
+
+    // parse names
+    if(map_struct->flags & TMX_NAMES) {
+      // calc_tmx_size doesn't include the names
+      auto names_offset = calc_tmx_size(map_struct);
+      auto name_ptr = reinterpret_cast<const char *>(asset) + names_offset;
+
+      for(unsigned i = 0; i < num_layers; i++) {
+        auto name = name_ptr;
+        name_ptr += strlen(name) + 1;
+
+        if(layers[i])
+          layers[i]->name = name;
+      }
+    }
   }
 
   /// Create from a map file generated with `output_struct=true`
@@ -476,6 +491,21 @@ namespace blit {
         layers[i] = TransformedTileLayer::load_tmx(map_file, sprites, i, flags);
       else
         layers[i] = SimpleTileLayer::load_tmx(map_file, sprites, i, flags);
+    }
+
+    // parse names
+    if(map_struct.flags & TMX_NAMES) {
+      // calc_tmx_size doesn't include the names
+      auto names_offset = calc_tmx_size(&map_struct);
+      char name_buf[256];
+
+      for(unsigned i = 0; i < num_layers; i++) {
+        map_file.read(names_offset, 256, name_buf);
+        names_offset += strlen(name_buf) + 1;
+
+        if(layers[i])
+          layers[i]->name = name_buf;
+      }
     }
   }
 
