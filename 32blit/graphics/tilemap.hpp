@@ -130,9 +130,18 @@ namespace blit {
     void set_transform(Mat3 transform);
     void set_transform(unsigned layer, Mat3 transform);
 
+    // flags
+    void add_flags(unsigned layer_index, uint16_t tile_id, uint8_t new_flags);
+    void add_flags(unsigned layer_index, std::initializer_list<uint16_t> tile_ids, uint8_t new_flags);
+
+    uint8_t get_flags(Point p) const;
+    bool has_flag(Point p, uint8_t flag) const;
+
   private:
     unsigned num_layers = 0;
     TileLayer **layers = nullptr;
+
+    uint8_t *flags = nullptr;
   };
 
   using TileMap [[deprecated("Use TransformedTileLayer (or TiledMap)")]] = TransformedTileLayer;

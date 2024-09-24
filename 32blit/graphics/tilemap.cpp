@@ -514,6 +514,8 @@ namespace blit {
       delete layers[i];
 
     delete[] layers;
+
+    delete[] flags;
   }
 
   /// Draw map to a viewport in `dest`
@@ -581,5 +583,41 @@ namespace blit {
   void TiledMap::set_transform(unsigned layer, Mat3 transform) {
     if(layer < num_layers && layers[layer])
       layers[layer]->transform = transform;
+  }
+
+  void TiledMap::add_flags(unsigned layer_index, uint16_t tile_id, uint8_t new_flags) {
+    auto layer = get_layer(layer_index);
+    if(!layer)
+      return;
+
+    auto num_tiles = get_bounds().area();
+
+    // allocate flags on first use
+    if(!flags)
+      flags = new uint8_t[num_tiles]();
+
+    // set flags for all matching tiles
+    for(int i = 0; i < num_tiles; i++) {
+      if(layer->tiles[i] == tile_id)
+        flags[i] |= new_flags;
+    }
+  }
+
+  void TiledMap::add_flags(unsigned layer_index, std::initializer_list<uint16_t> tile_ids, uint8_t new_flags) {
+    for(auto tile_id : tile_ids)
+      add_flags(layer_index, tile_id, new_flags);
+  }
+
+  uint8_t TiledMap::get_flags(Point p) const {
+    auto bounds = get_bounds();
+
+    if(bounds.contains(p) && flags)
+      return flags[p.x + p.y * bounds.w];
+
+    return 0;
+  }
+
+  bool TiledMap::has_flag(Point p, uint8_t flag) const {
+    return get_flags(p) & flag;
   }
 }
