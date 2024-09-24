@@ -15,7 +15,7 @@ namespace blit {
     LAYER_TRANSFORMS = (1 << 2), /// each layer can be transformed (optionally per-line), otherwise only scrolling is supported
     TILES_16BIT      = (1 << 3), /// internal flag set if tile data is 16-bit
   };
-  
+
   enum TMXFlags {
     TMX_16BIT      = (1 << 0), /// tile data is 16-bit
     TMX_TRANSFORMS = (1 << 1), /// transform data is included after the tile data
@@ -90,7 +90,7 @@ namespace blit {
 
     void mipmap_texture_span(Surface *dest, Point s, uint16_t c, Vec2 swc, Vec2 ewc);
     void texture_span(Surface *dest, Point s, unsigned int c, Vec2 swc, Vec2 ewc, Surface *src = nullptr, unsigned int mipmap_index = 0);
-    
+
   private:
     template<class index_type>
     void do_texture_span(Surface *dest, Point s, unsigned int c, Vec2 swc, Vec2 ewc, Surface *src, unsigned int mipmap_index);
