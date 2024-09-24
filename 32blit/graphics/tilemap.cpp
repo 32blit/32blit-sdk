@@ -531,12 +531,27 @@ namespace blit {
     }
   }
 
-  /// Get a layer of the map, or `nullptr` if the index doesn't exist
+  /// Get a layer of the map by index, or `nullptr` if the index doesn't exist
   TileLayer* TiledMap::get_layer(unsigned index) {
     if(index < num_layers)
       return layers[index];
 
     return nullptr;
+  }
+
+  /// Get a layer of the map by name, or `nullptr` if there is no layer with that name
+  TileLayer *TiledMap::get_layer(std::string_view name) {
+    return get_layer(get_layer_index(name));
+  }
+
+  /// Get the index of a layer of the map by name
+  unsigned TiledMap::get_layer_index(std::string_view name) const {
+    for(unsigned i = 0; i < num_layers; i++) {
+      if(layers[i] && layers[i]->name == name)
+        return i;
+    }
+
+    return std::numeric_limits<unsigned>::max();
   }
 
   /// Get map bounds

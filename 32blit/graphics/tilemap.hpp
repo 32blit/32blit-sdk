@@ -117,6 +117,9 @@ namespace blit {
     unsigned get_num_layers() const {return num_layers;}
 
     TileLayer *get_layer(unsigned index);
+    TileLayer *get_layer(std::string_view name);
+
+    unsigned get_layer_index(std::string_view name) const;
 
     Size get_bounds() const;
 
