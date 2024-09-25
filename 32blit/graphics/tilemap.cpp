@@ -316,7 +316,7 @@ namespace blit {
   void TransformedTileLayer::mipmap_texture_span(Surface *dest, Point s, uint16_t c, Vec2 swc, Vec2 ewc) {
     // calculate the mipmap index to use for drawing
     float span_length = (ewc - swc).length();
-    float mipmap = ((span_length / float(c)) / 2.0f);
+    float mipmap = std::max(0.0f, std::log2(span_length / float(c)));
     uint16_t mipmap_index = floorf(mipmap);
     uint8_t blend = (mipmap - floorf(mipmap)) * 255;
 
