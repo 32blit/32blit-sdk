@@ -68,6 +68,8 @@ namespace blit {
     int32_t offset(int16_t x, int16_t y);
     uint16_t tile_at(const Point &p);
     uint8_t transform_at(const Point &p);
+
+    void set_tiles(uint8_t *tiles, bool copy = true);
   };
 
   struct SimpleTileLayer : public TileLayer {

@@ -139,6 +139,27 @@ namespace blit {
     return 0;
   }
 
+  void TileLayer::set_tiles(uint8_t *tiles, bool copy) {
+    int tiles_size = bounds.area() * ((load_flags & TILES_16BIT) ? 2 : 1);
+
+    if(copy) {
+      // allocate if needed
+      if(!this->tiles || !(load_flags & COPY_TILES)) {
+        this->tiles = new uint8_t[tiles_size];
+        load_flags |= COPY_TILES;
+      }
+
+      memcpy(this->tiles, tiles, tiles_size);
+    } else {
+      // free old tiles if we know we allocated them
+      if(load_flags & COPY_TILES)
+        delete this->tiles;
+
+      this->tiles = tiles;
+      load_flags &= ~COPY_TILES;
+    }
+  }
+
  /**
    * Create a new tilemap
    *
