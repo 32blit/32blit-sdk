@@ -230,6 +230,7 @@ static const blit::APIConst blit_api_const {
   nullptr, // cdc_read
 
   nullptr, // list_installed_games
+  nullptr, // can_launch
 };
 
 static blit::APIData blit_api_data;
