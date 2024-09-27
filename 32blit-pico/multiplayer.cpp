@@ -46,8 +46,8 @@ void update_multiplayer() {
         mp_buffer_off += usb_cdc_read(mp_buffer + mp_buffer_off, mp_buffer_len - mp_buffer_off);
 
         if(mp_buffer_off == mp_buffer_len) {
-          if(blit::api.message_received)
-            blit::api.message_received(mp_buffer, mp_buffer_len);
+          if(blit::api_data.message_received)
+            blit::api_data.message_received(mp_buffer, mp_buffer_len);
 
           delete[] mp_buffer;
           mp_buffer = nullptr;

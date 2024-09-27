@@ -99,6 +99,76 @@ static GameMetadata get_metadata() {
   return ret;
 }
 
+// blit API
+static const blit::APIConst blit_api_const {
+  blit::api_version_major, blit::api_version_minor,
+
+  ::channels,
+
+  ::set_screen_mode,
+  ::set_screen_palette,
+
+  ::now,
+  ::random,
+  nullptr, // exit
+  ::debug,
+
+  ::open_file,
+  ::read_file,
+  ::write_file,
+  ::close_file,
+  ::get_file_length,
+  ::list_files,
+  ::file_exists,
+  ::directory_exists,
+  ::create_directory,
+  ::rename_file,
+  ::remove_file,
+  ::get_save_path,
+  ::is_storage_available,
+
+  nullptr, // enable_us_timer
+  ::get_us_timer,
+  ::get_max_us_timer,
+
+  nullptr, // decode_jpeg_buffer
+  nullptr, // decode_jpeg_file
+
+  nullptr, // launch
+  nullptr, // erase_game
+  nullptr, // get_type_handler_metadata
+
+  ::get_launch_path,
+
+  ::is_multiplayer_connected,
+  ::set_multiplayer_enabled,
+  ::send_multiplayer_message,
+
+  nullptr, // flash_to_tmp
+  nullptr, // tmp_file_closed
+
+  ::get_metadata,
+
+  ::set_screen_mode_format,
+
+  nullptr, // i2c_send
+  nullptr, // i2c_recieve
+
+  nullptr, // set_raw_cdc_enabled
+  nullptr, // cdc_write
+  nullptr, // cdc_read
+
+  nullptr, // list_installed_games
+  nullptr, // can_launch
+};
+
+static blit::APIData blit_api_data;
+
+namespace blit {
+  const APIConst &api = blit_api_const;
+  APIData &api_data = blit_api_data;
+}
+
 // user funcs
 void init();
 void render(uint32_t);
@@ -140,59 +210,6 @@ int main() {
 #endif
 
   stdio_init_all();
-
-  api.channels = ::channels;
-
-  api.set_screen_mode = ::set_screen_mode;
-  api.set_screen_palette = ::set_screen_palette;
-  api.set_screen_mode_format = ::set_screen_mode_format;
-  api.now = ::now;
-  api.random = ::random;
-  // api.exit = ::exit;
-
-  // serial debug
-  api.debug = ::debug;
-
-  // files
-  api.open_file = ::open_file;
-  api.read_file = ::read_file;
-  api.write_file = ::write_file;
-  api.close_file = ::close_file;
-  api.get_file_length = ::get_file_length;
-  api.list_files = ::list_files;
-  api.file_exists = ::file_exists;
-  api.directory_exists = ::directory_exists;
-  api.create_directory = ::create_directory;
-  api.rename_file = ::rename_file;
-  api.remove_file = ::remove_file;
-  api.get_save_path = ::get_save_path;
-  api.is_storage_available = ::is_storage_available;
-
-  // profiler
-  // api.enable_us_timer = ::enable_us_timer;
-  api.get_us_timer = ::get_us_timer;
-  api.get_max_us_timer = ::get_max_us_timer;
-
-  // jpeg
-  // api.decode_jpeg_buffer = ::decode_jpeg_buffer;
-  // api.decode_jpeg_file = ::decode_jpeg_file;
-
-  // launcher
-  // api.launch = ::launch;
-  // api.erase_game = ::erase_game;
-  // api.get_type_handler_metadata = ::get_type_handler_metadata;
-
-  api.get_launch_path = ::get_launch_path;
-
-  // multiplayer
-  api.is_multiplayer_connected = ::is_multiplayer_connected;
-  api.set_multiplayer_enabled = ::set_multiplayer_enabled;
-  api.send_message = ::send_multiplayer_message;
-
-  // api.flash_to_tmp = ::flash_to_tmp;
-  // api.tmp_file_closed = ::tmp_file_closed;
-
-  api.get_metadata = ::get_metadata;
 
   init_led();
   init_display();

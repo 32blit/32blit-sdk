@@ -71,19 +71,19 @@ void DFUBoot(void)
 
 static void init_api_shared() {
   // Reset button state, this prevents the user app immediately seeing the last button transition used to launch the game
-  api.buttons.state = 0;
-  api.buttons.pressed = 0;
-  api.buttons.released = 0;
+  api_data.buttons.state = 0;
+  api_data.buttons.pressed = 0;
+  api_data.buttons.released = 0;
 
   // reset shared outputs
-  api.vibration = 0.0f;
-  api.LED = Pen();
+  api_data.vibration = 0.0f;
+  api_data.LED = Pen();
 
   for(int i = 0; i < CHANNEL_COUNT; i++)
     api.channels[i] = AudioChannel();
 
-  api.message_received = nullptr;
-  api.i2c_completed = nullptr;
+  api_data.message_received = nullptr;
+  api_data.i2c_completed = nullptr;
 
   // take CDC back
   g_commandStream.SetParsingEnabled(true);
@@ -362,17 +362,20 @@ void blit_init() {
 
   i2c::init();
 
-  blit::api.version_major = api_version_major;
-  blit::api.version_minor = api_version_minor;
+  // bit of a hack, but we know it's writable
+  auto &api = *(APIConst *)&blit::api;
 
-  blit::api.debug = blit_debug;
-  blit::api.now = HAL_GetTick;
-  blit::api.random = HAL_GetRandom;
-  blit::api.exit = blit_exit;
+  api.version_major = api_version_major;
+  api.version_minor = api_version_minor;
 
-  blit::api.set_screen_mode = display::set_screen_mode;
-  blit::api.set_screen_palette = display::set_screen_palette;
-  blit::api.set_screen_mode_format = display::set_screen_mode_format;
+  api.debug = blit_debug;
+  api.now = HAL_GetTick;
+  api.random = HAL_GetRandom;
+  api.exit = blit_exit;
+
+  api.set_screen_mode = display::set_screen_mode;
+  api.set_screen_palette = display::set_screen_palette;
+  api.set_screen_mode_format = display::set_screen_mode_format;
 
   display::set_screen_mode(blit::lores);
 
@@ -380,43 +383,43 @@ void blit_init() {
   blit::render = ::render;
   blit::init   = ::init;
 
-  blit::api.open_file = ::open_file;
-  blit::api.read_file = ::read_file;
-  blit::api.write_file = ::write_file;
-  blit::api.close_file = ::close_file;
-  blit::api.get_file_length = ::get_file_length;
-  blit::api.list_files = ::list_files;
-  blit::api.file_exists = ::file_exists;
-  blit::api.directory_exists = ::directory_exists;
-  blit::api.create_directory = ::create_directory;
-  blit::api.rename_file = ::rename_file;
-  blit::api.remove_file = ::remove_file;
-  blit::api.get_save_path = ::get_save_path;
-  blit::api.is_storage_available = blit_sd_mounted;
+  api.open_file = ::open_file;
+  api.read_file = ::read_file;
+  api.write_file = ::write_file;
+  api.close_file = ::close_file;
+  api.get_file_length = ::get_file_length;
+  api.list_files = ::list_files;
+  api.file_exists = ::file_exists;
+  api.directory_exists = ::directory_exists;
+  api.create_directory = ::create_directory;
+  api.rename_file = ::rename_file;
+  api.remove_file = ::remove_file;
+  api.get_save_path = ::get_save_path;
+  api.is_storage_available = blit_sd_mounted;
 
-  blit::api.enable_us_timer = ::enable_us_timer;
-  blit::api.get_us_timer = ::get_us_timer;
-  blit::api.get_max_us_timer = ::get_max_us_timer;
+  api.enable_us_timer = ::enable_us_timer;
+  api.get_us_timer = ::get_us_timer;
+  api.get_max_us_timer = ::get_max_us_timer;
 
-  blit::api.decode_jpeg_buffer = blit_decode_jpeg_buffer;
-  blit::api.decode_jpeg_file = blit_decode_jpeg_file;
+  api.decode_jpeg_buffer = blit_decode_jpeg_buffer;
+  api.decode_jpeg_file = blit_decode_jpeg_file;
 
-  blit::api.get_launch_path = ::get_launch_path;
+  api.get_launch_path = ::get_launch_path;
 
-  blit::api.is_multiplayer_connected = multiplayer::is_connected;
-  blit::api.set_multiplayer_enabled = multiplayer::set_enabled;
-  blit::api.send_message = multiplayer::send_message;
+  api.is_multiplayer_connected = multiplayer::is_connected;
+  api.set_multiplayer_enabled = multiplayer::set_enabled;
+  api.send_message = multiplayer::send_message;
 
-  blit::api.get_metadata = ::get_metadata;
+  api.get_metadata = ::get_metadata;
 
-  blit::api.tick_function_changed = false;
+  api_data.tick_function_changed = false;
 
-  blit::api.i2c_send = i2c::user_send;
-  blit::api.i2c_receive = i2c::user_receive;
+  api.i2c_send = i2c::user_send;
+  api.i2c_receive = i2c::user_receive;
 
-  blit::api.set_raw_cdc_enabled = set_raw_cdc_enabled;
-  blit::api.cdc_write = cdc_write;
-  blit::api.cdc_read = cdc_read;
+  api.set_raw_cdc_enabled = set_raw_cdc_enabled;
+  api.cdc_write = cdc_write;
+  api.cdc_read = cdc_read;
 
   display::init();
 
@@ -492,7 +495,7 @@ void blit_menu() {
     if (user_tick && !user_code_disabled) {
       // user code was running
       do_tick = user_tick;
-      api.tick_function_changed = true;
+      api_data.tick_function_changed = true;
       blit::render = user_render;
     } else {
       blit::update = ::update;
@@ -513,7 +516,7 @@ void blit_menu() {
     blit::update = blit_menu_update;
     blit::render = blit_menu_render;
     do_tick = blit::tick;
-    api.tick_function_changed = true;
+    api_data.tick_function_changed = true;
 
     if(screen.format == PixelFormat::P) {
       memcpy(menu_saved_colours, screen.palette, num_menu_colours * sizeof(Pen));
@@ -671,7 +674,7 @@ bool blit_switch_execution(uint32_t address, bool force_game)
     blit::render = ::render;
     blit::update = ::update;
     do_tick = blit::tick;
-    api.tick_function_changed = true;
+    api_data.tick_function_changed = true;
 
     cached_file_in_tmp = false;
     close_open_files();
@@ -741,7 +744,7 @@ void blit_enable_user_code() {
     return;
 
   do_tick = user_tick;
-  api.tick_function_changed = true;
+  api_data.tick_function_changed = true;
   blit::render = user_render;
   user_code_disabled = false;
   sound::enabled = true;
@@ -752,7 +755,7 @@ void blit_disable_user_code() {
     return;
 
   do_tick = blit::tick;
-  api.tick_function_changed = true;
+  api_data.tick_function_changed = true;
   blit::render = ::render;
   sound::enabled = false;
   user_code_disabled = true;
