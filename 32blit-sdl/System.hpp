@@ -18,7 +18,7 @@ class System {
 		int update_thread();
 		int timer_thread();
 
-		void loop();
+		bool loop();
 
 		Uint32 mode();
     Uint32 format();
