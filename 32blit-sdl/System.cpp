@@ -286,25 +286,28 @@ int System::timer_thread() {
 }
 
 int System::update_thread() {
-	// Run the blit user code once every time we are signalled.
-	SDL_Event event = {};
-	event.type = loop_event;
+  // Run the blit user code once every time we are signalled.
+  SDL_Event event = {};
+  event.type = loop_event;
 
-	::init(); // Run init here because the user can make it hang.
+  ::init(); // Run init here because the user can make it hang.
 
-	while (true) {
-		SDL_SemWait(s_loop_update);
-		if(!running) break;
-		loop();
-		if(!running) break;
-		SDL_PushEvent(&event);
-		SDL_SemWait(s_loop_redraw);
-	}
-	SDL_SemPost(s_loop_ended);
-	return 0;
+  while (true) {
+    SDL_SemWait(s_loop_update);
+    if(!running) break;
+    bool rendered = loop();
+    if(!running) break;
+    if(rendered) {
+      // present on main thread if we need to
+      SDL_PushEvent(&event);
+      SDL_SemWait(s_loop_redraw);
+    }
+  }
+  SDL_SemPost(s_loop_ended);
+  return 0;
 }
 
-void System::loop() {
+bool System::loop() {
   SDL_LockMutex(m_input);
   blit::buttons = shadow_buttons;
   blit::tilt.x = shadow_tilt[0];
@@ -313,6 +316,8 @@ void System::loop() {
   blit::joystick.x = shadow_joystick[0];
   blit::joystick.y = shadow_joystick[1];
   SDL_UnlockMutex(m_input);
+
+  bool rendered = false;
 
   // only render at 50Hz (main loop runs at 100Hz)
   // however, the emscripten loop (usually) runs at the display refresh rate
@@ -328,12 +333,16 @@ void System::loop() {
       _mode = requested_mode;
       cur_format = requested_format;
     }
+
+    rendered = true;
   }
 
   blit::tick(::now());
   blit_input->rumble_controllers(blit::vibration);
 
   blit_multiplayer->update();
+
+  return rendered;
 }
 
 Uint32 System::mode() {
