@@ -83,7 +83,7 @@ else()
 		set(SDL2_LIBRARIES SDL2::SDL2main SDL2::SDL2-static)
 	else()
 		target_include_directories(BlitHalSDL
-			PRIVATE	${SDL2_INCLUDE_DIRS}
+			PUBLIC ${SDL2_INCLUDE_DIRS}
 		)
 	endif()
 
@@ -92,7 +92,7 @@ else()
 	find_sdl_lib(SDL2_net SDL_net.h)
 
 	target_include_directories(BlitHalSDL
-		PRIVATE	${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_NET_INCLUDE_DIR}
+		PUBLIC ${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_NET_INCLUDE_DIR}
 	)
 endif()
 
