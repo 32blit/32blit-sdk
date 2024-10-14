@@ -74,7 +74,7 @@ int encode_video = 0, encode_audio = 0;
 
 char *_av_err2str(int errnum) {
 	/* C++ friendly alternate to av_err2str */
-	char buf[AV_ERROR_MAX_STRING_SIZE] = {};
+	thread_local char buf[AV_ERROR_MAX_STRING_SIZE] = {};
 	return av_make_error_string(buf, AV_ERROR_MAX_STRING_SIZE, errnum);
 }
 
