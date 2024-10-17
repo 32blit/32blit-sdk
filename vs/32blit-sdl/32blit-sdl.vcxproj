@@ -214,7 +214,6 @@
     <ClCompile Include="..\..\32blit-sdl\DefaultMetadata.cpp" />
     <ClCompile Include="..\..\32blit-sdl\File.cpp" />
     <ClCompile Include="..\..\32blit-sdl\Input.cpp" />
-    <ClCompile Include="..\..\32blit-sdl\JPEG.cpp" />
     <ClCompile Include="..\..\32blit-sdl\Main.cpp" />
     <ClCompile Include="..\..\32blit-sdl\Multiplayer.cpp" />
     <ClCompile Include="..\..\32blit-sdl\Renderer.cpp" />
