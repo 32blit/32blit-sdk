@@ -39,11 +39,11 @@ void update_led() {
 
 #ifdef HAVE_LED
   const float gamma = 2.8;
-  uint16_t value = (uint16_t)(std::pow((float)(api.LED.r) / 255.0f, gamma) * 65535.0f + 0.5f);
+  uint16_t value = (uint16_t)(std::pow((float)(api_data.LED.r) / 255.0f, gamma) * 65535.0f + 0.5f);
   pwm_set_gpio_level(led_pins[0], value);
-  value = (uint16_t)(std::pow((float)(api.LED.g) / 255.0f, gamma) * 65535.0f + 0.5f);
+  value = (uint16_t)(std::pow((float)(api_data.LED.g) / 255.0f, gamma) * 65535.0f + 0.5f);
   pwm_set_gpio_level(led_pins[1], value);
-  value = (uint16_t)(std::pow((float)(api.LED.b) / 255.0f, gamma) * 65535.0f + 0.5f);
+  value = (uint16_t)(std::pow((float)(api_data.LED.b) / 255.0f, gamma) * 65535.0f + 0.5f);
   pwm_set_gpio_level(led_pins[2], value);
 #endif
 }

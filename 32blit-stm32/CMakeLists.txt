@@ -55,6 +55,7 @@ add_library(BlitHalSTM32 OBJECT
 	Middlewares/ST/STM32_USB_Host_Library/Class/CDC/Src/usbh_cdc.c
 	Src/usbd_msc_scsi.c
 	Src/system_stm32h7xx.c
+	Src/api.cpp
 	Src/fatfs.cpp
 	Src/fatfs_sd.c
 	Src/usb_otg.c

@@ -88,5 +88,5 @@ void update_input() {
       new_buttons |= 1 << i;
   }
 
-  blit::api.buttons = new_buttons;
+  blit::api_data.buttons = new_buttons;
 }

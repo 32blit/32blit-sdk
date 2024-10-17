@@ -41,8 +41,8 @@ namespace multiplayer {
 
       // done, send to user
       if(read == length) {
-        if(api.message_received && enabled)
-          api.message_received(buf, length);
+        if(api_data.message_received && enabled)
+          api_data.message_received(buf, length);
 
         delete[] buf;
         buf = nullptr;

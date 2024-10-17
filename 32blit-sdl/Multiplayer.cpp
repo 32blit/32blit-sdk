@@ -25,7 +25,7 @@ Multiplayer::~Multiplayer() {
 void Multiplayer::update() {
     if(!enabled)
         return;
-  
+
     if(!socket && !listen_socket) {
         // attempt to reconnect
         auto now = SDL_GetTicks();
@@ -131,8 +131,8 @@ void Multiplayer::update() {
 
       // got message, pass to user
       if(recv_off == recv_len) {
-          if(api.message_received)
-              api.message_received(recv_buf, recv_len);
+          if(api_data.message_received)
+              api_data.message_received(recv_buf, recv_len);
 
           delete[] recv_buf;
           recv_buf = nullptr;
