@@ -38,7 +38,6 @@ add_library(BlitHalSTM32 OBJECT
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rng.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd_ex.c
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_jpeg.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_hcd.c
 	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_usb.c
 	Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c
@@ -68,12 +67,10 @@ add_library(BlitHalSTM32 OBJECT
 	Src/usbd_storage_if.c
 	Src/display.cpp
 	Src/gpio.cpp
-	Src/jpeg.c
 	Src/multiplayer.cpp
 	Src/power.cpp
 	Src/sound.cpp
 	Src/file.cpp
-	Src/jpeg.cpp
 	Src/adc.c
 	Src/adc.cpp
 	Src/debug.c
@@ -103,7 +100,6 @@ add_library(BlitHalSTM32 OBJECT
 	Src/CDCResetHandler.cpp
 	Src/CDCInfoHandler.cpp
 	Src/USBManager.cpp
-	Utilities/JPEG/jpeg_utils.c
 )
 
 set_source_files_properties(

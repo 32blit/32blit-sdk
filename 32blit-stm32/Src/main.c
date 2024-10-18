@@ -23,7 +23,6 @@
 #include "dma.h"
 #include "hrtim.h"
 #include "i2c.h"
-#include "jpeg.h"
 #include "quadspi.h"
 #include "rng.h"
 #include "spi.h"
@@ -146,7 +145,6 @@ int main(void)
   //MX_TIM16_Init();
   MX_RNG_Init();
   MX_USB_DEVICE_Init();
-  MX_JPEG_Init();
   /* USER CODE BEGIN 2 */
 
   // USB in sleep

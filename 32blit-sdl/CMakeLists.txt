@@ -2,7 +2,6 @@ add_library(BlitHalSDL STATIC
 	DefaultMetadata.cpp
 	File.cpp
 	Input.cpp
-	JPEG.cpp
 	Main.cpp
 	Multiplayer.cpp
 	Renderer.cpp
@@ -52,7 +51,6 @@ if(EMSCRIPTEN)
 	)
 
 	set(SDL2_LIBRARIES "-sUSE_SDL=2")
-	set(SDL2_IMAGE_LIBRARY "-sUSE_SDL_IMAGE=2")
 	set(SDL2_NET_LIBRARY "-sUSE_SDL_NET=2")
 
 	set(EMSCRIPTEN_SHELL ${CMAKE_CURRENT_SOURCE_DIR}/emscripten-shell.html PARENT_SCOPE)
@@ -87,26 +85,21 @@ else()
 		)
 	endif()
 
-	# find SDL2_image
-	find_sdl_lib(SDL2_image SDL_image.h)
+	# find SDL2_net
 	find_sdl_lib(SDL2_net SDL_net.h)
 
 	target_include_directories(BlitHalSDL
-		PUBLIC ${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_NET_INCLUDE_DIR}
+		PUBLIC ${SDL2_NET_INCLUDE_DIR}
 	)
 endif()
 
-target_link_libraries(BlitHalSDL PUBLIC BlitEngine ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARY} ${SDL2_NET_LIBRARY})
+target_link_libraries(BlitHalSDL PUBLIC BlitEngine ${SDL2_LIBRARIES} ${SDL2_NET_LIBRARY})
 
 # copy SDL2 dlls to build/install dir for windows users
 set(DLLS_TO_COPY)
 
 if(SDL2_DLL)
 	list(APPEND DLLS_TO_COPY ${SDL2_DLL})
-endif()
-
-if(SDL2_IMAGE_DLL)
-	list(APPEND DLLS_TO_COPY ${SDL2_IMAGE_DLL})
 endif()
 
 if(SDL2_NET_DLL)
@@ -181,7 +174,7 @@ function(blit_executable NAME)
 	if(EMSCRIPTEN)
 		set_target_properties(${NAME} PROPERTIES
 			SUFFIX ".html"
-			LINK_FLAGS "-sENVIRONMENT=web -sSDL2_IMAGE_FORMATS=['jpg'] --shell-file ${EMSCRIPTEN_SHELL} -s'EXPORTED_RUNTIME_METHODS=[\"addRunDependency\", \"removeRunDependency\"]' -sTOTAL_STACK=1MB"
+			LINK_FLAGS "-sENVIRONMENT=web --shell-file ${EMSCRIPTEN_SHELL} -s'EXPORTED_RUNTIME_METHODS=[\"addRunDependency\", \"removeRunDependency\"]' -sTOTAL_STACK=1MB"
 			LINK_DEPENDS ${EMSCRIPTEN_SHELL}
 		)
 

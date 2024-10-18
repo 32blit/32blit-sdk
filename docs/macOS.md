@@ -82,10 +82,10 @@ If you want to run code on 32Blit, you should now refer to [Building & Running O
 
 ## Building & Running Locally
 
-You'll need to install `SDL2`, `SDL2 Image` and `SDL2 Net`
+You'll need to install `SDL2` and `SDL2 Net`
 
 ``` shell
-brew install sdl2 sdl2_image sdl2_net
+brew install sdl2 sdl2_net
 ```
 
 You also need something to build. The [32blit-examples](https://github.com/32blit/32blit-examples) repository includes a series of demos showcasing various 32blit SDK features. These instructions will assume you're building those and have cloned or extracted that repository alongside 32blit-sdk:

@@ -18,7 +18,7 @@ You'll need to install:
 
 For local builds:
  - GCC
- - SDL2 + SDL2_image + SDL2_net
+ - SDL2 + SDL2_net
 
 For 32Blit device builds:
  - Arm Embedded GCC (`gcc-arm-none-eabi`, versions 8.x-12.x should work)
@@ -30,7 +30,7 @@ Install them with apt like so:
 ```
 sudo apt install git gcc g++ gcc-arm-none-eabi cmake make \
 python3 python3-pip python3-setuptools \
-libsdl2-dev libsdl2-image-dev libsdl2-net-dev unzip
+libsdl2-dev libsdl2-net-dev unzip
 ```
 
 And install the 32blit tools with pip3:

@@ -8,7 +8,6 @@
 #include "Input.hpp"
 #include "32blit.hpp"
 #include "UserCode.hpp"
-#include "JPEG.hpp"
 #include "Multiplayer.hpp"
 
 #include "engine/api_private.hpp"
@@ -202,8 +201,8 @@ static const blit::APIConst blit_api_const {
   ::get_us_timer,
   ::get_max_us_timer,
 
-  blit_decode_jpeg_buffer,
-  blit_decode_jpeg_file,
+  nullptr, // decode_jpeg_buffer
+  nullptr, // decode_jpeg_file
 
   nullptr, // launch
   nullptr, // erase_game
