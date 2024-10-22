@@ -41,10 +41,6 @@ static void debug(const char *message) {
   usb_debug(message);
 }
 
-static bool is_storage_available() {
-  return true; // TODO: optional storage?
-}
-
 static uint32_t get_us_timer() {
   return to_us_since_boot(get_absolute_time());
 }
