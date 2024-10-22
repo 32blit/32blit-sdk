@@ -14,7 +14,7 @@ static uint32_t max_fb_size = 0;
 static Size max_fb_bounds(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 #else
 uint16_t screen_fb[FRAMEBUFFER_SIZE];
-static const uint32_t max_fb_size = FRAMEBUFFER_SIZE;
+static const uint32_t max_fb_size = FRAMEBUFFER_SIZE * sizeof(uint16_t);
 #endif
 
 static const Size lores_screen_size(DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2);
