@@ -37,18 +37,21 @@ static void spi_write(const uint8_t *buf, size_t len) {
 }
 
 static void spi_read(uint8_t *buf, size_t len) {
-  size_t tx_remain = len, rx_remain = len;
+  size_t rx_remain = len;
   auto txfifo = (io_rw_8 *) &sd_pio->txf[sd_sm];
   auto rxfifo = (io_rw_8 *) &sd_pio->rxf[sd_sm];
 
-  while (tx_remain || rx_remain) {
-    if (tx_remain && !pio_sm_is_tx_fifo_full(sd_pio, sd_sm)) {
-      *txfifo = 0xFF;
-      --tx_remain;
-    }
-    if (rx_remain && !pio_sm_is_rx_fifo_empty(sd_pio, sd_sm)) {
+  // assume FIFO is empty
+  *txfifo = 0xFF;
+  *txfifo = 0xFF;
+  *txfifo = 0xFF;
+  *txfifo = 0xFF;
+
+  while(rx_remain) {
+    if (!pio_sm_is_rx_fifo_empty(sd_pio, sd_sm)) {
       *buf++ = *rxfifo;
-      --rx_remain;
+      if(--rx_remain > 3)
+        *txfifo = 0xFF;
     }
   }
 }
