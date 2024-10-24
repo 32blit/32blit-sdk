@@ -68,7 +68,6 @@ namespace blit {
     IncompatibleBlit, /// file is incompatible with this device
   };
 
-  #pragma pack(push, 4)
   struct APIConst {
     uint16_t version_major;
     uint16_t version_minor;
@@ -176,8 +175,6 @@ namespace blit {
 
     COMPAT_PAD(uintptr_t, pad5, 5);
   };
-
-  #pragma pack(pop)
 
 #ifdef BLIT_API_SPLIT_COMPAT
   static_assert(sizeof(APIConst) == sizeof(APIData));
