@@ -149,7 +149,7 @@ namespace blit {
   };
 
   struct APIData {
-    uint16_t pad[2];
+    COMPAT_PAD(uint16_t, pad, 2);
 
     ButtonState buttons;
     float hack_left;
