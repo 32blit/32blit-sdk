@@ -179,6 +179,7 @@ function(blit_executable NAME)
     blit_executable_args(${ARGN})
 
     add_executable(${NAME} ${SOURCES})
+    target_compile_definitions(${NAME} PRIVATE PICO_EMBED_XIP_SETUP=1)
     target_link_libraries(${NAME} BlitHalPico BlitEngine)
     target_link_options(${NAME} PUBLIC -specs=nano.specs -u _printf_float)
 
