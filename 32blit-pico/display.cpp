@@ -23,7 +23,7 @@ static const Size hires_screen_size(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 ScreenMode cur_screen_mode = ScreenMode::lores;
 
 int get_display_page_size() {
-  return cur_surf_info.bounds.area() * pixel_format_stride[int(cur_surf_info.format)];
+  return max_fb_size / 2;
 }
 
 // blit api
