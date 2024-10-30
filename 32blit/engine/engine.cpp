@@ -33,7 +33,7 @@ namespace blit {
 
     if(new_screen.pen_blend)
       screen.pbf = new_screen.pen_blend;
-    
+
     if(new_screen.blit_blend)
       screen.bbf = new_screen.blit_blend;
 
@@ -89,8 +89,7 @@ namespace blit {
     return ret;
   }
 
-  Surface null_surface(nullptr, PixelFormat::M, Size(0, 0));
-  Surface &screen = null_surface;
+  Surface screen(nullptr, PixelFormat::M, Size(0, 0));
 
   static const uint32_t update_rate_ms = 10;
   static uint32_t pending_update_time = 0;
