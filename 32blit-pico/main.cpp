@@ -198,10 +198,13 @@ static void alarm_callback(uint alarm_num) {
 
 int main() {
 #if OVERCLOCK_250
+#ifndef PICO_RP2350
   // Apply a modest overvolt, default is 1.10v.
   // this is required for a stable 250MHz on some RP2040s
   vreg_set_voltage(VREG_VOLTAGE_1_20);
   sleep_ms(10);
+#endif
+
   set_sys_clock_khz(250000, false);
 #endif
 
