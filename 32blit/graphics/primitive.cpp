@@ -155,12 +155,14 @@ namespace blit {
 
     Point p(p1);
 
+    int count = std::max(dx, -dy);
+
     while (true) {
       if (clip.contains(p)) {
         pbf(&pen, this, offset(p), 1);
       }
 
-      if ((p.x == p2.x) && (p.y == p2.y)) break;
+      if (count-- == 0) break;
 
       int32_t e2 = err * 2;
       if (e2 >= dy) { err += dy; p.x += sx; }
