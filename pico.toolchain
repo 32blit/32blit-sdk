@@ -5,6 +5,6 @@ set(PICO_COMMON_LANG_FLAGS " -mcpu=cortex-m0plus -mthumb")
 
 include(${CMAKE_CURRENT_LIST_DIR}/pico-common.toolchain)
 
-if (NOT PICO_BOARD)
+if (NOT PICO_BOARD AND NOT PICO_ADDON)
     set(PICO_BOARD pimoroni_picosystem)
 endif()
