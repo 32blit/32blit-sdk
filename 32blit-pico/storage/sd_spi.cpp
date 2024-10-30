@@ -3,6 +3,7 @@
 
 #include "pico/time.h"
 #include "pico/binary_info.h"
+#include "hardware/clocks.h"
 
 #include "engine/engine.hpp"
 
@@ -388,21 +389,26 @@ bool storage_init() {
   blit::debugf("Detected %s card, size %i blocks\n", is_v2 ? (is_hcs ? "SDHC" : "SDv2") : "SDv1", card_size_blocks);
 
   // set speed (PIO program is 2 cycles/clock)
-  // these are a little fast
-  int div = 2; // 125/(2*2) = 31.25MHz
 
-#if OVERCLOCK_250
-  div *= 2;
+  // according to the SD specs high speed in SPI mode is "Same as SD mode", helpful.
+#if SD_SPI_OVERCLOCK
+  // these are too fast, but usually okay and the best we can do with a 125MHz clock
+  // 75MHz is definitely not okay (from 150MHz clock on RP2350)
+  int clkdiv = std::ceil(clock_get_hz(clk_sys) / (31250000.0f * 2.0f));
+  int clkdiv_high_speed = std::ceil(clock_get_hz(clk_sys) / (62500000.0f * 2.0f));
+#else
+  int clkdiv = std::ceil(clock_get_hz(clk_sys) / (25000000.0f * 2.0f));
+  int clkdiv_high_speed = std::ceil(clock_get_hz(clk_sys) / (50000000.0f * 2.0f));
 #endif
 
   // attempt high speed
   uint8_t switch_res[64];
   if(sd_command_read_block(6, 0x80FFFFF1, switch_res) == 0) { // SWITCH
     if((switch_res[16] & 0xF) == 1)
-      div /= 2; // successful switch, double speed
+      clkdiv = clkdiv_high_speed; // successful switch, use high speed
   }
 
-  pio_sm_set_clkdiv(sd_pio, sd_sm, div);
+  pio_sm_set_clkdiv(sd_pio, sd_sm, clkdiv);
   pio_sm_restart(sd_pio, sd_sm);
 
   return true;

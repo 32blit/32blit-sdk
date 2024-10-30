@@ -183,6 +183,10 @@
 #define OVERCLOCK_250 1
 #endif
 
+#ifndef SD_SPI_OVERCLOCK
+#define SD_SPI_OVERCLOCK 1
+#endif
+
 #ifndef USB_VENDOR_ID
 #define USB_VENDOR_ID 0xCafe
 #endif
