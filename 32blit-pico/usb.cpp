@@ -6,7 +6,7 @@
 #include "hardware/flash.h"
 
 #include "usb.hpp"
-#include "blit-launch.hpp"
+#include "blit_launch.hpp"
 #include "multiplayer.hpp"
 
 #include "engine/engine.hpp"
@@ -199,7 +199,7 @@ class CDCListCommand final : public CDCCommand {
     uint32_t end = 0xFFFFFFFF;
     usb_cdc_write((uint8_t *)&end, sizeof(uint32_t));
     usb_cdc_flush_write();
-  
+
     return Status::Done;
   }
 };

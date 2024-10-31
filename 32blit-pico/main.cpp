@@ -12,7 +12,7 @@
 
 #include "audio.hpp"
 #include "binary_info.hpp"
-#include "blit-launch.hpp"
+#include "blit_launch.hpp"
 #include "config.h"
 #include "display.hpp"
 #include "file.hpp"
