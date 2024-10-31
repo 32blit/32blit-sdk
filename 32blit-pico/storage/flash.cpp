@@ -19,6 +19,10 @@ bool storage_init() {
   return true;
 }
 
+bool is_storage_available() {
+  return true;
+}
+
 void get_storage_size(uint16_t &block_size, uint32_t &num_blocks) {
   block_size = FLASH_SECTOR_SIZE;
   num_blocks = storage_size / FLASH_SECTOR_SIZE;
