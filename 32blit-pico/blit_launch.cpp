@@ -9,7 +9,7 @@
 #include "hardware/structs/qmi.h"
 #endif
 
-#include "blit-launch.hpp"
+#include "blit_launch.hpp"
 #include "file.hpp"
 
 #include "engine/engine.hpp"
@@ -150,7 +150,7 @@ bool launch_file(const char *path) {
 
       file_offset += bytes_read;
     }
-    
+
     close_file(file);
 
     // didn't write everything, fail launch
@@ -266,7 +266,7 @@ void erase_game(uint32_t offset) {
   // check alignment
   if(offset & (game_block_size - 1))
     return;
-  
+
   // check in bounds
   // TODO: prevent erasing fs if flash storage is used?
   if(offset >= PICO_FLASH_SIZE_BYTES)

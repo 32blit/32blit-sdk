@@ -39,7 +39,7 @@ endfunction()
 
 add_library(BlitHalPico INTERFACE)
 target_sources(BlitHalPico INTERFACE
-    ${CMAKE_CURRENT_LIST_DIR}/blit-launch.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/blit_launch.cpp
     ${CMAKE_CURRENT_LIST_DIR}/display.cpp
     ${CMAKE_CURRENT_LIST_DIR}/file.cpp
     ${CMAKE_CURRENT_LIST_DIR}/led.cpp
