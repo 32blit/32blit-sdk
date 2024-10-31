@@ -8,7 +8,7 @@
 #include "ff.h"
 #include "diskio.h"
 
-#include "blit-launch.hpp"
+#include "blit_launch.hpp"
 #include "file.hpp"
 #include "storage.hpp"
 #include "executable.hpp"
