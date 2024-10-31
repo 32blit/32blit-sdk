@@ -25,19 +25,8 @@ extern "C" bool do_init() {
     return false;
 #endif
 
-  // preinit/init funcs (based on pico-sdk runtime.c)
-
-  // Start and end points of the constructor list,
-  // defined by the linker script.
-  extern void (*__preinit_array_start)();
-  extern void (*__preinit_array_end)();
-
-  // Call each function in the list.
-  // We have to take the address of the symbols, as __preinit_array_start *is*
-  // the first function pointer, not the address of it.
-  for (void (**p)(void) = &__preinit_array_start; p < &__preinit_array_end; ++p) {
-    (*p)();
-  }
+  // init funcs (based on pico-sdk runtime.c)
+  // we're not calling the preinit funcs as they're all low-level init that should've been done by the loader
 
   // Start and end points of the constructor list,
   // defined by the linker script.
