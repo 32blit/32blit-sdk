@@ -17,6 +17,7 @@
 #include "input.hpp"
 #include "led.hpp"
 #include "multiplayer.hpp"
+#include "storage.hpp"
 #include "usb.hpp"
 
 #include "engine/api_private.hpp"
