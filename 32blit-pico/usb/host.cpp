@@ -14,6 +14,16 @@ static uint16_t buttons_offset = 0, num_buttons = 0;
 static uint16_t hat_offset = 0xFFFF, stick_offset = 0;
 static uint8_t axis_size = 8;
 
+enum class SwitchProInit : uint8_t {
+  Mounted = 0,
+  Handshake,
+  ReadCalibration,
+};
+
+static SwitchProInit switch_pro_init_state = SwitchProInit::Mounted;
+static uint8_t switch_pro_seq = 0;
+static uint16_t switch_pro_calibration_x[2], switch_pro_calibration_y[2];
+
 uint32_t hid_gamepad_id = 0;
 bool hid_keyboard_detected = false;
 uint8_t hid_joystick[2]{0x80, 0x80};
@@ -21,11 +31,38 @@ uint8_t hid_hat = 8;
 uint32_t hid_buttons = 0;
 uint8_t hid_keys[6]{};
 
+static void switch_pro_read_flash(uint8_t dev_addr, uint8_t instance, uint32_t addr, uint8_t len) {
+  uint8_t buf[16];
+  buf[0] = 1; // rumble + command
+  buf[1] = switch_pro_seq;
+  // rumble data
+  buf[2] = 0; buf[3] = 1; buf[4] = buf[5] = 0x40;
+  buf[6] = 0; buf[7] = 1; buf[8] = buf[9] = 0x40;
+
+  buf[10] = 0x10; // read flash
+  buf[11] =  addr        & 0xFF;
+  buf[12] = (addr >>  8) & 0xFF;
+  buf[13] = (addr >> 16) & 0xFF;
+  buf[14] = (addr >> 24) & 0xFF;
+  buf[15] = len;
+
+#if TUSB_VERSION_MINOR >= 16
+  tuh_hid_send_report(dev_addr, instance, 0, buf, 16);
+#endif
+
+  switch_pro_seq++;
+  if(switch_pro_seq > 0xF)
+    switch_pro_seq = 0;
+}
+
 static void switch_pro_mount(uint8_t dev_addr, uint8_t instance) {
   uint8_t data = 2; // handshake
 #if TUSB_VERSION_MINOR >= 16
   tuh_hid_send_report(dev_addr, instance, 0x80, &data, 1);
 #endif
+
+  switch_pro_init_state = SwitchProInit::Mounted;
+
   // report descriptor is inaccurate
   hid_report_id = 0x30;
   buttons_offset = 2 * 8;
@@ -35,12 +72,58 @@ static void switch_pro_mount(uint8_t dev_addr, uint8_t instance) {
   hat_offset = 0xFFFF; // no hat, only buttons
 }
 
+static void switch_pro_parse_left_stick_calibration(const uint8_t *data) {
+  uint16_t max_x    = data[0]      | (data[1] & 0xF) << 8;
+  uint16_t max_y    = data[1] >> 4 |  data[2]        << 4;
+  uint16_t center_x = data[3]      | (data[4] & 0xF) << 8;
+  uint16_t center_y = data[4] >> 4 |  data[5]        << 4;
+  uint16_t min_x    = data[6]      | (data[7] & 0xF) << 8;
+  uint16_t min_y    = data[7] >> 4 |  data[8]        << 4;
+
+  switch_pro_calibration_x[0] = center_x - min_x;
+  switch_pro_calibration_x[1] = center_x + max_x - switch_pro_calibration_x[0];
+  switch_pro_calibration_y[0] = center_y - min_y;
+  switch_pro_calibration_y[1] = center_y + max_y - switch_pro_calibration_y[0];
+}
+
 static void switch_pro_report(uint8_t dev_addr, uint8_t instance, uint8_t const* report, uint16_t len) {
+
+  if(switch_pro_init_state == SwitchProInit::Handshake) {
+    // first report after sending usb enable
+    // request left stick calibration data
+    switch_pro_read_flash(dev_addr, instance, 0x8010, 11);
+    switch_pro_init_state = SwitchProInit::ReadCalibration;
+  }
+
   if(report[0] == 0x81 && report[1] == 2) { // handshake
     uint8_t data = 4; // disable bluetooth / enable usb
 #if TUSB_VERSION_MINOR >= 16
     tuh_hid_send_report(dev_addr, instance, 0x80, &data, 1);
 #endif
+    switch_pro_init_state = SwitchProInit::Handshake;
+  } else if(report[0] == 0x21) {
+    // response to cmd
+    auto cmd = report[14];
+
+    if(cmd == 0x10) { // flash read
+      uint32_t addr = report[15] | report[16] << 8 | report[17] << 16 | report[18] << 24;
+      // uint8_t len = report[19];
+      auto read_data = report + 20;
+
+      if(addr == 0x603D) {
+        // factory left stick calibration
+        switch_pro_parse_left_stick_calibration(read_data);
+      } else if(addr == 0x8010) {
+        // user left stick calibration
+        if(read_data[0] == 0xB2 && read_data[1] == 0xA1) {
+          // magic present, use it
+          switch_pro_parse_left_stick_calibration(read_data + 2);
+        } else {
+          // request factory calibration
+          switch_pro_read_flash(dev_addr, instance, 0x603D, 9);
+        }
+      }
+    }
   }
 }
 
@@ -179,13 +262,23 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t cons
     } else if(axis_size == 12) {
       uint16_t x = report_data[stick_offset / 8] | (report_data[stick_offset / 8 + 1] & 0xF) << 8;
       uint16_t y = report_data[stick_offset / 8 + 1] >> 4 | (report_data[stick_offset / 8 + 2]) << 4;
+
       // take the high bits
       hid_joystick[0] = x >> 4;
       hid_joystick[1] = y >> 4;
 
-      // FIXME: needs calibration for switch pro controller
-      if(hid_gamepad_id == 0x057E2009)
-        hid_joystick[1] = 0xFF - hid_joystick[1];
+      // apply switch pro calibration
+      if(hid_gamepad_id == 0x057E2009) {
+        int calib_x = (x - switch_pro_calibration_x[0]) * 255 / switch_pro_calibration_x[1];
+        int calib_y = (y - switch_pro_calibration_y[0]) * 255 / switch_pro_calibration_y[1];
+
+        // clamp
+        calib_x = calib_x < 0 ? 0 : (calib_x > 255 ? 255 : calib_x);
+        calib_y = calib_y < 0 ? 0 : (calib_y > 255 ? 255 : calib_y);
+
+        hid_joystick[0] = calib_x;
+        hid_joystick[1] = 0xFF - calib_y;
+      }
     }
 
     // get up to 32 buttons
