@@ -31,6 +31,10 @@ uint8_t hid_hat = 8;
 uint32_t hid_buttons = 0;
 uint8_t hid_keys[6]{};
 
+static bool is_switch_pro_controller() {
+  return hid_gamepad_id == 0x057E2009;
+}
+
 static void switch_pro_read_flash(uint8_t dev_addr, uint8_t instance, uint32_t addr, uint8_t len) {
   uint8_t buf[16];
   buf[0] = 1; // rumble + command
@@ -215,7 +219,7 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const* desc_re
   hid_gamepad_id = (vid << 16) | pid;
 
   // switch pro controller
-  if(hid_gamepad_id == 0x057E2009)
+  if(is_switch_pro_controller())
     switch_pro_mount(dev_addr, instance);
 
   if(!tuh_hid_receive_report(dev_addr, instance)) {
@@ -245,7 +249,7 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t cons
   }
 
   // switch pro controller setup
-  if(hid_gamepad_id == 0x057E2009)
+  if(is_switch_pro_controller())
     switch_pro_report(dev_addr, instance, report, len);
 
   // check report id if we have one
@@ -268,7 +272,7 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t cons
       hid_joystick[1] = y >> 4;
 
       // apply switch pro calibration
-      if(hid_gamepad_id == 0x057E2009) {
+      if(is_switch_pro_controller()) {
         int calib_x = (x - switch_pro_calibration_x[0]) * 255 / switch_pro_calibration_x[1];
         int calib_y = (y - switch_pro_calibration_y[0]) * 255 / switch_pro_calibration_y[1];
 
