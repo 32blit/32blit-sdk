@@ -55,6 +55,11 @@ void init_input() {
 void update_input() {
   using namespace blit;
 
+  if(!hid_keyboard_detected && !hid_gamepad_id) {
+    blit::api_data.buttons = 0;
+    return;
+  }
+
   // keyboard
   if(hid_keyboard_detected) {
     uint32_t new_buttons = 0;
