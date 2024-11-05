@@ -180,7 +180,6 @@ function(blit_executable NAME)
 
     add_executable(${NAME} ${SOURCES})
     target_link_libraries(${NAME} BlitHalPico BlitEngine)
-    target_link_options(${NAME} PUBLIC -specs=nano.specs -u _printf_float)
 
     pico_enable_stdio_uart(${NAME} 1)
     pico_enable_stdio_usb(${NAME} 0)
