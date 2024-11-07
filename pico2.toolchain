@@ -8,3 +8,7 @@ if (NOT PICO_NO_CMSE)
 endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/pico-common.toolchain)
+
+if (NOT PICO_BOARD)
+    set(PICO_BOARD pico2)
+endif()
