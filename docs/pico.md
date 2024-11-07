@@ -234,23 +234,22 @@ Additionally some supported features have limitations:
 
 The RP2040/Pico port supports PicoSystem, PicoVision and VGA board. Below is a table showing which features are available on each platform, and which `PICO_BOARD` to use to target them:
 
-|            | 32blit                       | PicoSystem                  | PicoVision               | VGA Board                
+|            | 32blit                       | PicoSystem                  | PicoVision               | VGA Board
 |------------|------------------------------|-----------------------------|--------------------------|--------------------------
-| PICO_BOARD | N/A                          | pimoroni_picosystem         | pico_w                   | vgaboard                 
-| PICO_ADDON | N/A                          | N/A                         | pimoroni_picovision      | N/A                      
-| CPU        | 480MHz                       | 250MHz †                    | 250MHz †                 | 250MHz †                 
-| RAM        | 583K §                       | 151K to 207K (lores only ¶) | ~250K                    | ~189K                    
-| FPU        | Yes                          | No                          | No                       | No                       
-| Buttons    | 6 + reset                    | 4 + power                   | HID Gamepad (up to 6)    | HID Gamepad (up to 6)    
-| Joystick   | Yes                          | No                          | HID Gamepad              | HID Gamepad              
-| Tilt       | Yes                          | No                          | No                       | No                       
-| Sound      | 8CH mini speaker             | 1CH piezo booper ‡          | 8CH 3.5mm jack (i2s DAC) | 8CH 3.5mm jack (i2s DAC) 
-| Storage    | 32MB XiP QSPI + 128K Flash   | 12MB XiP QSPI               | 2MB XiP QSPI             | 2MB XiP QSPI             
-|            | SD card for data             | 4MB QSPI for data (FAT)     | SD card for data         | SD card for data         
-| Screen     | 320x240 (160x120 lores)      | 240x240 (120x120 lores)     | 320x240 (160x120 lores)  | 160x120 only             
-| Firmware   | Yes                          | No                          | No                       | No                       
-| Launcher   | Browse + Launch Games        | No                          | No                       | No                       
-| LED        | Yes                          | Yes                         | No                       | No                       
+| PICO_BOARD | N/A                          | pimoroni_picosystem         | pimoroni_picovision      | vgaboard
+| CPU        | 480MHz                       | 250MHz †                    | 250MHz †                 | 250MHz †
+| RAM        | 583K §                       | 151K to 207K (lores only ¶) | ~250K                    | ~189K
+| FPU        | Yes                          | No                          | No                       | No
+| Buttons    | 6 + reset                    | 4 + power                   | HID Gamepad (up to 6)    | HID Gamepad (up to 6)
+| Joystick   | Yes                          | No                          | HID Gamepad              | HID Gamepad
+| Tilt       | Yes                          | No                          | No                       | No
+| Sound      | 8CH mini speaker             | 1CH piezo booper ‡          | 8CH 3.5mm jack (i2s DAC) | 8CH 3.5mm jack (i2s DAC)
+| Storage    | 32MB XiP QSPI + 128K Flash   | 12MB XiP QSPI               | 2MB XiP QSPI             | 2MB XiP QSPI
+|            | SD card for data             | 4MB QSPI for data (FAT)     | SD card for data         | SD card for data
+| Screen     | 320x240 (160x120 lores)      | 240x240 (120x120 lores)     | 320x240 (160x120 lores)  | 160x120 only
+| Firmware   | Yes                          | No                          | No                       | No
+| Launcher   | Browse + Launch Games        | No                          | No                       | No
+| LED        | Yes                          | Yes                         | No                       | No
 
 * † - technically 2 cores overclocked from 133MHz to 250MHz but the 32Blit SDK uses only one
 * ‡ - makes a best-effort attempt to play any `SQUARE` waveforms (single-channel)
