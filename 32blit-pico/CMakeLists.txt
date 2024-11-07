@@ -72,9 +72,7 @@ else()
     set(BOARD_ID ${PICO_BOARD})
 endif()
 
-if(EXISTS ${CONFIG_PATH}/config.cmake)
-    message("Using board config \"${BLIT_BOARD_NAME}\"")
-else()
+if(NOT EXISTS ${CONFIG_PATH}/config.cmake)
     set(CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/board/pico)
     if(DEFINED PICO_ADDON)
         message(WARNING "Using default config for \"${PICO_BOARD}\", add-on \"${PICO_ADDON}\"...")
@@ -84,6 +82,7 @@ else()
 endif()
 
 include(${CONFIG_PATH}/config.cmake)
+message("Using board config \"${BLIT_BOARD_NAME}\"")
 
 if(EXISTS ${CONFIG_PATH}/config.h)
     list(APPEND BLIT_BOARD_DEFINITIONS "BLIT_BOARD_CONFIG=\"${CONFIG_PATH}/config.h\"")
