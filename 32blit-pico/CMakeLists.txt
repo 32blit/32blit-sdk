@@ -268,6 +268,7 @@ function(blit_executable NAME)
         target_sources(${NAME} PRIVATE ${STARTUP_SRC})
 
         pico_add_bin_output(${NAME})
+        pico_add_dis_output(${NAME})
 
         # Ideally we want the .blit filename to match the .elf, but TARGET_FILE_BASE_NAME isn't always available
         # (This only affects the firmware updater as it's the only thing setting a custom OUTPUT_NAME)
