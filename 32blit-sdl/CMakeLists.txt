@@ -193,7 +193,7 @@ function(blit_executable NAME)
 	endif()
 
 	if(APPLE)
-		set(SEARCH_DIRS /usr/local/lib)
+		set(SEARCH_DIRS /usr/local/lib /opt/homebrew/lib)
 
 		# assuming all frameworks installed in the same place
 		if(SDL2_FRAMEWORK_PATH)
