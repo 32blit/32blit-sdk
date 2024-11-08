@@ -9,7 +9,6 @@
 #include "display.hpp"
 #include "gpio.hpp"
 #include "file.hpp"
-#include "jpeg.hpp"
 #include "executable.hpp"
 #include "multiplayer.hpp"
 #include "power.hpp"
@@ -400,9 +399,6 @@ void blit_init() {
   api.enable_us_timer = ::enable_us_timer;
   api.get_us_timer = ::get_us_timer;
   api.get_max_us_timer = ::get_max_us_timer;
-
-  api.decode_jpeg_buffer = blit_decode_jpeg_buffer;
-  api.decode_jpeg_file = blit_decode_jpeg_file;
 
   api.get_launch_path = ::get_launch_path;
 

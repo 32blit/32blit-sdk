@@ -65,7 +65,7 @@ jobs:
       working-directory: ${{runner.workspace}}/build
       shell: bash
       run: |
-        embuilder.py build sdl2 sdl2-image-jpg sdl2-net
+        embuilder.py build sdl2 sdl2-net
         cmake --build . --config $BUILD_TYPE -j 2
 
     - name: Prepare Site

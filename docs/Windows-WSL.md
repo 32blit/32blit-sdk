@@ -11,9 +11,8 @@ A basic knowledge of the Linux command-line, installing tools and compiling code
 - [Building & Running on 32Blit](#building--running-on-32blit)
 - [Building & Running Locally](#building--running-locally)
   - [Installing the MinGW compiler/tools](#installing-the-mingw-compilertools)
-  - [Installing SDL2, SDL2_image and SDL2_net](#installing-sdl2-sdl2_image-and-sdl2_net)
+  - [Installing SDL2 and SDL2_net](#installing-sdl2-and-sdl2_net)
     - [SDL2](#sdl2)
-    - [SDL2_image](#sdl2_image)
     - [SDL2_net](#sdl2_net)
   - [Building](#building)
     - [Single Example](#single-example)
@@ -55,7 +54,7 @@ You can use WSL on Windows to cross-compile your project (or any 32Blit example)
 
 If you're more familiar with Visual Studio then you should [follow the instructions in Windows-VisualStudio.md](Windows-VisualStudio.md)
 
-You will need to install SDL2 and SDL2_image/_net for MinGW.
+You will need to install SDL2 and SDL2_net for MinGW.
 
 ### Installing the MinGW compiler/tools
 
@@ -67,7 +66,7 @@ sudo apt install gcc-mingw-w64 g++-mingw-w64
 ```
 
 
-### Installing SDL2, SDL2_image and SDL2_net
+### Installing SDL2 and SDL2_net
 
 This will install the SDL2 64bit mingw development headers and libraries into `/opt/local/x86_64-w64-mingw32/`.
 
@@ -84,19 +83,9 @@ sudo mkdir -p /opt/local/
 Grab and install the SDL2 mingw development package:
 
 ```shell
-wget https://github.com/libsdl-org/SDL/releases/download/release-2.24.0/SDL2-devel-2.24.0-mingw.tar.gz 
+wget https://github.com/libsdl-org/SDL/releases/download/release-2.24.0/SDL2-devel-2.24.0-mingw.tar.gz
 tar xzf SDL2-devel-2.24.0-mingw.tar.gz
 sudo cp -r SDL2-2.24.0/x86_64-w64-mingw32 /opt/local/
-```
-
-#### SDL2_image
-
-Grab and install the SDL2_image mingw development package:
-
-```shell
-wget https://github.com/libsdl-org/SDL_image/releases/download/release-2.6.2/SDL2_image-devel-2.6.2-mingw.tar.gz
-tar xzf SDL2_image-devel-2.6.2-mingw.tar.gz
-sudo cp -r SDL2_image-2.6.2/x86_64-w64-mingw32 /opt/local/
 ```
 
 #### SDL2_net
