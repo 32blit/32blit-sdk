@@ -445,16 +445,19 @@ void System::set_button(int button, bool state) {
 }
 
 void System::stop() {
-	int returnValue;
-	running = false;
+  int returnValue;
+  running = false;
 
-	if(SDL_SemWaitTimeout(s_loop_ended, 500)) {
-		std::cerr << "User code appears to have frozen. Detaching thread." << std::endl;
-		SDL_DetachThread(t_system_loop);
-	} else {
-		SDL_WaitThread(t_system_loop, &returnValue);
-	}
+  // make sure the update thread is not waiting for a render to complete
+  SDL_SemPost(s_loop_redraw);
 
-	SDL_SemPost(s_timer_stop);
-	SDL_WaitThread(t_system_timer, &returnValue);
+  if(SDL_SemWaitTimeout(s_loop_ended, 500)) {
+    std::cerr << "User code appears to have frozen. Detaching thread." << std::endl;
+    SDL_DetachThread(t_system_loop);
+  } else {
+    SDL_WaitThread(t_system_loop, &returnValue);
+  }
+
+  SDL_SemPost(s_timer_stop);
+  SDL_WaitThread(t_system_timer, &returnValue);
 }
