@@ -95,6 +95,42 @@ static uint32_t find_flash_offset(uint32_t requested_size) {
   return 0;
 }
 
+static bool read_file_metadata(void *file, RawMetadata &meta, RawTypeMetadata &type_meta) {
+  // read header and check magic
+  BlitGameHeader header;
+  if(read_file(file, 0, sizeof(header), (char *)&header) != sizeof(header))
+    return false;
+
+  if(header.magic != blit_game_magic)
+    return false;
+
+  // read and check metadata header
+  auto meta_offset = header.end;
+
+  char meta_header[10];
+  if(read_file(file, meta_offset, 10, meta_header) != 10)
+    return false;
+
+  if(memcmp(meta_header, "BLITMETA", 8) != 0)
+    return false;
+
+  // read the reset of the metadata header
+  if(read_file(file, meta_offset + 10, sizeof(RawMetadata), (char *)&meta) != sizeof(RawMetadata))
+    return false;
+
+  // check for type data
+  meta_offset += 10 + sizeof(RawMetadata);
+  if(read_file(file, meta_offset, 8, meta_header) != 8)
+    return false;
+
+  if(memcmp(meta_header, "BLITTYPE", 8) == 0) {
+    if(read_file(file, meta_offset + 8, sizeof(RawTypeMetadata), (char *)&type_meta) != sizeof(RawTypeMetadata))
+      return false;
+  }
+
+  return true;
+}
+
 // 32blit API
 
 RawMetadata *get_running_game_metadata() {
