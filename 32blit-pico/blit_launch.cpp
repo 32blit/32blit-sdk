@@ -131,6 +131,29 @@ static bool read_file_metadata(void *file, RawMetadata &meta, RawTypeMetadata &t
   return true;
 }
 
+static uint32_t find_installed_blit(RawMetadata &meta) {
+  for(uint32_t off = 0; off < PICO_FLASH_SIZE_BYTES;) {
+    auto size = get_installed_file_size(off);
+
+    if(!size) {
+      off += game_block_size;
+      continue;
+    }
+
+    auto header = (BlitGameHeader *)(FLASH_BASE + off);
+    auto flash_meta = (RawMetadata *)(FLASH_BASE + off + header->end + 10);
+
+    // check CRC ant title
+    if(meta.crc32 == flash_meta->crc32 && strcmp(meta.title, flash_meta->title) == 0) {
+      return off;
+    }
+
+    off += calc_num_blocks(size) * game_block_size;
+  }
+
+  return ~0u;
+}
+
 // 32blit API
 
 RawMetadata *get_running_game_metadata() {
@@ -153,47 +176,58 @@ RawMetadata *get_running_game_metadata() {
 }
 
 bool launch_file(const char *path) {
-  uint32_t flash_offset;
+  uint32_t flash_offset = ~0u;
 
   if(strncmp(path, "flash:/", 7) == 0) // from flash
     flash_offset = atoi(path + 7) * game_block_size;
   else {
     // from storage
-    // TODO: check if already in flash
-
     auto file = open_file(path, blit::OpenMode::read);
 
     if(!file)
       return false;
 
-    BlitWriter writer;
+    // read file metadata and try to find matching installed gat
+    RawMetadata meta;
+    RawTypeMetadata type_meta = {};
 
-    uint32_t file_offset = 0;
-    uint32_t len = get_file_length(file);
+    if(read_file_metadata(file, meta, type_meta))
+      flash_offset = find_installed_blit(meta);
 
-    writer.init(len);
+    // flash if not found
+    if(flash_offset == ~0u) {
+      BlitWriter writer;
 
-    // read in small chunks
-    uint8_t buf[FLASH_PAGE_SIZE];
+      uint32_t file_offset = 0;
+      uint32_t len = get_file_length(file);
 
-    while(file_offset < len) {
-      auto bytes_read = read_file(file, file_offset, FLASH_PAGE_SIZE, (char *)buf);
-      if(bytes_read <= 0)
-        break;
+      writer.init(len);
 
-      if(!writer.write(buf, bytes_read))
-        break;
+      // read in small chunks
+      uint8_t buf[FLASH_PAGE_SIZE];
 
-      file_offset += bytes_read;
-    }
+      while(file_offset < len) {
+        auto bytes_read = read_file(file, file_offset, FLASH_PAGE_SIZE, (char *)buf);
+        if(bytes_read <= 0)
+          break;
 
-    close_file(file);
+        if(!writer.write(buf, bytes_read))
+          break;
 
-    // didn't write everything, fail launch
-    if(writer.get_remaining() > 0)
-      return false;
+        file_offset += bytes_read;
+      }
 
-    flash_offset = writer.get_flash_offset();
+      close_file(file);
+
+      // didn't write everything, fail launch
+      if(writer.get_remaining() > 0)
+        return false;
+
+      flash_offset = writer.get_flash_offset();
+
+      // TODO: cleanup duplicates
+    } else
+      close_file(file);
   }
 
   auto header = (BlitGameHeader *)(FLASH_BASE + flash_offset);
