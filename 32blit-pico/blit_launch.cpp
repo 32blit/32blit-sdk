@@ -154,6 +154,33 @@ static uint32_t find_installed_blit(RawMetadata &meta) {
   return ~0u;
 }
 
+static bool cleanup_duplicates(RawMetadata &meta, RawTypeMetadata &type_meta, uint32_t new_offset) {
+  bool ret = false;
+  for(uint32_t off = 0; off < PICO_FLASH_SIZE_BYTES;) {
+    auto size = get_installed_file_size(off);
+
+    if(!size) {
+      off += game_block_size;
+      continue;
+    }
+
+    auto header = (BlitGameHeader *)(FLASH_BASE + off);
+    auto flash_meta = (RawMetadata *)(FLASH_BASE + off + header->end + 10);
+
+    // check title and author, ignore the current copy of the game
+    if(off != new_offset && strcmp(meta.title, flash_meta->title) == 0 && strcmp(meta.author, flash_meta->author) == 0) {
+      erase_game(off);
+
+      if(off == current_game_offset)
+        ret = true;
+    }
+
+    off += calc_num_blocks(size) * game_block_size;
+  }
+
+  return ret;
+}
+
 // 32blit API
 
 RawMetadata *get_running_game_metadata() {
@@ -225,7 +252,7 @@ bool launch_file(const char *path) {
 
       flash_offset = writer.get_flash_offset();
 
-      // TODO: cleanup duplicates
+      cleanup_duplicates(meta, type_meta, flash_offset);
     } else
       close_file(file);
   }
