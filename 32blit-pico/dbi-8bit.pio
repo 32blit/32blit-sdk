@@ -1,4 +1,4 @@
-.program st7789_raw
+.program dbi_raw
 .side_set 1 opt
 
 ; raw serial, nothing special
@@ -8,7 +8,7 @@
 .wrap
 
 ; pixel doubling, "borrowed" from PicoSystem
-.program st7789_pixel_double
+.program dbi_pixel_double
 .side_set 1 opt
 
 .wrap_target

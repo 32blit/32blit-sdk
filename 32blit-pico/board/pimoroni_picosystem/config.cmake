@@ -10,5 +10,5 @@ set(BLIT_BOARD_DEFINITIONS
 )
 
 blit_driver(audio beep)
-blit_driver(display st7789)
+blit_driver(display dbi)
 blit_driver(input gpio)
