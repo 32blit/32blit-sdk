@@ -1,3 +1,5 @@
+enable_language(ASM)
+
 add_subdirectory(../32blit-shared ../32blit-shared)
 
 add_library(BlitHalSTM32 OBJECT
@@ -107,8 +109,6 @@ add_library(BlitHalSTM32 OBJECT
 )
 
 set_source_files_properties(
-	startup_stm32h750xx.s
-
 	Src/main.c
   	Src/usbd_msc_scsi.c
 	Src/usb_device.c
