@@ -3,6 +3,7 @@ cmake_policy(SET CMP0079 NEW) # target_link_libraries() allows use with targets 
 set(CMAKE_C_STANDARD 11)
 
 # Initialise the Pico SDK
+set(PICO_BOARD_HEADER_DIRS ${CMAKE_CURRENT_LIST_DIR}/board)
 include (pico_sdk_import.cmake)
 
 set(32BLIT_PICO 1 PARENT_SCOPE)
