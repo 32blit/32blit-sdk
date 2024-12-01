@@ -47,6 +47,13 @@ static void __not_in_flash_func(i2s_irq_handler)() {
 
 void init_audio() {
   // setup PIO
+
+#if AUDIO_I2S_DATA_PIN >= 32 || AUDIO_I2S_CLOCK_PIN_BASE >= 31
+    // this assumes anything else using this PIO can also deal with the base
+    static_assert(AUDIO_I2S_DATA_PIN >= 16 && AUDIO_I2S_CLOCK_PIN_BASE >= 16);
+    pio_set_gpio_base(audio_pio, 16);
+#endif
+
   int pio_offset = pio_add_program(audio_pio, &i2s_program);
 
   int pio_sm = pio_claim_unused_sm(audio_pio, true);
