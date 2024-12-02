@@ -18,6 +18,19 @@
 #endif
 #endif
 
+// default i2s config to values from SDK board
+#ifndef AUDIO_I2S_DATA_PIN
+#define AUDIO_I2S_DATA_PIN PICO_AUDIO_I2S_DATA_PIN
+#endif
+
+#ifndef AUDIO_I2S_CLOCK_PIN_BASE
+#define AUDIO_I2S_CLOCK_PIN_BASE PICO_AUDIO_I2S_CLOCK_PIN_BASE
+#endif
+
+#ifndef AUDIO_I2S_PIO
+#define AUDIO_I2S_PIO 0
+#endif
+
 #ifndef BUTTON_LEFT_PIN
 #define BUTTON_LEFT_PIN -1
 #define BUTTON_LEFT_BI_DECL
