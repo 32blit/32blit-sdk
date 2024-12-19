@@ -1,3 +1,5 @@
+enable_language(ASM)
+
 set(MCU_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/${MCU_LINKER_SCRIPT}")
 set(HAL_DIR ${CMAKE_CURRENT_LIST_DIR})
 
@@ -28,7 +30,6 @@ function(blit_executable NAME)
 		return()
 	endif()
 
-	set_source_files_properties(${USER_STARTUP} PROPERTIES LANGUAGE CXX)
 	add_executable(${NAME} ${USER_STARTUP} ${SOURCES})
 
 	# Ideally we want the .blit filename to match the .elf, but TARGET_FILE_BASE_NAME isn't always available
