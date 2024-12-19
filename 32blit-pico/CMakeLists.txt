@@ -54,7 +54,6 @@ target_include_directories(BlitHalPico INTERFACE
 )
 
 target_compile_definitions(BlitHalPico INTERFACE
-    PICO_AUDIO_I2S_MONO_INPUT=1
     PICO_AUDIO_DMA_IRQ=1
 )
 
@@ -110,10 +109,7 @@ if(NOT BLIT_USB_DRIVER)
 endif()
 
 # driver dependencies
-if(BLIT_AUDIO_DRIVER STREQUAL "i2s")
-    set(BLIT_REQUIRE_PICO_EXTRAS TRUE)
-    list(APPEND BLIT_BOARD_LIBRARIES pico_audio_i2s)
-elseif(BLIT_AUDIO_DRIVER STREQUAL "pwm")
+if(BLIT_AUDIO_DRIVER STREQUAL "pwm")
     set(BLIT_REQUIRE_PICO_EXTRAS TRUE)
     list(APPEND BLIT_BOARD_LIBRARIES pico_audio_pwm)
 endif()
@@ -150,6 +146,7 @@ pico_sdk_init()
 # generate PIO headers (has to be after SDK init)
 pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/dbi-spi.pio)
 pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/dbi-8bit.pio)
+pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/audio/i2s.pio)
 pico_generate_pio_header(BlitHalPico ${CMAKE_CURRENT_LIST_DIR}/spi.pio)
 
 # include picovision drivers
