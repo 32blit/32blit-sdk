@@ -4,59 +4,73 @@
 #include "tilemap.hpp"
 
 namespace blit {
-
-  /**
-   * Create a new tilemap.
-   *
-   * \param[in] tiles
-   * \param[in] transforms
-   * \param[in] bounds Map bounds, must be a power of two
-   * \param[in] sprites
-   */
-  TileMap::TileMap(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites) : bounds(bounds), tiles(tiles), transforms(transforms), sprites(sprites) {
-  }
-
-  TileMap *TileMap::load_tmx(const uint8_t *asset, Surface *sprites, int layer, int flags) {
-    auto map_struct = reinterpret_cast<const TMX *>(asset);
-
+  // TMX load helper
+  static bool load_tmx_layer_data(const TMX *map_struct, File &file, bool require_pot, int layer, int &flags, uint8_t *&tile_data, uint8_t *&transform_data) {
     if(memcmp(map_struct, "MTMX", 4) != 0 || map_struct->header_length != sizeof(TMX))
-      return nullptr;
+      return false;
 
-    // only 8 bit tiles supported
-    if(map_struct->flags & TMX_16Bit)
-      return nullptr;
+    // check power of two bounds if required
+    if(require_pot && ((map_struct->width & (map_struct->width - 1)) || (map_struct->height & (map_struct->height - 1))))
+      return false;
 
-    // power of two bounds required
-    if((map_struct->width & (map_struct->width - 1)) || (map_struct->height & (map_struct->height - 1)))
-      return nullptr;
+    bool is_16bit = map_struct->flags & TMX_16BIT;
 
     auto layer_size = map_struct->width * map_struct->height;
 
-    uint8_t *tile_data;
-    if(flags & copy_tiles) {
+    if(is_16bit) {
+      layer_size *= 2;
+      flags |= TILES_16BIT;
+    }
+
+    if(flags & COPY_TILES) {
       tile_data = new uint8_t[layer_size];
-      memcpy(tile_data, map_struct->data + layer_size * layer, layer_size);
-    } else {
-      tile_data = const_cast<uint8_t *>(map_struct->data + layer_size * layer);
+      file.read(map_struct->header_length + layer_size * layer, layer_size, (char *)tile_data);
+    } else if(file.get_ptr()) {
+      tile_data = const_cast<uint8_t *>(file.get_ptr() + map_struct->header_length + layer_size * layer);
     }
 
-    auto transform_base = map_struct->data + layer_size * map_struct->layers;
+    auto transform_base = map_struct->header_length + layer_size * map_struct->layers;
+    auto transform_layer_size = map_struct->width * map_struct->height;
 
-    uint8_t *transform_data = nullptr;
+    if(flags & COPY_TRANSFORMS) {
+      transform_data = new uint8_t[transform_layer_size]();
 
-    if(flags & copy_transforms) {
-      transform_data = new uint8_t[layer_size]();
-
-      if(map_struct->flags & TMX_Transforms)
-        memcpy(transform_data, transform_base + layer_size * layer, layer_size);
-    } else if(map_struct->flags & TMX_Transforms) {
-      transform_data = const_cast<uint8_t *>(transform_base + layer_size * layer);
+      if(map_struct->flags & TMX_TRANSFORMS)
+        file.read(transform_base + transform_layer_size * layer, transform_layer_size, (char *)transform_data);
+    } else if((map_struct->flags & TMX_TRANSFORMS) && file.get_ptr()) {
+      transform_data = const_cast<uint8_t *>(file.get_ptr() + transform_base + transform_layer_size * layer);
     }
 
-    auto ret = new TileMap(tile_data, transform_data, Size(map_struct->width, map_struct->height), sprites);
-    ret->empty_tile_id = map_struct->empty_tile;
+    return true;
+  }
 
-    return ret;
+  static uint32_t calc_tmx_size(const TMX *map_struct) {
+    // the TMX header contains many things, but a total size is not one of them
+    int tile_id_size = (map_struct->flags & TMX_16BIT) ? 2 : 1;
+    int transform_size = (map_struct->flags & TMX_TRANSFORMS) ? 1 : 0;
+
+    return map_struct->header_length
+         + map_struct->layers * map_struct->width * map_struct->height * tile_id_size
+         + map_struct->layers * map_struct->width * map_struct->height * transform_size;
+  }
+
+  /**
+   * Create a new tile layer.
+   *
+   * \param[in] tiles
+   * \param[in] transforms
+   * \param[in] bounds Map bounds
+   * \param[in] sprites
+   */
+  TileLayer::TileLayer(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites) : bounds(bounds), tiles(tiles), transforms(transforms), sprites(sprites) {
+  }
+
+  TileLayer::~TileLayer() {
+    if(load_flags & MapLoadFlags::COPY_TILES)
+      delete[] tiles;
+
+    if(load_flags & MapLoadFlags::COPY_TRANSFORMS)
+      delete[] transforms;
   }
 
   /**
@@ -65,13 +79,13 @@ namespace blit {
    * \param[in] x
    * \param[in] y
    */
-  int32_t TileMap::offset(int16_t x, int16_t y) {
-    int32_t cx = ((uint32_t)x) & (bounds.w - 1);
-    int32_t cy = ((uint32_t)y) & (bounds.h - 1);
-
-    if ((x ^ cx) | (y ^ cy)) {
+  int32_t TileLayer::offset(int16_t x, int16_t y) {
+    if (x < 0 || y < 0 || x >= bounds.w || y >= bounds.h) {
       if (repeat_mode == DEFAULT_FILL)
         return default_tile_id;
+
+      int32_t cx = x % bounds.w + (x < 0 ? bounds.w : 0);
+      int32_t cy = y % bounds.h + (y < 0 ? bounds.h : 0);
 
       if (repeat_mode == REPEAT)
         return cx + cy * bounds.w;
@@ -88,7 +102,7 @@ namespace blit {
       return -1;
     }
 
-    return cx + cy * bounds.w;
+    return x + y * bounds.w;
   }
 
   /**
@@ -97,11 +111,15 @@ namespace blit {
    * \param[in] p Point denoting the tile x/y position in the map.
    * \return Bitmask of flags for specified tile.
    */
-  uint8_t TileMap::tile_at(const Point &p) {
+  uint16_t TileLayer::tile_at(const Point &p) {
     int32_t o = offset(p.x, p.y);
 
-    if(o != -1)
-      return tiles[o];
+    if(o != -1) {
+      if(load_flags & TILES_16BIT)
+        return ((uint16_t *)tiles)[o];
+      else
+        return tiles[o];
+    }
 
     return 0;
   }
@@ -112,13 +130,158 @@ namespace blit {
    * \param[in] p Point denoting the tile x/y position in the map.
    * \return Bitmask of transforms for specified tile.
    */
-  uint8_t TileMap::transform_at(const Point &p) {
+  uint8_t TileLayer::transform_at(const Point &p) {
     int32_t o = offset(p.x, p.y);
 
     if (o != -1 && transforms)
       return transforms[o];
 
     return 0;
+  }
+
+  void TileLayer::set_tiles(uint8_t *tiles, bool copy) {
+    int tiles_size = bounds.area() * ((load_flags & TILES_16BIT) ? 2 : 1);
+
+    if(copy) {
+      // allocate if needed
+      if(!this->tiles || !(load_flags & COPY_TILES)) {
+        this->tiles = new uint8_t[tiles_size];
+        load_flags |= COPY_TILES;
+      }
+
+      memcpy(this->tiles, tiles, tiles_size);
+    } else {
+      // free old tiles if we know we allocated them
+      if(load_flags & COPY_TILES)
+        delete this->tiles;
+
+      this->tiles = tiles;
+      load_flags &= ~COPY_TILES;
+    }
+  }
+
+ /**
+   * Create a new tilemap
+   *
+   * \param[in] tiles
+   * \param[in] transforms
+   * \param[in] bounds Map bounds
+   * \param[in] sprites
+   */
+  SimpleTileLayer::SimpleTileLayer(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites) : TileLayer(tiles, transforms, bounds, sprites){
+  }
+
+  SimpleTileLayer *SimpleTileLayer::load_tmx(const uint8_t *asset, Surface *sprites, int layer, int flags) {
+    File map_file(asset, calc_tmx_size((TMX*)asset));
+
+    return load_tmx(map_file, sprites, layer, flags);
+  }
+
+  SimpleTileLayer *SimpleTileLayer::load_tmx(File &file, Surface *sprites, int layer, int flags) {
+    TMX map_struct;
+
+    file.read(0, sizeof(map_struct), (char *)&map_struct);
+
+    uint8_t *tile_data = nullptr;
+    uint8_t *transform_data = nullptr;
+
+    if(!load_tmx_layer_data(&map_struct, file, false, layer, flags, tile_data, transform_data))
+      return nullptr;
+
+    auto ret = new SimpleTileLayer(tile_data, transform_data, Size(map_struct.width, map_struct.height), sprites);
+    ret->empty_tile_id = map_struct.empty_tile;
+    ret->load_flags = flags;
+
+    return ret;
+  }
+
+  /**
+   * Draw tilemap to a specified destination surface, with clipping.
+   *
+   * \param[in] dest Destination surface.
+   * \param[in] viewport Clipping rectangle.
+   */
+  void SimpleTileLayer::draw(Surface *dest, Rect viewport) {
+    viewport = dest->clip.intersection(viewport);
+    Rect old_clip = dest->clip;
+    dest->clip = viewport;
+
+    Point scroll_offset(transform.v02, transform.v12);
+
+    Point start = (viewport.tl() + scroll_offset) / 8;
+    Point end = (viewport.br() + scroll_offset) / 8;
+
+    for(int y = start.y - 1; y <= end.y; y++) {
+      for(int x = start.x - 1; x <= end.x; x++) {
+        auto tile_offset = offset(x, y);
+
+        // out-of-bounds
+        if(tile_offset == -1)
+          continue;
+
+        int tile_id;
+
+        if(load_flags & TILES_16BIT)
+          tile_id = ((uint16_t *)tiles)[tile_offset];
+        else
+          tile_id = tiles[tile_offset];
+
+        // empty tile
+        if(tile_id == empty_tile_id)
+          continue;
+
+        int transform = transforms ? transforms[tile_offset] : 0;
+        int sprite_transform = 0;
+
+        // tilemap/sprite transform bits don't match
+        if(transform & 0b001)
+          sprite_transform |= SpriteTransform::XYSWAP;
+        if(transform & 0b010)
+          sprite_transform |= SpriteTransform::VERTICAL;
+        if(transform & 0b100)
+          sprite_transform |= SpriteTransform::HORIZONTAL;
+
+        Rect src_rect = sprites->sprite_bounds(tile_id);
+        dest->blit(sprites, src_rect, {x * 8 - scroll_offset.x, y * 8 - scroll_offset.y}, sprite_transform);
+      }
+    }
+
+    dest->clip = old_clip;
+  }
+
+  /**
+   * Create a new tilemap
+   *
+   * \param[in] tiles
+   * \param[in] transforms
+   * \param[in] bounds Map bounds, must be a power of two
+   * \param[in] sprites
+   */
+  TransformedTileLayer::TransformedTileLayer(uint8_t *tiles, uint8_t *transforms, Size bounds, Surface *sprites) : TileLayer(tiles, transforms, bounds, sprites){
+  }
+
+  TransformedTileLayer *TransformedTileLayer::load_tmx(const uint8_t *asset, Surface *sprites, int layer, int flags) {
+    File map_file(asset, calc_tmx_size((TMX*)asset));
+
+    return load_tmx(map_file, sprites, layer, flags);
+  }
+
+  TransformedTileLayer *TransformedTileLayer::load_tmx(File &file, Surface *sprites, int layer, int flags) {
+    TMX map_struct;
+
+    file.read(0, sizeof(map_struct), (char *)&map_struct);
+
+    uint8_t *tile_data = nullptr;
+    uint8_t *transform_data = nullptr;
+
+    if(!load_tmx_layer_data(&map_struct, file, true, layer, flags, tile_data, transform_data))
+      return nullptr;
+
+    auto ret = new TransformedTileLayer(tile_data, transform_data, Size(map_struct.width, map_struct.height), sprites);
+    ret->empty_tile_id = map_struct.empty_tile;
+    ret->load_flags = flags;
+
+    return ret;
   }
 
   /**
@@ -128,7 +291,7 @@ namespace blit {
    * \param[in] viewport Clipping rectangle.
    * \param[in] scanline_callback Functon called on every scanline, accepts the scanline y position, should return a transformation matrix.
    */
-  void TileMap::draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback) {
+  void TransformedTileLayer::draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback) {
     //bool not_scaled = (from.w - to.w) | (from.h - to.h);
 
     viewport = dest->clip.intersection(viewport);
@@ -150,25 +313,23 @@ namespace blit {
     }
   }
 
-  /*
-  void tilemap::mipmap_texture_span(surface *dest, point s, uint16_t c, vec2 swc, vec2 ewc) {
+  void TransformedTileLayer::mipmap_texture_span(Surface *dest, Point s, uint16_t c, Vec2 swc, Vec2 ewc) {
     // calculate the mipmap index to use for drawing
     float span_length = (ewc - swc).length();
-    float mipmap = ((span_length / float(c)) / 2.0f);
-    int16_t mipmap_index = floor(mipmap);
-    uint8_t blend = (mipmap - floor(mipmap)) * 255;
+    float mipmap = std::max(0.0f, std::log2(span_length / float(c)));
+    uint16_t mipmap_index = floorf(mipmap);
+    uint8_t blend = (mipmap - floorf(mipmap)) * 255;
 
-    mipmap_index = mipmap_index >= (int)sprites->s.mipmaps.size() ? sprites->s.mipmaps.size() - 1 : mipmap_index;
-    mipmap_index = mipmap_index < 0 ? 0 : mipmap_index;
+    mipmap_index = mipmap_index >= sprites->mipmaps.size() ? sprites->mipmaps.size() - 1 : mipmap_index;
 
     dest->alpha = 255;
-    texture_span(dest, s, c, swc, ewc, mipmap_index);
+    texture_span(dest, s, c, swc, ewc, sprites->mipmaps[mipmap_index], mipmap_index);
 
-    if (++mipmap_index < sprites->s.mipmaps.size()) {
+    if (++mipmap_index < sprites->mipmaps.size() && blend) {
       dest->alpha = blend;
-      texture_span(dest, s, c, swc, ewc, mipmap_index);
+      texture_span(dest, s, c, swc, ewc, sprites->mipmaps[mipmap_index], mipmap_index);
     }
-  }*/
+  }
 
   /**
    * TODO: Document
@@ -179,8 +340,17 @@ namespace blit {
    * \param[in] swc
    * \param[in] ewc
    */
-  void TileMap::texture_span(Surface *dest, Point s, unsigned int c, Vec2 swc, Vec2 ewc) {
-    Surface *src = sprites;
+  void TransformedTileLayer::texture_span(Surface *dest, Point s, unsigned int c, Vec2 swc, Vec2 ewc, Surface *src, unsigned int mipmap_index) {
+    if(load_flags & TILES_16BIT)
+      do_texture_span<uint16_t>(dest, s, c, swc, ewc, src, mipmap_index);
+    else
+      do_texture_span<uint8_t>(dest, s, c, swc, ewc, src, mipmap_index);
+  }
+
+  template<class tile_id_type>
+  void TransformedTileLayer::do_texture_span(Surface *dest, Point s, unsigned int c, Vec2 swc, Vec2 ewc, Surface *src, unsigned int mipmap_index) {
+    if(!src)
+      src = sprites;
 
     static const int fix_shift = 16;
 
@@ -192,10 +362,10 @@ namespace blit {
       int16_t wcx = wc.x >> fix_shift;
       int16_t wcy = wc.y >> fix_shift;
 
-      int32_t toff = offset(wcx >> 3, wcy >> 3);
+      int32_t toff = fast_offset(wcx >> 3, wcy >> 3);
 
-      if (toff != -1 && tiles[toff] != empty_tile_id) {
-        uint8_t tile_id = tiles[toff];
+      if (toff != -1 && ((tile_id_type *)tiles)[toff] != empty_tile_id) {
+        uint8_t tile_id = ((tile_id_type *)tiles)[toff];
         uint8_t transform = transforms ? transforms[toff] : 0;
 
         // coordinate within sprite
@@ -222,7 +392,7 @@ namespace blit {
           count++;
         } while(c && (wc.x >> fix_shift) == wcx && (wc.y >> fix_shift) == wcy);
 
-        auto pen = src->get_pixel({u, v});
+        auto pen = src->get_pixel({u >> mipmap_index, v >> mipmap_index});
         dest->pbf(&pen, dest, doff, count);
 
         doff += count;
@@ -240,4 +410,235 @@ namespace blit {
     } while (c);
   }
 
+  int32_t TransformedTileLayer::fast_offset(int16_t x, int16_t y) {
+    // this is the reason for the power of two size restriction
+    // (doing divides every pixel would hurt performance quite a bit)
+    int32_t cx = ((uint32_t)x) & (bounds.w - 1);
+    int32_t cy = ((uint32_t)y) & (bounds.h - 1);
+
+    if ((x ^ cx) | (y ^ cy)) {
+      if (repeat_mode == DEFAULT_FILL)
+        return default_tile_id;
+
+      if (repeat_mode == REPEAT)
+        return cx + cy * bounds.w;
+
+      if(repeat_mode == CLAMP_TO_EDGE) {
+        if(x != cx)
+          cx = x < 0 ? 0 : bounds.w - 1;
+        if(y != cy)
+          cy = y < 0 ? 0 : bounds.h - 1;
+
+        return cx + cy * bounds.w;
+      }
+
+      return -1;
+    }
+
+    return cx + cy * bounds.w;
+  }
+
+  /// Create an empty map
+  TiledMap::TiledMap(Size bounds, unsigned num_layers, Surface *sprites, int flags) : num_layers(num_layers) {
+    layers = new TileLayer *[num_layers];
+    for(unsigned i = 0; i < num_layers; i++) {
+      if(flags & LAYER_TRANSFORMS)
+        layers[i] = new TransformedTileLayer(nullptr, nullptr, bounds, sprites);
+      else
+        layers[i] = new SimpleTileLayer(nullptr, nullptr, bounds, sprites);
+
+      layers[i]->load_flags = flags;
+    }
+  }
+
+  /// Create from a map asset generated with `output_struct=true`
+  TiledMap::TiledMap(const uint8_t *asset, Surface *sprites, int flags) {
+    auto map_struct = reinterpret_cast<const TMX *>(asset);
+
+    // header check
+    if(memcmp(map_struct, "MTMX", 4) != 0 || map_struct->header_length != sizeof(TMX))
+      return;
+
+    num_layers = map_struct->layers;
+
+    // load each layer
+    layers = new TileLayer *[num_layers];
+
+    for(unsigned i = 0; i < num_layers; i++) {
+      if(flags & LAYER_TRANSFORMS)
+        layers[i] = TransformedTileLayer::load_tmx(asset, sprites, i, flags);
+      else
+        layers[i] = SimpleTileLayer::load_tmx(asset, sprites, i, flags);
+    }
+
+    // parse names
+    if(map_struct->flags & TMX_NAMES) {
+      // calc_tmx_size doesn't include the names
+      auto names_offset = calc_tmx_size(map_struct);
+      auto name_ptr = reinterpret_cast<const char *>(asset) + names_offset;
+
+      for(unsigned i = 0; i < num_layers; i++) {
+        auto name = name_ptr;
+        name_ptr += strlen(name) + 1;
+
+        if(layers[i])
+          layers[i]->name = name;
+      }
+    }
+  }
+
+  /// Create from a map file generated with `output_struct=true`
+  TiledMap::TiledMap(const std::string &filename, Surface *sprites, int flags) {
+    File map_file(filename);
+
+    if(!map_file.is_open())
+      return;
+
+    TMX map_struct;
+
+    map_file.read(0, sizeof(map_struct), (char *)&map_struct);
+
+    // header check
+    if(memcmp(map_struct.head, "MTMX", 4) != 0 || map_struct.header_length != sizeof(TMX))
+      return;
+
+    num_layers = map_struct.layers;
+
+    // load each layer
+    layers = new TileLayer *[num_layers];
+
+    for(unsigned i = 0; i < num_layers; i++) {
+      if(flags & LAYER_TRANSFORMS)
+        layers[i] = TransformedTileLayer::load_tmx(map_file, sprites, i, flags);
+      else
+        layers[i] = SimpleTileLayer::load_tmx(map_file, sprites, i, flags);
+    }
+
+    // parse names
+    if(map_struct.flags & TMX_NAMES) {
+      // calc_tmx_size doesn't include the names
+      auto names_offset = calc_tmx_size(&map_struct);
+      char name_buf[256];
+
+      for(unsigned i = 0; i < num_layers; i++) {
+        map_file.read(names_offset, 256, name_buf);
+        names_offset += strlen(name_buf) + 1;
+
+        if(layers[i])
+          layers[i]->name = name_buf;
+      }
+    }
+  }
+
+  TiledMap::~TiledMap() {
+    for(unsigned i = 0; i < num_layers; i++)
+      delete layers[i];
+
+    delete[] layers;
+
+    delete[] flags;
+  }
+
+  /// Draw map to a viewport in `dest`
+  void TiledMap::draw(Surface *dest, Rect viewport) {
+    for(unsigned i = 0; i < num_layers; i++) {
+      if(layers[i])
+        layers[i]->draw(dest, viewport);
+    }
+  }
+
+  void TiledMap::draw(Surface *dest, Rect viewport, std::function<Mat3(uint8_t)> scanline_callback) {
+    for(unsigned i = 0; i < num_layers; i++) {
+      if(layers[i] && (layers[i]->load_flags & LAYER_TRANSFORMS))
+        static_cast<TransformedTileLayer *>(layers[i])->draw(dest, viewport, scanline_callback);
+    }
+  }
+
+  /// Get a layer of the map by index, or `nullptr` if the index doesn't exist
+  TileLayer* TiledMap::get_layer(unsigned index) {
+    if(index < num_layers)
+      return layers[index];
+
+    return nullptr;
+  }
+
+  /// Get a layer of the map by name, or `nullptr` if there is no layer with that name
+  TileLayer *TiledMap::get_layer(std::string_view name) {
+    return get_layer(get_layer_index(name));
+  }
+
+  /// Get the index of a layer of the map by name
+  unsigned TiledMap::get_layer_index(std::string_view name) const {
+    for(unsigned i = 0; i < num_layers; i++) {
+      if(layers[i] && layers[i]->name == name)
+        return i;
+    }
+
+    return std::numeric_limits<unsigned>::max();
+  }
+
+  /// Get map bounds
+  Size TiledMap::get_bounds() const {
+    if(!num_layers || !layers[0])
+      return {0, 0};
+
+    // all layers have the same bounds
+    return layers[0]->bounds;
+  }
+
+  void TiledMap::set_scroll_position(Point scroll_position) {
+    set_transform(Mat3::translation(Vec2(scroll_position)));
+  }
+
+  void TiledMap::set_scroll_position(unsigned layer, Point scroll_position) {
+    set_transform(layer, Mat3::translation(Vec2(scroll_position)));
+  }
+
+  void TiledMap::set_transform(Mat3 transform) {
+    for(unsigned i = 0; i < num_layers; i++) {
+      if(layers[i])
+        layers[i]->transform = transform;
+    }
+  }
+
+  void TiledMap::set_transform(unsigned layer, Mat3 transform) {
+    if(layer < num_layers && layers[layer])
+      layers[layer]->transform = transform;
+  }
+
+  void TiledMap::add_flags(unsigned layer_index, uint16_t tile_id, uint8_t new_flags) {
+    auto layer = get_layer(layer_index);
+    if(!layer)
+      return;
+
+    auto num_tiles = get_bounds().area();
+
+    // allocate flags on first use
+    if(!flags)
+      flags = new uint8_t[num_tiles]();
+
+    // set flags for all matching tiles
+    for(int i = 0; i < num_tiles; i++) {
+      if(layer->tiles[i] == tile_id)
+        flags[i] |= new_flags;
+    }
+  }
+
+  void TiledMap::add_flags(unsigned layer_index, std::initializer_list<uint16_t> tile_ids, uint8_t new_flags) {
+    for(auto tile_id : tile_ids)
+      add_flags(layer_index, tile_id, new_flags);
+  }
+
+  uint8_t TiledMap::get_flags(Point p) const {
+    auto bounds = get_bounds();
+
+    if(bounds.contains(p) && flags)
+      return flags[p.x + p.y * bounds.w];
+
+    return 0;
+  }
+
+  bool TiledMap::has_flag(Point p, uint8_t flag) const {
+    return get_flags(p) & flag;
+  }
 }
