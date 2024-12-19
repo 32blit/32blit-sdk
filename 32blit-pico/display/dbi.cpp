@@ -289,6 +289,9 @@ static void prepare_write() {
 static void update() {
   dma_channel_wait_for_finish_blocking(dma_channel);
 
+  if(!frame_buffer)
+    return;
+
   if(!write_mode)
     prepare_write();
 
