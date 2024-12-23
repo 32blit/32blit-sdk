@@ -43,7 +43,7 @@ target_sources(BlitHalPico INTERFACE
 )
 
 target_link_libraries(BlitHalPico INTERFACE
-    hardware_dma hardware_pio hardware_pwm hardware_spi
+    hardware_dma hardware_i2c hardware_pio hardware_pwm hardware_spi
     pico_multicore pico_stdlib pico_unique_id pico_rand
     tinyusb_device
     FatFsBlitAPI
@@ -115,7 +115,7 @@ if(BLIT_AUDIO_DRIVER STREQUAL "pwm")
 endif()
 
 if(BLIT_DISPLAY_DRIVER STREQUAL "picovision")
-    list(APPEND BLIT_BOARD_LIBRARIES hardware_i2c aps6404 swd_load)
+    list(APPEND BLIT_BOARD_LIBRARIES aps6404 swd_load)
 elseif(BLIT_DISPLAY_DRIVER STREQUAL "scanvideo")
     set(BLIT_REQUIRE_PICO_EXTRAS TRUE)
     set(BLIT_ENABLE_CORE1 TRUE)
