@@ -14,14 +14,6 @@
 #define TCA9555_I2C i2c_default
 #endif
 
-#ifndef TCA9555_SDA_PIN
-#define TCA9555_SDA_PIN PICO_DEFAULT_I2C_SDA_PIN
-#endif
-
-#ifndef TCA9555_SCL_PIN
-#define TCA9555_SCL_PIN PICO_DEFAULT_I2C_SCL_PIN
-#endif
-
 #ifndef TCA9555_ADDR
 #define TCA9555_ADDR 0x21
 #endif
@@ -39,11 +31,6 @@
 #define TCA9555_SELECT_IO 5
 
 void init_input() {
-  // TODO: may want common i2c setup in the future?
-  gpio_set_function(TCA9555_SDA_PIN, GPIO_FUNC_I2C);
-  gpio_set_function(TCA9555_SCL_PIN, GPIO_FUNC_I2C);
-  i2c_init(TCA9555_I2C, 400000);
-
   // setup for reading
   uint8_t port = 0;
   i2c_write_blocking(TCA9555_I2C, TCA9555_ADDR, &port, 1, true);
