@@ -12,3 +12,4 @@ set(BLIT_BOARD_DEFINITIONS
 blit_driver(audio beep)
 blit_driver(display dbi)
 blit_driver(input gpio)
+blit_driver(led pwm)
