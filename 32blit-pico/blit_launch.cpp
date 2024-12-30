@@ -7,6 +7,7 @@
 
 #ifdef PICO_RP2350
 #include "hardware/structs/qmi.h"
+#include "hardware/xip_cache.h"
 #endif
 
 #include "blit_launch.hpp"
@@ -320,8 +321,7 @@ void delayed_launch() {
                       | (requested_launch_offset >> 12) << QMI_ATRANS1_BASE_LSB;
 
     // invalidate cache
-    for(uint32_t off = 0; off < size; off += 8)
-      *(uint8_t *)(XIP_MAINTENANCE_BASE + 4 * 1024 * 1024 + off + 2/*invalidate by addr*/) = 0;
+    xip_cache_invalidate_range(4 * 1024 * 1024, size);
 
     // FIXME: handle previous blit also using translation on failure
   }
