@@ -55,9 +55,15 @@ void init_input() {
 void update_input() {
   using namespace blit;
 
+  if(!hid_keyboard_detected && !hid_gamepad_id) {
+    blit::api_data.buttons = 0;
+    return;
+  }
+
+  uint32_t new_buttons = 0;
+
   // keyboard
   if(hid_keyboard_detected) {
-    uint32_t new_buttons = 0;
 
     for(int i = 0; i < 6; i++) {
       switch(hid_keys[i]) {
@@ -109,8 +115,6 @@ void update_input() {
           break;
       }
     }
-
-    api_data.buttons = new_buttons;
   }
 
   if(!hid_gamepad_id)
@@ -121,18 +125,21 @@ void update_input() {
   while(mapping->id && mapping->id != hid_gamepad_id)
     mapping++;
 
-  api_data.buttons = dpad_map[hid_hat > 8 ? 8 : hid_hat]
-                   | (hid_buttons & (1 << mapping->left)     ? uint32_t(Button::DPAD_LEFT) : 0)
-                   | (hid_buttons & (1 << mapping->right)    ? uint32_t(Button::DPAD_RIGHT) : 0)
-                   | (hid_buttons & (1 << mapping->up)       ? uint32_t(Button::DPAD_UP) : 0)
-                   | (hid_buttons & (1 << mapping->down)     ? uint32_t(Button::DPAD_DOWN) : 0)
-                   | (hid_buttons & (1 << mapping->a)        ? uint32_t(Button::A) : 0)
-                   | (hid_buttons & (1 << mapping->b)        ? uint32_t(Button::B) : 0)
-                   | (hid_buttons & (1 << mapping->x)        ? uint32_t(Button::X) : 0)
-                   | (hid_buttons & (1 << mapping->y)        ? uint32_t(Button::Y) : 0)
-                   | (hid_buttons & (1 << mapping->menu)     ? uint32_t(Button::MENU) : 0)
-                   | (hid_buttons & (1 << mapping->home)     ? uint32_t(Button::HOME) : 0)
-                   | (hid_buttons & (1 << mapping->joystick) ? uint32_t(Button::JOYSTICK) : 0);
+  new_buttons = new_buttons
+              | dpad_map[hid_hat > 8 ? 8 : hid_hat]
+              | (hid_buttons & (1 << mapping->left)     ? uint32_t(Button::DPAD_LEFT) : 0)
+              | (hid_buttons & (1 << mapping->right)    ? uint32_t(Button::DPAD_RIGHT) : 0)
+              | (hid_buttons & (1 << mapping->up)       ? uint32_t(Button::DPAD_UP) : 0)
+              | (hid_buttons & (1 << mapping->down)     ? uint32_t(Button::DPAD_DOWN) : 0)
+              | (hid_buttons & (1 << mapping->a)        ? uint32_t(Button::A) : 0)
+              | (hid_buttons & (1 << mapping->b)        ? uint32_t(Button::B) : 0)
+              | (hid_buttons & (1 << mapping->x)        ? uint32_t(Button::X) : 0)
+              | (hid_buttons & (1 << mapping->y)        ? uint32_t(Button::Y) : 0)
+              | (hid_buttons & (1 << mapping->menu)     ? uint32_t(Button::MENU) : 0)
+              | (hid_buttons & (1 << mapping->home)     ? uint32_t(Button::HOME) : 0)
+              | (hid_buttons & (1 << mapping->joystick) ? uint32_t(Button::JOYSTICK) : 0);
+
+  api_data.buttons = new_buttons;
 
   api_data.joystick.x = (float(hid_joystick[0]) - 0x80) / 0x80;
   api_data.joystick.y = (float(hid_joystick[1]) - 0x80) / 0x80;
