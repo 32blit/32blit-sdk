@@ -1,0 +1,23 @@
+; clock/sync generation, inspired by scanvideo
+.program dpi_timing
+.side_set 1 ; clock
+  out exec, 16       side 1 ; may set/clear IRQ
+
+  out x, 13          side 1 ; delay counter
+  out pins, 3        side 0 ; hsync/vsync/de bits
+
+delay_loop:
+  nop                side 1
+  jmp x-- delay_loop side 0
+
+
+.program dpi_data_16
+  wait irq, 4
+  mov x, y ; setup counter from pre-initialised Y
+
+data_loop:
+  out pins, 16
+PUBLIC data_loop_delay: ; patched to add delays
+  jmp x-- data_loop
+
+  mov pins, null
