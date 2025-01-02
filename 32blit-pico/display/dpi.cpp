@@ -3,8 +3,11 @@
 #include "hardware/gpio.h"
 #include "hardware/irq.h"
 #include "hardware/pio.h"
+#include "hardware/spi.h"
+#include "pico/time.h"
 
 #include "display.hpp"
+#include "display_commands.hpp"
 
 #include "config.h"
 
@@ -183,7 +186,52 @@ static void __not_in_flash_func(pio_timing_irq_handler)() {
   }
 }
 
+#ifdef DPI_SPI_INIT
+static void command(uint8_t reg, size_t len = 0, const char *data = nullptr) {
+  gpio_put(LCD_CS_PIN, 0);
+  gpio_put(LCD_DC_PIN, 0); // command
+  spi_write_blocking(spi0, &reg, 1);
+
+  if(data) {
+    gpio_put(LCD_DC_PIN, 1); // data
+    spi_write_blocking(spi0, (const uint8_t *)data, len);
+  }
+
+  gpio_put(LCD_CS_PIN, 1);
+}
+#endif
+
+static void init_display_spi() {
+#ifdef DPI_SPI_INIT
+  spi_init(spi0, 1 * 1000 * 1000);
+  gpio_set_function(LCD_SCK_PIN, GPIO_FUNC_SPI);
+  gpio_set_function(LCD_MOSI_PIN, GPIO_FUNC_SPI);
+
+  // init CS
+  gpio_init(LCD_CS_PIN);
+  gpio_set_dir(LCD_CS_PIN, GPIO_OUT);
+  gpio_put(LCD_CS_PIN, 1);
+
+  // init D/C
+  gpio_init(LCD_DC_PIN);
+  gpio_set_dir(LCD_DC_PIN, GPIO_OUT);
+
+#ifdef LCD_RESET_PIN
+  gpio_init(LCD_RESET_PIN);
+  gpio_set_dir(LCD_RESET_PIN, GPIO_OUT);
+
+  sleep_ms(15);
+  gpio_put(LCD_RESET_PIN, 1);
+  sleep_ms(15);
+#endif
+
+#endif
+}
+
 void init_display() {
+  // send init commands if needed
+  init_display_spi();
+
   // setup timing buffers
   auto encode_timing = [](uint16_t instr, bool vsync, bool hsync, bool de, int delay) {
     // instr needs sideset 0, but that's just a zero
