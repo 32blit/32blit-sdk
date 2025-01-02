@@ -174,20 +174,20 @@ void init_display() {
   };
 
   //                                     instr                           vbl    hbl    de     delay
-  active_line_timings[0] = encode_timing(pio_encode_irq_clear(false, 4), false, false, false, MODE_H_FRONT_PORCH);
-  active_line_timings[1] = encode_timing(pio_encode_nop(),               false, true,  false, MODE_H_SYNC_WIDTH);
-  active_line_timings[2] = encode_timing(pio_encode_nop(),               false, false, false, MODE_H_BACK_PORCH);
-  active_line_timings[3] = encode_timing(pio_encode_irq_set(false, 4),   false, false, true,  MODE_H_ACTIVE_PIXELS);
+  active_line_timings[0] = encode_timing(pio_encode_nop(),               false, true,  false, MODE_H_SYNC_WIDTH);
+  active_line_timings[1] = encode_timing(pio_encode_nop(),               false, false, false, MODE_H_BACK_PORCH);
+  active_line_timings[2] = encode_timing(pio_encode_irq_set(false, 4),   false, false, true,  MODE_H_ACTIVE_PIXELS);
+  active_line_timings[3] = encode_timing(pio_encode_irq_clear(false, 4), false, false, false, MODE_H_FRONT_PORCH);
 
-  vblank_line_timings[0] = encode_timing(pio_encode_irq_clear(false, 4), false, false, false, MODE_H_FRONT_PORCH);
-  vblank_line_timings[1] = encode_timing(pio_encode_nop(),               false, true,  false, MODE_H_SYNC_WIDTH);
-  vblank_line_timings[2] = encode_timing(pio_encode_nop(),               false, false, false, MODE_H_BACK_PORCH);
-  vblank_line_timings[3] = encode_timing(pio_encode_nop(),               false, false, false, MODE_H_ACTIVE_PIXELS);
+  vblank_line_timings[0] = encode_timing(pio_encode_nop(),               false, true,  false, MODE_H_SYNC_WIDTH);
+  vblank_line_timings[1] = encode_timing(pio_encode_nop(),               false, false, false, MODE_H_BACK_PORCH);
+  vblank_line_timings[2] = encode_timing(pio_encode_nop(),               false, false, false, MODE_H_ACTIVE_PIXELS);
+  vblank_line_timings[3] = encode_timing(pio_encode_nop(),               false, false, false, MODE_H_FRONT_PORCH);
 
-  vsync_line_timings[0]  = encode_timing(pio_encode_nop(),               true,  false, false, MODE_H_FRONT_PORCH);
-  vsync_line_timings[1]  = encode_timing(pio_encode_nop(),               true,  true,  false, MODE_H_SYNC_WIDTH);
-  vsync_line_timings[2]  = encode_timing(pio_encode_nop(),               true,  false, false, MODE_H_BACK_PORCH);
-  vsync_line_timings[3]  = encode_timing(pio_encode_nop(),               true,  false, false, MODE_H_ACTIVE_PIXELS);
+  vsync_line_timings[0]  = encode_timing(pio_encode_nop(),               true,  true,  false, MODE_H_SYNC_WIDTH);
+  vsync_line_timings[1]  = encode_timing(pio_encode_nop(),               true,  false, false, MODE_H_BACK_PORCH);
+  vsync_line_timings[2]  = encode_timing(pio_encode_nop(),               true,  false, false, MODE_H_ACTIVE_PIXELS);
+  vsync_line_timings[3]  = encode_timing(pio_encode_nop(),               true,  false, false, MODE_H_FRONT_PORCH);
 
   // setup timing program
   int num_sync_pins = 2; // h/v sync
