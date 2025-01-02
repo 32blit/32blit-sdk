@@ -208,7 +208,9 @@ void init_display() {
   sm_config_set_out_shift(&cfg, false, true, 32);
   sm_config_set_out_pins(&cfg, DPI_SYNC_PIN_BASE, num_sync_pins);
   sm_config_set_fifo_join(&cfg, PIO_FIFO_JOIN_TX);
-  //sm_config_set_sideset_pins(&cfg, CLOCK_PIN); // TODO
+#ifdef DPI_CLOCK_PIN
+  sm_config_set_sideset_pins(&cfg, DPI_CLOCK_PIN);
+#endif
 
   pio_sm_init(pio, timing_sm, pio_offset, &cfg);
 
@@ -237,6 +239,11 @@ void init_display() {
 
   pio_sm_set_consecutive_pindirs(pio, timing_sm, DPI_SYNC_PIN_BASE, num_sync_pins, true);
   pio_sm_set_consecutive_pindirs(pio, data_sm, DPI_DATA_PIN_BASE, num_data_pins, true);
+
+#ifdef DPI_CLOCK_PIN
+  pio_gpio_init(pio, DPI_CLOCK_PIN);
+  pio_sm_set_consecutive_pindirs(pio, timing_sm, DPI_CLOCK_PIN, 1, true);
+#endif
 
   // setup PIO IRQ
   pio_set_irq0_source_enabled(pio, pio_interrupt_source_t(pis_sm0_tx_fifo_not_full + timing_sm), true);
