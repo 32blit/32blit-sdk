@@ -4,6 +4,7 @@
 #include "hardware/irq.h"
 #include "hardware/pio.h"
 #include "hardware/spi.h"
+#include "pico/binary_info.h"
 #include "pico/time.h"
 
 #include "display.hpp"
@@ -216,6 +217,11 @@ static void init_display_spi() {
   gpio_init(LCD_DC_PIN);
   gpio_set_dir(LCD_DC_PIN, GPIO_OUT);
 
+  bi_decl_if_func_used(bi_1pin_with_name(LCD_MOSI_PIN, "Display TX"));
+  bi_decl_if_func_used(bi_1pin_with_name(LCD_SCK_PIN, "Display SCK"));
+  bi_decl_if_func_used(bi_1pin_with_name(LCD_DC_PIN, "Display D/C"));
+  bi_decl_if_func_used(bi_1pin_with_name(LCD_CS_PIN, "Display CS"));
+
 #ifdef LCD_RESET_PIN
   gpio_init(LCD_RESET_PIN);
   gpio_set_dir(LCD_RESET_PIN, GPIO_OUT);
@@ -223,6 +229,8 @@ static void init_display_spi() {
   sleep_ms(15);
   gpio_put(LCD_RESET_PIN, 1);
   sleep_ms(15);
+
+  bi_decl_if_func_used(bi_1pin_with_name(LCD_RESET_PIN, "Display Reset"));
 #endif
 
 #endif
@@ -309,9 +317,14 @@ void init_display() {
   pio_sm_set_consecutive_pindirs(pio, timing_sm, DPI_SYNC_PIN_BASE, num_sync_pins, true);
   pio_sm_set_consecutive_pindirs(pio, data_sm, DPI_DATA_PIN_BASE, num_data_pins, true);
 
+  bi_decl_if_func_used(bi_pin_mask_with_name(3 << DPI_SYNC_PIN_BASE, "Display Sync"));
+  bi_decl_if_func_used(bi_pin_mask_with_name(0xFFFF << DPI_DATA_PIN_BASE, "Display Data"));
+
 #ifdef DPI_CLOCK_PIN
   pio_gpio_init(pio, DPI_CLOCK_PIN);
   pio_sm_set_consecutive_pindirs(pio, timing_sm, DPI_CLOCK_PIN, 1, true);
+
+  bi_decl_if_func_used(bi_1pin_with_name(DPI_CLOCK_PIN, "Display Clock"));
 #endif
 
   // setup PIO IRQ
