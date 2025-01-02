@@ -18,28 +18,49 @@
 #define DPI_SYNC_PIN_BASE 16
 #endif
 
-// TODO: make configurable
-// mode
-#define MODE_CLOCK 25000000
+// mode (default to 640x480)
+#ifndef DPI_MODE_CLOCK
+#define DPI_MODE_CLOCK 25000000
+#endif
 
-#define MODE_H_SYNC_POLARITY 0
-#define MODE_H_FRONT_PORCH   16
-#define MODE_H_SYNC_WIDTH    96
-#define MODE_H_BACK_PORCH    48
-#define MODE_H_ACTIVE_PIXELS 640
+#ifndef DPI_MODE_H_SYNC_POLARITY
+#define DPI_MODE_H_SYNC_POLARITY 0
+#endif
+#ifndef DPI_MODE_H_FRONT_PORCH
+#define DPI_MODE_H_FRONT_PORCH   16
+#endif
+#ifndef DPI_MODE_H_SYNC_WIDTH
+#define DPI_MODE_H_SYNC_WIDTH    96
+#endif
+#ifndef DPI_MODE_H_BACK_PORCH
+#define DPI_MODE_H_BACK_PORCH    48
+#endif
+#ifndef DPI_MODE_H_ACTIVE_PIXELS
+#define DPI_MODE_H_ACTIVE_PIXELS 640
+#endif
 
-#define MODE_V_SYNC_POLARITY 0
-#define MODE_V_FRONT_PORCH   10
-#define MODE_V_SYNC_WIDTH    2
-#define MODE_V_BACK_PORCH    33
-#define MODE_V_ACTIVE_LINES  480
+#ifndef DPI_MODE_V_SYNC_POLARITY
+#define DPI_MODE_V_SYNC_POLARITY 0
+#endif
+#ifndef DPI_MODE_V_FRONT_PORCH
+#define DPI_MODE_V_FRONT_PORCH   10
+#endif
+#ifndef DPI_MODE_V_SYNC_WIDTH
+#define DPI_MODE_V_SYNC_WIDTH    2
+#endif
+#ifndef DPI_MODE_V_BACK_PORCH
+#define DPI_MODE_V_BACK_PORCH    33
+#endif
+#ifndef DPI_MODE_V_ACTIVE_LINES
+#define DPI_MODE_V_ACTIVE_LINES  480
+#endif
 
-static_assert(MODE_H_ACTIVE_PIXELS % DISPLAY_WIDTH == 0);
-static_assert(MODE_V_ACTIVE_LINES % DISPLAY_HEIGHT == 0);
+static_assert(DPI_MODE_H_ACTIVE_PIXELS % DISPLAY_WIDTH == 0);
+static_assert(DPI_MODE_V_ACTIVE_LINES % DISPLAY_HEIGHT == 0);
 
 #define MODE_V_TOTAL_LINES  ( \
-  MODE_V_FRONT_PORCH + MODE_V_SYNC_WIDTH + \
-  MODE_V_BACK_PORCH  + MODE_V_ACTIVE_LINES \
+  DPI_MODE_V_FRONT_PORCH + DPI_MODE_V_SYNC_WIDTH + \
+  DPI_MODE_V_BACK_PORCH  + DPI_MODE_V_ACTIVE_LINES \
 )
 
 // DMA logic
@@ -76,7 +97,7 @@ static uint32_t vsync_line_timings[4];
 // assumes data SM is idle
 static inline void update_h_repeat() {
   // update Y register
-  pio_sm_put(pio, data_sm, MODE_H_ACTIVE_PIXELS / h_repeat - 1);
+  pio_sm_put(pio, data_sm, DPI_MODE_H_ACTIVE_PIXELS / h_repeat - 1);
   pio_sm_exec(pio, data_sm, pio_encode_out(pio_y, 32));
 
   // patch loop delay for repeat
@@ -97,7 +118,7 @@ static void __not_in_flash_func(dma_irq_handler)() {
   else
     cur_dma_ch++;
 
-  if(data_scanline == MODE_V_ACTIVE_LINES) {
+  if(data_scanline == DPI_MODE_V_ACTIVE_LINES) {
     // new frame, swap buffers
     data_scanline = 0;
 
@@ -135,7 +156,7 @@ static void __not_in_flash_func(dma_irq_handler)() {
 
   // setup next line DMA
   int display_line = data_scanline / v_repeat;
-  auto w = MODE_H_ACTIVE_PIXELS / h_repeat;
+  auto w = DPI_MODE_H_ACTIVE_PIXELS / h_repeat;
   auto fb_line_ptr = reinterpret_cast<uint16_t *>(cur_display_buffer) + display_line * w;
 
   ch->read_addr = uintptr_t(fb_line_ptr);
@@ -146,9 +167,9 @@ static void __not_in_flash_func(dma_irq_handler)() {
 
 static void __not_in_flash_func(pio_timing_irq_handler)() {
   while(!(pio->fstat & (1 << (PIO_FSTAT_TXFULL_LSB + timing_sm)))) {
-    if(timing_scanline >= MODE_V_FRONT_PORCH && timing_scanline < MODE_V_FRONT_PORCH + MODE_V_SYNC_WIDTH)
+    if(timing_scanline >= DPI_MODE_V_FRONT_PORCH && timing_scanline < DPI_MODE_V_FRONT_PORCH + DPI_MODE_V_SYNC_WIDTH)
       pio_sm_put(pio, timing_sm, vsync_line_timings[timing_offset]); // v sync
-    else if(timing_scanline < MODE_V_FRONT_PORCH + MODE_V_SYNC_WIDTH + MODE_V_BACK_PORCH)
+    else if(timing_scanline < DPI_MODE_V_FRONT_PORCH + DPI_MODE_V_SYNC_WIDTH + DPI_MODE_V_BACK_PORCH)
       pio_sm_put(pio, timing_sm, vblank_line_timings[timing_offset]); // v blank
     else
       pio_sm_put(pio, timing_sm, active_line_timings[timing_offset]); // active
@@ -169,25 +190,25 @@ void init_display() {
     return instr                                   << 16
          | (delay - 3)                             <<  3 // two cycles from setup, one for the first loop iteration
          //| (de ? 1 : 0) << 2 // TODO
-         | (vsync == MODE_V_SYNC_POLARITY ? 1 : 0) <<  1
-         | (hsync == MODE_H_SYNC_POLARITY ? 1 : 0) <<  0;
+         | (vsync == DPI_MODE_V_SYNC_POLARITY ? 1 : 0) <<  1
+         | (hsync == DPI_MODE_H_SYNC_POLARITY ? 1 : 0) <<  0;
   };
 
   //                                     instr                           vbl    hbl    de     delay
-  active_line_timings[0] = encode_timing(pio_encode_nop(),               false, true,  false, MODE_H_SYNC_WIDTH);
-  active_line_timings[1] = encode_timing(pio_encode_nop(),               false, false, false, MODE_H_BACK_PORCH);
-  active_line_timings[2] = encode_timing(pio_encode_irq_set(false, 4),   false, false, true,  MODE_H_ACTIVE_PIXELS);
-  active_line_timings[3] = encode_timing(pio_encode_irq_clear(false, 4), false, false, false, MODE_H_FRONT_PORCH);
+  active_line_timings[0] = encode_timing(pio_encode_nop(),               false, true,  false, DPI_MODE_H_SYNC_WIDTH);
+  active_line_timings[1] = encode_timing(pio_encode_nop(),               false, false, false, DPI_MODE_H_BACK_PORCH);
+  active_line_timings[2] = encode_timing(pio_encode_irq_set(false, 4),   false, false, true,  DPI_MODE_H_ACTIVE_PIXELS);
+  active_line_timings[3] = encode_timing(pio_encode_irq_clear(false, 4), false, false, false, DPI_MODE_H_FRONT_PORCH);
 
-  vblank_line_timings[0] = encode_timing(pio_encode_nop(),               false, true,  false, MODE_H_SYNC_WIDTH);
-  vblank_line_timings[1] = encode_timing(pio_encode_nop(),               false, false, false, MODE_H_BACK_PORCH);
-  vblank_line_timings[2] = encode_timing(pio_encode_nop(),               false, false, false, MODE_H_ACTIVE_PIXELS);
-  vblank_line_timings[3] = encode_timing(pio_encode_nop(),               false, false, false, MODE_H_FRONT_PORCH);
+  vblank_line_timings[0] = encode_timing(pio_encode_nop(),               false, true,  false, DPI_MODE_H_SYNC_WIDTH);
+  vblank_line_timings[1] = encode_timing(pio_encode_nop(),               false, false, false, DPI_MODE_H_BACK_PORCH);
+  vblank_line_timings[2] = encode_timing(pio_encode_nop(),               false, false, false, DPI_MODE_H_ACTIVE_PIXELS);
+  vblank_line_timings[3] = encode_timing(pio_encode_nop(),               false, false, false, DPI_MODE_H_FRONT_PORCH);
 
-  vsync_line_timings[0]  = encode_timing(pio_encode_nop(),               true,  true,  false, MODE_H_SYNC_WIDTH);
-  vsync_line_timings[1]  = encode_timing(pio_encode_nop(),               true,  false, false, MODE_H_BACK_PORCH);
-  vsync_line_timings[2]  = encode_timing(pio_encode_nop(),               true,  false, false, MODE_H_ACTIVE_PIXELS);
-  vsync_line_timings[3]  = encode_timing(pio_encode_nop(),               true,  false, false, MODE_H_FRONT_PORCH);
+  vsync_line_timings[0]  = encode_timing(pio_encode_nop(),               true,  true,  false, DPI_MODE_H_SYNC_WIDTH);
+  vsync_line_timings[1]  = encode_timing(pio_encode_nop(),               true,  false, false, DPI_MODE_H_BACK_PORCH);
+  vsync_line_timings[2]  = encode_timing(pio_encode_nop(),               true,  false, false, DPI_MODE_H_ACTIVE_PIXELS);
+  vsync_line_timings[3]  = encode_timing(pio_encode_nop(),               true,  false, false, DPI_MODE_H_FRONT_PORCH);
 
   // setup timing program
   int num_sync_pins = 2; // h/v sync
@@ -201,8 +222,8 @@ void init_display() {
 
   pio_sm_config cfg = dpi_timing_program_get_default_config(pio_offset);
 
-  const int clkdiv = clock_get_hz(clk_sys) / (MODE_CLOCK * 2);
-  assert(clock_get_hz(clk_sys) / clkdiv == MODE_CLOCK * 2);
+  const int clkdiv = clock_get_hz(clk_sys) / (DPI_MODE_CLOCK * 2);
+  assert(clock_get_hz(clk_sys) / clkdiv == DPI_MODE_CLOCK * 2);
   sm_config_set_clkdiv_int_frac(&cfg, clkdiv, 0);
 
   sm_config_set_out_shift(&cfg, false, true, 32);
@@ -227,7 +248,7 @@ void init_display() {
   pio_sm_init(pio, data_sm, pio_offset, &cfg);
 
   // init Y register
-  pio_sm_put(pio, data_sm, MODE_H_ACTIVE_PIXELS - 1);
+  pio_sm_put(pio, data_sm, DPI_MODE_H_ACTIVE_PIXELS - 1);
   pio_sm_exec(pio, data_sm, pio_encode_out(pio_y, 32));
 
   // init pins
@@ -268,7 +289,7 @@ void init_display() {
       &c,
       &pio->txf[data_sm],
       cur_display_buffer,
-      MODE_H_ACTIVE_PIXELS,
+      DPI_MODE_H_ACTIVE_PIXELS,
       false
     );
   }
@@ -316,10 +337,10 @@ bool display_mode_supported(blit::ScreenMode new_mode, const blit::SurfaceTempla
 
   const int min_size = 96; // clamp smallest size
 
-  if(w < min_size || MODE_H_ACTIVE_PIXELS % w > 1) // allow a little rounding (it'll be filled with black)
+  if(w < min_size || DPI_MODE_H_ACTIVE_PIXELS % w > 1) // allow a little rounding (it'll be filled with black)
     return false;
 
-  if(h < min_size || MODE_V_ACTIVE_LINES % h)
+  if(h < min_size || DPI_MODE_V_ACTIVE_LINES % h)
     return false;
 
   return true;
@@ -339,8 +360,8 @@ void display_mode_changed(blit::ScreenMode new_mode, blit::SurfaceTemplate &new_
     new_surf_template.data = display_buf_base + get_display_page_size();
 
   // set h/v repeat
-  new_h_repeat = MODE_H_ACTIVE_PIXELS / new_surf_template.bounds.w;
-  new_v_repeat = MODE_V_ACTIVE_LINES / new_surf_template.bounds.h;
+  new_h_repeat = DPI_MODE_H_ACTIVE_PIXELS / new_surf_template.bounds.w;
+  new_v_repeat = DPI_MODE_V_ACTIVE_LINES / new_surf_template.bounds.h;
 
   // check if we're actually changing scale
   if(new_v_repeat == v_repeat && new_h_repeat == h_repeat)
@@ -359,5 +380,5 @@ void display_mode_changed(blit::ScreenMode new_mode, blit::SurfaceTemplate &new_
   // reconfigure DMA channels
   // FIXME: update addr for 2nd+ line
   for(int i = 0; i < DPI_NUM_DMA_CHANNELS; i++)
-    dma_channel_set_trans_count(DPI_DMA_CH_BASE + i, MODE_H_ACTIVE_PIXELS / h_repeat, false);
+    dma_channel_set_trans_count(DPI_DMA_CH_BASE + i, DPI_MODE_H_ACTIVE_PIXELS / h_repeat, false);
 }
