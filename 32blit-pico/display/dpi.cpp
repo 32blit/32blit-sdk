@@ -79,9 +79,8 @@ static uint8_t timing_sm, data_sm;
 static uint8_t data_program_offset;
 
 // pixel/line repeat
-static uint8_t h_repeat = 0;
+static uint16_t line_width = 0;
 static uint8_t v_repeat = 0;
-static uint8_t new_h_repeat = 0;
 static uint8_t new_v_repeat = 0;
 
 static uint data_scanline = DPI_NUM_DMA_CHANNELS;
@@ -101,11 +100,12 @@ static uint32_t vsync_line_timings[4];
 // assumes data SM is idle
 static inline void update_h_repeat() {
   // update Y register
-  pio_sm_put(pio, data_sm, DPI_MODE_H_ACTIVE_PIXELS / h_repeat - 1);
+  pio_sm_put(pio, data_sm, line_width - 1);
   pio_sm_exec(pio, data_sm, pio_encode_out(pio_y, 32));
 
   // patch loop delay for repeat
   auto offset = dpi_data_16_offset_data_loop_delay;
+  int h_repeat = DPI_MODE_H_ACTIVE_PIXELS / line_width;
   auto delay = (h_repeat - 1) * 2;
   // need to add the program offset as it's a jump
   pio->instr_mem[data_program_offset + offset] = (dpi_data_16_program.instructions[offset] | pio_encode_delay(delay)) + data_program_offset;
@@ -134,13 +134,13 @@ static void __not_in_flash_func(dma_irq_handler)() {
 
     // set h/v shift
     if(need_mode_change) {
-      if(new_h_repeat != h_repeat) {
+      if(line_width != cur_surf_info.bounds.w) {
         reconfigure_data_pio = (ch - dma_hw->ch) + 1;
         hw_clear_bits(&ch->al1_ctrl, DMA_CH0_CTRL_TRIG_EN_BITS); // clear enable so line 0 won't start
       }
 
-      h_repeat = new_h_repeat;
       v_repeat = new_v_repeat;
+      line_width = cur_surf_info.bounds.w;
 
       need_mode_change = false;
     }
@@ -160,7 +160,7 @@ static void __not_in_flash_func(dma_irq_handler)() {
 
   // setup next line DMA
   int display_line = data_scanline / v_repeat;
-  auto w = DPI_MODE_H_ACTIVE_PIXELS / h_repeat;
+  auto w = line_width;
   auto fb_line_ptr = reinterpret_cast<uint16_t *>(cur_display_buffer) + display_line * w;
 
   ch->read_addr = uintptr_t(fb_line_ptr);
@@ -371,7 +371,7 @@ void update_display(uint32_t time) {
       started = true;
       dma_channel_start(DPI_DMA_CH_BASE);
       pio_set_sm_mask_enabled(pio, 1 << timing_sm | 1 << data_sm, true);
-    } else if(new_h_repeat != h_repeat || new_v_repeat != v_repeat) {
+    } else if(cur_surf_info.bounds.w != line_width || new_v_repeat != v_repeat) {
       need_mode_change = true;
     }
     do_render = false;
@@ -399,7 +399,8 @@ bool display_mode_supported(blit::ScreenMode new_mode, const blit::SurfaceTempla
 
   // width needs to be even
   // allow a little rounding (it'll be filled with black)
-  if(w < min_size || DPI_MODE_H_ACTIVE_PIXELS % w > 1 || (w & 1))
+  int repeat = DPI_MODE_H_ACTIVE_PIXELS / w;
+  if(w < min_size || DPI_MODE_H_ACTIVE_PIXELS % w > repeat + 1 || (w & 1))
     return false;
 
   if(h < min_size || DPI_MODE_V_ACTIVE_LINES % h)
@@ -422,11 +423,10 @@ void display_mode_changed(blit::ScreenMode new_mode, blit::SurfaceTemplate &new_
     new_surf_template.data = display_buf_base + get_display_page_size();
 
   // set h/v repeat
-  new_h_repeat = DPI_MODE_H_ACTIVE_PIXELS / new_surf_template.bounds.w;
   new_v_repeat = DPI_MODE_V_ACTIVE_LINES / new_surf_template.bounds.h;
 
   // check if we're actually changing scale
-  if(new_v_repeat == v_repeat && new_h_repeat == h_repeat)
+  if(new_v_repeat == v_repeat && new_surf_template.bounds.w == line_width)
     return;
 
   // don't do it yet if already started
@@ -434,13 +434,13 @@ void display_mode_changed(blit::ScreenMode new_mode, blit::SurfaceTemplate &new_
   if(started)
     return;
 
-  h_repeat = new_h_repeat;
   v_repeat = new_v_repeat;
+  line_width = new_surf_template.bounds.w;
 
   update_h_repeat();
 
   // reconfigure DMA channels
   // FIXME: update addr for 2nd+ line
   for(int i = 0; i < DPI_NUM_DMA_CHANNELS; i++)
-    dma_channel_set_trans_count(DPI_DMA_CH_BASE + i, DPI_MODE_H_ACTIVE_PIXELS / h_repeat / 2, false);
+    dma_channel_set_trans_count(DPI_DMA_CH_BASE + i, line_width / 2, false);
 }
