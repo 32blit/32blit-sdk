@@ -164,7 +164,7 @@ static void __not_in_flash_func(dma_irq_handler)() {
   auto fb_line_ptr = reinterpret_cast<uint16_t *>(cur_display_buffer) + display_line * w;
 
   ch->read_addr = uintptr_t(fb_line_ptr);
-  ch->transfer_count = w;
+  ch->transfer_count = w / 2;
 
   data_scanline++;
 }
@@ -297,7 +297,7 @@ void init_display() {
 
   cfg = dpi_data_16_program_get_default_config(pio_offset);
   sm_config_set_clkdiv_int_frac(&cfg, clkdiv, 0);
-  sm_config_set_out_shift(&cfg, false, true, 16);
+  sm_config_set_out_shift(&cfg, true, true, 32);
   sm_config_set_out_pins(&cfg, DPI_DATA_PIN_BASE, num_data_pins);
   sm_config_set_fifo_join(&cfg, PIO_FIFO_JOIN_TX);
 
@@ -343,7 +343,6 @@ void init_display() {
 
     channel_config_set_chain_to(&c, DPI_DMA_CH_BASE + next_chan);
     channel_config_set_dreq(&c, pio_get_dreq(pio, data_sm, true));
-    channel_config_set_transfer_data_size(&c, DMA_SIZE_16);
 
     dma_channel_configure(
       DPI_DMA_CH_BASE + i,
@@ -398,7 +397,9 @@ bool display_mode_supported(blit::ScreenMode new_mode, const blit::SurfaceTempla
 
   const int min_size = 96; // clamp smallest size
 
-  if(w < min_size || DPI_MODE_H_ACTIVE_PIXELS % w > 1) // allow a little rounding (it'll be filled with black)
+  // width needs to be even
+  // allow a little rounding (it'll be filled with black)
+  if(w < min_size || DPI_MODE_H_ACTIVE_PIXELS % w > 1 || (w & 1))
     return false;
 
   if(h < min_size || DPI_MODE_V_ACTIVE_LINES % h)
@@ -441,5 +442,5 @@ void display_mode_changed(blit::ScreenMode new_mode, blit::SurfaceTemplate &new_
   // reconfigure DMA channels
   // FIXME: update addr for 2nd+ line
   for(int i = 0; i < DPI_NUM_DMA_CHANNELS; i++)
-    dma_channel_set_trans_count(DPI_DMA_CH_BASE + i, DPI_MODE_H_ACTIVE_PIXELS / h_repeat, false);
+    dma_channel_set_trans_count(DPI_DMA_CH_BASE + i, DPI_MODE_H_ACTIVE_PIXELS / h_repeat / 2, false);
 }
