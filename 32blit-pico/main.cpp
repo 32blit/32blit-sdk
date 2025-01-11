@@ -195,10 +195,10 @@ void core1_main() {
 
 #else
 static void alarm_callback(uint alarm_num) {
-  update_audio(::now());
-
   timer_hw->intr = 1 << alarm_num;
   hardware_alarm_set_target(alarm_num, make_timeout_time_ms(5));
+
+  update_audio(::now());
 }
 #endif
 
