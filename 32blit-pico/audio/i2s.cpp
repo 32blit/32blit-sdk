@@ -16,7 +16,7 @@
 
 #define AUDIO_SAMPLE_FREQ 44100
 #define AUDIO_BUFFER_SIZE 256
-#define AUDIO_NUM_BUFFERS 2
+#define AUDIO_NUM_BUFFERS 3
 
 static int16_t audio_buffer[AUDIO_BUFFER_SIZE * AUDIO_NUM_BUFFERS];
 static volatile bool queue_full = false;
