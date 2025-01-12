@@ -6,6 +6,7 @@
 #include "hardware/clocks.h"
 #include "hardware/dma.h"
 #include "hardware/pio.h"
+#include "hardware/sync.h"
 
 #include "audio/audio.hpp"
 
@@ -18,9 +19,10 @@
 #define AUDIO_NUM_BUFFERS 2
 
 static int16_t audio_buffer[AUDIO_BUFFER_SIZE * AUDIO_NUM_BUFFERS];
-static volatile int need_refill = AUDIO_NUM_BUFFERS;
+static volatile bool queue_full = false;
+static volatile bool underflow = true;
 static int cur_read_buffer_index = 1;
-static int cur_write_buffer_index = 1;
+static int cur_write_buffer_index = 0;
 
 // track offset if we limit samples pre update
 #ifdef AUDIO_MAX_SAMPLE_UPDATE
@@ -36,13 +38,13 @@ static void __not_in_flash_func(i2s_irq_handler)() {
 
   dma_irqn_acknowledge_channel(dma_irq, dma_channel);
 
-  if(need_refill < AUDIO_NUM_BUFFERS - 1)
-    need_refill++;
+  underflow = !queue_full && cur_read_buffer_index == cur_write_buffer_index;
 
   // setup for next buffer
-  dma_channel_set_read_addr(dma_channel, audio_buffer + cur_read_buffer_index * AUDIO_BUFFER_SIZE, true);
+  dma_channel_set_read_addr(dma_channel, audio_buffer + cur_read_buffer_index * AUDIO_BUFFER_SIZE, !underflow);
 
   cur_read_buffer_index = (cur_read_buffer_index + 1) % AUDIO_NUM_BUFFERS;
+  queue_full = false;
 }
 
 void init_audio() {
@@ -101,41 +103,51 @@ void init_audio() {
   irq_set_enabled(DMA_IRQ_0 + dma_irq, true);
 
   // start
-  dma_channel_start(dma_channel);
   pio_sm_set_enabled(audio_pio, pio_sm, true);
 }
 
 void update_audio(uint32_t time) {
- if(need_refill) {
-  auto buffer = audio_buffer + cur_write_buffer_index * AUDIO_BUFFER_SIZE;
+  if(!queue_full) {
+    auto buffer = audio_buffer + cur_write_buffer_index * AUDIO_BUFFER_SIZE;
 
-  int count = AUDIO_BUFFER_SIZE;
+    int count = AUDIO_BUFFER_SIZE;
 
-#ifdef AUDIO_MAX_SAMPLE_UPDATE
-  count -= refill_offset;
-  buffer += refill_offset;
-  if(count > AUDIO_MAX_SAMPLE_UPDATE)
-    count = AUDIO_MAX_SAMPLE_UPDATE;
+  #ifdef AUDIO_MAX_SAMPLE_UPDATE
+    count -= refill_offset;
+    buffer += refill_offset;
+    if(count > AUDIO_MAX_SAMPLE_UPDATE)
+      count = AUDIO_MAX_SAMPLE_UPDATE;
 
-  refill_offset += count;
-#endif
+    refill_offset += count;
+  #endif
 
-  for(int i = 0; i < count; i += 2) {
-    int val = (int)blit::get_audio_frame() - 0x8000;
-    // 22050 -> 44100
-    *buffer++ = val;
-    *buffer++ = val;
+    for(int i = 0; i < count; i += 2) {
+      int val = (int)blit::get_audio_frame() - 0x8000;
+      // 22050 -> 44100
+      *buffer++ = val;
+      *buffer++ = val;
+    }
+
+  #ifdef AUDIO_MAX_SAMPLE_UPDATE
+    if(refill_offset < AUDIO_BUFFER_SIZE)
+      return;
+
+    refill_offset = 0;
+  #endif
+
+    // prevent irq while updating queue
+    auto saved = save_and_disable_interrupts();
+
+    cur_write_buffer_index = (cur_write_buffer_index + 1) % AUDIO_NUM_BUFFERS;
+    // DMA will still be reading the prev buffer
+    queue_full = !underflow && (cur_read_buffer_index + AUDIO_NUM_BUFFERS - 1) % AUDIO_NUM_BUFFERS == cur_write_buffer_index;
+
+    restore_interrupts(saved);
+
+    // restart after underflow
+    if(underflow) {
+      underflow = false;
+      dma_channel_start(dma_channel);
+    }
   }
-
-#ifdef AUDIO_MAX_SAMPLE_UPDATE
-  if(refill_offset < AUDIO_BUFFER_SIZE)
-    return;
-
-  refill_offset = 0;
-#endif
-
-  cur_write_buffer_index = (cur_write_buffer_index + 1) % AUDIO_NUM_BUFFERS;
-
-  need_refill--;
- }
 }
