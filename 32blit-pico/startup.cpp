@@ -4,6 +4,7 @@
 #include "config.h"
 
 #ifndef BLIT_BOARD_PIMORONI_PICOVISION
+[[gnu::section(".uninitialized_data.framebuffer")]]
 static uint16_t screen_fb[FRAMEBUFFER_SIZE];
 #endif
 
