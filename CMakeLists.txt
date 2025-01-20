@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9...3.26)
+cmake_minimum_required(VERSION 3.12...3.31)
 
 # has to be before project
 include(32blit-pico/sdk_import.cmake)
