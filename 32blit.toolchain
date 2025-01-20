@@ -5,7 +5,6 @@ set(CMAKE_C_COMPILER arm-none-eabi-gcc CACHE PATH "Path to C compiler")
 set(CMAKE_CXX_COMPILER arm-none-eabi-g++ CACHE PATH "Path to C++ compiler")
 
 find_program(CMAKE_SIZE NAMES arm-none-eabi-size)
-find_program(CMAKE_READELF NAMES arm-none-eabi-readelf) # handled by CMake in 3.16+
 
 set(MCU_LINKER_SCRIPT STM32H750VBTx.ld)
 set(MCU_LINKER_FLAGS_INT -Wl,--defsym=FLASH_TARGET_INT=1)
