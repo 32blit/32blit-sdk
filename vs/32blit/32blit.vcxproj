@@ -153,7 +153,6 @@
     <ClInclude Include="..\..\32blit\engine\engine.hpp" />
     <ClInclude Include="..\..\32blit\engine\file.hpp" />
     <ClInclude Include="..\..\32blit\engine\input.hpp" />
-    <ClInclude Include="..\..\32blit\engine\output.hpp" />
     <ClInclude Include="..\..\32blit\engine\particle.hpp" />
     <ClInclude Include="..\..\32blit\engine\save.hpp" />
     <ClInclude Include="..\..\32blit\engine\timer.hpp" />
@@ -184,7 +183,6 @@
     <ClCompile Include="..\..\32blit\engine\engine.cpp" />
     <ClCompile Include="..\..\32blit\engine\file.cpp" />
     <ClCompile Include="..\..\32blit\engine\input.cpp" />
-    <ClCompile Include="..\..\32blit\engine\output.cpp" />
     <ClCompile Include="..\..\32blit\engine\particle.cpp" />
     <ClCompile Include="..\..\32blit\engine\save.cpp" />
     <ClCompile Include="..\..\32blit\engine\timer.cpp" />
