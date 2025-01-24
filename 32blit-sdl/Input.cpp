@@ -32,7 +32,7 @@ std::map<int, int> Input::keys = {
 	{SDLK_1,       blit::Button::HOME},
 	{SDLK_2,       blit::Button::MENU},
 	{SDLK_3,       blit::Button::JOYSTICK},
-  
+
   {SDLK_ESCAPE,  blit::Button::MENU},
 };
 
@@ -151,6 +151,13 @@ bool Input::handle_controller_motion(int axis, int value) {
 	return false;
 }
 
+bool Input::handle_controller_accel(float data[3]) {
+  target->set_tilt(0, -data[0]);
+  target->set_tilt(1, -data[2]);
+  target->set_tilt(2,  data[1]);
+  return true;
+}
+
 void Input::handle_controller_added(Sint32 joystick_index) {
 
   SDL_GameController* gc = SDL_GameControllerOpen(joystick_index);
@@ -200,6 +207,11 @@ void Input::_virtual_analog(int x, int y, int half_w, int half_h) {
 void Input::_add_controller(SDL_GameController* gc) {
   // welcome rumble to test if it can rumble
   auto can_rumble = SDL_GameControllerRumble(gc, 0xFFFF, 0xFFFF, 200);
+
+#if SDL_VERSION_ATLEAST(2, 0, 14)
+  // enable accelerometer if present
+  SDL_GameControllerSetSensorEnabled(gc, SDL_SENSOR_ACCEL, SDL_TRUE);
+#endif
 
   GameController gcs = {gc, can_rumble == 0};
   game_controllers.push_back(gcs);
