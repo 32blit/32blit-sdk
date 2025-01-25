@@ -87,7 +87,6 @@ namespace blit {
     blit::channels[channel].user_data = this;
     blit::channels[channel].wave_buffer_callback = &MP3Stream::static_callback;
 
-    blit::channels[channel].adsr = 0xFFFF00;
     blit::channels[channel].trigger_sustain();
   }
 
