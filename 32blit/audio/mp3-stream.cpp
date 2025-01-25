@@ -18,6 +18,9 @@ namespace blit {
 
   MP3Stream::~MP3Stream() {
     delete static_cast<mp3dec_t *>(mp3dec);
+
+    if(!file.get_ptr())
+      delete[] file_buffer;
   }
 
   bool MP3Stream::load(std::string filename, bool do_duration_calc) {
