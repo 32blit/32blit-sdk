@@ -2,6 +2,7 @@
 
 #include "audio/audio.hpp"
 #include "audio/mp3-stream.hpp"
+#include "audio/wav-stream.hpp"
 #include "engine/api.hpp"
 #include "engine/engine.hpp"
 #include "engine/fast_code.hpp"
