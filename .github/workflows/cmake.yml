@@ -110,7 +110,9 @@ jobs:
     - name: Cache
       uses: actions/cache@v4
       with:
-        path: ~/.ccache
+        path: |
+          ~/.ccache
+          ~/.cache/ccache
         key: ccache-${{matrix.cache-key}}-${{github.ref}}-${{github.sha}}
         restore-keys: |
           ccache-${{matrix.cache-key}}-${{github.ref}}
