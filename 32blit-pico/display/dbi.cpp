@@ -312,15 +312,6 @@ static void set_backlight(uint8_t brightness) {
 #endif
 }
 
-static bool vsync_callback(gpio_irq_callback_t callback) {
-#ifdef LCD_VSYNC_PIN
-  gpio_set_irq_enabled_with_callback(LCD_VSYNC_PIN, GPIO_IRQ_EDGE_RISE, true, callback);
-  return true;
-#else
-  return false;
-#endif
-}
-
 static void set_pixel_double(bool pd) {
   pixel_double = pd;
 
@@ -470,7 +461,10 @@ void init_display() {
 
   clear();
 
-  have_vsync = vsync_callback(vsync_callback);
+#ifdef LCD_VSYNC_PIN
+  gpio_set_irq_enabled_with_callback(LCD_VSYNC_PIN, GPIO_IRQ_EDGE_RISE, true, vsync_callback);
+  have_vsync =  true;
+#endif
 }
 
 void update_display(uint32_t time) {
