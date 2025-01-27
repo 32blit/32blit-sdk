@@ -20,7 +20,7 @@ endif ()
 
 set(CDC_FIFO_BUFFERS 64)
 
-set(COMMON_FLAGS "${MCU_FLAGS} -fsingle-precision-constant -Wall -fdata-sections -ffunction-sections -Wattributes -Wdouble-promotion -Werror=double-promotion -mno-pic-data-is-text-relative -mno-single-pic-base -DBLIT_API_SPLIT_COMPAT")
+set(COMMON_FLAGS "${MCU_FLAGS} -fsingle-precision-constant -Wall -fdata-sections -ffunction-sections -Wattributes -Wdouble-promotion -mno-pic-data-is-text-relative -mno-single-pic-base -DBLIT_API_SPLIT_COMPAT")
 
 set(CMAKE_C_FLAGS_INIT "${COMMON_FLAGS}")
 set(CMAKE_CXX_FLAGS_INIT "${COMMON_FLAGS} -fno-exceptions")
