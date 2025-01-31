@@ -350,6 +350,8 @@ bool System::loop() {
   blit::tilt.x = shadow_tilt[0];
   blit::tilt.y = shadow_tilt[1];
   blit::tilt.z = shadow_tilt[2];
+  blit::tilt.normalize();
+
   blit::joystick.x = shadow_joystick[0];
   blit::joystick.y = shadow_joystick[1];
   SDL_UnlockMutex(m_input);

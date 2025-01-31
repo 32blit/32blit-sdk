@@ -25,6 +25,7 @@ class Input {
 		bool handle_keyboard(int key, bool state);
 		bool handle_controller_button(int button, bool state);
 		bool handle_controller_motion(int axis, int value);
+    bool handle_controller_accel(float data[3]);
 
     // controller specific functions
     void handle_controller_added(Sint32 joystick_index);

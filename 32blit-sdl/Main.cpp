@@ -95,6 +95,13 @@ void handle_event(SDL_Event &event) {
       blit_input->handle_controller_removed(event.cdevice.which);
 			break;
 
+#if SDL_VERSION_ATLEAST(2, 0, 14)
+    case SDL_CONTROLLERSENSORUPDATE:
+      if(event.csensor.sensor == SDL_SENSOR_ACCEL)
+        blit_input->handle_controller_accel(event.csensor.data);
+      break;
+#endif
+
 		case SDL_RENDER_TARGETS_RESET:
 			std::cout << "Targets reset" << std::endl;
 			break;
