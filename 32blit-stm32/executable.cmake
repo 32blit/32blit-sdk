@@ -32,13 +32,7 @@ function(blit_executable NAME)
 
 	add_executable(${NAME} ${USER_STARTUP} ${SOURCES})
 
-	# Ideally we want the .blit filename to match the .elf, but TARGET_FILE_BASE_NAME isn't always available
-	# (This only affects the firmware updater as it's the only thing setting a custom OUTPUT_NAME)
-	if(${CMAKE_VERSION} VERSION_LESS "3.15.0")
-		set(BLIT_FILENAME ${NAME}.blit)
-	else()
-		set(BLIT_FILENAME $<TARGET_FILE_BASE_NAME:${NAME}>.blit)
-	endif()
+	set(BLIT_FILENAME $<TARGET_FILE_BASE_NAME:${NAME}>.blit)
 
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${BLIT_FILENAME}
 		DESTINATION bin
@@ -80,11 +74,7 @@ function(blit_metadata TARGET FILE)
 
 	include(${CMAKE_CURRENT_BINARY_DIR}/metadata.cmake)
 
-	if(${CMAKE_VERSION} VERSION_LESS "3.15.0")
-		set(BLIT_FILENAME ${TARGET}.blit)
-	else()
-		set(BLIT_FILENAME $<TARGET_FILE_BASE_NAME:${TARGET}>.blit)
-	endif()
+	set(BLIT_FILENAME $<TARGET_FILE_BASE_NAME:${TARGET}>.blit)
 
 	add_custom_command(
 		TARGET ${TARGET} POST_BUILD
