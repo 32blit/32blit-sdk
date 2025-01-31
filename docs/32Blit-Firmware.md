@@ -72,7 +72,7 @@ If you currently have a working firmware, you can flash a new firmware without u
 make firmware-update.flash
 ```
 
-Alternatively, you can run `make firmware-update` and install the resulting `firmware-update/firmware-update.blit` with any of the methods described [here](32blit.md#uploading-an-example).
+Alternatively, you can run `make firmware-update` and install the resulting `32blit-stm32/firmware-update/firmware-update.blit` with any of the methods described [here](32blit.md#uploading-an-example).
 
 ### Prepare the device
 
@@ -85,7 +85,7 @@ To enter DFU mode either hold the X & Y buttons and press the reset button or se
 Install `dfu-util` from your package manager then enter:
 
 ```
-sudo dfu-util -a 0 -s 0x08000000 -D firmware/firmware.bin
+sudo dfu-util -a 0 -s 0x08000000 -D 32blit-stm32/firmware/firmware.bin
 ```
 
 ### Windows
@@ -95,14 +95,14 @@ You will need [DfuSe Demonstration from st.com](https://www.st.com/en/developmen
 Once installed you should be able, from the `build.stm32` directory you created earlier, to flash 32Blit's firmware by running:
 
 ```
-../tools/wsl-flash firmware/firmware.dfu
+../tools/wsl-flash 32blit-stm32/firmware/firmware.dfu
 ```
 
 Note: `wsl-flash` uses a hard-coded path to DfuSe 3.0.6 in `c:\Program Files (x86)`
 
 If this fails you can run the `DfusSeDemo` application and pick your 32Blit (it should be "STM Device in DFU Mode") from the "Available USB Devices" drop down.
 
-In the "Upload Action" section hit "Choose" and select the `firmware.dfu` file you built earlier. (It should be in `build.stm32/firmware/firmware.dfu`) and finally hit "Upgrade" to flash the file.
+In the "Upload Action" section hit "Choose" and select the `firmware.dfu` file you built earlier. (It should be in `build.stm32/32blit-stm32/firmware/firmware.dfu`) and finally hit "Upgrade" to flash the file.
 
 ## Flashing a launcher
 Flashing a launcher is similar to [flashing a game/example](32blit.md#uploading-an-example), run `make launcher` and the output is `launcher/launcher.blit`. `launcher.blit` is automatically flashed from the SD card if it exists.

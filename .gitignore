@@ -342,14 +342,14 @@ build/
 
 # STM32 CubeMX Project Output (should be manually synced to 32blit-stm32 tree)
 .vscode/
-hardware/.mxproject
-hardware/Drivers/
-hardware/Inc/
-hardware/Makefile
-hardware/Middlewares/
-hardware/STM32H750VBTx_FLASH.ld
-hardware/Src/
-hardware/startup_stm32h750xx.s
+32blit-stm32/hardware/.mxproject
+32blit-stm32/hardware/Drivers/
+32blit-stm32/hardware/Inc/
+32blit-stm32/hardware/Makefile
+32blit-stm32/hardware/Middlewares/
+32blit-stm32/hardware/STM32H750VBTx_FLASH.ld
+32blit-stm32/hardware/Src/
+32blit-stm32/hardware/startup_stm32h750xx.s
 
 #CMAKE from https://github.com/github/gitignore/blob/master/CMake.gitignore
 CMakeLists.txt.user
