@@ -119,24 +119,17 @@ namespace i2c {
         i2c_state = PROC_ACL;
         break;
       case PROC_ACL:
-        // LIS3DH & MSA301 - 12-bit left-justified
+        // LIS3DH - 12-bit left-justified
+        // MSA301 - 14-bit left-justified
         accel_x.add(((int8_t)i2c_buffer[1] << 6) | (i2c_buffer[0] >> 2));
         accel_y.add(((int8_t)i2c_buffer[3] << 6) | (i2c_buffer[2] >> 2));
         accel_z.add(((int8_t)i2c_buffer[5] << 6) | (i2c_buffer[4] >> 2));
 
-        if(is_beta_unit){
-          blit::tilt = Vec3(
-            accel_x.average(),
-            accel_y.average(),
-            -accel_z.average()
-          );
-        } else {
-          blit::tilt = Vec3(
-            -accel_x.average(),
-            -accel_y.average(),
-            -accel_z.average()
-          );
-        }
+        blit::tilt = Vec3(
+          -accel_x.average(),
+          -accel_y.average(),
+          -accel_z.average()
+        );
 
         blit::tilt.normalize();
 
