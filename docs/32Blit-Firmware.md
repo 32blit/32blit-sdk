@@ -85,7 +85,7 @@ To enter DFU mode either hold the X & Y buttons and press the reset button or se
 Install `dfu-util` from your package manager then enter:
 
 ```
-sudo dfu-util -a 0 -s 0x08000000 -D 32blit-stm32/firmware/firmware.bin
+sudo dfu-util -a 0 -D 32blit-stm32/firmware/firmware.dfu
 ```
 
 ### Windows
