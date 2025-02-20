@@ -97,6 +97,8 @@ void init_usb() {
 
 void update_usb() {
   tud_task();
+
+  usb_cdc_update();
 }
 
 void usb_debug(const char *message) {
