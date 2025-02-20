@@ -289,6 +289,12 @@ static void prepare_write() {
 static void update() {
   dma_channel_wait_for_finish_blocking(dma_channel);
 
+  // update window if needed
+  auto expected_win = cur_surf_info.bounds * (pixel_double ? 2 : 1);
+
+  if(expected_win.w != win_w || expected_win.h != win_h)
+    set_window((DISPLAY_WIDTH - expected_win.w) / 2, (DISPLAY_HEIGHT - expected_win.h) / 2, expected_win.w, expected_win.h);
+
   if(!write_mode)
     prepare_write();
 
@@ -508,10 +514,10 @@ bool display_mode_supported(blit::ScreenMode new_mode, const blit::SurfaceTempla
   if(new_surf_template.format != blit::PixelFormat::RGB565)
     return false;
 
-  // TODO: could allow smaller sizes with window
+  // allow any size that will fit
   blit::Size expected_bounds(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
-  if(new_surf_template.bounds == expected_bounds || new_surf_template.bounds == expected_bounds / 2)
+  if(new_surf_template.bounds.w <= expected_bounds.w && new_surf_template.bounds.h <= expected_bounds.h)
     return true;
 
   return false;
