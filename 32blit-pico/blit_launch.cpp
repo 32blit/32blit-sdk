@@ -306,6 +306,19 @@ blit::CanLaunchResult can_launch(const char *path) {
   return blit::CanLaunchResult::UnknownType;
 }
 
+void launch_pre_init() {
+  // reset api state before launching new game
+  blit::api_data.buttons = {0, 0, 0};
+
+  blit::api_data.LED = {0, 0, 0};
+  blit::api_data.vibration = 0.0f;
+  blit::api_data.message_received = nullptr;
+  blit::api_data.i2c_completed = nullptr;
+
+  for(int i = 0; i < CHANNEL_COUNT; i++)
+    blit::api.channels[i] = blit::AudioChannel();
+}
+
 void delayed_launch() {
   if(!requested_launch_offset)
     return;
@@ -332,6 +345,8 @@ void delayed_launch() {
 
   current_game_offset = requested_launch_offset;
   requested_launch_offset = 0;
+
+  launch_pre_init();
 
   if(!header->init(0)) {
     blit::debugf("failed to init game!\n");
