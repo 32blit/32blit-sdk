@@ -43,8 +43,6 @@ static void debug(const char *message) {
   auto p = message;
   while(*p)
     putchar(*p++);
-
-  usb_debug(message);
 }
 
 static uint32_t get_us_timer() {

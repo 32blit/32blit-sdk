@@ -170,6 +170,9 @@ endif()
 target_compile_definitions(BlitHalPico INTERFACE ${BLIT_BOARD_DEFINITIONS})
 target_link_libraries(BlitHalPico INTERFACE ${BLIT_BOARD_LIBRARIES})
 
+# for enabling stdio_usb
+set(BLIT_USB_DRIVER ${BLIT_USB_DRIVER} PARENT_SCOPE)
+
 # functions
 function(blit_executable NAME)
     message(STATUS "Processing ${NAME}")
@@ -180,7 +183,9 @@ function(blit_executable NAME)
     target_link_libraries(${NAME} BlitHalPico BlitEngine)
 
     pico_enable_stdio_uart(${NAME} 1)
-    pico_enable_stdio_usb(${NAME} 0)
+    if(NOT BLIT_USB_DRIVER STREQUAL "host")
+        pico_enable_stdio_usb(${NAME} 1)
+    endif()
 
     pico_add_extra_outputs(${NAME})
 

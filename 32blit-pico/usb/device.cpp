@@ -99,14 +99,6 @@ void update_usb() {
   tud_task();
 }
 
-void usb_debug(const char *message) {
-  if(!tud_cdc_connected())
-    return;
-
-  auto len = strlen(message);
-  usb_cdc_write((uint8_t *)message, len);
-}
-
 bool usb_cdc_connected() {
   // tud_cdc_connected returns false with STM32 USB host
   return tud_ready(); //tud_cdc_connected();

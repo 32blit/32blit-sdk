@@ -181,10 +181,6 @@ void update_usb() {
   // TODO: resend multiplayer handshake
 }
 
-void usb_debug(const char *message) {
-
-}
-
 bool usb_cdc_connected() {
   return tuh_cdc_mounted(cdc_index);
 }
