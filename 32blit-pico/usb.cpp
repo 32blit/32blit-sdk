@@ -75,7 +75,6 @@ public:
 
           // end of string
           if(*buf_ptr == 0) {
-            printf("PROG: file %s\n", buf.get_data());
             parse_state = ParseState::Length;
             buf.reset();
             continue;
@@ -98,7 +97,6 @@ public:
           // end of string
           if(*buf_ptr == 0) {
             auto file_len = strtoul((const char *)buf.get_data(), nullptr, 10);
-            printf("PROG: len %lu\n", file_len);
             parse_state = ParseState::Data;
             buf.reset();
 

@@ -467,8 +467,6 @@ bool BlitWriter::prepare_write(const uint8_t *buf) {
   }
 #endif
 
-  printf("PROG: flash off %lu\n", flash_offset);
-
   disable_user_code();
 
   // erase flash
