@@ -10,7 +10,10 @@ else()
 endif()
 
 pico_enable_stdio_uart(blit-loader 1)
-pico_enable_stdio_usb(blit-loader 0)
+if(NOT BLIT_USB_DRIVER STREQUAL "host")
+    pico_enable_stdio_usb(blit-loader 1)
+    target_compile_definitions(blit-loader PRIVATE PICO_STDIO_USB_ENABLE_RESET_VIA_BAUD_RATE=1 PICO_STDIO_USB_RESET_MAGIC_BAUD_RATE=1200 PICO_STDIO_USB_RESET_BOOTSEL_INTERFACE_DISABLE_MASK=0)
+endif()
 
 pico_add_extra_outputs(blit-loader)
 
