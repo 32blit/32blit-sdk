@@ -55,6 +55,31 @@ private:
   uint32_t offset = 0;
 };
 
+/*
+  Helper to read a string
+  returns Done when the string is ready (in buf.get_ptr())
+  returns Error when we've reached the max length without a terminator
+  returns Continue when there is currently no more data to read
+*/
+static CDCCommand::Status cdc_read_string(CDCParseBuffer &buf, uint32_t max_len) {
+  while(true) {
+    auto buf_ptr = buf.get_current_ptr();
+
+    if(!usb_cdc_read(buf_ptr, 1))
+      return CDCCommand::Status::Continue;
+
+    // end of string
+    if(*buf_ptr == 0)
+      return CDCCommand::Status::Done;
+
+    buf.add_read(1);
+
+    // too long
+    if(buf.get_offset() == max_len)
+      return CDCCommand::Status::Error;
+  }
+}
+
 class CDCProgCommand final : public CDCCommand {
 public:
   CDCProgCommand(CDCParseBuffer &buf) : buf(buf) {}
@@ -69,33 +94,19 @@ public:
     while(true) {
       switch(parse_state) {
         case ParseState::Filename: {
-          auto buf_ptr = buf.get_current_ptr();
-          if(!usb_cdc_read(buf_ptr, 1))
-            return Status::Continue;
-
-          // end of string
-          if(*buf_ptr == 0) {
+          auto status = cdc_read_string(buf, MAX_FILENAME);
+          if(status == Status::Done) {
             parse_state = ParseState::Length;
             buf.reset();
             continue;
           }
 
-          buf.add_read(1);
-
-          // too long
-          if(buf.get_offset() == MAX_FILENAME)
-            return Status::Error;
-
-          break;
+          return status;
         }
 
         case ParseState::Length: {
-          auto buf_ptr = buf.get_current_ptr();
-          if(!usb_cdc_read(buf_ptr, 1))
-            return Status::Continue;
-
-          // end of string
-          if(*buf_ptr == 0) {
+          auto status = cdc_read_string(buf, MAX_FILELEN);
+          if(status == Status::Done) {
             auto file_len = strtoul((const char *)buf.get_data(), nullptr, 10);
             parse_state = ParseState::Data;
             buf.reset();
@@ -104,13 +115,7 @@ public:
             continue;
           }
 
-          buf.add_read(1);
-
-          // too long
-          if(buf.get_offset() == MAX_FILELEN)
-            return Status::Error;
-
-          break;
+          return status;
         }
 
         case ParseState::Data: {
@@ -211,25 +216,12 @@ public:
   }
 
   Status update() override {
-    while(true) {
-        auto buf_ptr = buf.get_current_ptr();
-        if(!usb_cdc_read(buf_ptr, 1))
-          return Status::Continue;
+    auto status = cdc_read_string(buf, MAX_FILENAME);
 
-        // end of string
-        if(*buf_ptr == 0) {
-          blit::api.launch((const char *)buf.get_data());
-          return Status::Done;
-        }
+    if(status == Status::Done)
+      blit::api.launch((const char *)buf.get_data());
 
-        buf.add_read(1);
-
-        // too long
-        if(buf.get_offset() == MAX_FILENAME)
-          return Status::Error;
-    }
-
-    return Status::Continue;
+    return status;
   }
 
   CDCParseBuffer &buf;
