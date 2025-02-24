@@ -212,13 +212,13 @@ int main() {
   set_sys_clock_khz(250000, false);
 #endif
 
+  init_usb();
   stdio_init_all();
 
   init_led();
   init_display();
   init_input();
   init_fs();
-  init_usb();
 #if !defined(ENABLE_CORE1)
   init_audio();
 #endif
