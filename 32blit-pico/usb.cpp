@@ -170,6 +170,98 @@ public:
   BlitWriter writer;
 };
 
+class CDCSaveCommand final : public CDCCommand {
+public:
+  CDCSaveCommand(CDCParseBuffer &buf) : buf(buf) {}
+
+  void init() override {
+    parse_state = ParseState::Filename;
+    buf.reset();
+  }
+
+  Status update() override {
+    while(true) {
+      switch(parse_state) {
+        case ParseState::Filename: {
+          auto status = cdc_read_string(buf, MAX_FILENAME);
+          if(status == Status::Done) {
+            auto filename = (const char *)buf.get_data();
+
+            file = blit::api.open_file(filename, blit::OpenMode::write);
+            if(!file) {
+              blit::debugf("Failed to open %s", filename);
+              return Status::Error;
+            }
+
+            parse_state = ParseState::Length;
+            buf.reset();
+            continue;
+          }
+
+          return status;
+        }
+
+        case ParseState::Length: {
+          auto status = cdc_read_string(buf, MAX_FILELEN);
+          if(status == Status::Done) {
+            file_length = strtoul((const char *)buf.get_data(), nullptr, 10);
+            parse_state = ParseState::Data;
+            buf.reset();
+            continue;
+          }
+
+          return status;
+        }
+
+        case ParseState::Data: {
+          // read data
+          auto max = std::min(uint32_t(FLASH_PAGE_SIZE), file_length - file_offset);
+          auto read = usb_cdc_read(buf.get_current_ptr(), max);
+
+          if(!read)
+            return Status::Continue;
+
+          // write whatever we got, the fs is going to buffer anyway
+          auto written = blit::api.write_file(file, file_offset, read, (const char *)buf.get_data());
+          if(written != read) {
+            blit::api.close_file(file);
+            return Status::Error;
+          }
+
+          file_offset += read;
+
+          // end of file
+          if(file_offset == file_length) {
+            blit::api.close_file(file);
+
+            // send response
+            uint8_t res_data[]{'3', '2', 'B', 'L', '_', '_', 'O', 'K'};
+            usb_cdc_write(res_data, sizeof(res_data));
+            usb_cdc_flush_write();
+
+            return Status::Done;
+          }
+
+          break;
+        }
+      }
+    }
+
+    return Status::Continue;
+  }
+
+  enum class ParseState {
+    Filename,
+    Length,
+    Data
+  } parse_state = ParseState::Filename;
+
+  CDCParseBuffer &buf;
+
+  void *file = nullptr;
+  uint32_t file_length = 0, file_offset = 0;
+};
+
 class CDCListCommand final : public CDCCommand {
   void init() override {
   }
@@ -264,6 +356,7 @@ static CDCUserCommand user_command;
 #define FLASH_COMMANDS
 static CDCParseBuffer parse_buffer;
 static CDCProgCommand prog_command(parse_buffer);
+static CDCSaveCommand save_command(parse_buffer);
 static CDCListCommand list_command;
 static CDCLaunchCommand launch_command(parse_buffer);
 static CDCEraseCommand erase_command(parse_buffer);
@@ -275,6 +368,7 @@ const std::tuple<uint32_t, CDCCommand *> cdc_commands[]{
 
 #ifdef FLASH_COMMANDS
   {to_cmd_id("PROG"), &prog_command},
+  {to_cmd_id("SAVE"), &save_command},
   {to_cmd_id("__LS"), &list_command},
   {to_cmd_id("LNCH"), &launch_command},
   {to_cmd_id("ERSE"), &erase_command},
