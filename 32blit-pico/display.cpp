@@ -95,6 +95,10 @@ bool set_screen_mode_format(ScreenMode new_mode, SurfaceTemplate &new_surf_templ
 
   cur_screen_mode = new_mode;
 
+#ifdef BUILD_LOADER
+  screen = Surface(new_surf_template.data, new_surf_template.format, new_surf_template.bounds);
+#endif
+
   return true;
 }
 
