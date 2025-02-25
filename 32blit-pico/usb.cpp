@@ -176,6 +176,7 @@ public:
 
   void init() override {
     parse_state = ParseState::Filename;
+    file_offset = 0;
     buf.reset();
   }
 
