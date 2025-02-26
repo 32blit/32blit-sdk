@@ -136,7 +136,7 @@ if (NOT DEFINED BLIT_ONCE)
 
 		include(${CMAKE_CURRENT_LIST_DIR}/32blit-stm32/executable.cmake)
 	elseif(PICO_SDK_PATH)
-		add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/32blit-pico 32blit-pico)
+		include(${CMAKE_CURRENT_LIST_DIR}/32blit-pico/executable.cmake)
 	else()
 		add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/32blit-sdl 32blit-sdl)
 	endif()
