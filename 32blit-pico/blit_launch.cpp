@@ -12,6 +12,7 @@
 
 #include "blit_launch.hpp"
 #include "file.hpp"
+#include "overlay.hpp"
 
 #include "engine/engine.hpp"
 #include "engine/file.hpp"
@@ -389,6 +390,13 @@ void erase_game(uint32_t offset) {
   // fall back to one block if size unknown
   auto num_blocks = size == 0 ? 1 : calc_num_blocks(size);
 
+  // we can't display progress unless we break up the erase...
+  set_render_overlay_enabled(true);
+  set_overlay_message("Erasing flash...");
+  set_overlay_progress(0, 0);
+  // make sure the message is displayed before we disable interrupts/core1
+  overlay_try_render(true);
+
   // do erase
   auto status = save_and_disable_interrupts();
 
@@ -403,6 +411,8 @@ void erase_game(uint32_t offset) {
     multicore_lockout_end_blocking(); // resume core1
 
   restore_interrupts(status);
+
+  set_render_overlay_enabled(false);
 #endif
 }
 
