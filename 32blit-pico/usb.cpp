@@ -108,6 +108,11 @@ public:
         case ParseState::Filename: {
           auto status = cdc_read_string(buf, MAX_FILENAME);
           if(status == Status::Done) {
+            // setup progress message
+            char message_buf[300];
+            snprintf(message_buf, sizeof(message_buf), "Saving %s... to flash", buf.get_data());
+            cdc_command_progress(message_buf, 0, 0);
+
             parse_state = ParseState::Length;
             buf.reset();
             continue;
@@ -122,6 +127,8 @@ public:
             auto file_len = strtoul((const char *)buf.get_data(), nullptr, 10);
             parse_state = ParseState::Data;
             buf.reset();
+
+            cdc_command_progress(nullptr, 0, file_len);
 
             writer.init(file_len);
             continue;
@@ -146,11 +153,15 @@ public:
             if(!writer.write(buf.get_data(), buf_off))
               return Status::Error;
 
+            cdc_command_progress(nullptr, writer.get_offset(), writer.get_length());
+
             buf.reset();
           }
 
           // end of file
           if(writer.get_remaining() == 0) {
+            cdc_command_progress(nullptr, 0, 0); // clear progress
+
             // send response
             auto block = writer.get_flash_offset() >> 16;
             uint8_t res_data[]{'3', '2', 'B', 'L', '_', '_', 'O', 'K', uint8_t(block), uint8_t(block >> 8)};

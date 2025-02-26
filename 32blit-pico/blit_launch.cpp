@@ -440,6 +440,14 @@ bool BlitWriter::write(const uint8_t *buf, uint32_t len) {
   return true;
 }
 
+uint32_t BlitWriter::get_offset() const {
+  return file_offset;
+}
+
+uint32_t BlitWriter::get_length() const {
+  return file_len;
+}
+
 uint32_t BlitWriter::get_remaining() const {
   return file_len - file_offset;
 }

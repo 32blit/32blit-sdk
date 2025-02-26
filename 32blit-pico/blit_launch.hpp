@@ -25,6 +25,8 @@ public:
 
   bool write(const uint8_t *buf, uint32_t len);
 
+  uint32_t get_offset() const;
+  uint32_t get_length() const;
   uint32_t get_remaining() const;
   uint32_t get_flash_offset() const;
 
