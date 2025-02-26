@@ -25,7 +25,7 @@ static void overlay_render(uint32_t time) {
 }
 
 void set_render_overlay_enabled(bool enabled) {
-  if(enabled && !orig_render) {
+  if(enabled && blit::render != overlay_render) {
     orig_render = blit::render;
     blit::render = overlay_render;
   } else if(!enabled && orig_render) {
