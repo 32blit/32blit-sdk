@@ -8,6 +8,7 @@ static void(*orig_render)(uint32_t) = nullptr;
 
 static std::string message;
 static uint32_t progress_value = 0, progress_total = 0;
+static bool render_flag = false;
 
 static void overlay_render(uint32_t time) {
   // TODO: don't want to do this if we add a menu to avoid the problems the stm32 firmware has...
@@ -22,6 +23,8 @@ static void overlay_render(uint32_t time) {
     uint32_t progress_width = float(progress_value) / progress_total * (screen.bounds.w - 10);
     screen.rectangle(Rect(5, screen.bounds.h - 10, progress_width, 5));
   }
+
+  render_flag = false;
 }
 
 void set_render_overlay_enabled(bool enabled) {
@@ -41,4 +44,11 @@ void set_overlay_message(std::string_view text) {
 void set_overlay_progress(uint32_t value, uint32_t total) {
   progress_value = value;
   progress_total = total;
+}
+
+void overlay_try_render(bool force) {
+  render_flag = force;
+  do {
+    update_display(blit::now());
+  } while(render_flag);
 }
