@@ -8,6 +8,7 @@
 #include "usb.hpp"
 #include "blit_launch.hpp"
 #include "multiplayer.hpp"
+#include "overlay.hpp"
 
 #include "engine/engine.hpp"
 #include "executable.hpp"
@@ -78,6 +79,17 @@ static CDCCommand::Status cdc_read_string(CDCParseBuffer &buf, uint32_t max_len)
     if(buf.get_offset() == max_len)
       return CDCCommand::Status::Error;
   }
+}
+
+// helper in an attempt to keep commands more generic...
+static void cdc_command_progress(const char *message, uint32_t progress, uint32_t total) {
+  set_render_overlay_enabled(message != nullptr || total);
+
+  // null message preserves the old one
+  if(message)
+    set_overlay_message(message);
+
+  set_overlay_progress(progress, total);
 }
 
 class CDCProgCommand final : public CDCCommand {
@@ -194,6 +206,11 @@ public:
               return Status::Error;
             }
 
+            // setup progress message
+            char message_buf[300];
+            snprintf(message_buf, sizeof(message_buf), "Saving %s...", filename);
+            cdc_command_progress(message_buf, 0, 0);
+
             parse_state = ParseState::Length;
             buf.reset();
             continue;
@@ -206,6 +223,9 @@ public:
           auto status = cdc_read_string(buf, MAX_FILELEN);
           if(status == Status::Done) {
             file_length = strtoul((const char *)buf.get_data(), nullptr, 10);
+
+            cdc_command_progress(nullptr, 0, file_length);
+
             parse_state = ParseState::Data;
             buf.reset();
             continue;
@@ -231,9 +251,12 @@ public:
 
           file_offset += read;
 
+          cdc_command_progress(nullptr, file_offset, file_length);
+
           // end of file
           if(file_offset == file_length) {
             blit::api.close_file(file);
+            cdc_command_progress(nullptr, 0, 0); // clear progress
 
             // send response
             uint8_t res_data[]{'3', '2', 'B', 'L', '_', '_', 'O', 'K'};
