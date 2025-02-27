@@ -164,6 +164,15 @@
 #define DISPLAY_HEIGHT 240
 #endif
 
+#if ALLOW_HIRES && DOUBLE_BUFFERED_HIRES
+#define FRAMEBUFFER_SIZE (DISPLAY_WIDTH * DISPLAY_HEIGHT * 2)
+#elif ALLOW_HIRES
+#define FRAMEBUFFER_SIZE (DISPLAY_WIDTH * DISPLAY_HEIGHT)
+#else
+// height rounded up to handle the 135px display
+#define FRAMEBUFFER_SIZE ((DISPLAY_WIDTH / 2) * ((DISPLAY_HEIGHT + 1) / 2) * 2) // double-buffered
+#endif
+
 #ifndef LCD_CS_PIN
 #define LCD_CS_PIN PICO_DEFAULT_SPI_CSN_PIN
 #endif
