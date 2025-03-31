@@ -190,6 +190,8 @@ static void __not_in_flash_func(pio_timing_irq_handler)() {
 #ifdef DPI_SPI_INIT
 static void command(uint8_t reg, size_t len = 0, const char *data = nullptr) {
   gpio_put(LCD_CS_PIN, 0);
+
+#if LCD_DC_PIN != -1
   gpio_put(LCD_DC_PIN, 0); // command
   spi_write_blocking(DPI_SPI_INIT, &reg, 1);
 
@@ -197,6 +199,17 @@ static void command(uint8_t reg, size_t len = 0, const char *data = nullptr) {
     gpio_put(LCD_DC_PIN, 1); // data
     spi_write_blocking(DPI_SPI_INIT, (const uint8_t *)data, len);
   }
+#else
+  uint16_t v = reg;
+  spi_write16_blocking(DPI_SPI_INIT, &v, 1);
+
+  if(data) {
+    for(size_t i = 0; i < len; i++) {
+      v = data[i] | 0x100;
+      spi_write16_blocking(DPI_SPI_INIT, &v, 1);
+    }
+  }
+#endif
 
   gpio_put(LCD_CS_PIN, 1);
 }
@@ -213,14 +226,20 @@ static void init_display_spi() {
   gpio_set_dir(LCD_CS_PIN, GPIO_OUT);
   gpio_put(LCD_CS_PIN, 1);
 
+  bi_decl_if_func_used(bi_1pin_with_name(LCD_MOSI_PIN, "Display TX"));
+  bi_decl_if_func_used(bi_1pin_with_name(LCD_SCK_PIN, "Display SCK"));
+  bi_decl_if_func_used(bi_1pin_with_name(LCD_CS_PIN, "Display CS"));
+
+#if LCD_DC_PIN != -1
   // init D/C
   gpio_init(LCD_DC_PIN);
   gpio_set_dir(LCD_DC_PIN, GPIO_OUT);
 
-  bi_decl_if_func_used(bi_1pin_with_name(LCD_MOSI_PIN, "Display TX"));
-  bi_decl_if_func_used(bi_1pin_with_name(LCD_SCK_PIN, "Display SCK"));
   bi_decl_if_func_used(bi_1pin_with_name(LCD_DC_PIN, "Display D/C"));
-  bi_decl_if_func_used(bi_1pin_with_name(LCD_CS_PIN, "Display CS"));
+#else
+  // configure for 9 bit if no D/C pin
+  spi_set_format(DPI_SPI_INIT, 9, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
+#endif
 
 #ifdef LCD_RESET_PIN
   gpio_init(LCD_RESET_PIN);
