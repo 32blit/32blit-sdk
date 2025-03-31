@@ -14,6 +14,47 @@
 
 #include "dpi.pio.h"
 
+enum ST7701Reg {
+  // Command2_BK0
+  PVGAMCTRL = 0xB0,  // Positive Voltage Gamma Control
+  NVGAMCTRL = 0xB1,  // Negative Voltage Gamma Control
+  DGMEN = 0xB8,   // Digital Gamma Enable
+  DGMLUTR = 0xB9, // Digital Gamma LUT for Red
+  DGMLUTB = 0xBA, // Digital Gamma Lut for Blue
+  LNESET = 0xC0,  // Display Line Setting
+  PORCTRL = 0xC1, // Porch Control
+  INVSET = 0xC2,  // Inversion Selection & Frame Rate Control
+  RGBCTRL = 0xC3, // RGB Control
+  PARCTRL = 0xC5, // Partial Mode Control
+  SDIR = 0xC7,    // X-direction Control
+  PDOSET = 0xC8,  // Pseudo-Dot Inversion Diving Setting
+  COLCTRL = 0xCD, // Colour Control
+  SRECTRL = 0xE0, // Sunlight Readable Enhancement
+  NRCTRL = 0xE1,  // Noise Reduce Control
+  SECTRL = 0xE2,  // Sharpness Control
+  CCCTRL = 0xE3,  // Color Calibration Control
+  SKCTRL = 0xE4,  // Skin Tone Preservation Control
+  // Command2_BK1
+  VHRS = 0xB0,    // Vop amplitude
+  VCOMS = 0xB1,   // VCOM amplitude
+  VGHSS = 0xB2,   // VGH voltage
+  TESTCMD = 0xB3, // TEST command
+  VGLS = 0xB5,    // VGL voltage
+  VRHDV = 0xB6,   // VRH_DV voltage
+  PWCTRL1 = 0xB7, // Power Control 1
+  PWCTRL2 = 0xB8, // Power Control 2
+  PCLKS1 = 0xBA,  // Power pumping clock selection 1
+  PCLKS2 = 0xBC,  // Power pumping clock selection 2
+  PDR1 = 0xC1,    // Source pre_drive timing set 1
+  PDR2 = 0xC2,    // Source pre_drive timing set 2
+  // Command2_BK3
+  NVMEN = 0xC8,    // NVM enable
+  NVMSET = 0xCA,   // NVM manual control
+  PROMACT = 0xCC,  // NVM program active
+  // Other
+  CND2BKxSEL = 0xFF,
+};
+
 #ifndef DPI_DATA_PIN_BASE
 #define DPI_DATA_PIN_BASE 0
 #endif
@@ -261,6 +302,71 @@ static void init_display_spi() {
   bi_decl_if_func_used(bi_1pin_with_name(LCD_RESET_PIN, "Display Reset"));
 #endif
 
+#ifdef DPI_ST7701
+  command(MIPIDCS::SoftReset);
+
+  sleep_ms(150);
+
+  // Commmand 2 BK0 - kinda a page select
+  command(ST7701Reg::CND2BKxSEL, 5, "\x77\x01\x00\x00\x10");
+
+  command(ST7701Reg::LNESET, 2, "\x3b\x00");   // (59 + 1) * 8 = 480 lines
+  command(ST7701Reg::PORCTRL, 2, "\x0d\x02");  // Display porch settings: 13 VBP, 2 VFP (these should not be changed)
+  command(ST7701Reg::INVSET, 2, "\x31\x01");
+  command(ST7701Reg::COLCTRL, 1, "\x08");      // LED polarity reversed
+  command(ST7701Reg::PVGAMCTRL, 16, "\x00\x11\x18\x0e\x11\x06\x07\x08\x07\x22\x04\x12\x0f\xaa\x31\x18");
+  command(ST7701Reg::NVGAMCTRL, 16, "\x00\x11\x19\x0e\x12\x07\x08\x08\x08\x22\x04\x11\x11\xa9\x32\x18");
+  command(ST7701Reg::RGBCTRL, 3, "\x80\x2e\x0e");  // HV mode, H and V back porch + sync
+
+
+  // Command 2 BK1 - Voltages and power and stuff
+  command(ST7701Reg::CND2BKxSEL, 5, "\x77\x01\x00\x00\x11");
+  command(ST7701Reg::VHRS, 1, "\x60");    // 4.7375v
+  command(ST7701Reg::VCOMS, 1, "\x32");   // 0.725v
+  command(ST7701Reg::VGHSS, 1, "\x07");   // 15v
+  command(ST7701Reg::TESTCMD, 1, "\x80"); // y tho?
+  command(ST7701Reg::VGLS, 1, "\x49");    // -10.17v
+  command(ST7701Reg::PWCTRL1, 1, "\x85"); // Middle/Min/Min bias
+  command(ST7701Reg::PWCTRL2, 1, "\x21"); // 6.6 / -4.6
+  command(ST7701Reg::PDR1, 1, "\x78");    // 1.6uS
+  command(ST7701Reg::PDR2, 1, "\x78");    // 6.4uS
+
+  // Begin Forbidden Knowledge
+  // This sequence is probably specific to TL040WVS03CT15-H1263A.
+  // It is not documented in the ST7701s datasheet.
+  // TODO: 👇 W H A T ! ? 👇
+  command(0xE0, 3, "\x00\x1b\x02");
+  command(0xE1, 11, "\x08\xa0\x00\x00\x07\xa0\x00\x00\x00\x44\x44");
+  command(0xE2, 12, "\x11\x11\x44\x44\xed\xa0\x00\x00\xec\xa0\x00\x00");
+  command(0xE3, 4, "\x00\x00\x11\x11");
+  command(0xE4, 2, "\x44\x44");
+  command(0xE5, 16, "\x0a\xe9\xd8\xa0\x0c\xeb\xd8\xa0\x0e\xed\xd8\xa0\x10\xef\xd8\xa0");
+  command(0xE6, 4, "\x00\x00\x11\x11");
+  command(0xE7, 2, "\x44\x44");
+  command(0xE8, 16, "\x09\xe8\xd8\xa0\x0b\xea\xd8\xa0\x0d\xec\xd8\xa0\x0f\xee\xd8\xa0");
+  command(0xEB, 7, "\x02\x00\xe4\xe4\x88\x00\x40");
+  command(0xEC, 2, "\x3c\x00");
+  command(0xED, 16, "\xab\x89\x76\x54\x02\xff\xff\xff\xff\xff\xff\x20\x45\x67\x98\xba");
+  command(0x36, 1, "\x00");
+
+  // Command 2 BK3
+  command(ST7701Reg::CND2BKxSEL, 5, "\x77\x01\x00\x00\x13");
+  command(0xE5, 1, "\xe4");
+  // End Forbidden Knowledge
+
+  command(ST7701Reg::CND2BKxSEL, 5, "\x77\x01\x00\x00\x00");
+
+  command(MIPIDCS::SetPixelFormat, 1, "\x66"); // (18bpp)
+
+  uint8_t madctl = MADCTL::RGB;
+  command(MIPIDCS::SetAddressMode, 1, (char *)&madctl);
+
+  command(MIPIDCS::EnterInvertMode);
+  sleep_ms(1);
+  command(MIPIDCS::ExitSleepMode);
+  sleep_ms(120);
+  command(MIPIDCS::DisplayOn);
+#endif
 #endif
 }
 
