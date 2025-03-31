@@ -170,6 +170,9 @@ endif()
 target_compile_definitions(BlitHalPico INTERFACE ${BLIT_BOARD_DEFINITIONS})
 target_link_libraries(BlitHalPico INTERFACE ${BLIT_BOARD_LIBRARIES})
 
+# for enabling stdio_usb
+set(BLIT_USB_DRIVER ${BLIT_USB_DRIVER} PARENT_SCOPE)
+
 # functions
 function(blit_executable NAME)
     message(STATUS "Processing ${NAME}")
@@ -180,7 +183,12 @@ function(blit_executable NAME)
     target_link_libraries(${NAME} BlitHalPico BlitEngine)
 
     pico_enable_stdio_uart(${NAME} 1)
-    pico_enable_stdio_usb(${NAME} 0)
+    if(NOT BLIT_USB_DRIVER STREQUAL "host")
+        pico_enable_stdio_usb(${NAME} 1)
+        # re-enable baud rate reset (we don't define our own tud_cdc_line_coding_cb)
+        # we have to set all the defines to compile? (something broken with the defaults?)
+        target_compile_definitions(${NAME} PRIVATE PICO_STDIO_USB_ENABLE_RESET_VIA_BAUD_RATE=1 PICO_STDIO_USB_RESET_MAGIC_BAUD_RATE=1200 PICO_STDIO_USB_RESET_BOOTSEL_INTERFACE_DISABLE_MASK=0)
+    endif()
 
     pico_add_extra_outputs(${NAME})
 
