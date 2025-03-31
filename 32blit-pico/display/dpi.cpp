@@ -104,11 +104,20 @@ static inline void update_h_repeat() {
   pio_sm_exec(pio, data_sm, pio_encode_out(pio_y, 32));
 
   // patch loop delay for repeat
-  auto offset = dpi_data_16_offset_data_loop_delay;
   int h_repeat = DPI_MODE_H_ACTIVE_PIXELS / line_width;
   auto delay = (h_repeat - 1) * 2;
+
+#ifdef DPI_BIT_REVERSE
+  auto offset = dpi_data_reversed_16_offset_data_loop_delay;
+  auto instr = dpi_data_reversed_16_program.instructions[offset];
+  delay *= 2;
+#else
+  auto offset = dpi_data_16_offset_data_loop_delay;
+  auto instr = dpi_data_16_program.instructions[offset];
+#endif
+
   // need to add the program offset as it's a jump
-  pio->instr_mem[data_program_offset + offset] = (dpi_data_16_program.instructions[offset] | pio_encode_delay(delay)) + data_program_offset;
+  pio->instr_mem[data_program_offset + offset] = (instr | pio_encode_delay(delay)) + data_program_offset;
 }
 
 static void __not_in_flash_func(dma_irq_handler)() {
@@ -311,14 +320,25 @@ void init_display() {
   pio_sm_init(pio, timing_sm, pio_offset, &cfg);
 
   // setup data program
+
+#ifdef DPI_BIT_REVERSE
+  pio_offset = pio_add_program(pio, &dpi_data_reversed_16_program);
+
+  cfg = dpi_data_reversed_16_program_get_default_config(pio_offset);
+  assert(!(clkdiv & 1));
+  sm_config_set_clkdiv_int_frac(&cfg, clkdiv / 2, 0);
+#else
   pio_offset = pio_add_program(pio, &dpi_data_16_program);
-  data_program_offset = pio_offset;
 
   cfg = dpi_data_16_program_get_default_config(pio_offset);
   sm_config_set_clkdiv_int_frac(&cfg, clkdiv, 0);
+#endif
   sm_config_set_out_shift(&cfg, true, true, 32);
+  sm_config_set_in_shift(&cfg, false, false, 32);
   sm_config_set_out_pins(&cfg, DPI_DATA_PIN_BASE, num_data_pins);
   sm_config_set_fifo_join(&cfg, PIO_FIFO_JOIN_TX);
+
+  data_program_offset = pio_offset;
 
   pio_sm_init(pio, data_sm, pio_offset, &cfg);
 

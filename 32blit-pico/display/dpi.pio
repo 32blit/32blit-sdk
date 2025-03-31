@@ -21,3 +21,18 @@ PUBLIC data_loop_delay: ; patched to add delays
   jmp x-- data_loop
 
   mov pins, null
+
+; reversed bit order
+; needs to run at 2x clock
+.program dpi_data_reversed_16
+  wait irq, 4
+  mov x, y; setup counter from pre-initialised Y
+
+data_loop:
+  out isr, 16
+  in null, 16
+  mov pins, ::isr
+PUBLIC data_loop_delay: ; patched to add delays
+  jmp x-- data_loop
+
+  mov pins, null [1]
