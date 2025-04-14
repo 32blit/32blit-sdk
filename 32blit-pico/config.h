@@ -214,6 +214,10 @@
 #define LCD_TRANSPOSE 0
 #endif
 
+#ifndef LED_WS2812_PIO
+#define LED_WS2812_PIO 0
+#endif
+
 #ifndef OVERCLOCK_250
 #define OVERCLOCK_250 1
 #endif
