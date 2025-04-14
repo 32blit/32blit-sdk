@@ -21,7 +21,8 @@ static void put_pixel(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
           | ((uint32_t)((g * a) >> 8) << 16)
           | (uint32_t)((b * a) >> 8)) << 8u;
 
-  pio_sm_put_blocking(led_pio, 0, color);
+  for(int i = 0; i < LED_WS2812_COUNT; i++)
+    pio_sm_put_blocking(led_pio, 0, color);
 }
 
 void init_led() {
@@ -32,8 +33,10 @@ void init_led() {
   uint pio_offset = pio_add_program(led_pio, &ws2812_program);
   pio_sm = pio_claim_unused_sm(led_pio, false);
   if(pio_sm > -1) {
-    ws2812_program_init(led_pio, pio_sm, pio_offset, LED_WS2812_PIN, 800000, true);
-    pio_sm_put_blocking(led_pio, pio_sm, 0);
+    ws2812_program_init(led_pio, pio_sm, pio_offset, LED_WS2812_PIN, 800000, LED_WS2812_RGBW);
+
+    for(int i = 0; i < LED_WS2812_COUNT; i++)
+      pio_sm_put_blocking(led_pio, pio_sm, 0);
   } else {
     printf("LED_WS2812: could not find a free pio sm\r\n");
   }
