@@ -18,6 +18,9 @@ namespace blit {
 
   MP3Stream::~MP3Stream() {
     delete static_cast<mp3dec_t *>(mp3dec);
+
+    if(!file.get_ptr())
+      delete[] file_buffer;
   }
 
   bool MP3Stream::load(std::string filename, bool do_duration_calc) {
@@ -87,7 +90,6 @@ namespace blit {
     blit::channels[channel].user_data = this;
     blit::channels[channel].wave_buffer_callback = &MP3Stream::static_callback;
 
-    blit::channels[channel].adsr = 0xFFFF00;
     blit::channels[channel].trigger_sustain();
   }
 

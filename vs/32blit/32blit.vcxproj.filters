@@ -42,9 +42,6 @@
     <ClInclude Include="..\..\32blit\engine\input.hpp">
       <Filter>engine</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\32blit\engine\output.hpp">
-      <Filter>engine</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\32blit\engine\particle.hpp">
       <Filter>engine</Filter>
     </ClInclude>
@@ -120,9 +117,6 @@
       <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="..\..\32blit\engine\input.cpp">
-      <Filter>engine</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\32blit\engine\output.cpp">
       <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="..\..\32blit\engine\particle.cpp">
