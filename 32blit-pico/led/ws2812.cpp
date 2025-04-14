@@ -12,19 +12,16 @@
 
 #define led_pio __CONCAT(pio, LED_WS2812_PIO)
 
-static uint32_t last_color = 0;
+static blit::Pen last_led;
 static int pio_sm = -1;
 
 static void put_pixel(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
-  if(pio_sm < 0) return;
   uint32_t color =
           (((uint32_t)((r * a) >> 8) << 8)
           | ((uint32_t)((g * a) >> 8) << 16)
           | (uint32_t)((b * a) >> 8)) << 8u;
-  if(color != last_color) {
-    pio_sm_put_blocking(led_pio, 0, color);
-    last_color = color;
-  }
+
+  pio_sm_put_blocking(led_pio, 0, color);
 }
 
 void init_led() {
@@ -47,5 +44,10 @@ void init_led() {
 void update_led() {
   using namespace blit;
 
-  put_pixel(api_data.LED.r, api_data.LED.g, api_data.LED.b, api_data.LED.a);
+  if(pio_sm < 0) return;
+
+  if(!(api_data.LED == last_led)) {
+    put_pixel(api_data.LED.r, api_data.LED.g, api_data.LED.b, api_data.LED.a);
+    last_led = api_data.LED;
+  }
 }
