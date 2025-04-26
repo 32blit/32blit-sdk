@@ -5,10 +5,10 @@ if (NOT DEFINED BLIT_ONCE)
 	set(CMAKE_CXX_EXTENSIONS OFF)
 	set(BLIT_MINIMUM_TOOLS_VERSION "0.7.3")
 
-	find_package(PythonInterp 3.6 REQUIRED)
+	find_package(Python 3.6 REQUIRED)
 
 	# make sure that the tools are installed
-	execute_process(COMMAND ${PYTHON_EXECUTABLE} -m ttblit version RESULT_VARIABLE VERSION_STATUS OUTPUT_VARIABLE TOOLS_VERSION ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+	execute_process(COMMAND ${Python_EXECUTABLE} -m ttblit version RESULT_VARIABLE VERSION_STATUS OUTPUT_VARIABLE TOOLS_VERSION ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 	if(${VERSION_STATUS})
 		# check for the executable if the module isn't found
@@ -18,11 +18,11 @@ if (NOT DEFINED BLIT_ONCE)
 			execute_process(COMMAND ${32BLIT_TOOLS_EXECUTABLE} version RESULT_VARIABLE VERSION_STATUS OUTPUT_VARIABLE TOOLS_VERSION ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
 		endif()
 	else()
-		set(32BLIT_TOOLS_EXECUTABLE ${PYTHON_EXECUTABLE} -m ttblit)
+		set(32BLIT_TOOLS_EXECUTABLE ${Python_EXECUTABLE} -m ttblit)
 	endif()
 
 	# get just the python command to output to the user
-	get_filename_component(PYTHON_USER_EXECUTABLE "${PYTHON_EXECUTABLE}" NAME)
+	get_filename_component(PYTHON_USER_EXECUTABLE "${Python_EXECUTABLE}" NAME)
 
 	if(${VERSION_STATUS})
 		message(FATAL_ERROR "32Blit tools not found!\nInstall with: ${PYTHON_USER_EXECUTABLE} -m pip install 32blit\n")
