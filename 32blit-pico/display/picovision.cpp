@@ -211,7 +211,7 @@ static void blit_rgb555(uint16_t *s, const blit::Surface* dest, uint32_t doff, u
       }
     } else {
       ram.wait_for_finish_blocking(); // make sure to always wait
-    
+
       for(unsigned i = 0; i < step; i += h_repeat) {
         for(int j = 0; j < h_repeat; j++)
           *ptr++ = *s;
@@ -310,7 +310,7 @@ static void write_frame_setup(uint16_t width, uint16_t height, blit::PixelFormat
 
   // write frame table
   uint frame_table_addr = 4 * 7;
-  
+
   for(int y = 0; y < height; y += buf_size) {
     int step = std::min(buf_size, height - y);
     for(int i = 0; i < step; i++) {
@@ -348,13 +348,7 @@ void init_display() {
   gpio_put(RAM_SEL, 0);
   sleep_ms(100);
 
-  // i2c init
-  i2c_init(i2c1, 400000);
-  gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
-  gpio_pull_up(I2C_SDA);
-  gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
-  gpio_pull_up(I2C_SCL);
-
+  static_assert(i2c_default == i2c1);
   uint8_t resolution = 0; // 640x480
   uint8_t buf[2] = {I2C_REG_SET_RES, resolution};
   i2c_write_blocking(i2c1, I2C_ADDR, buf, 2, false);
@@ -369,14 +363,14 @@ static int find_resolution(const blit::Size &bounds) {
 
     i++;
   }
-  
+
   return -1;
 }
 
 void update_display(uint32_t time) {
   if(!do_render)
     return;
-  
+
   blit::render(time);
 
   flush_batch();
