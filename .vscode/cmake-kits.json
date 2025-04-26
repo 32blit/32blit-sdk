@@ -1,6 +1,14 @@
 [
-    {
-      "name": "32Blit",
-      "toolchainFile": "${workspaceFolder}/32blit.toolchain"
-    }
+  {
+    "name": "32Blit",
+    "toolchainFile": "${workspaceFolder}/32blit.toolchain"
+  },
+  {
+    "name": "32Blit-Pico",
+    "toolchainFile": "${workspaceFolder}/pico.toolchain"
+  },
+  {
+    "name": "32Blit-Pico2",
+    "toolchainFile": "${workspaceFolder}/pico2.toolchain"
+  }
 ]
