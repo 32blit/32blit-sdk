@@ -16,6 +16,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: 32blit/32blit-examples
+        ref: one-map-to-tile-them-all #FIXME
         path: examples
 
     - name: Install deps

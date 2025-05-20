@@ -13,13 +13,13 @@
 #include "../graphics/font.hpp"
 
 namespace blit {
- 
+
 
   // TODO: Provide method to return scale for world coordinate
 
   /**
    * TODO: Document
-   * 
+   *
    * \param[in] w
    * \param[in] fov
    * \param[in] angle
@@ -29,7 +29,7 @@ namespace blit {
    * \param[in] viewport
    */
   Vec2 world_to_screen(Vec2 w, float fov, float angle, Vec2 pos, float near, float far, Rect viewport) {
-    float hfov = fov / 2.0f;    
+    float hfov = fov / 2.0f;
 
     Vec2 v(w - pos);
     v.normalize();
@@ -46,7 +46,7 @@ namespace blit {
     float pd = ctd / cosf(hfov);
 
     float theta_sign = std::copysign(1.0f, theta);
-    
+
     float hsl = sqrtf((pd * pd) - (ctd * ctd));
     float so = hsl + (sqrtf((wd * wd) - (ctd * ctd)) * theta_sign);
     float r = so / (hsl * 2.0f);
@@ -55,13 +55,13 @@ namespace blit {
       r * viewport.w,
       ((far - near) / (pd - near)) + viewport.y
     );
-      
+
     return s;
   }
 
   /**
    * Convert a screen coordinate to a mode7 world-space coordinate.
-   * 
+   *
    * \param[in] s vec2 describing the screen coordinate
    * \param[in] fov Current camera field-of-view
    * \param[in] angle Current camera z-angle in mode7 world-space
@@ -81,7 +81,7 @@ namespace blit {
     right *= Mat3::rotation((fov / 2.0f));
 
     float distance = ((far - near) / float(s.y - viewport.y)) + near;
-    
+
     Vec2 swc = pos + (left * distance);
     Vec2 ewc = pos + (right * distance);
 
@@ -93,7 +93,7 @@ namespace blit {
 
   /**
    * TODO: Document
-   * 
+   *
    * \param[in] dest
    * \param[in] sprites
    * \param[in] layer
@@ -104,7 +104,7 @@ namespace blit {
    * \param[in] far
    * \param[in] viewport
    */
-  void mode7(Surface *dest, Surface *sprites, MapLayer *layer, float fov, float angle, Vec2 pos, float near, float far, Rect viewport) {
+  void mode7(Surface *dest, TransformedTileLayer *layer, float fov, float angle, Vec2 pos, float near, float far, Rect viewport) {
     for (int y = viewport.y; y < viewport.y + viewport.h; y++) {
       Vec2 swc = screen_to_world(Vec2(viewport.x, y), fov, angle, pos, near, far, viewport);
       Vec2 ewc = screen_to_world(Vec2(viewport.x + viewport.w, y), fov, angle, pos, near, far, viewport);
@@ -113,7 +113,6 @@ namespace blit {
         dest,
         Point(viewport.x, y),
         viewport.w,
-        sprites,
         swc,
         ewc);
     }
@@ -122,5 +121,5 @@ namespace blit {
     dest->pen = Pen(255, 0, 255);
     dest->pixel(s);
   }
-  
+
 }

@@ -27,7 +27,6 @@ set(SOURCES
 	graphics/tilemap.cpp
 	math/geometry.cpp
 	math/interpolation.cpp
-	types/map.cpp
 	types/mat3.cpp
 	types/mat4.cpp
 	types/vec2.cpp
