@@ -1,0 +1,7 @@
+<map id="blit::Menu" name="blit::Menu">
+<area shape="rect" id="node1" title=" " alt="" coords="247,153,334,180"/>
+<area shape="rect" id="node2" href="$structblit_1_1Pen.html" title=" " alt="" coords="5,5,80,32"/>
+<area shape="rect" id="node3" href="$structblit_1_1Font.html" title=" " alt="" coords="189,5,267,32"/>
+<area shape="rect" id="node4" href="$structblit_1_1Rect.html" title=" " alt="" coords="292,5,372,32"/>
+<area shape="rect" id="node5" href="$structblit_1_1Menu_1_1Item.html" title=" " alt="" coords="396,5,521,32"/>
+</map>
