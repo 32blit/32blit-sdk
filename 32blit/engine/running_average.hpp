@@ -9,7 +9,9 @@ class RunningAverage
 {
 public:
   using Data = std::vector<T>;
-	RunningAverage(std::size_t uSize) : m_uSize(uSize), m_uIndex(0), m_average(0), m_bFull(false) {};
+	RunningAverage(std::size_t uSize) : m_uSize(uSize), m_uIndex(0), m_average(0), m_bFull(false) {
+    m_data.reserve(uSize);
+  };
 
 	const T &operator[] (std::size_t i) const
 	{
@@ -91,7 +93,7 @@ public:
 
 private:
 	Data 				m_data;
-	std::size_t m_uSize;
+	const std::size_t m_uSize;
 	std::size_t m_uIndex;
   T         	m_average;
   bool				m_bFull;

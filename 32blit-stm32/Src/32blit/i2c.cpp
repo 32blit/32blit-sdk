@@ -46,9 +46,9 @@ static uint16_t accel_address = LIS3DH_DEVICE_ADDRESS;
 //
 // Local variables for this file
 //
-static RunningAverage<float> accel_x(8);
-static RunningAverage<float> accel_y(8);
-static RunningAverage<float> accel_z(8);
+static RunningAverage<int16_t> accel_x(8);
+static RunningAverage<int16_t> accel_y(8);
+static RunningAverage<int16_t> accel_z(8);
 
 static I2CState i2c_state = SEND_ACL;
 static uint8_t i2c_buffer[6] = {0};
@@ -119,24 +119,18 @@ namespace i2c {
         i2c_state = PROC_ACL;
         break;
       case PROC_ACL:
-        // LIS3DH & MSA301 - 12-bit left-justified
-        accel_x.add(((int8_t)i2c_buffer[1] << 6) | (i2c_buffer[0] >> 2));
-        accel_y.add(((int8_t)i2c_buffer[3] << 6) | (i2c_buffer[2] >> 2));
-        accel_z.add(((int8_t)i2c_buffer[5] << 6) | (i2c_buffer[4] >> 2));
+        // LIS3DH - 12-bit left-justified
+        // MSA301 - 14-bit left-justified
+        // shift it down later so the average drops less bits
+        accel_x.add(((int8_t)i2c_buffer[1] << 8) | (i2c_buffer[0]));
+        accel_y.add(((int8_t)i2c_buffer[3] << 8) | (i2c_buffer[2]));
+        accel_z.add(((int8_t)i2c_buffer[5] << 8) | (i2c_buffer[4]));
 
-        if(is_beta_unit){
-          blit::tilt = Vec3(
-            accel_x.average(),
-            accel_y.average(),
-            -accel_z.average()
-          );
-        } else {
-          blit::tilt = Vec3(
-            -accel_x.average(),
-            -accel_y.average(),
-            -accel_z.average()
-          );
-        }
+        blit::tilt = Vec3(
+          -accel_x.average() >> 2,
+          -accel_y.average() >> 2,
+          -accel_z.average() >> 2
+        );
 
         blit::tilt.normalize();
 
