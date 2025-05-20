@@ -1,6 +1,7 @@
 #include <cstdio>
 
 #include "hardware/clocks.h"
+#include "hardware/i2c.h"
 #include "hardware/structs/rosc.h"
 #include "hardware/vreg.h"
 #include "hardware/timer.h"
@@ -200,6 +201,18 @@ static void alarm_callback(uint alarm_num) {
 }
 #endif
 
+static void init_i2c() {
+  // multiple drivers need i2c, initialise it in one place if needed
+#ifdef DEFAULT_I2C_CLOCK
+  i2c_init(i2c_default, DEFAULT_I2C_CLOCK);
+  gpio_set_function(PICO_DEFAULT_I2C_SDA_PIN, GPIO_FUNC_I2C);
+  gpio_set_function(PICO_DEFAULT_I2C_SCL_PIN, GPIO_FUNC_I2C);
+
+  gpio_pull_up(PICO_DEFAULT_I2C_SDA_PIN);
+  gpio_pull_up(PICO_DEFAULT_I2C_SCL_PIN);
+#endif
+}
+
 int main() {
 #if OVERCLOCK_250
 #ifndef PICO_RP2350
@@ -214,6 +227,8 @@ int main() {
 
   init_usb();
   stdio_init_all();
+
+  init_i2c();
 
   init_led();
   init_display();

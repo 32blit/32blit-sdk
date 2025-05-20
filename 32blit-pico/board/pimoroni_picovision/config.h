@@ -5,6 +5,8 @@
 
 #define DEFAULT_SCREEN_FORMAT PixelFormat::BGR555
 
+#define DEFAULT_I2C_CLOCK 400000
+
 // native
 #define SD_CLK  10
 #define SD_CMD  11

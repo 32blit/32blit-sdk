@@ -262,6 +262,15 @@ bool storage_init() {
 
   // this will be called again it it fails
   if(!sd_io_initialised) {
+    int base = 0;
+
+#if SD_MOSI >= 32 || SD_MISO >= 32 || SD_SCK >= 32
+    // assumes anything else using this PIO can also deal with the base
+    static_assert(SD_MOSI >= 16 && SD_MISO >= 16 && SD_SCK >= 16);
+    pio_set_gpio_base(sd_pio, 16);
+    base = 16;
+#endif
+
     uint offset = pio_add_program(sd_pio, &spi_cpha0_program);
 
     sd_sm = pio_claim_unused_sm(sd_pio, true);
@@ -276,8 +285,8 @@ bool storage_init() {
     sm_config_set_in_shift(&c, false, true, 8);
 
     // MOSI, SCK output are low, MISO is input
-    pio_sm_set_pins_with_mask(sd_pio, sd_sm, 0, (1u << SD_SCK) | (1u << SD_MOSI));
-    pio_sm_set_pindirs_with_mask(sd_pio, sd_sm, (1u << SD_SCK) | (1u << SD_MOSI), (1u << SD_SCK) | (1u << SD_MOSI) | (1u << SD_MISO));
+    pio_sm_set_pins_with_mask64(sd_pio, sd_sm, 0, (1ull << SD_SCK) | (1ull << SD_MOSI));
+    pio_sm_set_pindirs_with_mask64(sd_pio, sd_sm, (1ull << SD_SCK) | (1ull << SD_MOSI), (1ull << SD_SCK) | (1ull << SD_MOSI) | (1ull << SD_MISO));
     pio_gpio_init(sd_pio, SD_MOSI);
     pio_gpio_init(sd_pio, SD_MISO);
     pio_gpio_init(sd_pio, SD_SCK);
@@ -285,7 +294,7 @@ bool storage_init() {
     gpio_pull_up(SD_MISO);
 
     // SPI is synchronous, so bypass input synchroniser to reduce input delay.
-    hw_set_bits(&sd_pio->input_sync_bypass, 1u << SD_MISO);
+    hw_set_bits(&sd_pio->input_sync_bypass, 1u << (SD_MISO - base));
 
     pio_sm_init(sd_pio, sd_sm, offset, &c);
     pio_sm_set_enabled(sd_pio, sd_sm, true);
