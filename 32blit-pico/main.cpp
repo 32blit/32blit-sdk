@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cstring>
 
 #include "hardware/clocks.h"
 #include "hardware/i2c.h"
@@ -12,6 +13,7 @@
 
 #include "audio.hpp"
 #include "binary_info.hpp"
+#include "blit_launch.hpp"
 #include "config.h"
 #include "display.hpp"
 #include "file.hpp"
@@ -26,6 +28,10 @@
 using namespace blit;
 
 static blit::AudioChannel channels[CHANNEL_COUNT];
+
+int (*do_tick)(uint32_t time) = blit::tick;
+
+static alarm_id_t home_hold_alarm_id = 0;
 
 // override terminate handler to save ~20-30k
 namespace __cxxabiv1 {
@@ -60,6 +66,25 @@ const char *get_launch_path()  {
 
 static GameMetadata get_metadata() {
   GameMetadata ret;
+
+  // check for blit metadata
+  if(auto meta = get_running_game_metadata()) {
+    // this is identical to the 32blit-stm code
+    ret.title = meta->title;
+    ret.author = meta->author;
+    ret.description = meta->description;
+    ret.version = meta->version;
+
+    if(memcmp(meta + 1, "BLITTYPE", 8) == 0) {
+      auto type_meta = reinterpret_cast<RawTypeMetadata *>(reinterpret_cast<char *>(meta) + sizeof(*meta) + 8);
+      ret.url = type_meta->url;
+      ret.category = type_meta->category;
+    } else {
+      ret.url = "";
+      ret.category = "none";
+    }
+    return ret;
+  }
 
   // parse binary info
   extern binary_info_t *__binary_info_start, *__binary_info_end;
@@ -100,7 +125,12 @@ static GameMetadata get_metadata() {
   return ret;
 }
 
+static uint8_t *get_screen_data() {
+  return screen.data;
+}
+
 // blit API
+[[gnu::section(".rodata.api_const")]]
 static const blit::APIConst blit_api_const {
   blit::api_version_major, blit::api_version_minor,
 
@@ -135,8 +165,8 @@ static const blit::APIConst blit_api_const {
   nullptr, // decode_jpeg_buffer
   nullptr, // decode_jpeg_file
 
-  nullptr, // launch
-  nullptr, // erase_game
+  ::launch_file,
+  ::erase_game,
   nullptr, // get_type_handler_metadata
 
   ::get_launch_path,
@@ -159,10 +189,14 @@ static const blit::APIConst blit_api_const {
   nullptr, // cdc_write
   nullptr, // cdc_read
 
-  nullptr, // list_installed_games
-  nullptr, // can_launch
+  ::list_installed_games,
+  ::can_launch,
+
+  ::get_screen_data,
+  ::set_framebuffer,
 };
 
+[[gnu::section(".bss.api_data")]]
 static blit::APIData blit_api_data;
 
 namespace blit {
@@ -174,6 +208,37 @@ namespace blit {
 void init();
 void render(uint32_t);
 void update(uint32_t);
+
+void disable_user_code() {
+  // TODO: handle re-enabling
+  do_tick = blit::tick;
+  blit::render = ::render;
+}
+
+[[maybe_unused]]
+static int64_t home_hold_callback(alarm_id_t id, void *user_data) {
+  home_hold_alarm_id = 0;
+
+  launch_pre_init();
+  ::init(); // re-initialising the loader is effectively a reset
+
+  return 0;
+}
+
+static void check_home_button() {
+#ifdef BUILD_LOADER
+  if((api_data.buttons & Button::HOME) && !home_hold_alarm_id) {
+    // start timer for exit/reset
+    home_hold_alarm_id = add_alarm_in_ms(1000, home_hold_callback, nullptr, false);
+    debugf("home down at %i alarm %i\n", ::now(), home_hold_alarm_id);
+  } else if(!(api_data.buttons & Button::HOME) && home_hold_alarm_id) {
+    // released, cancel timer
+    debugf("home up at %i alarm %i\n", ::now(), home_hold_alarm_id);
+    cancel_alarm(home_hold_alarm_id);
+    home_hold_alarm_id = 0;
+  }
+#endif
+}
 
 bool core1_started = false;
 
@@ -252,7 +317,9 @@ int main() {
 #endif
 #endif
 
+#ifndef BUILD_LOADER
   blit::set_screen_mode(ScreenMode::lores);
+#endif
 
   blit::render = ::render;
   blit::update = ::update;
@@ -263,11 +330,18 @@ int main() {
   while(true) {
     auto now = ::now();
     update_display(now);
+
     update_input();
-    int ms_to_next_update = tick(::now());
+    check_home_button();
+
+    int ms_to_next_update = do_tick(::now());
+
     update_led();
     update_usb();
     update_multiplayer();
+
+    // do requested launch when no user code is running
+    delayed_launch();
 
     if(ms_to_next_update > 1 && !display_render_needed())
       best_effort_wfe_or_timeout(make_timeout_time_ms(ms_to_next_update - 1));

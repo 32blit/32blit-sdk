@@ -40,7 +40,7 @@ static bool display_enabled = false;
 static uint8_t need_mode_change = 2;
 static int cur_resolution = 0;
 
-static volatile bool do_render = true;
+static volatile bool do_render = false;
 
 static uint16_t blend_buf[512];
 
@@ -458,4 +458,7 @@ void display_mode_changed(blit::ScreenMode new_mode, blit::SurfaceTemplate &new_
   }
 
   need_mode_change = 2; // make sure to update both banks
+
+  if(!display_enabled)
+    do_render = true;
 }
