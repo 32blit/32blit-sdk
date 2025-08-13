@@ -18,22 +18,29 @@ extern uint8_t hid_hat;
 extern uint32_t hid_buttons;
 extern uint8_t hid_keys[6];
 
+enum GamePadFlags {
+  Gamepad_StickIsDPAD = 1 << 0,
+};
+
 struct GamepadMapping {
   uint32_t id; // vid:pid
   uint8_t a, b, x, y;
   uint8_t up, down, left, right; // if no hat
   uint8_t menu, home, joystick;
+  uint8_t flags;
 };
 
 #define NO 0xFF
+#define SD Gamepad_StickIsDPAD
 
 static const GamepadMapping gamepad_mappings[]{
-  {0x15320705,  0,  1,  3,  4, NO, NO, NO, NO, 16, 15, 13}, // Razer Raiju Mobile
-  {0x20D6A711,  2,  1,  3,  0, NO, NO, NO, NO,  8, 12, 10}, // PowerA wired Switch pro controller
-  {0x2DC89018,  0,  1,  3,  4, NO, NO, NO, NO, 10, 11, NO}, // 8BitDo Zero 2
-  {0x00000000,  0,  1,  2,  3, NO, NO, NO, NO,  4,  5,  6}  // probably wrong fallback
+  {0x15320705,  0,  1,  3,  4, NO, NO, NO, NO, 16, 15, 13,  0}, // Razer Raiju Mobile
+  {0x20D6A711,  2,  1,  3,  0, NO, NO, NO, NO,  8, 12, 10,  0}, // PowerA wired Switch pro controller
+  {0x2DC89018,  0,  1,  3,  4, NO, NO, NO, NO, 10, 11, NO,  0}, // 8BitDo Zero 2
+  {0x00000000,  0,  1,  2,  3, NO, NO, NO, NO,  4,  5,  6,  0}  // probably wrong fallback
 };
 
+#undef SD
 #undef NO
 
 // hat -> dpad
@@ -141,6 +148,19 @@ void update_input() {
 
   api_data.buttons = new_buttons;
 
-  api_data.joystick.x = (float(hid_joystick[0]) - 0x80) / 0x80;
-  api_data.joystick.y = (float(hid_joystick[1]) - 0x80) / 0x80;
+  if(mapping->flags & Gamepad_StickIsDPAD) {
+    // stick is actually a D-PAD
+    if(hid_joystick[0] < 0x40)
+      api_data.buttons.state |= uint32_t(Button::DPAD_LEFT);
+    else if(hid_joystick[0] > 0xC0)
+      api_data.buttons.state |= uint32_t(Button::DPAD_RIGHT);
+
+    if(hid_joystick[1] < 0x40)
+      api_data.buttons.state |= uint32_t(Button::DPAD_UP);
+    else if(hid_joystick[1] > 0xC0)
+      api_data.buttons.state |= uint32_t(Button::DPAD_DOWN);
+  } else {
+    api_data.joystick.x = (float(hid_joystick[0]) - 0x80) / 0x80;
+    api_data.joystick.y = (float(hid_joystick[1]) - 0x80) / 0x80;
+  }
 }
