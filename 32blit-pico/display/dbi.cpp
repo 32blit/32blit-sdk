@@ -380,6 +380,12 @@ void init_display() {
 #endif
 
   // setup PIO
+#if LCD_MOSI_PIN >= 32 || LCD_SCK_PIN >= 32
+  // assumes anything else using this PIO can also deal with the base
+  static_assert(LCD_MOSI_PIN >= 16 && LCD_SCK_PIN >= 16);
+  pio_set_gpio_base(pio, 16);
+#endif
+
   pio_offset = pio_add_program(pio, &dbi_raw_program);
   pio_double_offset = pio_add_program(pio, &dbi_pixel_double_program);
 
@@ -415,7 +421,7 @@ void init_display() {
 
 #ifdef DBI_8BIT
   // these are really D0/WR
-  bi_decl_if_func_used(bi_pin_mask_with_name(0xFF << LCD_MOSI_PIN, "Display Data"));
+  bi_decl_if_func_used(bi_pin_mask_with_name(0xFFull << LCD_MOSI_PIN, "Display Data"));
   bi_decl_if_func_used(bi_1pin_with_name(LCD_SCK_PIN, "Display WR"));
 #else
   bi_decl_if_func_used(bi_1pin_with_name(LCD_MOSI_PIN, "Display TX"));
