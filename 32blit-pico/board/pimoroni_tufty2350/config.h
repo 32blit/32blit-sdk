@@ -21,3 +21,5 @@
 #define LCD_MAX_CLOCK 15000000
 
 // there are white LEDs
+
+#define DEFAULT_I2C_CLOCK 400000
