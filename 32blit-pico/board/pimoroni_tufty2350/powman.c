@@ -3,8 +3,6 @@
 
 static powman_power_state off_state;
 static powman_power_state on_state;
-bool powman_wake_with_doubletap;
-uint32_t user_button_state = 0;
 
 // Long press to sleep LED effect
 #define LED_PEAK_BRIGHTNESS 150 // Total brightness value per led (this is multiplied by GAMMA)
@@ -23,43 +21,7 @@ const uint led_gpios[4] = {BW_LED_1, BW_LED_2, BW_LED_3, BW_LED_0};
 
 //#define DEBUG
 
-static inline bool double_tap_flag_is_set(void) {
-    return powman_hw->chip_reset & POWMAN_CHIP_RESET_DOUBLE_TAP_BITS;
-}
-
-static inline void set_double_tap_flag(void) {
-    powman_set_bits(&powman_hw->chip_reset, POWMAN_CHIP_RESET_DOUBLE_TAP_BITS);
-}
-
-static inline void clear_double_tap_flag(void) {
-    powman_clear_bits(&powman_hw->chip_reset, POWMAN_CHIP_RESET_DOUBLE_TAP_BITS);
-}
-
-uint8_t powman_get_wake_reason(void) {
-    // 0 = chip reset, for the source of the last reset see POWMAN_CHIP_RESET
-    // 1 = pwrup0 (GPIO interrupt 0)
-    // 2 = pwrup1 (GPIO interrupt 1)
-    // 3 = pwrup2 (GPIO interrupt 2)
-    // 4 = pwrup3 (GPIO interrupt 3)
-    // 5 = coresight_pwrup
-    // 6 = alarm_pwrup (timeout or alarm wakeup)
-    // 7 = powman_wake_with_doubletap
-    return (powman_hw->last_swcore_pwrup & 0x7f) | (powman_wake_with_doubletap ? POWMAN_DOUBLETAP : 0);
-}
-
-bool powman_wake_reset(void) {
-    return powman_hw->chip_reset & POWMAN_CHIP_RESET_HAD_RUN_LOW_BITS;
-}
-
-bool powman_wake_watchdog(void) {
-    return watchdog_caused_reboot();
-}
-
-uint32_t powman_get_user_switches(void) {
-    return user_button_state;
-}
-
-void i2c_enable(void) {
+static void i2c_enable(void) {
     gpio_init(BW_SW_POWER_EN);
     gpio_set_dir(BW_SW_POWER_EN, GPIO_OUT);
     gpio_put(BW_SW_POWER_EN, 1);
@@ -71,7 +33,7 @@ void i2c_enable(void) {
     gpio_set_function(BW_RTC_I2C_SCL, GPIO_FUNC_I2C);
 }
 
-void i2c_disable(void) {
+static void i2c_disable(void) {
     gpio_init(BW_SW_POWER_EN);
     gpio_init(BW_RTC_I2C_SDA);
     gpio_init(BW_RTC_I2C_SCL);
@@ -95,45 +57,8 @@ static inline void pcf85063_disable_interrupt() {
     i2c_write_blocking(BW_RTC_I2C, 0x51, data3, 2, false);
 }
 
-void pcf85063_wakeup_init(uint8_t period) {
-    // Set up the RTC to countdown before triggering wake
-
-    // Set default timer frequency to minutes (1/60Hz)
-    uint8_t timer_mode = 0b00010000; // 0b11 == minutes, 0b10 == seconds
-
-    uint8_t buf[2] = {0};
-
-    buf[0] = 0x00; // Control_1
-    buf[1] = 0b00000000; // Ensure default values
-    i2c_write_blocking(BW_RTC_I2C, BW_RTC_ADDR, buf, 2, false);
-
-    buf[0] = 0x11; // Timer_mode
-    buf[1] = timer_mode; // interrupt disable + timer disable
-    i2c_write_blocking(BW_RTC_I2C, BW_RTC_ADDR, buf, 2, false);
-
-    // Clear any prior interrupt flags
-    // And ensure a 32738 Hz clockout
-    pcf85063_clear_timer_flag();
-
-    // Switch into seconds to time anything 4 minutes and under
-    //if (period <= 4) {
-    //    period *= 60;
-    //    timer_mode = 0b00010000; // 0b10 == seconds
-    //}
-
-    buf[0] = 0x10; // Timer_value
-    buf[1] = period; // Set the timer period (in seconds)
-    i2c_write_blocking(BW_RTC_I2C, BW_RTC_ADDR, buf, 2, false);
-
-    buf[0] = 0x11; // Timer_mode
-    buf[1] = timer_mode | 0b00000111; // interrupt enable + timer enable
-    i2c_write_blocking(BW_RTC_I2C, BW_RTC_ADDR, buf, 2, false);
-}
-
-void powman_init() {
+static void powman_init() {
     uint64_t abs_time_ms = 1746057600000; // 2025/05/01 - Milliseconds since epoch
-
-    clear_double_tap_flag();
 
     // Run everything from pll_usb pll and stop pll_sys
     set_sys_clock_48mhz();
@@ -226,20 +151,8 @@ void powman_init() {
     on_state = P0_3;
 }
 
-bool __no_inline_not_in_flash_func(psram_cs1_pullup_check)(void) {
-    uint32_t intr_stash = save_and_disable_interrupts();
-    gpio_init(BW_PSRAM_CS);                         // Init to SIO / IN
-    gpio_set_pulls(BW_PSRAM_CS, false, true);       // Pull down
-    sleep_us(100);
-    bool pin_state = gpio_get(BW_PSRAM_CS) == 1;    // Check if pin is strongly pulled up
-    gpio_set_pulls(BW_PSRAM_CS, false, false);      // Disable pulls
-    gpio_set_function(BW_PSRAM_CS, GPIO_FUNC_XIP_CS1);  // Return the CS pin to the correct function
-    restore_interrupts(intr_stash);
-    return pin_state;
-}
-
 // Initiate power off
-int __no_inline_not_in_flash_func(powman_off)(void) {
+static int __no_inline_not_in_flash_func(powman_off)(void) {
     // Set power states
     bool valid_state = powman_configure_wakeup_state(off_state, on_state);
     if (!valid_state) {
@@ -262,7 +175,7 @@ int __no_inline_not_in_flash_func(powman_off)(void) {
     while (true) __wfi();
 }
 
-int powman_setup_gpio_wakeup(int hw_wakeup, int gpio, bool edge, bool high, uint64_t timeout_ms) {
+static int powman_setup_gpio_wakeup(int hw_wakeup, int gpio, bool edge, bool high, uint64_t timeout_ms) {
     gpio_init(gpio);
     gpio_set_dir(gpio, false);
     gpio_set_input_enabled(gpio, true);
@@ -281,37 +194,6 @@ int powman_setup_gpio_wakeup(int hw_wakeup, int gpio, bool edge, bool high, uint
     powman_enable_gpio_wakeup(hw_wakeup, gpio, edge, high);
 
     return 0;
-}
-
-// Power off until a gpio goes high
-int powman_off_until_gpio_high(int gpio, bool edge, bool high, uint64_t timeout_ms) {
-    powman_init();
-
-    powman_setup_gpio_wakeup(POWMAN_WAKE_PWRUP0_CH, gpio, edge, high, 1000);
-
-    if (timeout_ms > 0) {
-        uint64_t ms = powman_timer_get_ms();
-        return powman_off_until_time(ms + timeout_ms);
-    } else {
-        return powman_off();
-    }
-}
-
-// Power off until an absolute time
-int powman_off_until_time(uint64_t absolute_time_ms) {
-    powman_init();
-
-    // Start powman timer and turn off
-    powman_enable_alarm_wakeup_at_ms(absolute_time_ms);
-    return powman_off();
-}
-
-// Power off for a number of milliseconds
-int powman_off_for_ms(uint64_t duration_ms) {
-    powman_init();
-
-    uint64_t ms = powman_timer_get_ms();
-    return powman_off_until_time(ms + duration_ms);
 }
 
 static inline void setup_gpio(bool buttons_only) {
@@ -369,25 +251,13 @@ static inline void setup_gpio(bool buttons_only) {
     gpio_put(BW_SW_POWER_EN, 1);
 }
 
-// Latch inputs
-static inline void latch_inputs(void) {
-    user_button_state = ~gpio_get_all();
-    sleep_ms(5);
-    user_button_state |= ~gpio_get_all();
-}
-
 // disable RTC interrupt
 static inline void setup_system(void) {
     i2c_enable();
     pcf85063_disable_interrupt();
 }
 
-static int64_t alarm_clear_double_tap(alarm_id_t id, __unused void *user_data) {
-    clear_double_tap_flag();
-    return 0;
-}
-
-void shipping_mode() {
+static void shipping_mode() {
     powman_init();
     i2c_disable();
     int rc = powman_off();
@@ -395,7 +265,7 @@ void shipping_mode() {
     hard_assert(false); // should never get here!
 }
 
-void long_press_sleep() {
+static void long_press_sleep() {
     powman_init();
 
     // We must set the pulls on the user buttons or they will not be sufficient
@@ -415,7 +285,7 @@ void long_press_sleep() {
     hard_assert(false); // should never get here!
 }
 
-void handle_long_press() {
+static void handle_long_press() {
     pwm_config config = pwm_get_default_config();
     pwm_config_set_clkdiv(&config, clock_get_hz(clk_sys) / 2048.0f);
     pwm_config_set_wrap(&config, 1024);
@@ -441,7 +311,6 @@ void handle_long_press() {
         }
         // If the LEDs have completed their fade to black
         if(cbr > 0 && level == 0) {
-            clear_double_tap_flag();
             if(!gpio_get(BW_SWITCH_UP) && !gpio_get(BW_SWITCH_DOWN)) {
                 shipping_mode();
             } else {
@@ -462,7 +331,6 @@ void handle_long_press() {
 
 static void __attribute__((constructor)) powman_startup(void) {
     setup_gpio(false);
-    latch_inputs();
 
     // If we haven't reset via a button press we ought not to delay startup
     if (!(powman_hw->chip_reset & POWMAN_CHIP_RESET_HAD_RUN_LOW_BITS) || watchdog_caused_reboot()) {
@@ -471,22 +339,11 @@ static void __attribute__((constructor)) powman_startup(void) {
         return;
     };
 
-    if (!double_tap_flag_is_set()) {
-        // Arm, wait, then disarm and continue booting
-        set_double_tap_flag();
-
-        add_alarm_in_ms(POWMAN_DOUBLE_RESET_TIMEOUT_MS, alarm_clear_double_tap, NULL, false);
-
-        // If reset is held (low), it could be a long press
-        if(gpio_get(BW_RESET_SW) == 0) {
-            handle_long_press();
-        }
-
-        setup_system();
-        //power_on_leds();
-        return;
+    // If reset is held (low), it could be a long press
+    if(gpio_get(BW_RESET_SW) == 0) {
+        handle_long_press();
     }
-    clear_double_tap_flag();
-    powman_wake_with_doubletap = true;
+
     setup_system();
+    //power_on_leds();
 }

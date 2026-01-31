@@ -42,17 +42,3 @@
 #define POWMAN_WAKE_CORESI 0b00100000
 #define POWMAN_WAKE_ALARM  0b01000000
 #define POWMAN_DOUBLETAP   0b10000000
-
-int powman_off_until_gpio_high(int gpio, bool edge, bool high, uint64_t timeout_ms);
-int powman_off_until_time(uint64_t absolute_time_ms);
-int powman_off_for_ms(uint64_t duration_ms);
-uint8_t powman_get_wake_reason(void);
-uint32_t powman_get_user_switches(void);
-bool powman_wake_reset(void);
-bool powman_wake_watchdog(void);
-
-bool psram_cs1_pullup_check(void);
-
-void powman_init();
-int powman_setup_gpio_wakeup(int hw_wakeup, int gpio, bool edge, bool high, uint64_t timeout_ms);
-int powman_off(void);
