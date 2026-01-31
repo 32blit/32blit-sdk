@@ -17,8 +17,10 @@
 #define LCD_RD_PIN 31
 #define LCD_MOSI_PIN 32 // DB0
 #define LCD_BACKLIGHT_PIN 26
-// #define LCD_VSYNC_PIN
+#define LCD_VSYNC_PIN 21
 #define LCD_MAX_CLOCK 15000000
+
+#define LCD_TRANSPOSE 1
 
 // there are white LEDs
 
