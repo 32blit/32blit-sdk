@@ -15,6 +15,7 @@
 #ifndef _BOARDS_PICO2_W_H
 #define _BOARDS_PICO2_W_H
 
+#define PIMORONI_TUFTY2350
 
 //#define PICO_PANIC_FUNCTION mp_pico_panic
 
