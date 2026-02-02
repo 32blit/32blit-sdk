@@ -22,13 +22,12 @@
 
 #define LCD_TRANSPOSE 1
 
-// there are white LEDs
-
 #define DEFAULT_I2C_CLOCK 400000
+
+#define LED_MONO_PINS 0, 1, 2, 3
 
 #define USB_VENDOR_ID 0x2E8A
 #define USB_PRODUCT_ID 0x1101
 
 #define USB_VENDOR_STR "Pimoroni"
 #define USB_PRODUCT_STR "Tufty 2350"
-
