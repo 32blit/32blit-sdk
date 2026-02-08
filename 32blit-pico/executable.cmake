@@ -118,13 +118,7 @@ function(blit_executable NAME)
         pico_add_bin_output(${NAME})
         pico_add_dis_output(${NAME})
 
-        # Ideally we want the .blit filename to match the .elf, but TARGET_FILE_BASE_NAME isn't always available
-        # (This only affects the firmware updater as it's the only thing setting a custom OUTPUT_NAME)
-        if(${CMAKE_VERSION} VERSION_LESS "3.15.0")
-            set(BLIT_FILENAME ${NAME}.blit)
-        else()
-            set(BLIT_FILENAME $<TARGET_FILE_BASE_NAME:${NAME}>.blit)
-        endif()
+        set(BLIT_FILENAME $<TARGET_FILE_BASE_NAME:${NAME}>.blit)
 
         # no relocs, just copy it
         set(BIN_NAME "$<IF:$<BOOL:$<TARGET_PROPERTY:${NAME},OUTPUT_NAME>>,$<TARGET_PROPERTY:${NAME},OUTPUT_NAME>,$<TARGET_PROPERTY:${NAME},NAME>>.bin")
@@ -179,11 +173,7 @@ function(blit_metadata TARGET FILE)
         target_compile_definitions(${TARGET} PRIVATE PICO_NO_BI_PROGRAM_NAME=1)
     else()
         # real .blit metadata
-        if(${CMAKE_VERSION} VERSION_LESS "3.15.0")
-            set(BLIT_FILENAME ${TARGET}.blit)
-        else()
-            set(BLIT_FILENAME $<TARGET_FILE_BASE_NAME:${TARGET}>.blit)
-        endif()
+        set(BLIT_FILENAME $<TARGET_FILE_BASE_NAME:${TARGET}>.blit)
 
         add_custom_command(
             TARGET ${TARGET} POST_BUILD
