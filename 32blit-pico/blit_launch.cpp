@@ -10,6 +10,7 @@
 #include "hardware/xip_cache.h"
 #endif
 
+#include "config.h"
 #include "blit_launch.hpp"
 #include "file.hpp"
 #include "overlay.hpp"
@@ -26,6 +27,12 @@
 #endif
 
 // code related to blit files and launching
+
+#ifdef STORAGE_SD
+static const uint32_t flash_end = PICO_FLASH_SIZE_BYTES;
+#else
+static const uint32_t flash_end = FLASH_STORAGE_OFFSET;
+#endif
 
 extern int (*do_tick)(uint32_t time);
 
@@ -62,9 +69,7 @@ static uint32_t calc_num_blocks(uint32_t size) {
 static uint32_t find_flash_offset(uint32_t requested_size) {
   uint32_t free_off = 0; // 0 is invalid as that's where the loader is
 
-  // FIXME: avoid flash storage
-
-  for(uint32_t off = 256 * 1024; off < PICO_FLASH_SIZE_BYTES;) {
+  for(uint32_t off = 256 * 1024; off < flash_end;) {
     auto size = get_installed_file_size(off);
 
     if(!size) {
@@ -91,7 +96,7 @@ static uint32_t find_flash_offset(uint32_t requested_size) {
   }
 
   // last chance
-  if(free_off && PICO_FLASH_SIZE_BYTES - free_off >= requested_size)
+  if(free_off && flash_end - free_off >= requested_size)
     return free_off;
 
   return 0;
@@ -134,7 +139,7 @@ static bool read_file_metadata(void *file, RawMetadata &meta, RawTypeMetadata &t
 }
 
 static uint32_t find_installed_blit(RawMetadata &meta) {
-  for(uint32_t off = 0; off < PICO_FLASH_SIZE_BYTES;) {
+  for(uint32_t off = 0; off < flash_end;) {
     auto size = get_installed_file_size(off);
 
     if(!size) {
@@ -158,7 +163,7 @@ static uint32_t find_installed_blit(RawMetadata &meta) {
 
 static bool cleanup_duplicates(RawMetadata &meta, RawTypeMetadata &type_meta, uint32_t new_offset) {
   bool ret = false;
-  for(uint32_t off = 0; off < PICO_FLASH_SIZE_BYTES;) {
+  for(uint32_t off = 0; off < flash_end;) {
     auto size = get_installed_file_size(off);
 
     if(!size) {
@@ -360,7 +365,7 @@ void delayed_launch() {
 }
 
 void list_installed_games(std::function<void(const uint8_t *, uint32_t, uint32_t)> callback) {
-  for(uint32_t off = 0; off < PICO_FLASH_SIZE_BYTES;) {
+  for(uint32_t off = 0; off < flash_end;) {
     auto size = get_installed_file_size(off);
 
     if(!size) {
@@ -381,8 +386,7 @@ void erase_game(uint32_t offset) {
     return;
 
   // check in bounds
-  // TODO: prevent erasing fs if flash storage is used?
-  if(offset >= PICO_FLASH_SIZE_BYTES)
+  if(offset >= flash_end)
     return;
 
   auto size = get_installed_file_size(offset);

@@ -173,6 +173,15 @@
 #define FRAMEBUFFER_SIZE ((DISPLAY_WIDTH / 2) * ((DISPLAY_HEIGHT + 1) / 2) * 2) // double-buffered
 #endif
 
+// default flash storage to last 1/4 of flash
+#ifndef FLASH_STORAGE_SIZE
+#define FLASH_STORAGE_SIZE PICO_FLASH_SIZE_BYTES / 4
+#endif
+
+#ifndef FLASH_STORAGE_OFFSET
+#define FLASH_STORAGE_OFFSET PICO_FLASH_SIZE_BYTES - FLASH_STORAGE_SIZE
+#endif
+
 #ifndef LCD_CS_PIN
 #define LCD_CS_PIN PICO_DEFAULT_SPI_CSN_PIN
 #endif
