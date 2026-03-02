@@ -52,7 +52,7 @@ static void init_button(int pin, bool active_high) {
     gpio_pull_up(pin);
 }
 
-void init_input() {
+void init_gpio_input() {
   for(size_t i = 0; i < std::size(button_io); i++)
     init_button(button_io[i], button_active[i]);
 
@@ -72,10 +72,8 @@ void init_input() {
   #undef BUTTON_BI_DECL
 }
 
-void update_input() {
+void update_gpio_input(uint32_t &new_buttons, blit::Vec2 &new_joystick) {
   auto io = gpio_get_all();
-
-  uint32_t new_buttons = 0;
 
   for(size_t i = 0; i < std::size(button_io); i++) {
     // pin not defined, skip
@@ -87,6 +85,8 @@ void update_input() {
     if(pin_state == button_active[i])
       new_buttons |= 1 << i;
   }
-
-  blit::api_data.buttons = new_buttons;
 }
+
+extern const InputDriver gpio_input_driver {
+  init_gpio_input, update_gpio_input
+};

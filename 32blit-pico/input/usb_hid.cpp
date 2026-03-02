@@ -49,18 +49,14 @@ const uint32_t dpad_map[]{
   0
 };
 
-void init_input() {
+void init_usb_hid() {
 }
 
-void update_input() {
+void update_usb_hid(uint32_t &new_buttons, blit::Vec2 &new_joystick) {
   using namespace blit;
 
-  if(!hid_keyboard_detected && !hid_gamepad_id) {
-    blit::api_data.buttons = 0;
+  if(!hid_keyboard_detected && !hid_gamepad_id)
     return;
-  }
-
-  uint32_t new_buttons = 0;
 
   // keyboard
   if(hid_keyboard_detected) {
@@ -139,8 +135,10 @@ void update_input() {
               | (hid_buttons & (1 << mapping->home)     ? uint32_t(Button::HOME) : 0)
               | (hid_buttons & (1 << mapping->joystick) ? uint32_t(Button::JOYSTICK) : 0);
 
-  api_data.buttons = new_buttons;
-
-  api_data.joystick.x = (float(hid_joystick[0]) - 0x80) / 0x80;
-  api_data.joystick.y = (float(hid_joystick[1]) - 0x80) / 0x80;
+  new_joystick.x = (float(hid_joystick[0]) - 0x80) / 0x80;
+  new_joystick.y = (float(hid_joystick[1]) - 0x80) / 0x80;
 }
+
+extern const InputDriver usb_hid_driver {
+  init_usb_hid, update_usb_hid
+};
