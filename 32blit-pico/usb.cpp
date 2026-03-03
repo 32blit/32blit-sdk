@@ -110,7 +110,7 @@ public:
           if(status == Status::Done) {
             // setup progress message
             char message_buf[300];
-            snprintf(message_buf, sizeof(message_buf), "Saving %s... to flash", buf.get_data());
+            snprintf(message_buf, sizeof(message_buf), "Saving %s to flash...", buf.get_data());
             cdc_command_progress(message_buf, 0, 0);
 
             parse_state = ParseState::Length;
