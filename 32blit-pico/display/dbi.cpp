@@ -122,17 +122,17 @@ static void __isr double_transposed_dma_irq_handler() {
     auto count = cur_scanline == (win_h + 1) / 2 ? win_w / 2 : win_w;
 
     // start from buffer 0 (to repeat first line)
-    int palette_buf_idx = cur_scanline & 1;
+    int temp_buf_index = cur_scanline & 1;
 
     dma_channel_set_trans_count(dma_channel, count / 2, false);
-    dma_channel_set_read_addr(dma_channel, temp_buffer + (win_w / 2) * (palette_buf_idx ^ 1), true);
+    dma_channel_set_read_addr(dma_channel, temp_buffer + (win_w / 2) * (temp_buf_index ^ 1), true);
 
     // prepare next lines
     if(++cur_scanline > win_h / 2)
       return;
 
     auto in = upd_frame_buffer + (cur_scanline - 1);
-    auto out = (uint16_t *)temp_buffer + palette_buf_idx * win_w;
+    auto out = (uint16_t *)temp_buffer + temp_buf_index * win_w;
 
     transpose_data(in, out, win_w / 2, win_h / 2);
     if(cur_scanline != (win_h + 1) / 2)
@@ -148,17 +148,17 @@ static void __isr transposed_dma_irq_handler() {
       return;
 
     // start from buffer 1
-    int palette_buf_idx = cur_scanline & 1;
+    int temp_buf_index = cur_scanline & 1;
 
     dma_channel_set_trans_count(dma_channel, win_w, false);
-    dma_channel_set_read_addr(dma_channel, temp_buffer + (win_w / 2) * palette_buf_idx, true);
+    dma_channel_set_read_addr(dma_channel, temp_buffer + (win_w / 2) * temp_buf_index, true);
 
     // prepare next line
     if(++cur_scanline >= win_h)
       return;
 
     auto in = upd_frame_buffer + cur_scanline;
-    auto out = (uint16_t *)temp_buffer + (palette_buf_idx ^ 1) * win_w;
+    auto out = (uint16_t *)temp_buffer + (temp_buf_index ^ 1) * win_w;
     transpose_data(in, out, win_w, win_h);
   }
 }
