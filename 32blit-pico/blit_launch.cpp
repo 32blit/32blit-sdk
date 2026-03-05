@@ -66,6 +66,7 @@ static uint32_t calc_num_blocks(uint32_t size) {
   return (size - 1) / game_block_size + 1;
 }
 
+#ifdef PICO_RP2350
 static uint32_t find_flash_offset(uint32_t requested_size) {
   uint32_t free_off = 0; // 0 is invalid as that's where the loader is
 
@@ -101,6 +102,7 @@ static uint32_t find_flash_offset(uint32_t requested_size) {
 
   return 0;
 }
+#endif
 
 static bool read_file_metadata(void *file, RawMetadata &meta, RawTypeMetadata &type_meta) {
   // read header and check magic
