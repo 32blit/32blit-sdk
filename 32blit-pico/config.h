@@ -210,6 +210,10 @@
 #define LCD_MAX_CLOCK 62500000
 #endif
 
+#ifndef LCD_TRANSPOSE
+#define LCD_TRANSPOSE 0
+#endif
+
 #ifndef OVERCLOCK_250
 #define OVERCLOCK_250 1
 #endif

@@ -68,8 +68,13 @@ static uint16_t *upd_frame_buffer = nullptr;
 // frame buffer where pixel data is stored
 static uint16_t *frame_buffer = nullptr;
 
+// used for transpose, two scanlines
+static uint32_t temp_buffer[DISPLAY_WIDTH];
+
 // pixel double scanline counter
 static volatile int cur_scanline = DISPLAY_HEIGHT;
+
+static irq_handler_t cur_irq_handler = nullptr;
 
 // PIO helpers
 static void pio_put_byte(PIO pio, uint sm, uint8_t b) {
@@ -83,8 +88,16 @@ static void pio_wait(PIO pio, uint sm) {
   while(!(pio->fdebug & stall_mask));
 }
 
+static inline void transpose_data(const uint16_t *in, uint16_t *out, int count, int stride) {
+  auto end = out + count;
+  do {
+    *out++ = *in;
+    in += stride;
+  } while(out != end);
+}
+
 // used for pixel doubling
-static void __isr dbi_dma_irq_handler() {
+static void __isr double_dma_irq_handler() {
   if(dma_channel_get_irq0_status(dma_channel)) {
     dma_channel_acknowledge_irq0(dma_channel);
 
@@ -96,6 +109,79 @@ static void __isr dbi_dma_irq_handler() {
     dma_channel_set_trans_count(dma_channel, count, false);
     dma_channel_set_read_addr(dma_channel, upd_frame_buffer + (cur_scanline - 1) * (win_w / 2), true);
   }
+}
+
+static void __isr double_transposed_dma_irq_handler() {
+  if(dma_channel_get_irq0_status(dma_channel)) {
+    dma_channel_acknowledge_irq0(dma_channel);
+
+    if(cur_scanline > win_h / 2)
+      return;
+
+    // num pixels
+    auto count = cur_scanline == (win_h + 1) / 2 ? win_w / 2 : win_w;
+
+    // start from buffer 0 (to repeat first line)
+    int temp_buf_index = cur_scanline & 1;
+
+    dma_channel_set_trans_count(dma_channel, count / 2, false);
+    dma_channel_set_read_addr(dma_channel, temp_buffer + (win_w / 2) * (temp_buf_index ^ 1), true);
+
+    // prepare next lines
+    if(++cur_scanline > win_h / 2)
+      return;
+
+    auto in = upd_frame_buffer + (cur_scanline - 1);
+    auto out = (uint16_t *)temp_buffer + temp_buf_index * win_w;
+
+    transpose_data(in, out, win_w / 2, win_h / 2);
+    if(cur_scanline != (win_h + 1) / 2)
+      transpose_data(in + 1, out + win_w / 2, win_w / 2, win_h / 2);
+  }
+}
+
+static void __isr transposed_dma_irq_handler() {
+  if(dma_channel_get_irq0_status(dma_channel)) {
+    dma_channel_acknowledge_irq0(dma_channel);
+
+    if(cur_scanline >= win_h)
+      return;
+
+    // start from buffer 1
+    int temp_buf_index = cur_scanline & 1;
+
+    dma_channel_set_trans_count(dma_channel, win_w, false);
+    dma_channel_set_read_addr(dma_channel, temp_buffer + (win_w / 2) * temp_buf_index, true);
+
+    // prepare next line
+    if(++cur_scanline >= win_h)
+      return;
+
+    auto in = upd_frame_buffer + cur_scanline;
+    auto out = (uint16_t *)temp_buffer + (temp_buf_index ^ 1) * win_w;
+    transpose_data(in, out, win_w, win_h);
+  }
+}
+
+// set DMA irq handler for pixel doubling/palette lookup
+static void update_irq_handler() {
+  irq_handler_t new_handler;
+
+  if(LCD_TRANSPOSE)
+    new_handler = pixel_double ? double_transposed_dma_irq_handler : transposed_dma_irq_handler;
+  else
+    new_handler = double_dma_irq_handler;
+
+  if(cur_irq_handler == new_handler)
+    return;
+
+  if(cur_irq_handler)
+    irq_remove_handler(DMA_IRQ_0, cur_irq_handler);
+
+  irq_add_shared_handler(DMA_IRQ_0, new_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+  cur_irq_handler = new_handler;
+
+  cur_scanline = win_h; // probably switching mode, set to max so that dma_is_busy thinks we're finished
 }
 
 static void command(uint8_t command, size_t len = 0, const char *data = nullptr) {
@@ -134,6 +220,11 @@ static void command(uint8_t command, size_t len = 0, const char *data = nullptr)
 }
 
 static void set_window(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
+  if(LCD_TRANSPOSE) {
+    std::swap(x, y);
+    std::swap(w, h);
+  }
+
   uint32_t cols = __builtin_bswap32((x << 16) | (x + w - 1));
   uint32_t rows = __builtin_bswap32((y << 16) | (y + h - 1));
 
@@ -199,6 +290,10 @@ static void send_init_sequence() {
   sleep_ms(100);
 
   uint8_t madctl = MADCTL::RGB | rotations[LCD_ROTATION / 90];
+
+  if(LCD_TRANSPOSE)
+    madctl ^= MADCTL::SWAP_XY;
+
   command(MIPIDCS::SetAddressMode, 1, (char *)&madctl);
 
   // setup correct addressing window
@@ -267,9 +362,25 @@ static void update() {
   if(!write_mode)
     prepare_write();
 
+  upd_frame_buffer = frame_buffer;
+
+  if(LCD_TRANSPOSE) {
+    // setup first two lines
+    auto stride = pixel_double ? win_h / 2 : win_h;
+    auto count = pixel_double ? win_w / 2 : win_w;
+    transpose_data(frame_buffer, (uint16_t *)temp_buffer, count, stride);
+    transpose_data(frame_buffer + 1, (uint16_t *)temp_buffer + count, count, stride);
+
+    cur_scanline = 1;
+
+    int dma_count = pixel_double ? win_w / 4 : win_w;
+    dma_channel_set_trans_count(dma_channel, dma_count, false);
+    dma_channel_set_read_addr(dma_channel, temp_buffer, true);
+    return;
+  }
+
   if(pixel_double) {
     cur_scanline = 0;
-    upd_frame_buffer = frame_buffer;
     dma_channel_set_trans_count(dma_channel, win_w / 4, false);
   } else
     dma_channel_set_trans_count(dma_channel, win_w * win_h, false);
@@ -294,7 +405,10 @@ static void set_pixel_double(bool pd) {
   if(write_mode)
     command(0);
 
-  if(pixel_double) {
+  dma_channel_set_irq0_enabled(dma_channel, false);
+  update_irq_handler();
+
+  if(pixel_double || LCD_TRANSPOSE) {
     dma_channel_acknowledge_irq0(dma_channel);
     dma_channel_set_irq0_enabled(dma_channel, true);
   } else
@@ -306,12 +420,14 @@ static void clear() {
     prepare_write();
 
   for(int i = 0; i < win_w * win_h; i++)
-    pio_sm_put_blocking(pio, pio_sm, 0);
+    pio_sm_put_blocking(pio, pio_sm,0);
 }
 
 static bool dma_is_busy() {
   if(pixel_double && cur_scanline <= win_h / 2)
     return true;
+  else if(LCD_TRANSPOSE && !pixel_double && cur_scanline < win_h)
+      return true;
 
   return dma_channel_is_busy(dma_channel);
 }
@@ -380,6 +496,12 @@ void init_display() {
 #endif
 
   // setup PIO
+#if LCD_MOSI_PIN >= 32 || LCD_SCK_PIN >= 32
+  // assumes anything else using this PIO can also deal with the base
+  static_assert(LCD_MOSI_PIN >= 16 && LCD_SCK_PIN >= 16);
+  pio_set_gpio_base(pio, 16);
+#endif
+
   pio_offset = pio_add_program(pio, &dbi_raw_program);
   pio_double_offset = pio_add_program(pio, &dbi_pixel_double_program);
 
@@ -415,7 +537,7 @@ void init_display() {
 
 #ifdef DBI_8BIT
   // these are really D0/WR
-  bi_decl_if_func_used(bi_pin_mask_with_name(0xFF << LCD_MOSI_PIN, "Display Data"));
+  bi_decl_if_func_used(bi_pin_mask_with_name(0xFFull << LCD_MOSI_PIN, "Display Data"));
   bi_decl_if_func_used(bi_1pin_with_name(LCD_SCK_PIN, "Display WR"));
 #else
   bi_decl_if_func_used(bi_1pin_with_name(LCD_MOSI_PIN, "Display TX"));
@@ -433,7 +555,7 @@ void init_display() {
   dma_channel_configure(
     dma_channel, &config, &pio->txf[pio_sm], frame_buffer, DISPLAY_WIDTH * DISPLAY_HEIGHT, false);
 
-  irq_add_shared_handler(DMA_IRQ_0, dbi_dma_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+  update_irq_handler();
   irq_set_enabled(DMA_IRQ_0, true);
 
   clear();
