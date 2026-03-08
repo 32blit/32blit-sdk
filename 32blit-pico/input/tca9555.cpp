@@ -42,7 +42,7 @@ void update_input() {
   if(!tca9555_found)
     return;
 
-  uint16_t gpio = 0;
+  uint16_t gpio = 0xFFFF;
 
   i2c_read_blocking(TCA9555_I2C, TCA9555_ADDR, (uint8_t *)&gpio, 2, false);
 
