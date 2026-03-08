@@ -489,6 +489,11 @@ bool BlitWriter::prepare_write(const uint8_t *buf) {
     // we can use address translation for this, so flash in any free space
     flash_offset = find_flash_offset(file_len);
   }
+
+  if(!flash_offset) {
+    blit::debugf("Not enough space!");
+    return false;
+  }
 #endif
 
   disable_user_code();
