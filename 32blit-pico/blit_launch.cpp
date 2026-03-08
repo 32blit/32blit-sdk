@@ -456,6 +456,12 @@ bool BlitWriter::write(const uint8_t *buf, uint32_t len) {
   return true;
 }
 
+void BlitWriter::cleanup_duplicates() {
+  auto header = (BlitGameHeader *)(FLASH_BASE + flash_offset);
+  auto meta = (RawMetadata *)(FLASH_BASE + flash_offset + header->end + 10);
+  ::cleanup_duplicates(*meta, flash_offset);
+}
+
 uint32_t BlitWriter::get_offset() const {
   return file_offset;
 }

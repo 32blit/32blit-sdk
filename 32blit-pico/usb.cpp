@@ -164,6 +164,8 @@ public:
           if(writer.get_remaining() == 0) {
             cdc_command_progress(nullptr, 0, 0); // clear progress
 
+            writer.cleanup_duplicates();
+
             // send response
             auto block = writer.get_flash_offset() >> 16;
             uint8_t res_data[]{'3', '2', 'B', 'L', '_', '_', 'O', 'K', uint8_t(block), uint8_t(block >> 8)};
