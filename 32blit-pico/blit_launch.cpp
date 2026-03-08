@@ -163,7 +163,7 @@ static uint32_t find_installed_blit(RawMetadata &meta) {
   return ~0u;
 }
 
-static bool cleanup_duplicates(RawMetadata &meta, RawTypeMetadata &type_meta, uint32_t new_offset) {
+static bool cleanup_duplicates(RawMetadata &meta, uint32_t new_offset) {
   bool ret = false;
   for(uint32_t off = 0; off < flash_end;) {
     auto size = get_installed_file_size(off);
@@ -261,7 +261,7 @@ bool launch_file(const char *path) {
 
       flash_offset = writer.get_flash_offset();
 
-      cleanup_duplicates(meta, type_meta, flash_offset);
+      cleanup_duplicates(meta, flash_offset);
     } else
       close_file(file);
   }
