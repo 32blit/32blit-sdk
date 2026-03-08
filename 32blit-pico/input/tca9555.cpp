@@ -44,7 +44,12 @@ void update_tca9555(uint32_t &new_buttons, blit::Vec2 &new_joystick) {
 
   uint16_t gpio = 0xFFFF;
 
-  i2c_read_blocking(TCA9555_I2C, TCA9555_ADDR, (uint8_t *)&gpio, 2, false);
+  if(i2c_read_blocking(TCA9555_I2C, TCA9555_ADDR, (uint8_t *)&gpio, 2, false) != 2) {
+    // attempt to reset the address if read fails
+    uint8_t port = 0;
+    i2c_write_timeout_us(TCA9555_I2C, TCA9555_ADDR, &port, 1, false, 1000);
+    return; // will try again next time
+  }
 
   if(!(gpio & (1 << TCA9555_LEFT_IO)))
     new_buttons |= blit::Button::DPAD_LEFT;
