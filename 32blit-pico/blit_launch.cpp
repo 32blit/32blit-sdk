@@ -1,4 +1,5 @@
 #include <cstring>
+#include <forward_list>
 
 #include "pico/stdlib.h"
 #include "hardware/flash.h"
@@ -33,6 +34,13 @@ static const uint32_t flash_end = PICO_FLASH_SIZE_BYTES;
 #else
 static const uint32_t flash_end = FLASH_STORAGE_OFFSET;
 #endif
+
+struct TypeHandlerInfo {
+  char type[4]; // should have a null terminator, but the low byte of the offset will always be zero
+  uint32_t offset;
+};
+
+std::forward_list<TypeHandlerInfo> handlers;
 
 extern int (*do_tick)(uint32_t time);
 
@@ -221,6 +229,36 @@ RawMetadata *get_running_game_metadata() {
 
 #endif
   return nullptr;
+}
+
+void create_type_handler_list() {
+  handlers.clear();
+
+  blit::api.list_installed_games([](const uint8_t *ptr, uint32_t block, uint32_t size) {
+    auto header = (const BlitGameHeader *)ptr;
+    auto metadata_ptr = ptr + header->end;
+
+    if(memcmp(metadata_ptr, "BLITMETA", 8) != 0)
+      return;
+
+    // skip straight to the type block
+    metadata_ptr += 10 + sizeof(RawMetadata);
+
+    if(memcmp(metadata_ptr, "BLITTYPE", 8) != 0)
+      return;
+
+    // get the type block
+    auto type_meta = (const RawTypeMetadata *)(metadata_ptr + 8);
+
+    // loop through filetypes
+    for(unsigned i = 0; i < type_meta->num_filetypes; i++) {
+      TypeHandlerInfo info;
+      memcpy(info.type, type_meta->filetypes[i], 4);
+      info.offset = block * game_block_size;
+
+      handlers.emplace_front(info);
+    }
+  });
 }
 
 bool launch_file(const char *path) {

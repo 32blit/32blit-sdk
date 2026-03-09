@@ -317,7 +317,9 @@ int main() {
 #endif
 #endif
 
-#ifndef BUILD_LOADER
+#ifdef BUILD_LOADER
+  create_type_handler_list();
+#else
   blit::set_screen_mode(ScreenMode::lores);
 #endif
 

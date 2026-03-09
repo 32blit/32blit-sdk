@@ -10,6 +10,8 @@ static constexpr unsigned int game_block_size = 64 * 1024;
 
 RawMetadata *get_running_game_metadata();
 
+void create_type_handler_list();
+
 bool launch_file(const char *path);
 blit::CanLaunchResult can_launch(const char *path);
 void launch_pre_init();
