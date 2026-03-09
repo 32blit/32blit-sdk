@@ -488,6 +488,15 @@ void erase_game(uint32_t offset) {
   restore_interrupts(status);
 
   set_render_overlay_enabled(false);
+
+  // clear out any handler entries
+  auto prev = handlers.before_begin();
+  for(auto it = handlers.begin(); it != handlers.end();) {
+    if(it->offset == offset)
+      it = handlers.erase_after(prev);
+    else
+      prev = it++;
+  }
 #endif
 }
 
