@@ -190,6 +190,18 @@ static bool cleanup_duplicates(RawMetadata &meta, uint32_t new_offset) {
   return ret;
 }
 
+// returns lowercased extension
+static std::string get_file_ext(const char *path) {
+  // get the extension
+  std::string_view sv(path);
+  auto last_dot = sv.find_last_of('.');
+  auto ext = last_dot == std::string::npos ? "" : std::string(sv.substr(last_dot + 1));
+  for(auto &c : ext)
+    c = tolower(c);
+
+  return ext;
+}
+
 // 32blit API
 
 RawMetadata *get_running_game_metadata() {
@@ -286,11 +298,7 @@ blit::CanLaunchResult can_launch(const char *path) {
   }
 
   // get the extension
-  std::string_view sv(path);
-  auto last_dot = sv.find_last_of('.');
-  auto ext = last_dot == std::string::npos ? "" : std::string(sv.substr(last_dot + 1));
-  for(auto &c : ext)
-    c = tolower(c);
+  auto ext = get_file_ext(path);
 
   if(ext == "blit") {
     BlitGameHeader header;
