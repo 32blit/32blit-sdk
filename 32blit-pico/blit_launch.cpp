@@ -262,6 +262,7 @@ void create_type_handler_list() {
 }
 
 bool launch_file(const char *path) {
+#ifdef BUILD_LOADER
   uint32_t flash_offset = ~0u;
 
   if(strncmp(path, "flash:/", 7) == 0) // from flash
@@ -341,6 +342,9 @@ bool launch_file(const char *path) {
 
   requested_launch_offset = flash_offset;
   return true;
+#else
+  return false;
+#endif
 }
 
 blit::CanLaunchResult can_launch(const char *path) {
