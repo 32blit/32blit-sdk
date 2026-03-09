@@ -267,53 +267,68 @@ bool launch_file(const char *path) {
   if(strncmp(path, "flash:/", 7) == 0) // from flash
     flash_offset = atoi(path + 7) * game_block_size;
   else {
-    // from storage
-    auto file = open_file(path, blit::OpenMode::read);
 
-    if(!file)
-      return false;
+    auto ext = get_file_ext(path);
 
-    // read file metadata and try to find matching installed gat
-    RawMetadata meta;
-    RawTypeMetadata type_meta = {};
-
-    if(read_file_metadata(file, meta, type_meta))
-      flash_offset = find_installed_blit(meta);
-
-    // flash if not found
-    if(flash_offset == ~0u) {
-      BlitWriter writer;
-
-      uint32_t file_offset = 0;
-      uint32_t len = get_file_length(file);
-
-      writer.init(len);
-
-      // read in small chunks
-      uint8_t buf[FLASH_PAGE_SIZE];
-
-      while(file_offset < len) {
-        auto bytes_read = read_file(file, file_offset, FLASH_PAGE_SIZE, (char *)buf);
-        if(bytes_read <= 0)
+    if(ext != "blit") {
+      // with handler
+      for(auto &handler : handlers) {
+        if(strncmp(ext.data(), handler.type, 4) == 0) {
+          flash_offset = handler.offset;
           break;
-
-        if(!writer.write(buf, bytes_read))
-          break;
-
-        file_offset += bytes_read;
+        }
       }
 
-      close_file(file);
+      // set launch path
+    } else {
+      // from storage
+      auto file = open_file(path, blit::OpenMode::read);
 
-      // didn't write everything, fail launch
-      if(writer.get_remaining() > 0)
+      if(!file)
         return false;
 
-      flash_offset = writer.get_flash_offset();
+      // read file metadata and try to find matching installed gat
+      RawMetadata meta;
+      RawTypeMetadata type_meta = {};
 
-      cleanup_duplicates(meta, flash_offset);
-    } else
-      close_file(file);
+      if(read_file_metadata(file, meta, type_meta))
+        flash_offset = find_installed_blit(meta);
+
+      // flash if not found
+      if(flash_offset == ~0u) {
+        BlitWriter writer;
+
+        uint32_t file_offset = 0;
+        uint32_t len = get_file_length(file);
+
+        writer.init(len);
+
+        // read in small chunks
+        uint8_t buf[FLASH_PAGE_SIZE];
+
+        while(file_offset < len) {
+          auto bytes_read = read_file(file, file_offset, FLASH_PAGE_SIZE, (char *)buf);
+          if(bytes_read <= 0)
+            break;
+
+          if(!writer.write(buf, bytes_read))
+            break;
+
+          file_offset += bytes_read;
+        }
+
+        close_file(file);
+
+        // didn't write everything, fail launch
+        if(writer.get_remaining() > 0)
+          return false;
+
+        flash_offset = writer.get_flash_offset();
+
+        cleanup_duplicates(meta, flash_offset);
+      } else
+        close_file(file);
+    }
   }
 
   auto header = (BlitGameHeader *)(FLASH_BASE + flash_offset);
@@ -355,6 +370,14 @@ blit::CanLaunchResult can_launch(const char *path) {
     close_file(file);
     return blit::CanLaunchResult::IncompatibleBlit;
   }
+
+  // check handlers
+  for(auto &handler : handlers) {
+    if(strncmp(ext.data(), handler.type, 4) == 0) {
+      return blit::CanLaunchResult::Success;
+    }
+  }
+
 #endif
 
   return blit::CanLaunchResult::UnknownType;
