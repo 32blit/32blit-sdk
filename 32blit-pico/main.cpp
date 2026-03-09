@@ -215,6 +215,8 @@ void disable_user_code() {
 static int64_t home_hold_callback(alarm_id_t id, void *user_data) {
   home_hold_alarm_id = 0;
 
+  close_open_files();
+
   launch_pre_init();
   ::init(); // re-initialising the loader is effectively a reset
 
