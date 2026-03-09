@@ -42,6 +42,10 @@ struct TypeHandlerInfo {
 
 std::forward_list<TypeHandlerInfo> handlers;
 
+#ifdef BUILD_LOADER
+static char launch_path[256];
+#endif
+
 extern int (*do_tick)(uint32_t time);
 
 void disable_user_code();
@@ -265,6 +269,9 @@ bool launch_file(const char *path) {
 #ifdef BUILD_LOADER
   uint32_t flash_offset = ~0u;
 
+  // clear old path
+  launch_path[0] = 0;
+
   if(strncmp(path, "flash:/", 7) == 0) // from flash
     flash_offset = atoi(path + 7) * game_block_size;
   else {
@@ -281,6 +288,7 @@ bool launch_file(const char *path) {
       }
 
       // set launch path
+      strncpy(launch_path, path, sizeof(launch_path) - 1);
     } else {
       // from storage
       auto file = open_file(path, blit::OpenMode::read);
@@ -519,6 +527,14 @@ void *get_type_handler_metadata(const char *filetype) {
   }
 #endif
   return nullptr;
+}
+
+const char *get_launch_path() {
+#ifdef BUILD_LOADER
+  return launch_path;
+#else
+  return nullptr;
+#endif
 }
 
 // .blit file writer

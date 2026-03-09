@@ -23,6 +23,8 @@ void erase_game(uint32_t offset);
 
 void *get_type_handler_metadata(const char *filetype);
 
+const char *get_launch_path();
+
 class BlitWriter final {
 public:
   void init(uint32_t file_len);

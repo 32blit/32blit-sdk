@@ -60,10 +60,6 @@ static uint32_t get_max_us_timer() {
   return 0xFFFFFFFF; // it's a 64bit timer...
 }
 
-const char *get_launch_path()  {
-  return nullptr;
-}
-
 static GameMetadata get_metadata() {
   GameMetadata ret;
 
