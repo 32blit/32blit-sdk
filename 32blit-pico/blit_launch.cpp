@@ -468,6 +468,23 @@ void erase_game(uint32_t offset) {
 #endif
 }
 
+void *get_type_handler_metadata(const char *filetype) {
+#ifdef BUILD_LOADER
+  for(auto &handler : handlers) {
+    if(strncmp(filetype, handler.type, 4) == 0) {
+      auto ptr = (const uint8_t *)(FLASH_BASE + handler.offset);
+      auto header = (const BlitGameHeader *)ptr;
+      auto metadata_ptr = ptr + header->end;
+
+      // this really shouldn't fail if it's in the list, but be safe
+      if(memcmp(metadata_ptr, "BLITMETA", 8) == 0)
+        return (void *)metadata_ptr;
+    }
+  }
+#endif
+  return nullptr;
+}
+
 // .blit file writer
 void BlitWriter::init(uint32_t file_len) {
   this->file_len = file_len;

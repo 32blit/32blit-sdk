@@ -167,7 +167,7 @@ static const blit::APIConst blit_api_const {
 
   ::launch_file,
   ::erase_game,
-  nullptr, // get_type_handler_metadata
+  ::get_type_handler_metadata,
 
   ::get_launch_path,
 

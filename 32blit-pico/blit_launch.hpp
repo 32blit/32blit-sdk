@@ -21,6 +21,8 @@ void list_installed_games(std::function<void(const uint8_t *, uint32_t, uint32_t
 
 void erase_game(uint32_t offset);
 
+void *get_type_handler_metadata(const char *filetype);
+
 class BlitWriter final {
 public:
   void init(uint32_t file_len);
