@@ -10,13 +10,9 @@
 
 #include "engine/api_private.hpp"
 
-#if defined(LED_R_PIN) && defined(LED_G_PIN) && defined(LED_B_PIN)
 static const int led_pins[]{LED_R_PIN, LED_G_PIN, LED_B_PIN};
-#define HAVE_LED
-#endif
 
 void init_led() {
-#ifdef HAVE_LED
   pwm_config cfg = pwm_get_default_config();
 #ifdef LED_INVERTED
   pwm_config_set_output_polarity(&cfg, true, true);
@@ -31,13 +27,11 @@ void init_led() {
   bi_decl(bi_1pin_with_name(led_pins[0], "Red LED"));
   bi_decl(bi_1pin_with_name(led_pins[1], "Green LED"));
   bi_decl(bi_1pin_with_name(led_pins[2], "Blue LED"));
-#endif
 }
 
 void update_led() {
   using namespace blit;
 
-#ifdef HAVE_LED
   const float gamma = 2.8;
   uint16_t value = (uint16_t)(std::pow((float)(api_data.LED.r) / 255.0f, gamma) * 65535.0f + 0.5f);
   pwm_set_gpio_level(led_pins[0], value);
@@ -45,5 +39,4 @@ void update_led() {
   pwm_set_gpio_level(led_pins[1], value);
   value = (uint16_t)(std::pow((float)(api_data.LED.b) / 255.0f, gamma) * 65535.0f + 0.5f);
   pwm_set_gpio_level(led_pins[2], value);
-#endif
 }

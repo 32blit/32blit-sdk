@@ -14,7 +14,6 @@ target_sources(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/blit_launch.cpp
     ${CMAKE_CURRENT_LIST_DIR}/display.cpp
     ${CMAKE_CURRENT_LIST_DIR}/file.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/led.cpp
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
     ${CMAKE_CURRENT_LIST_DIR}/multiplayer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/overlay.cpp
@@ -59,9 +58,16 @@ target_sources(BlitHalPico INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/audio/${BLIT_AUDIO_DRIVER}.cpp
     ${CMAKE_CURRENT_LIST_DIR}/display/${BLIT_DISPLAY_DRIVER}.cpp
     ${CMAKE_CURRENT_LIST_DIR}/input/${BLIT_INPUT_DRIVER}.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/led/${BLIT_LED_DRIVER}.cpp
     ${CMAKE_CURRENT_LIST_DIR}/storage/${BLIT_STORAGE_DRIVER}.cpp
     ${CMAKE_CURRENT_LIST_DIR}/usb/${BLIT_USB_DRIVER}.cpp
 )
+
+# pull in powman code so the thing can be turned off...
+if(PICO_BOARD STREQUAL "pimoroni_tufty2350")
+    list(APPEND BLIT_BOARD_LIBRARIES hardware_powman)
+    target_sources(BlitHalPico INTERFACE ${CMAKE_CURRENT_LIST_DIR}/board/pimoroni_tufty2350/powman.c)
+endif()
 
 if(BLIT_ENABLE_CORE1)
     list(APPEND BLIT_BOARD_DEFINITIONS ENABLE_CORE1)
