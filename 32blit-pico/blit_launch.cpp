@@ -78,6 +78,8 @@ static uint32_t calc_num_blocks(uint32_t size) {
   return (size - 1) / game_block_size + 1;
 }
 
+#ifdef BUILD_LOADER
+
 #ifdef PICO_RP2350
 static uint32_t find_flash_offset(uint32_t requested_size) {
   uint32_t free_off = 0; // 0 is invalid as that's where the loader is
@@ -175,6 +177,20 @@ static uint32_t find_installed_blit(RawMetadata &meta) {
   return ~0u;
 }
 
+// returns lowercased extension
+static std::string get_file_ext(const char *path) {
+  // get the extension
+  std::string_view sv(path);
+  auto last_dot = sv.find_last_of('.');
+  auto ext = last_dot == std::string::npos ? "" : std::string(sv.substr(last_dot + 1));
+  for(auto &c : ext)
+    c = tolower(c);
+
+  return ext;
+}
+
+#endif
+
 static bool cleanup_duplicates(RawMetadata &meta, uint32_t new_offset) {
   bool ret = false;
   for(uint32_t off = 0; off < flash_end;) {
@@ -200,18 +216,6 @@ static bool cleanup_duplicates(RawMetadata &meta, uint32_t new_offset) {
   }
 
   return ret;
-}
-
-// returns lowercased extension
-static std::string get_file_ext(const char *path) {
-  // get the extension
-  std::string_view sv(path);
-  auto last_dot = sv.find_last_of('.');
-  auto ext = last_dot == std::string::npos ? "" : std::string(sv.substr(last_dot + 1));
-  for(auto &c : ext)
-    c = tolower(c);
-
-  return ext;
 }
 
 // 32blit API
