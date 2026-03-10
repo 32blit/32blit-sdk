@@ -163,7 +163,7 @@ static uint32_t find_installed_blit(RawMetadata &meta) {
   return ~0u;
 }
 
-static bool cleanup_duplicates(RawMetadata &meta, RawTypeMetadata &type_meta, uint32_t new_offset) {
+static bool cleanup_duplicates(RawMetadata &meta, uint32_t new_offset) {
   bool ret = false;
   for(uint32_t off = 0; off < flash_end;) {
     auto size = get_installed_file_size(off);
@@ -261,7 +261,7 @@ bool launch_file(const char *path) {
 
       flash_offset = writer.get_flash_offset();
 
-      cleanup_duplicates(meta, type_meta, flash_offset);
+      cleanup_duplicates(meta, flash_offset);
     } else
       close_file(file);
   }
@@ -456,6 +456,12 @@ bool BlitWriter::write(const uint8_t *buf, uint32_t len) {
   return true;
 }
 
+void BlitWriter::cleanup_duplicates() {
+  auto header = (BlitGameHeader *)(FLASH_BASE + flash_offset);
+  auto meta = (RawMetadata *)(FLASH_BASE + flash_offset + header->end + 10);
+  ::cleanup_duplicates(*meta, flash_offset);
+}
+
 uint32_t BlitWriter::get_offset() const {
   return file_offset;
 }
@@ -488,6 +494,11 @@ bool BlitWriter::prepare_write(const uint8_t *buf) {
   if(flash_offset == 4 * 1024 * 1024) {
     // we can use address translation for this, so flash in any free space
     flash_offset = find_flash_offset(file_len);
+  }
+
+  if(!flash_offset) {
+    blit::debugf("Not enough space!");
+    return false;
   }
 #endif
 

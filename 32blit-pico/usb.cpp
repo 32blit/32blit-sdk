@@ -150,8 +150,10 @@ public:
           // got full page or final part of file
           auto buf_off = buf.get_offset();
           if(buf_off == FLASH_PAGE_SIZE || buf_off == writer.get_remaining()) {
-            if(!writer.write(buf.get_data(), buf_off))
+            if(!writer.write(buf.get_data(), buf_off)) {
+              cdc_command_progress(nullptr, 0, 0); // clear progress
               return Status::Error;
+            }
 
             cdc_command_progress(nullptr, writer.get_offset(), writer.get_length());
 
@@ -161,6 +163,8 @@ public:
           // end of file
           if(writer.get_remaining() == 0) {
             cdc_command_progress(nullptr, 0, 0); // clear progress
+
+            writer.cleanup_duplicates();
 
             // send response
             auto block = writer.get_flash_offset() >> 16;
@@ -257,6 +261,7 @@ public:
           auto written = blit::api.write_file(file, file_offset, read, (const char *)buf.get_data());
           if(written != read) {
             blit::api.close_file(file);
+            cdc_command_progress(nullptr, 0, 0); // clear progress
             return Status::Error;
           }
 
