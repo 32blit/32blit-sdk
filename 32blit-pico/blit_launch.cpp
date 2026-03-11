@@ -541,6 +541,8 @@ const char *get_launch_path() {
 #endif
 }
 
+#ifdef BUILD_LOADER
+
 // .blit file writer
 void BlitWriter::init(uint32_t file_len) {
   this->file_len = file_len;
@@ -639,3 +641,5 @@ bool BlitWriter::prepare_write(const uint8_t *buf) {
 
   return true;
 }
+
+#endif
