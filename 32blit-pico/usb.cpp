@@ -10,6 +10,8 @@
 #include "multiplayer.hpp"
 #include "overlay.hpp"
 
+#include "fatfs_blit_api.hpp"
+
 #include "engine/engine.hpp"
 #include "executable.hpp"
 
@@ -173,6 +175,7 @@ public:
             usb_cdc_flush_write();
 
             // reinit loader
+            close_open_files();
             ::init();
 
             return Status::Done;

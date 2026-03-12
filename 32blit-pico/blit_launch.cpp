@@ -1,4 +1,5 @@
 #include <cstring>
+#include <forward_list>
 
 #include "pico/stdlib.h"
 #include "hardware/flash.h"
@@ -34,6 +35,17 @@ static const uint32_t flash_end = PICO_FLASH_SIZE_BYTES;
 static const uint32_t flash_end = FLASH_STORAGE_OFFSET;
 #endif
 
+struct TypeHandlerInfo {
+  char type[4]; // should have a null terminator, but the low byte of the offset will always be zero
+  uint32_t offset;
+};
+
+std::forward_list<TypeHandlerInfo> handlers;
+
+#ifdef BUILD_LOADER
+static char launch_path[256];
+#endif
+
 extern int (*do_tick)(uint32_t time);
 
 void disable_user_code();
@@ -65,6 +77,8 @@ static uint32_t get_installed_file_size(uint32_t offset) {
 static uint32_t calc_num_blocks(uint32_t size) {
   return (size - 1) / game_block_size + 1;
 }
+
+#ifdef BUILD_LOADER
 
 #ifdef PICO_RP2350
 static uint32_t find_flash_offset(uint32_t requested_size) {
@@ -163,6 +177,20 @@ static uint32_t find_installed_blit(RawMetadata &meta) {
   return ~0u;
 }
 
+// returns lowercased extension
+static std::string get_file_ext(const char *path) {
+  // get the extension
+  std::string_view sv(path);
+  auto last_dot = sv.find_last_of('.');
+  auto ext = last_dot == std::string::npos ? "" : std::string(sv.substr(last_dot + 1));
+  for(auto &c : ext)
+    c = tolower(c);
+
+  return ext;
+}
+
+#endif
+
 static bool cleanup_duplicates(RawMetadata &meta, uint32_t new_offset) {
   bool ret = false;
   for(uint32_t off = 0; off < flash_end;) {
@@ -211,59 +239,109 @@ RawMetadata *get_running_game_metadata() {
   return nullptr;
 }
 
+void create_type_handler_list() {
+  handlers.clear();
+
+  blit::api.list_installed_games([](const uint8_t *ptr, uint32_t block, uint32_t size) {
+    auto header = (const BlitGameHeader *)ptr;
+    auto metadata_ptr = ptr + header->end;
+
+    if(memcmp(metadata_ptr, "BLITMETA", 8) != 0)
+      return;
+
+    // skip straight to the type block
+    metadata_ptr += 10 + sizeof(RawMetadata);
+
+    if(memcmp(metadata_ptr, "BLITTYPE", 8) != 0)
+      return;
+
+    // get the type block
+    auto type_meta = (const RawTypeMetadata *)(metadata_ptr + 8);
+
+    // loop through filetypes
+    for(unsigned i = 0; i < type_meta->num_filetypes; i++) {
+      TypeHandlerInfo info;
+      memcpy(info.type, type_meta->filetypes[i], 4);
+      info.offset = block * game_block_size;
+
+      handlers.emplace_front(info);
+    }
+  });
+}
+
 bool launch_file(const char *path) {
+#ifdef BUILD_LOADER
   uint32_t flash_offset = ~0u;
+
+  // clear old path
+  launch_path[0] = 0;
 
   if(strncmp(path, "flash:/", 7) == 0) // from flash
     flash_offset = atoi(path + 7) * game_block_size;
   else {
-    // from storage
-    auto file = open_file(path, blit::OpenMode::read);
 
-    if(!file)
-      return false;
+    auto ext = get_file_ext(path);
 
-    // read file metadata and try to find matching installed gat
-    RawMetadata meta;
-    RawTypeMetadata type_meta = {};
-
-    if(read_file_metadata(file, meta, type_meta))
-      flash_offset = find_installed_blit(meta);
-
-    // flash if not found
-    if(flash_offset == ~0u) {
-      BlitWriter writer;
-
-      uint32_t file_offset = 0;
-      uint32_t len = get_file_length(file);
-
-      writer.init(len);
-
-      // read in small chunks
-      uint8_t buf[FLASH_PAGE_SIZE];
-
-      while(file_offset < len) {
-        auto bytes_read = read_file(file, file_offset, FLASH_PAGE_SIZE, (char *)buf);
-        if(bytes_read <= 0)
+    if(ext != "blit") {
+      // with handler
+      for(auto &handler : handlers) {
+        if(strncmp(ext.data(), handler.type, 4) == 0) {
+          flash_offset = handler.offset;
           break;
-
-        if(!writer.write(buf, bytes_read))
-          break;
-
-        file_offset += bytes_read;
+        }
       }
 
-      close_file(file);
+      // set launch path
+      strncpy(launch_path, path, sizeof(launch_path) - 1);
+    } else {
+      // from storage
+      auto file = open_file(path, blit::OpenMode::read);
 
-      // didn't write everything, fail launch
-      if(writer.get_remaining() > 0)
+      if(!file)
         return false;
 
-      flash_offset = writer.get_flash_offset();
+      // read file metadata and try to find matching installed gat
+      RawMetadata meta;
+      RawTypeMetadata type_meta = {};
 
-      cleanup_duplicates(meta, flash_offset);
-    } else
-      close_file(file);
+      if(read_file_metadata(file, meta, type_meta))
+        flash_offset = find_installed_blit(meta);
+
+      // flash if not found
+      if(flash_offset == ~0u) {
+        BlitWriter writer;
+
+        uint32_t file_offset = 0;
+        uint32_t len = get_file_length(file);
+
+        writer.init(len);
+
+        // read in small chunks
+        uint8_t buf[FLASH_PAGE_SIZE];
+
+        while(file_offset < len) {
+          auto bytes_read = read_file(file, file_offset, FLASH_PAGE_SIZE, (char *)buf);
+          if(bytes_read <= 0)
+            break;
+
+          if(!writer.write(buf, bytes_read))
+            break;
+
+          file_offset += bytes_read;
+        }
+
+        close_file(file);
+
+        // didn't write everything, fail launch
+        if(writer.get_remaining() > 0)
+          return false;
+
+        flash_offset = writer.get_flash_offset();
+
+        cleanup_duplicates(meta, flash_offset);
+      } else
+        close_file(file);
+    }
   }
 
   auto header = (BlitGameHeader *)(FLASH_BASE + flash_offset);
@@ -276,6 +354,9 @@ bool launch_file(const char *path) {
 
   requested_launch_offset = flash_offset;
   return true;
+#else
+  return false;
+#endif
 }
 
 blit::CanLaunchResult can_launch(const char *path) {
@@ -286,11 +367,7 @@ blit::CanLaunchResult can_launch(const char *path) {
   }
 
   // get the extension
-  std::string_view sv(path);
-  auto last_dot = sv.find_last_of('.');
-  auto ext = last_dot == std::string::npos ? "" : std::string(sv.substr(last_dot + 1));
-  for(auto &c : ext)
-    c = tolower(c);
+  auto ext = get_file_ext(path);
 
   if(ext == "blit") {
     BlitGameHeader header;
@@ -309,6 +386,14 @@ blit::CanLaunchResult can_launch(const char *path) {
     close_file(file);
     return blit::CanLaunchResult::IncompatibleBlit;
   }
+
+  // check handlers
+  for(auto &handler : handlers) {
+    if(strncmp(ext.data(), handler.type, 4) == 0) {
+      return blit::CanLaunchResult::Success;
+    }
+  }
+
 #endif
 
   return blit::CanLaunchResult::UnknownType;
@@ -419,8 +504,44 @@ void erase_game(uint32_t offset) {
   restore_interrupts(status);
 
   set_render_overlay_enabled(false);
+
+  // clear out any handler entries
+  auto prev = handlers.before_begin();
+  for(auto it = handlers.begin(); it != handlers.end();) {
+    if(it->offset == offset)
+      it = handlers.erase_after(prev);
+    else
+      prev = it++;
+  }
 #endif
 }
+
+void *get_type_handler_metadata(const char *filetype) {
+#ifdef BUILD_LOADER
+  for(auto &handler : handlers) {
+    if(strncmp(filetype, handler.type, 4) == 0) {
+      auto ptr = (const uint8_t *)(FLASH_BASE + handler.offset);
+      auto header = (const BlitGameHeader *)ptr;
+      auto metadata_ptr = ptr + header->end;
+
+      // this really shouldn't fail if it's in the list, but be safe
+      if(memcmp(metadata_ptr, "BLITMETA", 8) == 0)
+        return (void *)metadata_ptr;
+    }
+  }
+#endif
+  return nullptr;
+}
+
+const char *get_launch_path() {
+#ifdef BUILD_LOADER
+  return launch_path;
+#else
+  return nullptr;
+#endif
+}
+
+#ifdef BUILD_LOADER
 
 // .blit file writer
 void BlitWriter::init(uint32_t file_len) {
@@ -520,3 +641,5 @@ bool BlitWriter::prepare_write(const uint8_t *buf) {
 
   return true;
 }
+
+#endif

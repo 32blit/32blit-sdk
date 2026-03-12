@@ -60,10 +60,6 @@ static uint32_t get_max_us_timer() {
   return 0xFFFFFFFF; // it's a 64bit timer...
 }
 
-const char *get_launch_path()  {
-  return nullptr;
-}
-
 static GameMetadata get_metadata() {
   GameMetadata ret;
 
@@ -167,7 +163,7 @@ static const blit::APIConst blit_api_const {
 
   ::launch_file,
   ::erase_game,
-  nullptr, // get_type_handler_metadata
+  ::get_type_handler_metadata,
 
   ::get_launch_path,
 
@@ -218,6 +214,8 @@ void disable_user_code() {
 [[maybe_unused]]
 static int64_t home_hold_callback(alarm_id_t id, void *user_data) {
   home_hold_alarm_id = 0;
+
+  close_open_files();
 
   launch_pre_init();
   ::init(); // re-initialising the loader is effectively a reset
@@ -317,7 +315,9 @@ int main() {
 #endif
 #endif
 
-#ifndef BUILD_LOADER
+#ifdef BUILD_LOADER
+  create_type_handler_list();
+#else
   blit::set_screen_mode(ScreenMode::lores);
 #endif
 

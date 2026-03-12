@@ -10,6 +10,8 @@ static constexpr unsigned int game_block_size = 64 * 1024;
 
 RawMetadata *get_running_game_metadata();
 
+void create_type_handler_list();
+
 bool launch_file(const char *path);
 blit::CanLaunchResult can_launch(const char *path);
 void launch_pre_init();
@@ -18,6 +20,10 @@ void delayed_launch();
 void list_installed_games(std::function<void(const uint8_t *, uint32_t, uint32_t)> callback);
 
 void erase_game(uint32_t offset);
+
+void *get_type_handler_metadata(const char *filetype);
+
+const char *get_launch_path();
 
 class BlitWriter final {
 public:
