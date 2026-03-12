@@ -34,6 +34,10 @@
 #define LCD_BACKLIGHT_PIN 45
 #define LCD_RESET_PIN     44
 
+#define LED_WS2812_PIN   33
+#define LED_WS2812_PIO    1 // needs to be the same as SD (both need GPIO base)
+#define LED_WS2812_COUNT  7
+
 // spi
 #define SD_SCK  34
 #define SD_MOSI 35
