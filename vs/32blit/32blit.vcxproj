@@ -168,7 +168,6 @@
     <ClInclude Include="..\..\32blit\helpers.hpp" />
     <ClInclude Include="..\..\32blit\math\geometry.hpp" />
     <ClInclude Include="..\..\32blit\math\interpolation.hpp" />
-    <ClInclude Include="..\..\32blit\types\map.hpp" />
     <ClInclude Include="..\..\32blit\types\mat3.hpp" />
     <ClInclude Include="..\..\32blit\types\mat4.hpp" />
     <ClInclude Include="..\..\32blit\types\point.hpp" />
@@ -202,7 +201,6 @@
     <ClCompile Include="..\..\32blit\graphics\tilemap.cpp" />
     <ClCompile Include="..\..\32blit\math\geometry.cpp" />
     <ClCompile Include="..\..\32blit\math\interpolation.cpp" />
-    <ClCompile Include="..\..\32blit\types\map.cpp" />
     <ClCompile Include="..\..\32blit\types\mat3.cpp" />
     <ClCompile Include="..\..\32blit\types\mat4.cpp" />
     <ClCompile Include="..\..\32blit\types\vec2.cpp" />
