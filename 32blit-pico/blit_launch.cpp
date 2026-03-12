@@ -535,6 +535,9 @@ void *get_type_handler_metadata(const char *filetype) {
 
 const char *get_launch_path() {
 #ifdef BUILD_LOADER
+  if(!launch_path[0])
+    return nullptr;
+
   return launch_path;
 #else
   return nullptr;
