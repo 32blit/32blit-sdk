@@ -28,6 +28,7 @@ struct GamepadMapping {
 #define NO 0xFF
 
 static const GamepadMapping gamepad_mappings[]{
+  {0x057E2009,  3,  2,  1,  0, 17, 16, 19, 18,  8, 12, 11}, // Switch Pro Controller
   {0x15320705,  0,  1,  3,  4, NO, NO, NO, NO, 16, 15, 13}, // Razer Raiju Mobile
   {0x20D6A711,  2,  1,  3,  0, NO, NO, NO, NO,  8, 12, 10}, // PowerA wired Switch pro controller
   {0x2DC89018,  0,  1,  3,  4, NO, NO, NO, NO, 10, 11, NO}, // 8BitDo Zero 2
