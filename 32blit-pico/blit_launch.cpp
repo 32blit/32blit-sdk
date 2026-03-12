@@ -189,8 +189,6 @@ static std::string get_file_ext(const char *path) {
   return ext;
 }
 
-#endif
-
 static bool cleanup_duplicates(RawMetadata &meta, uint32_t new_offset) {
   bool ret = false;
   for(uint32_t off = 0; off < flash_end;) {
@@ -217,6 +215,8 @@ static bool cleanup_duplicates(RawMetadata &meta, uint32_t new_offset) {
 
   return ret;
 }
+
+#endif
 
 // 32blit API
 
