@@ -19,10 +19,10 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Checkout Examples
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         repository: 32blit/32blit-examples
         path: 32blit-examples
@@ -34,7 +34,7 @@ jobs:
 
     - name: Setup cache
       id: cache-system-libraries
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ${{env.EM_CACHE_FOLDER}}
         key: ${{env.EM_VERSION}}-${{runner.os}}
@@ -74,7 +74,7 @@ jobs:
         cp ../build/*/*.{js,wasm} site/examples
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{github.event.repository.name}}-${{github.sha}}-web
         path: site

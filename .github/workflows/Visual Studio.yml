@@ -10,10 +10,10 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Checkout Examples
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         repository: 32blit/32blit-examples
         path: examples
