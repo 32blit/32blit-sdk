@@ -1,0 +1,7 @@
+<map id="blit::APIData" name="blit::APIData">
+<area shape="rect" id="node1" title=" " alt="" coords="147,95,250,121"/>
+<area shape="rect" id="node2" href="$structblit_1_1Pen.html" title=" " alt="" coords="5,5,80,32"/>
+<area shape="rect" id="node3" href="$structblit_1_1Vec2.html" title=" " alt="" coords="104,5,187,32"/>
+<area shape="rect" id="node4" href="$structblit_1_1Vec3.html" title=" " alt="" coords="211,5,293,32"/>
+<area shape="rect" id="node5" href="$structblit_1_1ButtonState.html" title=" " alt="" coords="317,5,445,32"/>
+</map>
