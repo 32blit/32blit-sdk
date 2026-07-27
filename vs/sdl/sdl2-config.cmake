@@ -19,8 +19,8 @@ function(fetch_sdl2_library directory url filename hash)
     endif()
 endfunction(fetch_sdl2_library)
 
-set(SDL2_VERSION 2.24.0)
-set(SDL2_IMAGE_VERSION 2.6.2)
+set(SDL2_VERSION 2.28.5)
+set(SDL2_IMAGE_VERSION 2.8.12)
 set(SDL2_NET_VERSION 2.2.0)
 
 if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/include)
@@ -29,14 +29,14 @@ if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/include)
         SDL2-${SDL2_VERSION}
         https://github.com/libsdl-org/SDL/releases/download/release-${SDL2_VERSION}/
         SDL2-devel-${SDL2_VERSION}-VC.zip
-        8a54459189e88c30ba024ee5f18ce4b1a5d1d9e7
+        7469e9ea44d30a48b0510328cd94b25596e0aa0f
     )
 
     fetch_sdl2_library(
         SDL2_image-${SDL2_IMAGE_VERSION}
         https://github.com/libsdl-org/SDL_image/releases/download/release-${SDL2_IMAGE_VERSION}/
         SDL2_image-devel-${SDL2_IMAGE_VERSION}-VC.zip
-        4111affcca1f4b41c2f4b4c445ccf06fe081b5e9
+        fbb2bff20c616949b1dc2fc35bad0ec55cf9d9f8
     )
 
     fetch_sdl2_library(
@@ -54,3 +54,6 @@ get_property(SDL2_DLL TARGET SDL2::SDL2 PROPERTY IMPORTED_LOCATION)
 # help cmake to find the other libs
 set(SDL2_image_DIR ${CMAKE_CURRENT_LIST_DIR}/SDL2_image-${SDL2_IMAGE_VERSION}/cmake)
 set(SDL2_net_DIR ${CMAKE_CURRENT_LIST_DIR}/SDL2_net-${SDL2_NET_VERSION}/cmake)
+
+# the latest SDL2_net (2.4.0) still has cmake_minimum_required(VERSION 3.0) in its config file for VC
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)

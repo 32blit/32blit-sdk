@@ -1,5 +1,5 @@
 if [ ! -f ~/Library/Frameworks/SDL2_net.framework/SDL2_net ]; then
-    curl -L https://github.com/libsdl-org/SDL/releases/download/release-2.24.0/SDL2-2.24.0.dmg -o SDL2.dmg
+    curl -L https://github.com/libsdl-org/SDL/releases/download/release-2.28.5/SDL2-2.28.5.dmg -o SDL2.dmg
     curl -L https://github.com/libsdl-org/SDL_image/releases/download/release-2.6.2/SDL2_image-2.6.2.dmg -o SDL2_image.dmg
     curl -L https://github.com/libsdl-org/SDL_net/releases/download/release-2.2.0/SDL2_net-2.2.0.dmg -o SDL2_net.dmg
 
