@@ -26,7 +26,6 @@
 #include "graphics/tilemap.hpp"
 #include "math/constants.hpp"
 #include "math/interpolation.hpp"
-#include "types/map.hpp"
 #include "types/mat3.hpp"
 #include "types/mat4.hpp"
 #include "types/point.hpp"
