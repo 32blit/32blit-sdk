@@ -40,7 +40,7 @@ static bool fs_mounted = false;
 bool exit_game = false;
 bool toggle_menu = false;
 bool take_screenshot = false;
-const float volume_log_base = 2.0f;
+const float volume_log_base = 0.04f;
 
 const uint32_t long_press_exit_time = 1000;
 
