@@ -71,7 +71,7 @@ jobs:
             cmake-args: -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/mingw.toolchain -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSDL2_DIR=$GITHUB_WORKSPACE/SDL2/cmake -DSDL2_image_DIR=$GITHUB_WORKSPACE/SDL2_image/cmake -DSDL2_net_DIR=$GITHUB_WORKSPACE/SDL2_net/cmake
             apt-packages: ccache g++-mingw-w64
 
-          - os: macos-14
+          - os: macos-15
             name: macOS
             cache-key: macos
             artifact-suffix: macOS
@@ -153,7 +153,7 @@ jobs:
       if: runner.os == 'Windows'
       shell: bash
       run: |
-        python -m pip install 32blit requests
+        python -m pip install 32blit requests "bitstring<5.0"
 
     - name: MinGW deps
       if: matrix.name == 'MinGW'
@@ -165,7 +165,7 @@ jobs:
       run: |
         python -m venv .venv
         source .venv/bin/activate
-        python -m pip install 32blit requests
+        python -m pip install 32blit requests "bitstring<5.0"
         echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
         echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
 
